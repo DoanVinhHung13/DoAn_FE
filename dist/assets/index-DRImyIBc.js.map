@@ -1,1 +1,0 @@
-{"version":3,"file":"index-DRImyIBc.js","sources":["../../src/pages/ADMIN/UserManagement/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst UserManagement = () => {\n  return <div>UserManagement Page</div>;\n};\n\nexport default UserManagement;\n"],"names":["UserManagement","jsx"],"mappings":"wCAEA,MAAMA,EAAiB,IACdC,EAAA,IAAC,OAAI,SAAmB,qBAAA,CAAA"}

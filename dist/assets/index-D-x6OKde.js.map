@@ -1,1 +1,0 @@
-{"version":3,"file":"index-D-x6OKde.js","sources":["../../src/pages/USER/Warehouse/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst Warehouse = () => {\n  return <div>Warehouse Page</div>;\n};\n\nexport default Warehouse;\n"],"names":["Warehouse","jsx"],"mappings":"wCAEA,MAAMA,EAAY,IACTC,EAAA,IAAC,OAAI,SAAc,gBAAA,CAAA"}

@@ -1,7 +1,10 @@
 import { useContext } from "react"
 import {
   BellOutlined,
+  BulbOutlined,
   LogoutOutlined,
+  MoonOutlined,
+  SunOutlined,
   UserOutlined
 } from "@ant-design/icons"
 import { Avatar, Badge, Dropdown, Layout } from "antd"
@@ -18,9 +21,10 @@ const { Header } = Layout
 
 const GlobalHeader = ({ role }) => {
   const navigate = useNavigate()
-  const { authModalStore, loginStore } = useContext(StoreContext)
+  const { authModalStore, loginStore, themeStore } = useContext(StoreContext)
   const { setAuthModal } = authModalStore
   const { setIsLoginContext } = loginStore
+  const { isDarkMode, setIsDarkMode } = themeStore
   
   const dropMenuItems = role ? getDropMenuByRole(role) : []
 
@@ -108,6 +112,15 @@ const GlobalHeader = ({ role }) => {
 
       {/* ── Right Actions ── */}
       <div className="gh-actions">
+        <button
+          className="gh-theme-toggle"
+          title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+          onClick={() => setIsDarkMode(prev => !prev)}
+        >
+          <BulbOutlined />
+          {isDarkMode ? <SunOutlined /> : <MoonOutlined />}
+        </button>
+
         {role && (
           <Badge count={3} size="small">
             <button className="gh-icon-btn" title="Notifications">

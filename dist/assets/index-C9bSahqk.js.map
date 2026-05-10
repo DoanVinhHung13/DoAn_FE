@@ -1,1 +1,0 @@
-{"version":3,"file":"index-C9bSahqk.js","sources":["../../src/pages/ANONYMOUS/ResetPassword/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst ResetPassword = () => {\n  return <div>ResetPassword Page</div>;\n};\n\nexport default ResetPassword;\n"],"names":["ResetPassword","jsx"],"mappings":"wCAEA,MAAMA,EAAgB,IACbC,EAAA,IAAC,OAAI,SAAkB,oBAAA,CAAA"}

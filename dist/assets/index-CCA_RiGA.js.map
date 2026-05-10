@@ -1,1 +1,0 @@
-{"version":3,"file":"index-CCA_RiGA.js","sources":["../../src/pages/ANONYMOUS/Unauthorized/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst Unauthorized = () => {\n  return <div>Unauthorized Page</div>;\n};\n\nexport default Unauthorized;\n"],"names":["Unauthorized","jsx"],"mappings":"wCAEA,MAAMA,EAAe,IACZC,EAAA,IAAC,OAAI,SAAiB,mBAAA,CAAA"}

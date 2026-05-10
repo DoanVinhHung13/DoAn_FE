@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
-import STORAGE, { getStorage } from "src/lib/storage";
+import { useEffect } from "react"
+import STORAGE, { getStorage } from "src/lib/storage"
 
 const DefaultAction = ({ children }) => {
-  const isLogin = getStorage(STORAGE.TOKEN);
-  const [loading, setLoading] = useState(false);
+  const isLogin = getStorage(STORAGE.TOKEN)
 
   useEffect(() => {
     // Implement global initial data fetching here
@@ -11,9 +10,9 @@ const DefaultAction = ({ children }) => {
     if (isLogin) {
       // getUserInfo();
     }
-  }, [isLogin]);
+  }, [isLogin])
 
-  return <>{children}</>;
-};
+  return <>{children}</>
+}
 
-export default DefaultAction;
+export default DefaultAction

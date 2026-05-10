@@ -1,1 +1,0 @@
-{"version":3,"file":"index-CwHAlAL3.js","sources":["../../src/pages/ANONYMOUS/ForgotPassword/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst ForgotPassword = () => {\n  return <div>ForgotPassword Page</div>;\n};\n\nexport default ForgotPassword;\n"],"names":["ForgotPassword","jsx"],"mappings":"wCAEA,MAAMA,EAAiB,IACdC,EAAA,IAAC,OAAI,SAAmB,qBAAA,CAAA"}

@@ -1,5 +1,6 @@
 import React, { Suspense } from "react"
 import { Navigate, useRoutes } from "react-router-dom"
+import ErrorBoundary from "src/components/Boundary"
 import SpinCustom from "src/components/SpinCustom"
 import ROUTER from "./ROUTER"
 
@@ -73,6 +74,8 @@ function LazyLoadingComponent({ children }) {
   )
 }
 
+const ModuleBoundary = ({ children }) => <ErrorBoundary>{children}</ErrorBoundary>
+
 const routes = [
   // Public & Guest Routes
   {
@@ -115,11 +118,13 @@ const routes = [
   {
     path: ROUTER.HOME,
     element: (
-      <LazyLoadingComponent>
-        <LayoutCommon>
-          <Home />
-        </LayoutCommon>
-      </LazyLoadingComponent>
+      <ModuleBoundary>
+        <LazyLoadingComponent>
+          <LayoutCommon>
+            <Home />
+          </LayoutCommon>
+        </LazyLoadingComponent>
+      </ModuleBoundary>
     ),
   },
 
@@ -127,9 +132,11 @@ const routes = [
   {
     path: "/admin",
     element: (
-      <ProtectedRoute roles={["admin"]}>
-        <LayoutAdmin />
-      </ProtectedRoute>
+      <ModuleBoundary>
+        {/* <ProtectedRoute roles={["admin"]}> */}
+          <LayoutAdmin />
+        {/* </ProtectedRoute> */}
+      </ModuleBoundary>
     ),
     children: [
       {
@@ -187,9 +194,11 @@ const routes = [
   {
     path: "/",
     element: (
-      <ProtectedRoute roles={["user", "seller"]}>
-        <LayoutUser />
-      </ProtectedRoute>
+      <ModuleBoundary>
+        <ProtectedRoute roles={["user", "seller"]}>
+          <LayoutUser />
+        </ProtectedRoute>
+      </ModuleBoundary>
     ),
     children: [
       {

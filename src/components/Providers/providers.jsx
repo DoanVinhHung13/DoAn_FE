@@ -1,10 +1,14 @@
 import { Provider } from "react-redux"
-import StoreProvider from "src/contexts"
+import StoreProvider, { StoreContext } from "src/contexts"
+import { useContext } from "react"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { store } from "src/redux/store"
-import { ThemeStyledComponent } from "src/theme/ThemeStyledComponent"
+import {
+  ThemeStyledComponent,
+  darkThemeStyledComponent,
+} from "src/theme/ThemeStyledComponent"
 import { ThemeProvider } from "styled-components"
 // Tạo một instance QueryClient
 const queryClient = new QueryClient({
@@ -17,14 +21,27 @@ const queryClient = new QueryClient({
   },
 })
 
+const ThemeBridge = ({ children }) => {
+  const { themeStore } = useContext(StoreContext)
+  const { isDarkMode } = themeStore
+
+  return (
+    <ThemeProvider
+      theme={isDarkMode ? darkThemeStyledComponent : ThemeStyledComponent}
+    >
+      {children}
+    </ThemeProvider>
+  )
+}
+
 const Providers = props => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={ThemeStyledComponent}>
-        <Provider store={store}>
-          <StoreProvider>{props.children}</StoreProvider>
-        </Provider>
-      </ThemeProvider>
+      <Provider store={store}>
+        <StoreProvider>
+          <ThemeBridge>{props.children}</ThemeBridge>
+        </StoreProvider>
+      </Provider>
       {/* Devtools chỉ hiển thị khi nằm trong QueryClientProvider */}
       <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
     </QueryClientProvider>

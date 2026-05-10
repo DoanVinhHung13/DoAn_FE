@@ -1,1 +1,0 @@
-{"version":3,"file":"index-6c0FczRG.js","sources":["../../src/pages/ANONYMOUS/Forbidden/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst Forbidden = () => {\n  return <div>Forbidden Page</div>;\n};\n\nexport default Forbidden;\n"],"names":["Forbidden","jsx"],"mappings":"wCAEA,MAAMA,EAAY,IACTC,EAAA,IAAC,OAAI,SAAc,gBAAA,CAAA"}

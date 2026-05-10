@@ -1,4 +1,6 @@
-const primaryColor = "#01638D"
+import { APP_THEMES, THEME_TOKENS } from "./themeTokens"
+
+const primaryColor = THEME_TOKENS.primary
 const backgroundColor = "#F2F2F2"
 
 const primaryHover = "#4347D9"
@@ -190,8 +192,18 @@ const ThemeStyledComponent = {
 
 const darkThemeStyledComponent = {
   ...ThemeStyledComponent,
-  "primary-color": "red",
-  backgroundColor: "#000",
+  "primary-color": APP_THEMES.dark.primary,
+  "primary-hover": APP_THEMES.dark.primaryHover,
+  "layout-body-background": APP_THEMES.dark.backgroundSoft,
+  "layout-header-background": APP_THEMES.dark.headerBg,
+  "layout-sider-background": APP_THEMES.dark.backgroundSoft,
+  "card-head-background": APP_THEMES.dark.backgroundSoft,
+  "card-background": APP_THEMES.dark.backgroundSoft,
+  "text-color": APP_THEMES.dark.text,
+  "text-color-secondary": APP_THEMES.dark.textSecondary,
+  "heading-color": APP_THEMES.dark.text,
+  "border-color-base": APP_THEMES.dark.border,
+  black: APP_THEMES.dark.text,
 }
 
 export { darkThemeStyledComponent, ThemeStyledComponent }

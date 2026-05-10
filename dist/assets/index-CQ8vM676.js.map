@@ -1,1 +1,0 @@
-{"version":3,"file":"index-CQ8vM676.js","sources":["../../src/pages/ANONYMOUS/NotFound/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst NotFound = () => {\n  return <div>NotFound Page</div>;\n};\n\nexport default NotFound;\n"],"names":["NotFound","jsx"],"mappings":"wCAEA,MAAMA,EAAW,IACRC,EAAA,IAAC,OAAI,SAAa,eAAA,CAAA"}
