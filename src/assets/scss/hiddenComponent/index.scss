@@ -1,0 +1,16 @@
+.account-infor {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 0 15px;
+  &-sumary-fullname {
+    font-size: 14px !important;
+    color: #5e5c5c;
+    font-weight: 600;
+  }
+  &-sumary-position {
+    font-size: 14px !important;
+    color: #a3a3a3;
+  }
+}

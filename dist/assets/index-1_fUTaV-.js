@@ -1,0 +1,2 @@
+import{bI as t}from"./index-DVhs729P.js";const n="MemberRank/GetListMemberRank",a="MemberRank/GetMemberrankByID",s="MemberRank/InsertMemberRank",k="MemberRank/UpdateMemberRank",r="MemberRank/Delete",R=e=>t.get(n,{params:e}),o=e=>t.get(a,{params:e}),c=e=>t.post(s,e),i=e=>t.post(k,e),p=e=>t.delete(r,{params:e}),b={getListRank:R,getRankById:o,insertRank:c,updateRank:i,deleteRank:p};export{b as M};
+//# sourceMappingURL=index-1_fUTaV-.js.map

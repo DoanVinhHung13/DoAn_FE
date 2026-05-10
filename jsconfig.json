@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    // Chạy ở ESNext để dùng bare imports và tree-shaking
+    "target": "ES6",
+    "module": "CommonJS",
+
+    // Bắt buộc để Node-style resolution
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+
+    // Cho phép import absolute từ src/ (tùy ý) chứ ko phải node-module
+    "baseUrl": "./",
+    "paths": {}
+  },
+  "include": ["src/**/*.js", "src/**/*.jsx", "cypress/**/*.js"],
+  "exclude": [
+    "node_modules",
+    "build",
+    "dist",
+    "01.Source/node_modules",
+    "01.Source/build",
+    "01.Source/dist",
+    "01.Source/.next",
+    "01.Source/.cache"
+  ]
+}

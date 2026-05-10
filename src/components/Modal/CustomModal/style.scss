@@ -1,0 +1,48 @@
+.ant-modal-header .ant-modal-title {
+  font-size: 24px;
+  color: #134197;
+  font-family: "Inter", sans-serif;
+  border-bottom: 1px solid #ebebeb;
+  position: relative;
+  font-weight: 700;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+.ant-modal-header .ant-modal-title::after {
+  content: "";
+  width: 80px;
+  height: 4px;
+  background-image: -webkit-linear-gradient(
+    0deg,
+    rgb(21, 67, 152) 0%,
+    rgb(238, 29, 35) 100%
+  );
+  position: absolute;
+  left: 40px;
+  bottom: -2px;
+  margin: 0 0 0 -40px;
+}
+/* modal */
+.ant-modal-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  .ant-modal {
+    position: unset;
+  }
+}
+.ant-modal-content .ant-modal-body {
+  max-height: calc(100vh - 130px);
+  overflow: hidden auto;
+  padding: 0px 4px 0px 16px;
+}
+:where(.css-dev-only-do-not-override-p9spd9).ant-modal .ant-modal-content {
+  padding: 0px;
+}
+:where(.css-dev-only-do-not-override-p9spd9).ant-modal {
+  padding-bottom: 0px;
+}
+
+.ant-modal-content .ant-modal-footer {
+  padding: 10px 14px;
+}

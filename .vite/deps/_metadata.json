@@ -1,0 +1,403 @@
+{
+  "hash": "27b08a63",
+  "configHash": "1abd9453",
+  "lockfileHash": "0b8edb1b",
+  "browserHash": "6cd7291c",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "1c805caa",
+      "needsInterop": true
+    },
+    "react-dom": {
+      "src": "../../node_modules/react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "6e010487",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "77934572",
+      "needsInterop": true
+    },
+    "react/jsx-runtime": {
+      "src": "../../node_modules/react/jsx-runtime.js",
+      "file": "react_jsx-runtime.js",
+      "fileHash": "5059dabb",
+      "needsInterop": true
+    },
+    "@ant-design/charts": {
+      "src": "../../node_modules/@ant-design/charts/es/index.js",
+      "file": "@ant-design_charts.js",
+      "fileHash": "97f8bfdc",
+      "needsInterop": false
+    },
+    "@ant-design/icons": {
+      "src": "../../node_modules/@ant-design/icons/es/index.js",
+      "file": "@ant-design_icons.js",
+      "fileHash": "ae15de55",
+      "needsInterop": false
+    },
+    "@ant-design/plots": {
+      "src": "../../node_modules/@ant-design/plots/es/index.js",
+      "file": "@ant-design_plots.js",
+      "fileHash": "c3cbad68",
+      "needsInterop": false
+    },
+    "@ant-design/v5-patch-for-react-19": {
+      "src": "../../node_modules/@ant-design/v5-patch-for-react-19/es/index.js",
+      "file": "@ant-design_v5-patch-for-react-19.js",
+      "fileHash": "42cc2baf",
+      "needsInterop": false
+    },
+    "@microsoft/signalr": {
+      "src": "../../node_modules/@microsoft/signalr/dist/esm/index.js",
+      "file": "@microsoft_signalr.js",
+      "fileHash": "e367cd85",
+      "needsInterop": false
+    },
+    "@react-pdf-viewer/core": {
+      "src": "../../node_modules/@react-pdf-viewer/core/lib/index.js",
+      "file": "@react-pdf-viewer_core.js",
+      "fileHash": "d236218f",
+      "needsInterop": true
+    },
+    "@react-pdf-viewer/get-file": {
+      "src": "../../node_modules/@react-pdf-viewer/get-file/lib/index.js",
+      "file": "@react-pdf-viewer_get-file.js",
+      "fileHash": "07ddda35",
+      "needsInterop": true
+    },
+    "@react-pdf-viewer/toolbar": {
+      "src": "../../node_modules/@react-pdf-viewer/toolbar/lib/index.js",
+      "file": "@react-pdf-viewer_toolbar.js",
+      "fileHash": "9787fcb6",
+      "needsInterop": true
+    },
+    "@reduxjs/toolkit": {
+      "src": "../../node_modules/@reduxjs/toolkit/dist/redux-toolkit.modern.mjs",
+      "file": "@reduxjs_toolkit.js",
+      "fileHash": "dfd1cc6e",
+      "needsInterop": false
+    },
+    "@reduxjs/toolkit/query": {
+      "src": "../../node_modules/@reduxjs/toolkit/dist/query/rtk-query.modern.mjs",
+      "file": "@reduxjs_toolkit_query.js",
+      "fileHash": "b9e948d8",
+      "needsInterop": false
+    },
+    "@tanstack/react-query": {
+      "src": "../../node_modules/@tanstack/react-query/build/modern/index.js",
+      "file": "@tanstack_react-query.js",
+      "fileHash": "22305cfb",
+      "needsInterop": false
+    },
+    "@tanstack/react-query-devtools": {
+      "src": "../../node_modules/@tanstack/react-query-devtools/build/modern/index.js",
+      "file": "@tanstack_react-query-devtools.js",
+      "fileHash": "e7b1456c",
+      "needsInterop": false
+    },
+    "@zxing/browser": {
+      "src": "../../node_modules/@zxing/browser/esm/index.js",
+      "file": "@zxing_browser.js",
+      "fileHash": "6ce406a4",
+      "needsInterop": false
+    },
+    "antd": {
+      "src": "../../node_modules/antd/es/index.js",
+      "file": "antd.js",
+      "fileHash": "dc471dd5",
+      "needsInterop": false
+    },
+    "antd/es/input/TextArea": {
+      "src": "../../node_modules/antd/es/input/TextArea.js",
+      "file": "antd_es_input_TextArea.js",
+      "fileHash": "53814924",
+      "needsInterop": false
+    },
+    "antd/es/locale/vi_VN": {
+      "src": "../../node_modules/antd/es/locale/vi_VN.js",
+      "file": "antd_es_locale_vi_VN.js",
+      "fileHash": "0adf0620",
+      "needsInterop": false
+    },
+    "antd/es/splitter/Splitter": {
+      "src": "../../node_modules/antd/es/splitter/Splitter.js",
+      "file": "antd_es_splitter_Splitter.js",
+      "fileHash": "75ac2344",
+      "needsInterop": false
+    },
+    "antd/lib/statistic/Countdown": {
+      "src": "../../node_modules/antd/lib/statistic/Countdown.js",
+      "file": "antd_lib_statistic_Countdown.js",
+      "fileHash": "00ff6f7a",
+      "needsInterop": true
+    },
+    "atropos/react": {
+      "src": "../../node_modules/atropos/atropos-react.mjs",
+      "file": "atropos_react.js",
+      "fileHash": "db3dbf69",
+      "needsInterop": false
+    },
+    "axios": {
+      "src": "../../node_modules/axios/index.js",
+      "file": "axios.js",
+      "fileHash": "36d5acc4",
+      "needsInterop": false
+    },
+    "crypto-js": {
+      "src": "../../node_modules/crypto-js/index.js",
+      "file": "crypto-js.js",
+      "fileHash": "38a1efc9",
+      "needsInterop": true
+    },
+    "dayjs": {
+      "src": "../../node_modules/dayjs/dayjs.min.js",
+      "file": "dayjs.js",
+      "fileHash": "e364ae0e",
+      "needsInterop": true
+    },
+    "dayjs/locale/vi": {
+      "src": "../../node_modules/dayjs/locale/vi.js",
+      "file": "dayjs_locale_vi.js",
+      "fileHash": "61df91dd",
+      "needsInterop": true
+    },
+    "dayjs/plugin/customParseFormat": {
+      "src": "../../node_modules/dayjs/plugin/customParseFormat.js",
+      "file": "dayjs_plugin_customParseFormat.js",
+      "fileHash": "9f0781ca",
+      "needsInterop": true
+    },
+    "dayjs/plugin/isBetween": {
+      "src": "../../node_modules/dayjs/plugin/isBetween.js",
+      "file": "dayjs_plugin_isBetween.js",
+      "fileHash": "db57623f",
+      "needsInterop": true
+    },
+    "dayjs/plugin/timezone": {
+      "src": "../../node_modules/dayjs/plugin/timezone.js",
+      "file": "dayjs_plugin_timezone.js",
+      "fileHash": "533b8841",
+      "needsInterop": true
+    },
+    "dayjs/plugin/utc": {
+      "src": "../../node_modules/dayjs/plugin/utc.js",
+      "file": "dayjs_plugin_utc.js",
+      "fileHash": "4feac2b4",
+      "needsInterop": true
+    },
+    "file-saver": {
+      "src": "../../node_modules/file-saver/dist/FileSaver.min.js",
+      "file": "file-saver.js",
+      "fileHash": "210b1225",
+      "needsInterop": true
+    },
+    "html-to-image": {
+      "src": "../../node_modules/html-to-image/es/index.js",
+      "file": "html-to-image.js",
+      "fileHash": "fb90ca45",
+      "needsInterop": false
+    },
+    "jsqr": {
+      "src": "../../node_modules/jsqr/dist/jsQR.js",
+      "file": "jsqr.js",
+      "fileHash": "92ae6f23",
+      "needsInterop": true
+    },
+    "lodash": {
+      "src": "../../node_modules/lodash/lodash.js",
+      "file": "lodash.js",
+      "fileHash": "a1ef6f41",
+      "needsInterop": true
+    },
+    "lodash/get": {
+      "src": "../../node_modules/lodash/get.js",
+      "file": "lodash_get.js",
+      "fileHash": "69dbf584",
+      "needsInterop": true
+    },
+    "lodash/isEmpty": {
+      "src": "../../node_modules/lodash/isEmpty.js",
+      "file": "lodash_isEmpty.js",
+      "fileHash": "98bfc2c2",
+      "needsInterop": true
+    },
+    "lucide-react": {
+      "src": "../../node_modules/lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "08e711c9",
+      "needsInterop": false
+    },
+    "moment": {
+      "src": "../../node_modules/moment/dist/moment.js",
+      "file": "moment.js",
+      "fileHash": "b07b2fb4",
+      "needsInterop": false
+    },
+    "prop-types": {
+      "src": "../../node_modules/prop-types/index.js",
+      "file": "prop-types.js",
+      "fileHash": "d130fad9",
+      "needsInterop": true
+    },
+    "qs": {
+      "src": "../../node_modules/qs/lib/index.js",
+      "file": "qs.js",
+      "fileHash": "0391b428",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "34eb126f",
+      "needsInterop": true
+    },
+    "react-icons/fi": {
+      "src": "../../node_modules/react-icons/fi/index.mjs",
+      "file": "react-icons_fi.js",
+      "fileHash": "927caac9",
+      "needsInterop": false
+    },
+    "react-redux": {
+      "src": "../../node_modules/react-redux/dist/react-redux.mjs",
+      "file": "react-redux.js",
+      "fileHash": "93f6b0bf",
+      "needsInterop": false
+    },
+    "react-router": {
+      "src": "../../node_modules/react-router/dist/development/index.mjs",
+      "file": "react-router.js",
+      "fileHash": "b0cae4b8",
+      "needsInterop": false
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "a2b30668",
+      "needsInterop": false
+    },
+    "styled-components": {
+      "src": "../../node_modules/styled-components/dist/styled-components.browser.esm.js",
+      "file": "styled-components.js",
+      "fileHash": "17919486",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "JZI2RDCT-3ZMZPUYT": {
+      "file": "JZI2RDCT-3ZMZPUYT.js"
+    },
+    "chunk-J44RAMTL": {
+      "file": "chunk-J44RAMTL.js"
+    },
+    "HH7B3BHX-QVTH2VLZ": {
+      "file": "HH7B3BHX-QVTH2VLZ.js"
+    },
+    "chunk-LKM33DI4": {
+      "file": "chunk-LKM33DI4.js"
+    },
+    "chunk-WDH6NI6N": {
+      "file": "chunk-WDH6NI6N.js"
+    },
+    "chunk-QHT6C4X3": {
+      "file": "chunk-QHT6C4X3.js"
+    },
+    "chunk-TYCJHKIY": {
+      "file": "chunk-TYCJHKIY.js"
+    },
+    "chunk-Q2DUW2OO": {
+      "file": "chunk-Q2DUW2OO.js"
+    },
+    "chunk-Y6G6JHOP": {
+      "file": "chunk-Y6G6JHOP.js"
+    },
+    "chunk-7RBSQVB5": {
+      "file": "chunk-7RBSQVB5.js"
+    },
+    "chunk-7SEKGA7M": {
+      "file": "chunk-7SEKGA7M.js"
+    },
+    "chunk-GWTV6MMM": {
+      "file": "chunk-GWTV6MMM.js"
+    },
+    "chunk-XT7Q2V4B": {
+      "file": "chunk-XT7Q2V4B.js"
+    },
+    "chunk-M7BPHUHN": {
+      "file": "chunk-M7BPHUHN.js"
+    },
+    "chunk-4EERCYYJ": {
+      "file": "chunk-4EERCYYJ.js"
+    },
+    "chunk-4FWX5KEA": {
+      "file": "chunk-4FWX5KEA.js"
+    },
+    "chunk-RP3IDQJD": {
+      "file": "chunk-RP3IDQJD.js"
+    },
+    "chunk-HKJLO6MU": {
+      "file": "chunk-HKJLO6MU.js"
+    },
+    "chunk-5N7RU25N": {
+      "file": "chunk-5N7RU25N.js"
+    },
+    "chunk-KCF654OU": {
+      "file": "chunk-KCF654OU.js"
+    },
+    "chunk-MD656YZX": {
+      "file": "chunk-MD656YZX.js"
+    },
+    "chunk-JQKYYQEP": {
+      "file": "chunk-JQKYYQEP.js"
+    },
+    "chunk-N77XPGZE": {
+      "file": "chunk-N77XPGZE.js"
+    },
+    "chunk-GS7XUPI3": {
+      "file": "chunk-GS7XUPI3.js"
+    },
+    "chunk-U3KX4ZK4": {
+      "file": "chunk-U3KX4ZK4.js"
+    },
+    "chunk-FXHEM6XN": {
+      "file": "chunk-FXHEM6XN.js"
+    },
+    "chunk-NCNYUNTH": {
+      "file": "chunk-NCNYUNTH.js"
+    },
+    "chunk-BZLMKWYM": {
+      "file": "chunk-BZLMKWYM.js"
+    },
+    "chunk-E5RYPNP6": {
+      "file": "chunk-E5RYPNP6.js"
+    },
+    "chunk-DAZ57CJZ": {
+      "file": "chunk-DAZ57CJZ.js"
+    },
+    "chunk-T7EAGB7Q": {
+      "file": "chunk-T7EAGB7Q.js"
+    },
+    "chunk-EBYKSYDI": {
+      "file": "chunk-EBYKSYDI.js"
+    },
+    "chunk-QK5V2VZG": {
+      "file": "chunk-QK5V2VZG.js"
+    },
+    "chunk-MEUL3AC6": {
+      "file": "chunk-MEUL3AC6.js"
+    },
+    "chunk-P5JXV5NI": {
+      "file": "chunk-P5JXV5NI.js"
+    },
+    "chunk-MC2JJCLE": {
+      "file": "chunk-MC2JJCLE.js"
+    },
+    "chunk-OL46QLBJ": {
+      "file": "chunk-OL46QLBJ.js"
+    }
+  }
+}

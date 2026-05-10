@@ -1,0 +1,90 @@
+@use "sass:map";
+// Danh sách các kích thước màn hình phổ biến
+$breakpoints: (
+  "xs": 480px,
+  // Điện thoại nhỏ
+  "sm": 768px,
+  // Tablet nhỏ hoặc điện thoại lớn
+  "md": 1024px,
+  // Tablet lớn / Laptop nhỏ
+  "lg": 1280px,
+  // Laptop lớn
+  "xl": 1440px,
+  // Màn hình lớn
+  "xxl": 1920px // 4K / Ultra-wide,,,
+);
+
+@function bp($key) {
+  @return map.get($breakpoints, $key);
+}
+
+// Mixin hỗ trợ cả Portrait(màn hình dọc) & Landscape Mode(màn hình ngang)
+
+@mixin responsive($size, $orientation: null) {
+  @if $orientation == "landscape" {
+    @media (max-width: bp($size)) and (orientation: landscape) {
+      @content;
+    }
+  } @else if $orientation == "portrait" {
+    @media (max-width: bp($size)) and (orientation: portrait) {
+      @content;
+    }
+  } @else {
+    @media (max-width: bp($size)) {
+      @content;
+    }
+  }
+}
+
+//Cách dùng
+// .box {
+//     font-size: 18px;
+
+//     @include responsive("md") {
+//       font-size: 16px; // Màn hình nhỏ hơn 1024px
+//     }
+
+//     @include responsive("md", "landscape") {
+//       font-size: 14px; // Màn hình nhỏ hơn 1024px và xoay ngang
+//     }
+
+//     @include responsive("sm") {
+//       font-size: 12px; // Màn hình nhỏ hơn 768px
+//     }
+//   }
+
+// Mixin Mobile-First hỗ trợ Landscape Mode
+@mixin min-responsive($size, $orientation: null) {
+  @if $orientation == "landscape" {
+    @media (min-width: bp($size)) and (orientation: landscape) {
+      @content;
+    }
+  } @else if $orientation == "portrait" {
+    @media (min-width: bp($size)) and (orientation: portrait) {
+      @content;
+    }
+  } @else {
+    @media (min-width: bp($size)) {
+      @content;
+    }
+  }
+}
+
+//Nếu muốn dùng Mobile-First (mặc định là mobile, chỉ tăng kích thước khi màn hình lớn hơn),
+
+//Cách dùng:
+// .box {
+//     font-size: 14px; // Mặc định cho mobile
+
+//     @include min-responsive("md") {
+//       font-size: 16px; // Từ 1024px trở lên
+//     }
+
+//     @include min-responsive("md", "landscape") {
+//       font-size: 15px; // Từ 1024px trở lên và xoay ngang
+//     }
+
+//     @include min-responsive("lg") {
+//       font-size: 18px; // Từ 1280px trở lên
+//     }
+//   }

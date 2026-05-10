@@ -1,0 +1,61 @@
+@use "../../../../assets/scss/responsive/responsive.scss" as *;
+
+.menu--top--item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  @include responsive("sm") {
+    display: none !important;
+  }
+}
+
+.menu-top-mobile-icon {
+  display: none;
+  @include responsive("sm") {
+    display: flex !important;
+    align-items: center;
+    font-size: 24px;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+}
+
+.account-infor{
+  display: flex;
+  justify-content: start;
+}
+
+.menu-label {
+  margin-left: 12px;
+}
+
+.menu-top-label {
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+  &:hover {
+    color: #009688;
+  }
+
+  &.active {
+    color: #009688;
+  }
+}
+
+.menu-label-drawer {
+  @include responsive("sm") {
+    margin-left: 20px;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+}
+
+.menu-top-mobile-icon {
+  @include responsive("sm") {
+    margin-right: -15px;
+  }
+}
+
+.menu-top-mobile-drawer .ant-drawer-body {
+  padding: 0;
+}

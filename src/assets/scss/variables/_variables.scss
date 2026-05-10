@@ -1,0 +1,44 @@
+/*
+Đây là file chứa các biến dùng chung cho toàn bộ dự án
+Sẽ sử dụng biến này để thay đổi màu sắc, kích thước, font chữ, v.v... linh hoạt hơn
+Lưu ý: Biến này sẽ không được sử dụng trong các component, mà chỉ dùng trong các file scss
+Lúc dùng thì import vào đầu file scss cảu component đó
+Ví dụ: @import "src/assets/scss/variables/variables.scss";
+
+Còn để sử dùng inline trong các component thì qua file constants/Token.ts và thêm vào đó
+Lúc thêm thì thêm biến mới thì thêm cả 2 bên : bên này dành cho sscs còn bên kia dành cho js
+Còn nếu không muốn thêm vào file constants/Token.ts thì khi dùng inline css trong các component 
+thay vì code cứng giá trị màu theo hexa thì hãy dùng var(--color) để lấy giá trị màu từ biến css đã định nghĩa ở dưới
+*/
+:root {
+  --primary-color: #1890ff;
+  --secondary-color: #f5f5f6;
+  --text-color: #777;
+  --text-warning: red;
+  --white: #fff;
+  --background-hover-color: rgba(0, 0, 0, 0.05);
+  --background-secondary: #f5f5f5;
+  --blue-header: rgb(237, 246, 252);
+  --bold-blue: rgb(21, 67, 152);
+  --black-color: #000;
+}
+// Color:
+$primary-color: var(--primary-color);
+$secondary-color: var(--secondary-color);
+$text-color: var(--text-color);
+$text-warning: var(--text-warning);
+$white: var(--white);
+$blue-header: var(--blue-header);
+$bold-blue: var(--bold-blue);
+$black: var(--black-color);
+
+// Font:
+$font-family: "Be Vietnam Pro-Regular", Helvetica;
+
+// Font size:
+$font-size-14: 14px;
+$font-size-12: 12px;
+
+// Background:
+$background-hover-color: rgba(0, 0, 0, 0.03);
+$background-secondary: #f5f5f5;

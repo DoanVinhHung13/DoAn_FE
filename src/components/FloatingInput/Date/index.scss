@@ -1,0 +1,97 @@
+/* Đặt position relative lên thẻ wrapper chính của Select */
+.date-custom {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Nếu bạn muốn float bên phải */
+.date-custom.float-right {
+  float: right;
+}
+
+/* pseudo-element hiện label */
+.date-custom::before {
+  content: var(--label);
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background: transparent;
+  color: transparent;
+  padding: 0 4px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  z-index: 1;
+  border-radius: 30%;
+}
+
+/* khi focus hoặc đã có giá trị */
+.date-custom.floating::before {
+  top: 0;
+  transform: translateY(-78%);
+  font-size: 12px;
+  color: rgba(29, 29, 29, 0.45);
+  background: white;
+}
+
+/* đẩy xuống để label không chồng lên */
+.date-custom .ant-select-selector {
+  padding-top: 12px;
+}
+
+//Ranger
+/* Đặt position relative lên thẻ wrapper chính của Select */
+
+/* Nếu bạn muốn float bên phải */
+.date-custom-ranger.float-right {
+  float: right;
+}
+.date-custom-ranger {
+  position: relative;
+  transition: all 0.2s ease;
+  .ant-picker-input {
+    &:nth-child(1)::before {
+      content: var(--label);
+    }
+    &:nth-child(3)::before {
+      content: var(--label2);
+    }
+    &:nth-child(1),
+    &:nth-child(3) {
+      /* pseudo-element hiện label */
+      &::before {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        background: transparent;
+        color: transparent;
+        padding: 0 4px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        z-index: 1;
+        border-radius: 30%;
+      }
+    }
+  }
+  /* khi focus hoặc đã có giá trị */
+
+  &.floating .ant-picker-input {
+    &:nth-child(1)::before,
+    &:nth-child(3)::before {
+      top: 0;
+      transform: translateY(-108%);
+      font-size: 12px;
+      color: rgba(29, 29, 29, 0.45);
+      background: white;
+    }
+  }
+
+  /* đẩy xuống để label không chồng lên */
+  &.ant-select-selector {
+    padding-top: 12px;
+  }
+}

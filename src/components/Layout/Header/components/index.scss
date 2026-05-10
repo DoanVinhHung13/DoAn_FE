@@ -1,0 +1,171 @@
+.btn-border-gray {
+  border: 1px solid #ccc !important;
+
+  min-width: 34px !important;
+  width: 34px;
+  min-height: 34px !important;
+  height: 34px;
+  margin: 0px !important;
+}
+
+.warming-btn-effect {
+  /* From Uiverse.io by ShadowShahriar */
+  button {
+    --border-radius: 15px;
+    --border-width: 2px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    appearance: none;
+    position: relative;
+    font-family: "Roboto", Arial, "Segoe UI", sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: #fff;
+    background: #fff;
+    border-radius: 100%;
+    cursor: pointer;
+    z-index: 2;
+
+    /* Hiệu ứng nhấp nháy glow trên chính button */
+    animation: pulse-shadow 1.5s infinite;
+  }
+
+  /* Keyframes cho gradient quay */
+  @keyframes rotate-hue {
+    to {
+      filter: hue-rotate(1turn);
+    }
+  }
+
+  /* Keyframes cho glow nhấp nháy */
+  @keyframes pulse-shadow {
+    0% {
+      box-shadow: 0 0 0 rgba(255, 59, 48, 0);
+    }
+    50% {
+      box-shadow: 0 0 10px rgba(2, 116, 255, 0.916);
+    }
+    100% {
+      box-shadow: 0 0 0 rgba(255, 59, 48, 0);
+    }
+  }
+
+  /* Đảm bảo box-sizing */
+  button,
+  button::after {
+    box-sizing: border-box;
+  }
+}
+.menu--top--item {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: 20px;
+  margin-top: 10px;
+  font-weight: 600;
+
+  .menu-top-label {
+    color: #000;
+    font-weight: 600;
+
+    font-size: 14px;
+    &.active {
+      color: rgb(217, 120, 31);
+    }
+    &:hover {
+      color: rgb(217, 120, 31);
+      cursor: pointer;
+    }
+  }
+}
+
+/* ===== CSS CHO NOTIFICATION ICON - THÊM VÀO CUỐI FILE ===== */
+
+/* CSS cho icon thông báo */
+.notification-icon-container {
+  position: relative;
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  cursor: pointer;
+  // padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// .notification-icon-container:hover {
+//   background-color: #f0f0f0 !important;
+//   transform: scale(1.1);
+// }
+
+/* Dark mode support */
+.dark .notification-icon-container:hover,
+[data-theme="dark"] .notification-icon-container:hover,
+body.dark .notification-icon-container:hover {
+  background-color: #1f1f1f !important;
+}
+
+/* Animation cho badge */
+.ant-badge .ant-badge-count {
+  animation: pulseNotification 2s infinite;
+}
+
+@keyframes pulseNotification {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Style cho notification popup */
+.ant-popover-title {
+  font-weight: 600;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ant-popover-inner-content {
+  padding: 0;
+}
+
+/* Scroll bar styling cho notification list */
+.notification-popup-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-popup-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.notification-popup-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.notification-popup-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Style cho notification items */
+.notification-item-unread {
+  background-color: #f0f8ff !important;
+  border: 1px solid #e6f7ff !important;
+}
+
+.notification-item-read {
+  background-color: transparent !important;
+}
+
+/* Dot indicator cho thông báo chưa đọc */
+.notification-unread-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #1890ff;
+  border-radius: 50%;
+  display: inline-block;
+}

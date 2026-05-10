@@ -1,0 +1,2 @@
+import{f as a,u as m,j as t}from"./index-DVhs729P.js";import{B as s,C as i}from"./ProfessionalMemberCard-CBbhrzhi.js";import"./logo3-D3WI5Au7.js";import"./index-ojWjwHk6.js";import"./ReloadOutlined-B00s2TmV.js";import"./user-BUmKZ6gd.js";import"./index-DlhsBwLD.js";const g=()=>{const{state:r}=a(),o=m(),e=r==null?void 0:r.memberData;return e?e.MemberType==="Doanh nghiệp"?t.jsx(s,{memberData:e}):t.jsx(i,{memberData:e}):o("/")};export{g as default};
+//# sourceMappingURL=MemberCardPage-CVJK9pyF.js.map

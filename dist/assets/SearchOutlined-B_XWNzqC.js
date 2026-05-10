@@ -1,0 +1,2 @@
+import{r as o,aV as s,dF as c}from"./index-DVhs729P.js";function e(){return e=Object.assign?Object.assign.bind():function(t){for(var n=1;n<arguments.length;n++){var r=arguments[n];for(var a in r)Object.prototype.hasOwnProperty.call(r,a)&&(t[a]=r[a])}return t},e.apply(this,arguments)}const i=(t,n)=>o.createElement(s,e({},t,{ref:n,icon:c})),p=o.forwardRef(i);export{p as R};
+//# sourceMappingURL=SearchOutlined-B_XWNzqC.js.map

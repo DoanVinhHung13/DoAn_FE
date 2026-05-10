@@ -1,0 +1,1 @@
+{"version":3,"file":"index-CDAlAFVa.js","sources":["../../src/pages/ADMIN/ComplaintHandling/index.jsx"],"sourcesContent":["const ComplaintHandling = () => {\r\n  return <div>ComplaintHandling</div>\r\n}\r\n\r\nexport default ComplaintHandling\r\n"],"names":["ComplaintHandling","jsx"],"mappings":"wCAAA,MAAMA,EAAoB,IACjBC,EAAA,IAAC,OAAI,SAAiB,mBAAA,CAAA"}

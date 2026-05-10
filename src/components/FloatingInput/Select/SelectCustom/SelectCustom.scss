@@ -1,0 +1,42 @@
+/* Đặt position relative lên thẻ wrapper chính của Select */
+.select-custom {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Nếu bạn muốn float bên phải */
+.select-custom.float-right {
+  float: right;
+}
+
+/* pseudo-element hiện label */
+.select-custom::before {
+  content: var(--label);
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background: transparent;
+  color: transparent;
+  padding: 0 4px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  z-index: 1;
+  border-radius: 30%;
+}
+
+/* khi focus hoặc đã có giá trị */
+.select-custom.floating::before {
+  top: 0;
+  transform: translateY(-78%);
+  font-size: 12px;
+  color: rgba(29, 29, 29, 0.45);
+  background: white;
+}
+
+/* đẩy selector xuống để label không chồng lên */
+.select-custom .ant-select-selector {
+  padding-top: 12px;
+}

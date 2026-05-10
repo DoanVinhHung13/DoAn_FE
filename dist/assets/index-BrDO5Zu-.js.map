@@ -1,0 +1,1 @@
+{"version":3,"file":"index-BrDO5Zu-.js","sources":["../../src/pages/ADMIN/NotificationManagement/index.jsx"],"sourcesContent":["const NotificationManagement = () => {\r\n  return <div>NotificationManagement</div>\r\n}\r\n\r\nexport default NotificationManagement\r\n"],"names":["NotificationManagement","jsx"],"mappings":"wCAAA,MAAMA,EAAyB,IACtBC,EAAA,IAAC,OAAI,SAAsB,wBAAA,CAAA"}

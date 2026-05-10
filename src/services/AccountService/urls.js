@@ -1,0 +1,24 @@
+// Account
+export const apiGetAccount = `Account/GetAccount`
+export const apiGetListMemberByAccount = `Account/GetListMemberByAccount`
+export const apiGetChildAccountByParentID = `Account/GetChildAccountByParentID`
+export const apiUpdateByAccountID = `Account/UpdateByAccountID`
+export const apiInsertAccount = `Account/InsertAccount`
+export const apiDeleteAccount = `Account/DeleteAccount`
+export const apiGetGroupAccount = `Account/GetGroupAccount`
+export const apiInsertGroupAccount = `Account/InsertGroupAccount`
+export const apiUpdateGroupAccount = `Account/UpdateGroupAccount`
+export const apiDeleteGroupAccount = `Account/DeleteGroupAccount`
+export const apiGetAllMember = `Account/GetAllMember`
+export const apiInsertMember = `Account/InsertMember`
+export const apiUpdateMember = `Account/UpdateMember`
+export const apiDeleteMember = `Account/DeleteMember`
+export const apiGetListMemberForGroup = `Account/GetListMemberForGroup`
+export const apiInsertMemberToGroup = `Account/InsertMemberToGroup`
+export const apiDeleteMemberGroup = `Account/DeleteMemberGroup`
+export const apiUpdateSortOrder = `Account/UpdateSortOrder`
+export const apiExportUser = `Account/ExportUser`
+export const apiExportAccountMember = `Account/ExportAccountMember`
+export const apiGetAccountFather = `Account/GetAccountFather`
+export const apiResetPassword = `Account/ResetPassword`
+export const apiGetAllNoneAccountUser = `Account/GetAllNoneAccountUser`

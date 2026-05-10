@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Receiver</title>
+  </head>
+  <body>
+    <script>
+      window.addEventListener("message", event => {
+        if (event.origin === "https://tintuc.h2qsolution.com") {
+          const { key, value } = event.data
+          localStorage.setItem(key, value)
+        }
+      })
+
+      // Gửi phản hồi ngược nếu cần
+      window.parent.postMessage(
+        { status: "ok" },
+        "https://tintuc.h2qsolution.com",
+      )
+    </script>
+  </body>
+</html>

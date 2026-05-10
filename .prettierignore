@@ -1,0 +1,17 @@
+#  Tệp này đảm bảo rằng các tệp không phải là mã ứng dụng (tức là các tệp không phải là .js, .ts, .cssv.v.) 
+#  sẽ không được định dạng. Nếu không, Prettier sẽ mất quá nhiều thời gian để xử lý các tệp có định dạng mà bạn không thực sự quan tâm.
+ node_modules
+ .next
+ .husky
+ coverage
+ .prettierignore
+ .stylelintignore
+ .eslintignore
+ stories
+ storybook-static
+ *.log
+ playwright-report
+ .nyc_output
+ test-results
+ junit.xml
+ docs

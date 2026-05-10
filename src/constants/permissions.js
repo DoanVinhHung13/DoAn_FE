@@ -1,0 +1,18 @@
+export const PERMISSIONS = {
+  DASHBOARD_VIEW: "dashboard:view",
+  USER_MANAGE: "user:manage",
+  ROLE_MANAGE: "role:manage",
+  CONTENT_MANAGE: "content:manage",
+}
+
+export const ROLE_PERMISSIONS = {
+  admin: [
+    PERMISSIONS.DASHBOARD_VIEW,
+    PERMISSIONS.USER_MANAGE,
+    PERMISSIONS.ROLE_MANAGE,
+    PERMISSIONS.CONTENT_MANAGE,
+  ],
+  manager: [PERMISSIONS.DASHBOARD_VIEW, PERMISSIONS.CONTENT_MANAGE],
+  staff: [PERMISSIONS.DASHBOARD_VIEW],
+  customer: [],
+}
