@@ -54,22 +54,25 @@ const AuthModal = () => {
           localStorage.setItem('mock_role', values.username); 
           setIsLoginContext(true);
 
-          notice({ msg: "Login successful!", isSuccess: true });
           setAuthModal({ ...authModal, open: false });
           
           // Redirect logic
           const returnUrl = location.state?.returnUrl || (values.username === 'admin' ? ROUTER.ADMIN_DASHBOARD : ROUTER.USER_DASHBOARD);
           navigate(returnUrl, { replace: true });
         } else {
-          notice({ msg: "Invalid credentials. Try admin or user.", isSuccess: false });
+          form.setFields([
+            {
+              name: "username",
+              errors: ["Invalid username"],
+            },
+          ]);
         }
       } else {
         // Register logic (Mock)
-        notice({ msg: "Registration successful! You can now login.", isSuccess: true });
         setAuthModal({ open: true, type: 'login' });
       }
     } catch (error) {
-      notice({ msg: "An error occurred", isSuccess: false });
+      notice({ msg: error?.messages?.[0] || error?.message, isSuccess: false });
     } finally {
       setLoading(false);
     }
@@ -145,7 +148,7 @@ const AuthModal = () => {
 
         {authModal.type === 'login' && (
           <div className="auth-modal__footer-link">
-            <Button type="link" onClick={() => notice({ msg: "Feature coming soon!", isSuccess: false })}>
+            <Button type="link">
               Forgot password?
             </Button>
           </div>

@@ -1,11 +1,46 @@
 .notification-custom {
-  box-shadow: 0px 2px 16px rgba(0, 0, 0, 0.24);
-  border-radius: 8px;
+  border-radius: 14px;
   justify-content: flex-start;
   display: flex;
   width: max-content;
-  max-width: 450px;
+  max-width: 460px;
   min-width: 320px;
+  padding: 14px 16px !important;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.18);
+  border: 1px solid transparent;
+
+  .ant-notification-notice-message {
+    margin-bottom: 2px !important;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .ant-notification-notice-description {
+    font-size: 13px;
+    color: #475569;
+  }
+
+  .ant-notification-notice-icon {
+    margin-inline-end: 10px;
+    margin-top: 2px;
+  }
+}
+
+.notification-custom.success {
+  border-color: #86efac;
+}
+
+.notification-custom.error {
+  border-color: #fda4af;
+}
+
+.notification-custom.warning {
+  border-color: #fcd34d;
+}
+
+.notification-custom.info {
+  border-color: #93c5fd;
 }
 
 @include responsive("sm") {

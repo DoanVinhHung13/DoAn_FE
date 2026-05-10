@@ -17,7 +17,7 @@ const JournalManagement = () => {
         setData(res.Object.data);
       }
     } catch (error) {
-      notice({ msg: "Error fetching journals", isSuccess: false });
+      notice({ msg: error?.messages?.[0] || error?.message, isSuccess: false });
     } finally {
       setLoading(false);
     }
@@ -30,11 +30,11 @@ const JournalManagement = () => {
   const handleDelete = async (id) => {
     setLoading(true);
     try {
-      await JournalService.deleteJournal(id);
-      notice({ msg: "Journal deleted successfully", isSuccess: true });
+      const res = await JournalService.deleteJournal(id);
+      notice({ msg: res?.Object || res?.message, isSuccess: res?.Status === 0 });
       fetchJournals();
     } catch (error) {
-      notice({ msg: "Failed to delete", isSuccess: false });
+      notice({ msg: error?.messages?.[0] || error?.message, isSuccess: false });
     } finally {
       setLoading(false);
     }

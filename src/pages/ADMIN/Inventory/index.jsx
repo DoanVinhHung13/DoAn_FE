@@ -17,7 +17,7 @@ const InventoryManagement = () => {
         setData(res.Object);
       }
     } catch (error) {
-      notice({ msg: "Error fetching inventory", isSuccess: false });
+      notice({ msg: error?.messages?.[0] || error?.message, isSuccess: false });
     } finally {
       setLoading(false);
     }

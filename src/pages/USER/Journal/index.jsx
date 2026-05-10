@@ -20,7 +20,7 @@ const UserJournal = () => {
         setData(res.Object.data);
       }
     } catch (error) {
-      notice({ msg: "Error fetching your journals", isSuccess: false });
+      notice({ msg: error?.messages?.[0] || error?.message, isSuccess: false });
     } finally {
       setLoading(false);
     }

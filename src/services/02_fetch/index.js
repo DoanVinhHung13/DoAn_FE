@@ -6,6 +6,27 @@ const isPlainObject = value => value?.constructor === Object
 
 const BASE_URL = import.meta.env.VITE_REACT_APP_API_ROOT
 
+const getApiMessage = payload => {
+  if (!payload) return ""
+  if (typeof payload === "string") return payload
+  if (Array.isArray(payload?.messages)) return payload.messages.filter(Boolean).join(", ")
+  return (
+    payload?.Object ||
+    payload?.object ||
+    payload?.Message ||
+    payload?.message ||
+    payload?.error ||
+    ""
+  )
+}
+
+const notifyFromApi = (payload, isSuccess = false, isNotice = true) => {
+  if (!isNotice) return
+  const msg = getApiMessage(payload)
+  if (!msg) return
+  notice({ msg, isSuccess })
+}
+
 export async function fetcher(initFetcher) {
   try {
     const { isNotice = true } = initFetcher
@@ -39,52 +60,21 @@ export async function fetcher(initFetcher) {
       return responseConvert
     }
   } catch (error) {
-    notice({
-      msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-      isSuccess: false,
-    })
+    notifyFromApi(error, false, true)
     console.log("error", error)
   }
 }
 
-export function handleError(status, isNotice = true) {
+export function handleError(status, isNotice = true, payload = null) {
   switch (status) {
     case 401:
-      notice({
-        msg: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-        isSuccess: false,
-      })
+      notifyFromApi(payload, false, isNotice)
       deleteStorage(STORAGE.TOKEN)
       authSession.clearSession()
-      window.location.replace(ROUTER.DANG_NHAP)
-      break
-    case 500:
-      !!isNotice &&
-        notice({
-          msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-          isSuccess: false,
-        })
-      break
-    case 404: //không tìm thấy
-      !!isNotice &&
-        notice({
-          msg: `Không tìm thấy API [404]`,
-          isSuccess: false,
-        })
-      break
-    case 405:
-      !!isNotice &&
-        notice({
-          msg: `Method Not Allowed [405]`,
-          isSuccess: false,
-        })
+      window.location.replace(`${ROUTER.HOME}?auth=login`)
       break
     default:
-      !!isNotice &&
-        notice({
-          msg: `Lỗi không xác định!`,
-          isSuccess: false,
-        })
+      notifyFromApi(payload || { message: `HTTP ${status}` }, false, isNotice)
       break
   }
 }
@@ -93,15 +83,13 @@ export function handleOk(response, isNotice = true) {
   if (response.StatusCode !== 200) {
     switch (response.StatusCode) {
       case 400:
-        !!isNotice &&
-          notice({
-            msg: response?.Object,
-            isSuccess: false,
-          })
+        notifyFromApi(response, false, isNotice)
         break
       default:
-        handleError(response.StatusCode)
+        handleError(response.StatusCode, isNotice, response)
         break
     }
+  } else {
+    notifyFromApi(response, true, isNotice)
   }
 }

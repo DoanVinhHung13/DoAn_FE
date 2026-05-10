@@ -8,6 +8,35 @@ import authSession from "src/services/core/authSession"
 
 const AUTH_LOGIN_REDIRECT = `${ROUTER.HOME}?auth=login`
 
+const getApiMessage = payload => {
+  if (!payload) return ""
+  if (typeof payload === "string") return payload
+  if (Array.isArray(payload?.messages)) return payload.messages.filter(Boolean).join(", ")
+  return (
+    payload?.Object ||
+    payload?.object ||
+    payload?.Message ||
+    payload?.message ||
+    payload?.error ||
+    ""
+  )
+}
+
+const isBusinessSuccess = payload =>
+  payload?.Status === 0 ||
+  payload?.Status === 1 ||
+  payload?.StatusCode === 200 ||
+  payload?.success === true
+
+const maybeNotifyFromPayload = (payload, isSuccessFallback = false) => {
+  const msg = getApiMessage(payload)
+  if (!msg) return
+  notice({
+    msg,
+    isSuccess: typeof isSuccessFallback === "boolean" ? isSuccessFallback : false,
+  })
+}
+
 // const baseURL = import.meta.env.VITE_VITE_BACKEND_URL!
 /**
  *
@@ -30,44 +59,18 @@ function parseError(messages) {
 
 export function parseBody(response) {
   const resData = response.data
-  if (+response?.status >= 500) {
-    notice({
-      msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-      isSuccess: false,
-    })
-  }
-  if (+response?.status < 500 && +response?.status !== 200) {
-    return notice({
-      msg: `Hệ thống xảy ra lỗi. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ (SC${response?.status})`,
-      isSuccess: false,
-    })
-  }
-
   if (response?.status === 200) {
     if (resData?.StatusCode === 401) {
-      notice({
-        msg: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-        isSuccess: false,
-      })
+      maybeNotifyFromPayload(resData, false)
       authSession.clearSession()
       window.location.replace(AUTH_LOGIN_REDIRECT)
       return Promise.reject({ messages: ["Unauthorized"] })
     }
-    if (resData?.Status === -2) return resData // ma sp, ten sp ton tai
-    if (resData?.Status === 0) return resData // API tra ve success
-
-    if (resData?.Status !== -1 && resData?.Status !== 69 && resData?.Object) {
-      notice({
-        msg: getMsgClient(resData?.Object?.replace("[MessageForUser]", "")),
-        isSuccess: false,
-      })
+    const normalized = {
+      ...resData,
+      object: getMsgClient(getApiMessage(resData)?.replace?.("[MessageForUser]", "") || ""),
     }
-    if (resData?.Status !== 1 && resData?.Object) {
-      return {
-        ...resData,
-        object: getMsgClient(resData?.Object),
-      }
-    }
+    maybeNotifyFromPayload(normalized, isBusinessSuccess(normalized))
     return resData
   }
   return parseError(resData?.messages)
@@ -146,20 +149,6 @@ instance.interceptors.request.use(
   },
   error => Promise.reject(error),
 )
-const noticeError500 = message => {
-  if (!message)
-    notice({
-      msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-      isSuccess: false,
-    })
-  else {
-    notice({
-      msg: message,
-      isSuccess: false,
-    })
-  }
-}
-
 // response parse
 instance.interceptors.response.use(
   response => {
@@ -220,10 +209,7 @@ instance.interceptors.response.use(
         })
         .catch(() => {
           authSession.clearSession()
-          notice({
-            msg: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
-            isSuccess: false,
-          })
+          maybeNotifyFromPayload(error?.response?.data, false)
           window.location.replace(AUTH_LOGIN_REDIRECT)
           return Promise.reject(error)
         })
@@ -232,48 +218,28 @@ instance.interceptors.response.use(
         })
     }
 
-    // can not connect API
     if (error.code === "ECONNABORTED") {
-      notice({
-        msg: "Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ ",
-        isSuccess: false,
-      })
+      maybeNotifyFromPayload(error?.response?.data, false)
     } else if (+error?.response?.status >= 500) {
-      //Nếu response là loại blob(thường dùng lúc xuất excel)
-      //Thì phải convert về json rồi check nếu có message (ở đây là thuộc tính Object) thì thông báo mess đấy lên
-      //Nếu không có message thì thông báo hệ thống gián đoạn
       const dataReceived = error?.response?.data
       if (dataReceived instanceof Blob) {
         const reader = new FileReader()
         reader.readAsText(dataReceived)
         reader.onload = function () {
           const dataRespone = JSON.parse(reader.result)
-          noticeError500(dataRespone?.Object)
+          maybeNotifyFromPayload(dataRespone, false)
         }
-      } else noticeError500(dataReceived?.Object)
+      } else maybeNotifyFromPayload(dataReceived, false)
     } else if (+error?.response?.status < 500 && +error?.response?.status !== 200) {
-      notice({
-        msg: `Hệ thống xảy ra lỗi. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ (SC${error?.response?.status})`,
-        isSuccess: false,
-      })
+      maybeNotifyFromPayload(error?.response?.data, false)
     } else if (error.code === "ERR_NETWORK") {
-      notice({
-        msg: `Hệ thống đang bị gián đoạn, vui lòng kiểm tra lại đường truyền!`,
-        isSuccess: false,
-      })
+      maybeNotifyFromPayload(error?.response?.data, false)
     } else if (typeof error.response === "undefined") {
-      notice({ msg: "Không xác định", isSuccess: false })
+      maybeNotifyFromPayload(error, false)
     } else if (error.response) {
-      notice({
-        msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-        isSuccess: false,
-      })
+      maybeNotifyFromPayload(error.response?.data, false)
       return parseError(error.response.data)
-    } else
-      notice({
-        msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-        isSuccess: false,
-      })
+    } else maybeNotifyFromPayload(error, false)
     return Promise.reject(error)
   },
 )

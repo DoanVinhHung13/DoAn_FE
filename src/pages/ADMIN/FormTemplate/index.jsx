@@ -21,7 +21,7 @@ const FormTemplate = () => {
         setData(res.Object);
       }
     } catch (error) {
-      notice({ msg: "Error fetching templates", isSuccess: false });
+      notice({ msg: error?.messages?.[0] || error?.message, isSuccess: false });
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ const FormTemplate = () => {
         <FormWrapper 
           onFinish={(values) => {
             console.log(values);
-            notice({ msg: "Template created (mock)", isSuccess: true });
+            notice({ msg: values?.name, isSuccess: true });
             setIsModalOpen(false);
           }}
           submitText="Save Template"

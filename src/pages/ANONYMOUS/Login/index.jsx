@@ -26,17 +26,13 @@ const Login = () => {
         authSession.setSessionTokens({ accessToken: fakeToken, refreshToken: fakeToken });
         // Set mock role depending on username for fake backend
         localStorage.setItem('mock_role', values.username); 
-
-        notice({ msg: "Login successful!", isSuccess: true });
         
         // redirect to return URL or default role dashboard
         const returnUrl = location.state?.returnUrl || (values.username === 'admin' ? ROUTER.ADMIN_DASHBOARD : ROUTER.USER_DASHBOARD);
         navigate(returnUrl, { replace: true });
-      } else {
-        notice({ msg: "Invalid credentials. Try admin or user.", isSuccess: false });
       }
     } catch (error) {
-      notice({ msg: "An error occurred during login", isSuccess: false });
+      notice({ msg: error?.messages?.[0] || error?.message, isSuccess: false });
     } finally {
       setLoading(false);
     }
