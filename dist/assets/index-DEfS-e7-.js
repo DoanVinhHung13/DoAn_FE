@@ -1,2 +1,0 @@
-import{j as t,R as s,N as n,b as e,B as a}from"./index-DVhs729P.js";function o(){return t.jsx(s,{status:"404",title:"404 NotFound",subTitle:"Xin lỗi, Trang web bạn đang tìm kiếm không tồn tại.",extra:t.jsx(n,{to:e.DEFAULT,children:t.jsx("div",{style:{display:"flex",justifyContent:"center"},children:t.jsx(a,{className:"btn-hover-shadow",children:"Quay lại trang chủ"})})})})}export{o as default};
-//# sourceMappingURL=index-DEfS-e7-.js.map

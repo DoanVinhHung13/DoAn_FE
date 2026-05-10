@@ -1,10 +1,8 @@
 import { Layout, Menu } from "antd";
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate, Outlet } from "react-router-dom";
-import { AdminMenuStyled } from "./styled";
-import { MenuItemAdmin } from "src/router/MenuItem";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import GlobalHeader from "src/components/Layout/Header";
-import GlobalFooter from "src/components/Layout/Footer";
+import { MenuItemAdmin } from "src/router/MenuItem";
 
 const { Content, Sider } = Layout;
 
@@ -25,13 +23,13 @@ const LayoutAdmin = () => {
   }, [location?.pathname]);
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Remove role="admin" from GlobalHeader if we don't want the horizontal menu to duplicate the sidebar. 
           But the user specifically requested: "ở header sẽ có mục menu nếu Role nào thì sẽ được hiển thị menu theo Role của người đó".
           I will pass role="admin" as requested. */}
       <GlobalHeader role="admin" />
       
-      <Layout>
+      <Layout style={{ flex: 1, display: "flex" }}>
         <Sider
           collapsible
           collapsed={collapseMenu}
@@ -40,9 +38,7 @@ const LayoutAdmin = () => {
           width={250}
           style={{ borderRight: "1px solid #e5e7eb" }}
         >
-          <div style={{ padding: "16px", textAlign: "center", fontWeight: "bold", fontSize: collapseMenu ? "12px" : "18px" }}>
-            {collapseMenu ? "Admin" : "Admin Panel"}
-          </div>
+      
           <Menu
             onClick={onChange}
             selectedKeys={[selectedKey]}
@@ -55,14 +51,16 @@ const LayoutAdmin = () => {
         <Content
           style={{
             padding: "24px",
-            backgroundColor: "#f3f4f6"
+            backgroundColor: "#f3f4f6",
+            flex: 1,
+            minHeight: "calc(100vh - 64px - 220px)"
           }}
         >
           <Outlet />
         </Content>
       </Layout>
       
-      <GlobalFooter />
+      {/* <GlobalFooter /> */}
     </Layout>
   );
 };

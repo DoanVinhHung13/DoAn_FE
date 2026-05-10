@@ -1,0 +1,1 @@
+{"version":3,"file":"index-D-H-RlDe.js","sources":["../../src/pages/USER/ChangePassword/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst ChangePassword = () => {\n  return <div>ChangePassword Page</div>;\n};\n\nexport default ChangePassword;\n"],"names":["ChangePassword","jsx"],"mappings":"wCAEA,MAAMA,EAAiB,IACdC,EAAA,IAAC,OAAI,SAAmB,qBAAA,CAAA"}

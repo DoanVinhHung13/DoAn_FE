@@ -1,0 +1,1 @@
+{"version":3,"file":"index-tc9agzcm.js","sources":["../../src/pages/USER/Profile/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst Profile = () => {\n  return <div>Profile Page</div>;\n};\n\nexport default Profile;\n"],"names":["Profile","jsx"],"mappings":"wCAEA,MAAMA,EAAU,IACPC,EAAA,IAAC,OAAI,SAAY,cAAA,CAAA"}

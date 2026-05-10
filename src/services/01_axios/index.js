@@ -6,6 +6,8 @@ import { trimData } from "src/lib/utils"
 import ROUTER from "src/router/ROUTER"
 import authSession from "src/services/core/authSession"
 
+const AUTH_LOGIN_REDIRECT = `${ROUTER.HOME}?auth=login`
+
 // const baseURL = import.meta.env.VITE_VITE_BACKEND_URL!
 /**
  *
@@ -48,7 +50,7 @@ export function parseBody(response) {
         isSuccess: false,
       })
       authSession.clearSession()
-      window.location.replace(ROUTER.LOGIN)
+      window.location.replace(AUTH_LOGIN_REDIRECT)
       return Promise.reject({ messages: ["Unauthorized"] })
     }
     if (resData?.Status === -2) return resData // ma sp, ten sp ton tai
@@ -222,7 +224,7 @@ instance.interceptors.response.use(
             msg: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
             isSuccess: false,
           })
-          window.location.replace(ROUTER.LOGIN)
+          window.location.replace(AUTH_LOGIN_REDIRECT)
           return Promise.reject(error)
         })
         .finally(() => {

@@ -1,0 +1,1 @@
+{"version":3,"file":"index-DvwvL0qv.js","sources":["../../src/pages/USER/Settings/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst Settings = () => {\n  return <div>Settings Page</div>;\n};\n\nexport default Settings;\n"],"names":["Settings","jsx"],"mappings":"wCAEA,MAAMA,EAAW,IACRC,EAAA,IAAC,OAAI,SAAa,eAAA,CAAA"}

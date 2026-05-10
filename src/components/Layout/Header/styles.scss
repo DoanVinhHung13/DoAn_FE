@@ -1,311 +1,309 @@
-.header-main {
-  position: relative;
-  padding: 10px 0;
+/* ===================================================
+   GlobalHeader – styles.scss
+   =================================================== */
 
-  .hover-menu:hover {
-    span {
-      color: #ed1117 !important;
+/* ── Base Header ── */
+.global-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: #ffffff;
+  padding: 0 28px;
+  height: 64px;
+  border-bottom: 1px solid #e9ecef;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
 
-      svg path {
-        fill: #ed1117;
-      }
+/* ── Logo ── */
+.gh-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  flex-shrink: 0;
+
+  &:hover .gh-logo-brand {
+    color: #15803d;
+  }
+}
+
+.gh-logo-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.gh-logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.gh-logo-brand {
+  font-size: 18px;
+  font-weight: 800;
+  color: #16a34a;
+  letter-spacing: -0.3px;
+  transition: color 0.2s;
+}
+
+.gh-logo-tagline {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+/* ── Public Nav Links ── */
+.gh-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.gh-nav-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: background 0.18s, color 0.18s;
+  font-family: inherit;
+
+  &:hover {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+}
+
+/* ── Role Badge (authenticated) ── */
+.gh-role-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: color-mix(in srgb, var(--badge-color) 12%, transparent);
+  color: var(--badge-color);
+  border: 1px solid color-mix(in srgb, var(--badge-color) 25%, transparent);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  flex-shrink: 0;
+}
+
+/* ── Spacer ── */
+.gh-role-badge,
+.gh-nav {
+  // pushes actions to the right
+}
+
+.global-header .gh-actions {
+  margin-left: auto;
+}
+
+/* ── Right Actions ── */
+.gh-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.gh-auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gh-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #6b7280;
+  transition: background 0.18s, color 0.18s;
+  font-family: inherit;
+
+  &:hover {
+    background: #f3f4f6;
+    color: #16a34a;
+  }
+}
+
+/* ── User Trigger (avatar + name) ── */
+.gh-user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 4px 10px 4px 4px;
+  border-radius: 40px;
+  border: 1.5px solid transparent;
+  transition: background 0.18s, border-color 0.18s;
+
+  &:hover {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+}
+
+.gh-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.gh-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.gh-user-role {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.gh-chevron {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-left: 2px;
+}
+
+/* ── Login Button ── */
+.gh-login-btn {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+  font-family: inherit;
+
+  &:hover {
+    background: #15803d;
+  }
+}
+
+.gh-register-btn {
+  background: #fff;
+  color: #15803d;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  font-family: inherit;
+
+  &:hover {
+    background: #f0fdf4;
+    border-color: #4ade80;
+    color: #166534;
+  }
+}
+
+/* ── Avatar Dropdown Overlay ── */
+.gh-avatar-dropdown {
+  .ant-dropdown-menu {
+    padding: 6px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    min-width: 220px;
+  }
+
+  .ant-dropdown-menu-item {
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 12px;
+    gap: 8px;
+    transition: background 0.15s;
+
+    &:hover {
+      background: #f0fdf4 !important;
+      color: #16a34a;
     }
   }
 
-  .account-infor-sumary-border {
-    cursor: pointer;
+  .ant-dropdown-menu-item-danger:hover {
+    background: #fff1f0 !important;
+    color: #dc2626 !important;
   }
 
-  .account-infor-sumary {
-    display: flex;
-    justify-content: flex-start;
-    align-items: start;
-    flex-direction: column;
-    font-size: 0.9rem;
-    span {
-      svg path {
-        fill: #000;
-      }
-
-      .fullname {
-        font-size: 12px !important;
-        color: #a3a3a3;
-        font-weight: 600;
-        max-width: 160px;
-
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 1;
-        /* number of lines to show */
-        line-clamp: 1;
-        -webkit-box-orient: vertical;
-      }
-
-      .account {
-        font-size: 12px !important;
-        color: #a3a3a3;
-        font-style: italic;
-      }
-    }
-  }
-
-  .spacement_pp {
-    height: 16px;
-    position: sticky;
-    top: 70px;
-    background: #fff;
-    z-index: 10;
-  }
-
-  .admin-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    filter: drop-shadow(0px 1px 10px rgba(0, 0, 0, 0.1));
-  }
-
-  .breadcrumb-header {
-    box-shadow: inset 0 5px 10px #ebebeb;
-    padding: 15px 0;
-    background: #f7f7f7;
-  }
-
-  @keyframes Background-zoom {
-    0%,
-    100% {
-      transform: rotate(0) scale(0.7) skew(1deg);
-      opacity: 0.2;
-    }
-
-    50% {
-      transform: rotate(0) scale(1) skew(1deg);
-      opacity: 0.2;
-    }
-  }
-
-  @keyframes App-logo-spin {
-    0%,
-    100%,
-    50% {
-      transform: rotate(0) scale(1) skew(1deg);
-    }
-
-    10%,
-    30% {
-      transform: rotate(-25deg) scale(1) skew(1deg);
-    }
-
-    20%,
-    40% {
-      transform: rotate(25deg) scale(1) skew(1deg);
-    }
-  }
-
-  .contact-infor {
-    .online-support {
-      font-weight: 600;
-      font-size: 12px;
-      line-height: 15px;
-      color: #a3a3a3;
-    }
-
-    .hotline {
-      color: #ed1117;
-      font-size: 14px;
-    }
-  }
-
-  .ant-layout-header {
-    padding: 0px;
-    height: auto;
-    line-height: normal;
-  }
-
-  .name-branch {
+  .ant-dropdown-menu-item-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #9ca3af;
     text-transform: uppercase;
-    color: #01b39e;
-    cursor: pointer;
-
-    .name-branch-top {
-      font-size: 12px;
-    }
-
-    .name-branch-bottom {
-      font-size: 16px;
-    }
+    letter-spacing: 0.5px;
+    padding: 6px 12px 2px;
   }
 
-  .menu-arrow {
-    padding-top: 20px;
-
-    .ant-menu-submenu-selected::after {
-      content: "";
-      width: 0;
-      height: 0;
-      border-left: 6px solid transparent;
-      border-right: 6px solid transparent;
-      border-bottom: 6px solid #ed1117 !important;
-      bottom: 0px;
-      right: 0;
-      position: absolute;
-      left: 0;
-      margin: auto;
-    }
-
-    .ant-menu-item,
-    .ant-menu-submenu {
-      padding: 0px 12px !important;
-      top: 11px;
-    }
-
-    .ant-menu-submenu-popup .ant-menu-vertical .ant-menu-submenu {
-      border-bottom: 1px dashed #e1e1e1;
-
-      &:last-child {
-        border-bottom: unset;
-      }
-    }
-
-    .ant-menu-submenu:hover::after {
-      border-bottom: unset !important;
-    }
-
-    .ant-menu-horizontal {
-      border-bottom: 0px;
-    }
-
-    .ant-menu-title-content {
-      color: #154398;
-      font-weight: 600;
-      padding-top: 5px;
-    }
-
-    .ant-menu-item:hover::after {
-      border-bottom: unset !important;
-    }
-
-    .ant-menu-submenu:hover {
-      color: transparent !important;
-    }
-
-    .ant-menu-submenu::after {
-      border: unset !important;
-    }
-
-    .ant-menu-item-selected span svg path {
-      fill: #ed1117 !important;
-    }
-
-    .ant-menu-item-selected .ant-menu-title-content {
-      color: #ed1117 !important;
-    }
-
-    .ant-menu-submenu-selected .ant-menu-submenu-title span {
-      color: #ed1117 !important;
-    }
-
-    .ant-menu-item:hover .ant-menu-title-content {
-      color: #ed1117 !important;
-    }
-
-    .ant-menu-overflow-item:hover
-      .ant-menu-submenu-title
-      .ant-menu-title-content {
-      color: #ed1117 !important;
-    }
-
-    .ant-menu-item.ant-menu-item-selected::after {
-      content: "";
-      width: 0;
-      height: 0;
-      border-left: 6px solid transparent;
-      border-right: 6px solid transparent;
-      border-bottom: 6px solid #ed1117 !important;
-      bottom: 0px;
-      right: 0;
-      position: absolute;
-      left: 0;
-      margin: auto;
-    }
-
-    .ant-menu-item-active::after {
-      border-bottom: unset !important;
-    }
-
-    .ant-menu-horizontal > .ant-menu-item::after {
-      transition: unset !important;
-    }
-
-    &.menu-no-arrow {
-      .ant-menu-item-selected::after {
-        display: none;
-      }
-    }
+  .ant-dropdown-menu-item-divider {
+    margin: 4px 6px;
   }
 }
 
-@include responsive("sm") {
-  .menu--top--item {
-    display: flex;
-    flex-wrap: wrap;
+/* ── Dropdown group label ── */
+.gh-dropdown-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #9ca3af;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .global-header {
+    padding: 0 16px;
     gap: 12px;
-
-    .menu-top-label {
-      display: flex;
-      align-items: center;
-      padding: 6px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 14px;
-
-      .menu-icon {
-        margin-right: 6px;
-        display: flex;
-        align-items: center;
-        font-size: 16px;
-      }
-
-      &.active {
-        background-color: #01b39e;
-        color: #fff;
-      }
-
-      &:hover {
-        background-color: rgba(1, 179, 158, 0.1);
-      }
-    }
   }
 
-  /* Responsive cho mobile 430px */
-  @media (max-width: 430px) {
-    .menu--top--item {
-      flex-direction: column;
-      gap: 4px;
-
-      .menu-top-label {
-        justify-content: flex-start;
-        font-size: 12px;
-        padding: 4px 8px;
-        white-space: nowrap;
-
-        .menu-icon {
-          font-size: 14px;
-          margin-right: 4px;
-        }
-      }
-    }
+  .gh-logo-tagline {
+    display: none;
   }
-}
 
-.custom-menu {
-  .ant-menu-item:first-of-type {
-    transform: scale(1.2);
-    padding-bottom: 7px;
+  .gh-user-info {
+    display: none;
   }
-  svg {
-    width: 20px;
-    height: 20px;
+
+  .gh-chevron {
+    display: none;
+  }
+
+  .gh-nav {
+    display: none;
+  }
+
+  .gh-auth-actions {
+    gap: 8px;
+  }
+
+  .gh-register-btn,
+  .gh-login-btn {
+    padding: 7px 14px;
+    font-size: 13px;
   }
 }

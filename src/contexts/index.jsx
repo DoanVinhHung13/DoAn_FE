@@ -11,12 +11,14 @@ function StoreProvider({ children }) {
   )
   const [user, setUser] = useState({})
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [authModal, setAuthModal] = useState({ open: false, type: 'login' }) // 'login' or 'register'
 
   const store = {
     routerBeforeStore: { routerBeforeLogin, setRouterBeforeLogin },
     loginStore: { isLoginContext, setIsLoginContext },
     userStore: { user, setUser },
     themeStore: { isDarkMode, setIsDarkMode },
+    authModalStore: { authModal, setAuthModal },
   }
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }

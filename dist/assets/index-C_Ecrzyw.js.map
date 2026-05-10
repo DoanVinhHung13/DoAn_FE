@@ -1,0 +1,1 @@
+{"version":3,"file":"index-C_Ecrzyw.js","sources":["../../src/pages/ADMIN/Supplies/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst Supplies = () => {\n  return <div>Supplies Page</div>;\n};\n\nexport default Supplies;\n"],"names":["Supplies","jsx"],"mappings":"wCAEA,MAAMA,EAAW,IACRC,EAAA,IAAC,OAAI,SAAa,eAAA,CAAA"}

@@ -1,2 +1,0 @@
-import{bI as t}from"./index-DVhs729P.js";const n="Region/getAllChidrenByRegionId",o="Region/Insert",i="Region/Update",g="Region/Delete",s="Region/GetLocationVN",c="Guest/GetByRegionId",R="Region/ConvertAddress",a=e=>t.get(n,{params:e}),d=e=>t.get(s,{params:e}),p=e=>t.post(o,e),r=e=>t.put(i,e),l=e=>t.patch(g+e),I=e=>t.get(c,{params:e}),y=e=>t.get(R,{params:e}),A={getAllChidrenByRegionId:a,insertRegion:p,updateRegion:r,deleteRegion:l,getLocationVN:d,getByRegionId:I,convertRegion:y};export{A as R};
-//# sourceMappingURL=index-IUAdKnUh.js.map

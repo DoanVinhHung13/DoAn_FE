@@ -1,0 +1,1 @@
+{"version":3,"file":"index-DvvNv1m3.js","sources":["../../src/pages/ANONYMOUS/VerifyOTP/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst VerifyOTP = () => {\n  return <div>VerifyOTP Page</div>;\n};\n\nexport default VerifyOTP;\n"],"names":["VerifyOTP","jsx"],"mappings":"wCAEA,MAAMA,EAAY,IACTC,EAAA,IAAC,OAAI,SAAc,gBAAA,CAAA"}

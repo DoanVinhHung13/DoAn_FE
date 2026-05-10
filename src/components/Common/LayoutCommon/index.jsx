@@ -11,10 +11,10 @@ const LayoutCommon = ({ children }) => {
   const role = localStorage.getItem("mock_role") || null;
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <GlobalHeader role={role} />
-      
-      <Content style={{ minHeight: "calc(100vh - 64px - 300px)", padding: "24px" }}>
+
+      <Content style={{ flex: 1, minHeight: "calc(100vh - 64px - 220px)", padding: "24px" }}>
         {children || <Outlet />}
       </Content>
 

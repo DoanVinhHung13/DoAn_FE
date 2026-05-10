@@ -1,0 +1,1 @@
+{"version":3,"file":"index-AzxwwYg4.js","sources":["../../src/pages/USER/Notifications/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst Notifications = () => {\n  return <div>Notifications Page</div>;\n};\n\nexport default Notifications;\n"],"names":["Notifications","jsx"],"mappings":"wCAEA,MAAMA,EAAgB,IACbC,EAAA,IAAC,OAAI,SAAkB,oBAAA,CAAA"}

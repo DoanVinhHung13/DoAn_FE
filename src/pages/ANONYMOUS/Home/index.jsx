@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Button, Row, Col, Card, Typography } from 'antd';
-import { ArrowRightOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { ArrowRightOutlined } from '@ant-design/icons';
 import { ColorPrimary } from 'src/theme/GlobalThemeConfig';
-import ROUTER from 'src/router/ROUTER';
 import { Leaf, ShieldCheck, Activity } from 'lucide-react';
+import { StoreContext } from 'src/contexts';
 
 const { Title, Paragraph } = Typography;
 
 const Home = () => {
-  const navigate = useNavigate();
+  const { authModalStore } = useContext(StoreContext);
+  const { setAuthModal } = authModalStore;
 
   const features = [
     {
@@ -45,14 +45,14 @@ const Home = () => {
             size="large" 
             icon={<ArrowRightOutlined />} 
             style={{ background: ColorPrimary, height: 48, padding: '0 32px', fontSize: 16 }}
-            onClick={() => navigate(ROUTER.REGISTER)}
+            onClick={() => setAuthModal({ open: true, type: 'register' })}
           >
             Get Started
           </Button>
           <Button 
             size="large" 
             style={{ height: 48, padding: '0 32px', fontSize: 16 }}
-            onClick={() => navigate(ROUTER.LOGIN)}
+            onClick={() => setAuthModal({ open: true, type: 'login' })}
           >
             Login
           </Button>
@@ -92,7 +92,7 @@ const Home = () => {
         <Button 
           size="large" 
           style={{ height: 48, padding: '0 48px', fontSize: 16, color: ColorPrimary, fontWeight: 'bold' }}
-          onClick={() => navigate(ROUTER.REGISTER)}
+          onClick={() => setAuthModal({ open: true, type: 'register' })}
         >
           Create Free Account
         </Button>

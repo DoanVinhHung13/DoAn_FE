@@ -1,2 +1,0 @@
-import{bI as o}from"./index-DVhs729P.js";const i="Position/GetListPositionForCombobox",s="Position/GetList",e="Position/Create",n="Position/Delete",c="Position/Update",a="Position/GetListTitleForCombobox",p=()=>o.get(a),P=()=>o.get(i),l=t=>o.patch(n+`?PositionID=${t}`),r=t=>o.post(e,t),G=t=>o.put(c,t),b=t=>o.post(s,t),L={getAllPosition:P,create:r,getListPosition:b,deletePos:l,update:G,getAllTitle:p};export{L as P};
-//# sourceMappingURL=index-8UatQ_zc.js.map

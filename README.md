@@ -27,7 +27,7 @@ src/
 ├── pages/          # Thư mục chứa các trang theo vai trò:
 │   ├── ADMIN/      # Quản trị viên (Dashboard, Journal, Inventory, User Management)
 │   ├── USER/       # Nông dân/Người dùng (My Journal, Warehouse, Production)
-│   ├── ANONYMOUS/  # Trang công khai (Home, Login, Register, Errors)
+│   ├── ANONYMOUS/  # Trang công khai (Home, ForgotPassword, ResetPassword, VerifyOTP, Errors)
 │   └── SUPPORTPAGES/ # Các trang bổ trợ (NotFound, SvgViewer...)
 ├── redux/          # Redux Toolkit (Slices, Store)
 ├── router/         # Cấu hình Routing và Route Guards (ProtectedRoute, GuestRoute)
@@ -38,10 +38,11 @@ src/
 
 ## 🔐 Luồng Xác Thực (Auth Flow)
 
-1. **Route Guard**: Bảo vệ các route yêu cầu đăng nhập bằng `ProtectedRoute`. Lưu lại `returnUrl` để chuyển hướng sau khi đăng nhập.
-2. **Redirect Logic**: Sau khi đăng nhập thành công, hệ thống ưu tiên quay lại trang người dùng đang truy cập trước đó. Nếu không có, sẽ điều hướng về Dashboard theo vai trò (Admin/User).
-3. **Session Management**: Quản lý bởi `src/services/core/authSession.js`. Token được lưu trữ và đính kèm tự động vào mọi request.
-4. **Refresh Token**: Tự động xử lý qua Axios Interceptor khi mã lỗi 401 được trả về.
+1. **Auth Modal trung tâm**: Đăng nhập/đăng ký sử dụng modal tại `src/components/Layout/Header/AuthModal.jsx`, không dùng trang `/login` và `/register` riêng cho luồng chính.
+2. **Route Guard**: `ProtectedRoute` bảo vệ route cần đăng nhập, khi chưa login sẽ điều hướng về `ROUTER.HOME` kèm state mở login modal (`openLogin` + `returnUrl`).
+3. **Redirect Logic sau login**: Ưu tiên `returnUrl` nếu có; nếu không có thì điều hướng theo vai trò (`ADMIN_DASHBOARD` hoặc `USER_DASHBOARD`).
+4. **Session Management**: Quản lý bởi `src/services/core/authSession.js`. Token được lưu trữ và đính kèm tự động vào mọi request.
+5. **Refresh Token / 401**: Axios Interceptor xử lý tập trung; khi hết phiên sẽ quay về Home và mở modal login theo query `?auth=login`.
 
 ## 📡 Quản Lý API (Networking)
 
@@ -58,14 +59,15 @@ src/
 - **Secondary Color**: `#ECFDF5`.
 - **Layouts**: 
   - Tích hợp **GlobalHeader** và **GlobalFooter** đồng nhất.
-  - Header tự động hiển thị Menu tương ứng với vai trò (Role) của người dùng hiện tại thông qua hàm `getMenuByRole`.
+  - Header hiển thị dropdown theo vai trò thông qua `getDropMenuByRole`, và hiển thị cặp nút `Register/Login` cho guest.
 - **Components**: Ưu tiên tính tái sử dụng cao. Mọi component phải nhận props rõ ràng và không phụ thuộc vào dữ liệu fix cứng.
 
 ## 🛠 Hướng Dẫn Phát Triển
 
 1. **Thêm trang mới**: Tạo thư mục trang bên trong `src/pages/` tương ứng với vai trò. Đăng ký route trong `src/router/ROUTER.js` và `src/router/AppRouter.jsx`.
-2. **Thêm menu**: Cập nhật hàm `MenuItemAdmin` hoặc `MenuItemUser` trong `src/router/MenuItem.jsx`.
+2. **Thêm menu**: Cập nhật menu sidebar/dropdown tại `src/router/MenuItem.jsx` theo đúng role.
 3. **Kết nối API**: Tạo Service mới trong `src/services/`. Sử dụng instance `http` từ `01_axios` để thực hiện call.
+4. **Auth action ở trang public**: Khi cần mở login/register, dùng `authModalStore.setAuthModal({ open: true, type: "login" | "register" })` thay vì `navigate(ROUTER.LOGIN/REGISTER)`.
 
 ## 📏 Quy Định Code (Coding Convention)
 
@@ -75,3 +77,41 @@ src/
   - Service/Hook: `camelCase`.
 - **Separation of Concerns**: Tách biệt rõ ràng giữa giao diện (UI) và logic xử lý dữ liệu.
 - **Generic First**: Luôn ưu tiên viết component theo hướng generic trước khi viết cho một nghiệp vụ cụ thể.
+
+## 🤝 Quy Ước Làm Việc Nhóm (Bắt Buộc Thống Nhất)
+
+1. **Tách component theo trang khi trang phức tạp**  
+   - Nếu một trang có từ 2-3 block UI độc lập trở lên (filter, bảng, form, modal, chart...), bắt buộc tách component con.
+   - Tạo thư mục `components` ngay trong thư mục của trang đó.
+
+2. **Cấu trúc thư mục trang đề xuất**
+
+```text
+src/pages/<ROLE>/<PageName>/
+├── index.jsx                # Container page, điều phối dữ liệu và ghép layout
+├── components/              # UI con chỉ dùng trong trang này
+│   ├── FilterBar.jsx
+│   ├── DataTable.jsx
+│   └── EditModal.jsx
+├── hooks/                   # Hook riêng của trang (nếu có)
+│   └── use<PageName>.js
+├── constants.js             # Hằng số riêng của trang
+└── styles.scss              # Style riêng của trang (nếu cần)
+```
+
+3. **Nguyên tắc chia trách nhiệm**
+   - `index.jsx` của page không chứa JSX quá dài: chỉ giữ orchestration (state chính, gọi service, truyền props).
+   - `components/*` chỉ xử lý hiển thị và callback.
+   - Logic gọi API/transform data ưu tiên đưa vào `services` hoặc hook riêng.
+
+4. **Quy ước kích thước file để tránh file "quá tải"**
+   - Một file component nên giữ dưới khoảng 250-300 dòng.
+   - Nếu vượt ngưỡng, phải tách nhỏ theo khối chức năng.
+
+5. **Quy ước route & menu**
+   - Mọi path phải khai báo trong `src/router/ROUTER.js`, không hard-code string route rải rác.
+   - Mọi mục menu tương ứng route phải cập nhật trong `src/router/MenuItem.jsx`.
+
+6. **Quy ước auth khi phát triển tính năng mới**
+   - Không tạo thêm luồng đăng nhập rời bằng trang mới nếu chưa có quyết định kiến trúc từ team.
+   - Chuẩn hiện tại: auth qua modal + guard điều hướng về Home.

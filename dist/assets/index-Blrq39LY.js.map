@@ -1,0 +1,1 @@
+{"version":3,"file":"index-Blrq39LY.js","sources":["../../src/pages/USER/ProductionProcess/index.jsx"],"sourcesContent":["import React from 'react';\n\nconst ProductionProcess = () => {\n  return <div>ProductionProcess Page</div>;\n};\n\nexport default ProductionProcess;\n"],"names":["ProductionProcess","jsx"],"mappings":"wCAEA,MAAMA,EAAoB,IACjBC,EAAA,IAAC,OAAI,SAAsB,wBAAA,CAAA"}

@@ -24,10 +24,10 @@ const LayoutUser = () => {
   }, [location?.pathname]);
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <GlobalHeader role="user" />
       
-      <Layout>
+      <Layout style={{ flex: 1, display: "flex" }}>
         <Sider
           collapsible
           collapsed={collapseMenu}
@@ -51,7 +51,9 @@ const LayoutUser = () => {
         <Content
           style={{
             padding: "24px",
-            backgroundColor: "#f9f9f9"
+            backgroundColor: "#f9f9f9",
+            flex: 1,
+            minHeight: "calc(100vh - 64px - 220px)"
           }}
         >
           <Outlet />
