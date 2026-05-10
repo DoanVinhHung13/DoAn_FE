@@ -23,6 +23,8 @@ const Unauthorized = React.lazy(
   () => import("src/pages/ANONYMOUS/Unauthorized"),
 )
 const Forbidden = React.lazy(() => import("src/pages/ANONYMOUS/Forbidden"))
+const ServerError = React.lazy(() => import("src/pages/ANONYMOUS/ServerError"))
+const Maintenance = React.lazy(() => import("src/pages/ANONYMOUS/Maintenance"))
 
 // Admin Pages
 const AdminDashboard = React.lazy(() => import("src/pages/ADMIN/Dashboard"))
@@ -282,6 +284,30 @@ const routes = [
     element: (
       <LazyLoadingComponent>
         <Forbidden />
+      </LazyLoadingComponent>
+    ),
+  },
+  {
+    path: ROUTER.NOT_FOUND,
+    element: (
+      <LazyLoadingComponent>
+        <NotFound />
+      </LazyLoadingComponent>
+    ),
+  },
+  {
+    path: ROUTER.SERVER_ERROR,
+    element: (
+      <LazyLoadingComponent>
+        <ServerError />
+      </LazyLoadingComponent>
+    ),
+  },
+  {
+    path: ROUTER.MAINTENANCE,
+    element: (
+      <LazyLoadingComponent>
+        <Maintenance />
       </LazyLoadingComponent>
     ),
   },

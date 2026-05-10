@@ -1,7 +1,14 @@
-import React from 'react';
+import ErrorStatusPage from "src/pages/ANONYMOUS/components/ErrorStatusPage"
 
 const NotFound = () => {
-  return <div>NotFound Page</div>;
-};
+  return (
+    <ErrorStatusPage
+      status="404"
+      title="404 - Page not found"
+      subtitle="The page you are looking for does not exist or has been moved."
+      primaryText="Go to Home"
+    />
+  )
+}
 
-export default NotFound;
+export default NotFound

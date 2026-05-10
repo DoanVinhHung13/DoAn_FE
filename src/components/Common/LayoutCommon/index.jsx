@@ -10,7 +10,6 @@ const { Content } = Layout;
 const LayoutCommon = ({ children }) => {
   const { themeStore } = useContext(StoreContext);
   const { isDarkMode } = themeStore;
-  // Try to get role from localStorage if logged in, otherwise anonymous
   const role = localStorage.getItem("mock_role") || null;
 
   return (

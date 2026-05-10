@@ -7,6 +7,7 @@ import authSession from 'src/services/core/authSession';
 import notice from 'src/components/Notice';
 import { ColorPrimary } from 'src/theme/GlobalThemeConfig';
 import ROUTER from 'src/router/ROUTER';
+import './authModal.scss';
 
 const { Title, Text } = Typography;
 
@@ -82,9 +83,10 @@ const AuthModal = () => {
       width={400}
       centered
       destroyOnClose
+      className="auth-modal"
     >
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ color: ColorPrimary, margin: 0 }}>🌿 EbookFarm</Title>
+      <div className="auth-modal__brand">
+        <Title level={3} style={{ color: ColorPrimary, margin: 0 }}>EbookFarm</Title>
         <Text type="secondary">Enterprise Agricultural System</Text>
       </div>
 
@@ -92,6 +94,7 @@ const AuthModal = () => {
         activeKey={authModal.type}
         onChange={(key) => setAuthModal({ ...authModal, type: key })}
         centered
+        className="auth-modal__tabs"
         items={[
           {
             key: 'login',
@@ -109,14 +112,14 @@ const AuthModal = () => {
         name="auth_form"
         layout="vertical"
         onFinish={onFinish}
-        style={{ marginTop: 20 }}
+        className="auth-modal__form"
       >
         {authModal.type === 'register' && (
           <Form.Item
             name="email"
             rules={[{ required: true, type: 'email', message: 'Please input a valid Email!' }]}
           >
-            <Input prefix={<MailOutlined />} placeholder="Email" size="large" />
+            <Input prefix={<MailOutlined />} placeholder="Email" size="large" className="auth-modal__input" />
           </Form.Item>
         )}
 
@@ -124,24 +127,24 @@ const AuthModal = () => {
           name="username"
           rules={[{ required: true, message: 'Please input your Username!' }]}
         >
-          <Input prefix={<UserOutlined />} placeholder="Username" size="large" />
+          <Input prefix={<UserOutlined />} placeholder="Username" size="large" className="auth-modal__input" />
         </Form.Item>
 
         <Form.Item
           name="password"
           rules={[{ required: true, message: 'Please input your Password!' }]}
         >
-          <Input.Password prefix={<LockOutlined />} placeholder="Password" size="large" />
+          <Input.Password prefix={<LockOutlined />} placeholder="Password" size="large" className="auth-modal__input" />
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" size="large" block loading={loading} style={{ background: ColorPrimary }}>
+          <Button type="primary" htmlType="submit" size="large" block loading={loading} className="auth-modal__submit" style={{ background: ColorPrimary }}>
             {authModal.type === 'login' ? 'Login' : 'Register'}
           </Button>
         </Form.Item>
 
         {authModal.type === 'login' && (
-          <div style={{ textAlign: 'center' }}>
+          <div className="auth-modal__footer-link">
             <Button type="link" onClick={() => notice({ msg: "Feature coming soon!", isSuccess: false })}>
               Forgot password?
             </Button>
