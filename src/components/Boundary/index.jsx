@@ -1,43 +1,56 @@
-import { Result } from "antd"
-import { Component } from "react"
-import errorImg from "src/assets/images/common-icon/errorPage.png"
-import ButtonCustom from "../MyButton/Button"
+import React from "react"
 
-export default class ErrorBoundary extends Component {
-  state = { hasError: false }
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
 
   static getDerivedStateFromError(error) {
-    console.log("error", error)
-    // Update state to show the fallback UI during the next render phase
-    return { hasError: true }
+    return { hasError: true, error }
   }
 
   componentDidCatch(error, info) {
-    // logging the error details
-    console.log("error ", error, "info ", info)
+    console.error("[ErrorBoundary]", error, info)
   }
 
   render() {
     if (this.state.hasError) {
-      // Return the fallback UI
-
       return (
-        <Result
-          // status="500"
-          title="Có lỗi xảy ra!"
-          subTitle="Hệ thống xảy ra lỗi, vui lòng tải lại trang để tiếp tục sử dụng!"
-          icon={<img src={errorImg} alt="error" width={400} />}
-          extra={
-            <div className="d-flex justify-content-center">
-              <ButtonCustom onClick={() => window.location.reload()}>
-                Tải lại trang
-              </ButtonCustom>
-            </div>
-          }
-        />
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          gap: 16,
+          fontFamily: "Inter, sans-serif",
+        }}>
+          <h2 style={{ color: "#ef4444", fontSize: 24, margin: 0 }}>
+            Đã xảy ra lỗi không mong muốn
+          </h2>
+          <p style={{ color: "#6b7280", margin: 0 }}>
+            {this.state.error?.message || "Vui lòng tải lại trang."}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: "8px 24px",
+              background: "#16a34a",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            Tải lại trang
+          </button>
+        </div>
       )
     }
-
     return this.props.children
   }
 }
+
+export default ErrorBoundary

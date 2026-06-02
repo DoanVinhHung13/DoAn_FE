@@ -1,178 +1,310 @@
-import { useContext } from "react"
 import {
-  BellOutlined,
-  BulbOutlined,
+  DashboardOutlined,
   LogoutOutlined,
-  MoonOutlined,
-  SunOutlined,
-  UserOutlined
-} from "@ant-design/icons"
-import { Avatar, Badge, Dropdown, Layout } from "antd"
-import { useNavigate } from "react-router-dom"
-import { getDropMenuByRole } from "src/router/MenuItem"
-import ROUTER from "src/router/ROUTER"
-import authSession from "src/services/core/authSession"
-import { StoreContext } from "src/contexts"
-import { ColorPrimary } from "src/theme/GlobalThemeConfig"
-import AuthModal from "./AuthModal"
-import "./styles.scss"
+  MenuOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import {
+  Divider as AntdDivider,
+  Avatar,
+  Button,
+  Drawer,
+  Dropdown,
+  Space,
+  Typography,
+} from "antd";
+import { useContext, useState } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import logo from "src/assets/images/logo/logo-ebookfarm.jpg";
+import { StoreContext } from "src/contexts";
+import { clearStorage } from "src/lib/storage";
+import { getAvatarUrl } from "src/lib/utils";
+import { useAppDispatch } from "src/redux/hooks";
+import { setUserInfo } from "src/redux/slices/appGlobalSlice";
 
-const { Header } = Layout
+const { Title } = Typography;
 
-const GlobalHeader = ({ role }) => {
-  const navigate = useNavigate()
-  const { authModalStore, loginStore, themeStore } = useContext(StoreContext)
-  const { setAuthModal } = authModalStore
-  const { setIsLoginContext } = loginStore
-  const { isDarkMode, setIsDarkMode } = themeStore
-  
-  const dropMenuItems = role ? getDropMenuByRole(role) : []
+const PublicNavbar = () => {
+  const navigate = useNavigate();
+  const { loginStore } = useContext(StoreContext);
+  const { isLoginContext } = loginStore;
+  const { userInfo: user } = useSelector((state) => state.appGlobal);
+  const dispatch = useAppDispatch();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    authSession.clearSession()
-    localStorage.removeItem("mock_role")
-    setIsLoginContext(false)
-    navigate(ROUTER.HOME)
-  }
+    clearStorage();
+    dispatch(setUserInfo({}));
+    navigate("/");
+  };
 
-  // Build avatar dropdown: dùng MenuDropItem theo role + divider + logout
-  const avatarDropdownItems = role
-    ? [
-        // Inject navigate handler vào từng item của dropMenuItems
-        ...dropMenuItems.map(group =>
-          group.type === "group"
-            ? {
-                ...group,
-                children: group.children?.map(item => ({
-                  ...item,
-                  onClick: () => navigate(item.key),
-                })),
-              }
-            : group, // type: "divider" giữ nguyên
-        ),
-        { type: "divider" },
-        {
-          key: "profile",
-          label: "My Profile",
-          icon: <UserOutlined />,
-          onClick: () => navigate(ROUTER.PROFILE),
-        },
-        {
-          key: "logout",
-          label: "Logout",
-          icon: <LogoutOutlined />,
-          danger: true,
-          onClick: handleLogout,
-        },
-      ]
-    : []
-
-  const roleBadgeColor = role === "admin" ? "#dc2626" : ColorPrimary
-  const roleLabel = role === "admin" ? "Admin" : role === "user" ? "Farmer" : null
-  const roleInitial = role === "admin" ? "A" : role === "user" ? "F" : null
+  const userMenuItems = [
+    {
+      key: "dashboard",
+      label: "Bảng điều khiển",
+      icon: <DashboardOutlined />,
+      onClick: () => navigate("/dashboard"),
+    },
+    {
+      key: "profile",
+      label: "Trang cá nhân",
+      icon: <UserOutlined />,
+      onClick: () => navigate("/account-info"),
+    },
+    {
+      type: "divider",
+    },
+    {
+      key: "logout",
+      label: "Đăng xuất",
+      icon: <LogoutOutlined />,
+      danger: true,
+      onClick: handleLogout,
+    },
+  ];
 
   return (
-    <Header className="global-header">
-      {/* ── Logo ── */}
-      <div className="gh-logo" onClick={() => navigate(ROUTER.HOME)}>
-        <div className="gh-logo-icon">🌿</div>
-        <div className="gh-logo-text">
-          <span className="gh-logo-brand">EbookFarm</span>
-          <span className="gh-logo-tagline">Agricultural System</span>
-        </div>
-      </div>
-
-      {/* ── Nav Links (public only) ── */}
-      {!role && (
-        <nav className="gh-nav">
-          {[
-            { label: "Home", key: ROUTER.HOME },
-            { label: "News", key: "/news" },
-            { label: "About", key: "/about" },
-            { label: "Contact", key: "/contact" },
-          ].map(item => (
-            <button
-              key={item.key}
-              className="gh-nav-link"
-              onClick={() => navigate(item.key)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      )}
-
-      {/* ── Role badge (authenticated) ── */}
-      {/* {role && (
-        <div className="gh-role-badge" style={{ "--badge-color": roleBadgeColor }}>
-          <MenuOutlined style={{ fontSize: 12 }} />
-          <span>{roleLabel} Panel</span>
-        </div>
-      )} */}
-
-      {/* ── Right Actions ── */}
-      <div className="gh-actions">
-        <button
-          className="gh-theme-toggle"
-          title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-          onClick={() => setIsDarkMode(prev => !prev)}
-        >
-          <BulbOutlined />
-          {isDarkMode ? <SunOutlined /> : <MoonOutlined />}
-        </button>
-
-        {role && (
-          <Badge count={3} size="small">
-            <button className="gh-icon-btn" title="Notifications">
-              <BellOutlined />
-            </button>
-          </Badge>
-        )}
-
-        {role ? (
-          <Dropdown
-            menu={{ items: avatarDropdownItems }}
-            placement="bottomRight"
-            trigger={["click"]}
-            overlayClassName="gh-avatar-dropdown"
+    <nav className="fixed top-0 z-50 flex justify-center w-full border-b border-gray-100 glass-card">
+      <div className="flex items-center justify-between w-full px-6 py-4 max-w-7xl md:px-12">
+        {/* Left Side: Logo */}
+        <div className="flex justify-start flex-1">
+          <div
+            className="flex items-center gap-3 transition-opacity cursor-pointer hover:opacity-80"
+            onClick={() => navigate("/")}
           >
-            <div className="gh-user-trigger">
-              <Avatar
-                size={36}
-                style={{ backgroundColor: roleBadgeColor, fontWeight: 700 }}
-              >
-                {roleInitial}
-              </Avatar>
-              <div className="gh-user-info">
-                <span className="gh-user-name">
-                  {role === "admin" ? "Admin User" : "Farmer User"}
-                </span>
-                <span className="gh-user-role">{roleLabel}</span>
-              </div>
-              <span className="gh-chevron">▾</span>
+            <div className="flex items-center justify-center w-12 h-12 overflow-hidden bg-white border rounded-full shadow-sm border-gray-50">
+              <img
+                src={logo}
+                alt="EBookFarm Logo"
+                className="w-[140%] h-[140%] object-contain mix-blend-multiply"
+              />
             </div>
-          </Dropdown>
-        ) : (
-          <div className="gh-auth-actions">
-            <button
-              className="gh-register-btn"
-              onClick={() => setAuthModal({ open: true, type: "register" })}
-            >
-              Register
-            </button>
-            <button
-              className="gh-login-btn"
-              onClick={() => setAuthModal({ open: true, type: "login" })}
-            >
-              Login
-            </button>
+            <div className="flex flex-col justify-center">
+              <span className="text-green-600 font-extrabold text-[18px] leading-[1.1] uppercase tracking-tight">
+                Nhật ký sản xuất
+              </span>
+              <span className="text-green-600 font-extrabold text-[18px] leading-[1.1] uppercase tracking-tight">
+                Điện tử
+              </span>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Center: Desktop Menu */}
+        <div className="items-center justify-center hidden lg:flex">
+          <Space size="large">
+            <Button
+              type="text"
+              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
+              onClick={() => navigate("/")}
+            >
+              Trang chủ
+            </Button>
+            <Button
+              type="text"
+              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
+              onClick={() => navigate("/reference/tcvn")}
+            >
+              Tra cứu TCVN
+            </Button>
+            <Button
+              type="text"
+              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
+              onClick={() => navigate("/news")}
+            >
+              Tin tức
+            </Button>
+            <Button
+              type="text"
+              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
+              onClick={() => {
+                if (window.location.pathname === "/") {
+                  document
+                    .getElementById("about-us")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                } else {
+                  navigate("/");
+                  setTimeout(
+                    () =>
+                      document
+                        .getElementById("about-us")
+                        ?.scrollIntoView({ behavior: "smooth" }),
+                    300,
+                  );
+                }
+              }}
+            >
+              Về chúng tôi
+            </Button>
+          </Space>
+        </div>
+
+        {/* Right Side: Auth & Mobile Menu */}
+        <div className="flex items-center justify-end flex-1">
+          <Space size={0} className="flex items-center">
+            {isLoginContext ? (
+              <div className="flex items-center">
+                <Button
+                  type="text"
+                  icon={<DashboardOutlined />}
+                  className="items-center hidden px-3 font-bold text-green-600 transition-all rounded-lg hover:bg-green-50 sm:flex"
+                  onClick={() => navigate("/dashboard")}
+                >
+                  Bảng điều khiển
+                </Button>
+
+                <AntdDivider
+                  type="vertical"
+                  className="hidden h-8 mx-4 border-gray-100 sm:block"
+                />
+
+                <Dropdown
+                  menu={{ items: userMenuItems }}
+                  placement="bottomRight"
+                  arrow
+                >
+                  <div className="flex items-center gap-3 cursor-pointer p-1.5 hover:bg-gray-50/80 rounded-2xl transition-all border border-transparent hover:border-gray-100">
+                    <Avatar
+                      size={40}
+                      src={getAvatarUrl(user?.avatar)}
+                      style={{ backgroundColor: "#16a34a" }}
+                      icon={!user?.avatar && <UserOutlined />}
+                      className="border-2 border-white shadow-sm"
+                    />
+                    <div className="hidden md:flex flex-col justify-center min-w-[80px]">
+                      <span className="text-[10px] text-gray-400 font-black uppercase leading-none tracking-widest mb-0.5">
+                        Xin chào
+                      </span>
+                      <span className="text-[14px] text-gray-800 font-extrabold leading-none truncate">
+                        {user?.fullname ||
+                          user?.username ||
+                          user?.email?.split("@")[0] ||
+                          "Người dùng"}
+                      </span>
+                    </div>
+                  </div>
+                </Dropdown>
+              </div>
+            ) : (
+              <Space size="small">
+                <Button
+                  type="text"
+                  className="px-2 font-bold text-green-600 rounded-full"
+                  onClick={() => navigate("/login")}
+                >
+                  Đăng nhập
+                </Button>
+                <Button
+                  type="primary"
+                  size="large"
+                  className="px-4 font-bold bg-green-600 border-0 rounded-full shadow-lg hover:bg-green-700 md:px-6 shadow-green-100"
+                  onClick={() => navigate("/register")}
+                >
+                  Đăng ký
+                </Button>
+              </Space>
+            )}
+
+            {/* Mobile Menu Toggle */}
+            <Button
+              type="text"
+              icon={<MenuOutlined />}
+              className="ml-2 text-xl text-gray-600 lg:hidden"
+              onClick={() => setMobileMenuOpen(true)}
+            />
+          </Space>
+        </div>
+
+        {/* Mobile Drawer */}
+        <Drawer
+          title={
+            <div className="flex items-center gap-2">
+              <img src={logo} alt="Logo" className="object-contain w-8 h-8" />
+              <span className="text-sm font-black text-green-600 uppercase">
+                EBookFarm
+              </span>
+            </div>
+          }
+          placement="right"
+          onClose={() => setMobileMenuOpen(false)}
+          open={mobileMenuOpen}
+          width={280}
+        >
+          <div className="flex flex-col gap-4">
+            <Button
+              type="text"
+              className="font-bold text-left text-gray-600"
+              onClick={() => {
+                navigate("/");
+                setMobileMenuOpen(false);
+              }}
+            >
+              Trang chủ
+            </Button>
+            <Button
+              type="text"
+              className="font-bold text-left text-gray-600"
+              onClick={() => {
+                navigate("/reference/tcvn");
+                setMobileMenuOpen(false);
+              }}
+            >
+              Tra cứu TCVN
+            </Button>
+            <Button
+              type="text"
+              className="font-bold text-left text-gray-600"
+              onClick={() => {
+                navigate("/news");
+                setMobileMenuOpen(false);
+              }}
+            >
+              Tin tức
+            </Button>
+            <Button
+              type="text"
+              className="font-bold text-left text-gray-600"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (window.location.pathname === "/") {
+                  document
+                    .getElementById("about-us")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                } else {
+                  navigate("/");
+                  setTimeout(
+                    () =>
+                      document
+                        .getElementById("about-us")
+                        ?.scrollIntoView({ behavior: "smooth" }),
+                    300,
+                  );
+                }
+              }}
+            >
+              Về chúng tôi
+            </Button>
+
+            <AntdDivider className="my-2" />
+
+            {!isLoginContext && (
+              <Button
+                type="primary"
+                className="h-12 font-bold bg-green-600 border-0 rounded-xl"
+                onClick={() => {
+                  navigate("/register");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Đăng ký
+              </Button>
+            )}
+          </div>
+        </Drawer>
       </div>
+    </nav>
+  );
+};
 
-      <AuthModal />
-    </Header>
-  )
-}
-
-export default GlobalHeader
+export default PublicNavbar;

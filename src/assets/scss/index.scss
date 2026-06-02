@@ -1,77 +1,22 @@
-@use "antd/dist/reset.css" as *;
-@use "./color/color.scss" as *;
-@use "./flexBox/flex_box.scss" as *;
-@use "./fontSize/font_size.scss" as *;
-@use "./fontWeight/font_weight.scss" as *;
-@use "./lineNumber/line_number.scss" as *;
-@use "./rotate/rotate.scss" as *;
-@use "./title/title.scss" as *;
-@use "./margin/margin.scss" as *;
-@use "./margin/margin_bottom.scss" as *;
-@use "./margin/margin_left.scss" as *;
-@use "./margin/margin_right.scss" as *;
-@use "./margin/margin_top.scss" as *;
-@use "./padding/padding.scss" as *;
-@use "./padding/padding_bottom.scss" as *;
-@use "./padding/padding_left.scss" as *;
-@use "./padding/padding_right.scss" as *;
-@use "./padding/padding_top.scss" as *;
-@use "./height/height.scss" as *;
-@use "./hiddenComponent/index.scss" as *;
-@use "./width/width.scss" as *;
-@use "./background/background.scss" as *;
-@use "./text/text.scss" as *;
-@use "./button/button.scss" as *;
-@use "./fontFamily/index.scss" as *;
-@use "./lineHeight/index.scss" as *;
-@use "./checkbox" as *;
-@use "./upload/" as *;
-@use "./custom-antd" as *;
-@use "../../assets/fonts/style.scss" as *;
-@use "../../assets/scss/border/border.scss" as *;
-
-body {
-  font-weight: 400;
-
-  #root {
-    overflow: hidden auto;
-    height: 100vh;
-  }
-
-  ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-  }
-
-  /* Track */
-  ::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    box-shadow: unset;
-    margin: 5px 0px;
-  }
-
-  /* Handle */
-  ::-webkit-scrollbar-thumb {
-    background: #c5ced9;
-    border-radius: 30px;
-  }
-}
-
-.site-layout-content {
-  min-height: 280px;
-  padding: 24px;
-  background: #fff;
-}
-
-.w-90 {
-  width: 90%;
-}
-
-.loading-center {
-  .ant-spin-fullscreen {
-    background-color: #fff;
-  }
-}
-.btn-hover-shadow:hover {
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-}
+@forward './custom-antd.scss';
+@forward './variables/_variables.scss';
+@forward './color/color.scss';
+@forward './background/background.scss';
+@forward './border/border.scss';
+@forward './button/button.scss';
+@forward './flexBox/flex_box.scss';
+@forward './fontSize/font_size.scss';
+@forward './fontWeight/font_weight.scss';
+@forward './fontFamily/index.scss';
+@forward './margin/margin.scss';
+@forward './padding/padding.scss';
+@forward './width/width.scss';
+@forward './height/height.scss';
+@forward './text/text.scss';
+@forward './title/title.scss';
+@forward './lineHeight/index.scss';
+@forward './lineNumber/line_number.scss';
+@forward './hover/index.scss';
+@forward './rotate/rotate.scss';
+@forward './responsive/responsive.scss';
+@forward './hiddenComponent/index.scss';

@@ -1,22 +1,33 @@
-import { App as AntdApp } from "antd"
-import ErrorBoundary from "src/components/Boundary"
-import DefaultAction from "src/components/Layout/DefaultAction/DefaultAction"
-import GlobalThemeConfig from "src/theme/GlobalThemeConfig"
+import React, { useState, useEffect } from 'react'
+import { useSelector } from 'react-redux'
+import ForceChangePasswordModal from '../Modal/ForceChangePassword'
 
+/**
+ * AppShell — global shell logic that runs once auth context is available.
+ * Handles mustChangePassword check. Wraps all authenticated content.
+ */
 const AppShell = ({ children }) => {
+  const { userInfo: user } = useSelector((state) => state.appGlobal)
+  const [showForceChangePassword, setShowForceChangePassword] = useState(false)
+
+  useEffect(() => {
+    if (user && user.mustChangePassword) {
+      setShowForceChangePassword(true)
+    } else {
+      setShowForceChangePassword(false)
+    }
+  }, [user])
+
   return (
-    <GlobalThemeConfig>
-      <AntdApp>
-        <ErrorBoundary>
-          <div className="layout-center">
-            <div className="layout-max-width">
-              <DefaultAction>{children}</DefaultAction>
-            </div>
-          </div>
-        </ErrorBoundary>
-      </AntdApp>
-    </GlobalThemeConfig>
+    <>
+      <ForceChangePasswordModal
+        visible={showForceChangePassword}
+        onSuccess={() => setShowForceChangePassword(false)}
+      />
+      {children}
+    </>
   )
 }
 
 export default AppShell
+

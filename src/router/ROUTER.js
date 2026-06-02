@@ -1,42 +1,67 @@
 const ROUTER = {
+  HOME: '/',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password/:token',
+  NOT_FOUND: '/404',
+  FORBIDDEN: '/403',
+
   // Public
-  HOME: "/",
-  FORBIDDEN: "/403",
-  NOT_FOUND: "/404",
-  SERVER_ERROR: "/500",
-  MAINTENANCE: "/503",
-  UNAUTHORIZED: "/401",
+  NEWS: '/news',
+  NEWS_DETAIL: '/news/:id',
+  TCVN: '/reference/tcvn',
+  TRACE: '/trace/:qrCode',
 
-  // Auth
-  LOGIN: "/login",
-  REGISTER: "/register",
-  FORGOT_PASSWORD: "/forgot-password",
-  RESET_PASSWORD: "/reset-password",
-  VERIFY_OTP: "/verify-otp",
+  // Admin
+  ADMIN_DASHBOARD: '/dashboard',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_JOURNALS: '/admin/journals',
+  ADMIN_FORM_BUILDER: '/form-builder',
+  ADMIN_INVENTORY: '/inventory/items',
+  ADMIN_INVENTORY_CATEGORY: '/inventory/categories',
+  ADMIN_INVENTORY_MODELS: '/inventory/models',
+  ADMIN_GROUPS: '/admin/groups',
+  ADMIN_ROLES: '/admin/roles',
+  ADMIN_NEWS: '/admin/news',
+  ADMIN_CONSULTATIONS: '/admin/consultations',
+  ADMIN_LOGS: '/admin/logs',
+  ADMIN_BACKUP: '/admin/backup',
+  ADMIN_REPORTS: '/reports',
+  ADMIN_CHAT_STATS: '/admin/chat-stats',
+  ADMIN_AG_MODELS: '/agriculture-models',
+  ADMIN_GEMINI: '/admin/gemini-test',
+  ADMIN_OPENAI: '/admin/openai-test',
+  ADMIN_GROQ: '/admin/groq-test',
+  ADMIN_RAG: '/admin/rag-test',
+  ADMIN_ACCOUNTS_MGMT: '/admin/accounts-mgmt',
+  ADMIN_DASHBOARD_ALIAS: '/admin/dashboard',
 
-  // Admin Module
-  ADMIN_DASHBOARD: "/admin/dashboard",
-  ADMIN_JOURNAL: "/admin/journal",
-  ADMIN_JOURNAL_DETAIL: "/admin/journal/:id",
-  ADMIN_INVENTORY: "/admin/inventory",
-  ADMIN_USERS: "/admin/users",
-  ADMIN_FORM_TEMPLATE: "/admin/form-template",
-  ADMIN_DYNAMIC_FORM_BUILDER: "/admin/dynamic-form-builder",
-  ADMIN_SUPPLIES: "/admin/supplies",
+  // User / HTX / Farmer
+  CHANGE_PASSWORD: '/change-password',
+  ACCOUNT_INFO: '/account-info',
+  HTX_JOURNALS: '/htx/journals',
+  HTX_APPROVALS: '/htx/approvals',
+  HTX_FARMERS: '/htx/farmers',
+  HTX_PRODUCTS: '/htx/products',
+  HTX_BATCHES: '/htx/batches',
+  HTX_SUPPLIES: '/htx/supplies',
+  HTX_PORTAL_SETTINGS: '/htx/portal-settings',
+  HTX_INVENTORY: '/inventory',
+  FARMER_INVENTORY: '/inventory/farmer',
+  FARMER_SUPPLIES: '/supplies/farmer',
+  PRODUCTION_TECH: '/docs',
+  JOURNAL_VIEW: '/journals/view/:id',
+  APP_REDIRECT: '/app',
 
-  // User Module
-  USER_DASHBOARD: "/user/dashboard",
-  USER_JOURNAL: "/user/journal",
-  USER_JOURNAL_CREATE: "/user/journal/create",
-  USER_JOURNAL_DETAIL: "/user/journal/:id",
-  USER_PRODUCTION_PROCESS: "/user/production-process",
-  USER_WAREHOUSE: "/user/warehouse",
+  // Farmer category-based routes
+  VIETGAP: '/vietgap/:subCategory',
+  HUUCO: '/huuco/:subCategory',
+  THONGMINH: '/thongminh/:subCategory',
 
-  // Profile
-  PROFILE: "/profile",
-  SETTINGS: "/settings",
-  NOTIFICATIONS: "/notifications",
-  CHANGE_PASSWORD: "/change-password",
-};
+  // Legacy/sidebar shortcuts
+  TCVN_AUTH: '/tcvn',
+  FARMERS: '/farmers',
+}
 
-export default ROUTER;
+export default ROUTER

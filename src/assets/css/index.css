@@ -1,3 +1,44 @@
-.ant-layout-header {
-  background-color: transparent !important;
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Upload component styles */
+.ant-upload-list {
+  margin-top: 16px !important;
+}
+
+.ant-upload-list-item {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.ant-upload-list-item-thumbnail img {
+  object-fit: cover !important;
+  border-radius: 4px !important;
+}
+
+.ant-upload-list-item-name {
+  color: #374151 !important;
+  font-weight: 500 !important;
+}
+
+.ant-upload-list-item:hover {
+  background-color: #f9fafb !important;
 }

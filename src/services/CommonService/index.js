@@ -1,11 +1,18 @@
-import http from "../01_axios"
-import { apiGetSystemKey } from "./urls"
+// src/services/CommonService/index.js
+import http from "src/services/01_axios"
+import URL_COMMON from "./urls"
 
-const getSystemKey = key =>
-  http.get(
-    apiGetSystemKey,
-    // { params: { key } }
-  )
+/**
+ * CommonService — config hệ thống (dropdown, loại...).
+ * TODO: Cập nhật URL_COMMON.GET_SYSTEM_KEY theo API thực tế.
+ */
+const CommonService = {
+  /**
+   * Lấy danh sách system key (dropdown config toàn app)
+   * @param {string} type - e.g. "All"
+   */
+  getSystemKey: (type = "All") =>
+    http.get(URL_COMMON.GET_SYSTEM_KEY, { params: { type } }),
+}
 
-const CommonService = { getSystemKey }
 export default CommonService

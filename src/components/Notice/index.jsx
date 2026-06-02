@@ -1,25 +1,35 @@
 import { notification } from "antd"
-import { getMsgClient } from "src/lib/stringsUtils"
-import SvgIcon from "../SvgIcon"
-import "./styles.scss"
 
-const typeStyles = {
-  success: { background: "#E5F5EB", className: "success", icon: "notice-success" },
-  error: { background: "#FCCED4", className: "error", icon: "notice-error" },
-  warning: { background: "#FFF7E6", className: "warning", icon: "notice-error" },
-  info: { background: "#E6F4FF", className: "info", icon: "notice-success" },
-}
-
-function notice({ msg = "", desc, place, isSuccess = true, type }) {
-  const resolvedType = type || (isSuccess ? "success" : "error")
-  const ui = typeStyles[resolvedType] || typeStyles.error
+/**
+ * notice() — Global toast notification.
+ * Gọi tập trung từ axios interceptor. Không gọi trực tiếp message.success() / notification.open() ở page.
+ *
+ * @param {string}  msg       - Nội dung chính (hỗ trợ HTML)
+ * @param {string}  desc      - Mô tả thêm (optional, hỗ trợ HTML)
+ * @param {string}  place     - Vị trí: "bottomRight" | "topRight" | "topLeft" | ...
+ * @param {boolean} isSuccess - true = thành công (xanh), false = lỗi (đỏ)
+ */
+function notice({ msg = "", desc = "", place, isSuccess = true }) {
   notification.open({
-    className: `notification-custom ${ui.className}`,
-    style: { background: ui.background },
+    className: `notification-custom ${isSuccess ? "success" : "error"}`,
+    style: {
+      background:   isSuccess ? "#E5F5EB" : "#FCCED4",
+      borderRadius: 12,
+      border:       `1px solid ${isSuccess ? "#86efac" : "#fca5a5"}`,
+    },
     placement: place || "bottomRight",
-    message: <div>{getMsgClient(msg || "")}</div>,
-    description: <div>{getMsgClient(desc || "")}</div>,
-    icon: <SvgIcon name={ui.icon} />,
+    message: (
+      <div
+        style={{ color: isSuccess ? "#15803d" : "#b91c1c", fontWeight: 600 }}
+        dangerouslySetInnerHTML={{ __html: msg }}
+      />
+    ),
+    description: desc ? (
+      <div
+        style={{ color: isSuccess ? "#166534" : "#991b1b" }}
+        dangerouslySetInnerHTML={{ __html: desc }}
+      />
+    ) : null,
     duration: 3,
   })
 }

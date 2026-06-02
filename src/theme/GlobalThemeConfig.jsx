@@ -1,18 +1,13 @@
-// App.tsx
 import { ConfigProvider, theme as antdTheme } from "antd"
 import { useContext } from "react"
-// import ThemeConfigAntd from "./ThemeConfigAntd"
 import { StoreContext } from "src/contexts"
-import { APP_THEMES, THEME_TOKENS } from "./themeTokens"
 
-export const ColorPrimary = THEME_TOKENS.primary
-export const ColorDefault = THEME_TOKENS.baseBackground
-export const ColorSecondary = THEME_TOKENS.secondary
+// Màu primary của EBookFarm (xanh lá nông nghiệp)
+export const ColorPrimary = "#22c55e"
 
 function GlobalThemeConfig({ children }) {
   const { themeStore } = useContext(StoreContext)
   const { isDarkMode } = themeStore
-  const currentTheme = isDarkMode ? APP_THEMES.dark : APP_THEMES.light
 
   return (
     <ConfigProvider
@@ -21,34 +16,38 @@ function GlobalThemeConfig({ children }) {
           ? antdTheme.darkAlgorithm
           : antdTheme.defaultAlgorithm,
         token: {
-          colorInfo: currentTheme.primary,
-          colorPrimary: currentTheme.primary,
-          fontSize: 16,
-          fontFamily: `"Inter", Helvetica, sans-serif`,
-          colorTextBase: currentTheme.text,
-          colorBgBase: currentTheme.background,
-          colorBgContainer: currentTheme.background,
-          colorBorder: currentTheme.border,
-          colorIcon: currentTheme.text,
+          colorPrimary:  ColorPrimary,
+          colorInfo:     ColorPrimary,
+          colorSuccess:  "#16a34a",
+          colorLink:     "#15803d",
+          colorLinkHover: ColorPrimary,
+          fontSize:      16,
+          fontFamily:    `"Inter", "Roboto", Helvetica, sans-serif`,
+          borderRadius:  12,
+          colorBgBase:   isDarkMode ? "#1a1a1a" : "#ffffff",
+          colorIcon:     isDarkMode ? "#ffffff" : "#000000",
         },
         components: {
           Button: {
-            colorPrimary: currentTheme.primary,
-            colorPrimaryHover: currentTheme.primaryHover,
-            defaultBg: currentTheme.background,
-            borderRadius: 4,
-            borderRadiusLG: 4,
-            lineWidth: 2,
-            lineWidthFocus: 3,
+            controlHeight:  40,
+            fontWeight:     600,
+            borderRadius:   8,
+            borderRadiusLG: 8,
+            lineWidth:      2,
+          },
+          Menu: {
+            itemHeight:        50,
+            itemSelectedBg:    "#f0fdf4",
+            itemSelectedColor: "#15803d",
           },
           Table: {
-            headerColor: isDarkMode ? currentTheme.text : ColorDefault,
-            headerBg: currentTheme.primary,
-            cellPaddingInline: 12,
-            cellPaddingBlock: 8,
-            headerBorderRadius: 4,
-            borderRadius: 4,
-            fontSize: 14,
+            headerColor:        "#ffffff",
+            headerBg:           ColorPrimary,
+            cellPaddingInline:  12,
+            cellPaddingBlock:   8,
+            headerBorderRadius: 8,
+            borderRadius:       8,
+            fontSize:           14,
           },
         },
       }}

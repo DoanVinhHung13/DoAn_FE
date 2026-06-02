@@ -1,38 +1,54 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom"
-import authSession from "src/services/core/authSession"
-import ROUTER from "../router/ROUTER"
+import { Navigate, Outlet } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import STORAGE from 'src/lib/storage'
+import ROUTER from './ROUTER'
 
-export const ProtectedRoute = ({ children, roles = [] }) => {
-  const location = useLocation()
-  const token = authSession.getAccessToken()
-  const userRole = localStorage.getItem("mock_role")
+/**
+ * ProtectedRoute — chỉ cho vào nếu đã đăng nhập.
+ * Hỗ trợ cả children (inline) lẫn Outlet (layout route).
+ */
+export const ProtectedRoute = ({ children, requireAdmin, farmerOnly }) => {
+  const user = useSelector((state) => state.appGlobal.userInfo)
+  const token = localStorage.getItem(STORAGE.TOKEN)
 
-  if (!token) {
-    return (
-      <Navigate
-        to={ROUTER.HOME}
-        state={{ returnUrl: `${location.pathname}${location.search}${location.hash}`, openLogin: true }}
-        replace
-      />
-    )
+  if (!token || !user?._id) {
+    return <Navigate to={ROUTER.LOGIN} replace />
   }
 
-  if (roles.length > 0 && !roles.includes(userRole)) {
+  const currentUser = user
+
+  // Admin cố tình vào trang Farmer-only → hiện 403
+  if (farmerOnly && currentUser?.role === 'Admin') {
     return <Navigate to={ROUTER.FORBIDDEN} replace />
   }
 
-  return children ? children : <Outlet />
-}
-
-export const GuestRoute = ({ children }) => {
-  const token = authSession.getAccessToken()
-  const location = useLocation()
-
-  if (token) {
-    const returnUrl = location.state?.returnUrl || ROUTER.HOME
-    return <Navigate to={returnUrl} replace />
+  // Farmer/HTX cố vào trang Admin-only → hiện 403
+  if (requireAdmin && currentUser?.role !== 'Admin') {
+    return <Navigate to={ROUTER.FORBIDDEN} replace />
   }
 
-  return children ? children : <Outlet />
+  return children ?? <Outlet />
 }
 
+/**
+ * GuestRoute — chỉ cho vào nếu chưa đăng nhập.
+ * Nếu đã login thì redirect về dashboard.
+ */
+export const GuestRoute = ({ children }) => {
+  const token = localStorage.getItem(STORAGE.TOKEN)
+  if (token) {
+    return <Navigate to={ROUTER.ADMIN_DASHBOARD} replace />
+  }
+  return children ?? <Outlet />
+}
+
+/**
+ * AdminRoute — chỉ cho Admin.
+ */
+export const AdminRoute = ({ children }) => {
+  const currentUser = useSelector((state) => state.appGlobal.userInfo)
+  if (currentUser?.role !== 'Admin') {
+    return <Navigate to={ROUTER.FORBIDDEN} replace />
+  }
+  return children ?? <Outlet />
+}

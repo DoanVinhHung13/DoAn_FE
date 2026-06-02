@@ -1,4 +1,4 @@
-import appGlobalReducer from "../slices/appGlobalSlide"
+import appGlobalReducer from "../slices/appGlobalSlice"
 
 const rootReducer = {
   appGlobal: appGlobalReducer,

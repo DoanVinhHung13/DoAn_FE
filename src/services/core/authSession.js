@@ -1,41 +1,32 @@
-import STORAGE, {
-  clearAuthStorage,
-  deleteStorage,
-  getStorage,
-  setStorage,
-} from "src/lib/storage"
-import ROUTER from "src/router/ROUTER"
+import STORAGE, { getStorage, setStorage, clearAuthStorage } from 'src/lib/storage'
 
+/**
+ * authSession — thay thế Zustand useAuthStore.
+ * Cung cấp cùng dữ liệu { user, token } nhưng không reactive.
+ * Dùng cho guards, axios interceptor, và các nơi cần đọc auth state mà không cần re-render.
+ */
 export const authSession = {
   isAuthenticated() {
     return Boolean(getStorage(STORAGE.TOKEN))
   },
+
   getAccessToken() {
     return getStorage(STORAGE.TOKEN)
   },
-  getRefreshToken() {
-    return getStorage(STORAGE.REFRESH_TOKEN)
+
+  getUser() {
+    return JSON.parse(getStorage(STORAGE.USER_INFO) || 'null')
   },
-  setSessionTokens({ accessToken, refreshToken, remember }) {
-    if (remember !== undefined) {
-      setStorage(STORAGE.REMEMBER_LOGIN, remember ? "1" : "")
-    }
-    if (accessToken) {
-      setStorage(STORAGE.TOKEN, accessToken)
-    }
-    if (refreshToken) {
-      setStorage(STORAGE.REFRESH_TOKEN, refreshToken)
-    }
+
+  setSessionTokens({ token, user }) {
+    if (token) setStorage(STORAGE.TOKEN, token)
+    if (user) setStorage(STORAGE.USER_INFO, JSON.stringify(user))
   },
-  saveReturnUrl(path) {
-    if (!path || path === ROUTER.LOGIN) return
-    setStorage(STORAGE.RETURN_URL, path)
+
+  updateUser(user) {
+    setStorage(STORAGE.USER_INFO, JSON.stringify(user))
   },
-  consumeReturnUrl() {
-    const returnUrl = getStorage(STORAGE.RETURN_URL)
-    deleteStorage(STORAGE.RETURN_URL)
-    return returnUrl || ROUTER.DEFAULT
-  },
+
   clearSession() {
     clearAuthStorage()
   },

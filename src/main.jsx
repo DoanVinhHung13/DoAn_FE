@@ -1,12 +1,7 @@
-import "@ant-design/v5-patch-for-react-19"
-import { createRoot } from "react-dom/client"
-import "src/assets/css/globals.css"
-import "src/assets/css/index.css"
-import "src/assets/scss/index.scss"
-import App from "./App.jsx"
+import "./assets/css/globals.css";
+import "./assets/css/index.css";
+import "./assets/scss/index.scss";
+import App from "./App.jsx";
+import { createRoot } from "react-dom/client";
 
-createRoot(document.getElementById("root")).render(
-  // <StrictMode>
-  <App />,
-  // </StrictMode>,
-)
+createRoot(document.getElementById("root")).render(<App />);

@@ -1,50 +1,44 @@
 import { Provider } from "react-redux"
-import StoreProvider, { StoreContext } from "src/contexts"
-import { useContext } from "react"
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
-import { store } from "src/redux/store"
-import {
-  ThemeStyledComponent,
-  darkThemeStyledComponent,
-} from "src/theme/ThemeStyledComponent"
 import { ThemeProvider } from "styled-components"
-// Tạo một instance QueryClient
+import { GoogleOAuthProvider } from "@react-oauth/google"
+import { store } from "src/redux/store"
+import StoreProvider from "src/contexts"
+import { ThemeStyledComponent } from "src/theme/ThemeStyledComponent"
+import { GOOGLE_CLIENT_ID } from "src/constants/constants"
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // dữ liệu được xem là "tươi" trong 5 phút
-      cacheTime: 1000 * 60 * 30, // cached data giữ trong 30 phút nếu không active
-      retry: 2, // tự động thử lại tối đa 2 lần khi lỗi
+      staleTime: 1000 * 60 * 5,  // 5 phút dữ liệu "tươi"
+      gcTime:    1000 * 60 * 30, // giữ cache 30 phút (v5 đổi cacheTime → gcTime)
+      retry:     2,
     },
   },
 })
 
-const ThemeBridge = ({ children }) => {
-  const { themeStore } = useContext(StoreContext)
-  const { isDarkMode } = themeStore
-
-  return (
-    <ThemeProvider
-      theme={isDarkMode ? darkThemeStyledComponent : ThemeStyledComponent}
-    >
-      {children}
-    </ThemeProvider>
-  )
-}
-
-const Providers = props => {
-  return (
-    <QueryClientProvider client={queryClient}>
+/**
+ * Thứ tự providers (quan trọng):
+ * 1. QueryClientProvider — ngoài cùng, ReactQueryDevtools cần nằm trong
+ * 2. ThemeProvider      — styled-components theme tokens
+ * 3. Redux Provider     — global Redux store
+ * 4. StoreProvider      — Context API (login, user, darkMode, routerBefore)
+ * 5. GoogleOAuthProvider — Google OAuth
+ */
+const Providers = ({ children }) => (
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider theme={ThemeStyledComponent}>
       <Provider store={store}>
         <StoreProvider>
-          <ThemeBridge>{props.children}</ThemeBridge>
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            {children}
+          </GoogleOAuthProvider>
         </StoreProvider>
       </Provider>
-      {/* Devtools chỉ hiển thị khi nằm trong QueryClientProvider */}
-      <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
-    </QueryClientProvider>
-  )
-}
+    </ThemeProvider>
+    <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+  </QueryClientProvider>
+)
+
 export default Providers

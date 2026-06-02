@@ -1,15 +1,10 @@
-//Authenticate
-export const apiLogin = `Authservice/Login`
-export const apiLogout = `Authservice/Logout`
-export const apiRegister = `Authservice/Register`
-export const apiForgotPassword = `Authservice/ForgotPassword`
-export const apiChangePassword = `Authservice/ChangePassword`
-export const apiVerifyCode = `Authservice/VerifyCode`
-export const apiVerifyCodeRegister = `Authservice/VerifyCodeRegister`
-export const apiResendOtp = `Authservice/ResendOtp`
-export const apiScanCCCD = `Authservice/ScanCCCD`
-
-// GOOGLE
-export const apiLoginGoole = "Authservice/GetGoogleLoginUrl"
-export const apiCallBackLoginGoole = "Authservice/GetTokenInfo"
-
+// Auth API endpoints
+export const apiLogin = "/auth/login";
+export const apiRegister = "/auth/register";
+export const apiLogout = "/auth/logout";
+export const apiGoogleLogin = "/auth/google";
+export const apiForgotPassword = "/auth/forgot-password";
+export const apiResetPassword = "/auth/reset-password";
+export const apiForceChangePassword = "/auth/force-change-password";
+export const apiChangePassword = "/auth/change-password";
+export const apiGetProfile = "/auth/profile";

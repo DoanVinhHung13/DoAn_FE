@@ -1,23 +1,11 @@
-// User
-export const apiInsertUser = "User/Insert"
-export const apiDeleteUser = "User/Delete"
-export const apiDetailUser = "User/GetDetail"
-export const apiUpdateUser = "User/Update"
-export const apiGetListUser = "User/GetList"
-export const apiImportUser = "User/ImportUser"
-export const apiExportUser = "User/ExportUser"
-export const apiGetTemplateFileImportUser = "User/GetTemplateFileImportUser"
-export const apiGetListGuest = "User/GetListGuest"
-export const apiGetAccount = "User/GetAccount"
-export const apiExportGuest = "User/ExportGuest"
-export const apiImportGuest = "User/ImportGuest"
-export const apiGetTemplateFileImportGuest = "User/GetTemplateFileImportGuest"
-export const apiUpdateAccount = "User/UpdateAccount"
-export const apiReplacePassword = "User/ReplacePassword"
-export const apiGetInforUser = "User/GetInforUser"
-export const apiChangeInfor = "User/ChangeInfor"
-export const apiChangeImgUser = "User/ChangeImgUser"
-export const apiResetPassword = "User/ResetPassword"
-export const apiGetListUserInDept = "User/GetListUserInDept"
-export const apiQRAccount = "QRInfo/generate"
-export const apiQRScan = "QRScan/scan"
+// User API endpoints
+export const apiGetUserInfo = '/users/profile'  // dùng bởi DefaultAction
+export const apiGetUsers = '/users'
+export const apiCreateUser = '/users'
+export const apiBulkImportUsers = '/users/bulk'
+export const apiUpdateProfile = '/users/profile'
+export const apiGetUserById = (id) => `/users/${id}`
+export const apiUpdateUser = (id) => `/users/${id}`
+export const apiDeleteUser = (id) => `/users/${id}`
+export const apiChangeUserPassword = (id) => `/users/${id}/password`
+export const apiToggleUserStatus = (id) => `/users/${id}/status`

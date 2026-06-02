@@ -1,39 +1,18 @@
-import react from "@vitejs/plugin-react"
-import path, { dirname } from "path"
-import { fileURLToPath } from "url"
-import { defineConfig } from "vite"
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+import path from 'path'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
+  plugins: [react()],
   resolve: {
     alias: {
-      src: path.resolve(__dirname, "./src"),
+      'src': path.resolve(__dirname, './src'),
     },
   },
-  plugins: [react()],
-
-  build: {
-    outDir: "dist",
-    sourcemap: true,
-    // Mặc định Vite là 500 (kB). Tăng lên 2000 (kB) hoặc lớn hơn
-    chunkSizeWarningLimit: 2000,
-    // Nếu muốn “vô hiệu” hẳn cảnh báo, đặt thành một số rất lớn:
-    // chunkSizeWarningLimit: 10000,
-  },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        additionalData: `@use "/src/assets/scss/responsive/responsive.scss" as *;
-        `,
-      },
-    },
-  },
-
   server: {
-    port: 3000,
-    open: true,
-  },
+    host: '0.0.0.0', // Cho phép truy cập từ mạng LAN (để test QR trên điện thoại)
+    port: 5173,
+  }
 })
