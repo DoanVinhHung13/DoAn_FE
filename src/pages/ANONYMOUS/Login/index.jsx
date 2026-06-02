@@ -1,5 +1,5 @@
-import { LockOutlined, MailOutlined } from "@ant-design/icons";
-import { GoogleLogin } from "@react-oauth/google";
+import { LockOutlined, MailOutlined } from "@ant-design/icons"
+import { GoogleLogin } from "@react-oauth/google"
 import {
   Button,
   Checkbox,
@@ -8,86 +8,102 @@ import {
   Input,
   message,
   Typography,
-} from "antd";
-import React, { useContext } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { StoreContext } from "src/contexts";
-import STORAGE, { setStorage } from "src/lib/storage";
-import { useAppDispatch } from "src/redux/hooks";
-import { setUserInfo } from "src/redux/slices/appGlobalSlice";
+} from "antd"
+import React, { useContext, useEffect } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { StoreContext } from "src/contexts"
+import STORAGE, { setStorage } from "src/lib/storage"
+import { useAppDispatch } from "src/redux/hooks"
+import { setUserInfo } from "src/redux/slices/appGlobalSlice"
+import ROUTER from "src/router/ROUTER"
 
-import logo from "src/assets/logo-ebookfarm.jpg";
-import AuthService from "../../../services/AuthService";
+import logo from "src/assets/logo-ebookfarm.jpg"
+import AuthService from "../../../services/AuthService"
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text, Paragraph } = Typography
 
 const Login = () => {
-  const navigate = useNavigate();
-  const { loginStore } = useContext(StoreContext);
-  const { setIsLoginContext } = loginStore;
-  const dispatch = useAppDispatch();
+  const navigate = useNavigate()
+  const { loginStore } = useContext(StoreContext)
+  const { setIsLoginContext } = loginStore
+  const dispatch = useAppDispatch()
+  
   const setCredentials = (user, token) => {
-    setStorage(STORAGE.TOKEN, token);
-    dispatch(setUserInfo(user));
-    setIsLoginContext(true);
-  };
-  const [loading, setLoading] = React.useState(false);
-  const [form] = Form.useForm();
+    setStorage(STORAGE.TOKEN, token)
+    dispatch(setUserInfo(user))
+    setIsLoginContext(true)
+  }
+  
+  const [loading, setLoading] = React.useState(false)
+  const [form] = Form.useForm()
 
   // Load remembered account
-  React.useEffect(() => {
-    const rememberedEmail = localStorage.getItem("rememberedEmail");
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem("rememberedEmail")
     if (rememberedEmail) {
       form.setFieldsValue({
         email: rememberedEmail,
         remember: true,
-      });
+      })
     }
-  }, [form]);
+  }, [form])
 
   const onFinish = async (values) => {
     try {
-      setLoading(true);
+      setLoading(true)
       const { data } = await AuthService.login({
         identifier: values.email,
         password: values.password,
-      });
+      })
 
       // Handle Remember Me
       if (values.remember) {
-        localStorage.setItem("rememberedEmail", values.email);
+        localStorage.setItem("rememberedEmail", values.email)
       } else {
-        localStorage.removeItem("rememberedEmail");
+        localStorage.removeItem("rememberedEmail")
       }
 
-      setCredentials(data.data, data.data.token);
-      message.success("Đăng nhập thành công! Chào mừng trở lại EBookFarm.");
-      navigate("/dashboard");
+      setCredentials(data.data, data.data.token)
+      message.success("Đăng nhập thành công! Chào mừng trở lại EBookFarm.")
+      
+      // Navigate based on role
+      const userRole = data.data.user?.role || data.data.role
+      if (userRole === 'FarmManager') {
+        navigate(ROUTER.FM_DASHBOARD)
+      } else if (userRole === 'LandManager') {
+        navigate(ROUTER.LM_DASHBOARD)
+      } else if (userRole === 'MaterialManager') {
+        navigate(ROUTER.MM_DASHBOARD)
+      } else if (userRole === 'Farmer') {
+        navigate(ROUTER.FARMER_DASHBOARD)
+      } else {
+        navigate(ROUTER.ADMIN_DASHBOARD)
+      }
     } catch (error) {
       message.error(
         error.response?.data?.message ||
-          "Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản.",
-      );
+          "Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản."
+      )
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      setLoading(true);
+      setLoading(true)
       const { data } = await AuthService.googleLogin({
-        tokenId: credentialResponse.credential, // Pass the ID Token (JWT)
-      });
-      setCredentials(data.data, data.data.token);
-      message.success("Đăng nhập Google thành công!");
-      navigate("/dashboard");
+        tokenId: credentialResponse.credential,
+      })
+      setCredentials(data.data, data.data.token)
+      message.success("Đăng nhập Google thành công!")
+      navigate(ROUTER.FM_DASHBOARD)
     } catch (error) {
-      message.error("Xác thực Google thất bại. Vui lòng thử lại.");
+      message.error("Xác thực Google thất bại. Vui lòng thử lại.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="relative flex items-center justify-center min-h-screen p-4 overflow-hidden md:p-6 bg-slate-50">
@@ -103,7 +119,7 @@ const Login = () => {
 
           <div className="relative z-10">
             <Link
-              to="/"
+              to={ROUTER.HOME}
               className="flex items-center gap-3 mb-12 transition-opacity cursor-pointer hover:opacity-80"
             >
               <div className="flex items-center justify-center w-16 h-16 p-2 overflow-hidden bg-white border shadow-lg rounded-2xl border-white/20">
@@ -130,8 +146,7 @@ const Login = () => {
               Chào mừng bạn quay lại hệ thống
             </Title>
             <Paragraph className="text-emerald-50/80 text-lg leading-relaxed max-w-[320px]">
-              Tiếp tục quản lý nông trại và theo dõi nhật ký sản xuất chuẩn quốc
-              gia ngay hôm nay.
+              Tiếp tục quản lý nông trại và theo dõi nhật ký sản xuất chuẩn quốc gia ngay hôm nay.
             </Paragraph>
           </div>
 
@@ -154,7 +169,7 @@ const Login = () => {
         {/* Right Side: Form */}
         <div className="flex flex-col justify-center w-full p-5 md:w-1/2 sm:p-10 md:p-16">
           <div className="block mb-4 md:mb-10 md:hidden">
-            <Link to="/">
+            <Link to={ROUTER.HOME}>
               <img
                 src={logo}
                 alt="Logo"
@@ -227,7 +242,7 @@ const Login = () => {
                 </Checkbox>
               </Form.Item>
               <Link
-                to="/forgot-password"
+                to={ROUTER.FORGOT_PASSWORD}
                 alt="Quên mật khẩu"
                 className="text-emerald-600 font-bold text-[11px] hover:underline"
               >
@@ -272,7 +287,7 @@ const Login = () => {
               Bạn chưa có tài khoản?{" "}
             </Text>
             <Link
-              to="/register"
+              to={ROUTER.REGISTER}
               className="px-1 font-black text-emerald-600 hover:underline"
             >
               Đăng ký miễn phí
@@ -285,7 +300,7 @@ const Login = () => {
         Copyright 2026 © EBookFarm Security Standard
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
