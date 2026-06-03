@@ -35,9 +35,9 @@ const AIChatWidget = () => {
     const [showUpgradeAlert, setShowUpgradeAlert] = useState(false);
     const messagesEndRef = useRef(null);
 
-    // Lấy thông tin user từ localStorage
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
+    // Lấy thông tin user từ localStorage (key đồng nhất với STORAGE.TOKEN)
+    const token = localStorage.getItem('token-ebookfarm') || sessionStorage.getItem('token-ebookfarm');
+    const userStr = localStorage.getItem('user-info-ebookfarm') || sessionStorage.getItem('user-info-ebookfarm');
     const user = userStr ? JSON.parse(userStr) : null;
 
     // Lấy thông tin chat khi mở widget

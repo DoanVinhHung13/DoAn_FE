@@ -77,7 +77,7 @@ const instance = axios.create({
     // "Content-Type": "application/json",
     accept: "application/json, text/plain, */*",
   },
-  withCredentials: true, // to send cookie
+  withCredentials: false, // set true only if backend supports CORS with credentials (no wildcard origin)
 })
 // request header
 instance.interceptors.request.use(

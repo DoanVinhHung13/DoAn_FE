@@ -615,7 +615,7 @@ const AccountInfo = () => {
                             </Form.Item>
 
                             {/* Thông tin nông trại (chỉ hiện với Farmer/User role) */}
-                            {['Farmer', 'User'].includes(user?.role) && (
+                            {['FARMER'].includes(user?.role) && (
                                 <>
                                     <Divider orientation="left" className="!text-gray-600 !text-sm font-bold mt-8">
                                         <SafetyCertificateOutlined className="mr-2" />

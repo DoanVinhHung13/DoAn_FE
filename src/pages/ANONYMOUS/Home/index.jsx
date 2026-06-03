@@ -18,7 +18,7 @@ import {
 const LandingPage = () => {
   return (
     <div className="min-h-screen overflow-x-hidden bg-white">
-      {/* AI Chat Widget */}
+
       <AIChatWidget />
 
       {/* Main Sections */}
@@ -31,9 +31,9 @@ const LandingPage = () => {
       <SupplyChainSection />
       <ProductShowcaseSection />
       <SuccessStoriesSection />
-      <AboutSection />
+      {/* <AboutSection /> */}
       <ConsultationSection />
-      <FooterSection />
+      {/* <FooterSection /> */}
     </div>
   )
 }

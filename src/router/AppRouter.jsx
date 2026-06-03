@@ -7,63 +7,68 @@ import { StoreContext } from 'src/contexts'
 import LayoutCommon from 'src/components/Common/LayoutCommon'
 import LayoutAdmin from 'src/components/Layout/LayoutAdmin'
 
-// ── SUPPORTPAGES Guards (TabID system) ────────────────────────────────────────
-const AdminRoutes   = React.lazy(() => import('src/pages/SUPPORTPAGES/AdminRouter'))
-const PrivateRoutes = React.lazy(() => import('src/pages/SUPPORTPAGES/PrivateRoutes'))
-const PublicRouters = React.lazy(() => import('src/pages/SUPPORTPAGES/PublicRouters'))
-const GuestRoute    = React.lazy(() => import('src/pages/SUPPORTPAGES/GuestRoute'))
+// ── SupportPage Guards ─────────────────────────────────────────────────────────
+const PrivateRoutes = React.lazy(() => import('src/pages/SupportPage/PrivateRoutes'))
+const GuestRoute = React.lazy(() => import('src/pages/SupportPage/GuestRoute'))
 
 // ── Lazy-loaded pages ─────────────────────────────────────────────────────────
 // ANONYMOUS
-const Home            = React.lazy(() => import('../pages/ANONYMOUS/Home'))
-const Login           = React.lazy(() => import('../pages/ANONYMOUS/Login'))
-const Register        = React.lazy(() => import('../pages/ANONYMOUS/Register'))
-const ForgotPassword  = React.lazy(() => import('../pages/ANONYMOUS/ForgotPassword'))
-const ResetPassword   = React.lazy(() => import('../pages/ANONYMOUS/ResetPassword'))
-const NotFound        = React.lazy(() => import('../pages/SUPPORTPAGES/NotFound'))
-const Forbidden       = React.lazy(() => import('../pages/ANONYMOUS/Forbidden'))
-const NewsListAll     = React.lazy(() => import('../pages/ANONYMOUS/News/NewsListAll'))
-const NewsDetail      = React.lazy(() => import('../pages/ANONYMOUS/News/NewsDetail'))
-const TCVNReference   = React.lazy(() => import('../pages/ANONYMOUS/Reference/TCVNReference'))
+const Home = React.lazy(() => import('../pages/ANONYMOUS/Home'))
+const Login = React.lazy(() => import('../pages/ANONYMOUS/Login'))
+const Register = React.lazy(() => import('../pages/ANONYMOUS/Register'))
+const ForgotPassword = React.lazy(() => import('../pages/ANONYMOUS/ForgotPassword'))
+const ResetPassword = React.lazy(() => import('../pages/ANONYMOUS/ResetPassword'))
+const NotFound = React.lazy(() => import('../pages/SupportPage/NotFound'))
+const Forbidden = React.lazy(() => import('../pages/ANONYMOUS/Forbidden'))
+const NewsListAll = React.lazy(() => import('../pages/ANONYMOUS/News/NewsListAll'))
+const NewsDetail = React.lazy(() => import('../pages/ANONYMOUS/News/NewsDetail'))
+const TCVNReference = React.lazy(() => import('../pages/ANONYMOUS/Reference/TCVNReference'))
 
-// ADMIN
-const Dashboard             = React.lazy(() => import('../pages/ADMIN/Dashboard/index'))
-const UserManagement        = React.lazy(() => import('../pages/ADMIN/UserManagement/index'))
-const JournalManagement     = React.lazy(() => import('../pages/ADMIN/JournalManagement/index'))
-const FormTemplate          = React.lazy(() => import('../pages/ADMIN/FormTemplate/index'))
-const Inventory             = React.lazy(() => import('../pages/ADMIN/Inventory/index'))
-const InventoryCategory     = React.lazy(() => import('../pages/ADMIN/InventoryCategory/index'))
-const GroupManagement       = React.lazy(() => import('../pages/ADMIN/GroupManagement'))
-const RolesManagement       = React.lazy(() => import('../pages/ADMIN/RolesManagement'))
-const NewsManagement        = React.lazy(() => import('../pages/ADMIN/NewsManagement'))
-const ConsultationManagement = React.lazy(() => import('../pages/ADMIN/ConsultationManagement'))
-const Reports               = React.lazy(() => import('../pages/ADMIN/Reports'))
-const SystemLogs            = React.lazy(() => import('../pages/ADMIN/SystemLogs'))
-const BackupMgmt            = React.lazy(() => import('../pages/ADMIN/BackupMgmt'))
-const ChatStats             = React.lazy(() => import('../pages/ADMIN/ChatStats'))
-const AgricultureModels     = React.lazy(() => import('../pages/ADMIN/AgricultureModels'))
-const AccountInfo           = React.lazy(() => import('../pages/ADMIN/AccountInfo'))
-const GeminiTest            = React.lazy(() => import('../pages/ADMIN/GeminiTest'))
-const OpenAITest            = React.lazy(() => import('../pages/ADMIN/OpenAITest'))
-const GroqTest              = React.lazy(() => import('../pages/ADMIN/GroqTest'))
-const RAGTest               = React.lazy(() => import('../pages/ADMIN/RAGTest'))
+// Shared pages (accessible by all roles) - kept in USER/ for now
+const AccountInfo = React.lazy(() => import('../pages/USER/AccountInfo'))
+const ChangePassword = React.lazy(() => import('../pages/USER/ChangePassword'))
+const Notifications = React.lazy(() => import('../pages/USER/Notifications'))
+const JournalTrace = React.lazy(() => import('../pages/FARM_MANAGER/JournalTrace'))
 
-// USER
-const ChangePassword        = React.lazy(() => import('../pages/USER/ChangePassword'))
-const FarmerManagement      = React.lazy(() => import('../pages/USER/FarmerManagement'))
-const HtxInventory          = React.lazy(() => import('../pages/USER/HtxInventory'))
-const HtxJournal            = React.lazy(() => import('../pages/USER/HtxJournal'))
-const HtxJournalApproval    = React.lazy(() => import('../pages/HTX/HtxJournalApproval'))
-const HtxProductMgmt        = React.lazy(() => import('../pages/HTX/HtxProductMgmt'))
-const HtxBatchMgmt          = React.lazy(() => import('../pages/HTX/HtxBatchMgmt'))
-const HtxSupplyMgmt         = React.lazy(() => import('../pages/HTX/HtxSupplyMgmt'))
-const HtxPortalSettings     = React.lazy(() => import('../pages/HTX/HtxPortalSettings'))
-const JournalList           = React.lazy(() => import('../pages/USER/Journal/JournalList'))
-const JournalEntry          = React.lazy(() => import('../pages/USER/Journal/JournalEntry'))
-const JournalTrace          = React.lazy(() => import('../pages/USER/Journal/JournalTrace'))
-const FarmerInventory       = React.lazy(() => import('../pages/USER/FarmerInventory'))
-const FarmerSupplyMgmt      = React.lazy(() => import('../pages/Journal/FarmerSupplyMgmt'))
-const ProductionTech        = React.lazy(() => import('../pages/USER/ProductionTech'))
+// FARM_MANAGER pages
+const FarmManagerDashboard = React.lazy(() => import('../pages/FARM_MANAGER/Dashboard'))
+const FarmManagerUsers = React.lazy(() => import('../pages/FARM_MANAGER/Users'))
+const FarmManagerLands = React.lazy(() => import('../pages/FARM_MANAGER/Lands'))
+const FarmManagerCropCatalogs = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs'))
+const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans'))
+const FarmManagerTasks = React.lazy(() => import('../pages/FARM_MANAGER/Tasks'))
+const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
+const FarmManagerBatches = React.lazy(() => import('../pages/FARM_MANAGER/Batches'))
+const FarmManagerNotifications = React.lazy(() => import('../pages/FARM_MANAGER/Notifications'))
+const FarmManagerViewFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers'))
+const FarmManagerViewCropProtections = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections'))
+
+// LAND_MANAGER pages
+const LandManagerDashboard = React.lazy(() => import('../pages/LAND_MANAGER/Dashboard'))
+const LandManagerFarmers = React.lazy(() => import('../pages/LAND_MANAGER/Farmers'))
+const LandManagerLands = React.lazy(() => import('../pages/LAND_MANAGER/Lands'))
+const LandManagerProductionPlans = React.lazy(() => import('../pages/LAND_MANAGER/ProductionPlans'))
+const LandManagerTasks = React.lazy(() => import('../pages/LAND_MANAGER/Tasks'))
+const LandManagerLogbooks = React.lazy(() => import('../pages/LAND_MANAGER/Logbooks'))
+const LandManagerBatches = React.lazy(() => import('../pages/LAND_MANAGER/Batches'))
+const LandManagerViewCatalogs = React.lazy(() => import('../pages/LAND_MANAGER/ViewCatalogs'))
+
+// MATERIAL_MANAGER pages
+const MaterialManagerDashboard = React.lazy(() => import('../pages/MATERIAL_MANAGER/Dashboard'))
+const MaterialManagerFertilizers = React.lazy(() => import('../pages/MATERIAL_MANAGER/Fertilizers'))
+const MaterialManagerCropProtections = React.lazy(() => import('../pages/MATERIAL_MANAGER/CropProtections'))
+const MaterialManagerMachinery = React.lazy(() => import('../pages/MATERIAL_MANAGER/Machinery'))
+const MaterialManagerOtherMaterials = React.lazy(() => import('../pages/MATERIAL_MANAGER/OtherMaterials'))
+const MaterialManagerPurchaseReqs = React.lazy(() => import('../pages/MATERIAL_MANAGER/PurchaseReqs'))
+const MaterialManagerProductionPlans = React.lazy(() => import('../pages/MATERIAL_MANAGER/ProductionPlans'))
+const MaterialManagerTasks = React.lazy(() => import('../pages/MATERIAL_MANAGER/Tasks'))
+
+// FARMER pages (mapped to USER/ since FARMER folder doesn't exist)
+const FarmerDashboard = React.lazy(() => import('../pages/USER/FarmerManagement'))
+const FarmerTasks = React.lazy(() => import('../pages/FARM_MANAGER/Tasks'))
+const FarmerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
+const FarmerPlans = React.lazy(() => import('../pages/USER/ProductionProcess'))
+const FarmerSupplies = React.lazy(() => import('../pages/FARM_MANAGER/Supplies'))
 
 // ── Spinner fallback dùng chung ───────────────────────────────────────────────
 function Lazy({ children }) {
@@ -91,10 +96,10 @@ const routes = [
   {
     element: <LayoutCommon />,
     children: [
-      { path: ROUTER.HOME,        element: <Lazy><Home /></Lazy> },
-      { path: ROUTER.NEWS,        element: <Lazy><NewsListAll /></Lazy> },
+      { path: ROUTER.HOME, element: <Lazy><Home /></Lazy> },
+      { path: ROUTER.NEWS, element: <Lazy><NewsListAll /></Lazy> },
       { path: ROUTER.NEWS_DETAIL, element: <Lazy><NewsDetail /></Lazy> },
-      { path: ROUTER.TCVN,        element: <Lazy><TCVNReference /></Lazy> },
+      { path: ROUTER.TCVN, element: <Lazy><TCVNReference /></Lazy> },
     ],
   },
 
@@ -122,7 +127,7 @@ const routes = [
     element: <Lazy><JournalTrace /></Lazy>,
   },
 
-  // ── Authenticated app layout (LayoutAdmin bao ngoài Outlet) ──────────────
+  // ── Authenticated app layout ──────────────────────────────────────────────
   {
     element: (
       <Lazy>
@@ -133,83 +138,78 @@ const routes = [
       {
         element: <LayoutAdmin />,
         children: [
-          // Redirect /app → /dashboard
-          { path: ROUTER.APP_REDIRECT, element: <Navigate to={ROUTER.ADMIN_DASHBOARD} replace /> },
+          // Redirect /app → /farm-manager/dashboard
+          { path: ROUTER.APP_REDIRECT, element: <Navigate to={ROUTER.FM_DASHBOARD} replace /> },
 
-          // Shared (mọi role đã login đều thấy)
-          { path: ROUTER.ADMIN_DASHBOARD,       element: <Lazy><Dashboard /></Lazy> },
-          { path: ROUTER.ADMIN_DASHBOARD_ALIAS, element: <Lazy><Dashboard /></Lazy> },
-          { path: ROUTER.ADMIN_REPORTS,         element: <Lazy><Reports /></Lazy> },
-          { path: ROUTER.ACCOUNT_INFO,          element: <Lazy><AccountInfo /></Lazy> },
-          { path: ROUTER.CHANGE_PASSWORD,       element: <Lazy><ChangePassword /></Lazy> },
-          { path: ROUTER.ADMIN_AG_MODELS,       element: <Lazy><AgricultureModels /></Lazy> },
-          { path: ROUTER.ADMIN_INVENTORY,       element: <Lazy><Inventory /></Lazy> },
-          { path: ROUTER.ADMIN_INVENTORY_CATEGORY, element: <Lazy><InventoryCategory /></Lazy> },
-          { path: ROUTER.ADMIN_INVENTORY_MODELS,   element: <Lazy><Inventory /></Lazy> },
-          { path: ROUTER.TCVN_AUTH,             element: <Lazy><TCVNReference /></Lazy> },
+          // Shared routes (mọi role đã login đều thấy)
+          { path: ROUTER.ACCOUNT_INFO, element: <Lazy><AccountInfo /></Lazy> },
+          { path: ROUTER.CHANGE_PASSWORD, element: <Lazy><ChangePassword /></Lazy> },
+          { path: ROUTER.NOTIFICATIONS, element: <Lazy><Notifications /></Lazy> },
+          { path: ROUTER.TCVN_AUTH, element: <Lazy><TCVNReference /></Lazy> },
 
-          // Admin-only (TabID guard via AdminRoutes wraps these in LayoutAdmin)
+          // ── Farm Manager Routes ────────────────────────────────────────────
           {
-            element: <Lazy><AdminRoutes /></Lazy>,
+            path: 'farm-manager',
             children: [
-              { path: ROUTER.ADMIN_FORM_BUILDER,   element: <Lazy><FormTemplate /></Lazy> },
-              { path: ROUTER.ADMIN_USERS,           element: <Lazy><UserManagement /></Lazy> },
-              { path: ROUTER.ADMIN_JOURNALS,        element: <Lazy><JournalManagement /></Lazy> },
-              { path: ROUTER.ADMIN_ACCOUNTS_MGMT,  element: <Lazy><AccountInfo /></Lazy> },
-              { path: ROUTER.ADMIN_GROUPS,          element: <Lazy><GroupManagement /></Lazy> },
-              { path: ROUTER.ADMIN_ROLES,           element: <Lazy><RolesManagement /></Lazy> },
-              { path: ROUTER.ADMIN_NEWS,            element: <Lazy><NewsManagement /></Lazy> },
-              { path: ROUTER.ADMIN_CONSULTATIONS,  element: <Lazy><ConsultationManagement /></Lazy> },
-              { path: ROUTER.ADMIN_GEMINI,          element: <Lazy><GeminiTest /></Lazy> },
-              { path: ROUTER.ADMIN_OPENAI,          element: <Lazy><OpenAITest /></Lazy> },
-              { path: ROUTER.ADMIN_GROQ,            element: <Lazy><GroqTest /></Lazy> },
-              { path: ROUTER.ADMIN_RAG,             element: <Lazy><RAGTest /></Lazy> },
-              { path: ROUTER.ADMIN_CHAT_STATS,      element: <Lazy><ChatStats /></Lazy> },
-              { path: ROUTER.ADMIN_LOGS,            element: <Lazy><SystemLogs /></Lazy> },
-              { path: ROUTER.ADMIN_BACKUP,          element: <Lazy><BackupMgmt /></Lazy> },
+              { index: true, element: <Navigate to={ROUTER.FM_DASHBOARD} replace /> },
+              { path: 'dashboard', element: <Lazy><FarmManagerDashboard /></Lazy> },
+              { path: 'users', element: <Lazy><FarmManagerUsers /></Lazy> },
+              { path: 'lands', element: <Lazy><FarmManagerLands /></Lazy> },
+              { path: 'crop-catalogs', element: <Lazy><FarmManagerCropCatalogs /></Lazy> },
+              { path: 'production-plans', element: <Lazy><FarmManagerProductionPlans /></Lazy> },
+              { path: 'tasks', element: <Lazy><FarmManagerTasks /></Lazy> },
+              { path: 'logbooks', element: <Lazy><FarmManagerLogbooks /></Lazy> },
+              { path: 'batches', element: <Lazy><FarmManagerBatches /></Lazy> },
+              { path: 'notifications', element: <Lazy><FarmManagerNotifications /></Lazy> },
+              { path: 'view-fertilizers', element: <Lazy><FarmManagerViewFertilizers /></Lazy> },
+              { path: 'view-crop-protections', element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
             ],
           },
 
-          // HTX routes
-          { path: ROUTER.HTX_JOURNALS,       element: <Lazy><HtxJournal /></Lazy> },
-          { path: ROUTER.HTX_FARMERS,        element: <Lazy><FarmerManagement /></Lazy> },
-          { path: ROUTER.HTX_APPROVALS,      element: <Lazy><HtxJournalApproval /></Lazy> },
-          { path: ROUTER.HTX_PRODUCTS,       element: <Lazy><HtxProductMgmt /></Lazy> },
-          { path: ROUTER.HTX_BATCHES,        element: <Lazy><HtxBatchMgmt /></Lazy> },
-          { path: ROUTER.HTX_SUPPLIES,       element: <Lazy><HtxSupplyMgmt /></Lazy> },
-          { path: ROUTER.HTX_PORTAL_SETTINGS, element: <Lazy><HtxPortalSettings /></Lazy> },
-          { path: ROUTER.HTX_INVENTORY,      element: <Lazy><HtxInventory /></Lazy> },
-          { path: ROUTER.FARMERS,            element: <Lazy><FarmerManagement /></Lazy> },
-          { path: ROUTER.JOURNAL_VIEW,       element: <Lazy><JournalEntry /></Lazy> },
+          // ── Land Manager Routes ────────────────────────────────────────────
+          {
+            path: 'land-manager',
+            children: [
+              { index: true, element: <Navigate to={ROUTER.LM_DASHBOARD} replace /> },
+              { path: 'dashboard', element: <Lazy><LandManagerDashboard /></Lazy> },
+              { path: 'farmers', element: <Lazy><LandManagerFarmers /></Lazy> },
+              { path: 'lands', element: <Lazy><LandManagerLands /></Lazy> },
+              { path: 'production-plans', element: <Lazy><LandManagerProductionPlans /></Lazy> },
+              { path: 'tasks', element: <Lazy><LandManagerTasks /></Lazy> },
+              { path: 'logbooks', element: <Lazy><LandManagerLogbooks /></Lazy> },
+              { path: 'batches', element: <Lazy><LandManagerBatches /></Lazy> },
+              { path: 'view-catalogs', element: <Lazy><LandManagerViewCatalogs /></Lazy> },
+            ],
+          },
 
-          // Farmer routes — VietGAP, Hữu cơ, Thông minh
+          // ── Material Manager Routes ────────────────────────────────────────
           {
-            path: 'vietgap/:subCategory',
+            path: 'material-manager',
             children: [
-              { index: true,            element: <Lazy><JournalList /></Lazy> },
-              { path: 'new/:schemaId',  element: <Lazy><JournalEntry /></Lazy> },
-              { path: 'edit/:id',       element: <Lazy><JournalEntry /></Lazy> },
+              { index: true, element: <Navigate to={ROUTER.MM_DASHBOARD} replace /> },
+              { path: 'dashboard', element: <Lazy><MaterialManagerDashboard /></Lazy> },
+              { path: 'fertilizers', element: <Lazy><MaterialManagerFertilizers /></Lazy> },
+              { path: 'crop-protections', element: <Lazy><MaterialManagerCropProtections /></Lazy> },
+              { path: 'machinery', element: <Lazy><MaterialManagerMachinery /></Lazy> },
+              { path: 'materials', element: <Lazy><MaterialManagerOtherMaterials /></Lazy> },
+              { path: 'purchase-requisitions', element: <Lazy><MaterialManagerPurchaseReqs /></Lazy> },
+              { path: 'production-plans', element: <Lazy><MaterialManagerProductionPlans /></Lazy> },
+              { path: 'tasks', element: <Lazy><MaterialManagerTasks /></Lazy> },
             ],
           },
+
+          // ── Farmer Routes ──────────────────────────────────────────────────
           {
-            path: 'huuco/:subCategory',
+            path: 'farmer',
             children: [
-              { index: true,            element: <Lazy><JournalList /></Lazy> },
-              { path: 'new/:schemaId',  element: <Lazy><JournalEntry /></Lazy> },
-              { path: 'edit/:id',       element: <Lazy><JournalEntry /></Lazy> },
+              { index: true, element: <Navigate to={ROUTER.FARMER_DASHBOARD} replace /> },
+              { path: 'dashboard', element: <Lazy><FarmerDashboard /></Lazy> },
+              { path: 'tasks', element: <Lazy><FarmerTasks /></Lazy> },
+              { path: 'logbooks', element: <Lazy><FarmerLogbooks /></Lazy> },
+              { path: 'production-plans', element: <Lazy><FarmerPlans /></Lazy> },
+              { path: 'supplies', element: <Lazy><FarmerSupplies /></Lazy> },
             ],
           },
-          {
-            path: 'thongminh/:subCategory',
-            children: [
-              { index: true,            element: <Lazy><JournalList /></Lazy> },
-              { path: 'new/:schemaId',  element: <Lazy><JournalEntry /></Lazy> },
-              { path: 'edit/:id',       element: <Lazy><JournalEntry /></Lazy> },
-            ],
-          },
-          { path: ROUTER.PRODUCTION_TECH,   element: <Lazy><ProductionTech /></Lazy> },
-          { path: ROUTER.FARMER_INVENTORY,  element: <Lazy><FarmerInventory /></Lazy> },
-          { path: ROUTER.FARMER_SUPPLIES,   element: <Lazy><FarmerSupplyMgmt /></Lazy> },
         ],
       },
     ],
@@ -218,7 +218,7 @@ const routes = [
   // ── Error pages (standalone, no layout) ──────────────────────────────────
   { path: ROUTER.FORBIDDEN, element: <Lazy><Forbidden /></Lazy> },
   { path: ROUTER.NOT_FOUND, element: <Lazy><NotFound /></Lazy> },
-  { path: '*',              element: <Lazy><NotFound /></Lazy> },
+  { path: '*', element: <Lazy><NotFound /></Lazy> },
 ]
 
 const AppRouter = () => useRoutes(routes)

@@ -22,6 +22,7 @@ import { clearStorage } from "src/lib/storage";
 import { getAvatarUrl } from "src/lib/utils";
 import { useAppDispatch } from "src/redux/hooks";
 import { setUserInfo } from "src/redux/slices/appGlobalSlice";
+import ROUTER from "src/router/ROUTER";
 
 const { Title } = Typography;
 
@@ -36,7 +37,7 @@ const PublicNavbar = () => {
   const handleLogout = () => {
     clearStorage();
     dispatch(setUserInfo({}));
-    navigate("/");
+    navigate(ROUTER.HOME);
   };
 
   const userMenuItems = [
@@ -44,13 +45,13 @@ const PublicNavbar = () => {
       key: "dashboard",
       label: "Bảng điều khiển",
       icon: <DashboardOutlined />,
-      onClick: () => navigate("/dashboard"),
+      onClick: () => navigate(ROUTER.FM_DASHBOARD),
     },
     {
       key: "profile",
       label: "Trang cá nhân",
       icon: <UserOutlined />,
-      onClick: () => navigate("/account-info"),
+      onClick: () => navigate(ROUTER.ACCOUNT_INFO),
     },
     {
       type: "divider",
@@ -71,7 +72,7 @@ const PublicNavbar = () => {
         <div className="flex justify-start flex-1">
           <div
             className="flex items-center gap-3 transition-opacity cursor-pointer hover:opacity-80"
-            onClick={() => navigate("/")}
+            onClick={() => navigate(ROUTER.HOME)}
           >
             <div className="flex items-center justify-center w-12 h-12 overflow-hidden bg-white border rounded-full shadow-sm border-gray-50">
               <img
@@ -97,21 +98,21 @@ const PublicNavbar = () => {
             <Button
               type="text"
               className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => navigate("/")}
+              onClick={() => navigate(ROUTER.HOME)}
             >
               Trang chủ
             </Button>
             <Button
               type="text"
               className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => navigate("/reference/tcvn")}
+              onClick={() => navigate(ROUTER.TCVN)}
             >
               Tra cứu TCVN
             </Button>
             <Button
               type="text"
               className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => navigate("/news")}
+              onClick={() => navigate(ROUTER.NEWS)}
             >
               Tin tức
             </Button>
@@ -119,12 +120,12 @@ const PublicNavbar = () => {
               type="text"
               className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
               onClick={() => {
-                if (window.location.pathname === "/") {
+                if (window.location.pathname === ROUTER.HOME) {
                   document
                     .getElementById("about-us")
                     ?.scrollIntoView({ behavior: "smooth" });
                 } else {
-                  navigate("/");
+                  navigate(ROUTER.HOME);
                   setTimeout(
                     () =>
                       document
@@ -149,7 +150,7 @@ const PublicNavbar = () => {
                   type="text"
                   icon={<DashboardOutlined />}
                   className="items-center hidden px-3 font-bold text-green-600 transition-all rounded-lg hover:bg-green-50 sm:flex"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate(ROUTER.FM_DASHBOARD)}
                 >
                   Bảng điều khiển
                 </Button>
@@ -167,9 +168,9 @@ const PublicNavbar = () => {
                   <div className="flex items-center gap-3 cursor-pointer p-1.5 hover:bg-gray-50/80 rounded-2xl transition-all border border-transparent hover:border-gray-100">
                     <Avatar
                       size={40}
-                      src={getAvatarUrl(user?.avatar)}
+                      src={getAvatarUrl(user?.avatarUrl)}
                       style={{ backgroundColor: "#16a34a" }}
-                      icon={!user?.avatar && <UserOutlined />}
+                      icon={!user?.avatarUrl && <UserOutlined />}
                       className="border-2 border-white shadow-sm"
                     />
                     <div className="hidden md:flex flex-col justify-center min-w-[80px]">
@@ -177,8 +178,7 @@ const PublicNavbar = () => {
                         Xin chào
                       </span>
                       <span className="text-[14px] text-gray-800 font-extrabold leading-none truncate">
-                        {user?.fullname ||
-                          user?.username ||
+                        {user?.fullName ||
                           user?.email?.split("@")[0] ||
                           "Người dùng"}
                       </span>
@@ -191,7 +191,7 @@ const PublicNavbar = () => {
                 <Button
                   type="text"
                   className="px-2 font-bold text-green-600 rounded-full"
-                  onClick={() => navigate("/login")}
+                  onClick={() => navigate(ROUTER.LOGIN)}
                 >
                   Đăng nhập
                 </Button>
@@ -199,7 +199,7 @@ const PublicNavbar = () => {
                   type="primary"
                   size="large"
                   className="px-4 font-bold bg-green-600 border-0 rounded-full shadow-lg hover:bg-green-700 md:px-6 shadow-green-100"
-                  onClick={() => navigate("/register")}
+                  onClick={() => navigate(ROUTER.REGISTER)}
                 >
                   Đăng ký
                 </Button>
@@ -236,7 +236,7 @@ const PublicNavbar = () => {
               type="text"
               className="font-bold text-left text-gray-600"
               onClick={() => {
-                navigate("/");
+                navigate(ROUTER.HOME);
                 setMobileMenuOpen(false);
               }}
             >
@@ -246,7 +246,7 @@ const PublicNavbar = () => {
               type="text"
               className="font-bold text-left text-gray-600"
               onClick={() => {
-                navigate("/reference/tcvn");
+                navigate(ROUTER.TCVN);
                 setMobileMenuOpen(false);
               }}
             >
@@ -256,7 +256,7 @@ const PublicNavbar = () => {
               type="text"
               className="font-bold text-left text-gray-600"
               onClick={() => {
-                navigate("/news");
+                navigate(ROUTER.NEWS);
                 setMobileMenuOpen(false);
               }}
             >
@@ -267,12 +267,12 @@ const PublicNavbar = () => {
               className="font-bold text-left text-gray-600"
               onClick={() => {
                 setMobileMenuOpen(false);
-                if (window.location.pathname === "/") {
+                if (window.location.pathname === ROUTER.HOME) {
                   document
                     .getElementById("about-us")
                     ?.scrollIntoView({ behavior: "smooth" });
                 } else {
-                  navigate("/");
+                  navigate(ROUTER.HOME);
                   setTimeout(
                     () =>
                       document
@@ -293,7 +293,7 @@ const PublicNavbar = () => {
                 type="primary"
                 className="h-12 font-bold bg-green-600 border-0 rounded-xl"
                 onClick={() => {
-                  navigate("/register");
+                  navigate(ROUTER.REGISTER);
                   setMobileMenuOpen(false);
                 }}
               >

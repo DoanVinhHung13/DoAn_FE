@@ -1,7 +1,7 @@
 // Helper functions
 
 // Base URL of the backend server (no trailing slash, no /api)
-export const API_BASE_URL = (import.meta.env.VITE_API_URL || 'https://ebookfarm.onrender.com/api').replace(/\/api$/, '');
+export const API_BASE_URL = (import.meta.env.VITE_API_URL);
 // Full API URL with /api suffix
 export const API_URL = `${API_BASE_URL}/api`;
 

@@ -12,24 +12,10 @@ import {
   MenuOutlined,
   LogoutOutlined,
   UserOutlined,
-  CheckCircleOutlined,
-  AppstoreOutlined,
-  GlobalOutlined,
-  FileTextOutlined,
-  SettingOutlined,
-  BellOutlined,
-  BorderOutlined,
-  LockOutlined,
-  BarChartOutlined,
-  InboxOutlined,
-  ReadOutlined,
-  PhoneOutlined,
-  RobotOutlined,
-  ThunderboltOutlined,
-  DatabaseOutlined,
-  TeamOutlined,
 } from '@ant-design/icons'
-import { Leaf, BoxSelect, Droplet, Sprout, Tractor, Fish, ChevronDown, RefreshCcw } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
+import { getMenuByRole } from 'src/router/MenuItem'
+import ROUTER from 'src/router/ROUTER'
 import logoImg from 'src/assets/images/logo/logo-ebookfarm.jpg'
 
 const { Header, Sider, Content } = Layout
@@ -63,235 +49,13 @@ const LayoutAdmin = () => {
     }
   }
 
-  const getAdminItems = () => [
-    {
-      key: '/dashboard',
-      icon: <AppstoreOutlined className="text-lg" />,
-      label: <span className="font-medium">Tổng quan</span>,
-    },
-    {
-      key: '/reports',
-      icon: <BarChartOutlined className="text-lg" />,
-      label: <span className="font-medium">Báo cáo &amp; Thống kê</span>,
-    },
-    {
-      key: '/account-info',
-      icon: <UserOutlined className="text-lg" />,
-      label: <span className="font-medium">Thông tin tài khoản</span>,
-    },
-    {
-      key: '/form-builder',
-      icon: <FileTextOutlined className="text-lg" />,
-      label: <span className="font-medium">Biểu mẫu nhật ký</span>,
-    },
-    {
-      key: '/tcvn',
-      icon: <ReadOutlined className="text-lg" />,
-      label: <span className="font-medium">Tra cứu TCVN</span>,
-    },
-    {
-      key: '/admin/news',
-      icon: <FileTextOutlined className="text-lg" />,
-      label: <span className="font-medium">Quản lý tin tức</span>,
-    },
-    {
-      key: '/admin/consultations',
-      icon: <PhoneOutlined className="text-lg" />,
-      label: <span className="font-medium">Yêu cầu tư vấn</span>,
-    },
-    {
-      key: '/admin/groq-test',
-      icon: <ThunderboltOutlined className="text-lg" />,
-      label: <span className="font-medium">Test Groq AI</span>,
-    },
-    {
-      key: '/admin/rag-test',
-      icon: <DatabaseOutlined className="text-lg" />,
-      label: <span className="font-medium">Test RAG System</span>,
-    },
-    {
-      key: '/admin/chat-stats',
-      icon: <BarChartOutlined className="text-lg" />,
-      label: <span className="font-medium">Thống kê Chat AI</span>,
-    },
-    {
-      key: '/agriculture-models',
-      icon: <GlobalOutlined className="text-lg" />,
-      label: <span className="font-medium">Mô hình nông nghiệp</span>,
-    },
-    {
-      key: '/admin/journals',
-      icon: <SettingOutlined className="text-lg" />,
-      label: <span className="font-medium">Quản lý nhật ký</span>,
-    },
-    {
-      key: 'inventory-mgmt',
-      icon: <Tractor className="w-5 h-5" />,
-      label: <span className="font-medium">Quản lý kho vật tư</span>,
-      children: [
-        { key: '/inventory/categories', label: 'Danh mục vật tư' },
-        { key: '/inventory/items', label: 'Kho tổng vật tư' },
-      ],
-    },
-    {
-      key: '/admin/accounts-mgmt',
-      icon: <BorderOutlined className="text-lg" />,
-      label: <span className="font-medium">Quản lý tài khoản</span>,
-      children: [
-        { key: '/admin/users', label: 'Danh sách tài khoản' },
-        { key: '/admin/groups', label: 'Quản Lý HTX' },
-        { key: '/admin/roles', label: 'Phân quyền & Vai trò' },
-      ],
-    },
-    {
-      key: 'customer-mgmt',
-      icon: <GlobalOutlined className="text-lg" />,
-      label: <span className="font-medium">Quản lý khách hàng</span>,
-      children: [
-        { key: '/admin/customers', label: 'Danh sách khách hàng' },
-        { key: '/admin/customer-rights', label: 'Quản lý quyền tài khoản thành viên' },
-      ],
-    },
-    {
-      key: '/admin/logs',
-      icon: <SettingOutlined className="text-lg" />,
-      label: <span className="font-medium">Nhật ký hệ thống</span>,
-    },
-    {
-      key: 'system-config',
-      icon: <SettingOutlined className="text-lg" />,
-      label: <span className="font-medium">Cấu hình hệ thống</span>,
-      children: [
-        { key: '/admin/config/setup', label: 'Thiết lập hệ thống' },
-        { key: '/admin/config/backup', label: 'Backup dữ liệu' },
-      ],
-    },
-  ]
+  // Lấy menu theo role từ MenuItem.jsx
+  const menuItems = getMenuByRole(user?.role)
 
-  const getFarmerItems = () => [
-    {
-      key: '/dashboard',
-      icon: <AppstoreOutlined className="text-lg" />,
-      label: <span className="font-medium">Tổng quan</span>,
-    },
-    {
-      key: '/reports',
-      icon: <BarChartOutlined className="text-lg" />,
-      label: <span className="font-medium">Báo cáo &amp; Thống kê</span>,
-    },
-    {
-      key: 'vietgap',
-      icon: <Sprout className="w-[18px] h-[18px] text-green-600" />,
-      label: <span className="font-medium">Sản xuất VietGAP</span>,
-      className: 'custom-farmer-submenu',
-      children: [
-        { key: '/vietgap/trong-trot', label: 'VietGAP Trồng trọt' },
-        { key: '/vietgap/chan-nuoi', label: 'VietGAHP Chăn nuôi' },
-        { key: '/vietgap/thuy-san', label: 'VietGAP Thủy sản' },
-      ],
-    },
-    {
-      key: 'huuco',
-      icon: <Leaf className="w-5 h-5 text-green-600" />,
-      label: <span className="font-medium">Nông nghiệp hữu cơ</span>,
-      className: 'custom-farmer-submenu',
-      children: [
-        { key: '/huuco/cay-trong', label: 'Cây trồng' },
-        { key: '/huuco/chan-nuoi', label: 'Chăn nuôi' },
-        { key: '/huuco/thuy-san', label: 'Thủy sản' },
-      ],
-    },
-    {
-      key: 'thongminh',
-      icon: <RefreshCcw className="w-[18px] h-[18px] text-green-600" />,
-      label: <span className="font-medium">Nông nghiệp thông minh</span>,
-      className: 'custom-farmer-submenu',
-      children: [
-        { key: '/thongminh/rau-cu-qua', label: 'Rau củ quả' },
-        { key: '/thongminh/lua', label: 'Lúa' },
-        { key: '/thongminh/chan-nuoi', label: 'Chăn nuôi' },
-      ],
-    },
-    {
-      key: '/inventory/farmer',
-      icon: <InboxOutlined className="text-lg" />,
-      label: <span className="font-medium">Tồn kho</span>,
-    },
-    {
-      key: '/supplies/farmer',
-      icon: <BoxSelect className="w-5 h-5" />,
-      label: <span className="font-medium">Xin cấp vật tư</span>,
-    },
-    {
-      key: 'docs-submenu',
-      icon: <ReadOutlined className="text-lg" />,
-      label: <span className="font-medium">Tiêu chuẩn &amp; Quy trình</span>,
-      children: [
-        { key: '/docs', label: 'Quy trình kỹ thuật' },
-        { key: '/tcvn', label: 'Tra cứu TCVN' },
-      ],
-    },
-  ]
-
-  const getHtxItems = () => [
-    {
-      key: '/dashboard',
-      icon: <AppstoreOutlined className="text-lg" />,
-      label: <span className="font-medium">Tổng quan HTX</span>,
-    },
-    {
-      key: '/reports',
-      icon: <BarChartOutlined className="text-lg" />,
-      label: <span className="font-medium">Báo cáo &amp; Thống kê</span>,
-    },
-    {
-      key: '/htx/farmers',
-      icon: <TeamOutlined className="text-lg" />,
-      label: <span className="font-medium">Quản lý nông dân</span>,
-    },
-    {
-      key: '/htx/journals',
-      icon: <SettingOutlined className="text-lg" />,
-      label: <span className="font-medium">Quản lý sổ HTX</span>,
-    },
-    {
-      key: '/inventory',
-      icon: <InboxOutlined className="text-lg" />,
-      label: <span className="font-medium">Kho vật tư tập trung</span>,
-    },
-    {
-      key: '/htx/approvals',
-      icon: <CheckCircleOutlined className="text-lg" />,
-      label: <span className="font-medium">Duyệt nhật ký nông dân</span>,
-    },
-    {
-      key: '/htx/products',
-      icon: <Sprout className="w-5 h-5" />,
-      label: <span className="font-medium">Quản lý sản phẩm</span>,
-    },
-    {
-      key: '/htx/batches',
-      icon: <BoxSelect className="w-5 h-5" />,
-      label: <span className="font-medium">Quản lý lô sản xuất</span>,
-    },
-    {
-      key: '/htx/supplies',
-      icon: <Droplet className="w-5 h-5" />,
-      label: <span className="font-medium">Quản lý cấp phát vật tư</span>,
-    },
-    {
-      key: '/htx/portal-settings',
-      icon: <GlobalOutlined className="text-lg" />,
-      label: <span className="font-medium">Thiết lập cổng quốc gia</span>,
-    },
-  ]
-
-  const items =
-    user?.role?.toUpperCase() === 'ADMIN'
-      ? getAdminItems()
-      : user?.role?.toUpperCase() === 'HTX'
-      ? getHtxItems()
-      : getFarmerItems()
+  const selectedKey =
+    menuItems
+      .flatMap((item) => (item.children ? [item, ...item.children] : [item]))
+      .find((item) => item.key && location.pathname.startsWith(item.key))?.key || location.pathname
 
   const dropdownItems = [
     {
@@ -299,7 +63,7 @@ const LayoutAdmin = () => {
       label: (
         <div className="p-2 min-w-[160px]">
           <Text strong className="block text-gray-800">
-            {user?.fullname || user?.username || 'Thành viên'}
+            {user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}
           </Text>
           <Text type="secondary" className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">
             {user?.role || 'User'}
@@ -310,14 +74,14 @@ const LayoutAdmin = () => {
     },
     { type: 'divider' },
     { key: '1', icon: <UserOutlined />, label: 'Thông tin cá nhân', className: 'rounded-lg mb-1' },
-    { key: '2', icon: <LockOutlined />, label: 'Đổi mật khẩu', className: 'rounded-lg mb-1' },
+    { key: '2', icon: <LogoutOutlined />, label: 'Đổi mật khẩu', className: 'rounded-lg mb-1' },
     { type: 'divider' },
     { key: '3', danger: true, icon: <LogoutOutlined />, label: 'Đăng xuất', className: 'rounded-lg' },
   ]
 
   const handleMenuClick = ({ key }) => {
-    if (key === '1') navigate('/account-info')
-    else if (key === '2') navigate('/change-password')
+    if (key === '1') navigate(ROUTER.ACCOUNT_INFO)
+    else if (key === '2') navigate(ROUTER.CHANGE_PASSWORD)
     else if (key === '3') handleLogout()
   }
 
@@ -331,7 +95,7 @@ const LayoutAdmin = () => {
       {/* Logo/Branding Section */}
       <div
         className="h-24 flex flex-col items-center justify-center border-b border-gray-50 px-4 shrink-0 transition-all duration-300 cursor-pointer hover:bg-gray-50/50"
-        onClick={() => navigate('/')}
+        onClick={() => navigate(ROUTER.HOME)}
       >
         {collapsed && !isMobile ? (
           <div className="w-10 h-10 flex items-center justify-center">
@@ -352,13 +116,9 @@ const LayoutAdmin = () => {
       <div className="flex-1 overflow-y-auto overflow-x-hidden custom-sidebar-scroll transition-all duration-300">
         <Menu
           mode="inline"
-          selectedKeys={[
-            items
-              .flatMap((item) => (item.children ? [item, ...item.children] : [item]))
-              .find((item) => item.key && location.pathname.startsWith(item.key))?.key || location.pathname,
-          ]}
+          selectedKeys={[selectedKey]}
           defaultOpenKeys={[]}
-          items={items}
+          items={menuItems}
           onClick={handleNavItemClick}
           className="border-r-0 px-3 py-4"
           expandIcon={({ isOpen }) => (
@@ -368,7 +128,7 @@ const LayoutAdmin = () => {
       </div>
 
       {/* Support Card */}
-      {(!collapsed || isMobile) && (
+      {/* {(!collapsed || isMobile) && (
         <div className="p-6 mt-auto border-t border-gray-50 shrink-0 bg-white">
           <div className="bg-green-50 rounded-2xl p-4 border border-green-100 shadow-sm shadow-green-50/50">
             <Text strong className="text-green-800 text-xs block mb-1">
@@ -380,7 +140,7 @@ const LayoutAdmin = () => {
             </Button>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   )
 
@@ -431,7 +191,7 @@ const LayoutAdmin = () => {
               {!isMobile && (
                 <Button
                   type="text"
-                  icon={<SettingOutlined className="text-gray-400 text-lg" />}
+                  icon={<UserOutlined className="text-gray-400 text-lg" />}
                   className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-50"
                 />
               )}
@@ -449,15 +209,15 @@ const LayoutAdmin = () => {
               <div className="flex items-center gap-2 md:gap-3 cursor-pointer group hover:bg-green-50/50 p-1.5 md:pr-3 rounded-2xl transition-all border border-transparent hover:border-green-100">
                 <Avatar
                   size={isMobile ? 32 : 44}
-                  src={getAvatarUrl(user?.avatar)}
+                  src={getAvatarUrl(user?.avatarUrl)}
                   className="bg-green-50 text-green-600 border-2 border-green-200 group-hover:border-green-400 transition-all font-bold shadow-sm"
                 >
-                  {!user?.avatar && getInitialAvatar(user?.fullname || user?.username || 'U')}
+                  {!user?.avatarUrl && getInitialAvatar(user?.fullName || user?.email?.split('@')[0] || 'U')}
                 </Avatar>
                 {!isMobile && (
                   <div className="text-left flex flex-col justify-center">
                     <Text className="font-bold text-gray-800 group-hover:text-green-600 transition-colors block text-sm leading-tight">
-                      {user?.fullname || user?.username || 'Thành viên'}
+                      {user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}
                     </Text>
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                       {user?.role || 'Admin Account'}

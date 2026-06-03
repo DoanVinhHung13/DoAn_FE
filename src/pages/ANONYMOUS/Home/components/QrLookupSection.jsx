@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Card, Form, Input, Button, Typography } from 'antd'
-import { QrcodeOutlined, SearchOutlined, ArrowRightOutlined } from '@ant-design/icons'
+import { QrcodeOutlined, SearchOutlined, ArrowRightOutlined, CameraOutlined, CheckOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import api from 'src/services/01_axios'
 import { message } from 'antd'

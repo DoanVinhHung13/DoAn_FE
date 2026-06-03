@@ -16,7 +16,7 @@ export const apiChangePassword = "/auth/change-password"
 export const apiForceChangePassword = "/auth/force-change-password"
 
 // Profile
-export const apiGetProfile = "/auth/profile"
+export const apiGetProfile = "/auth/me"
 export const apiUpdateProfile = "/auth/profile"
 export const apiUploadAvatar = "/auth/profile/avatar"
 
@@ -26,8 +26,8 @@ export const apiGetUserById = (id) => `/users/${id}`
 export const apiCreateUser = "/users"
 export const apiUpdateUser = (id) => `/users/${id}`
 export const apiDeleteUser = (id) => `/users/${id}`
-export const apiChangeUserStatus = (id) => `/users/${id}/status"
-export const apiChangeUserPassword = (id) => `/users/${id}/password"
+export const apiChangeUserStatus = (id) => `/users/${id}/status`
+export const apiChangeUserPassword = (id) => `/users/${id}/password`
 
 // Role & Permission
 export const apiGetRoles = "/roles"

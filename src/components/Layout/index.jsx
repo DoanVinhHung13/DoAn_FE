@@ -34,18 +34,16 @@ const MainLayout = props => {
   const [selectedKey, setSelectedKey] = useState(
     getStorage(STORAGE.KEY_MENU_ACTIVE) || [location?.pathname] || ["/"],
   )
-  const { listTabs, userInfo } = useSelector(state => state?.appGlobal)
+  const { userInfo } = useSelector(state => state?.appGlobal)
   const { loginStore } = useContext(StoreContext)
   const { isLoginContext } = loginStore
 
   const setShowListMenu = list =>
     list?.length
-      ? list
-          ?.filter(x => hasPermission(x?.tabid, [...listTabs]))
-          .map(i => ({
-            ...i,
-            children: setShowListMenu(i?.children),
-          }))
+      ? list.map(i => ({
+          ...i,
+          children: setShowListMenu(i?.children),
+        }))
       : undefined
 
   const onClickMenu = menu => {
@@ -93,7 +91,6 @@ const MainLayout = props => {
     }
   }, [
     userInfo,
-    listTabs,
     badgeCounts,
     loading,
     connectionReady,
@@ -110,7 +107,6 @@ const MainLayout = props => {
     loading,
     badgeCounts,
     userInfo,
-    listTabs,
     isLoginContext,
   ])
 

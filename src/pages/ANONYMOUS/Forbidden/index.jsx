@@ -3,6 +3,7 @@ import { Button, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Leaf, ShieldX } from 'lucide-react';
+import ROUTER from 'src/router/ROUTER';
 
 const { Title, Text } = Typography;
 
@@ -12,9 +13,9 @@ const Forbidden = () => {
   const user = userInfo;
 
   const handleGoHome = () => {
-    if (!user) navigate('/login');
-    else if (user.role === 'Admin') navigate('/dashboard');
-    else navigate('/journal');
+    if (!user) navigate(ROUTER.LOGIN);
+    else if (user.role === 'Admin') navigate(ROUTER.FM_DASHBOARD);
+    else navigate(ROUTER.FM_DASHBOARD);
   };
 
   return (

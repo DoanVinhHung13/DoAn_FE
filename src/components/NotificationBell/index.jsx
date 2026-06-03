@@ -7,6 +7,7 @@ import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } 
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
+import ROUTER from 'src/router/ROUTER';
 
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
@@ -21,7 +22,7 @@ const NotificationBell = () => {
     const { data, isLoading } = useQuery({
         queryKey: ['notifications'],
         queryFn: () => getNotifications().then(res => res.data),
-        refetchInterval: 10000, // Reduced to 10 seconds for "closer" to realtime
+        refetchInterval: 10000,
     });
 
     const markReadMutation = useMutation({
@@ -40,38 +41,35 @@ const NotificationBell = () => {
     });
 
     const handleNotificationClick = (item) => {
-        // Mark as read first
         if (!item.isRead) {
             markReadMutation.mutate(item._id);
         }
         
-        // Close popover
         setVisible(false);
 
-        // Navigate based on type and relatedId
         if (item.relatedId || item.relatedModel) {
             switch (item.relatedModel) {
                 case 'HtxJournal':
-                    navigate('/htx/journals');
+                    navigate(ROUTER.FM_HTX_JOURNALS);
                     break;
                 case 'FarmJournal':
-                    navigate(`/journals/view/${item.relatedId}`);
+                    navigate(ROUTER.FM_JOURNAL_ENTRY.replace(':id', item.relatedId));
                     break;
                 case 'InventoryItem':
-                    navigate('/inventory/farmer'); // Nông dân nhận được thì bay vào kho
+                    navigate(ROUTER.FARMER_INVENTORY);
                     break;
                 case 'Consultation':
-                    navigate('/admin/consultations'); // Admin xử lý tư vấn
+                    navigate(ROUTER.FM_DASHBOARD);
                     break;
                 case 'User':
-                    navigate('/admin/users'); // Admin duyệt user mới
+                    navigate(ROUTER.FM_USERS);
                     break;
                 case 'News':
-                    navigate('/dashboard'); // Mọi người về trang chủ xem tin
+                    navigate(ROUTER.NEWS);
                     break;
                 default:
                     if (item.type === 'Journal_Assigned') {
-                        navigate('/dashboard');
+                        navigate(ROUTER.FM_DASHBOARD);
                     }
                     break;
             }

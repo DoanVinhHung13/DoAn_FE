@@ -1,3 +1,7 @@
+// src/router/guards.jsx
+// 4 Role: FARM_MANAGER, LAND_MANAGER, MATERIAL_MANAGER, FARMER
+// Permission definitions by role
+
 import { Navigate, Outlet } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import STORAGE from 'src/lib/storage'
@@ -23,6 +27,11 @@ export const ROLE_PERMISSIONS = {
     'view_fertilizers',
     'view_crop_protections',
     'view_purchase_reqs',
+    'htx_journals',
+    'journal_approval',
+    'vietgap',
+    'huuco',
+    'thongminh',
     'account_info',
     'change_password',
   ],
@@ -56,6 +65,9 @@ export const ROLE_PERMISSIONS = {
     'logbooks',
     'plans',
     'supplies',
+    'vietgap',
+    'huuco',
+    'thongminh',
     'account_info',
     'change_password',
   ],

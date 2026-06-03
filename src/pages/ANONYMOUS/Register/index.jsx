@@ -10,6 +10,7 @@ import STORAGE, { setStorage } from 'src/lib/storage';
 
 import logo from 'src/assets/logo-ebookfarm.jpg';
 import AuthService from 'src/services/AuthService'
+import ROUTER from 'src/router/ROUTER'
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -33,10 +34,8 @@ const Register = () => {
           role: 'Farmer' // Default role for public registration
       });
       setCredentials(data.data, data.data.token);
-      message.success('Tài khoản đã được tạo thành công! Chào mừng bạn đến với EBookFarm.');
-      navigate('/dashboard');
+      navigate(ROUTER.FM_DASHBOARD);
     } catch (error) {
-      message.error(error.response?.data?.message || 'Đăng ký thất bại. Email hoặc tên tài khoản có thể đã tồn tại.');
     } finally {
       setLoading(false);
     }

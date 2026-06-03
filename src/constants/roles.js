@@ -1,11 +1,11 @@
-// Role constants
+// Role constants — phải khớp đúng với giá trị BE trả về trong roles[]
 export const ROLES = {
-  ADMIN: 'Admin',
-  FARM_MANAGER: 'FarmManager',
-  LAND_MANAGER: 'LandManager',
-  MATERIAL_MANAGER: 'MaterialManager',
-  FARMER: 'Farmer',
-  HTX: 'HTX',
+  ADMIN:            'ADMIN',
+  FARM_MANAGER:     'FARM_MANAGER',
+  LAND_MANAGER:     'LAND_MANAGER',
+  MATERIAL_MANAGER: 'MATERIAL_MANAGER',
+  FARMER:           'FARMER',
+  HTX:              'HTX',
 }
 
 export default ROLES

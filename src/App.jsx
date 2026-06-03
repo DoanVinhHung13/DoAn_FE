@@ -2,6 +2,7 @@
 import { App as AntdApp } from "antd";
 import { BrowserRouter } from "react-router-dom";
 import AppShell from "./components/AppShell";
+import ErrorBoundary from "./components/ErrorBoundary";
 import DefaultAction from "./components/Layout/DefaultAction/DefaultAction";
 import Providers from "./components/Providers/providers";
 import AppRouter from "./router/AppRouter";
@@ -21,13 +22,13 @@ function App() {
       <GlobalThemeConfig>
         <AntdApp>
           <BrowserRouter>
-            {/* <ErrorBoundary> */}
-            <DefaultAction>
-              <AppShell>
-                <AppRouter />
-              </AppShell>
-            </DefaultAction>
-            {/* </ErrorBoundary> */}
+            <ErrorBoundary>
+              <DefaultAction>
+                <AppShell>
+                  <AppRouter />
+                </AppShell>
+              </DefaultAction>
+            </ErrorBoundary>
           </BrowserRouter>
         </AntdApp>
       </GlobalThemeConfig>

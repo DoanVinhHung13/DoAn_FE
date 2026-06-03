@@ -3,11 +3,9 @@
 import { useContext, useEffect } from "react"
 import { StoreContext } from "src/contexts"
 import { useAppDispatch } from "src/redux/hooks"
-import { getListSystemKey, setListTabs, setUserInfo } from "src/redux/slices/appGlobalSlice"
+import { setUserInfo } from "src/redux/slices/appGlobalSlice"
 import STORAGE, { getStorage } from "src/lib/storage"
-import UserService   from "src/services/UserService"
-import RoleService   from "src/services/RoleService"
-import CommonService from "src/services/CommonService"
+import AuthService from "src/services/AuthService"
 
 const DefaultAction = ({ children }) => {
   const isLogin = getStorage(STORAGE.TOKEN)
@@ -15,49 +13,43 @@ const DefaultAction = ({ children }) => {
   const { isLoginContext, setIsLoginContext } = loginStore
   const dispatch = useAppDispatch()
 
-  // 1. Lấy cấu hình hệ thống (dropdown, loại…)
-  const getSystemKey = async () => {
+  // Lấy thông tin user đăng nhập
+  const getMeInfo = async () => {
     try {
-      const res = await CommonService.getSystemKey("All")
-      if (res && !res?.IsError) dispatch(getListSystemKey(res?.Object))
+      const res = await AuthService.getProfile()
+      // API trả { success, message, data: { id, fullName, roles, ... } }
+      const meData = res?.data?.data || res?.data || res
+      if (meData?.id) {
+        const userData = {
+          _id:         meData.id,
+          id:          meData.id,
+          fullName:    meData.fullName,
+          email:       meData.email,
+          phoneNumber: meData.phoneNumber,
+          avatarUrl:   meData.avatarUrl,
+          isActive:    meData.isActive,
+          lastLoginAt: meData.lastLoginAt,
+          dateOfBirth: meData.dateOfBirth,
+          gender:      meData.gender,
+          role:        meData.roles?.[0] || null,
+          roles:       meData.roles || [],
+        }
+        dispatch(setUserInfo(userData))
+      }
     } catch (e) {
-      console.warn("[DefaultAction] getSystemKey skipped:", e?.message)
-    }
-  }
-
-  // 2. Lấy danh sách tab quyền của user
-  const getListTab = async () => {
-    try {
-      const res = await RoleService.getListTab()
-      if (res?.isOk) dispatch(setListTabs(res?.Object))
-      // Fallback: nếu API trả về theo format khác (Status === 0)
-      else if (res?.Status === 0 && res?.Object) dispatch(setListTabs(res?.Object))
-    } catch (e) {
-      console.warn("[DefaultAction] getListTab skipped:", e?.message)
-    }
-  }
-
-  // 3. Lấy thông tin user
-  const getUserInfo = async () => {
-    try {
-      const res = await UserService.getInforUser()
-      if (res && !res?.IsError) dispatch(setUserInfo(res?.Object ?? res?.data ?? res))
-    } catch (e) {
-      console.warn("[DefaultAction] getUserInfo skipped:", e?.message)
+      console.warn("[DefaultAction] getMeInfo skipped:", e?.message)
     }
   }
 
   // Chạy 1 lần lúc mount — khởi tạo trạng thái login
   useEffect(() => {
-    getSystemKey()
     setIsLoginContext(!!isLogin)
   }, [])
 
-  // Khi đã login → lấy quyền + userInfo
+  // Khi đã login → lấy thông tin user
   useEffect(() => {
     if (isLoginContext) {
-      getListTab()
-      getUserInfo()
+      getMeInfo()
     }
   }, [isLoginContext])
 

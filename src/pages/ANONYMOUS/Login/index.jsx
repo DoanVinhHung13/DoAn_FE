@@ -16,23 +16,20 @@ import STORAGE, { setStorage } from "src/lib/storage"
 import { useAppDispatch } from "src/redux/hooks"
 import { setUserInfo } from "src/redux/slices/appGlobalSlice"
 import ROUTER from "src/router/ROUTER"
+import { ROLES } from "src/constants/roles"
 
 import logo from "src/assets/logo-ebookfarm.jpg"
 import AuthService from "../../../services/AuthService"
 
 const { Title, Text, Paragraph } = Typography
 
+
+
 const Login = () => {
   const navigate = useNavigate()
   const { loginStore } = useContext(StoreContext)
   const { setIsLoginContext } = loginStore
   const dispatch = useAppDispatch()
-  
-  const setCredentials = (user, token) => {
-    setStorage(STORAGE.TOKEN, token)
-    dispatch(setUserInfo(user))
-    setIsLoginContext(true)
-  }
   
   const [loading, setLoading] = React.useState(false)
   const [form] = Form.useForm()
@@ -51,39 +48,79 @@ const Login = () => {
   const onFinish = async (values) => {
     try {
       setLoading(true)
-      const { data } = await AuthService.login({
-        identifier: values.email,
+
+      // ── Bước 1: Đăng nhập, lấy token ────────────────────────────────
+      const loginRes = await AuthService.login({
+        email: values.email,
         password: values.password,
       })
 
-      // Handle Remember Me
+      // Xử lý Ghi nhớ tài khoản
       if (values.remember) {
         localStorage.setItem("rememberedEmail", values.email)
       } else {
         localStorage.removeItem("rememberedEmail")
       }
 
-      setCredentials(data.data, data.data.token)
-      message.success("Đăng nhập thành công! Chào mừng trở lại EBookFarm.")
-      
-      // Navigate based on role
-      const userRole = data.data.user?.role || data.data.role
-      if (userRole === 'FarmManager') {
+      // Response BE: { success, message, data: { accessToken, refreshToken, ... } }
+      const loginData = loginRes?.data?.data || loginRes?.data || loginRes
+      const token = loginData?.accessToken || loginData?.token
+
+      if (!token) {
+        throw new Error("Không nhận được mã xác thực (Token) từ hệ thống.")
+      }
+
+      // Lưu token vào storage (axios interceptor sẽ tự đính vào header)
+      setStorage(STORAGE.TOKEN, token)
+      if (loginData?.refreshToken) {
+        setStorage(STORAGE.REFRESH_TOKEN, loginData.refreshToken)
+      }
+
+      // ── Bước 2: Gọi /auth/me để lấy thông tin user đầy đủ ──────────
+      // Response BE: { success, message, data: { id, fullName, email, roles, ... } }
+      const meRes = await AuthService.getProfile()
+      const meData = meRes?.data?.data || meRes?.data || meRes
+
+      if (!meData?.id) {
+        throw new Error("Không thể lấy thông tin tài khoản sau khi đăng nhập.")
+      }
+
+      // Map sang cấu trúc userData dùng trong toàn bộ app
+      // Dùng _id để tương thích với ProtectedRoute guard (check user?._id)
+      const userRole = meData?.roles?.[0] || null
+      const userData = {
+        _id:         meData.id,
+        id:          meData.id,
+        fullName:    meData.fullName,
+        email:       meData.email,
+        phoneNumber: meData.phoneNumber,
+        avatarUrl:   meData.avatarUrl,
+        isActive:    meData.isActive,
+        lastLoginAt: meData.lastLoginAt,
+        dateOfBirth: meData.dateOfBirth,
+        gender:      meData.gender,
+        role:        userRole,
+        roles:       meData.roles || [],
+      }
+
+      // ── Bước 3: Cập nhật Redux store & điều hướng theo role ─────────
+      dispatch(setUserInfo(userData))
+      setIsLoginContext(true)
+
+
+      if (userRole === ROLES.FARM_MANAGER) {
         navigate(ROUTER.FM_DASHBOARD)
-      } else if (userRole === 'LandManager') {
+      } else if (userRole === ROLES.LAND_MANAGER) {
         navigate(ROUTER.LM_DASHBOARD)
-      } else if (userRole === 'MaterialManager') {
+      } else if (userRole === ROLES.MATERIAL_MANAGER) {
         navigate(ROUTER.MM_DASHBOARD)
-      } else if (userRole === 'Farmer') {
+      } else if (userRole === ROLES.FARMER) {
         navigate(ROUTER.FARMER_DASHBOARD)
       } else {
-        navigate(ROUTER.ADMIN_DASHBOARD)
+        navigate(ROUTER.LOGIN)
       }
     } catch (error) {
-      message.error(
-        error.response?.data?.message ||
-          "Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản."
-      )
+
     } finally {
       setLoading(false)
     }

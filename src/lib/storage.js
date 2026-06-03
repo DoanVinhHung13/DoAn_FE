@@ -1,6 +1,7 @@
 // Storage key constants
 const STORAGE = {
   TOKEN:           "token-ebookfarm",
+  REFRESH_TOKEN:   "refresh-token-ebookfarm",
   USER_INFO:       "user-info-ebookfarm",
   REMEMBER_LOGIN:  "ebookfarm-remember",
   KEY_MENU_ACTIVE: "key-active-ebookfarm",

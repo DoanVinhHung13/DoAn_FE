@@ -24,7 +24,7 @@ import * as XLSX from 'xlsx';
 import api from 'src/services/01_axios';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
-import JournalEntry from '../Journal/JournalEntry';
+import JournalEntry from '../../FARM_MANAGER/JournalEntry';
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';

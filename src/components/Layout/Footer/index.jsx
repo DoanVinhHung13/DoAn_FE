@@ -7,6 +7,7 @@ import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
 import { clearStorage } from 'src/lib/storage';
 import logo from 'src/assets/images/logo/logo-ebookfarm.jpg';
+import ROUTER from 'src/router/ROUTER';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -21,6 +22,10 @@ const PublicFooter = () => {
         dispatch(setUserInfo({}));
     };
 
+    const handleDashboardClick = () => {
+      navigate(ROUTER.FM_DASHBOARD);
+    };
+
     return (
         <footer className="bg-gray-900 text-white py-16 px-6">
             <div className="max-w-7xl mx-auto">
@@ -28,7 +33,7 @@ const PublicFooter = () => {
                     {/* Company Info */}
                     <Col xs={24} md={8} className="space-y-6">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-white shadow-sm">
+                            <div className="flex items-center justify-center w-10 h-10 overflow-hidden bg-white border rounded-full shadow-sm border-gray-50">
                                 <img src={logo} alt="EBookFarm Logo" className="w-[140%] h-[140%] object-contain mix-blend-multiply" />
                             </div>
                             <div className="flex flex-col justify-center">
@@ -85,24 +90,24 @@ const PublicFooter = () => {
                             <div className="space-y-4">
                                 <Text strong className="text-white block uppercase tracking-widest text-xs">Liên kết nhanh</Text>
                                 <Space direction="vertical" className="text-gray-200">
-                                    <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate('/reference/tcvn')}>
+                                    <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate(ROUTER.TCVN)}>
                                         Tra cứu TCVN
                                     </Text>
                                     {isLoggedIn ? (
-                                        <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate('/dashboard')}>
+                                        <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={handleDashboardClick}>
                                             Vào bảng điều khiển
                                         </Text>
                                     ) : (
-                                        <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate('/login')}>
+                                        <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate(ROUTER.LOGIN)}>
                                             Đăng nhập
                                         </Text>
                                     )}
                                     {isLoggedIn ? (
-                                        <Text className="text-red-400 hover:text-red-300 cursor-pointer transition-colors" onClick={() => { logout(); navigate('/'); }}>
+                                        <Text className="text-red-400 hover:text-red-300 cursor-pointer transition-colors" onClick={() => { logout(); navigate(ROUTER.HOME); }}>
                                             Đăng xuất
                                         </Text>
                                     ) : (
-                                        <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate('/register')}>
+                                        <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate(ROUTER.REGISTER)}>
                                             Đăng ký
                                         </Text>
                                     )}
