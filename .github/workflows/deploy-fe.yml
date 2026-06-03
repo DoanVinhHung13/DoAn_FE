@@ -1,0 +1,50 @@
+name: Deploy FE
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on:
+      - self-hosted
+      - eapls-fe
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create production env
+        run: |
+          cat > .env.production <<'EOF'
+          VITE_API_URL=https://api.eapls.io.vn
+          VITE_API_ROOT=https://api.eapls.io.vn/api
+          VITE_REACT_APP_API_ROOT=https://api.eapls.io.vn/api
+          VITE_GOOGLE_CLIENT_ID=147676468818-86oa6l06us45c8as6272v1mbc6egenf5.apps.googleusercontent.com
+          EOF
+
+          cat > public/config.js <<'EOF'
+          window.env = {
+            API_ROOT: "https://api.eapls.io.vn/api",
+            BASE_URL: "https://api.eapls.io.vn",
+            HASH_KEY: "HASH_KEY",
+          }
+          EOF
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to Nginx web root
+        run: |
+          rsync -a --delete dist/ /var/www/eapls-fe/
