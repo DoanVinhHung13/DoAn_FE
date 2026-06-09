@@ -14,5 +14,12 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // Cho phép truy cập từ mạng LAN (để test QR trên điện thoại)
     port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://103.245.236.147/api',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   }
 })

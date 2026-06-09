@@ -4,7 +4,7 @@
 
 import { Navigate, Outlet } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import STORAGE from 'src/lib/storage'
+import STORAGE from 'src/store/storage'
 import ROUTER from './ROUTER'
 import { ROLES } from 'src/constants/roles'
 

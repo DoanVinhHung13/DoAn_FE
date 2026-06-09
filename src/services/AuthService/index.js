@@ -4,7 +4,6 @@ import {
   apiLogin,
   apiRegister,
   apiLogout,
-  apiGoogleLogin,
   apiRefreshToken,
   apiVerifyOTP,
   // Password Management
@@ -33,7 +32,6 @@ import {
 const login = (body) => http.post(apiLogin, body)
 const register = (body) => http.post(apiRegister, body)
 const logout = () => http.post(apiLogout)
-const googleLogin = (body) => http.post(apiGoogleLogin, body)
 const refreshToken = (body) => http.post(apiRefreshToken, body)
 const verifyOTP = (body) => http.post(apiVerifyOTP, body)
 
@@ -66,7 +64,6 @@ const AuthService = {
   login,
   register,
   logout,
-  googleLogin,
   refreshToken,
   verifyOTP,
   // Password Management

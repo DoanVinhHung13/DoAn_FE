@@ -1,10 +1,9 @@
 import { Layout } from "antd"
 import PropTypes from "prop-types"
-import { useContext, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { useLocation, useNavigate } from "react-router-dom"
-import { StoreContext } from "src/contexts"
-import STORAGE, { getStorage, setStorage } from "src/lib/storage"
+import STORAGE, { getStorage, setStorage } from "src/store/storage"
 import { hasPermission } from "src/lib/utils"
 import { MenuItemAdmin, MenuItemUser } from "src/router/MenuItem"
 import { useBadgeCounts } from "../../hooks/useBadgeCounts"
@@ -35,8 +34,8 @@ const MainLayout = props => {
     getStorage(STORAGE.KEY_MENU_ACTIVE) || [location?.pathname] || ["/"],
   )
   const { userInfo } = useSelector(state => state?.appGlobal)
-  const { loginStore } = useContext(StoreContext)
-  const { isLoginContext } = loginStore
+  // Dùng Redux làm nguồn duy nhất — không cần isLoginContext từ Context
+  const isLoginContext = Boolean(userInfo?._id)
 
   const setShowListMenu = list =>
     list?.length

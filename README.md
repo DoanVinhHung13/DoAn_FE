@@ -1,73 +1,122 @@
-# React + TypeScript + Vite
+<div align="center">
+  <img src="https://raw.githubusercontent.com/tandp53/DoAn_FE/main/src/assets/logo-ebookfarm.jpg" alt="EBookFarm Logo" width="120" />
+  <h1>🌱 EBookFarm - Nhật Ký Sản Xuất Nông Nghiệp Điện Tử</h1>
+  <p><i>Hệ thống quản lý quy trình sản xuất nông nghiệp thông minh, minh bạch và an toàn</i></p>
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+  [![React](https://img.shields.io/badge/React-19.x-61DAFB.svg?style=for-the-badge&logo=react)](https://reactjs.org/)
+  [![Vite](https://img.shields.io/badge/Vite-6.x-646CFF.svg?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC.svg?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+  [![Ant Design](https://img.shields.io/badge/Ant_Design-6.x-0170FE.svg?style=for-the-badge&logo=ant-design)](https://ant.design/)
+  [![Redux Toolkit](https://img.shields.io/badge/Redux-2.x-764ABC.svg?style=for-the-badge&logo=redux)](https://redux-toolkit.js.org/)
+</div>
 
-Currently, two official plugins are available:
+<br />
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 📖 Giới thiệu dự án
 
-## React Compiler
+**EBookFarm (Nhật ký sản xuất điện tử)** là nền tảng quản lý nông nghiệp số toàn diện, giúp các hợp tác xã, trang trại và nông dân số hóa toàn bộ quy trình sản xuất. 
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Dự án cung cấp một hệ sinh thái khép kín từ việc quản lý nhân sự, phân bổ vùng trồng, kiểm soát vật tư, đến việc truy xuất nguồn gốc nông sản bằng QR Code. Qua đó, EBookFarm giúp nâng cao tính minh bạch, tối ưu năng suất và đảm bảo an toàn chất lượng nông sản.
 
-## Expanding the ESLint configuration
+## ✨ Tính năng nổi bật
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- 🔐 **Phân quyền đa lớp (Role-Based Access Control):** 
+  - **Quản lý HTX (Farm Manager):** Quản lý tổng thể, duyệt tài khoản, xem thống kê báo cáo.
+  - **Quản lý vùng trồng (Land Manager):** Theo dõi mùa vụ, phân công lô đất.
+  - **Quản lý vật tư (Material Manager):** Quản lý kho phân bón, thuốc bảo vệ thực vật, hạt giống.
+  - **Nông dân (Farmer):** Ghi chép nhật ký sản xuất hằng ngày.
+- ⚡ **Luồng xác thực bảo mật (Auth Flow):** Tích hợp JWT, tự động khôi phục phiên đăng nhập, cấu trúc "Single Source of Truth" với Redux.
+- 📊 **Thống kê trực quan:** Biểu đồ đa chiều, xuất dữ liệu báo cáo ra Excel/PDF.
+- 📱 **Truy xuất nguồn gốc:** Tích hợp tạo mã QR, quét mã kiểm tra lịch sử chăm sóc cây trồng.
+- 📚 **Tra cứu TCVN:** Tích hợp cổng tra cứu Tiêu chuẩn Quốc gia (TCVN) trực tiếp trên ứng dụng.
+- 🎨 **Giao diện hiện đại & Responsive:** Kết hợp sức mạnh của Ant Design và Tailwind CSS.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🛠 Công nghệ sử dụng
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Hệ thống Front-end được xây dựng trên nền tảng các công nghệ hiện đại nhất:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Core & Build
+- **[React 19](https://react.dev/):** Thư viện UI cốt lõi.
+- **[Vite](https://vitejs.dev/):** Build tool siêu tốc, HMR cực nhanh.
+- **[React Router DOM v7](https://reactrouter.com/):** Quản lý điều hướng và Router Guards bảo mật.
+
+### State Management & Data Fetching
+- **[Redux Toolkit](https://redux-toolkit.js.org/):** Quản lý Global State (Theme, User Info).
+- **[TanStack Query (React Query)](https://tanstack.com/query/latest):** Quản lý Server State, caching, synchronization.
+
+### UI / Styling
+- **[Ant Design 6](https://ant.design/):** Hệ thống Component UI doanh nghiệp.
+- **[Tailwind CSS](https://tailwindcss.com/):** Utility-first CSS framework.
+- **[Styled Components](https://styled-components.com/) & SCSS:** Xử lý các UI logic phức tạp.
+
+### Forms & Validation
+- **[React Hook Form](https://react-hook-form.com/):** Quản lý Form tối ưu hiệu năng.
+- **[Yup](https://github.com/jquense/yup):** Schema validation.
+
+### Utils & Extensions
+- **[Axios](https://axios-http.com/):** HTTP Client với hệ thống Interceptors tự động bắt lỗi và xử lý Token.
+- **Biểu đồ & Xuất file:** `recharts`, `jspdf`, `xlsx`.
+
+## ⚙️ Yêu cầu hệ thống
+
+- **Node.js**: Phiên bản `v18.0.0` trở lên.
+- **NPM / Yarn / pnpm**.
+
+## 🚀 Hướng dẫn cài đặt và chạy dự án
+
+1. **Clone kho lưu trữ về máy:**
+   ```bash
+   git clone https://github.com/your-username/DoAn_FE.git
+   cd DoAn_FE
+   ```
+
+2. **Cài đặt các thư viện phụ thuộc:**
+   ```bash
+   npm install
+   ```
+
+3. **Cấu hình biến môi trường (`.env`):**
+   Đảm bảo bạn có file `.env` tại thư mục gốc với nội dung:
+   ```env
+   VITE_API_ROOT=https://api.eapls.io.vn/api
+   VITE_API_URL=https://api.eapls.io.vn/api
+   ```
+
+4. **Khởi chạy môi trường phát triển (Development):**
+   ```bash
+   npm run dev
+   ```
+   > Ứng dụng sẽ chạy tại địa chỉ: `https://eapls.io.vn/`. Vite proxy đã được thiết lập tự động để giải quyết vấn đề CORS.
+
+5. **Build cho môi trường Production:**
+   ```bash
+   npm run build
+   ```
+
+## 📁 Cấu trúc thư mục
+
+```text
+DoAn_FE/
+├── src/
+│   ├── assets/            # Hình ảnh, icon, styles (css, scss)
+│   ├── components/        # Component tái sử dụng (Layout, UI chung, Providers)
+│   ├── constants/         # Các hằng số (Roles, Status...)
+│   ├── contexts/          # React Context (UI settings, Theme)
+│   ├── hooks/             # Custom React Hooks
+│   ├── lib/               # Utility functions (Utils, Formatters)
+│   ├── pages/             # Các trang chia theo phân quyền (ANONYMOUS, MANAGER, FARMER...)
+│   ├── redux/             # Redux Store, Slices
+│   ├── router/            # Định nghĩa Route, Menu, Guards bảo mật
+│   ├── services/          # HTTP Request (Axios configs, API endpoints)
+│   └── store/             # Quản lý LocalStorage, AuthSession
+├── public/                # Tài nguyên tĩnh
+├── .env                   # Biến môi trường
+├── vite.config.js         # Cấu hình Vite & Proxy CORS
+└── package.json           # Dependencies
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🤝 Đóng góp (Contributing)
+Mọi đóng góp nhằm cải thiện hệ thống đều được hoan nghênh. Vui lòng tạo `Pull Request` hoặc mở `Issue` để thảo luận.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📝 Giấy phép (License)
+Dự án được phân phối dưới giấy phép **MIT License**.

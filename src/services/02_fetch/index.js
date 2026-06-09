@@ -1,4 +1,4 @@
-import STORAGE, { deleteStorage } from "src/lib/storage"
+import STORAGE, { deleteStorage } from "src/store/storage"
 import ROUTER from "src/router/ROUTER"
 import notice from "../../components/Notice"
 const isPlainObject = value => value?.constructor === Object

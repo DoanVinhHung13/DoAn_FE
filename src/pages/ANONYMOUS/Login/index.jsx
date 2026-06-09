@@ -1,18 +1,15 @@
 import { LockOutlined, MailOutlined } from "@ant-design/icons"
-import { GoogleLogin } from "@react-oauth/google"
 import {
   Button,
   Checkbox,
-  Divider,
   Form,
   Input,
-  message,
   Typography,
 } from "antd"
-import React, { useContext, useEffect } from "react"
+import React, { useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { StoreContext } from "src/contexts"
-import STORAGE, { setStorage } from "src/lib/storage"
+import STORAGE, { setStorage } from "src/store/storage"
+import authSession from "src/store/authSession"
 import { useAppDispatch } from "src/redux/hooks"
 import { setUserInfo } from "src/redux/slices/appGlobalSlice"
 import ROUTER from "src/router/ROUTER"
@@ -27,10 +24,8 @@ const { Title, Text, Paragraph } = Typography
 
 const Login = () => {
   const navigate = useNavigate()
-  const { loginStore } = useContext(StoreContext)
-  const { setIsLoginContext } = loginStore
   const dispatch = useAppDispatch()
-  
+
   const [loading, setLoading] = React.useState(false)
   const [form] = Form.useForm()
 
@@ -103,9 +98,9 @@ const Login = () => {
         roles:       meData.roles || [],
       }
 
-      // ── Bước 3: Cập nhật Redux store & điều hướng theo role ─────────
+      // ── Bước 3: Persist vào Storage & cập nhật Redux (nguồn duy nhất) ──
+      authSession.updateUser(userData)
       dispatch(setUserInfo(userData))
-      setIsLoginContext(true)
 
 
       if (userRole === ROLES.FARM_MANAGER) {
@@ -121,22 +116,6 @@ const Login = () => {
       }
     } catch (error) {
 
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      setLoading(true)
-      const { data } = await AuthService.googleLogin({
-        tokenId: credentialResponse.credential,
-      })
-      setCredentials(data.data, data.data.token)
-      message.success("Đăng nhập Google thành công!")
-      navigate(ROUTER.FM_DASHBOARD)
-    } catch (error) {
-      message.error("Xác thực Google thất bại. Vui lòng thử lại.")
     } finally {
       setLoading(false)
     }
@@ -298,25 +277,6 @@ const Login = () => {
               </Button>
             </Form.Item>
 
-            <Divider plain className="border-gray-100">
-              <span className="text-[10px] text-gray-300 font-bold uppercase tracking-[2px]">
-                Hoặc sử dụng Google
-              </span>
-            </Divider>
-
-            <div className="flex justify-center w-full mt-4 md:mt-6">
-              <div className="flex justify-center max-w-full mx-auto overflow-hidden">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() =>
-                    message.error("Không thể kết nối với máy chủ Google.")
-                  }
-                  shape="pill"
-                  theme="outline"
-                  width="280"
-                />
-              </div>
-            </div>
           </Form>
 
           <div className="mt-12 text-center">

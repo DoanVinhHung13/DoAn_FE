@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import signalRService from "../components/SocketWrapper/index"
 import Notify from "../services/Notify/index"
-import STORAGE, { getStorage } from "src/lib/storage"
+import STORAGE, { getStorage } from "src/store/storage"
 
 export const useBadgeCounts = () => {
   const [badgeCounts, setBadgeCounts] = useState({

@@ -1,6 +1,6 @@
 import axios from "axios"
 import notice from "src/components/Notice"
-import STORAGE, { deleteStorage, getStorage } from "src/lib/storage"
+import STORAGE, { deleteStorage, getStorage } from "src/store/storage"
 import { getMsgClient } from "src/lib/stringsUtils"
 import { trimData } from "src/lib/utils"
 import ROUTER from "src/router/ROUTER"

@@ -13,12 +13,11 @@ import {
   Space,
   Typography,
 } from "antd";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import logo from "src/assets/images/logo/logo-ebookfarm.jpg";
-import { StoreContext } from "src/contexts";
-import { clearStorage } from "src/lib/storage";
+import { clearAuthStorage } from "src/store/storage";
 import { getAvatarUrl } from "src/lib/utils";
 import { useAppDispatch } from "src/redux/hooks";
 import { setUserInfo } from "src/redux/slices/appGlobalSlice";
@@ -28,14 +27,14 @@ const { Title } = Typography;
 
 const PublicNavbar = () => {
   const navigate = useNavigate();
-  const { loginStore } = useContext(StoreContext);
-  const { isLoginContext } = loginStore;
+  // Dùng Redux làm nguồn duy nhất — không cần isLoginContext từ Context
   const { userInfo: user } = useSelector((state) => state.appGlobal);
+  const isLoginContext = Boolean(user?._id);
   const dispatch = useAppDispatch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    clearStorage();
+    clearAuthStorage();
     dispatch(setUserInfo({}));
     navigate(ROUTER.HOME);
   };

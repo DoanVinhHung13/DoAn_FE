@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 import { useAppDispatch } from 'src/redux/hooks'
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
 import { getAvatarUrl, getInitialAvatar } from 'src/lib/utils'
-import STORAGE, { clearStorage } from 'src/lib/storage'
+import STORAGE, { clearAuthStorage } from 'src/store/storage'
 import http from 'src/services/01_axios'
 import NotificationBell from '../../NotificationBell'
 import {
@@ -28,7 +28,7 @@ const LayoutAdmin = () => {
   const { userInfo: user } = useSelector((state) => state.appGlobal)
   const dispatch = useAppDispatch()
   const logout = () => {
-    clearStorage()
+    clearAuthStorage()
     dispatch(setUserInfo({}))
     window.location.href = '/login'
   }

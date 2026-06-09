@@ -5,7 +5,6 @@
 export const apiLogin = "/auth/login"
 export const apiRegister = "/auth/register"
 export const apiLogout = "/auth/logout"
-export const apiGoogleLogin = "/auth/google"
 export const apiRefreshToken = "/auth/refresh-token"
 export const apiVerifyOTP = "/auth/verify-otp"
 
@@ -28,7 +27,6 @@ export const apiUpdateUser = (id) => `/users/${id}`
 export const apiDeleteUser = (id) => `/users/${id}`
 export const apiChangeUserStatus = (id) => `/users/${id}/status`
 export const apiChangeUserPassword = (id) => `/users/${id}/password`
-//
 
 // Role & Permission
 export const apiGetRoles = "/roles"

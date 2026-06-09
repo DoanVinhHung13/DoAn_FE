@@ -2,11 +2,10 @@ import React from 'react';
 import { Form, Input, Button, message, Typography, Row, Col } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, RocketFilled, SafetyCertificateFilled } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
-import { StoreContext } from 'src/contexts';
 import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
-import STORAGE, { setStorage } from 'src/lib/storage';
+import STORAGE, { setStorage } from 'src/store/storage';
+import authSession from 'src/store/authSession';
 
 import logo from 'src/assets/logo-ebookfarm.jpg';
 import AuthService from 'src/services/AuthService'
@@ -16,13 +15,13 @@ const { Title, Text, Paragraph } = Typography;
 
 const Register = () => {
   const navigate = useNavigate();
-  const { loginStore } = useContext(StoreContext);
-  const { setIsLoginContext } = loginStore;
   const dispatch = useAppDispatch();
+
+  // Lưu token vào Storage và user vào Redux sau khi đăng ký thành công
   const setCredentials = (user, token) => {
     setStorage(STORAGE.TOKEN, token);
+    authSession.updateUser(user);
     dispatch(setUserInfo(user));
-    setIsLoginContext(true);
   };
   const [loading, setLoading] = React.useState(false);
 

@@ -1,11 +1,12 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Row, Col, Typography, Space, Divider } from 'antd';
 import { GlobalOutlined, ThunderboltFilled, EnvironmentOutlined, PhoneOutlined, MailOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { StoreContext } from 'src/contexts';
 import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
-import { clearStorage } from 'src/lib/storage';
+import { clearAuthStorage } from 'src/store/storage';
+import { useSelector } from 'react-redux';
 import logo from 'src/assets/images/logo/logo-ebookfarm.jpg';
 import ROUTER from 'src/router/ROUTER';
 
@@ -13,12 +14,13 @@ const { Title, Text, Paragraph } = Typography;
 
 const PublicFooter = () => {
     const navigate = useNavigate();
-    const { loginStore } = useContext(StoreContext);
-    const { isLoginContext: isLoggedIn } = loginStore;
+    // Dùng Redux làm nguồn duy nhất
+    const { userInfo } = useSelector((state) => state.appGlobal);
+    const isLoggedIn = Boolean(userInfo?._id);
     const dispatch = useAppDispatch();
 
     const logout = () => {
-        clearStorage();
+        clearAuthStorage();
         dispatch(setUserInfo({}));
     };
 
