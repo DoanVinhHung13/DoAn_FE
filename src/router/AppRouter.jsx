@@ -1,8 +1,6 @@
-import React, { Suspense, useContext } from 'react'
+import React, { Suspense } from 'react'
 import { Navigate, useRoutes } from 'react-router-dom'
 import ROUTER from './ROUTER'
-import { StoreContext } from 'src/contexts'
-
 // ── Layouts ───────────────────────────────────────────────────────────────────
 import LayoutCommon from 'src/components/Common/LayoutCommon'
 import LayoutAdmin from 'src/components/Layout/LayoutAdmin'

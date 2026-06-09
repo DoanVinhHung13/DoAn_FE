@@ -1,7 +1,6 @@
 // src/App.jsx
 import { App as AntdApp } from 'antd'
 import { BrowserRouter } from 'react-router-dom'
-import AppShell from './components/AppShell'
 import ErrorBoundary from './components/ErrorBoundary'
 import DefaultAction from './components/Layout/DefaultAction/DefaultAction'
 import Providers from './components/Providers/providers'
@@ -20,8 +19,7 @@ import AppRouter from './router/AppRouter'
  *               └─ BrowserRouter
  *                    └─ ErrorBoundary
  *                         └─ DefaultAction  ← boot: đọc token → fetch /me → Redux
- *                              └─ AppShell  ← check mustChangePassword
- *                                   └─ AppRouter
+ *                              └─ AppRouter
  */
 function App() {
   return (
@@ -30,9 +28,7 @@ function App() {
         <BrowserRouter>
           <ErrorBoundary>
             <DefaultAction>
-              <AppShell>
-                <AppRouter />
-              </AppShell>
+              <AppRouter />
             </DefaultAction>
           </ErrorBoundary>
         </BrowserRouter>
