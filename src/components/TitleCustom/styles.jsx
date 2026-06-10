@@ -3,7 +3,7 @@ import styled from "styled-components"
 export const TitleCustomWrapper = styled.div`
   .title-main {
     font-size: 24px;
-    color: #134197;
+    color: #16a34a;
     font-family: "Inter", sans-serif;
     border-bottom: 1px solid #ebebeb;
     position: relative;
@@ -16,11 +16,6 @@ export const TitleCustomWrapper = styled.div`
     content: "";
     width: 80px;
     height: 4px;
-    background-image: -webkit-linear-gradient(
-      0deg,
-      rgb(21, 67, 152) 0%,
-      rgb(238, 29, 35) 100%
-    );
     position: absolute;
     left: 40px;
     bottom: -2px;

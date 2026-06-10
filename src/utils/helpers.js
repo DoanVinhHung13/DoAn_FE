@@ -47,6 +47,21 @@ export const isValidPhone = (phone) => {
 };
 
 /**
+ * Validate Email
+ * @param {string} email - Email
+ * @returns {boolean} - true nếu hợp lệ
+ */
+export const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+/**
+ * Regex dùng để validate từ khoá tìm kiếm chung (chỉ cho phép chữ, số, khoảng trắng, và _, @, ., -)
+ */
+export const invalidCharsRegex = /[^\p{L}\d\s_@.-]/u;
+
+/**
  * Format diện tích
  * @param {number} area - Diện tích (m²)
  * @returns {string} - Diện tích đã format

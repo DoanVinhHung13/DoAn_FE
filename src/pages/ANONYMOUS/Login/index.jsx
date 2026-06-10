@@ -18,6 +18,7 @@ import { getDashboardPathByRole } from "src/router/roleRedirects"
 
 import logo from "src/assets/logo-ebookfarm.jpg"
 import AuthService from "../../../services/AuthService"
+import { isValidEmail, isValidPhone } from "src/utils/helpers"
 
 const { Title, Text, Paragraph } = Typography
 
@@ -50,8 +51,8 @@ const Login = () => {
       if (!loginRes?.success) {
         throw new Error(
           loginRes?.message ||
-            loginRes?.errors?.[0] ||
-            "Đăng nhập thất bại."
+          loginRes?.errors?.[0] ||
+          "Đăng nhập thất bại."
         )
       }
 
@@ -70,8 +71,8 @@ const Login = () => {
       if (!meRes?.success) {
         throw new Error(
           meRes?.message ||
-            meRes?.errors?.[0] ||
-            "Không thể lấy thông tin tài khoản sau khi đăng nhập."
+          meRes?.errors?.[0] ||
+          "Không thể lấy thông tin tài khoản sau khi đăng nhập."
         )
       }
 
@@ -84,18 +85,18 @@ const Login = () => {
 
       const userRole = normalizeRole(meData.roles?.[0])
       const userData = {
-        _id:         finalId,
-        id:          finalId,
-        fullName:    meData.fullName,
-        email:       meData.email,
+        _id: finalId,
+        id: finalId,
+        fullName: meData.fullName,
+        email: meData.email,
         phoneNumber: meData.phoneNumber,
-        avatarUrl:   meData.avatarUrl,
-        isActive:    meData.isActive,
+        avatarUrl: meData.avatarUrl,
+        isActive: meData.isActive,
         lastLoginAt: meData.lastLoginAt,
         dateOfBirth: meData.dateOfBirth,
-        gender:      meData.gender,
-        role:        userRole,
-        roles:       meData.roles || [],
+        gender: meData.gender,
+        role: userRole,
+        roles: meData.roles || [],
       }
 
       authSession.updateUser(userData)
@@ -207,11 +208,20 @@ const Login = () => {
               name="email"
               label={
                 <span className="text-[10px] md:text-[11px] uppercase font-black text-gray-400 tracking-wider">
-                  Email hoặc Tên tài khoản
+                  Email hoặc Số điện thoại
                 </span>
               }
               rules={[
                 { required: true, message: "Thông tin này là bắt buộc!" },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve()
+                    if (isValidEmail(value) || isValidPhone(value)) {
+                      return Promise.resolve()
+                    }
+                    return Promise.reject(new Error("Email hoặc số điện thoại không hợp lệ!"))
+                  },
+                },
               ]}
               className="mb-3 md:mb-6"
             >
@@ -226,7 +236,7 @@ const Login = () => {
               name="password"
               label={
                 <span className="text-[10px] md:text-[11px] uppercase font-black text-gray-400 tracking-wider">
-                  Mật khẩu bảo mật
+                  Mật khẩu
                 </span>
               }
               rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}

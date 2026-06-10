@@ -9,6 +9,7 @@ import VoiceInput from 'src/components/VoiceInput';
 import { useSelector } from 'react-redux';
 import JournalService from 'src/services/JournalService'
 import InventoryService from 'src/services/InventoryService'
+import UploadService from 'src/services/UploadService'
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -128,8 +129,7 @@ const JournalEntry = ({ schemaId: propsSchemaId, id: propsId }) => {
       formData.append('file', file);
 
       try {
-        const res = await api.post('/upload/document', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+        const res = await UploadService.uploadDocument(formData, {
           onUploadProgress: (event) => {
             const percent = Math.floor((event.loaded / event.total) * 100);
             onProgress({ percent });

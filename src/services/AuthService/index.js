@@ -1,52 +1,46 @@
+/**
+ * AuthService — Chỉ xử lý các API thuộc nhóm /auth/*
+ *
+ * POST /auth/login             → login(body)
+ * POST /auth/register          → register(body)
+ * POST /auth/logout            → logout()
+ * POST /auth/refresh-token     → refreshToken(body)
+ * POST /auth/verify-otp        → verifyOTP(body)
+ * POST /auth/forgot-password   → forgotPassword(body)
+ * POST /auth/reset-password    → resetPassword(body)
+ * POST /auth/change-password   → changePassword(body)
+ * GET  /auth/me                → getProfile()
+ *
+ * Lưu ý: Các API /users/* đã chuyển sang UserService
+ */
 import http from '../01_axios'
 import { getRefreshToken } from 'src/redux/authTokens'
-import {
-  apiLogin,
-  apiRegister,
-  apiLogout,
-  apiRefreshToken,
-  apiVerifyOTP,
-  apiForgotPassword,
-  apiResetPassword,
-  apiChangePassword,
-  apiGetProfile,
-  apiUpdateProfile,
-  apiUploadAvatar,
-  apiGetUsers,
-  apiGetUserById,
-  apiCreateUser,
-  apiUpdateUser,
-  apiDeleteUser,
-  apiChangeUserStatus,
-  apiChangeUserPassword,
-  apiGetRoles,
-  apiGetPermissions,
-} from './urls'
 
-const login = (body) => http.post(apiLogin, body)
-const register = (body) => http.post(apiRegister, body)
-const logout = () => http.post(apiLogout, { refreshToken: getRefreshToken() })
-const refreshToken = (body) => http.post(apiRefreshToken, body)
-const verifyOTP = (body) => http.post(apiVerifyOTP, body)
+// ─── Endpoints ─────────────────────────────────────────────
+export const AUTH_URLS = {
+  login:          '/auth/login',
+  register:       '/auth/register',
+  logout:         '/auth/logout',
+  refreshToken:   '/auth/refresh-token',
+  verifyOTP:      '/auth/verify-otp',
+  forgotPassword: '/auth/forgot-password',
+  resetPassword:  '/auth/reset-password',
+  changePassword: '/auth/change-password',
+  me:             '/auth/me',
+}
 
-const forgotPassword = (body) => http.post(apiForgotPassword, body)
-const resetPassword = (body) => http.post(apiResetPassword, body)
-const changePassword = (body) => http.post(apiChangePassword, body)
+// ─── Methods ───────────────────────────────────────────────
+const login          = (body) => http.post(AUTH_URLS.login, body)
+const register       = (body) => http.post(AUTH_URLS.register, body)
+const logout         = ()     => http.post(AUTH_URLS.logout, { refreshToken: getRefreshToken() })
+const refreshToken   = (body) => http.post(AUTH_URLS.refreshToken, body)
+const verifyOTP      = (body) => http.post(AUTH_URLS.verifyOTP, body)
+const forgotPassword = (body) => http.post(AUTH_URLS.forgotPassword, body)
+const resetPassword  = (body) => http.post(AUTH_URLS.resetPassword, body)
+const changePassword = (body) => http.post(AUTH_URLS.changePassword, body)
 
-const getProfile = () => http.get(apiGetProfile)
-const updateProfile = (body) => http.put(apiUpdateProfile, body)
-const uploadAvatar = (body) => http.post(apiUploadAvatar, body)
-
-const getUsers = (params) => http.get(apiGetUsers, { params })
-const getUserById = (id) => http.get(apiGetUserById(id))
-const createUser = (body) => http.post(apiCreateUser, body)
-const updateUser = (id, body) => http.put(apiUpdateUser(id), body)
-const deleteUser = (id) => http.delete(apiDeleteUser(id))
-const changeUserStatus = (id, body) => http.patch(apiChangeUserStatus(id), body)
-const changeUserPassword = (id, body) => http.put(apiChangeUserPassword(id), body)
-
-const getRoles = () => http.get(apiGetRoles)
-const getPermissions = () => http.get(apiGetPermissions)
+/** GET /auth/me — thông tin user đang đăng nhập */
+const getProfile = () => http.get(AUTH_URLS.me)
 
 const AuthService = {
   login,
@@ -58,17 +52,6 @@ const AuthService = {
   resetPassword,
   changePassword,
   getProfile,
-  updateProfile,
-  uploadAvatar,
-  getUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser,
-  changeUserStatus,
-  changeUserPassword,
-  getRoles,
-  getPermissions,
 }
 
 export default AuthService
