@@ -33,6 +33,7 @@ const JournalTrace = React.lazy(() => import('../pages/FARM_MANAGER/JournalTrace
 // FARM_MANAGER pages
 const FarmManagerDashboard = React.lazy(() => import('../pages/FARM_MANAGER/Dashboard'))
 const FarmManagerUsers = React.lazy(() => import('../pages/FARM_MANAGER/Users'))
+const FarmManagerUserDetail = React.lazy(() => import('../pages/FARM_MANAGER/Users/UserDetail'))
 const FarmManagerLands = React.lazy(() => import('../pages/FARM_MANAGER/Lands'))
 const FarmManagerCropCatalogs = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs'))
 const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans'))
@@ -153,6 +154,7 @@ const routes = [
             children: [
               { path: ROUTER.FM_DASHBOARD, element: <Lazy><FarmManagerDashboard /></Lazy> },
               { path: ROUTER.FM_USERS, element: <Lazy><FarmManagerUsers /></Lazy> },
+              { path: ROUTER.FM_USER_DETAIL, element: <Lazy><FarmManagerUserDetail /></Lazy> },
               { path: ROUTER.FM_LANDS, element: <Lazy><FarmManagerLands /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOGS, element: <Lazy><FarmManagerCropCatalogs /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },

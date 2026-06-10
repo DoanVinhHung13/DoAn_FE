@@ -21,8 +21,8 @@ import {
 } from '@ant-design/icons';
 import { Modal, List, Divider, Empty } from 'antd';
 import api from 'src/services/01_axios';
+import { formatDate, formatDateTime, timeAgo } from 'src/utils/dateFormatters';
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers';
-import dayjs from 'dayjs';
 import JournalService from 'src/services/JournalService'
 
 const { Title, Text } = Typography;
@@ -136,9 +136,9 @@ const HtxFarmerMgmt = () => {
       dataIndex: 'createdAt',
       key: 'join_date',
       render: (date) => (
-        <div className="flex flex-col">
-          <Text className="text-xs text-gray-600">{dayjs(date).format('DD/MM/YYYY')}</Text>
-          <Text className="text-[10px] text-gray-400 italic">{dayjs(date).fromNow()}</Text>
+        <div className="flex flex-col text-right">
+          <Text className="text-xs text-gray-600">{formatDate(date)}</Text>
+          <Text className="text-[10px] text-gray-400 italic">{timeAgo(date)}</Text>
         </div>
       )
     },
@@ -338,9 +338,8 @@ const HtxFarmerMgmt = () => {
                   description={
                     <div className="space-y-1 mt-1">
                       <div className="flex gap-4">
-                        <Text type="secondary" className="text-xs">
-                          <ClockCircleOutlined className="mr-1" />
-                          Hạn dùng: {cert.expiryDate ? dayjs(cert.expiryDate).format('DD/MM/YYYY') : '---'}
+                        <Text className="text-xs text-gray-500 block mt-1">
+                          Hạn dùng: {cert.expiryDate ? formatDate(cert.expiryDate) : '---'}
                         </Text>
                         {cert.fileUrl && (
                           <a href={cert.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 text-xs flex items-center hover:underline">
@@ -349,8 +348,8 @@ const HtxFarmerMgmt = () => {
                         )}
                       </div>
                       {cert.verifiedAt && (
-                        <Text type="secondary" className="text-[10px] italic block">
-                          Đã xác minh vào {dayjs(cert.verifiedAt).format('HH:mm - DD/MM/YYYY')}
+                        <Text className="text-xs text-green-600 mt-2 block font-medium flex items-center gap-1">
+                          <CheckCircleOutlined /> Đã xác minh vào {formatDateTime(cert.verifiedAt)}
                         </Text>
                       )}
                     </div>

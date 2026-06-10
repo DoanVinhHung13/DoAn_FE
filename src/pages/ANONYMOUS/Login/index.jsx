@@ -5,7 +5,6 @@ import {
   Form,
   Input,
   Typography,
-  message,
 } from "antd"
 import React, { useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
@@ -19,10 +18,9 @@ import { getDashboardPathByRole } from "src/router/roleRedirects"
 
 import logo from "src/assets/logo-ebookfarm.jpg"
 import AuthService from "../../../services/AuthService"
+import { isValidEmail, isValidPhone } from "src/utils/helpers"
 
 const { Title, Text, Paragraph } = Typography
-
-
 
 const Login = () => {
   const navigate = useNavigate()
@@ -31,7 +29,6 @@ const Login = () => {
   const [loading, setLoading] = React.useState(false)
   const [form] = Form.useForm()
 
-  // Load remembered account
   useEffect(() => {
     const rememberedEmail = localStorage.getItem(STORAGE.REMEMBERED_EMAIL)
     if (rememberedEmail) {
@@ -46,61 +43,68 @@ const Login = () => {
     try {
       setLoading(true)
 
-      // ── Bước 1: Đăng nhập, lấy token ────────────────────────────────
       const loginRes = await AuthService.login({
         email: values.email,
         password: values.password,
       })
 
-      // Ghi nhớ email (phiên đăng nhập luôn persist 1 tuần qua localStorage)
+      if (!loginRes?.success) {
+        throw new Error(
+          loginRes?.message ||
+          loginRes?.errors?.[0] ||
+          "Đăng nhập thất bại."
+        )
+      }
+
       if (values.remember) {
         localStorage.setItem(STORAGE.REMEMBERED_EMAIL, values.email)
       } else {
         localStorage.removeItem(STORAGE.REMEMBERED_EMAIL)
       }
 
-      const loginData = loginRes?.data?.data || loginRes?.data || loginRes
-
+      const loginData = loginRes.data
       if (!authSession.persistAuth(loginData)) {
         throw new Error("Không nhận được mã xác thực (Token) từ hệ thống.")
       }
 
-      // ── Bước 2: Gọi /auth/me để lấy thông tin user đầy đủ ──────────
       const meRes = await AuthService.getProfile()
-      const meData = meRes?.data?.data || meRes?.data || meRes
+      if (!meRes?.success) {
+        throw new Error(
+          meRes?.message ||
+          meRes?.errors?.[0] ||
+          "Không thể lấy thông tin tài khoản sau khi đăng nhập."
+        )
+      }
 
-      const finalId = meData?.userId || meData?.id || loginData?.userId || loginData?.id;
+      const meData = meRes.data
+      const finalId =
+        meData?.id || meData?.userId || loginData?.userId || loginData?.id
       if (!finalId) {
         throw new Error("Không thể lấy thông tin tài khoản sau khi đăng nhập.")
       }
 
-      // Map sang cấu trúc userData dùng trong toàn bộ app
       const userRole = normalizeRole(meData.roles?.[0])
-      
       const userData = {
-        _id:         finalId,
-        id:          finalId,
-        fullName:    meData.fullName,
-        email:       meData.email,
+        _id: finalId,
+        id: finalId,
+        fullName: meData.fullName,
+        email: meData.email,
         phoneNumber: meData.phoneNumber,
-        avatarUrl:   meData.avatarUrl,
-        isActive:    meData.isActive,
+        avatarUrl: meData.avatarUrl,
+        isActive: meData.isActive,
         lastLoginAt: meData.lastLoginAt,
         dateOfBirth: meData.dateOfBirth,
-        gender:      meData.gender,
-        role:        userRole,
-        roles:       meData.roles || [],
+        gender: meData.gender,
+        role: userRole,
+        roles: meData.roles || [],
       }
 
-      // ── Bước 3: Lưu user info + cập nhật Redux ──
       authSession.updateUser(userData)
       dispatch(setUserInfo(userData))
-
-
       navigate(getDashboardPathByRole(userRole))
     } catch (error) {
       console.error(error)
-      message.error(error?.message || "Đã có lỗi xảy ra trong quá trình đăng nhập.")
+      // Lỗi API: axios đã hiện notice — không toast trùng
     } finally {
       setLoading(false)
     }
@@ -204,11 +208,20 @@ const Login = () => {
               name="email"
               label={
                 <span className="text-[10px] md:text-[11px] uppercase font-black text-gray-400 tracking-wider">
-                  Email hoặc Tên tài khoản
+                  Email hoặc Số điện thoại
                 </span>
               }
               rules={[
                 { required: true, message: "Thông tin này là bắt buộc!" },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve()
+                    if (isValidEmail(value) || isValidPhone(value)) {
+                      return Promise.resolve()
+                    }
+                    return Promise.reject(new Error("Email hoặc số điện thoại không hợp lệ!"))
+                  },
+                },
               ]}
               className="mb-3 md:mb-6"
             >
@@ -223,7 +236,7 @@ const Login = () => {
               name="password"
               label={
                 <span className="text-[10px] md:text-[11px] uppercase font-black text-gray-400 tracking-wider">
-                  Mật khẩu bảo mật
+                  Mật khẩu
                 </span>
               }
               rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}

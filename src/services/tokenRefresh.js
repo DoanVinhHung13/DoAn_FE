@@ -6,7 +6,6 @@ import {
   isRefreshTokenExpired,
   isAccessTokenExpired,
 } from 'src/redux/authTokens'
-
 const getBaseUrl = () =>
   (typeof window !== 'undefined' && window.env?.API_ROOT) ||
   import.meta.env.VITE_API_ROOT
@@ -34,8 +33,9 @@ export async function refreshAccessToken({ force = false } = {}) {
     refreshPromise = axios
       .post(`${getBaseUrl()}/auth/refresh-token`, { refreshToken })
       .then((response) => {
-        const payload = response?.data?.data || response?.data
-        return persistAuthPayload(payload)
+        const body = response?.data
+        if (!body?.success || !body?.data) return false
+        return persistAuthPayload(body.data)
       })
       .catch(() => false)
       .finally(() => {

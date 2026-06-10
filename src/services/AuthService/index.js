@@ -1,91 +1,57 @@
+/**
+ * AuthService — Chỉ xử lý các API thuộc nhóm /auth/*
+ *
+ * POST /auth/login             → login(body)
+ * POST /auth/register          → register(body)
+ * POST /auth/logout            → logout()
+ * POST /auth/refresh-token     → refreshToken(body)
+ * POST /auth/verify-otp        → verifyOTP(body)
+ * POST /auth/forgot-password   → forgotPassword(body)
+ * POST /auth/reset-password    → resetPassword(body)
+ * POST /auth/change-password   → changePassword(body)
+ * GET  /auth/me                → getProfile()
+ *
+ * Lưu ý: Các API /users/* đã chuyển sang UserService
+ */
 import http from '../01_axios'
-import {
-  // Authentication
-  apiLogin,
-  apiRegister,
-  apiLogout,
-  apiRefreshToken,
-  apiVerifyOTP,
-  // Password Management
-  apiForgotPassword,
-  apiResetPassword,
-  apiChangePassword,
-  apiForceChangePassword,
-  // Profile
-  apiGetProfile,
-  apiUpdateProfile,
-  apiUploadAvatar,
-  // User Management
-  apiGetUsers,
-  apiGetUserById,
-  apiCreateUser,
-  apiUpdateUser,
-  apiDeleteUser,
-  apiChangeUserStatus,
-  apiChangeUserPassword,
-  // Role & Permission
-  apiGetRoles,
-  apiGetPermissions,
-} from './urls'
+import { getRefreshToken } from 'src/redux/authTokens'
 
-// Authentication
-const login = (body) => http.post(apiLogin, body)
-const register = (body) => http.post(apiRegister, body)
-const logout = () => http.post(apiLogout)
-const refreshToken = (body) => http.post(apiRefreshToken, body)
-const verifyOTP = (body) => http.post(apiVerifyOTP, body)
+// ─── Endpoints ─────────────────────────────────────────────
+export const AUTH_URLS = {
+  login:          '/auth/login',
+  register:       '/auth/register',
+  logout:         '/auth/logout',
+  refreshToken:   '/auth/refresh-token',
+  verifyOTP:      '/auth/verify-otp',
+  forgotPassword: '/auth/forgot-password',
+  resetPassword:  '/auth/reset-password',
+  changePassword: '/auth/change-password',
+  me:             '/auth/me',
+}
 
-// Password Management
-const forgotPassword = (body) => http.post(apiForgotPassword, body)
-const resetPassword = (body) => http.post(apiResetPassword, body)
-const changePassword = (body) => http.put(apiChangePassword, body)
-const forceChangePassword = (body) => http.put(apiForceChangePassword, body)
+// ─── Methods ───────────────────────────────────────────────
+const login          = (body) => http.post(AUTH_URLS.login, body)
+const register       = (body) => http.post(AUTH_URLS.register, body)
+const logout         = ()     => http.post(AUTH_URLS.logout, { refreshToken: getRefreshToken() })
+const refreshToken   = (body) => http.post(AUTH_URLS.refreshToken, body)
+const verifyOTP      = (body) => http.post(AUTH_URLS.verifyOTP, body)
+const forgotPassword = (body) => http.post(AUTH_URLS.forgotPassword, body)
+const resetPassword  = (body) => http.post(AUTH_URLS.resetPassword, body)
+const changePassword = (body) => http.post(AUTH_URLS.changePassword, body)
 
-// Profile
-const getProfile = () => http.get(apiGetProfile)
-const updateProfile = (body) => http.put(apiUpdateProfile, body)
-const uploadAvatar = (body) => http.post(apiUploadAvatar, body)
-
-// User Management
-const getUsers = (params) => http.get(apiGetUsers, { params })
-const getUserById = (id) => http.get(apiGetUserById(id))
-const createUser = (body) => http.post(apiCreateUser, body)
-const updateUser = (id, body) => http.put(apiUpdateUser(id), body)
-const deleteUser = (id) => http.delete(apiDeleteUser(id))
-const changeUserStatus = (id, body) => http.patch(apiChangeUserStatus(id), body)
-const changeUserPassword = (id, body) => http.put(apiChangeUserPassword(id), body)
-
-// Role & Permission
-const getRoles = () => http.get(apiGetRoles)
-const getPermissions = () => http.get(apiGetPermissions)
+/** GET /auth/me — thông tin user đang đăng nhập */
+const getProfile = () => http.get(AUTH_URLS.me)
 
 const AuthService = {
-  // Authentication
   login,
   register,
   logout,
   refreshToken,
   verifyOTP,
-  // Password Management
   forgotPassword,
   resetPassword,
   changePassword,
-  forceChangePassword,
-  // Profile
   getProfile,
-  updateProfile,
-  uploadAvatar,
-  // User Management
-  getUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser,
-  changeUserStatus,
-  changeUserPassword,
-  // Role & Permission
-  getRoles,
-  getPermissions,
 }
 
 export default AuthService

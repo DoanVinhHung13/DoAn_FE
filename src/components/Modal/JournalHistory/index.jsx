@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Timeline, Tag, Empty, Spin, Descriptions, Alert, Tabs } from 'antd';
 import { ClockCircleOutlined, UserOutlined, EditOutlined, FileAddOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import api from 'src/services/01_axios';
-import dayjs from 'dayjs';
-import 'dayjs/locale/vi';
-
-dayjs.locale('vi');
+import { formatDateTime } from 'src/utils/dateFormatters';
 
 const JournalHistoryModal = ({ visible, onClose, journalId }) => {
   const [loading, setLoading] = useState(false);
@@ -81,7 +78,7 @@ const JournalHistoryModal = ({ visible, onClose, journalId }) => {
                   <span className="font-medium">{item.user.name}</span>
                   <span className="text-gray-400">•</span>
                   <ClockCircleOutlined />
-                  <span>{dayjs(item.timestamp).format('DD/MM/YYYY HH:mm')}</span>
+                  <span>{formatDateTime(item.timestamp, 'DD/MM/YYYY HH:mm')}</span>
                 </div>
               </div>
             </div>
@@ -156,7 +153,7 @@ const JournalHistoryModal = ({ visible, onClose, journalId }) => {
             </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Ngày tạo">
-            {dayjs(summary.journal.createdAt).format('DD/MM/YYYY HH:mm')}
+            {formatDateTime(summary.journal.createdAt, 'DD/MM/YYYY HH:mm')}
           </Descriptions.Item>
           <Descriptions.Item label="Tổng số lần sửa">
             {summary.journal.editCount || 0}
@@ -176,7 +173,7 @@ const JournalHistoryModal = ({ visible, onClose, journalId }) => {
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <ClockCircleOutlined />
-                <span>{dayjs(summary.lastEdit.timestamp).format('DD/MM/YYYY HH:mm')}</span>
+                <span>{formatDateTime(summary.lastEdit.timestamp, 'DD/MM/YYYY HH:mm')}</span>
               </div>
               <div className="mt-2">
                 <Tag>{summary.lastEdit.action}</Tag>

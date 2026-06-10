@@ -23,7 +23,7 @@ import {
 import * as XLSX from 'xlsx';
 import api from 'src/services/01_axios';
 import { useSelector } from 'react-redux';
-import dayjs from 'dayjs';
+import { formatDate } from 'src/utils/dateFormatters';
 import JournalEntry from '../../FARM_MANAGER/JournalEntry';
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers';
 import jsPDF from 'jspdf';
@@ -1095,8 +1095,8 @@ const HtxJournalMgmt = () => {
 
                 // Helper to format values (like ISO dates)
                 const formatValue = (val) => {
-                  if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
-                    return dayjs(val).format('DD/MM/YYYY');
+                  if (field.type === 'date') {
+                    return formatDate(val);
                   }
                   return val;
                 };
