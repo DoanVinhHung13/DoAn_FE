@@ -8,32 +8,68 @@ import authSession from 'src/redux/authSession';
 
 import logo from 'src/assets/logo-ebookfarm.jpg';
 import AuthService from 'src/services/AuthService'
-import ROUTER from 'src/router/ROUTER'
+import { normalizeRole } from 'src/constants/roles'
+import { getDashboardPathByRole } from 'src/router/roleRedirects'
 
 const { Title, Text, Paragraph } = Typography;
 
 const Register = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
-  // Lưu token vào Storage và user vào Redux sau khi đăng ký thành công
-  const setCredentials = (payload) => {
-    authSession.persistAuth(payload);
-    authSession.updateUser(payload);
-    dispatch(setUserInfo(payload));
-  };
   const [loading, setLoading] = React.useState(false);
 
   const onFinish = async (values) => {
     try {
       setLoading(true);
-      const { data } = await AuthService.register({
-          ...values,
-          role: 'Farmer' // Default role for public registration
+      const registerRes = await AuthService.register({
+        fullName: values.fullName,
+        email: values.email,
+        phoneNumber: values.phoneNumber,
+        password: values.password,
+        confirmPassword: values.confirmPassword,
       });
-      setCredentials(data.data);
-      navigate(ROUTER.FM_DASHBOARD);
+
+      if (!registerRes?.success) {
+        throw new Error(
+          registerRes?.message ||
+            registerRes?.errors?.[0] ||
+            'Đăng ký thất bại'
+        );
+      }
+
+      const authData = registerRes.data;
+      if (!authSession.persistAuth(authData)) {
+        throw new Error('Không nhận được mã xác thực sau khi đăng ký.');
+      }
+
+      const meRes = await AuthService.getProfile();
+      if (!meRes?.success) {
+        throw new Error(meRes?.message || 'Không thể lấy thông tin tài khoản.');
+      }
+
+      const meData = meRes.data;
+      const finalId = meData?.id || meData?.userId || authData?.userId;
+      const userRole = normalizeRole(meData?.roles?.[0]);
+      const userData = {
+        _id:         finalId,
+        id:          finalId,
+        fullName:    meData.fullName,
+        email:       meData.email,
+        phoneNumber: meData.phoneNumber,
+        avatarUrl:   meData.avatarUrl,
+        isActive:    meData.isActive,
+        lastLoginAt: meData.lastLoginAt,
+        dateOfBirth: meData.dateOfBirth,
+        gender:      meData.gender,
+        role:        userRole,
+        roles:       meData.roles || [],
+      };
+
+      authSession.updateUser(userData);
+      dispatch(setUserInfo(userData));
+      navigate(getDashboardPathByRole(userRole));
     } catch (error) {
+      message.error(error?.message || 'Đăng ký thất bại');
     } finally {
       setLoading(false);
     }

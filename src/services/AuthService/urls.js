@@ -1,5 +1,5 @@
-// Auth API endpoints
-// Base URL: http://103.245.236.147:5000/api
+// Auth API endpoints — đối chiếu Swagger: https://api.eapls.io.vn/swagger/index.html
+// Base URL (axios): https://api.eapls.io.vn/api
 
 // Authentication
 export const apiLogin = "/auth/login"
@@ -12,12 +12,11 @@ export const apiVerifyOTP = "/auth/verify-otp"
 export const apiForgotPassword = "/auth/forgot-password"
 export const apiResetPassword = "/auth/reset-password"
 export const apiChangePassword = "/auth/change-password"
-export const apiForceChangePassword = "/auth/force-change-password"
 
-// Profile
+// Profile (GET me thuộc Auth; cập nhật profile/avatar thuộc Users)
 export const apiGetProfile = "/auth/me"
-export const apiUpdateProfile = "/auth/profile"
-export const apiUploadAvatar = "/auth/profile/avatar"
+export const apiUpdateProfile = "/users/me/profile"
+export const apiUploadAvatar = "/users/me/avatar"
 
 // User Management
 export const apiGetUsers = "/users"

@@ -1,30 +1,45 @@
 import React from 'react';
-import { Card, Typography, Form, Input, Button, message, Divider, Space, Breadcrumb } from 'antd';
+import { Card, Typography, Form, Input, Button, Divider, Space, Breadcrumb } from 'antd';
 import { LockOutlined, SaveOutlined, HomeOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 
-import UserService from 'src/services/UserService'
+import notice from 'src/components/Notice'
+import AuthService from 'src/services/AuthService'
+import authSession from 'src/redux/authSession'
+import { useAppDispatch } from 'src/redux/hooks'
+import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
+import { useNavigate } from 'react-router-dom'
+import ROUTER from 'src/router/ROUTER'
 
 const { Title, Text, Paragraph } = Typography;
 
 const ChangePassword = () => {
     const [form] = Form.useForm();
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     const updateMutation = useMutation({
-        mutationFn: (values) => {
+        mutationFn: async (values) => {
             if (values.newPassword !== values.confirmPassword) {
-                return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                notice({ msg: 'Mật khẩu xác nhận không khớp!', isSuccess: false });
+                throw new Error('Mật khẩu xác nhận không khớp!');
             }
-            return UserService.updateProfile({ 
-                currentPassword: values.currentPassword, 
-                password: values.newPassword 
+            const res = await AuthService.changePassword({
+                currentPassword: values.currentPassword,
+                newPassword: values.newPassword,
+                confirmNewPassword: values.confirmPassword,
             });
+            if (!res?.success) {
+                throw new Error(res?.message || res?.errors?.[0] || 'Đổi mật khẩu thất bại');
+            }
+            return res;
         },
         onSuccess: () => {
-            message.success('Đổi mật khẩu thành công!');
             form.resetFields();
+            authSession.clearSession();
+            dispatch(setUserInfo({}));
+            navigate(ROUTER.LOGIN);
         },
-        onError: (err) => message.error(err.response?.data?.message || err.message || 'Có lỗi xảy ra!')
     });
 
     return (

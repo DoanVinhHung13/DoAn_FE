@@ -1,21 +1,17 @@
 import http from '../01_axios'
+import { getRefreshToken } from 'src/redux/authTokens'
 import {
-  // Authentication
   apiLogin,
   apiRegister,
   apiLogout,
   apiRefreshToken,
   apiVerifyOTP,
-  // Password Management
   apiForgotPassword,
   apiResetPassword,
   apiChangePassword,
-  apiForceChangePassword,
-  // Profile
   apiGetProfile,
   apiUpdateProfile,
   apiUploadAvatar,
-  // User Management
   apiGetUsers,
   apiGetUserById,
   apiCreateUser,
@@ -23,30 +19,24 @@ import {
   apiDeleteUser,
   apiChangeUserStatus,
   apiChangeUserPassword,
-  // Role & Permission
   apiGetRoles,
   apiGetPermissions,
 } from './urls'
 
-// Authentication
 const login = (body) => http.post(apiLogin, body)
 const register = (body) => http.post(apiRegister, body)
-const logout = () => http.post(apiLogout)
+const logout = () => http.post(apiLogout, { refreshToken: getRefreshToken() })
 const refreshToken = (body) => http.post(apiRefreshToken, body)
 const verifyOTP = (body) => http.post(apiVerifyOTP, body)
 
-// Password Management
 const forgotPassword = (body) => http.post(apiForgotPassword, body)
 const resetPassword = (body) => http.post(apiResetPassword, body)
-const changePassword = (body) => http.put(apiChangePassword, body)
-const forceChangePassword = (body) => http.put(apiForceChangePassword, body)
+const changePassword = (body) => http.post(apiChangePassword, body)
 
-// Profile
 const getProfile = () => http.get(apiGetProfile)
 const updateProfile = (body) => http.put(apiUpdateProfile, body)
 const uploadAvatar = (body) => http.post(apiUploadAvatar, body)
 
-// User Management
 const getUsers = (params) => http.get(apiGetUsers, { params })
 const getUserById = (id) => http.get(apiGetUserById(id))
 const createUser = (body) => http.post(apiCreateUser, body)
@@ -55,27 +45,21 @@ const deleteUser = (id) => http.delete(apiDeleteUser(id))
 const changeUserStatus = (id, body) => http.patch(apiChangeUserStatus(id), body)
 const changeUserPassword = (id, body) => http.put(apiChangeUserPassword(id), body)
 
-// Role & Permission
 const getRoles = () => http.get(apiGetRoles)
 const getPermissions = () => http.get(apiGetPermissions)
 
 const AuthService = {
-  // Authentication
   login,
   register,
   logout,
   refreshToken,
   verifyOTP,
-  // Password Management
   forgotPassword,
   resetPassword,
   changePassword,
-  forceChangePassword,
-  // Profile
   getProfile,
   updateProfile,
   uploadAvatar,
-  // User Management
   getUsers,
   getUserById,
   createUser,
@@ -83,7 +67,6 @@ const AuthService = {
   deleteUser,
   changeUserStatus,
   changeUserPassword,
-  // Role & Permission
   getRoles,
   getPermissions,
 }

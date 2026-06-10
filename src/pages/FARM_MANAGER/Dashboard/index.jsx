@@ -145,13 +145,13 @@ const Dashboard = () => {
     : farmerQuickAccess;
 
   // Fetch News
-  const { data: newsItems = [], isLoading: newsLoading } = useQuery({
-    queryKey: ['news'],
-    queryFn: async () => {
-      const { data } = await NewsService.getNews();
-      return data.data;
-    }
-  });
+  // const { data: newsItems = [], isLoading: newsLoading } = useQuery({
+  //   queryKey: ['news'],
+  //   queryFn: async () => {
+  //     const { data } = await NewsService.getNews();
+  //     return data.data;
+  //   }
+  // });
 
   const [visibleNews, setVisibleNews] = useState(2);
 
@@ -295,7 +295,7 @@ const Dashboard = () => {
           <Title level={3} className="!mb-2 !text-gray-800 font-bold">Tin tức</Title>
         </div>
 
-        {newsLoading ? (
+        {/* {newsLoading ? (
           <Row gutter={[24, 24]}>
             {[1, 2].map(i => (
               <Col xs={24} lg={12} key={i}>
@@ -381,7 +381,7 @@ const Dashboard = () => {
               </div>
             )}
           </>
-        )}
+        )} */}
       </div>
 
     </div>

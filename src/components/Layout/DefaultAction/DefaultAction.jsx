@@ -1,6 +1,3 @@
-// src/components/Layout/DefaultAction/DefaultAction.jsx
-// Boot component: chạy 1 lần khi app mount, không render UI.
-// Nhiệm vụ: nếu có token trong Storage → gọi /auth/me → đưa user vào Redux.
 import { useEffect } from 'react'
 import { useAppDispatch } from 'src/redux/hooks'
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
@@ -13,24 +10,28 @@ const DefaultAction = ({ children }) => {
   const dispatch = useAppDispatch()
 
   useEffect(() => {
-    // Chỉ fetch nếu có token — không phụ thuộc vào Context hay state
     if (!authSession.isAuthenticated()) return
 
     const fetchProfile = async () => {
-      try {
-        return await AuthService.getProfile()
-      } catch {
+      let meRes = await AuthService.getProfile()
+
+      if (!meRes?.success) {
         const refreshed = await refreshAccessToken()
         if (!refreshed) throw new Error('Phiên đăng nhập đã hết hạn')
-        return AuthService.getProfile()
+        meRes = await AuthService.getProfile()
       }
+
+      if (!meRes?.success) {
+        throw new Error(meRes?.message || 'Không thể tải thông tin người dùng')
+      }
+
+      return meRes.data
     }
 
     const restoreUser = async () => {
       try {
-        const res = await fetchProfile()
-        const meData = res?.data?.data || res?.data || res
-        const finalId = meData?.userId || meData?.id
+        const meData = await fetchProfile()
+        const finalId = meData?.id || meData?.userId
         if (!finalId) return
 
         const userData = {
@@ -48,7 +49,6 @@ const DefaultAction = ({ children }) => {
           roles:       meData.roles || [],
         }
 
-        // Cập nhật Storage (user info mới nhất) và Redux (reactive UI)
         authSession.updateUser(userData)
         dispatch(setUserInfo(userData))
       } catch (e) {
@@ -57,7 +57,7 @@ const DefaultAction = ({ children }) => {
     }
 
     restoreUser()
-  }, []) // Chạy đúng 1 lần khi mount — [] là intentional
+  }, [])
 
   return <>{children}</>
 }
