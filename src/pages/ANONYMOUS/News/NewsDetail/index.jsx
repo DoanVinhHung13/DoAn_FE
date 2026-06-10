@@ -15,9 +15,9 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import api from 'src/services/01_axios';
+
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers';
-import dayjs from 'dayjs';
+import { formatDate, timeAgo } from 'src/utils/dateFormatters';
 import NewsService from 'src/services/NewsService'
 
 const { Title, Text, Paragraph } = Typography;
@@ -30,7 +30,7 @@ const NewsDetail = () => {
     const { data: news, isLoading } = useQuery({
         queryKey: ['news', id],
         queryFn: async () => {
-            const { data } = await api.get(`/news/${id}`);
+            const { data } = await NewsService.getNewsById(id);
             return data.data;
         }
     });
@@ -145,7 +145,7 @@ const NewsDetail = () => {
                                             {(typeof news.author === 'object' ? (news.author.fullname || news.author.username) : news.author) || 'EBookFarm Editor'}
                                         </Text>
                                         <div className="text-gray-500 text-[13px] mt-0.5">
-                                            {dayjs(news.publishedAt).fromNow()} • 6 phút đọc
+                                            {timeAgo(news.publishedAt)} • 6 phút đọc
                                         </div>
                                     </div>
                                 </div>
@@ -257,7 +257,7 @@ const NewsDetail = () => {
                                                 <Title level={5} className="!text-[#242424] !font-bold !text-[14px] group-hover:text-green-600 transition-colors line-clamp-2 leading-snug !mb-1">
                                                     {n.title}
                                                 </Title>
-                                                <Text className="text-gray-500 text-[12px]">{dayjs(n.publishedAt).format('DD/MM/YYYY')}</Text>
+                                                <Text className="text-gray-500 text-[12px]">{formatDate(n.publishedAt)}</Text>
                                             </div>
                                         </div>
                                     )) : <Text className="italic text-gray-400">Chưa có bài viết liên quan</Text>}

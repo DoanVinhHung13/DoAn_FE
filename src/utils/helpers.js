@@ -58,3 +58,21 @@ export const formatArea = (area) => {
   }
   return `${area.toLocaleString()} m²`;
 };
+
+/**
+ * Trim khoảng trắng thừa trong object data trước khi gửi API
+ */
+export const trimData = (data) => {
+  if (typeof data !== 'object' || data === null) return data;
+  if (Array.isArray(data)) return data.map(item => trimData(item));
+  
+  const newData = { ...data };
+  for (const key in newData) {
+    if (typeof newData[key] === 'string') {
+      newData[key] = newData[key].trim();
+    } else if (typeof newData[key] === 'object') {
+      newData[key] = trimData(newData[key]);
+    }
+  }
+  return newData;
+};

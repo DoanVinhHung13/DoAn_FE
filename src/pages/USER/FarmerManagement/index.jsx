@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Card, Typography, Row, Col, Input, Button, Tag, Space, Avatar, Statistic, Tooltip, message, Badge, Select } from 'antd';
-import { 
-  UserOutlined, 
-  SearchOutlined, 
-  PhoneOutlined, 
-  HomeOutlined, 
+import {
+  UserOutlined,
+  SearchOutlined,
+  PhoneOutlined,
+  HomeOutlined,
   EnvironmentOutlined,
   AreaChartOutlined,
   DeploymentUnitOutlined,
@@ -39,61 +39,6 @@ const HtxFarmerMgmt = () => {
   const [selectedFarmer, setSelectedFarmer] = useState(null);
   const [certLoading, setCertLoading] = useState(false);
 
-  useEffect(() => {
-    fetchFarmers();
-  }, []);
-
-  const fetchFarmers = async () => {
-    try {
-      setLoading(true);
-      const res = await JournalService.getHtxFarmers();
-      if (res.data.success) {
-        setFarmers(res.data.data);
-      }
-    } catch (error) {
-      message.error('Lỗi khi tải danh sách nông dân');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCert = async (certId, status, feedback = '') => {
-    try {
-      setCertLoading(true);
-      const res = await api.put(`/users/${selectedFarmer._id}/certifications/${certId}/verify`, { status, feedback });
-      if (res.data.success) {
-        message.success(res.data.message);
-        // Cập nhật lại list local
-        const updatedFarmers = farmers.map(f => {
-          if (f._id === selectedFarmer._id) {
-            const updatedCerts = f.certifications.map(c => c._id === certId ? { ...c, status, verifiedAt: new Date() } : c);
-            return { ...f, certifications: updatedCerts };
-          }
-          return f;
-        });
-        setFarmers(updatedFarmers);
-        // Cập nhật nông dân đang chọn trong Modal
-        const current = updatedFarmers.find(f => f._id === selectedFarmer._id);
-        setSelectedFarmer(current);
-      }
-    } catch (error) {
-      message.error(error.response?.data?.message || 'Lỗi khi phê duyệt chứng nhận');
-    } finally {
-      setCertLoading(false);
-    }
-  };
-
-  const filteredFarmers = farmers.filter(f => {
-    const searchVal = searchText.toLowerCase();
-    const nameMatch = (f.fullname || f.username || '').toLowerCase().includes(searchVal);
-    const emailMatch = (f.email || '').toLowerCase().includes(searchVal);
-    const phoneMatch = (f.phone || '').includes(searchVal);
-    const farmTypeMatch = farmTypeFilter 
-      ? (farmTypeFilter === 'none' ? !f.farmType : f.farmType === farmTypeFilter)
-      : true;
-    const statusMatch = statusFilter ? f.status === statusFilter : true;
-    return (nameMatch || emailMatch || phoneMatch) && farmTypeMatch && statusMatch;
-  });
 
   const columns = [
     {
@@ -108,9 +53,9 @@ const HtxFarmerMgmt = () => {
       key: 'farmer_info',
       render: (record) => (
         <div className="flex items-center gap-3 py-1">
-          <Avatar 
-            size={40} 
-            src={getAvatarUrl(record.avatar)} 
+          <Avatar
+            size={40}
+            src={getAvatarUrl(record.avatar)}
             className="border-2 border-green-50 shadow-sm"
           >
             {!record.avatar && getInitialAvatar(record.fullname || record.username)}
@@ -162,9 +107,9 @@ const HtxFarmerMgmt = () => {
       dataIndex: 'certifications',
       key: 'certs',
       render: (certs, record) => (
-        <Button 
-          type="text" 
-          size="small" 
+        <Button
+          type="text"
+          size="small"
           className="p-0 h-auto hover:bg-transparent"
           onClick={() => {
             setSelectedFarmer(record);
@@ -180,7 +125,7 @@ const HtxFarmerMgmt = () => {
               return <Tag key={i} color={color} className="rounded-full border-0 text-[9px] font-bold px-2 m-0">{c.name || c}</Tag>;
             }) : <Text className="text-[10px] text-gray-300 italic">Chưa có</Text>}
             <Tooltip title="Quản lý chứng nhận">
-               <SafetyCertificateOutlined className="text-blue-500 ml-1" />
+              <SafetyCertificateOutlined className="text-blue-500 ml-1" />
             </Tooltip>
           </Space>
         </Button>
@@ -218,8 +163,8 @@ const HtxFarmerMgmt = () => {
           </div>
           <Title level={4} className="!mb-0">Quản Lý Thành Viên Nông Dân</Title>
         </div>
-        <Button 
-          icon={<ReloadOutlined />} 
+        <Button
+          icon={<ReloadOutlined />}
           onClick={fetchFarmers}
           className="rounded-xl border-gray-200"
         >
@@ -231,30 +176,30 @@ const HtxFarmerMgmt = () => {
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={8}>
           <Card className="rounded-2xl border-0 shadow-sm bg-gradient-to-br from-green-600 to-green-700">
-            <Statistic 
+            <Statistic
               title={<Text className="text-white/80 uppercase text-xs font-bold">Tổng số thành viên</Text>}
-              value={farmers.length} 
-              prefix={<TeamOutlined />} 
+              value={farmers.length}
+              prefix={<TeamOutlined />}
               valueStyle={{ color: '#fff', fontSize: '28px', fontWeight: 'bold' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
           <Card className="rounded-2xl border-gray-100 shadow-sm">
-            <Statistic 
+            <Statistic
               title={<Text className="text-gray-400 uppercase text-xs font-bold">Quy mô trồng trọt</Text>}
-              value={farmers.filter(f => f.farmType === 'Trồng trọt').length} 
-              prefix={<DeploymentUnitOutlined className="text-green-500" />} 
+              value={farmers.filter(f => f.farmType === 'Trồng trọt').length}
+              prefix={<DeploymentUnitOutlined className="text-green-500" />}
               valueStyle={{ color: '#22c55e', fontSize: '28px', fontWeight: 'bold' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
           <Card className="rounded-2xl border-gray-100 shadow-sm">
-            <Statistic 
+            <Statistic
               title={<Text className="text-gray-400 uppercase text-xs font-bold">Tổng diện tích (m²)</Text>}
-              value={farmers.reduce((acc, curr) => acc + (curr.farmArea || 0), 0)} 
-              prefix={<AreaChartOutlined className="text-blue-500" />} 
+              value={farmers.reduce((acc, curr) => acc + (curr.farmArea || 0), 0)}
+              prefix={<AreaChartOutlined className="text-blue-500" />}
               valueStyle={{ color: '#3b82f6', fontSize: '28px', fontWeight: 'bold' }}
             />
           </Card>
@@ -305,14 +250,14 @@ const HtxFarmerMgmt = () => {
 
       {/* Table Section */}
       <Card bordered={false} className="shadow-sm rounded-2xl overflow-hidden" bodyStyle={{ padding: 0 }}>
-        <Table 
-          columns={columns} 
-          dataSource={filteredFarmers} 
+        <Table
+          columns={columns}
+          dataSource={filteredFarmers}
           rowKey="_id"
           loading={loading}
           className="premium-table-refined custom-pagination"
           scroll={{ x: 1000 }}
-          pagination={{ 
+          pagination={{
             current: currentPage,
             pageSize: pageSize,
             onChange: (page, size) => {
@@ -352,9 +297,9 @@ const HtxFarmerMgmt = () => {
                 actions={[
                   cert.status === 'Pending' && (
                     <Space>
-                      <Button 
-                        size="small" 
-                        type="primary" 
+                      <Button
+                        size="small"
+                        type="primary"
                         icon={<CheckCircleOutlined />}
                         className="bg-green-600 border-0 rounded-lg"
                         onClick={() => handleVerifyCert(cert._id, 'Approved')}
@@ -362,9 +307,9 @@ const HtxFarmerMgmt = () => {
                       >
                         Duyệt
                       </Button>
-                      <Button 
-                        size="small" 
-                        danger 
+                      <Button
+                        size="small"
+                        danger
                         icon={<CloseCircleOutlined />}
                         className="rounded-lg"
                         onClick={() => handleVerifyCert(cert._id, 'Rejected')}

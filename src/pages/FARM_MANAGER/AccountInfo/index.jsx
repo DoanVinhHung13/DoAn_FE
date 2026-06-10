@@ -8,7 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import dayjs from 'dayjs';
 import { getProvinces, getWardsByProvince } from 'src/services/LocationService';
-import { API_BASE_URL, API_URL, getAvatarUrl, getInitialAvatar } from 'src/lib/utils';
+import { API_BASE_URL, API_URL, getAvatarUrl, getInitialAvatar, isValidPhone, formatArea } from 'src/utils/helpers';
 import UserService from 'src/services/UserService'
 
 const { Title, Text, Paragraph } = Typography;
@@ -423,7 +423,7 @@ const AccountInfo = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <Text type="secondary" className="text-[10px] uppercase font-bold block">Diện tích</Text>
-                                        <Text strong className="block truncate">{user.farmArea.toLocaleString()} m²</Text>
+                                        <Text strong className="block truncate">{formatArea(user.farmArea)}</Text>
                                     </div>
                                 </div>
                             )}
@@ -500,7 +500,17 @@ const AccountInfo = () => {
                                 <Form.Item
                                     name="phone"
                                     label="Số điện thoại"
-                                    rules={[{ pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ!' }]}
+                                    rules={[
+                                        {
+                                            validator: (_, value) => {
+                                                if (!value) return Promise.resolve();
+                                                if (!isValidPhone(value)) {
+                                                    return Promise.reject(new Error('Số điện thoại không hợp lệ!'));
+                                                }
+                                                return Promise.resolve();
+                                            }
+                                        }
+                                    ]}
                                 >
                                     <Input className="h-11 rounded-lg" prefix={<PhoneOutlined className="text-gray-300" />} placeholder="0912345678" />
                                 </Form.Item>

@@ -5,15 +5,17 @@ import {
   Form,
   Input,
   Typography,
+  message,
 } from "antd"
 import React, { useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import STORAGE, { setStorage } from "src/store/storage"
-import authSession from "src/store/authSession"
+import STORAGE from "src/redux/storage"
+import authSession from "src/redux/authSession"
 import { useAppDispatch } from "src/redux/hooks"
 import { setUserInfo } from "src/redux/slices/appGlobalSlice"
 import ROUTER from "src/router/ROUTER"
-import { ROLES } from "src/constants/roles"
+import { normalizeRole } from "src/constants/roles"
+import { getDashboardPathByRole } from "src/router/roleRedirects"
 
 import logo from "src/assets/logo-ebookfarm.jpg"
 import AuthService from "../../../services/AuthService"
@@ -31,7 +33,7 @@ const Login = () => {
 
   // Load remembered account
   useEffect(() => {
-    const rememberedEmail = localStorage.getItem("rememberedEmail")
+    const rememberedEmail = localStorage.getItem(STORAGE.REMEMBERED_EMAIL)
     if (rememberedEmail) {
       form.setFieldsValue({
         email: rememberedEmail,
@@ -50,42 +52,34 @@ const Login = () => {
         password: values.password,
       })
 
-      // Xử lý Ghi nhớ tài khoản
+      // Ghi nhớ email (phiên đăng nhập luôn persist 1 tuần qua localStorage)
       if (values.remember) {
-        localStorage.setItem("rememberedEmail", values.email)
+        localStorage.setItem(STORAGE.REMEMBERED_EMAIL, values.email)
       } else {
-        localStorage.removeItem("rememberedEmail")
+        localStorage.removeItem(STORAGE.REMEMBERED_EMAIL)
       }
 
-      // Response BE: { success, message, data: { accessToken, refreshToken, ... } }
       const loginData = loginRes?.data?.data || loginRes?.data || loginRes
-      const token = loginData?.accessToken || loginData?.token
 
-      if (!token) {
+      if (!authSession.persistAuth(loginData)) {
         throw new Error("Không nhận được mã xác thực (Token) từ hệ thống.")
       }
 
-      // Lưu token vào storage (axios interceptor sẽ tự đính vào header)
-      setStorage(STORAGE.TOKEN, token)
-      if (loginData?.refreshToken) {
-        setStorage(STORAGE.REFRESH_TOKEN, loginData.refreshToken)
-      }
-
       // ── Bước 2: Gọi /auth/me để lấy thông tin user đầy đủ ──────────
-      // Response BE: { success, message, data: { id, fullName, email, roles, ... } }
       const meRes = await AuthService.getProfile()
       const meData = meRes?.data?.data || meRes?.data || meRes
 
-      if (!meData?.id) {
+      const finalId = meData?.userId || meData?.id || loginData?.userId || loginData?.id;
+      if (!finalId) {
         throw new Error("Không thể lấy thông tin tài khoản sau khi đăng nhập.")
       }
 
       // Map sang cấu trúc userData dùng trong toàn bộ app
-      // Dùng _id để tương thích với ProtectedRoute guard (check user?._id)
-      const userRole = meData?.roles?.[0] || null
+      const userRole = normalizeRole(meData.roles?.[0])
+      
       const userData = {
-        _id:         meData.id,
-        id:          meData.id,
+        _id:         finalId,
+        id:          finalId,
         fullName:    meData.fullName,
         email:       meData.email,
         phoneNumber: meData.phoneNumber,
@@ -98,24 +92,15 @@ const Login = () => {
         roles:       meData.roles || [],
       }
 
-      // ── Bước 3: Persist vào Storage & cập nhật Redux (nguồn duy nhất) ──
+      // ── Bước 3: Lưu user info + cập nhật Redux ──
       authSession.updateUser(userData)
       dispatch(setUserInfo(userData))
 
 
-      if (userRole === ROLES.FARM_MANAGER) {
-        navigate(ROUTER.FM_DASHBOARD)
-      } else if (userRole === ROLES.LAND_MANAGER) {
-        navigate(ROUTER.LM_DASHBOARD)
-      } else if (userRole === ROLES.MATERIAL_MANAGER) {
-        navigate(ROUTER.MM_DASHBOARD)
-      } else if (userRole === ROLES.FARMER) {
-        navigate(ROUTER.FARMER_DASHBOARD)
-      } else {
-        navigate(ROUTER.LOGIN)
-      }
+      navigate(getDashboardPathByRole(userRole))
     } catch (error) {
-
+      console.error(error)
+      message.error(error?.message || "Đã có lỗi xảy ra trong quá trình đăng nhập.")
     } finally {
       setLoading(false)
     }

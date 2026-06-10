@@ -4,8 +4,7 @@ import { UserOutlined, LockOutlined, MailOutlined, RocketFilled, SafetyCertifica
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
-import STORAGE, { setStorage } from 'src/store/storage';
-import authSession from 'src/store/authSession';
+import authSession from 'src/redux/authSession';
 
 import logo from 'src/assets/logo-ebookfarm.jpg';
 import AuthService from 'src/services/AuthService'
@@ -18,10 +17,10 @@ const Register = () => {
   const dispatch = useAppDispatch();
 
   // Lưu token vào Storage và user vào Redux sau khi đăng ký thành công
-  const setCredentials = (user, token) => {
-    setStorage(STORAGE.TOKEN, token);
-    authSession.updateUser(user);
-    dispatch(setUserInfo(user));
+  const setCredentials = (payload) => {
+    authSession.persistAuth(payload);
+    authSession.updateUser(payload);
+    dispatch(setUserInfo(payload));
   };
   const [loading, setLoading] = React.useState(false);
 
@@ -32,7 +31,7 @@ const Register = () => {
           ...values,
           role: 'Farmer' // Default role for public registration
       });
-      setCredentials(data.data, data.data.token);
+      setCredentials(data.data);
       navigate(ROUTER.FM_DASHBOARD);
     } catch (error) {
     } finally {

@@ -1,8 +1,9 @@
 import axios from "axios"
 import notice from "src/components/Notice"
-import STORAGE, { deleteStorage, getStorage } from "src/store/storage"
-import { getMsgClient } from "src/lib/stringsUtils"
-import { trimData } from "src/lib/utils"
+import STORAGE, { clearAuthStorage, deleteStorage, getStorage } from "src/redux/storage"
+import { refreshAccessToken } from "src/services/tokenRefresh"
+import { getMsgClient } from "src/utils/stringsUtils"
+import { trimData } from "src/utils/helpers"
 import ROUTER from "src/router/ROUTER"
 
 // const baseURL = import.meta.env.VITE_VITE_BACKEND_URL!
@@ -82,8 +83,6 @@ const instance = axios.create({
 // request header
 instance.interceptors.request.use(
   async config => {
-    // Do something before request is sent
-    // Kiểm tra url truy cập của web để config tương ứng
     const BASE_URL =
       (typeof window !== "undefined" && window.env?.API_ROOT) ||
       import.meta.env.VITE_API_ROOT
@@ -92,11 +91,19 @@ instance.interceptors.request.use(
       config.data =
         config.data instanceof FormData ? config.data : trimData(config.data)
     }
-    let Authorization = getStorage(STORAGE.TOKEN) || false
-    if (Authorization)
+
+    const isRefreshCall = String(config.url || "").includes("/auth/refresh-token")
+    if (!isRefreshCall && getStorage(STORAGE.TOKEN)) {
+      await refreshAccessToken()
+    }
+
+    const Authorization = getStorage(STORAGE.TOKEN) || false
+    if (Authorization) {
       config.headers = {
+        ...config.headers,
         Authorization: `Bearer ${Authorization}`,
       }
+    }
     config.baseURL = BASE_URL
     // config.onUploadProgress = (progressEvent: any) => {
     // let percentCompleted = Math.floor(
@@ -127,7 +134,29 @@ const noticeError500 = message => {
 // response parse
 instance.interceptors.response.use(
   response => parseBody(response),
-  error => {
+  async error => {
+    const originalRequest = error.config
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !String(originalRequest.url || "").includes("/auth/refresh-token")
+    ) {
+      originalRequest._retry = true
+      const refreshed = await refreshAccessToken()
+      if (refreshed) {
+        const token = getStorage(STORAGE.TOKEN)
+        originalRequest.headers = {
+          ...originalRequest.headers,
+          Authorization: `Bearer ${token}`,
+        }
+        return instance(originalRequest)
+      }
+      clearAuthStorage()
+      window.location.replace(ROUTER.LOGIN)
+      return Promise.reject(error)
+    }
+
     // can not connect API
     if (error.code === "ECONNABORTED") {
       notice({

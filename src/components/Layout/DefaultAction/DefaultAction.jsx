@@ -4,8 +4,10 @@
 import { useEffect } from 'react'
 import { useAppDispatch } from 'src/redux/hooks'
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
-import authSession from 'src/store/authSession'
+import authSession from 'src/redux/authSession'
 import AuthService from 'src/services/AuthService'
+import { refreshAccessToken } from 'src/services/tokenRefresh'
+import { normalizeRole } from 'src/constants/roles'
 
 const DefaultAction = ({ children }) => {
   const dispatch = useAppDispatch()
@@ -14,15 +16,26 @@ const DefaultAction = ({ children }) => {
     // Chỉ fetch nếu có token — không phụ thuộc vào Context hay state
     if (!authSession.isAuthenticated()) return
 
+    const fetchProfile = async () => {
+      try {
+        return await AuthService.getProfile()
+      } catch {
+        const refreshed = await refreshAccessToken()
+        if (!refreshed) throw new Error('Phiên đăng nhập đã hết hạn')
+        return AuthService.getProfile()
+      }
+    }
+
     const restoreUser = async () => {
       try {
-        const res = await AuthService.getProfile()
+        const res = await fetchProfile()
         const meData = res?.data?.data || res?.data || res
-        if (!meData?.id) return
+        const finalId = meData?.userId || meData?.id
+        if (!finalId) return
 
         const userData = {
-          _id:         meData.id,
-          id:          meData.id,
+          _id:         finalId,
+          id:          finalId,
           fullName:    meData.fullName,
           email:       meData.email,
           phoneNumber: meData.phoneNumber,
@@ -31,7 +44,7 @@ const DefaultAction = ({ children }) => {
           lastLoginAt: meData.lastLoginAt,
           dateOfBirth: meData.dateOfBirth,
           gender:      meData.gender,
-          role:        meData.roles?.[0] || null,
+          role:        normalizeRole(meData.roles?.[0]),
           roles:       meData.roles || [],
         }
 

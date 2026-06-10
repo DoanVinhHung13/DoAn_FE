@@ -1,5 +1,5 @@
 import PropTypes from "prop-types"
-import cn from "src/lib/classnames"
+import cn from "src/utils/classnames"
 import { ModalWrapper } from "./styled"
 
 import "./style.scss"

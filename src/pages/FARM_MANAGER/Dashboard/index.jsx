@@ -140,11 +140,9 @@ const Dashboard = () => {
     { title: 'Báo cáo & Thống kê', icon: <Package className="w-8 h-8" />, path: ROUTER.FM_REPORTS, color: '#ec4899' },
   ];
 
-  const quickAccessItems = user?.role?.toUpperCase() === 'ADMIN' 
+  const quickAccessItems = user?.role?.toUpperCase() === 'FARM_MANAGER' 
     ? adminQuickAccess 
-    : user?.role?.toUpperCase() === 'HTX' 
-      ? htxQuickAccess 
-      : farmerQuickAccess;
+    : farmerQuickAccess;
 
   // Fetch News
   const { data: newsItems = [], isLoading: newsLoading } = useQuery({
@@ -170,11 +168,9 @@ const Dashboard = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
         <div className="space-y-1">
           <Title level={4} className="!mb-0 !text-gray-400 font-medium uppercase tracking-widest text-[10px] md:text-xs">
-            {user?.role?.toUpperCase() === 'ADMIN' 
+            {user?.role?.toUpperCase() === 'FARM_MANAGER' 
               ? 'Tổng quan hệ thống' 
-              : user?.role?.toUpperCase() === 'HTX'
-                ? 'Tổng quan Hợp Tác Xã'
-                : 'Tổng quan nông trại'}
+              : 'Tổng quan nông trại'}
           </Title>
           <Title level={2} className="!mb-0">Chào bạn, <span className="text-green-600">{user?.fullname || user?.username || 'Thành viên'}</span>! 👋</Title>
           <Text className="text-gray-500 font-medium whitespace-nowrap">Hôm nay là {new Date().toLocaleDateString('vi-VN', { weekday: 'long' })}, ngày {moment().format('D [tháng] M [năm] YYYY')}</Text>
@@ -267,7 +263,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-center mb-10">
               <Title level={5} className="!mb-0 !text-gray-800">Truy cập nhanh</Title>
               <Text className="text-xs text-gray-400 font-medium">
-                {user?.role?.toUpperCase() === 'ADMIN' ? 'Quản trị hệ thống' : 'Các mô-đun sản xuất'}
+                {user?.role?.toUpperCase() === 'FARM_MANAGER' ? 'Quản trị hệ thống' : 'Các mô-đun sản xuất'}
               </Text>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-8 md:gap-y-12 gap-x-4 md:gap-x-6">
