@@ -36,6 +36,7 @@ const ROUTER = {
   FM_LOGBOOKS:           '/farm-manager/logbooks',
   FM_BATCHES:            '/farm-manager/batches',
   FM_NOTIFICATIONS:      '/farm-manager/notifications',
+  FM_NOTIFICATION_DETAIL: '/farm-manager/notifications/:id',
   FM_VIEW_FERTILIZERS:   '/farm-manager/view-fertilizers',
   FM_VIEW_CROP_PROTECTIONS: '/farm-manager/view-crop-protections',
   FM_VIEW_PURCHASE_REQS: '/farm-manager/view-purchase-reqs',

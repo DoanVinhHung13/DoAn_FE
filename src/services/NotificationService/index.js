@@ -5,9 +5,10 @@ import {
   apiMarkAllNotificationsAsRead,
 } from './urls';
 
-export const getNotifications = () => http.get(apiGetNotifications);
-export const markNotificationAsRead = id => http.put(apiMarkNotificationAsRead(id));
-export const markAllNotificationsAsRead = () => http.put(apiMarkAllNotificationsAsRead);
+export const getNotifications = (params = { PageIndex: 1, PageSize: 100 }) =>
+  http.get(apiGetNotifications, { params });
+export const markNotificationAsRead = id => http.post(apiMarkNotificationAsRead(id));
+export const markAllNotificationsAsRead = () => http.post(apiMarkAllNotificationsAsRead);
 
 const NotificationService = {
   getNotifications,

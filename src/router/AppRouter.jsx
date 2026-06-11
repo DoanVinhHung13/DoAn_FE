@@ -28,6 +28,7 @@ const TCVNReference = React.lazy(() => import('../pages/ANONYMOUS/Reference/TCVN
 const AccountInfo = React.lazy(() => import('../pages/USER/AccountInfo'))
 const ChangePassword = React.lazy(() => import('../pages/USER/ChangePassword'))
 const Notifications = React.lazy(() => import('../pages/USER/Notifications'))
+const NotificationDetail = React.lazy(() => import('../pages/USER/NotificationDetail'))
 const JournalTrace = React.lazy(() => import('../pages/FARM_MANAGER/JournalTrace'))
 
 // FARM_MANAGER pages
@@ -146,6 +147,7 @@ const routes = [
           { path: ROUTER.ACCOUNT_INFO, element: <Lazy><AccountInfo /></Lazy> },
           { path: ROUTER.CHANGE_PASSWORD, element: <Lazy><ChangePassword /></Lazy> },
           { path: ROUTER.NOTIFICATIONS, element: <Lazy><Notifications /></Lazy> },
+          { path: ROUTER.NOTIFICATIONS_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
           { path: ROUTER.TCVN_AUTH, element: <Lazy><TCVNReference /></Lazy> },
 
           // ── Farm Manager Routes ────────────────────────────────────────────
@@ -162,6 +164,7 @@ const routes = [
               { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },
               { path: ROUTER.FM_BATCHES, element: <Lazy><FarmManagerBatches /></Lazy> },
               { path: ROUTER.FM_NOTIFICATIONS, element: <Lazy><FarmManagerNotifications /></Lazy> },
+              { path: ROUTER.FM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
               { path: ROUTER.FM_VIEW_FERTILIZERS, element: <Lazy><FarmManagerViewFertilizers /></Lazy> },
               { path: ROUTER.FM_VIEW_CROP_PROTECTIONS, element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
             ],
