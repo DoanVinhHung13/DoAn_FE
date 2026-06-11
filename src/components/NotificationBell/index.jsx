@@ -3,6 +3,7 @@ import { Badge, Popover, List, Typography, Button, Empty, Spin, message, Tag } f
 import { BellOutlined, CheckOutlined, LoadingOutlined, EyeOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from 'src/services/NotificationService';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -17,6 +18,7 @@ const { Text } = Typography;
 const NotificationBell = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
+    const { userInfo } = useSelector((state) => state.appGlobal);
     const [visible, setVisible] = useState(false);
 
     const { data, isLoading } = useQuery({
@@ -41,39 +43,14 @@ const NotificationBell = () => {
     });
 
     const handleNotificationClick = (item) => {
-        if (!item.isRead) {
-            markReadMutation.mutate(item._id);
-        }
-        
         setVisible(false);
+        const id = item._id || item.id;
+        const detailPath =
+            userInfo?.role === 'FARM_MANAGER'
+                ? ROUTER.FM_NOTIFICATION_DETAIL
+                : ROUTER.NOTIFICATIONS_DETAIL;
 
-        if (item.relatedId || item.relatedModel) {
-            switch (item.relatedModel) {
-                case 'HtxJournal':
-                    navigate(ROUTER.FM_HTX_JOURNALS);
-                    break;
-                case 'FarmJournal':
-                    navigate(ROUTER.FM_JOURNAL_ENTRY.replace(':id', item.relatedId));
-                    break;
-                case 'InventoryItem':
-                    navigate(ROUTER.FARMER_INVENTORY);
-                    break;
-                case 'Consultation':
-                    navigate(ROUTER.FM_DASHBOARD);
-                    break;
-                case 'User':
-                    navigate(ROUTER.FM_USERS);
-                    break;
-                case 'News':
-                    navigate(ROUTER.NEWS);
-                    break;
-                default:
-                    if (item.type === 'Journal_Assigned') {
-                        navigate(ROUTER.FM_DASHBOARD);
-                    }
-                    break;
-            }
-        }
+        navigate(detailPath.replace(':id', id));
     };
 
     const handleMarkRead = (id, e) => {
@@ -172,7 +149,20 @@ const NotificationBell = () => {
             </div>
             
             <div className="p-2 border-t text-center bg-white">
-                <Button type="text" block size="small" className="text-gray-400 text-xs font-medium hover:text-green-600">
+                <Button
+                    type="text"
+                    block
+                    size="small"
+                    className="text-gray-400 text-xs font-medium hover:text-green-600"
+                    onClick={() => {
+                        setVisible(false);
+                        navigate(
+                            userInfo?.role === 'FARM_MANAGER'
+                                ? ROUTER.FM_NOTIFICATIONS
+                                : ROUTER.NOTIFICATIONS
+                        );
+                    }}
+                >
                     XEM TẤT CẢ THÔNG BÁO
                 </Button>
             </div>

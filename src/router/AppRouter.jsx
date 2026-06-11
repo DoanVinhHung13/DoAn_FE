@@ -26,6 +26,7 @@ const TCVNReference = React.lazy(() => import('../pages/ANONYMOUS/Reference/TCVN
 const AccountInfo = React.lazy(() => import('../pages/USER/AccountInfo'))
 const ChangePassword = React.lazy(() => import('../pages/USER/ChangePassword'))
 const Notifications = React.lazy(() => import('../pages/USER/Notifications'))
+const NotificationDetail = React.lazy(() => import('../pages/USER/NotificationDetail'))
 const JournalTrace = React.lazy(() => import('../pages/FARM_MANAGER/JournalTrace'))
 
 // FARM_MANAGER pages
@@ -37,7 +38,7 @@ const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGE
 const FarmManagerTasks = React.lazy(() => import('../pages/FARM_MANAGER/Tasks'))
 const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
 const FarmManagerBatches = React.lazy(() => import('../pages/FARM_MANAGER/Batches'))
-const FarmManagerNotifications = React.lazy(() => import('../pages/FARM_MANAGER/Notifications'))
+const FarmManagerNotifications = React.lazy(() => import('../pages/USER/Notifications'))
 const FarmManagerViewFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers'))
 const FarmManagerViewCropProtections = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections'))
 
@@ -143,6 +144,7 @@ const routes = [
           { path: ROUTER.ACCOUNT_INFO, element: <Lazy><AccountInfo /></Lazy> },
           { path: ROUTER.CHANGE_PASSWORD, element: <Lazy><ChangePassword /></Lazy> },
           { path: ROUTER.NOTIFICATIONS, element: <Lazy><Notifications /></Lazy> },
+          { path: ROUTER.NOTIFICATIONS_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
           { path: ROUTER.TCVN_AUTH, element: <Lazy><TCVNReference /></Lazy> },
 
           // ── Farm Manager Routes ────────────────────────────────────────────
@@ -159,6 +161,7 @@ const routes = [
               { path: 'logbooks', element: <Lazy><FarmManagerLogbooks /></Lazy> },
               { path: 'batches', element: <Lazy><FarmManagerBatches /></Lazy> },
               { path: 'notifications', element: <Lazy><FarmManagerNotifications /></Lazy> },
+              { path: 'notifications/:id', element: <Lazy><NotificationDetail /></Lazy> },
               { path: 'view-fertilizers', element: <Lazy><FarmManagerViewFertilizers /></Lazy> },
               { path: 'view-crop-protections', element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
             ],

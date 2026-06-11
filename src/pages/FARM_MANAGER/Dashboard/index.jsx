@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, Col, Row, Typography, Space, Button, Badge, Skeleton, Tag } from 'antd';
-import { CloudOutlined, ArrowRightOutlined, CompassOutlined, GlobalOutlined, TeamOutlined } from '@ant-design/icons';
+import { CloudOutlined, ArrowRightOutlined, CompassOutlined, GlobalOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { Leaf, PawPrint, Fish, Settings, Link as LinkIcon, Package, Sun, CloudRain, Wind, Droplets } from 'lucide-react';
+import {
+  BookOpenText,
+  ClipboardList,
+  MapPinned,
+  Package,
+  Sprout,
+  Sun,
+  CloudRain,
+  Wind,
+  Droplets,
+  Users
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import moment from 'moment';
 import 'moment/locale/vi';
@@ -18,7 +29,7 @@ const { Title, Text, Paragraph } = Typography;
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const user = useSelector((state) => state.appGlobal);
+  const user = useSelector((state) => state.appGlobal.userInfo);
   const [coords, setCoords] = useState(null);
 
   // Get Geolocation
@@ -86,6 +97,9 @@ const Dashboard = () => {
       'Overcast': 'Trời U Ám',
       'Mist': 'Có Sương Mù Nhẹ',
       'Fog': 'Sương Mù',
+      'Smoky haze': 'Khói Mù',
+      'Haze': 'Sương Mù Khô',
+      'Smoke': 'Có Khói',
       'Patchy rain possible': 'Có Thể Có Mưa',
       'Patchy rain nearby': 'Mưa Rải Rác',
       'Patchy light rain with thunder': 'Mưa Nhẹ Và Có Dong',
@@ -116,35 +130,14 @@ const Dashboard = () => {
   const area = weather?.nearest_area?.[0];
   const forecast = weather?.weather || [];
 
-  const adminQuickAccess = [
-    { title: 'Quản lý tài khoản', icon: <Settings className="w-8 h-8" />, path: ROUTER.FM_USERS, color: '#6366f1' },
-    { title: 'Biểu mẫu nhật ký', icon: <LinkIcon className="w-8 h-8" />, path: ROUTER.FM_FORM_BUILDER, color: '#f59e0b' },
-    { title: 'Mô hình nông nghiệp', icon: <Leaf className="w-8 h-8" />, path: ROUTER.FM_VIEW_FERTILIZERS, color: '#22c55e' },
-    { title: 'Kho vật tư', icon: <Package className="w-8 h-8" />, path: ROUTER.FM_LOGBOOKS, color: '#ec4899' },
-    { title: 'Nhật ký hệ thống', icon: <PawPrint className="w-8 h-8" />, path: ROUTER.FM_BATCHES, color: '#10b981' },
-    { title: 'Cấu hình hệ thống', icon: <Fish className="w-8 h-8" />, path: ROUTER.FM_VIEW_PURCHASE_REQS, color: '#06b6d4' },
+  const quickAccessItems = [
+    { title: 'Quản lý người dùng', icon: <Users className="w-8 h-8" />, path: ROUTER.FM_USERS, color: '#6366f1' },
+    { title: 'Quản lý vùng trồng', icon: <MapPinned className="w-8 h-8" />, path: ROUTER.FM_LANDS, color: '#22c55e' },
+    { title: 'Danh mục cây trồng', icon: <Sprout className="w-8 h-8" />, path: ROUTER.FM_CROP_CATALOGS, color: '#10b981' },
+    { title: 'Kế hoạch sản xuất', icon: <ClipboardList className="w-8 h-8" />, path: ROUTER.FM_PRODUCTION_PLANS, color: '#f59e0b' },
+    { title: 'Nhật ký sản xuất', icon: <BookOpenText className="w-8 h-8" />, path: ROUTER.FM_LOGBOOKS, color: '#06b6d4' },
+    { title: 'Quản lý vật tư', icon: <Package className="w-8 h-8" />, path: ROUTER.FM_VIEW_FERTILIZERS, color: '#ec4899' },
   ];
-
-  const farmerQuickAccess = [
-    { title: 'VietGAP Trồng trọt', icon: <Leaf className="w-8 h-8" />, path: ROUTER.FM_VIETGAP.replace(':subCategory', 'trong-trot'), color: '#22c55e' },
-    { title: 'VietGAHP Chăn nuôi', icon: <PawPrint className="w-8 h-8" />, path: ROUTER.FM_VIETGAP.replace(':subCategory', 'chan-nuoi'), color: '#10b981' },
-    { title: 'VietGAP Thủy sản', icon: <Fish className="w-8 h-8" />, path: ROUTER.FM_VIETGAP.replace(':subCategory', 'thuy-san'), color: '#06b6d4' },
-    { title: 'Báo cáo & Thống kê', icon: <LinkIcon className="w-8 h-8" />, path: ROUTER.FM_REPORTS, color: '#f59e0b' },
-    { title: 'Tồn kho', icon: <Package className="w-8 h-8" />, path: ROUTER.FARMER_INVENTORY, color: '#ec4899' },
-    { title: 'Quy trình kỹ thuật', icon: <Settings className="w-8 h-8" />, path: ROUTER.FM_PRODUCTION_TECH, color: '#6366f1' },
-  ];
-
-  const htxQuickAccess = [
-    { title: 'Quản lý nông dân', icon: <TeamOutlined className="w-8 h-8" />, path: ROUTER.FM_LANDS, color: '#22c55e' },
-    { title: 'Quản lý sổ HTX', icon: <LinkIcon className="w-8 h-8" />, path: ROUTER.FM_HTX_JOURNALS, color: '#f59e0b' },
-    { title: 'Báo cáo & Thống kê', icon: <Package className="w-8 h-8" />, path: ROUTER.FM_REPORTS, color: '#ec4899' },
-  ];
-
-  const quickAccessItems = user?.role?.toUpperCase() === 'ADMIN' 
-    ? adminQuickAccess 
-    : user?.role?.toUpperCase() === 'HTX' 
-      ? htxQuickAccess 
-      : farmerQuickAccess;
 
   // Fetch News
   const { data: newsItems = [], isLoading: newsLoading } = useQuery({
@@ -176,7 +169,13 @@ const Dashboard = () => {
                 ? 'Tổng quan Hợp Tác Xã'
                 : 'Tổng quan nông trại'}
           </Title>
-          <Title level={2} className="!mb-0">Chào bạn, <span className="text-green-600">{user?.fullname || user?.username || 'Thành viên'}</span>! 👋</Title>
+          <Title level={2} className="!mb-0">
+            Chào bạn,{' '}
+            <span className="text-green-600">
+              {user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}
+            </span>
+            ! 👋
+          </Title>
           <Text className="text-gray-500 font-medium whitespace-nowrap">Hôm nay là {new Date().toLocaleDateString('vi-VN', { weekday: 'long' })}, ngày {moment().format('D [tháng] M [năm] YYYY')}</Text>
         </div>
         <Button icon={<CompassOutlined />} className="rounded-xl font-bold border-gray-200 text-gray-600 hover:text-green-600">Khám phá module</Button>
@@ -267,7 +266,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-center mb-10">
               <Title level={5} className="!mb-0 !text-gray-800">Truy cập nhanh</Title>
               <Text className="text-xs text-gray-400 font-medium">
-                {user?.role?.toUpperCase() === 'ADMIN' ? 'Quản trị hệ thống' : 'Các mô-đun sản xuất'}
+                Các chức năng quản lý
               </Text>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-8 md:gap-y-12 gap-x-4 md:gap-x-6">

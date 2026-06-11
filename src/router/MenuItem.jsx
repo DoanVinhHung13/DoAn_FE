@@ -6,7 +6,7 @@ import {
   AppstoreOutlined,
   FileTextOutlined,
   ReadOutlined,
-  ThunderboltOutlined,
+  BellOutlined,
   SettingOutlined,
   InboxOutlined,
   CheckCircleOutlined,
@@ -16,7 +16,15 @@ import {
   ShopOutlined,
   EnvironmentOutlined,
 } from '@ant-design/icons'
-import { BoxSelect, Sprout } from 'lucide-react'
+import {
+  BookOpenText,
+  BoxSelect,
+  ClipboardList,
+  MapPinned,
+  Package,
+  Sprout,
+  Users,
+} from 'lucide-react'
 import ROUTER from './ROUTER'
 
 // ─── FARM_MANAGER MENU ────────────────────────────────────────────────────────
@@ -28,12 +36,12 @@ export const farmManagerItem = () => [
   },
   {
     key: ROUTER.FM_USERS,
-    icon: <TeamOutlined className="text-lg" />,
+    icon: <Users className="w-5 h-5" />,
     label: 'Quản lý người dùng',
   },
   {
     key: ROUTER.FM_LANDS,
-    icon: <EnvironmentOutlined className="text-lg" />,
+    icon: <MapPinned className="w-5 h-5" />,
     label: 'Quản lý vùng trồng',
   },
   {
@@ -43,7 +51,7 @@ export const farmManagerItem = () => [
   },
   {
     key: ROUTER.FM_PRODUCTION_PLANS,
-    icon: <FileTextOutlined className="text-lg" />,
+    icon: <ClipboardList className="w-5 h-5" />,
     label: 'Kế hoạch sản xuất',
   },
   {
@@ -53,7 +61,7 @@ export const farmManagerItem = () => [
   },
   {
     key: ROUTER.FM_LOGBOOKS,
-    icon: <SettingOutlined className="text-lg" />,
+    icon: <BookOpenText className="w-5 h-5" />,
     label: 'Nhật ký sản xuất',
   },
   {
@@ -63,12 +71,12 @@ export const farmManagerItem = () => [
   },
   {
     key: ROUTER.FM_NOTIFICATIONS,
-    icon: <ThunderboltOutlined className="text-lg" />,
+    icon: <BellOutlined className="text-lg" />,
     label: 'Thông báo',
   },
   {
     key: 'material-submenu',
-    icon: <ReadOutlined className="text-lg" />,
+    icon: <Package className="w-5 h-5" />,
     label: 'Quản lý vật tư',
     children: [
       { key: ROUTER.FM_VIEW_FERTILIZERS, label: 'Phân bón' },
