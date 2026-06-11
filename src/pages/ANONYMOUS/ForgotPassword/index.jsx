@@ -27,7 +27,8 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden p-4 md:p-6 bg-slate-50">
+    <div >
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-50 w-full">
       {/* Background Decor */}
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-emerald-100/50 rounded-full blur-[120px]"></div>
       
@@ -110,6 +111,7 @@ const ForgotPassword = () => {
 
       <div className="absolute bottom-8 text-[10px] uppercase font-bold tracking-[3px] text-gray-400/50 pointer-events-none w-full text-center">
         EBookFarm identity protection system
+      </div>
       </div>
     </div>
   );

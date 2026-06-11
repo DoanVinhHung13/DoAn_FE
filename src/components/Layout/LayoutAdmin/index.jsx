@@ -4,9 +4,9 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from 'src/redux/hooks'
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
-import { getAvatarUrl, getInitialAvatar } from 'src/lib/utils'
-import STORAGE, { clearAuthStorage } from 'src/store/storage'
-import http from 'src/services/01_axios'
+import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers'
+import STORAGE, { clearAuthStorage } from 'src/redux/storage'
+import AuthService from 'src/services/AuthService'
 import NotificationBell from '../../NotificationBell'
 import {
   MenuOutlined,
@@ -40,7 +40,7 @@ const LayoutAdmin = () => {
 
   const handleLogout = async () => {
     try {
-      await http.post('/auth/logout')
+      await AuthService.logout()
     } catch (error) {
       console.error('Logout error:', error)
     } finally {

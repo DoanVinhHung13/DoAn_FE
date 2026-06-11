@@ -16,13 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import 'dayjs/locale/vi';
+import { formatDate, timeAgo } from 'src/utils/dateFormatters';
 import NewsService from 'src/services/NewsService'
-
-dayjs.extend(relativeTime);
-dayjs.locale('vi');
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -143,7 +138,7 @@ const NewsListAll = () => {
                                                             {news.category}
                                                         </span>
                                                         <span className="flex items-center gap-1">
-                                                            <CalendarOutlined /> {dayjs(news.publishedAt).fromNow()}
+                                                            <CalendarOutlined /> {timeAgo(news.publishedAt)}
                                                         </span>
                                                         <span className="flex items-center gap-1">
                                                             <ClockCircleOutlined /> 6 phút đọc
@@ -226,7 +221,7 @@ const NewsListAll = () => {
                                             <Title level={5} className="!text-[#242424] !font-bold !text-[14px] group-hover:text-green-600 transition-colors line-clamp-2 leading-snug mb-1">
                                                 {news.title}
                                             </Title>
-                                            <Text className="text-gray-400 text-[10px] font-black uppercase">{dayjs(news.publishedAt).format('DD MMM, YYYY')}</Text>
+                                            <Text className="text-gray-400 text-[10px] font-black uppercase">{formatDate(news.publishedAt, 'DD MMM, YYYY')}</Text>
                                         </div>
                                     ))}
                                 </div>

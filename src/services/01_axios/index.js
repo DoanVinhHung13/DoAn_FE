@@ -1,8 +1,9 @@
 import axios from "axios"
 import notice from "src/components/Notice"
-import STORAGE, { deleteStorage, getStorage } from "src/store/storage"
-import { getMsgClient } from "src/lib/stringsUtils"
-import { trimData } from "src/lib/utils"
+import STORAGE, { clearAuthStorage, deleteStorage, getStorage } from "src/redux/storage"
+import { refreshAccessToken } from "src/services/tokenRefresh"
+import { getMsgClient } from "src/utils/stringsUtils"
+import { trimData } from "src/utils/helpers"
 import ROUTER from "src/router/ROUTER"
 
 // const baseURL = import.meta.env.VITE_VITE_BACKEND_URL!
@@ -21,10 +22,37 @@ function parseError(messages) {
   return Promise.reject({ messages: ["Server quá tải"] })
 }
 
+const getEaplsMessage = (resData) =>
+  resData?.message ||
+  (Array.isArray(resData?.errors) ? resData.errors[0] : null) ||
+  null
+
+/** Xử lý notice cho format EAPLS { success, message, data, errors } */
+const handleEaplsBody = (resData, config) => {
+  if (typeof resData?.success !== "boolean") return resData
+
+  const method = (config?.method || "get").toLowerCase()
+  const skipNotice = config?.skipNotice
+  const msg = getEaplsMessage(resData)
+
+  if (resData.success === false) {
+    if (!skipNotice && msg) notice({ msg, isSuccess: false })
+    return resData
+  }
+
+  if (!skipNotice && msg && method !== "get" && msg !== "Success") {
+    notice({ msg, isSuccess: true })
+  }
+
+  return resData
+}
+
+const isPublicAuthUrl = (url = "") =>
+  /\/auth\/(login|register|forgot-password|verify-otp|reset-password)/.test(url)
+
 /**
  * parse response
  */
-
 export function parseBody(response) {
   const resData = response.data
   if (+response?.status >= 500) {
@@ -41,6 +69,10 @@ export function parseBody(response) {
   }
 
   if (response?.status === 200) {
+    if (typeof resData?.success === "boolean") {
+      return handleEaplsBody(resData, response.config)
+    }
+
     if (resData?.StatusCode === 401) {
       alert("Phiên đăng nhập đã hết hạn!")
       deleteStorage(STORAGE.TOKEN)
@@ -82,8 +114,6 @@ const instance = axios.create({
 // request header
 instance.interceptors.request.use(
   async config => {
-    // Do something before request is sent
-    // Kiểm tra url truy cập của web để config tương ứng
     const BASE_URL =
       (typeof window !== "undefined" && window.env?.API_ROOT) ||
       import.meta.env.VITE_API_ROOT
@@ -92,11 +122,19 @@ instance.interceptors.request.use(
       config.data =
         config.data instanceof FormData ? config.data : trimData(config.data)
     }
-    let Authorization = getStorage(STORAGE.TOKEN) || false
-    if (Authorization)
+
+    const isRefreshCall = String(config.url || "").includes("/auth/refresh-token")
+    if (!isRefreshCall && getStorage(STORAGE.TOKEN)) {
+      await refreshAccessToken()
+    }
+
+    const Authorization = getStorage(STORAGE.TOKEN) || false
+    if (Authorization) {
       config.headers = {
+        ...config.headers,
         Authorization: `Bearer ${Authorization}`,
       }
+    }
     config.baseURL = BASE_URL
     // config.onUploadProgress = (progressEvent: any) => {
     // let percentCompleted = Math.floor(
@@ -127,14 +165,49 @@ const noticeError500 = message => {
 // response parse
 instance.interceptors.response.use(
   response => parseBody(response),
-  error => {
+  async error => {
+    const originalRequest = error.config
+    const errorData = error.response?.data
+    const requestUrl = String(originalRequest?.url || "")
+
+    // BE trả 4xx + body EAPLS (vd: login sai → 401 + success:false)
+    if (errorData && typeof errorData.success === "boolean" && errorData.success === false) {
+      const msg = getEaplsMessage(errorData)
+      if (!originalRequest?.skipNotice && msg) {
+        notice({ msg, isSuccess: false })
+      }
+      return Promise.reject(new Error(msg || "Yêu cầu thất bại"))
+    }
+
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !requestUrl.includes("/auth/refresh-token") &&
+      !isPublicAuthUrl(requestUrl)
+    ) {
+      originalRequest._retry = true
+      const refreshed = await refreshAccessToken()
+      if (refreshed) {
+        const token = getStorage(STORAGE.TOKEN)
+        originalRequest.headers = {
+          ...originalRequest.headers,
+          Authorization: `Bearer ${token}`,
+        }
+        return instance(originalRequest)
+      }
+      clearAuthStorage()
+      window.location.replace(ROUTER.LOGIN)
+      return Promise.reject(error)
+    }
+
     // can not connect API
     if (error.code === "ECONNABORTED") {
       notice({
         msg: "Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ ",
         isSuccess: false,
       })
-    } else if (+error?.response?.Status >= 500) {
+    } else if (+error?.response?.status >= 500) {
       //Nếu response là loại blob(thường dùng lúc xuất excel)
       //Thì phải convert về json rồi check nếu có message (ở đây là thuộc tính Object) thì thông báo mess đấy lên
       //Nếu không có message thì thông báo hệ thống gián đoạn
@@ -148,11 +221,14 @@ instance.interceptors.response.use(
         }
       } else noticeError500(dataReceived?.Object)
     } else if (
-      +error?.response?.Status < 500 &&
-      +error?.response?.Status !== 200
+      +error?.response?.status < 500 &&
+      +error?.response?.status !== 200
     ) {
+      const fallbackMsg = getEaplsMessage(errorData)
       notice({
-        msg: `Hệ thống xảy ra lỗi. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ (SC${error?.response?.Status})`,
+        msg:
+          fallbackMsg ||
+          `Hệ thống xảy ra lỗi. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ (SC${error?.response?.status})`,
         isSuccess: false,
       })
     } else if (error.code === "ERR_NETWORK") {

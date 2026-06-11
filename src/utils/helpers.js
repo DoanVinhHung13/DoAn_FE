@@ -47,6 +47,21 @@ export const isValidPhone = (phone) => {
 };
 
 /**
+ * Validate Email
+ * @param {string} email - Email
+ * @returns {boolean} - true nếu hợp lệ
+ */
+export const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+/**
+ * Regex dùng để validate từ khoá tìm kiếm chung (chỉ cho phép chữ, số, khoảng trắng, và _, @, ., -)
+ */
+export const invalidCharsRegex = /[^\p{L}\d\s_@.-]/u;
+
+/**
  * Format diện tích
  * @param {number} area - Diện tích (m²)
  * @returns {string} - Diện tích đã format
@@ -57,4 +72,22 @@ export const formatArea = (area) => {
     return `${(area / 10000).toFixed(2)} ha`;
   }
   return `${area.toLocaleString()} m²`;
+};
+
+/**
+ * Trim khoảng trắng thừa trong object data trước khi gửi API
+ */
+export const trimData = (data) => {
+  if (typeof data !== 'object' || data === null) return data;
+  if (Array.isArray(data)) return data.map(item => trimData(item));
+  
+  const newData = { ...data };
+  for (const key in newData) {
+    if (typeof newData[key] === 'string') {
+      newData[key] = newData[key].trim();
+    } else if (typeof newData[key] === 'object') {
+      newData[key] = trimData(newData[key]);
+    }
+  }
+  return newData;
 };

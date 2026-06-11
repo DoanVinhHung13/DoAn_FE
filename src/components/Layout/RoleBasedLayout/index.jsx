@@ -2,7 +2,7 @@
 // Đọc role từ Redux store và render Layout tương ứng.
 import { useSelector } from 'react-redux'
 import { Navigate } from 'react-router-dom'
-import authSession from 'src/store/authSession'
+import authSession from 'src/redux/authSession'
 import { ROLES } from 'src/constants/roles'
 import ROUTER from 'src/router/ROUTER'
 import LayoutAdmin from 'src/components/Layout/LayoutAdmin'
