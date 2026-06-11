@@ -3,7 +3,6 @@ import styled from "styled-components"
 
 export const ModalWrapper = styled(Modal)`
   /* .ant-modal-root .ant-modal-header {
-    background-color: #d3f7ff;
   }
 
   .ant-modal-body {

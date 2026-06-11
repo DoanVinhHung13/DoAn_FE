@@ -7,7 +7,7 @@ import CustomModal from 'src/components/Modal/CustomModal'
 import UserService from 'src/services/UserService'
 import Notice from 'src/components/Notice'
 import { ROLE_CONFIG } from './AssignRolesModal'
-import { isValidPhone } from 'src/utils/helpers'
+import { FULL_NAME_RULES, EMAIL_RULES, PASSWORD_RULES, PHONE_RULES } from 'src/utils/helpers'
 import ROUTER from 'src/router/ROUTER'
 
 const { Option } = Select
@@ -23,9 +23,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
     if (open) {
       if (isEdit) {
         form.setFieldsValue({
-          fullName:    editingUser.fullName    || '',
+          fullName: editingUser.fullName || '',
           phoneNumber: editingUser.phoneNumber || '',
-          isActive:    editingUser.isActive    ?? true,
+          isActive: editingUser.isActive ?? true,
         })
       } else {
         form.resetFields()
@@ -38,25 +38,24 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
     mutationFn: (values) => {
       if (isEdit) {
         return UserService.updateUser(editingUser.id, {
-          fullName:    values.fullName,
+          fullName: values.fullName,
           phoneNumber: values.phoneNumber || null,
-          isActive:    values.isActive ?? true,
+          isActive: editingUser.isActive,
         })
       }
       return UserService.createUser({
         fullName: values.fullName,
-        email:    values.email,
+        email: values.email,
         password: values.password,
-        roles:    values.roles || ['FARMER'],
+        roles: values.roles || ['FARMER'],
       })
     },
     onSuccess: (res) => {
       if (res?.success === false) return
       queryClient.invalidateQueries(['users'])
-      Notice({ msg: isEdit ? 'Cập nhật thành công!' : 'Tạo tài khoản thành công!', isSuccess: true })
       onClose()
       onSuccess?.()
-      
+
       if (isEdit && editingUser?.id) {
         navigate(ROUTER.FM_USER_DETAIL.replace(':id', editingUser.id))
       }
@@ -86,7 +85,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
             <UserAddOutlined className="text-green-600" />
           </div>
-          <span className="font-bold text-gray-800">
+          <span className="font-bold">
             {isEdit ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
           </span>
         </div>
@@ -98,7 +97,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         <Form.Item
           name="fullName"
           label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Họ và tên</span>}
-          rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}
+          rules={FULL_NAME_RULES}
         >
           <Input prefix={<UserOutlined className="text-gray-300" />} placeholder="Nguyễn Văn A" className="h-10 rounded-lg" />
         </Form.Item>
@@ -108,20 +107,14 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             <Form.Item
               name="email"
               label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</span>}
-              rules={[
-                { required: true, message: 'Vui lòng nhập email!' },
-                { type: 'email', message: 'Định dạng không hợp lệ (MSG-UM-16)' },
-              ]}
+              rules={EMAIL_RULES}
             >
               <Input prefix={<MailOutlined className="text-gray-300" />} placeholder="example@eapls.com" className="h-10 rounded-lg" />
             </Form.Item>
             <Form.Item
               name="password"
               label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mật khẩu</span>}
-              rules={[
-                { required: true, message: 'Vui lòng nhập mật khẩu!' },
-                { min: 6, message: 'Định dạng không hợp lệ (MSG-UM-16)' }
-              ]}
+              rules={PASSWORD_RULES}
             >
               <Input.Password prefix={<LockOutlined className="text-gray-300" />} placeholder="••••••••" className="h-10 rounded-lg" />
             </Form.Item>
@@ -141,28 +134,13 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           <Form.Item
             name="phoneNumber"
             label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Số điện thoại</span>}
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value || isValidPhone(value)) return Promise.resolve();
-                  return Promise.reject(new Error('Định dạng không hợp lệ (MSG-UM-16)'));
-                }
-              }
-            ]}
+            rules={PHONE_RULES}
           >
             <Input prefix={<PhoneOutlined className="text-gray-300" />} placeholder="0912345678" className="h-10 rounded-lg" />
           </Form.Item>
         )}
 
-        {isEdit && (
-          <Form.Item
-            name="isActive"
-            label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trạng thái</span>}
-            valuePropName="checked"
-          >
-            <Switch checkedChildren="Hoạt động" unCheckedChildren="Vô hiệu" className="bg-green-500" />
-          </Form.Item>
-        )}
+
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
           <Button onClick={onClose} className="h-10 px-6 rounded-xl">Hủy</Button>

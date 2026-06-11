@@ -18,7 +18,7 @@ import { getDashboardPathByRole } from "src/router/roleRedirects"
 
 import logo from "src/assets/logo-ebookfarm.jpg"
 import AuthService from "../../../services/AuthService"
-import { isValidEmail, isValidPhone } from "src/utils/helpers"
+import { LOGIN_IDENTIFIER_RULES, PASSWORD_RULES } from "src/utils/helpers"
 
 const { Title, Text, Paragraph } = Typography
 
@@ -211,18 +211,7 @@ const Login = () => {
                   Email hoặc Số điện thoại
                 </span>
               }
-              rules={[
-                { required: true, message: "Thông tin này là bắt buộc!" },
-                {
-                  validator: (_, value) => {
-                    if (!value) return Promise.resolve()
-                    if (isValidEmail(value) || isValidPhone(value)) {
-                      return Promise.resolve()
-                    }
-                    return Promise.reject(new Error("Email hoặc số điện thoại không hợp lệ!"))
-                  },
-                },
-              ]}
+              rules={LOGIN_IDENTIFIER_RULES}
               className="mb-3 md:mb-6"
             >
               <Input
@@ -239,7 +228,7 @@ const Login = () => {
                   Mật khẩu
                 </span>
               }
-              rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
+              rules={PASSWORD_RULES}
               className="mb-4 md:mb-6"
             >
               <Input.Password

@@ -23,6 +23,7 @@ import {
     ShopOutlined, SafetyCertificateOutlined, PlusOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import { useSelector } from 'react-redux';
+import { FULL_NAME_RULES, PHONE_RULES } from 'src/utils/helpers';
 import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

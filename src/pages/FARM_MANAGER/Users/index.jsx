@@ -4,7 +4,7 @@
  */
 import React, { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Input, Dropdown, Badge, Row, Col, Card, Statistic, Popconfirm, Tooltip, Avatar, Select, message } from 'antd'
+import { Button, Input, Dropdown, Badge, Row, Col, Card, Statistic, Popconfirm, Tooltip, Avatar, Select, message, Modal } from 'antd'
 import {
   UserAddOutlined, SearchOutlined, EditOutlined, DeleteOutlined,
   KeyOutlined, SafetyCertificateOutlined, ReloadOutlined,
@@ -29,6 +29,7 @@ import { getAvatarUrl, invalidCharsRegex } from 'src/utils/helpers'
 import { formatDate } from 'src/utils/dateFormatters'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
+import CustomModal from 'src/components/Modal/CustomModal'
 
 const getRoleTag = (role) => {
   const cfg = ROLE_CONFIG[role] || { label: role, color: 'default' }
@@ -55,6 +56,7 @@ const UsersManagement = () => {
   const [formModal, setFormModal] = useState({ open: false, user: null })
   const [rolesModal, setRolesModal] = useState({ open: false, user: null })
   const [pwdModal, setPwdModal] = useState({ open: false, user: null })
+  const [statusModal, setStatusModal] = useState({ open: false, user: null })
 
   // ── Data fetching ──────────────────────────────────────────
   const { data, isLoading, isFetching } = useQuery({
@@ -78,7 +80,6 @@ const UsersManagement = () => {
     onSuccess: (res) => {
       if (res?.success === false) return
       queryClient.invalidateQueries(['users'])
-      Notice({ msg: 'Cập nhật trạng thái thành công (MSG-UM-04)', isSuccess: true })
     },
   })
 
@@ -129,7 +130,7 @@ const UsersManagement = () => {
           {(roles || []).map(r => getRoleTag(r))}
         </div>
       ),
-      width: 200,
+      width: 150,
     },
     {
       title: 'Điện thoại',
@@ -139,45 +140,6 @@ const UsersManagement = () => {
       width: 140,
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'isActive',
-      key: 'isActive',
-      render: (isActive, record) => {
-        const toggleUI = (
-          <Popconfirm
-            title="Thay đổi trạng thái"
-            description="Bạn có chắc muốn thay đổi trạng thái người dùng này không? (MSG-UM-20)"
-            onConfirm={(e) => {
-              e.stopPropagation();
-              if (isFarmManager) statusMutation.mutate({ id: record.id, isActive: !isActive });
-            }}
-            onCancel={(e) => e.stopPropagation()}
-            okText="Xác nhận"
-            cancelText="Hủy"
-          >
-            <div
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${isFarmManager ? 'cursor-pointer transition-all hover:bg-opacity-80' : 'cursor-default'
-                } select-none
-                  ${isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {isActive ? <><CheckCircleOutlined /><span>Hoạt động</span></> : <><StopOutlined /><span>Vô hiệu</span></>}
-            </div>
-          </Popconfirm>
-        )
-
-        if (isFarmManager) {
-          return (
-            <Tooltip title={isActive ? 'Nhấn để vô hiệu hóa' : 'Nhấn để kích hoạt'}>
-              {toggleUI}
-            </Tooltip>
-          )
-        }
-        return toggleUI
-      },
-      width: 150,
-    },
-    {
       title: 'Ngày tạo',
       dataIndex: 'createdAt',
       key: 'createdAt',
@@ -185,56 +147,78 @@ const UsersManagement = () => {
       width: 120,
     },
     {
+      title: 'Trạng thái',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      render: (isActive) => {
+        return (
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none
+                ${isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}
+          >
+            {isActive ? <><CheckCircleOutlined /><span>Hoạt động</span></> : <><StopOutlined /><span>Vô hiệu</span></>}
+          </div>
+        );
+      },
+      width: 150,
+    },
+
+    {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 80,
+      width: 180,
       align: 'center',
       render: (_, record) => {
-        const items = []
-
-        if (isFarmManager) {
-          items.push(
-            {
-              key: 'edit',
-              icon: <EditOutlined className="text-green-500" />,
-              label: 'Chỉnh sửa',
-              onClick: ({ domEvent }) => {
-                domEvent.stopPropagation();
-                setFormModal({ open: true, user: record });
-              },
-            },
-            {
-              key: 'roles',
-              icon: <SafetyCertificateOutlined className="text-purple-500" />,
-              label: 'Phân quyền',
-              onClick: ({ domEvent }) => {
-                domEvent.stopPropagation();
-                setRolesModal({ open: true, user: record });
-              },
-            },
-            {
-              key: 'password',
-              icon: <KeyOutlined className="text-orange-500" />,
-              label: 'Đặt lại mật khẩu',
-              onClick: ({ domEvent }) => {
-                domEvent.stopPropagation();
-                setPwdModal({ open: true, user: record });
-              },
-            },
-            { type: 'divider' },
-          )
-        }
+        if (!isFarmManager) return null;
 
         return (
-          <Dropdown trigger={['click']} menu={{ items }}>
-            <Button
-              type="text"
-              icon={<MoreOutlined className="text-lg" />}
-              className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 m-auto"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Dropdown>
+          <div className="flex items-center justify-center gap-2">
+            <Tooltip title="Chỉnh sửa">
+              <Button
+                type="text"
+                icon={<EditOutlined className="text-green-500 text-lg" />}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFormModal({ open: true, user: record });
+                }}
+              />
+            </Tooltip>
+            {/* <Tooltip title="Phân quyền">
+              <Button
+                type="text"
+                icon={<SafetyCertificateOutlined className="text-purple-500 text-lg" />}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-purple-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRolesModal({ open: true, user: record });
+                }}
+              />
+            </Tooltip>
+            <Tooltip title="Đặt lại mật khẩu">
+              <Button
+                type="text"
+                icon={<KeyOutlined className="text-orange-500 text-lg" />}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-orange-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPwdModal({ open: true, user: record });
+                }}
+              />
+            </Tooltip> */}
+            <Tooltip title={record.isActive ? "Vô hiệu hóa" : "Kích hoạt"}>
+              <Button
+                type="text"
+                icon={record.isActive ? <StopOutlined className="text-red-500 text-lg" /> : <CheckCircleOutlined className="text-green-500 text-lg" />}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${record.isActive ? 'hover:bg-red-50' : 'hover:bg-green-50'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setStatusModal({ open: true, user: record });
+                }}
+              />
+            </Tooltip>
+          </div>
         )
       },
     },
@@ -362,6 +346,38 @@ const UsersManagement = () => {
         user={pwdModal.user}
         onClose={() => setPwdModal({ open: false, user: null })}
       />
+      <CustomModal
+        open={statusModal.open}
+        onCancel={() => setStatusModal({ open: false, user: null })}
+        title={
+          <div className="flex items-center ">
+            <span className="font-bold">Thay đổi trạng thái</span>
+          </div>
+        }
+        footer={null}
+        width={400}
+      >
+        <div className="mt-4 mb-6 ml-4">
+          <p className="text-gray-600">Bạn có chắc muốn thay đổi trạng thái người dùng này không? </p>
+        </div>
+        <div className="flex justify-end gap-3">
+          <Button onClick={() => setStatusModal({ open: false, user: null })} className="h-10 px-6 rounded-xl">
+            Hủy
+          </Button>
+          <Button
+            type="primary"
+            className="h-10 px-6 rounded-xl bg-orange-600 border-0 font-bold shadow-lg shadow-orange-100"
+            onClick={() => {
+              if (statusModal.user) {
+                statusMutation.mutate({ id: statusModal.user.id, isActive: !statusModal.user.isActive });
+                setStatusModal({ open: false, user: null });
+              }
+            }}
+          >
+            Xác nhận
+          </Button>
+        </div>
+      </CustomModal>
     </div>
   )
 }

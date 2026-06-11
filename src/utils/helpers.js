@@ -91,3 +91,56 @@ export const trimData = (data) => {
   }
   return newData;
 };
+
+export const FULL_NAME_RULES = [
+  { required: true, message: 'Vui lòng nhập họ tên!' },
+  { whitespace: true, message: 'Họ tên không hợp lệ!' },
+  {
+    pattern: /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$/,
+    message: 'Họ tên không được chứa số hoặc ký tự đặc biệt!'
+  }
+];
+
+export const EMAIL_RULES = [
+  { required: true, message: 'Vui lòng nhập email!' },
+  { whitespace: true, message: 'Email không được chứa khoảng trắng!' },
+  {
+    validator: (_, value) => {
+      if (!value || isValidEmail(value)) return Promise.resolve();
+      return Promise.reject(new Error('Định dạng không hợp lệ'));
+    }
+  }
+];
+
+export const PASSWORD_RULES = [
+  { required: true, message: 'Vui lòng nhập mật khẩu!' },
+  { whitespace: true, message: 'Mật khẩu không được chứa khoảng trắng!' },
+  { min: 6, message: 'Mật khẩu phải từ 6 ký tự trở lên' },
+  {
+    pattern: /^\S+$/,
+    message: 'Mật khẩu không được chứa khoảng trắng!'
+  }
+];
+
+export const PHONE_RULES = [
+  {
+    validator: (_, value) => {
+      if (!value || isValidPhone(value)) return Promise.resolve();
+      return Promise.reject(new Error('Định dạng không hợp lệ'));
+    }
+  }
+];
+
+export const LOGIN_IDENTIFIER_RULES = [
+  { required: true, message: "Thông tin này là bắt buộc!" },
+  { whitespace: true, message: "Không được để khoảng trắng!" },
+  {
+    validator: (_, value) => {
+      if (!value) return Promise.resolve()
+      if (isValidEmail(value) || isValidPhone(value)) {
+        return Promise.resolve()
+      }
+      return Promise.reject(new Error("Email hoặc số điện thoại không hợp lệ!"))
+    },
+  },
+];
