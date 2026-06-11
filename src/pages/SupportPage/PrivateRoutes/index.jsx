@@ -6,7 +6,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useContext } from 'react'
 import { StoreContext } from 'src/contexts'
-import authSession from 'src/redux/authSession'
+import authSession from 'src/store/authSession'
 import ROUTER from 'src/router/ROUTER'
 
 /**

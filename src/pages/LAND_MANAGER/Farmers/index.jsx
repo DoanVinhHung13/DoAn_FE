@@ -1,13 +1,7 @@
-/**
- * Farmers Management — Land Manager
- * Route: /land-manager/farmers
- * 
- * Re-uses the exact same component as /farm-manager/users.
- * The logic for showing/hiding CUD buttons is handled inside UsersManagement based on the Redux user role.
- * 
- * Land Manager chỉ có quyền xem (Read-only) nên các nút CUD sẽ bị ẩn.
- * API Backend cũng tự filter danh sách trả về chỉ chứa FARMER.
- */
-import UsersManagement from 'src/pages/FARM_MANAGER/Users';
-
-export default UsersManagement;
+const Farmers = () => (
+  <div style={{ padding: 40, textAlign: "center" }}>
+    <h2 style={{ color: "#16a34a" }}>Quan ly nong dan</h2>
+    <p style={{ color: "#6b7280" }}>Trang dang duoc phat trien.</p>
+  </div>
+)
+export default Farmers

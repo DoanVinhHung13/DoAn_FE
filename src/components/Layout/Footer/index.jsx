@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { StoreContext } from 'src/contexts';
 import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
-import { clearAuthStorage } from 'src/redux/storage';
+import { clearAuthStorage } from 'src/store/storage';
 import { useSelector } from 'react-redux';
 import logo from 'src/assets/images/logo/logo-ebookfarm.jpg';
 import ROUTER from 'src/router/ROUTER';

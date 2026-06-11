@@ -4,7 +4,7 @@ import { Card, Typography, Descriptions, Spin, Tag, Button, Image, Divider, Time
 import { CheckCircleOutlined, EnvironmentOutlined, CalendarOutlined, UserOutlined, SafetyOutlined, FileTextOutlined, HomeOutlined, QrcodeOutlined, EyeOutlined, ShareAltOutlined, SafetyCertificateOutlined, PictureOutlined, FacebookOutlined, LinkOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { formatDate, formatDateTime } from 'src/utils/dateFormatters';
+import dayjs from 'dayjs';
 import { API_URL, getAvatarUrl, getInitialAvatar } from 'src/utils/helpers';
 
 const { Title, Text, Paragraph } = Typography;
@@ -98,11 +98,11 @@ const JournalTrace = () => {
   // Hàm hỗ trợ tìm data động thông qua label của schema thay vì tên biến
   const getDynamicFieldByLabel = (fields, data, possibleLabels) => {
     if (!fields || !data) return null;
-
+    
     // Tìm field có label khớp với từ khóa
     for (const field of fields) {
       if (!field.label) continue;
-
+      
       const labelLower = field.label.toLowerCase();
       // Khớp chính xác hoặc gần đúng
       if (possibleLabels.some(kw => labelLower === kw.toLowerCase() || labelLower.includes(kw.toLowerCase()))) {
@@ -206,7 +206,7 @@ const JournalTrace = () => {
                     <CalendarOutlined className="text-green-600" />
                     <Text strong>Ngày tạo:</Text>
                   </div>
-                  <Text className="text-base">{formatDate(journal.createdAt)}</Text>
+                  <Text className="text-base">{dayjs(journal.createdAt).format('DD/MM/YYYY')}</Text>
                 </Col>
               </Row>
             </Col>
@@ -223,7 +223,7 @@ const JournalTrace = () => {
                     HTX VERIFIED
                   </Tag>
                   <Text className="text-center text-gray-700 font-medium">
-                    Sản phẩm mang thương hiệu chính thức của <br />
+                    Sản phẩm mang thương hiệu chính thức của <br/>
                     <Text strong className="text-amber-700 text-lg">{journal.htxJournalId?.htxId?.fullname || 'Hợp Tác Xã'}</Text>
                   </Text>
                 </div>
@@ -336,13 +336,13 @@ const JournalTrace = () => {
                           {cert.issueDate && (
                             <div>
                               <Text className="text-gray-500 text-xs">Ngày cấp:</Text>
-                              <Text className="block font-medium">{formatDate(cert.issueDate)}</Text>
+                              <Text className="block font-medium">{dayjs(cert.issueDate).format('DD/MM/YYYY')}</Text>
                             </div>
                           )}
                           {cert.expiryDate && (
                             <div>
                               <Text className="text-gray-500 text-xs">Hiệu lực đến:</Text>
-                              <Text className="block font-medium text-green-600">{formatDate(cert.expiryDate)}</Text>
+                              <Text className="block font-medium text-green-600">{dayjs(cert.expiryDate).format('DD/MM/YYYY')}</Text>
                             </div>
                           )}
                         </div>
@@ -449,7 +449,7 @@ const JournalTrace = () => {
 
                             // Format date
                             if (field.type === 'date' && value) {
-                              displayValue = formatDate(value);
+                              displayValue = dayjs(value).format('DD/MM/YYYY');
                             }
                             // Format number
                             else if (field.type === 'number' && value) {
@@ -494,13 +494,13 @@ const JournalTrace = () => {
             <Row gutter={[24, 24]} align="middle">
               <Col xs={24} sm={6} className="text-center">
                 <div className="bg-white p-2 rounded-full inline-block shadow-lg">
-                  <Avatar
-                    size={100}
-                    src={getAvatarUrl(journal.htxJournalId.htxId.avatar)}
-                    className="bg-gold-50 text-gold-600 flex items-center justify-center font-bold text-4xl"
-                  >
-                    {!getAvatarUrl(journal.htxJournalId.htxId.avatar) && getInitialAvatar(journal.htxJournalId.htxId.fullname || journal.htxJournalId.htxId.username)}
-                  </Avatar>
+                   <Avatar 
+                     size={100} 
+                     src={getAvatarUrl(journal.htxJournalId.htxId.avatar)} 
+                     className="bg-gold-50 text-gold-600 flex items-center justify-center font-bold text-4xl"
+                   >
+                     {!getAvatarUrl(journal.htxJournalId.htxId.avatar) && getInitialAvatar(journal.htxJournalId.htxId.fullname || journal.htxJournalId.htxId.username)}
+                   </Avatar>
                 </div>
               </Col>
               <Col xs={24} sm={18}>
@@ -515,7 +515,7 @@ const JournalTrace = () => {
                   </div>
                   <div className="bg-white/20 backdrop-blur-md p-3 rounded-xl border border-white/30">
                     <Text className="text-white/70 text-xs block uppercase font-bold tracking-wider">Thời điểm xác nhận</Text>
-                    <Text className="text-white text-base font-bold">{formatDateTime(journal.brandAuthorizedAt)}</Text>
+                    <Text className="text-white text-base font-bold">{dayjs(journal.brandAuthorizedAt).format('HH:mm - DD/MM/YYYY')}</Text>
                   </div>
                 </div>
               </Col>

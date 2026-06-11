@@ -2,8 +2,8 @@ import { Tooltip } from "antd"
 import { useEffect, useRef, useState } from "react"
 
 import { truncate } from "lodash"
-import cn from "src/utils/classnames"
-import { decodeHtml } from "src/utils/stringsUtils"
+import cn from "src/lib/classnames"
+import { decodeHtml } from "src/lib/stringsUtils"
 import styles from "./styles.module.scss"
 
 export default function TooltipArrow(props) {

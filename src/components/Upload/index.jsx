@@ -2,7 +2,7 @@ import { Upload } from "antd"
 import axios from "axios"
 import React, { useEffect, useState } from "react"
 import { useDispatch } from "react-redux"
-import STORAGE, { getStorage } from "src/redux/storage"
+import STORAGE, { getStorage } from "src/store/storage"
 import Notice from "../Notice"
 
 const { Dragger } = Upload

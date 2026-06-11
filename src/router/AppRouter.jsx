@@ -8,8 +8,6 @@ import LayoutAdmin from 'src/components/Layout/LayoutAdmin'
 // ── SupportPage Guards ─────────────────────────────────────────────────────────
 const PrivateRoutes = React.lazy(() => import('src/pages/SupportPage/PrivateRoutes'))
 const GuestRoute = React.lazy(() => import('src/pages/SupportPage/GuestRoute'))
-import { ProtectedRoute } from 'src/router/guards'
-import { ROLES } from 'src/constants/roles'
 
 // ── Lazy-loaded pages ─────────────────────────────────────────────────────────
 // ANONYMOUS
@@ -33,7 +31,6 @@ const JournalTrace = React.lazy(() => import('../pages/FARM_MANAGER/JournalTrace
 // FARM_MANAGER pages
 const FarmManagerDashboard = React.lazy(() => import('../pages/FARM_MANAGER/Dashboard'))
 const FarmManagerUsers = React.lazy(() => import('../pages/FARM_MANAGER/Users'))
-const FarmManagerUserDetail = React.lazy(() => import('../pages/FARM_MANAGER/Users/UserDetail'))
 const FarmManagerLands = React.lazy(() => import('../pages/FARM_MANAGER/Lands'))
 const FarmManagerCropCatalogs = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs'))
 const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans'))
@@ -150,62 +147,65 @@ const routes = [
 
           // ── Farm Manager Routes ────────────────────────────────────────────
           {
-            element: <ProtectedRoute allowedRoles={[ROLES.FARM_MANAGER]} />,
+            path: 'farm-manager',
             children: [
-              { path: ROUTER.FM_DASHBOARD, element: <Lazy><FarmManagerDashboard /></Lazy> },
-              { path: ROUTER.FM_USERS, element: <Lazy><FarmManagerUsers /></Lazy> },
-              { path: ROUTER.FM_USER_DETAIL, element: <Lazy><FarmManagerUserDetail /></Lazy> },
-              { path: ROUTER.FM_LANDS, element: <Lazy><FarmManagerLands /></Lazy> },
-              { path: ROUTER.FM_CROP_CATALOGS, element: <Lazy><FarmManagerCropCatalogs /></Lazy> },
-              { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
-              { path: ROUTER.FM_TASKS, element: <Lazy><FarmManagerTasks /></Lazy> },
-              { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },
-              { path: ROUTER.FM_BATCHES, element: <Lazy><FarmManagerBatches /></Lazy> },
-              { path: ROUTER.FM_NOTIFICATIONS, element: <Lazy><FarmManagerNotifications /></Lazy> },
-              { path: ROUTER.FM_VIEW_FERTILIZERS, element: <Lazy><FarmManagerViewFertilizers /></Lazy> },
-              { path: ROUTER.FM_VIEW_CROP_PROTECTIONS, element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
+              { index: true, element: <Navigate to={ROUTER.FM_DASHBOARD} replace /> },
+              { path: 'dashboard', element: <Lazy><FarmManagerDashboard /></Lazy> },
+              { path: 'users', element: <Lazy><FarmManagerUsers /></Lazy> },
+              { path: 'lands', element: <Lazy><FarmManagerLands /></Lazy> },
+              { path: 'crop-catalogs', element: <Lazy><FarmManagerCropCatalogs /></Lazy> },
+              { path: 'production-plans', element: <Lazy><FarmManagerProductionPlans /></Lazy> },
+              { path: 'tasks', element: <Lazy><FarmManagerTasks /></Lazy> },
+              { path: 'logbooks', element: <Lazy><FarmManagerLogbooks /></Lazy> },
+              { path: 'batches', element: <Lazy><FarmManagerBatches /></Lazy> },
+              { path: 'notifications', element: <Lazy><FarmManagerNotifications /></Lazy> },
+              { path: 'view-fertilizers', element: <Lazy><FarmManagerViewFertilizers /></Lazy> },
+              { path: 'view-crop-protections', element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
             ],
           },
 
           // ── Land Manager Routes ────────────────────────────────────────────
           {
-            element: <ProtectedRoute allowedRoles={[ROLES.LAND_MANAGER]} />,
+            path: 'land-manager',
             children: [
-              { path: ROUTER.LM_DASHBOARD, element: <Lazy><LandManagerDashboard /></Lazy> },
-              { path: ROUTER.LM_FARMERS, element: <Lazy><LandManagerFarmers /></Lazy> },
-              { path: ROUTER.LM_LANDS, element: <Lazy><LandManagerLands /></Lazy> },
-              { path: ROUTER.LM_PRODUCTION_PLANS, element: <Lazy><LandManagerProductionPlans /></Lazy> },
-              { path: ROUTER.LM_TASKS, element: <Lazy><LandManagerTasks /></Lazy> },
-              { path: ROUTER.LM_LOGBOOKS, element: <Lazy><LandManagerLogbooks /></Lazy> },
-              { path: ROUTER.LM_BATCHES, element: <Lazy><LandManagerBatches /></Lazy> },
-              { path: ROUTER.LM_VIEW_CATALOGS, element: <Lazy><LandManagerViewCatalogs /></Lazy> },
+              { index: true, element: <Navigate to={ROUTER.LM_DASHBOARD} replace /> },
+              { path: 'dashboard', element: <Lazy><LandManagerDashboard /></Lazy> },
+              { path: 'farmers', element: <Lazy><LandManagerFarmers /></Lazy> },
+              { path: 'lands', element: <Lazy><LandManagerLands /></Lazy> },
+              { path: 'production-plans', element: <Lazy><LandManagerProductionPlans /></Lazy> },
+              { path: 'tasks', element: <Lazy><LandManagerTasks /></Lazy> },
+              { path: 'logbooks', element: <Lazy><LandManagerLogbooks /></Lazy> },
+              { path: 'batches', element: <Lazy><LandManagerBatches /></Lazy> },
+              { path: 'view-catalogs', element: <Lazy><LandManagerViewCatalogs /></Lazy> },
             ],
           },
 
           // ── Material Manager Routes ────────────────────────────────────────
           {
-            element: <ProtectedRoute allowedRoles={[ROLES.MATERIAL_MANAGER]} />,
+            path: 'material-manager',
             children: [
-              { path: ROUTER.MM_DASHBOARD, element: <Lazy><MaterialManagerDashboard /></Lazy> },
-              { path: ROUTER.MM_FERTILIZERS, element: <Lazy><MaterialManagerFertilizers /></Lazy> },
-              { path: ROUTER.MM_CROP_PROTECTIONS, element: <Lazy><MaterialManagerCropProtections /></Lazy> },
-              { path: ROUTER.MM_MACHINERY, element: <Lazy><MaterialManagerMachinery /></Lazy> },
-              { path: ROUTER.MM_OTHER_MATERIALS, element: <Lazy><MaterialManagerOtherMaterials /></Lazy> },
-              { path: ROUTER.MM_PURCHASE_REQS, element: <Lazy><MaterialManagerPurchaseReqs /></Lazy> },
-              { path: ROUTER.MM_PRODUCTION_PLANS, element: <Lazy><MaterialManagerProductionPlans /></Lazy> },
-              { path: ROUTER.MM_TASKS, element: <Lazy><MaterialManagerTasks /></Lazy> },
+              { index: true, element: <Navigate to={ROUTER.MM_DASHBOARD} replace /> },
+              { path: 'dashboard', element: <Lazy><MaterialManagerDashboard /></Lazy> },
+              { path: 'fertilizers', element: <Lazy><MaterialManagerFertilizers /></Lazy> },
+              { path: 'crop-protections', element: <Lazy><MaterialManagerCropProtections /></Lazy> },
+              { path: 'machinery', element: <Lazy><MaterialManagerMachinery /></Lazy> },
+              { path: 'materials', element: <Lazy><MaterialManagerOtherMaterials /></Lazy> },
+              { path: 'purchase-requisitions', element: <Lazy><MaterialManagerPurchaseReqs /></Lazy> },
+              { path: 'production-plans', element: <Lazy><MaterialManagerProductionPlans /></Lazy> },
+              { path: 'tasks', element: <Lazy><MaterialManagerTasks /></Lazy> },
             ],
           },
 
           // ── Farmer Routes ──────────────────────────────────────────────────
           {
-            element: <ProtectedRoute allowedRoles={[ROLES.FARMER]} />,
+            path: 'farmer',
             children: [
-              { path: ROUTER.FARMER_DASHBOARD, element: <Lazy><FarmerDashboard /></Lazy> },
-              { path: ROUTER.FARMER_TASKS, element: <Lazy><FarmerTasks /></Lazy> },
-              { path: ROUTER.FARMER_LOGBOOKS, element: <Lazy><FarmerLogbooks /></Lazy> },
-              { path: ROUTER.FARMER_PLANS, element: <Lazy><FarmerPlans /></Lazy> },
-              { path: ROUTER.FARMER_SUPPLIES, element: <Lazy><FarmerSupplies /></Lazy> },
+              { index: true, element: <Navigate to={ROUTER.FARMER_DASHBOARD} replace /> },
+              { path: 'dashboard', element: <Lazy><FarmerDashboard /></Lazy> },
+              { path: 'tasks', element: <Lazy><FarmerTasks /></Lazy> },
+              { path: 'logbooks', element: <Lazy><FarmerLogbooks /></Lazy> },
+              { path: 'production-plans', element: <Lazy><FarmerPlans /></Lazy> },
+              { path: 'supplies', element: <Lazy><FarmerSupplies /></Lazy> },
             ],
           },
         ],

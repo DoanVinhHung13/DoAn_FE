@@ -28,7 +28,6 @@ const ROUTER = {
   // ── Farm Manager Routes ────────────────────────────────────────────────────
   FM_DASHBOARD:          '/farm-manager/dashboard',
   FM_USERS:              '/farm-manager/users',
-  FM_USER_DETAIL:        '/farm-manager/users/:id',
   FM_LANDS:              '/farm-manager/lands',
   FM_CROP_CATALOGS:      '/farm-manager/crop-catalogs',
   FM_PRODUCTION_PLANS:   '/farm-manager/production-plans',

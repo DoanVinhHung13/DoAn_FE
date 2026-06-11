@@ -1,4 +1,5 @@
 import PropTypes from "prop-types"
+import cn from "src/lib/classnames"
 import { ModalWrapper } from "./styled"
 
 import "./style.scss"
@@ -12,7 +13,7 @@ export default function CustomModal(props) {
       width={1024}
       style={{ top: 120 }}
       {...props}
-      className={[className, tilteStart ? styles.titleFlexStart : ''].filter(Boolean).join(' ')}
+      className={cn(className, { [styles.titleFlexStart]: tilteStart })}
       hiddenScroll={hiddenScroll}
       maskTransitionName=""
     >

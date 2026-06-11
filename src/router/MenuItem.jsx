@@ -18,7 +18,6 @@ import {
 } from '@ant-design/icons'
 import { BoxSelect, Sprout } from 'lucide-react'
 import ROUTER from './ROUTER'
-import { ROLES } from 'src/constants/roles'
 
 // ─── FARM_MANAGER MENU ────────────────────────────────────────────────────────
 export const farmManagerItem = () => [
@@ -188,10 +187,10 @@ export const farmerItem = () => [
 // ─── HELPER: Lấy menu theo role ───────────────────────────────────────────────
 export const getMenuByRole = (role) => {
   switch (role) {
-    case ROLES.FARM_MANAGER:     return farmManagerItem()
-    case ROLES.LAND_MANAGER:     return landManagerItem()
-    case ROLES.MATERIAL_MANAGER: return materialManagerItem()
-    case ROLES.FARMER:           return farmerItem()
+    case 'FARM_MANAGER':     return farmManagerItem()
+    case 'LAND_MANAGER':     return landManagerItem()
+    case 'MATERIAL_MANAGER': return materialManagerItem()
+    case 'FARMER':           return farmerItem()
     default:                 return []
   }
 }

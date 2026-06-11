@@ -12,7 +12,7 @@ import {
 class SignalRService {
   constructor() {
     this.connection = null
-    this.hubUrl = "https://api.eapls.io.vn/api/signalrServer" // URL của Hub
+    this.hubUrl = "https://api-qlhv.hhsk.h2qsolution.com/signalrServer" // URL của Hub
   }
 
   /**
