@@ -23,12 +23,13 @@ import {
   getNotifications,
   markAllNotificationsAsRead,
 } from 'src/services/NotificationService';
+import TitleCustom from 'src/components/TitleCustom';
 import ROUTER from 'src/router/ROUTER';
 
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Tất cả trạng thái' },
@@ -142,20 +143,10 @@ const Notifications = () => {
   return (
     <div className="mx-auto max-w-[1100px] space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-green-600">
-            <BellOutlined className="text-lg" />
-            <Text className="!text-xs !font-bold uppercase text-green-600">
-              Trung tâm thông báo
-            </Text>
-          </div>
-          <Title level={3} className="!mb-1 !text-[26px]">
-            Thông báo
-          </Title>
-          <Text type="secondary">
-            Theo dõi các cập nhật và hoạt động liên quan đến tài khoản của bạn.
-          </Text>
-        </div>
+        <TitleCustom className="!mb-0 flex items-center gap-2">
+          <BellOutlined className="text-green-600" />
+          Thông báo
+        </TitleCustom>
 
         <Button
           icon={<CheckOutlined />}

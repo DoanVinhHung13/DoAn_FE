@@ -31,6 +31,7 @@ import dayjs from 'dayjs';
 
 import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
+import TitleCustom from 'src/components/TitleCustom';
 import { getProvinces, getWardsByProvince } from 'src/services/LocationService';
 import UserService from 'src/services/UserService';
 import { getAvatarUrl, getInitialAvatar, isValidPhone } from 'src/utils/helpers';
@@ -213,7 +214,12 @@ const AccountInfo = () => {
   );
 
   return (
-    <div className="mx-auto max-w-[1180px]">
+    <div className="mx-auto max-w-[1180px] space-y-6">
+      <TitleCustom className="!mb-0 flex items-center gap-2">
+        <UserOutlined className="text-green-600" />
+        Thông tin cá nhân
+      </TitleCustom>
+
       <Row gutter={[24, 24]} align="stretch">
         <Col xs={24} lg={8} className="flex">
           <Card variant="borderless" className="w-full rounded-lg shadow-sm">
