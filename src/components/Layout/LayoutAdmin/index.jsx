@@ -188,13 +188,6 @@ const LayoutAdmin = () => {
           <div className="flex items-center gap-2 md:gap-6">
             <Space size={isMobile ? 8 : 16} className="mr-0 md:mr-4">
               <NotificationBell />
-              {!isMobile && (
-                <Button
-                  type="text"
-                  icon={<UserOutlined className="text-gray-400 text-lg" />}
-                  className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-50"
-                />
-              )}
             </Space>
 
             {!isMobile && <div className="h-10 w-[1px] bg-gray-100" />}
