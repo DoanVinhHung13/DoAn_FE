@@ -1,0 +1,420 @@
+import React, { useEffect, useMemo } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  Alert,
+  Button,
+  Card,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Space,
+  Spin,
+  Typography,
+  Upload,
+  message,
+} from 'antd';
+import {
+  ArrowLeftOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  SaveOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Sprout } from 'lucide-react';
+
+import TitleCustom from 'src/components/TitleCustom';
+import CropManagementService from 'src/services/CropManagementService';
+import CropService from 'src/services/CropService';
+import UploadService from 'src/services/UploadService';
+import ROUTER from 'src/router/ROUTER';
+
+const { Text } = Typography;
+
+const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
+
+const getItemId = (item) => item?.id || item?._id || item?.cropId;
+
+const CropEdit = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const queryClient = useQueryClient();
+  const [form] = Form.useForm();
+  const watchedImageUrl = Form.useWatch('imageUrl', form);
+
+  const {
+    data: cropDetail,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ['crop-detail', id],
+    queryFn: async () => {
+      const response = await CropManagementService.getCropById(id);
+      const payload = response?.data ?? {};
+      return payload?.data ?? payload;
+    },
+    enabled: !!id,
+    retry: false,
+  });
+
+  // Query to get crop catalogs for the dropdown
+  const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
+    queryKey: ['crop-catalogs-dropdown'],
+    queryFn: async () => {
+      try {
+        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
+        const payload = response?.data ?? response ?? {};
+        const data = payload?.data ?? payload;
+        const items = Array.isArray(data)
+          ? data
+          : data?.items || data?.results || data?.crops || data?.cropCatalogs || [];
+        return items.filter(item => {
+          if (typeof item?.isActive === 'boolean') return item.isActive;
+          const status = String(item?.status || '').toLowerCase();
+          return !['inactive', 'disabled', 'deleted'].includes(status);
+        });
+      } catch (err) {
+        return [];
+      }
+    },
+    retry: false,
+  });
+
+  const cropCatalogOptions = useMemo(() => {
+    if (!cropCatalogsData || cropCatalogsData.length === 0) {
+      return [];
+    }
+    return cropCatalogsData.map((catalog) => ({
+      value: catalog.name || catalog.cropCatalogName,
+      label: catalog.name || catalog.cropCatalogName,
+    }));
+  }, [cropCatalogsData]);
+
+  useEffect(() => {
+    if (cropDetail) {
+      form.setFieldsValue({
+        name: cropDetail.name || '',
+        cropCode: cropDetail.cropCode || '',
+        cropType: cropDetail.cropType || '',
+        scientificName: cropDetail.scientificName || '',
+        description: cropDetail.description || '',
+        growthDurationDays: cropDetail.growthDurationDays || null,
+        imageUrl: cropDetail.imageUrl || '',
+        recommendedCultivationConditions:
+          cropDetail.recommendedCultivationConditions || '',
+      });
+    }
+  }, [cropDetail, form]);
+
+  const updateMutation = useMutation({
+    mutationFn: (values) => {
+      const payload = {
+        name: values.name.trim().replace(/\s+/g, ' '),
+        cropCode: values.cropCode?.trim().replace(/\s+/g, ' ') || null,
+        cropType: values.cropType?.trim().replace(/\s+/g, ' ') || null,
+        scientificName: values.scientificName?.trim().replace(/\s+/g, ' ') || null,
+        description: values.description?.trim().replace(/\s+/g, ' ') || null,
+        growthDurationDays: values.growthDurationDays || null,
+        imageUrl: values.imageUrl?.trim() || null,
+        recommendedCultivationConditions:
+          values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
+        isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
+      };
+      return CropManagementService.updateCrop(id, payload);
+    },
+    onSuccess: () => {
+      message.success('Cập nhật cây trồng thành công.');
+      queryClient.invalidateQueries({ queryKey: ['crops'] });
+      queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
+      navigate(`${ROUTER.FM_CROPS}/${id}`);
+    },
+    onError: (error) => {
+      if (error?.response?.status === 404) {
+        message.error(EMPTY_MESSAGE);
+        navigate(ROUTER.FM_CROPS);
+        return;
+      }
+      message.error(
+        error?.response?.data?.message ||
+          error?.response?.data?.title ||
+          'Không thể cập nhật cây trồng.'
+      );
+    },
+  });
+
+  const beforeCropImageUpload = (file) => {
+    const validType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+    if (!validType) {
+      message.error('Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.');
+      return Upload.LIST_IGNORE;
+    }
+    if (file.size / 1024 / 1024 > 5) {
+      message.error('Dung lượng ảnh không được vượt quá 5MB.');
+      return Upload.LIST_IGNORE;
+    }
+    return true;
+  };
+
+  const handleCropImageUpload = async ({ file, onSuccess, onError }) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await UploadService.uploadImage(formData);
+      const payload = response?.data?.data || response?.data || {};
+      const imageUrl =
+        payload.imageUrl ||
+        payload.url ||
+        payload.secureUrl ||
+        payload.fileUrl ||
+        payload.path;
+
+      if (!imageUrl) {
+        throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
+      }
+
+      form.setFieldsValue({ imageUrl });
+      message.success('Tải ảnh minh họa thành công.');
+      onSuccess(response);
+    } catch (error) {
+      message.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Không thể tải ảnh minh họa. Vui lòng thử lại.'
+      );
+      onError(error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTER.FM_CROPS)}
+            className="h-10"
+          >
+            Quay lại
+          </Button>
+          <TitleCustom className="!mb-0">Chỉnh sửa cây trồng</TitleCustom>
+        </div>
+        <Alert
+          showIcon
+          type="error"
+          message="Không thể tải thông tin cây trồng."
+          action={
+            <Button size="small" onClick={() => refetch()}>
+              Thử lại
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
+  if (!cropDetail) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTER.FM_CROPS)}
+            className="h-10"
+          >
+            Quay lại
+          </Button>
+          <TitleCustom className="!mb-0">Chỉnh sửa cây trồng</TitleCustom>
+        </div>
+        <Card>
+          <Alert showIcon type="warning" message={EMPTY_MESSAGE} />
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(-1)}
+          className="h-10 rounded-lg"
+        >
+          Quay lại
+        </Button>
+        <TitleCustom className="!mb-0 flex items-center gap-2">
+          <Sprout className="h-6 w-6" />
+          Chỉnh sửa cây trồng
+        </TitleCustom>
+      </div>
+
+      <Card className="rounded-lg shadow-sm">
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={(values) => updateMutation.mutate(values)}
+          onFinishFailed={() =>
+            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
+          }
+          scrollToFirstError
+        >
+          <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
+            <Form.Item
+              name="name"
+              label="Tên cây trồng"
+              rules={[
+                {
+                  required: true,
+                  whitespace: true,
+                  message: 'Vui lòng nhập tên cây trồng.',
+                },
+                { max: 150, message: 'Tên cây trồng không được vượt quá 150 ký tự.' },
+              ]}
+            >
+              <Input className="h-11 rounded-lg" placeholder="Nhập tên cây trồng" />
+            </Form.Item>
+
+            <Form.Item
+              name="cropCode"
+              label="Mã cây"
+              rules={[
+                { max: 50, message: 'Mã cây không được vượt quá 50 ký tự.' },
+              ]}
+            >
+              <Input className="h-11 rounded-lg" placeholder="Nhập mã cây" />
+            </Form.Item>
+
+            <Form.Item
+              name="cropType"
+              label="Nhóm cây/Loại cây"
+              rules={[
+                { required: true, message: 'Vui lòng chọn nhóm cây từ danh mục.' },
+              ]}
+            >
+              <Select
+                className="h-11"
+                placeholder="Chọn nhóm cây từ danh mục"
+                loading={isCatalogsLoading}
+                options={cropCatalogOptions}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                notFoundContent={
+                  isCatalogsLoading ? (
+                    <span>Đang tải...</span>
+                  ) : (
+                    <span>Không có danh mục. Vui lòng tạo danh mục cây trồng trước.</span>
+                  )
+                }
+                disabled={!cropCatalogOptions || cropCatalogOptions.length === 0}
+              />
+            </Form.Item>
+
+            <Form.Item name="scientificName" label="Tên khoa học">
+              <Input className="h-11 rounded-lg" placeholder="Nhập tên khoa học" />
+            </Form.Item>
+
+            <Form.Item name="growthDurationDays" label="Thời gian sinh trưởng (ngày)">
+              <InputNumber
+                min={1}
+                max={9999}
+                className="!h-11 !w-full rounded-lg"
+                placeholder="Số ngày"
+              />
+            </Form.Item>
+
+            <Form.Item name="imageUrl" label="Ảnh minh họa">
+              <div className="space-y-3">
+                <Upload
+                  accept="image/png,image/jpeg,image/webp"
+                  showUploadList={false}
+                  beforeUpload={beforeCropImageUpload}
+                  customRequest={(options) => handleCropImageUpload(options)}
+                >
+                  <Button icon={<UploadOutlined />} className="h-11 rounded-lg">
+                    Tải ảnh lên
+                  </Button>
+                </Upload>
+
+                {watchedImageUrl && (
+                  <div className="group relative h-[120px] w-[140px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
+                    <img
+                      src={watchedImageUrl}
+                      alt="Ảnh minh họa cây trồng"
+                      className="h-full w-full rounded-md object-cover"
+                    />
+                    <div className="absolute inset-1 flex items-center justify-center gap-2 rounded-md bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<EyeOutlined />}
+                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
+                        onClick={() => window.open(watchedImageUrl, '_blank')}
+                      />
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
+                        onClick={() => form.setFieldsValue({ imageUrl: '' })}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Form.Item>
+          </div>
+
+          <Form.Item name="recommendedCultivationConditions" label="Điều kiện canh tác khuyến nghị">
+            <Input.TextArea
+              rows={4}
+              className="rounded-lg"
+              placeholder="Nhập điều kiện canh tác khuyến nghị"
+            />
+          </Form.Item>
+
+          <Form.Item name="description" label="Mô tả">
+            <Input.TextArea
+              rows={4}
+              className="rounded-lg"
+              placeholder="Nhập mô tả về cây trồng"
+            />
+          </Form.Item>
+
+          <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
+            <Button
+              onClick={() => navigate(-1)}
+              className="h-11 min-w-[100px] rounded-lg font-semibold"
+            >
+              Hủy
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              icon={<SaveOutlined />}
+              loading={updateMutation.isPending}
+              className="h-11 min-w-[120px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
+            >
+              Lưu thay đổi
+            </Button>
+          </div>
+        </Form>
+      </Card>
+    </div>
+  );
+};
+
+export default CropEdit;
