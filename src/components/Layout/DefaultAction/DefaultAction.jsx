@@ -1,13 +1,32 @@
 import { useEffect } from 'react'
+import { useSelector } from 'react-redux'
 import { useAppDispatch } from 'src/redux/hooks'
-import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
+import { setUserInfo, getListSystemKey } from 'src/redux/slices/appGlobalSlice'
 import authSession from 'src/redux/authSession'
 import AuthService from 'src/services/AuthService'
+import CommonService from 'src/services/CommonService'
 import { refreshAccessToken } from 'src/services/tokenRefresh'
 import { normalizeRole } from 'src/constants/roles'
 
 const DefaultAction = ({ children }) => {
   const dispatch = useAppDispatch()
+  const userInfo = useSelector((state) => state.appGlobal.userInfo)
+  useEffect(() => {
+    if (!userInfo?.id) return
+
+    const fetchSystemKey = async () => {
+      try {
+        const res = await CommonService.getSystemKey()
+        const data = res?.data?.data || res?.data || res
+        if (Array.isArray(data)) {
+          dispatch(getListSystemKey(data))
+        }
+      } catch (error) {
+        console.warn('[DefaultAction] fetchSystemKey failed:', error)
+      }
+    }
+    fetchSystemKey()
+  }, [userInfo?.id, dispatch])
 
   useEffect(() => {
     if (!authSession.isAuthenticated()) return
@@ -35,18 +54,18 @@ const DefaultAction = ({ children }) => {
         if (!finalId) return
 
         const userData = {
-          _id:         finalId,
-          id:          finalId,
-          fullName:    meData.fullName,
-          email:       meData.email,
+          _id: finalId,
+          id: finalId,
+          fullName: meData.fullName,
+          email: meData.email,
           phoneNumber: meData.phoneNumber,
-          avatarUrl:   meData.avatarUrl,
-          isActive:    meData.isActive,
+          avatarUrl: meData.avatarUrl,
+          isActive: meData.isActive,
           lastLoginAt: meData.lastLoginAt,
           dateOfBirth: meData.dateOfBirth,
-          gender:      meData.gender,
-          role:        normalizeRole(meData.roles?.[0]),
-          roles:       meData.roles || [],
+          gender: meData.gender,
+          role: normalizeRole(meData.roles?.[0]),
+          roles: meData.roles || [],
         }
 
         authSession.updateUser(userData)

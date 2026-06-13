@@ -2,7 +2,7 @@
  * Users Management — Farm Manager / Land Manager
  * Route: /farm-manager/users OR /land-manager/farmers
  */
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Input, Dropdown, Badge, Row, Col, Card, Statistic, Popconfirm, Tooltip, Avatar, Select, message, Modal } from 'antd'
 import {
@@ -11,7 +11,7 @@ import {
   CheckCircleOutlined, StopOutlined, MoreOutlined, TeamOutlined,
   UsergroupAddOutlined, EyeOutlined, CrownOutlined, UserOutlined
 } from '@ant-design/icons'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSelector } from 'react-redux'
 import dayjs from 'dayjs'
 
@@ -23,19 +23,26 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
 import UserFormModal from './components/UserFormModal'
-import AssignRolesModal, { ROLE_CONFIG } from './components/AssignRolesModal'
+import AssignRolesModal from './components/AssignRolesModal'
 import ResetPasswordModal from './components/ResetPasswordModal'
 import { getAvatarUrl, invalidCharsRegex } from 'src/utils/helpers'
 import { formatDate } from 'src/utils/dateFormatters'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CustomModal from 'src/components/Modal/CustomModal'
+import { useSystemKey } from 'src/hooks/useSystemKey'
+import { SYSTEM_KEY } from 'src/constants/systemKey'
 
-const getRoleTag = (role) => {
-  const cfg = ROLE_CONFIG[role] || { label: role, color: 'default' }
+const getRoleTag = (role, roleDesc) => {
+  let color = 'default'
+  if (role === 'FARM_MANAGER') color = 'green'
+  else if (role === 'LAND_MANAGER') color = 'blue'
+  else if (role === 'MATERIAL_MANAGER') color = 'orange'
+  else if (role === 'FARMER') color = 'cyan'
+
   return (
-    <span key={role} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold bg-${cfg.color}-50 text-${cfg.color}-600 border border-${cfg.color}-100`}>
-      {cfg.label}
+    <span key={role} className={`px-2 py-0.5 rounded-full text-[11px] font-semibold bg-${color}-50 text-${color}-600 border border-${color}-100`}>
+      {roleDesc || role}
     </span>
   )
 }
@@ -46,10 +53,24 @@ const UsersManagement = () => {
   const currentUser = useSelector(state => state.appGlobal.userInfo)
   const isFarmManager = currentUser?.role === ROLES.FARM_MANAGER
 
+  const { getCombo, getDescription } = useSystemKey()
+  const statusOptions = getCombo(SYSTEM_KEY.STATUS)
+  const roleOptions = getCombo(SYSTEM_KEY.ROLE)
+  const statusSystemOptions = getCombo(SYSTEM_KEY.STATUS)
+
+  const selectStatusOptions = [
+    { value: 'all', label: 'Tất cả trạng thái' },
+    ...statusSystemOptions.map(opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description
+    }))
+  ]
+
   // ── State ──────────────────────────────────────────────────
   const [search, setSearch] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [roleFilter, setRoleFilter] = useState(undefined)
+  const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
@@ -59,19 +80,31 @@ const UsersManagement = () => {
   const [statusModal, setStatusModal] = useState({ open: false, user: null })
 
   // ── Data fetching ──────────────────────────────────────────
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['users', { page, pageSize, search, roleFilter }],
-    queryFn: () => UserService.getUsers({
-      PageIndex: page,
-      PageSize: pageSize,
-      SearchKeyword: search || undefined,
-      Role: roleFilter || undefined,
-    }),
-    keepPreviousData: true,
-    select: (res) => res?.data || { items: [], totalItems: 0 },
-  })
-  const users = data?.items || []
-  const totalItems = data?.totalItems || 0
+  const [listData, setListData] = useState([])
+  const [totalRecords, setTotalRecords] = useState(0)
+  const [loading, setLoading] = useState(false)
+
+  const getList = async () => {
+    try {
+      setLoading(true)
+      const res = await UserService.getUsers({
+        PageIndex: page,
+        PageSize: pageSize,
+        SearchKeyword: search || undefined,
+        Role: roleFilter || undefined,
+        Status: statusFilter === 'all' ? undefined : statusFilter,
+      })
+      if (res?.success === false) return
+      setListData(res?.data?.items || [])
+      setTotalRecords(res?.data?.totalItems || 0)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    getList()
+  }, [page, pageSize, search, roleFilter, statusFilter])
 
   // ── Mutations (only for Farm Manager) ──────────────────────
 
@@ -79,7 +112,7 @@ const UsersManagement = () => {
     mutationFn: ({ id, isActive }) => UserService.changeUserStatus(id, { isActive }),
     onSuccess: (res) => {
       if (res?.success === false) return
-      queryClient.invalidateQueries(['users'])
+      getList()
     },
   })
 
@@ -136,7 +169,7 @@ const UsersManagement = () => {
       key: 'roles',
       render: (roles) => (
         <div className="flex flex-wrap gap-1">
-          {(roles || []).map(r => getRoleTag(r))}
+          {(roles || []).map(r => getRoleTag(r, getDescription(SYSTEM_KEY.ROLE, r)))}
         </div>
       ),
       width: 150,
@@ -160,12 +193,16 @@ const UsersManagement = () => {
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive) => {
+        // Ánh xạ boolean sang SystemKey value để lấy mô tả
+        const sysVal = isActive ? "ACTIVE" : "INACTIVE";
+        const statusDesc = getDescription(SYSTEM_KEY.STATUS, sysVal) || (isActive ? 'Hoạt động' : 'Vô hiệu');
+
         return (
           <div
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none
                 ${isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}
           >
-            {isActive ? <><CheckCircleOutlined /><span>Hoạt động</span></> : <><StopOutlined /><span>Vô hiệu</span></>}
+            {isActive ? <><CheckCircleOutlined /><span>{statusDesc}</span></> : <><StopOutlined /><span>{statusDesc}</span></>}
           </div>
         );
       },
@@ -243,7 +280,7 @@ const UsersManagement = () => {
             <TeamOutlined className="text-green-600" />
             Quản lý người dùng
             <Badge
-              count={totalItems}
+              count={totalRecords}
               overflowCount={999}
               className="ml-1"
               style={{ backgroundColor: '#16a34a', fontSize: 11, fontWeight: 700 }}
@@ -288,7 +325,18 @@ const UsersManagement = () => {
             allowClear
             value={roleFilter}
             onChange={(val) => { setRoleFilter(val); setPage(1); }}
-            options={Object.entries(ROLE_CONFIG).map(([val, cfg]) => ({ value: val, label: cfg.label }))}
+            options={roleOptions.map(opt => ({ value: opt.codeValue || opt.value, label: opt.label || opt.description }))}
+          />
+          <Select
+            placeholder="Tất cả trạng thái"
+            className="h-10 rounded-xl min-w-[150px]"
+            allowClear
+            value={statusFilter}
+            onChange={(value) => {
+              setStatusFilter(value)
+              setPage(1)
+            }}
+            options={selectStatusOptions}
           />
           <div className="flex gap-2 ml-auto">
             <Button
@@ -300,8 +348,8 @@ const UsersManagement = () => {
             </Button>
             <Button
               icon={<ReloadOutlined />}
-              onClick={() => queryClient.invalidateQueries(['users'])}
-              loading={isFetching}
+              onClick={() => getList()}
+              loading={loading}
               className="h-10 px-3 rounded-xl bg-gray-50"
             />
           </div>
@@ -309,10 +357,10 @@ const UsersManagement = () => {
 
         {/* Table */}
         <CustomTable
-          dataSource={users}
+          dataSource={listData}
           columns={columns}
           rowKey="id"
-          loading={isLoading || isFetching}
+          loading={loading}
           onRow={(record) => {
             return {
               onClick: () => {
@@ -325,7 +373,7 @@ const UsersManagement = () => {
           pagination={{
             current: page,
             pageSize: pageSize,
-            total: totalItems,
+            total: totalRecords,
             showSizeChanger: true,
             pageSizeOptions: PAGE_SIZE,
             showTotal: (total, range) => (

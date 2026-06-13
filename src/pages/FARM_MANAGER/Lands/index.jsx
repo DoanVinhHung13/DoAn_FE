@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Alert,
@@ -23,7 +23,7 @@ import {
   SearchOutlined,
   StopOutlined,
 } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { MapPinned } from 'lucide-react'
 
 import TitleCustom from 'src/components/TitleCustom'
@@ -35,20 +35,31 @@ import { invalidCharsRegex } from 'src/utils/helpers'
 import {
   EMPTY_LAND_MESSAGE,
   MSG_LM_26,
-  STATUS_OPTIONS,
   formatLandArea,
-  getAssignedManagerNames,
   getItemId,
   getStatusLabel,
   isLandPlotActive,
   normalizeLandPlotResponse,
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
+import { useSystemKey } from 'src/hooks/useSystemKey'
+import { SYSTEM_KEY } from 'src/constants/systemKey'
 
 const LandsManagement = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { canManage, routes } = useLandPlotAccess()
+
+  const { getCombo, getDescription } = useSystemKey()
+  const statusSystemOptions = getCombo(SYSTEM_KEY.STATUS)
+  
+  const selectStatusOptions = [
+    { value: 'all', label: 'Tất cả trạng thái' },
+    ...statusSystemOptions.map(opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description
+    }))
+  ]
 
   const [keyword, setKeyword] = useState('')
   const [searchInput, setSearchInput] = useState('')
@@ -67,17 +78,31 @@ const LandsManagement = () => {
     [page, pageSize, keyword, status],
   )
 
-  const { data, isLoading, isError, refetch, error } = useQuery({
-    queryKey: ['land-plots', queryParams],
-    queryFn: async () => {
-      const response = await LandPlotService.getLandPlots(queryParams)
-      return normalizeLandPlotResponse(response)
-    },
-    keepPreviousData: true,
-  })
+  const [listData, setListData] = useState([])
+  const [totalRecords, setTotalRecords] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+  const [error, setError] = useState(null)
 
-  const items = data?.items || []
-  const total = data?.total || 0
+  const getList = async () => {
+    try {
+      setLoading(true)
+      setIsError(false)
+      const response = await LandPlotService.getLandPlots(queryParams)
+      const normalizedData = normalizeLandPlotResponse(response)
+      setListData(normalizedData?.items || [])
+      setTotalRecords(normalizedData?.total || 0)
+    } catch (err) {
+      setIsError(true)
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    getList()
+  }, [queryParams])
 
   const statusMutation = useMutation({
     mutationFn: async ({ plot, activate }) => {
@@ -89,7 +114,7 @@ const LandsManagement = () => {
     onSuccess: (res) => {
       if (res?.success === false) return
       setStatusTarget(null)
-      queryClient.invalidateQueries({ queryKey: ['land-plots'] })
+      getList()
     },
   })
 
@@ -185,14 +210,7 @@ const LandsManagement = () => {
     },
   ]
 
-  if (canManage) {
-    columns.push({
-      title: 'Quản lý vùng trồng',
-      width: 180,
-      ellipsis: true,
-      render: (_, record) => getAssignedManagerNames(record),
-    })
-  }
+
 
   columns.push(
     {
@@ -200,9 +218,12 @@ const LandsManagement = () => {
       width: 130,
       render: (_, record) => {
         const active = isLandPlotActive(record)
+        const sysVal = active ? "ACTIVE" : "INACTIVE"
+        const statusDesc = getDescription(SYSTEM_KEY.STATUS, sysVal) || getStatusLabel(record)
+
         return (
           <Tag color={active ? 'success' : 'default'} icon={active ? <CheckCircleOutlined /> : <StopOutlined />}>
-            {getStatusLabel(record)}
+            {statusDesc}
           </Tag>
         )
       },
@@ -240,58 +261,66 @@ const LandsManagement = () => {
           message="Không thể tải danh sách vùng trồng."
           description={error?.message}
           action={
-            <Button size="small" onClick={() => refetch()}>
+            <Button size="small" onClick={() => getList()}>
               Thử lại
             </Button>
           }
         />
       )}
 
-      <Card>
-        <Row gutter={[12, 12]} className="mb-4">
-          <Col xs={24} md={12} lg={10}>
-            <Input
-              allowClear
-              prefix={<SearchOutlined className="text-slate-400" />}
-              placeholder="Tìm theo mã, tên, địa chỉ..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onPressEnter={handleSearch}
+      <Card
+        bordered={false}
+        className="rounded-2xl shadow-sm"
+        bodyStyle={{ padding: 0 }}
+      >
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row gap-3 p-5 border-b border-gray-100">
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onPressEnter={handleSearch}
+            placeholder="Tìm theo mã, tên, địa chỉ..."
+            prefix={<SearchOutlined className="text-gray-300" />}
+            className="h-10 rounded-xl w-64"
+            allowClear
+            onClear={() => { setSearchInput(''); setKeyword(''); setPage(1) }}
+          />
+          <Select
+            className="h-10 rounded-xl min-w-[150px]"
+            value={status}
+            options={selectStatusOptions}
+            onChange={(value) => {
+              setStatus(value)
+              setPage(1)
+            }}
+          />
+          <div className="flex gap-2 ml-auto">
+            <Button
+              onClick={handleSearch}
+              icon={<SearchOutlined />}
+              className="h-10 px-4 rounded-xl font-semibold bg-gray-50"
+            >
+              Tìm kiếm
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => getList()}
+              loading={loading}
+              className="h-10 px-3 rounded-xl bg-gray-50"
             />
-          </Col>
-          <Col xs={12} md={6} lg={5}>
-            <Select
-              className="w-full"
-              value={status}
-              options={STATUS_OPTIONS}
-              onChange={(value) => {
-                setStatus(value)
-                setPage(1)
-              }}
-            />
-          </Col>
-          <Col xs={12} md={6} lg={9}>
-            <Space>
-              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-                Tìm kiếm
-              </Button>
-              <Button icon={<ReloadOutlined />} onClick={() => refetch()}>
-                Tải lại
-              </Button>
-            </Space>
-          </Col>
-        </Row>
+          </div>
+        </div>
 
         <CustomTable
           rowKey={(record) => getItemId(record)}
-          loading={isLoading}
+          loading={loading}
           columns={columns}
-          dataSource={items}
+          dataSource={listData}
           scroll={{ x: 1000 }}
           pagination={{
             current: page,
             pageSize,
-            total,
+            total: totalRecords,
             showSizeChanger: true,
             pageSizeOptions: PAGE_SIZE,
             onChange: (nextPage, nextSize) => {

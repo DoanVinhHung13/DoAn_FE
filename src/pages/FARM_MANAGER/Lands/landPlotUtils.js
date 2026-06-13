@@ -114,19 +114,3 @@ export const buildLandPlotPayload = (values, polygonData, farmId) => {
   }
 }
 
-export const extractLandManagers = (plot) => {
-  if (Array.isArray(plot?.landManagers)) return plot.landManagers
-  if (Array.isArray(plot?.managers)) return plot.managers
-  if (plot?.landManager) return [plot.landManager]
-  if (plot?.assignedLandManager) return [plot.assignedLandManager]
-  return []
-}
-
-export const getAssignedManagerNames = (plot) => {
-  const managers = extractLandManagers(plot)
-  if (!managers.length) return 'Chưa phân công'
-  return managers
-    .map((item) => item.fullName || item.name || item.landManagerName)
-    .filter(Boolean)
-    .join(', ')
-}
