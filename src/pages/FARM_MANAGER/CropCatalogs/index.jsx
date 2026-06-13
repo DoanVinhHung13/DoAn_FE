@@ -615,7 +615,7 @@ const CropCatalogs = () => {
               {displayValue(catalogDetail.name || catalogDetail.cropCatalogName)}
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={isCatalogActive(catalogDetail) ? 'success' : 'default'}>
+              <Tag color={isCatalogActive(catalogDetail) ? 'success' : 'error'}>
                 {getStatusLabel(catalogDetail)}
               </Tag>
             </Descriptions.Item>

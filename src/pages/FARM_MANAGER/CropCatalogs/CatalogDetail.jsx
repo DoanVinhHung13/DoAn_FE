@@ -218,7 +218,7 @@ const CatalogDetail = () => {
               </div>
               <div className="pt-4">
                 <Tag
-                  color={isActive ? 'success' : 'default'}
+                  color={isActive ? 'success' : 'error'}
                   className="rounded-full px-4 py-1 text-sm"
                 >
                   {getStatusLabel(catalogDetail)}

@@ -920,7 +920,7 @@ const Crops = () => {
                 : 'Chưa cập nhật'}
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={isCropActive(cropDetail) ? 'success' : 'default'}>
+              <Tag color={isCropActive(cropDetail) ? 'success' : 'error'}>
                 {getStatusLabel(cropDetail)}
               </Tag>
             </Descriptions.Item>
