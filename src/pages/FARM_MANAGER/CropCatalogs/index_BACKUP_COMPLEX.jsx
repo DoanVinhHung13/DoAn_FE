@@ -1,5 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   Button,
@@ -35,10 +34,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
-import ROUTER from 'src/router/ROUTER';
 
 const { Text } = Typography;
 
@@ -56,7 +53,7 @@ const SORT_OPTIONS = [
   { value: 'duration-desc', label: 'Thời gian sinh trưởng giảm dần' },
 ];
 
-const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
+const EMPTY_MESSAGE = 'Không tìm thấy thông tin danh mục cây trồng.';
 
 const getItemId = (item) => item?.id || item?._id || item?.cropId;
 const CATEGORY_TAG_COLORS = [
@@ -112,11 +109,10 @@ const isCropActive = (item) => {
 };
 
 const getStatusLabel = (item) =>
-  isCropActive(item) ? 'Ho\u1ea1t \u0111\u1ed9ng' : 'Ng\u1eebng ho\u1ea1t \u0111\u1ed9ng';
+  isCropActive(item) ? 'Đang hoạt động' : 'Ngừng hoạt động';
 
-const Crops = () => {
+const CropCatalogs = () => {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [createForm] = Form.useForm();
   const watchedImageUrl = Form.useWatch('imageUrl', form);
@@ -131,57 +127,23 @@ const Crops = () => {
   const [statusTarget, setStatusTarget] = useState(null);
   const [inlineError, setInlineError] = useState('');
 
-  const { data, isLoading, isError, refetch, error } = useQuery({
-    queryKey: ['crops'],
-    queryFn: async () => {
-      try {
-        const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 200 });
-        console.log('Crops API Response:', response);
-        return normalizeCropResponse(response);
-      } catch (err) {
-        console.error('Crops API Error:', err);
-        throw err;
-      }
-    },
-    retry: false,
-  });
-
-  // Query to get crop catalogs for the dropdown
-  const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
-    queryKey: ['crop-catalogs-dropdown'],
-    queryFn: async () => {
-      try {
-        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
-        console.log('Crop Catalogs Dropdown Response:', response);
-        const payload = response?.data ?? response ?? {};
-        const data = payload?.data ?? payload;
-        const items = Array.isArray(data)
-          ? data
-          : data?.items || data?.results || data?.crops || data?.cropCatalogs || [];
-        return items.filter(item => {
-          // Only return active catalogs
-          if (typeof item?.isActive === 'boolean') return item.isActive;
-          const status = String(item?.status || '').toLowerCase();
-          return !['inactive', 'disabled', 'deleted'].includes(status);
-        });
-      } catch (err) {
-        console.error('Crop Catalogs Dropdown Error:', err);
-        return [];
-      }
-    },
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['crop-catalogs'],
+    queryFn: async () =>
+      normalizeCropResponse(
+        await CropService.getCrops({ PageIndex: 1, PageSize: 200 })
+      ),
     retry: false,
   });
 
   const statusMutation = useMutation({
     mutationFn: ({ id, nextActive }) =>
-      nextActive
-        ? CropManagementService.activateCrop(id)
-        : CropManagementService.deactivateCrop(id),
+      nextActive ? CropService.activateCrop(id) : CropService.deactivateCrop(id),
     onSuccess: () => {
       setInlineError('');
-      message.success('Thay đổi trạng thái cây trồng thành công.');
-      queryClient.invalidateQueries({ queryKey: ['crops'] });
-      queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
+      message.success('Thay đổi trạng thái danh mục cây trồng thành công.');
+      queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+      queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
     },
     onError: (error) => {
       const statusCode = error?.response?.status;
@@ -194,11 +156,11 @@ const Crops = () => {
       if (statusCode === 404) {
         setInlineError(EMPTY_MESSAGE);
         setSelectedCropId(null);
-        queryClient.invalidateQueries({ queryKey: ['crops'] });
+        queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
         return;
       }
 
-      message.error(apiMessage || 'Không thể thay đổi trạng thái cây trồng.');
+      message.error(apiMessage || 'Không thể thay đổi trạng thái danh mục cây trồng.');
     },
   });
 
@@ -225,20 +187,20 @@ const Crops = () => {
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
         isActive: true,
       };
-      return CropManagementService.createCrop(payload);
+      return CropService.createCrop(payload);
     },
     onSuccess: () => {
       setInlineError('');
       setIsCreating(false);
       createForm.resetFields();
-      message.success('Tạo cây trồng thành công.');
-      queryClient.invalidateQueries({ queryKey: ['crops'] });
+      message.success('Tạo danh mục cây trồng thành công.');
+      queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
     },
     onError: (error) => {
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.title ||
-        'Không thể tạo cây trồng.';
+        'Không thể tạo danh mục cây trồng.';
 
       // Check for specific error codes/messages
       if (errorMessage.includes('Mã danh mục cây trồng đã tồn tại') || 
@@ -247,7 +209,7 @@ const Crops = () => {
         createForm.setFields([
           {
             name: 'cropCode',
-            errors: ['Mã cây đã tồn tại trong hệ thống.'],
+            errors: ['Mã danh mục cây trồng đã tồn tại trong hệ thống.'],
           },
         ]);
       } else if (errorMessage.includes('Tên danh mục cây trồng đã tồn tại') ||
@@ -255,7 +217,7 @@ const Crops = () => {
         createForm.setFields([
           {
             name: 'name',
-            errors: ['Tên cây trồng đã tồn tại trong hệ thống.'],
+            errors: ['Tên danh mục cây trồng đã tồn tại trong hệ thống.'],
           },
         ]);
       } else {
@@ -278,29 +240,29 @@ const Crops = () => {
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
         isActive: typeof editingCrop?.isActive === 'boolean' ? editingCrop.isActive : true,
       };
-      return CropManagementService.updateCrop(id, payload);
+      return CropService.updateCrop(id, payload);
     },
     onSuccess: () => {
       setInlineError('');
       setEditingCrop(null);
       form.resetFields();
-      message.success('Cập nhật cây trồng thành công.');
-      queryClient.invalidateQueries({ queryKey: ['crops'] });
-      queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
+      message.success('Cập nhật danh mục cây trồng thành công.');
+      queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+      queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
     },
     onError: (error) => {
       if (error?.response?.status === 404) {
         setInlineError(EMPTY_MESSAGE);
         setEditingCrop(null);
         form.resetFields();
-        queryClient.invalidateQueries({ queryKey: ['crops'] });
+        queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
         return;
       }
 
       message.error(
         error?.response?.data?.message ||
           error?.response?.data?.title ||
-          'Không thể cập nhật cây trồng.'
+          'Không thể cập nhật danh mục cây trồng.'
       );
     },
   });
@@ -370,9 +332,9 @@ const Crops = () => {
     isLoading: isDetailLoading,
     isError: isDetailError,
   } = useQuery({
-    queryKey: ['crop-detail', selectedCropId],
+    queryKey: ['crop-catalog-detail', selectedCropId],
     queryFn: async () => {
-      const response = await CropManagementService.getCropById(selectedCropId);
+      const response = await CropService.getCropById(selectedCropId);
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
     },
@@ -438,17 +400,6 @@ const Crops = () => {
     ];
   }, [data?.items]);
 
-  // Create options from crop catalogs for the form
-  const cropCatalogOptions = useMemo(() => {
-    if (!cropCatalogsData || cropCatalogsData.length === 0) {
-      return [];
-    }
-    return cropCatalogsData.map((catalog) => ({
-      value: catalog.name || catalog.cropCatalogName,
-      label: catalog.name || catalog.cropCatalogName,
-    }));
-  }, [cropCatalogsData]);
-
   const columns = [
     {
       title: 'STT',
@@ -500,7 +451,7 @@ const Crops = () => {
       ),
     },
     {
-      title: 'Nhóm cây/Loại cây',
+      title: 'Nhóm cây',
       dataIndex: 'cropType',
       key: 'cropType',
       width: 130,
@@ -528,6 +479,26 @@ const Crops = () => {
       ),
     },
     {
+      title: 'Trạng thái',
+      key: 'status',
+      width: 180,
+      render: (_, record) => {
+        const isActive = isCropActive(record);
+        return (
+          <div
+            className={`rounded-full px-4 py-2 font-semibold text-sm inline-flex items-center justify-center gap-2 ${
+              isActive 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-red-50 text-red-600'
+            }`}
+          >
+            {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
+            {getStatusLabel(record)}
+          </div>
+        );
+      },
+    },
+    {
       title: 'Mô tả',
       dataIndex: 'description',
       key: 'description',
@@ -538,26 +509,6 @@ const Crops = () => {
           {displayValue(value)}
         </Text>
       ),
-    },
-    {
-      title: 'Trạng thái',
-      key: 'status',
-      width: 180,
-      render: (_, record) => {
-        const isActive = isCropActive(record);
-        return (
-          <div
-            className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
-              isActive 
-                ? 'bg-green-50 text-green-700' 
-                : 'bg-red-50 text-red-600'
-            }`}
-          >
-            {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
-            {getStatusLabel(record)}
-          </div>
-        );
-      },
     },
     {
       title: 'Hành động',
@@ -572,7 +523,7 @@ const Crops = () => {
               size="small"
               icon={<EditOutlined />}
               className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
-              onClick={() => navigate(`${ROUTER.FM_CROPS}/${getItemId(record)}/edit`)}
+              onClick={() => openUpdateForm(record)}
             />
           </Tooltip>
           <Tooltip title="Xem chi tiết">
@@ -581,7 +532,7 @@ const Crops = () => {
               size="small"
               icon={<EyeOutlined />}
               className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
-              onClick={() => navigate(`${ROUTER.FM_CROPS}/${getItemId(record)}`)}
+              onClick={() => setSelectedCropId(getItemId(record))}
             />
           </Tooltip>
           <Tooltip title={isCropActive(record) ? 'Vô hiệu hóa' : 'Kích hoạt'}>
@@ -620,7 +571,7 @@ const Crops = () => {
           onClick={() => setIsCreating(true)}
           className="h-10 rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
         >
-          Thêm cây trồng
+          Thêm danh mục cây trồng
         </Button>
       </div>
 
@@ -628,8 +579,7 @@ const Crops = () => {
         <Alert
           showIcon
           type="error"
-          message="Không thể tải danh sách cây trồng."
-          description={error?.message || error?.response?.data?.message || 'Vui lòng kiểm tra console để biết thêm chi tiết.'}
+          message="Không thể tải danh sách danh mục cây trồng."
           action={
             <Button size="small" onClick={() => refetch()}>
               Thử lại
@@ -687,8 +637,11 @@ const Crops = () => {
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <div className="flex items-center gap-2">
             <FileTextOutlined className="text-green-600" />
-            <Text strong>Danh sách cây trồng</Text>
+            <Text strong>Danh sách danh mục</Text>
           </div>
+          <Text type="secondary" className="!text-sm">
+            {filteredCrops.length} bản ghi
+          </Text>
         </div>
 
         <Table
@@ -701,6 +654,7 @@ const Crops = () => {
             pageSize: 10,
             showSizeChanger: true,
             pageSizeOptions: [10, 20, 50],
+            showTotal: (total) => `${total} bản ghi`,
           }}
           locale={{
             emptyText: (
@@ -725,7 +679,7 @@ const Crops = () => {
         destroyOnClose
         title={
           <span className="text-2xl font-bold text-green-600">
-            Thêm cây trồng
+            Thêm danh mục cây trồng
           </span>
         }
       >
@@ -769,27 +723,10 @@ const Crops = () => {
               name="cropType"
               label="Nhóm cây"
               rules={[
-                { required: true, message: 'Vui lòng chọn nhóm cây từ danh mục.' },
+                { max: 100, message: 'Nhóm cây không được vượt quá 100 ký tự.' },
               ]}
             >
-              <Select
-                className="h-11"
-                placeholder="Chọn nhóm cây từ danh mục"
-                loading={isCatalogsLoading}
-                options={cropCatalogOptions}
-                showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-                notFoundContent={
-                  isCatalogsLoading ? (
-                    <span>Đang tải...</span>
-                  ) : (
-                    <span>Không có danh mục. Vui lòng tạo danh mục cây trồng trước.</span>
-                  )
-                }
-                disabled={!cropCatalogOptions || cropCatalogOptions.length === 0}
-              />
+              <Input className="h-11" placeholder="Nhập nhóm cây" />
             </Form.Item>
 
             <Form.Item name="scientificName" label="Tên khoa học">
@@ -878,7 +815,7 @@ const Crops = () => {
       </Modal>
 
       <Drawer
-        title="Chi tiết cây trồng"
+        title="Chi tiết danh mục cây trồng"
         width={520}
         open={!!selectedCropId}
         onClose={() => setSelectedCropId(null)}
@@ -945,7 +882,7 @@ const Crops = () => {
         destroyOnHidden
         title={
           <span className="text-2xl font-bold text-green-600">
-            Cập nhật cây trồng
+            Cập nhật danh mục cây trồng
           </span>
         }
       >
@@ -1095,7 +1032,7 @@ const Crops = () => {
             Thay đổi trạng thái
           </h2>
           <p className="mb-7 text-base leading-6 text-gray-600">
-            Bạn có chắc muốn thay đổi trạng thái của cây trồng này không?
+            Bạn có chắc muốn thay đổi trạng thái của danh mục cây trồng này không?
           </p>
           <div className="flex justify-end gap-3">
             <Button
@@ -1119,4 +1056,4 @@ const Crops = () => {
   );
 };
 
-export default Crops;
+export default CropCatalogs;

@@ -37,6 +37,11 @@ const FarmManagerUsers = React.lazy(() => import('../pages/FARM_MANAGER/Users'))
 const FarmManagerUserDetail = React.lazy(() => import('../pages/FARM_MANAGER/Users/UserDetail'))
 const FarmManagerLands = React.lazy(() => import('../pages/FARM_MANAGER/Lands'))
 const FarmManagerCropCatalogs = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs'))
+const FarmManagerCropCatalogDetail = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs/CatalogDetail'))
+const FarmManagerCropCatalogEdit = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs/CatalogEdit'))
+const FarmManagerCrops = React.lazy(() => import('../pages/FARM_MANAGER/Crops'))
+const FarmManagerCropDetail = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropDetail'))
+const FarmManagerCropEdit = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropEdit'))
 const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans'))
 const FarmManagerTasks = React.lazy(() => import('../pages/FARM_MANAGER/Tasks'))
 const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
@@ -159,6 +164,11 @@ const routes = [
               { path: ROUTER.FM_USER_DETAIL, element: <Lazy><FarmManagerUserDetail /></Lazy> },
               { path: ROUTER.FM_LANDS, element: <Lazy><FarmManagerLands /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOGS, element: <Lazy><FarmManagerCropCatalogs /></Lazy> },
+              { path: ROUTER.FM_CROP_CATALOG_DETAIL, element: <Lazy><FarmManagerCropCatalogDetail /></Lazy> },
+              { path: ROUTER.FM_CROP_CATALOG_EDIT, element: <Lazy><FarmManagerCropCatalogEdit /></Lazy> },
+              { path: ROUTER.FM_CROPS, element: <Lazy><FarmManagerCrops /></Lazy> },
+              { path: ROUTER.FM_CROP_DETAIL, element: <Lazy><FarmManagerCropDetail /></Lazy> },
+              { path: ROUTER.FM_CROP_EDIT, element: <Lazy><FarmManagerCropEdit /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
               { path: ROUTER.FM_TASKS, element: <Lazy><FarmManagerTasks /></Lazy> },
               { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },

@@ -47,8 +47,13 @@ export const farmManagerItem = () => [
   },
   {
     key: ROUTER.FM_CROP_CATALOGS,
-    icon: <Sprout className="w-5 h-5" />,
+    icon: <FileTextOutlined className="text-lg" />,
     label: 'Danh mục cây trồng',
+  },
+  {
+    key: ROUTER.FM_CROPS,
+    icon: <Sprout className="w-5 h-5" />,
+    label: 'Cây trồng',
   },
   {
     key: ROUTER.FM_PRODUCTION_PLANS,
