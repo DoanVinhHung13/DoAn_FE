@@ -39,6 +39,8 @@ import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
+import { useSystemKey } from 'src/hooks/useSystemKey';
+import { SYSTEM_KEY } from 'src/constants/systemKey';
 import TableCustom from 'src/components/Table/CustomTable';
 
 const { Text } = Typography;
@@ -131,6 +133,34 @@ const Crops = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [statusTarget, setStatusTarget] = useState(null);
   const [inlineError, setInlineError] = useState('');
+
+  // SystemKey hook
+  const { getCombo, getDescription } = useSystemKey();
+  const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE);
+  const cropStatusOptions = getCombo(SYSTEM_KEY.CROP_STATUS);
+
+  // Status filter options (dùng SystemKey nếu có, fallback về hardcode)
+  const statusFilterOptions = useMemo(() => {
+    const baseOptions = [{ value: 'all', label: 'Tất cả trạng thái' }];
+    
+    if (cropStatusOptions && cropStatusOptions.length > 0) {
+      // Dùng SystemKey từ backend
+      return [
+        ...baseOptions,
+        ...cropStatusOptions.map(opt => ({
+          value: opt.codeValue || opt.CodeValue,
+          label: opt.description || opt.Description,
+        }))
+      ];
+    }
+    
+    // Fallback nếu chưa có SystemKey
+    return [
+      ...baseOptions,
+      { value: 'active', label: 'Đang hoạt động' },
+      { value: 'inactive', label: 'Ngừng hoạt động' },
+    ];
+  }, [cropStatusOptions]);
 
   const { data, isLoading, isError, refetch, error } = useQuery({
     queryKey: ['crops'],
@@ -439,7 +469,7 @@ const Crops = () => {
     ];
   }, [data?.items]);
 
-  // Create options from crop catalogs for the form
+  // Transform crop catalogs data into options
   const cropCatalogOptions = useMemo(() => {
     if (!cropCatalogsData || cropCatalogsData.length === 0) {
       return [];
@@ -450,11 +480,30 @@ const Crops = () => {
     }));
   }, [cropCatalogsData]);
 
+  // Create options from SystemKey hoặc crop catalogs cho form
+  const cropTypeFormOptions = useMemo(() => {
+    // Ưu tiên dùng SystemKey nếu có
+    if (cropTypeOptions && cropTypeOptions.length > 0) {
+      return cropTypeOptions.map((opt) => ({
+        value: opt.codeValue || opt.CodeValue,
+        label: opt.description || opt.Description,
+      }));
+    }
+    
+    // Fallback: Dùng Crop Catalogs nếu chưa có SystemKey
+    if (cropCatalogOptions && cropCatalogOptions.length > 0) {
+      return cropCatalogOptions;
+    }
+    
+    return [];
+  }, [cropTypeOptions, cropCatalogOptions]);
+
   const columns = [
     {
       title: 'STT',
       key: 'index',
-      width: 56,
+      width: 50,
+      align: 'center',
       render: (_, __, index) => (
         <Text className="font-medium text-gray-400">{index + 1}</Text>
       ),
@@ -463,7 +512,7 @@ const Crops = () => {
       title: 'Mã cây',
       dataIndex: 'cropCode',
       key: 'cropCode',
-      width: 110,
+      width: 100,
       render: (value) => (
         <Text strong className="block truncate font-mono text-green-600">
           {displayValue(value)}
@@ -474,7 +523,6 @@ const Crops = () => {
       title: 'Tên cây trồng',
       dataIndex: 'name',
       key: 'name',
-      width: 240,
       sorter: (a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'vi'),
       render: (value, record) => (
         <div className="flex min-w-0 items-center gap-2">
@@ -504,7 +552,8 @@ const Crops = () => {
       title: 'Nhóm cây/Loại cây',
       dataIndex: 'cropType',
       key: 'cropType',
-      width: 130,
+      width: 150,
+      align: 'center',
       render: (value) => (
         <Tag
           className="!m-0 max-w-full truncate rounded-full border-0 px-3 font-semibold"
@@ -518,37 +567,27 @@ const Crops = () => {
       title: 'Thời gian sinh trưởng',
       dataIndex: 'growthDurationDays',
       key: 'growthDurationDays',
-      width: 126,
+      width: 140,
+      align: 'center',
       sorter: (a, b) =>
         Number(a.growthDurationDays || 0) - Number(b.growthDurationDays || 0),
       render: (value) => (
-        <Space size={6}>
+        <Space size={4}>
           <ClockCircleOutlined className="text-green-500" />
-          <Text>{value ? `${value} ngày` : 'Chưa cập nhật'}</Text>
+          <Text>{value ? `${value} ngày` : '-'}</Text>
         </Space>
-      ),
-    },
-    {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
-      width: 260,
-      ellipsis: true,
-      render: (value) => (
-        <Text type="secondary" className="block truncate text-sm">
-          {displayValue(value)}
-        </Text>
       ),
     },
     {
       title: 'Trạng thái',
       key: 'status',
-      width: 180,
+      width: 150,
+      align: 'center',
       render: (_, record) => {
         const isActive = isCropActive(record);
         return (
           <div
-            className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${
               isActive 
                 ? 'bg-green-50 text-green-700' 
                 : 'bg-red-50 text-red-600'
@@ -563,10 +602,11 @@ const Crops = () => {
     {
       title: 'Hành động',
       key: 'action',
-      width: 112,
+      width: 120,
       align: 'center',
+      fixed: 'right',
       render: (_, record) => (
-        <Space size={6} className="whitespace-nowrap">
+        <Space size={4} className="whitespace-nowrap">
           <Tooltip title="Sửa">
             <Button
               type="text"
@@ -597,8 +637,8 @@ const Crops = () => {
               }
               className={
                 isCropActive(record)
-                  ? 'rounded-lg text-red-500 hover:bg-red-50'
-                  : 'rounded-lg text-green-600 hover:bg-green-50'
+                  ? '!h-8 !w-8 rounded-lg text-red-500 hover:bg-red-50'
+                  : '!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50'
               }
               onClick={() => setStatusTarget(record)}
             />
@@ -662,7 +702,7 @@ const Crops = () => {
           <Select
             value={status}
             onChange={setStatus}
-            options={STATUS_OPTIONS}
+            options={statusFilterOptions}
             className="h-11"
           />
           <Select
@@ -697,7 +737,7 @@ const Crops = () => {
           loading={isLoading}
           dataSource={filteredCrops}
           columns={columns}
-          tableLayout="fixed"
+          scroll={{ x: 'max-content' }}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
@@ -770,14 +810,14 @@ const Crops = () => {
               name="cropType"
               label="Nhóm cây"
               rules={[
-                { required: true, message: 'Vui lòng chọn nhóm cây từ danh mục.' },
+                { required: true, message: 'Vui lòng chọn nhóm cây.' },
               ]}
             >
               <Select
                 className="h-11"
-                placeholder="Chọn nhóm cây từ danh mục"
-                loading={isCatalogsLoading}
-                options={cropCatalogOptions}
+                placeholder={cropTypeOptions?.length > 0 ? "Chọn nhóm cây" : "Chọn nhóm cây từ danh mục"}
+                loading={isCatalogsLoading && !cropTypeOptions?.length}
+                options={cropTypeFormOptions}
                 showSearch
                 filterOption={(input, option) =>
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -786,10 +826,10 @@ const Crops = () => {
                   isCatalogsLoading ? (
                     <span>Đang tải...</span>
                   ) : (
-                    <span>Không có danh mục. Vui lòng tạo danh mục cây trồng trước.</span>
+                    <span>Không có dữ liệu. Vui lòng cấu hình SystemKey hoặc tạo danh mục cây trồng.</span>
                   )
                 }
-                disabled={!cropCatalogOptions || cropCatalogOptions.length === 0}
+                disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
               />
             </Form.Item>
 
@@ -992,10 +1032,27 @@ const Crops = () => {
               name="cropType"
               label="Nhóm cây"
               rules={[
-                { max: 100, message: 'Nhóm cây không được vượt quá 100 ký tự.' },
+                { required: true, message: 'Vui lòng chọn nhóm cây.' },
               ]}
             >
-              <Input className="h-11" placeholder="Nhập nhóm cây" />
+              <Select
+                className="h-11"
+                placeholder={cropTypeOptions?.length > 0 ? "Chọn nhóm cây" : "Chọn nhóm cây từ danh mục"}
+                loading={isCatalogsLoading && !cropTypeOptions?.length}
+                options={cropTypeFormOptions}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                notFoundContent={
+                  isCatalogsLoading ? (
+                    <span>Đang tải...</span>
+                  ) : (
+                    <span>Không có dữ liệu. Vui lòng cấu hình SystemKey hoặc tạo danh mục cây trồng.</span>
+                  )
+                }
+                disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
+              />
             </Form.Item>
 
             <Form.Item name="scientificName" label="Tên khoa học">
