@@ -17,7 +17,6 @@ const Home = React.lazy(() => import('../pages/ANONYMOUS/Home'))
 const Login = React.lazy(() => import('../pages/ANONYMOUS/Login'))
 const Register = React.lazy(() => import('../pages/ANONYMOUS/Register'))
 const ForgotPassword = React.lazy(() => import('../pages/ANONYMOUS/ForgotPassword'))
-const ResetPassword = React.lazy(() => import('../pages/ANONYMOUS/ResetPassword'))
 const NotFound = React.lazy(() => import('../pages/SupportPage/NotFound'))
 const Forbidden = React.lazy(() => import('../pages/ANONYMOUS/Forbidden'))
 const NewsListAll = React.lazy(() => import('../pages/ANONYMOUS/News/NewsListAll'))
@@ -36,6 +35,9 @@ const FarmManagerDashboard = React.lazy(() => import('../pages/FARM_MANAGER/Dash
 const FarmManagerUsers = React.lazy(() => import('../pages/FARM_MANAGER/Users'))
 const FarmManagerUserDetail = React.lazy(() => import('../pages/FARM_MANAGER/Users/UserDetail'))
 const FarmManagerLands = React.lazy(() => import('../pages/FARM_MANAGER/Lands'))
+const FarmManagerLandPlotCreate = React.lazy(() => import('../pages/FARM_MANAGER/Lands/LandPlotCreate'))
+const FarmManagerLandPlotDetail = React.lazy(() => import('../pages/FARM_MANAGER/Lands/LandPlotDetail'))
+const FarmManagerLandPlotEdit = React.lazy(() => import('../pages/FARM_MANAGER/Lands/LandPlotEdit'))
 const FarmManagerCropCatalogs = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs'))
 const FarmManagerCropCatalogDetail = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs/CatalogDetail'))
 const FarmManagerCropCatalogEdit = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs/CatalogEdit'))
@@ -54,6 +56,7 @@ const FarmManagerViewCropProtections = React.lazy(() => import('../pages/FARM_MA
 const LandManagerDashboard = React.lazy(() => import('../pages/LAND_MANAGER/Dashboard'))
 const LandManagerFarmers = React.lazy(() => import('../pages/LAND_MANAGER/Farmers'))
 const LandManagerLands = React.lazy(() => import('../pages/LAND_MANAGER/Lands'))
+const LandManagerLandPlotDetail = React.lazy(() => import('../pages/LAND_MANAGER/Lands/LandPlotDetail'))
 const LandManagerProductionPlans = React.lazy(() => import('../pages/LAND_MANAGER/ProductionPlans'))
 const LandManagerTasks = React.lazy(() => import('../pages/LAND_MANAGER/Tasks'))
 const LandManagerLogbooks = React.lazy(() => import('../pages/LAND_MANAGER/Logbooks'))
@@ -123,10 +126,6 @@ const routes = [
     path: ROUTER.FORGOT_PASSWORD,
     element: <Lazy><GuestRoute><ForgotPassword /></GuestRoute></Lazy>,
   },
-  {
-    path: ROUTER.RESET_PASSWORD,
-    element: <Lazy><GuestRoute><ResetPassword /></GuestRoute></Lazy>,
-  },
 
   // ── Trace QR (standalone — không cần layout, không cần login) ────────────
   {
@@ -163,6 +162,9 @@ const routes = [
               { path: ROUTER.FM_USERS, element: <Lazy><FarmManagerUsers /></Lazy> },
               { path: ROUTER.FM_USER_DETAIL, element: <Lazy><FarmManagerUserDetail /></Lazy> },
               { path: ROUTER.FM_LANDS, element: <Lazy><FarmManagerLands /></Lazy> },
+              { path: ROUTER.FM_LAND_CREATE, element: <Lazy><FarmManagerLandPlotCreate /></Lazy> },
+              { path: ROUTER.FM_LAND_DETAIL, element: <Lazy><FarmManagerLandPlotDetail /></Lazy> },
+              { path: ROUTER.FM_LAND_EDIT, element: <Lazy><FarmManagerLandPlotEdit /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOGS, element: <Lazy><FarmManagerCropCatalogs /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOG_DETAIL, element: <Lazy><FarmManagerCropCatalogDetail /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOG_EDIT, element: <Lazy><FarmManagerCropCatalogEdit /></Lazy> },
@@ -187,6 +189,7 @@ const routes = [
               { path: ROUTER.LM_DASHBOARD, element: <Lazy><LandManagerDashboard /></Lazy> },
               { path: ROUTER.LM_FARMERS, element: <Lazy><LandManagerFarmers /></Lazy> },
               { path: ROUTER.LM_LANDS, element: <Lazy><LandManagerLands /></Lazy> },
+              { path: ROUTER.LM_LAND_DETAIL, element: <Lazy><LandManagerLandPlotDetail /></Lazy> },
               { path: ROUTER.LM_PRODUCTION_PLANS, element: <Lazy><LandManagerProductionPlans /></Lazy> },
               { path: ROUTER.LM_TASKS, element: <Lazy><LandManagerTasks /></Lazy> },
               { path: ROUTER.LM_LOGBOOKS, element: <Lazy><LandManagerLogbooks /></Lazy> },

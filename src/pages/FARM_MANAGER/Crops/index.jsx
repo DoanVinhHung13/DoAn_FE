@@ -39,6 +39,7 @@ import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
+import TableCustom from 'src/components/Table/CustomTable';
 
 const { Text } = Typography;
 
@@ -691,7 +692,7 @@ const Crops = () => {
           </div>
         </div>
 
-        <Table
+        <TableCustom
           rowKey={(record) => getItemId(record) || record.cropCode || record.name}
           loading={isLoading}
           dataSource={filteredCrops}

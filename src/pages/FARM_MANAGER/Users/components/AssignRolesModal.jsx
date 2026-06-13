@@ -11,10 +11,10 @@ const { Text } = Typography
 const { Option } = Select
 
 export const ROLE_CONFIG = {
-  FARM_MANAGER:     { label: 'Farm Manager',     color: 'purple' },
-  LAND_MANAGER:     { label: 'Land Manager',     color: 'blue'   },
-  MATERIAL_MANAGER: { label: 'Material Manager', color: 'orange' },
-  FARMER:           { label: 'Farmer',           color: 'green'  },
+  FARM_MANAGER:     { label: 'Farm Manager' },
+  LAND_MANAGER:     { label: 'Land Manager'   },
+  MATERIAL_MANAGER: { label: 'Material Manager' },
+  FARMER:           { label: 'Farmer'  },
 }
 
 const ALL_ROLES = Object.entries(ROLE_CONFIG).map(([value, cfg]) => ({

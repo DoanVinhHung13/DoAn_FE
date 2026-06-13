@@ -10,6 +10,7 @@ const STORAGE = {
   KEY_MENU_ACTIVE:          'key-active-ebookfarm',
   DEV_MODE:                 'dev-mode-ebookfarm',
   REMEMBERED_EMAIL:         'remembered-email-ebookfarm',
+  REMEMBERED_IDENTIFIER:    'remembered-identifier-ebookfarm',
 }
 
 /** Fallback khi API không trả refreshTokenExpiredAt */

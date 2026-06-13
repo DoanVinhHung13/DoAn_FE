@@ -97,6 +97,15 @@ const UsersManagement = () => {
   // ── Table columns ──────────────────────────────────────────
   const columns = [
     {
+      title: 'STT',
+      key: 'stt',
+      width: 50,
+      align: 'center',
+      render: (_, __, index) => (
+        <span className="text-sm text-gray-400 font-medium">{(page - 1) * pageSize + index + 1}</span>
+      ),
+    },
+    {
       title: 'Người dùng',
       key: 'user',
       render: (_, record) => (
