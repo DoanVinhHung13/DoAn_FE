@@ -29,6 +29,8 @@ import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
+import { useSystemKey } from 'src/hooks/useSystemKey';
+import { SYSTEM_KEY } from 'src/constants/systemKey';
 
 const { Text } = Typography;
 
@@ -42,6 +44,10 @@ const CropEdit = () => {
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const watchedImageUrl = Form.useWatch('imageUrl', form);
+
+  // SystemKey hook
+  const { getCombo } = useSystemKey();
+  const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE);
 
   const {
     data: cropDetail,
@@ -92,6 +98,20 @@ const CropEdit = () => {
     }));
   }, [cropCatalogsData]);
 
+  // Create options ưu tiên SystemKey, fallback Crop Catalogs
+  const cropTypeFormOptions = useMemo(() => {
+    if (cropTypeOptions && cropTypeOptions.length > 0) {
+      return cropTypeOptions.map((opt) => ({
+        value: opt.codeValue || opt.CodeValue,
+        label: opt.description || opt.Description,
+      }));
+    }
+    if (cropCatalogOptions && cropCatalogOptions.length > 0) {
+      return cropCatalogOptions;
+    }
+    return [];
+  }, [cropTypeOptions, cropCatalogOptions]);
+
   useEffect(() => {
     if (cropDetail) {
       form.setFieldsValue({
@@ -128,7 +148,7 @@ const CropEdit = () => {
       message.success('Cập nhật cây trồng thành công.');
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
-      navigate(`${ROUTER.FM_CROPS}/${id}`);
+      navigate(ROUTER.FM_CROPS);
     },
     onError: (error) => {
       if (error?.response?.status === 404) {
@@ -300,14 +320,14 @@ const CropEdit = () => {
               name="cropType"
               label="Nhóm cây/Loại cây"
               rules={[
-                { required: true, message: 'Vui lòng chọn nhóm cây từ danh mục.' },
+                { required: true, message: 'Vui lòng chọn nhóm cây.' },
               ]}
             >
               <Select
                 className="h-11"
-                placeholder="Chọn nhóm cây từ danh mục"
-                loading={isCatalogsLoading}
-                options={cropCatalogOptions}
+                placeholder={cropTypeOptions?.length > 0 ? "Chọn nhóm cây" : "Chọn nhóm cây từ danh mục"}
+                loading={isCatalogsLoading && !cropTypeOptions?.length}
+                options={cropTypeFormOptions}
                 showSearch
                 filterOption={(input, option) =>
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
@@ -316,10 +336,10 @@ const CropEdit = () => {
                   isCatalogsLoading ? (
                     <span>Đang tải...</span>
                   ) : (
-                    <span>Không có danh mục. Vui lòng tạo danh mục cây trồng trước.</span>
+                    <span>Không có dữ liệu. Vui lòng cấu hình SystemKey hoặc tạo danh mục cây trồng.</span>
                   )
                 }
-                disabled={!cropCatalogOptions || cropCatalogOptions.length === 0}
+                disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
               />
             </Form.Item>
 

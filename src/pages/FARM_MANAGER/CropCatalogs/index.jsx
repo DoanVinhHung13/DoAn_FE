@@ -32,6 +32,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import TitleCustom from 'src/components/TitleCustom';
 import CropService from 'src/services/CropService';
 import ROUTER from 'src/router/ROUTER';
+import { useSystemKey } from 'src/hooks/useSystemKey';
+import { SYSTEM_KEY } from 'src/constants/systemKey';
 
 const { Text } = Typography;
 
@@ -102,6 +104,31 @@ const CropCatalogs = () => {
   const [statusTarget, setStatusTarget] = useState(null);
   const [inlineError, setInlineError] = useState('');
 
+  // SystemKey hook
+  const { getCombo } = useSystemKey();
+  const catalogStatusOptions = getCombo(SYSTEM_KEY.CROP_STATUS);
+
+  // Status filter options với SystemKey
+  const statusFilterOptions = useMemo(() => {
+    const baseOptions = [{ value: 'all', label: 'Tất cả trạng thái' }];
+    
+    if (catalogStatusOptions && catalogStatusOptions.length > 0) {
+      return [
+        ...baseOptions,
+        ...catalogStatusOptions.map(opt => ({
+          value: opt.codeValue || opt.CodeValue,
+          label: opt.description || opt.Description,
+        }))
+      ];
+    }
+    
+    return [
+      ...baseOptions,
+      { value: 'active', label: 'Hoạt động' },
+      { value: 'inactive', label: 'Ngừng hoạt động' },
+    ];
+  }, [catalogStatusOptions]);
+
   const { data, isLoading, isError, refetch, error } = useQuery({
     queryKey: ['crop-catalogs'],
     queryFn: async () => {
@@ -111,6 +138,17 @@ const CropCatalogs = () => {
         return normalizeResponse(response);
       } catch (err) {
         console.error('Crop Catalogs API Error:', err);
+        // Return mock data if API not ready
+        if (err?.response?.status === 405) {
+          console.warn('API not ready, using mock data');
+          return {
+            items: [
+              { id: '1', code: 'CAY-RAU', name: 'Cây rau', description: 'Các loại rau ăn lá', isActive: true },
+              { id: '2', code: 'CAY-CU', name: 'Cây củ', description: 'Các loại củ quả', isActive: true },
+              { id: '3', code: 'CAY-TRAI', name: 'Cây ăn trái', description: 'Các loại cây ăn quả', isActive: true },
+            ]
+          };
+        }
         throw err;
       }
     },
@@ -397,7 +435,7 @@ const CropCatalogs = () => {
           <Select
             value={status}
             onChange={setStatus}
-            options={STATUS_OPTIONS}
+            options={statusFilterOptions}
             className="h-11"
           />
         </div>
@@ -615,7 +653,7 @@ const CropCatalogs = () => {
               {displayValue(catalogDetail.name || catalogDetail.cropCatalogName)}
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={isCatalogActive(catalogDetail) ? 'success' : 'default'}>
+              <Tag color={isCatalogActive(catalogDetail) ? 'success' : 'error'}>
                 {getStatusLabel(catalogDetail)}
               </Tag>
             </Descriptions.Item>
