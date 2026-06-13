@@ -1,4 +1,4 @@
-import { LockOutlined, MailOutlined } from "@ant-design/icons"
+import { LockOutlined, UserOutlined } from "@ant-design/icons"
 import {
   Button,
   Checkbox,
@@ -30,10 +30,12 @@ const Login = () => {
   const [form] = Form.useForm()
 
   useEffect(() => {
-    const rememberedEmail = localStorage.getItem(STORAGE.REMEMBERED_EMAIL)
-    if (rememberedEmail) {
+    const remembered =
+      localStorage.getItem(STORAGE.REMEMBERED_IDENTIFIER) ||
+      localStorage.getItem(STORAGE.REMEMBERED_EMAIL)
+    if (remembered) {
       form.setFieldsValue({
-        email: rememberedEmail,
+        identifier: remembered,
         remember: true,
       })
     }
@@ -44,7 +46,7 @@ const Login = () => {
       setLoading(true)
 
       const loginRes = await AuthService.login({
-        email: values.email,
+        identifier: values.identifier,
         password: values.password,
       })
 
@@ -57,9 +59,9 @@ const Login = () => {
       }
 
       if (values.remember) {
-        localStorage.setItem(STORAGE.REMEMBERED_EMAIL, values.email)
+        localStorage.setItem(STORAGE.REMEMBERED_IDENTIFIER, values.identifier.trim())
       } else {
-        localStorage.removeItem(STORAGE.REMEMBERED_EMAIL)
+        localStorage.removeItem(STORAGE.REMEMBERED_IDENTIFIER)
       }
 
       const loginData = loginRes.data
@@ -154,21 +156,6 @@ const Login = () => {
               Tiếp tục quản lý nông trại và theo dõi nhật ký sản xuất chuẩn quốc gia ngay hôm nay.
             </Paragraph>
           </div>
-
-          <div className="relative z-10 p-6 border bg-white/10 backdrop-blur-md rounded-3xl border-white/10">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="flex items-center justify-center p-2 overflow-hidden bg-white border border-gray-100 shadow-lg w-14 h-14 rounded-2xl">
-                <img
-                  src={logo}
-                  alt="Logo"
-                  className="object-contain w-full h-full"
-                />
-              </div>
-              <Text className="text-2xl font-black tracking-tighter text-gray-800 uppercase">
-                EBookFarm
-              </Text>
-            </div>
-          </div>
         </div>
 
         {/* Right Side: Form */}
@@ -205,7 +192,7 @@ const Login = () => {
             className="premium-form"
           >
             <Form.Item
-              name="email"
+              name="identifier"
               label={
                 <span className="text-[10px] md:text-[11px] uppercase font-black text-gray-400 tracking-wider">
                   Email hoặc Số điện thoại
@@ -215,8 +202,8 @@ const Login = () => {
               className="mb-3 md:mb-6"
             >
               <Input
-                prefix={<MailOutlined className="text-gray-300" />}
-                placeholder="example@farm.com"
+                prefix={<UserOutlined className="text-gray-300" />}
+                placeholder="Email hoặc số điện thoại"
                 className="h-12 text-sm font-medium transition-all border-gray-100 rounded-xl md:h-14 hover:border-emerald-400 focus:border-emerald-500 md:text-base"
               />
             </Form.Item>
@@ -266,7 +253,7 @@ const Login = () => {
 
           </Form>
 
-          <div className="mt-12 text-center">
+          {/* <div className="mt-12 text-center">
             <Text className="font-medium text-gray-400">
               Bạn chưa có tài khoản?{" "}
             </Text>
@@ -276,13 +263,13 @@ const Login = () => {
             >
               Đăng ký miễn phí
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
 
-      <div className="absolute bottom-8 left-0 right-0 text-center text-[10px] uppercase font-bold tracking-[3px] text-gray-400/50 pointer-events-none">
+      {/* <div className="absolute bottom-8 left-0 right-0 text-center text-[10px] uppercase font-bold tracking-[3px] text-gray-400/50 pointer-events-none">
         Copyright 2026 © EBookFarm Security Standard
-      </div>
+      </div> */}
     </div>
   )
 }

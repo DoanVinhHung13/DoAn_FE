@@ -22,10 +22,24 @@ function parseError(messages) {
   return Promise.reject({ messages: ["Server quá tải"] })
 }
 
-const getEaplsMessage = (resData) =>
-  resData?.message ||
-  (Array.isArray(resData?.errors) ? resData.errors[0] : null) ||
-  null
+const GENERIC_SUCCESS_MESSAGES = new Set(['Success', 'success', 'OK', 'ok'])
+
+const getEaplsMessage = (resData) => {
+  const topLevel =
+    resData?.message ||
+    (Array.isArray(resData?.errors) ? resData.errors[0] : null) ||
+    null
+
+  if (topLevel && !GENERIC_SUCCESS_MESSAGES.has(topLevel)) {
+    return topLevel
+  }
+
+  if (typeof resData?.data === 'string' && resData.data.trim()) {
+    return resData.data.trim()
+  }
+
+  return topLevel
+}
 
 /** Xử lý notice cho format EAPLS { success, message, data, errors } */
 const handleEaplsBody = (resData, config) => {
@@ -40,7 +54,7 @@ const handleEaplsBody = (resData, config) => {
     return resData
   }
 
-  if (!skipNotice && msg && method !== "get" && msg !== "Success") {
+  if (!skipNotice && msg && method !== "get" && !GENERIC_SUCCESS_MESSAGES.has(msg)) {
     notice({ msg, isSuccess: true })
   }
 
