@@ -133,6 +133,7 @@ const Crops = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [statusTarget, setStatusTarget] = useState(null);
   const [inlineError, setInlineError] = useState('');
+  const [previewImage, setPreviewImage] = useState(null); // State cho modal xem ảnh
 
   // SystemKey hook
   const { getCombo, getDescription } = useSystemKey();
@@ -311,7 +312,8 @@ const Crops = () => {
       };
       return CropManagementService.updateCrop(id, payload);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log('✅ Update response:', response);
       setInlineError('');
       setEditingCrop(null);
       form.resetFields();
@@ -380,17 +382,17 @@ const Crops = () => {
         payload.path;
 
       if (!imageUrl) {
-        throw new Error('Kh\u00f4ng nh\u1eadn \u0111\u01b0\u1ee3c \u0111\u01b0\u1eddng d\u1eabn \u1ea3nh sau khi upload.');
+        throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
       }
 
       targetForm.setFieldsValue({ imageUrl });
-      message.success('T\u1ea3i \u1ea3nh minh h\u1ecda th\u00e0nh c\u00f4ng.');
+      message.success('Tải ảnh minh họa thành công.');
       onSuccess(response);
     } catch (error) {
       message.error(
         error?.response?.data?.message ||
           error?.message ||
-          'Kh\u00f4ng th\u1ec3 t\u1ea3i \u1ea3nh minh h\u1ecda. Vui l\u00f2ng th\u1eed l\u1ea1i.'
+          'Không thể tải ảnh minh họa. Vui lòng thử lại.'
       );
       onError(error);
     }
@@ -846,7 +848,7 @@ const Crops = () => {
               />
             </Form.Item>
 
-            <Form.Item name="imageUrl" label={"\u1ea2nh minh h\u1ecda"}>
+            <Form.Item name="imageUrl" label="Ảnh minh họa">
               <div className="space-y-3">
                 <Upload
                   accept="image/png,image/jpeg,image/webp"
@@ -855,7 +857,7 @@ const Crops = () => {
                   customRequest={(options) => handleCropImageUpload(options, createForm)}
                 >
                   <Button icon={<UploadOutlined />} className="h-11 rounded-lg">
-                    {"T\u1ea3i \u1ea3nh l\u00ean"}
+                    Tải ảnh lên
                   </Button>
                 </Upload>
 
@@ -863,7 +865,7 @@ const Crops = () => {
                   <div className="group relative h-[96px] w-[112px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
                     <img
                       src={watchedCreateImageUrl}
-                      alt={"\u1ea2nh minh h\u1ecda c\u00e2y tr\u1ed3ng"}
+                      alt="Ảnh minh họa cây trồng"
                       className="h-full w-full rounded-md object-cover"
                     />
                     <div className="absolute inset-1 flex items-center justify-center gap-2 rounded-md bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
@@ -872,7 +874,7 @@ const Crops = () => {
                         size="small"
                         icon={<EyeOutlined />}
                         className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => window.open(watchedCreateImageUrl, '_blank')}
+                        onClick={() => setPreviewImage(watchedCreateImageUrl)}
                       />
                       <Button
                         type="text"
@@ -1094,7 +1096,7 @@ const Crops = () => {
                         size="small"
                         icon={<EyeOutlined />}
                         className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => window.open(watchedImageUrl, '_blank')}
+                        onClick={() => setPreviewImage(watchedImageUrl)}
                       />
                       <Button
                         type="text"
@@ -1171,6 +1173,32 @@ const Crops = () => {
               Xác nhận
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Modal xem ảnh */}
+      <Modal
+        open={!!previewImage}
+        onCancel={() => setPreviewImage(null)}
+        footer={null}
+        centered
+        width="auto"
+        styles={{
+          body: { padding: 0 },
+        }}
+        closeIcon={
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+            ×
+          </span>
+        }
+      >
+        <div className="relative max-h-[80vh] max-w-[90vw]">
+          <img
+            src={previewImage}
+            alt="Xem ảnh"
+            className="max-h-[80vh] max-w-full rounded-lg object-contain"
+            style={{ display: 'block' }}
+          />
         </div>
       </Modal>
     </div>

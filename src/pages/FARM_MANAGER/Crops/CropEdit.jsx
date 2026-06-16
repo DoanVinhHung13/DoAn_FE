@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -7,6 +7,7 @@ import {
   Form,
   Input,
   InputNumber,
+  Modal,
   Select,
   Space,
   Spin,
@@ -44,6 +45,7 @@ const CropEdit = () => {
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const watchedImageUrl = Form.useWatch('imageUrl', form);
+  const [previewImage, setPreviewImage] = useState(null); // State cho modal xem ảnh
 
   // SystemKey hook
   const { getCombo } = useSystemKey();
@@ -137,14 +139,17 @@ const CropEdit = () => {
         scientificName: values.scientificName?.trim().replace(/\s+/g, ' ') || null,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         growthDurationDays: values.growthDurationDays || null,
-        imageUrl: values.imageUrl?.trim() || null,
+        imageUrl: values.imageUrl?.trim() || '', // Gửi string rỗng thay vì null
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
         isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
       };
+      console.log('🔄 Payload gửi lên server:', payload);
+      console.log('📷 ImageUrl:', payload.imageUrl === '' ? 'EMPTY STRING (sẽ xóa ảnh)' : payload.imageUrl);
       return CropManagementService.updateCrop(id, payload);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log('✅ Update Crop Response:', response);
       message.success('Cập nhật cây trồng thành công.');
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
@@ -178,18 +183,27 @@ const CropEdit = () => {
   };
 
   const handleCropImageUpload = async ({ file, onSuccess, onError }) => {
+    console.log('📤 Bắt đầu upload ảnh:', file);
     const formData = new FormData();
     formData.append('file', file);
+    console.log('📦 FormData created');
 
     try {
+      console.log('🔄 Đang gọi API /upload/image...');
       const response = await UploadService.uploadImage(formData);
+      console.log('✅ Upload response:', response);
+      
       const payload = response?.data?.data || response?.data || {};
+      console.log('📦 Payload:', payload);
+      
       const imageUrl =
         payload.imageUrl ||
         payload.url ||
         payload.secureUrl ||
         payload.fileUrl ||
         payload.path;
+
+      console.log('🖼️ ImageUrl:', imageUrl);
 
       if (!imageUrl) {
         throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
@@ -199,6 +213,12 @@ const CropEdit = () => {
       message.success('Tải ảnh minh họa thành công.');
       onSuccess(response);
     } catch (error) {
+      console.error('❌ Upload error:', error);
+      console.error('❌ Error details:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message
+      });
       message.error(
         error?.response?.data?.message ||
           error?.message ||
@@ -382,7 +402,7 @@ const CropEdit = () => {
                         size="small"
                         icon={<EyeOutlined />}
                         className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => window.open(watchedImageUrl, '_blank')}
+                        onClick={() => setPreviewImage(watchedImageUrl)}
                       />
                       <Button
                         type="text"
@@ -433,6 +453,32 @@ const CropEdit = () => {
           </div>
         </Form>
       </Card>
+
+      {/* Modal xem ảnh */}
+      <Modal
+        open={!!previewImage}
+        onCancel={() => setPreviewImage(null)}
+        footer={null}
+        centered
+        width="auto"
+        styles={{
+          body: { padding: 0 },
+        }}
+        closeIcon={
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+            ×
+          </span>
+        }
+      >
+        <div className="relative max-h-[80vh] max-w-[90vw]">
+          <img
+            src={previewImage}
+            alt="Xem ảnh"
+            className="max-h-[80vh] max-w-full rounded-lg object-contain"
+            style={{ display: 'block' }}
+          />
+        </div>
+      </Modal>
     </div>
   );
 };
