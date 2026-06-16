@@ -134,6 +134,8 @@ const Crops = () => {
   const [statusTarget, setStatusTarget] = useState(null);
   const [inlineError, setInlineError] = useState('');
   const [previewImage, setPreviewImage] = useState(null); // State cho modal xem ảnh
+  const [uploadingCreate, setUploadingCreate] = useState(false); // Loading state cho create form
+  const [uploadingEdit, setUploadingEdit] = useState(false); // Loading state cho edit form
 
   // SystemKey hook
   const { getCombo, getDescription } = useSystemKey();
@@ -367,7 +369,14 @@ const Crops = () => {
     return true;
   };
 
-  const handleCropImageUpload = async ({ file, onSuccess, onError }, targetForm) => {
+  const handleCropImageUpload = async ({ file, onSuccess, onError }, targetForm, isEditForm = false) => {
+    // Set loading state
+    if (isEditForm) {
+      setUploadingEdit(true);
+    } else {
+      setUploadingCreate(true);
+    }
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -385,6 +394,7 @@ const Crops = () => {
         throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
       }
 
+      // Cập nhật URL thật từ server sau khi upload xong
       targetForm.setFieldsValue({ imageUrl });
       message.success('Tải ảnh minh họa thành công.');
       onSuccess(response);
@@ -395,6 +405,13 @@ const Crops = () => {
           'Không thể tải ảnh minh họa. Vui lòng thử lại.'
       );
       onError(error);
+    } finally {
+      // Tắt loading state
+      if (isEditForm) {
+        setUploadingEdit(false);
+      } else {
+        setUploadingCreate(false);
+      }
     }
   };
 
@@ -854,14 +871,26 @@ const Crops = () => {
                   accept="image/png,image/jpeg,image/webp"
                   showUploadList={false}
                   beforeUpload={beforeCropImageUpload}
-                  customRequest={(options) => handleCropImageUpload(options, createForm)}
+                  customRequest={(options) => handleCropImageUpload(options, createForm, false)}
                 >
-                  <Button icon={<UploadOutlined />} className="h-11 rounded-lg">
-                    Tải ảnh lên
+                  <Button 
+                    icon={<UploadOutlined />} 
+                    loading={uploadingCreate}
+                    className="h-11 rounded-lg"
+                  >
+                    {uploadingCreate ? 'Đang tải lên...' : 'Tải ảnh lên'}
                   </Button>
                 </Upload>
 
-                {watchedCreateImageUrl && (
+                {/* Loading state */}
+                {uploadingCreate && !watchedCreateImageUrl && (
+                  <div className="flex h-[96px] w-[112px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
+                    <Spin />
+                  </div>
+                )}
+
+                {/* Preview ảnh sau khi upload xong */}
+                {watchedCreateImageUrl && !uploadingCreate && (
                   <div className="group relative h-[96px] w-[112px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
                     <img
                       src={watchedCreateImageUrl}
@@ -1076,14 +1105,26 @@ const Crops = () => {
                   accept="image/png,image/jpeg,image/webp"
                   showUploadList={false}
                   beforeUpload={beforeCropImageUpload}
-                  customRequest={(options) => handleCropImageUpload(options, form)}
+                  customRequest={(options) => handleCropImageUpload(options, form, true)}
                 >
-                  <Button icon={<UploadOutlined />} className="h-11 rounded-lg">
-                    {"T\u1ea3i \u1ea3nh l\u00ean"}
+                  <Button 
+                    icon={<UploadOutlined />} 
+                    loading={uploadingEdit}
+                    className="h-11 rounded-lg"
+                  >
+                    {uploadingEdit ? 'Đang tải lên...' : 'Tải ảnh lên'}
                   </Button>
                 </Upload>
 
-                {watchedImageUrl && (
+                {/* Loading state */}
+                {uploadingEdit && !watchedImageUrl && (
+                  <div className="flex h-[96px] w-[112px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
+                    <Spin />
+                  </div>
+                )}
+
+                {/* Preview ảnh sau khi upload xong */}
+                {watchedImageUrl && !uploadingEdit && (
                   <div className="group relative h-[96px] w-[112px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
                     <img
                       src={watchedImageUrl}
