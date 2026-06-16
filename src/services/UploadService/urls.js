@@ -1,4 +1,4 @@
 // Upload API endpoints
-export const apiUploadImage = '/upload/image'
-export const apiUploadDocument = '/upload/document'
-export const apiUploadAvatar = '/upload/avatar'
+export const apiUploadImage = '/v1/media/upload'
+export const apiUploadDocument = '/v1/media/upload'
+export const apiUploadAvatar = '/v1/media/upload'
