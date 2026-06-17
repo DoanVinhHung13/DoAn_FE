@@ -46,6 +46,7 @@ const CropEdit = () => {
   const [form] = Form.useForm();
   const watchedImageUrl = Form.useWatch('imageUrl', form);
   const [previewImage, setPreviewImage] = useState(null); // State cho modal xem ảnh
+  const [uploading, setUploading] = useState(false); // Loading state khi upload
 
   // SystemKey hook
   const { getCombo } = useSystemKey();
@@ -183,13 +184,15 @@ const CropEdit = () => {
   };
 
   const handleCropImageUpload = async ({ file, onSuccess, onError }) => {
+    setUploading(true);
+
     console.log('📤 Bắt đầu upload ảnh:', file);
     const formData = new FormData();
     formData.append('file', file);
     console.log('📦 FormData created');
 
     try {
-      console.log('🔄 Đang gọi API /upload/image...');
+      console.log('🔄 Đang gọi API /v1/media/upload...');
       const response = await UploadService.uploadImage(formData);
       console.log('✅ Upload response:', response);
       
@@ -209,6 +212,7 @@ const CropEdit = () => {
         throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
       }
 
+      // Cập nhật URL thật từ server sau khi upload xong
       form.setFieldsValue({ imageUrl });
       message.success('Tải ảnh minh họa thành công.');
       onSuccess(response);
@@ -225,6 +229,8 @@ const CropEdit = () => {
           'Không thể tải ảnh minh họa. Vui lòng thử lại.'
       );
       onError(error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -384,12 +390,24 @@ const CropEdit = () => {
                   beforeUpload={beforeCropImageUpload}
                   customRequest={(options) => handleCropImageUpload(options)}
                 >
-                  <Button icon={<UploadOutlined />} className="h-11 rounded-lg">
-                    Tải ảnh lên
+                  <Button 
+                    icon={<UploadOutlined />} 
+                    loading={uploading}
+                    className="h-11 rounded-lg"
+                  >
+                    {uploading ? 'Đang tải lên...' : 'Tải ảnh lên'}
                   </Button>
                 </Upload>
 
-                {watchedImageUrl && (
+                {/* Loading state */}
+                {uploading && !watchedImageUrl && (
+                  <div className="flex h-[120px] w-[140px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
+                    <Spin />
+                  </div>
+                )}
+
+                {/* Preview ảnh sau khi upload xong */}
+                {watchedImageUrl && !uploading && (
                   <div className="group relative h-[120px] w-[140px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
                     <img
                       src={watchedImageUrl}

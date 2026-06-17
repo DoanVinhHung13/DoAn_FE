@@ -82,6 +82,9 @@ const ROUTER = {
 
   // ── Land Manager additional ───────────────────────────────────────────────
   LM_CROP_CATALOGS:     '/land-manager/crop-catalogs',
+  LM_CROP_CATALOG_DETAIL: '/land-manager/crop-catalogs/:id',
+  LM_CROPS:             '/land-manager/crops',
+  LM_CROP_DETAIL:       '/land-manager/crops/:id',
 
   // ── Material Manager additional ──────────────────────────────────────────
   MM_PURCHASE_REQS:     '/material-manager/purchase-requisitions',

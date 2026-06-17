@@ -5,9 +5,7 @@
 import {
   AppstoreOutlined,
   FileTextOutlined,
-  ReadOutlined,
   BellOutlined,
-  SettingOutlined,
   InboxOutlined,
   CheckCircleOutlined,
   TeamOutlined,
@@ -15,16 +13,12 @@ import {
   ShoppingCartOutlined,
   ShopOutlined,
   EnvironmentOutlined,
+  UserOutlined,
+  BookOutlined,
+  ContainerOutlined,
+  ProfileOutlined,
 } from '@ant-design/icons'
-import {
-  BookOpenText,
-  BoxSelect,
-  ClipboardList,
-  MapPinned,
-  Package,
-  Sprout,
-  Users,
-} from 'lucide-react'
+import { Sprout } from 'lucide-react'
 import ROUTER from './ROUTER'
 import { ROLES } from 'src/constants/roles'
 
@@ -37,12 +31,12 @@ export const farmManagerItem = () => [
   },
   {
     key: ROUTER.FM_USERS,
-    icon: <Users className="w-5 h-5" />,
+    icon: <UserOutlined className="text-lg" />,
     label: 'Quản lý người dùng',
   },
   {
     key: ROUTER.FM_LANDS,
-    icon: <MapPinned className="w-5 h-5" />,
+    icon: <EnvironmentOutlined className="text-lg" />,
     label: 'Quản lý vùng trồng',
   },
   {
@@ -57,7 +51,7 @@ export const farmManagerItem = () => [
   },
   {
     key: ROUTER.FM_PRODUCTION_PLANS,
-    icon: <ClipboardList className="w-5 h-5" />,
+    icon: <ContainerOutlined className="text-lg" />,
     label: 'Kế hoạch sản xuất',
   },
   {
@@ -67,12 +61,12 @@ export const farmManagerItem = () => [
   },
   {
     key: ROUTER.FM_LOGBOOKS,
-    icon: <BookOpenText className="w-5 h-5" />,
+    icon: <BookOutlined className="text-lg" />,
     label: 'Nhật ký sản xuất',
   },
   {
     key: ROUTER.FM_BATCHES,
-    icon: <BoxSelect className="w-5 h-5" />,
+    icon: <InboxOutlined className="text-lg" />,
     label: 'Quản lý lô sản xuất',
   },
   {
@@ -82,7 +76,7 @@ export const farmManagerItem = () => [
   },
   {
     key: 'material-submenu',
-    icon: <Package className="w-5 h-5" />,
+    icon: <ShopOutlined className="text-lg" />,
     label: 'Quản lý vật tư',
     children: [
       { key: ROUTER.FM_VIEW_FERTILIZERS, label: 'Phân bón' },
@@ -110,12 +104,17 @@ export const landManagerItem = () => [
   },
   {
     key: ROUTER.LM_CROP_CATALOGS,
-    icon: <Sprout className="w-5 h-5" />,
+    icon: <FileTextOutlined className="text-lg" />,
     label: 'Danh mục cây trồng',
   },
   {
+    key: ROUTER.LM_CROPS,
+    icon: <Sprout className="w-5 h-5" />,
+    label: 'Cây trồng',
+  },
+  {
     key: ROUTER.LM_PRODUCTION_PLANS,
-    icon: <FileTextOutlined className="text-lg" />,
+    icon: <ContainerOutlined className="text-lg" />,
     label: 'Kế hoạch sản xuất',
   },
   {
@@ -125,18 +124,13 @@ export const landManagerItem = () => [
   },
   {
     key: ROUTER.LM_LOGBOOKS,
-    icon: <SettingOutlined className="text-lg" />,
+    icon: <BookOutlined className="text-lg" />,
     label: 'Nhật ký sản xuất',
   },
   {
     key: ROUTER.LM_BATCHES,
-    icon: <BoxSelect className="w-5 h-5" />,
+    icon: <InboxOutlined className="text-lg" />,
     label: 'Quản lý lô sản xuất',
-  },
-  {
-    key: ROUTER.LM_VIEW_CATALOGS,
-    icon: <ReadOutlined className="text-lg" />,
-    label: 'Danh mục tham khảo',
   },
 ]
 
@@ -154,7 +148,7 @@ export const materialManagerItem = () => [
   },
   {
     key: ROUTER.MM_CROP_PROTECTIONS,
-    icon: <ShopOutlined className="w-5 h-5" />,
+    icon: <ShopOutlined className="text-lg" />,
     label: 'Quản lý thuốc BVTV',
   },
   {
@@ -164,7 +158,7 @@ export const materialManagerItem = () => [
   },
   {
     key: ROUTER.MM_OTHER_MATERIALS,
-    icon: <BoxSelect className="w-5 h-5" />,
+    icon: <InboxOutlined className="text-lg" />,
     label: 'Vật tư khác',
   },
   {
