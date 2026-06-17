@@ -669,16 +669,36 @@ const CropCatalogs = () => {
         onCancel={() => setStatusTarget(null)}
         footer={null}
         centered
-        width={400}
+        width={460}
         closeIcon={<span className="text-2xl leading-none text-gray-900">×</span>}
       >
         <div className="px-3 pb-1 pt-2">
           <h2 className="mb-3 border-b border-gray-100 pb-4 text-[24px] font-bold text-green-600">
-            Thay đổi trạng thái
+            {isCatalogActive(statusTarget) ? 'Vô hiệu hóa danh mục' : 'Kích hoạt danh mục'}
           </h2>
-          <p className="mb-7 text-base leading-6 text-gray-600">
-            Bạn có chắc muốn thay đổi trạng thái của danh mục cây trồng này không?
-          </p>
+          <div className="mb-7 space-y-3 text-base leading-6 text-gray-600">
+            <p>
+              Bạn có chắc muốn {isCatalogActive(statusTarget) ? 'vô hiệu hóa' : 'kích hoạt'} danh mục cây trồng <strong className="text-gray-900">"{statusTarget?.name || statusTarget?.cropCatalogName}"</strong> không?
+            </p>
+            {isCatalogActive(statusTarget) && (
+              <Alert
+                type="warning"
+                showIcon
+                message={
+                  <div className="space-y-2">
+                    <Text strong>Lưu ý khi vô hiệu hóa danh mục:</Text>
+                    <ul className="ml-4 mt-2 list-disc space-y-1">
+                      <li>Các cây trồng hiện tại thuộc danh mục này vẫn <strong>giữ nguyên trạng thái</strong></li>
+                      <li>Không thể <strong>tạo mới</strong> cây trồng với danh mục này</li>
+                      <li>Không thể <strong>chỉnh sửa</strong> cây trồng để chuyển sang danh mục này</li>
+                      <li>Danh mục sẽ <strong>không hiển thị</strong> trong dropdown khi tạo/sửa cây trồng</li>
+                    </ul>
+                  </div>
+                }
+                className="rounded-lg"
+              />
+            )}
+          </div>
           <div className="flex justify-end gap-3">
             <Button
               onClick={() => setStatusTarget(null)}
@@ -688,9 +708,14 @@ const CropCatalogs = () => {
             </Button>
             <Button
               type="primary"
+              danger={isCatalogActive(statusTarget)}
               loading={statusMutation.isPending}
               onClick={handleConfirmStatusChange}
-              className="h-10 min-w-[104px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
+              className={`h-10 min-w-[104px] rounded-lg font-semibold shadow-lg ${
+                isCatalogActive(statusTarget)
+                  ? 'bg-red-500 shadow-red-100'
+                  : 'bg-green-500 shadow-green-100'
+              }`}
             >
               Xác nhận
             </Button>

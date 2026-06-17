@@ -260,6 +260,17 @@ const CropDetail = () => {
                 </Descriptions.Item>
                 <Descriptions.Item label="Nhóm cây/Loại cây">
                   {displayValue(cropDetail.cropType)}
+                  {/* TODO: [BACKEND] Hiển thị badge cảnh báo khi danh mục đã ngừng hoạt động
+                  Yêu cầu: Backend cần trả về field "cropCatalogStatus" trong GET /api/crops/{id}
+                  Response mẫu: { ..., "cropCatalogStatus": "active" | "inactive", ... }
+                  
+                  Code để bật lại:
+                  {cropDetail.cropCatalogStatus === 'inactive' && (
+                    <Tag color="warning" className="!ml-2">
+                      ⚠️ Danh mục đã ngừng hoạt động
+                    </Tag>
+                  )}
+                  */}
                 </Descriptions.Item>
                 <Descriptions.Item label="Thời gian sinh trưởng">
                   <Space>
