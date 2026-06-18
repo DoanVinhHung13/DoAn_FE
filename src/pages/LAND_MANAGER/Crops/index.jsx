@@ -212,7 +212,7 @@ const Crops = () => {
       ...new Set((data?.items || []).map((item) => item.cropType).filter(Boolean)),
     ];
     return [
-      { value: 'all', label: 'Tất cả nhóm cây' },
+      { value: 'all', label: 'Tất cả danh mục' },
       ...categories.map((item) => ({ value: item, label: item })),
     ];
   }, [data?.items]);
@@ -242,7 +242,6 @@ const Crops = () => {
       title: 'Tên cây trồng',
       dataIndex: 'name',
       key: 'name',
-      sorter: (a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'vi'),
       render: (value, record) => (
         <div className="flex min-w-0 items-center gap-2">
           {record.imageUrl ? (
@@ -256,14 +255,9 @@ const Crops = () => {
               <Sprout className="h-4 w-4" />
             </div>
           )}
-          <div className="min-w-0">
-            <Text strong className="block truncate text-gray-900">
-              {displayValue(value)}
-            </Text>
-            <Text type="secondary" className="block truncate !text-xs">
-              {displayValue(record.scientificName)}
-            </Text>
-          </div>
+          <Text strong className="block truncate text-gray-900">
+            {displayValue(value)}
+          </Text>
         </div>
       ),
     },
@@ -288,8 +282,6 @@ const Crops = () => {
       key: 'growthDurationDays',
       width: 140,
       align: 'center',
-      sorter: (a, b) =>
-        Number(a.growthDurationDays || 0) - Number(b.growthDurationDays || 0),
       render: (value) => (
         <Space size={4}>
           <ClockCircleOutlined className="text-green-500" />
@@ -366,7 +358,7 @@ const Crops = () => {
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             prefix={<SearchOutlined className="text-gray-400" />}
-            placeholder="Tìm theo tên, mã cây, nhóm cây..."
+            placeholder="Tìm theo tên, mã cây, danh mục..."
             className="h-11 rounded-lg"
           />
           <Select
@@ -395,13 +387,6 @@ const Crops = () => {
         className="overflow-hidden rounded-lg shadow-sm"
         styles={{ body: { padding: 0 } }}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <FileTextOutlined className="text-green-600" />
-            <Text strong>Danh sách cây trồng</Text>
-          </div>
-        </div>
-
         <TableCustom
           rowKey={(record) => getItemId(record) || record.cropCode || record.name}
           loading={isLoading}
@@ -469,9 +454,9 @@ const Crops = () => {
               <Descriptions.Item label="Nhóm cây">
                 {displayValue(cropDetail.cropType)}
               </Descriptions.Item>
-              <Descriptions.Item label="Tên khoa học">
+              {/* <Descriptions.Item label="Tên khoa học">
                 {displayValue(cropDetail.scientificName)}
-              </Descriptions.Item>
+              </Descriptions.Item> */}
               <Descriptions.Item label="Thời gian sinh trưởng">
                 {cropDetail.growthDurationDays
                   ? `${cropDetail.growthDurationDays} ngày`

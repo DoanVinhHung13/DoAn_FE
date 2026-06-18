@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -35,6 +35,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
+import GrowthStages from 'src/components/GrowthStages';
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
@@ -251,12 +252,12 @@ const Crops = () => {
         name: values.name.trim().replace(/\s+/g, ' '),
         cropCode: values.cropCode?.trim().replace(/\s+/g, ' ') || null,
         cropType: values.cropType?.trim().replace(/\s+/g, ' ') || null,
-        scientificName: values.scientificName?.trim().replace(/\s+/g, ' ') || null,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         growthDurationDays: values.growthDurationDays || null,
         imageUrl: values.imageUrl?.trim() || null,
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
+        growthStages: values.growthStages || [],
         isActive: true,
       };
       return CropManagementService.createCrop(payload);
@@ -304,12 +305,12 @@ const Crops = () => {
         name: values.name.trim().replace(/\s+/g, ' '),
         cropCode: values.cropCode?.trim().replace(/\s+/g, ' ') || null,
         cropType: values.cropType?.trim().replace(/\s+/g, ' ') || null,
-        scientificName: values.scientificName?.trim().replace(/\s+/g, ' ') || null,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         growthDurationDays: values.growthDurationDays || null,
         imageUrl: values.imageUrl?.trim() || null,
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
+        growthStages: values.growthStages || [],
         isActive: typeof editingCrop?.isActive === 'boolean' ? editingCrop.isActive : true,
       };
       return CropManagementService.updateCrop(id, payload);
@@ -347,12 +348,12 @@ const Crops = () => {
       name: record.name || '',
       cropCode: record.cropCode || '',
       cropType: record.cropType || '',
-      scientificName: record.scientificName || '',
       description: record.description || '',
       growthDurationDays: record.growthDurationDays || null,
       imageUrl: record.imageUrl || '',
       recommendedCultivationConditions:
         record.recommendedCultivationConditions || '',
+      growthStages: record.growthStages || [],
     });
   };
 
@@ -439,7 +440,6 @@ const Crops = () => {
           item.name,
           item.cropCode,
           item.cropType,
-          item.scientificName,
           item.description,
         ]
           .filter(Boolean)
@@ -483,7 +483,7 @@ const Crops = () => {
       ...new Set((data?.items || []).map((item) => item.cropType).filter(Boolean)),
     ];
     return [
-      { value: 'all', label: 'Tất cả nhóm cây' },
+      { value: 'all', label: 'Tất cả danh mục' },
       ...categories.map((item) => ({ value: item, label: item })),
     ];
   }, [data?.items]);
@@ -542,7 +542,6 @@ const Crops = () => {
       title: 'Tên cây trồng',
       dataIndex: 'name',
       key: 'name',
-      sorter: (a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'vi'),
       render: (value, record) => (
         <div className="flex min-w-0 items-center gap-2">
           {record.imageUrl ? (
@@ -556,19 +555,14 @@ const Crops = () => {
               <Sprout className="h-4 w-4" />
             </div>
           )}
-          <div className="min-w-0">
-            <Text strong className="block truncate text-gray-900">
-              {displayValue(value)}
-            </Text>
-            <Text type="secondary" className="block truncate !text-xs">
-              {displayValue(record.scientificName)}
-            </Text>
-          </div>
+          <Text strong className="block truncate text-gray-900">
+            {displayValue(value)}
+          </Text>
         </div>
       ),
     },
     {
-      title: 'Nhóm cây/Loại cây',
+      title: 'Danh mục',
       dataIndex: 'cropType',
       key: 'cropType',
       width: 150,
@@ -588,8 +582,6 @@ const Crops = () => {
       key: 'growthDurationDays',
       width: 140,
       align: 'center',
-      sorter: (a, b) =>
-        Number(a.growthDurationDays || 0) - Number(b.growthDurationDays || 0),
       render: (value) => (
         <Space size={4}>
           <ClockCircleOutlined className="text-green-500" />
@@ -715,7 +707,7 @@ const Crops = () => {
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             prefix={<SearchOutlined className="text-gray-400" />}
-            placeholder="Tìm theo tên, mã cây, nhóm cây..."
+            placeholder="Tìm theo tên, mã cây, danh mục..."
             className="h-11 rounded-lg"
           />
           <Select
@@ -744,13 +736,6 @@ const Crops = () => {
         className="overflow-hidden rounded-lg shadow-sm"
         styles={{ body: { padding: 0 } }}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <FileTextOutlined className="text-green-600" />
-            <Text strong>Danh sách cây trồng</Text>
-          </div>
-        </div>
-
         <TableCustom
           rowKey={(record) => getItemId(record) || record.cropCode || record.name}
           loading={isLoading}
@@ -852,10 +837,6 @@ const Crops = () => {
               />
             </Form.Item>
 
-            <Form.Item name="scientificName" label="Tên khoa học">
-              <Input className="h-11" placeholder="Nhập tên khoa học" />
-            </Form.Item>
-
             <Form.Item name="growthDurationDays" label="Thời gian sinh trưởng">
               <InputNumber
                 min={1}
@@ -927,6 +908,10 @@ const Crops = () => {
             <Input.TextArea rows={3} placeholder="Nhập mô tả" />
           </Form.Item>
 
+          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
+            <GrowthStages />
+          </Form.Item>
+
           <div className="flex justify-end gap-3 pt-2">
             <Button
               onClick={() => {
@@ -981,9 +966,6 @@ const Crops = () => {
             </Descriptions.Item>
             <Descriptions.Item label="Nhóm cây">
               {displayValue(cropDetail.cropType)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Tên khoa học">
-              {displayValue(cropDetail.scientificName)}
             </Descriptions.Item>
             <Descriptions.Item label="Thời gian sinh trưởng">
               {cropDetail.growthDurationDays
@@ -1086,10 +1068,6 @@ const Crops = () => {
               />
             </Form.Item>
 
-            <Form.Item name="scientificName" label="Tên khoa học">
-              <Input className="h-11" placeholder="Nhập tên khoa học" />
-            </Form.Item>
-
             <Form.Item name="growthDurationDays" label="Thời gian sinh trưởng">
               <InputNumber
                 min={1}
@@ -1159,6 +1137,10 @@ const Crops = () => {
 
           <Form.Item name="description" label="Mô tả">
             <Input.TextArea rows={3} placeholder="Nhập mô tả" />
+          </Form.Item>
+
+          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
+            <GrowthStages />
           </Form.Item>
 
           <div className="flex justify-end gap-3 pt-2">

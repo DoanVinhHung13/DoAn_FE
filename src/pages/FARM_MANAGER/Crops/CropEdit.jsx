@@ -26,6 +26,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
+import GrowthStages from 'src/components/GrowthStages';
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
@@ -121,12 +122,12 @@ const CropEdit = () => {
         name: cropDetail.name || '',
         cropCode: cropDetail.cropCode || '',
         cropType: cropDetail.cropType || '',
-        scientificName: cropDetail.scientificName || '',
         description: cropDetail.description || '',
         growthDurationDays: cropDetail.growthDurationDays || null,
         imageUrl: cropDetail.imageUrl || '',
         recommendedCultivationConditions:
           cropDetail.recommendedCultivationConditions || '',
+        growthStages: cropDetail.growthStages || [],
       });
     }
   }, [cropDetail, form]);
@@ -137,12 +138,12 @@ const CropEdit = () => {
         name: values.name.trim().replace(/\s+/g, ' '),
         cropCode: values.cropCode?.trim().replace(/\s+/g, ' ') || null,
         cropType: values.cropType?.trim().replace(/\s+/g, ' ') || null,
-        scientificName: values.scientificName?.trim().replace(/\s+/g, ' ') || null,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         growthDurationDays: values.growthDurationDays || null,
         imageUrl: values.imageUrl?.trim() || '', // Gửi string rỗng thay vì null
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
+        growthStages: values.growthStages || [],
         isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
       };
       console.log('🔄 Payload gửi lên server:', payload);
@@ -344,14 +345,14 @@ const CropEdit = () => {
 
             <Form.Item
               name="cropType"
-              label="Nhóm cây/Loại cây"
+              label="Danh mục"
               rules={[
-                { required: true, message: 'Vui lòng chọn nhóm cây.' },
+                { required: true, message: 'Vui lòng chọn danh mục.' },
               ]}
             >
               <Select
                 className="h-11"
-                placeholder={cropTypeOptions?.length > 0 ? "Chọn nhóm cây" : "Chọn nhóm cây từ danh mục"}
+                placeholder={cropTypeOptions?.length > 0 ? "Chọn danh mục" : "Chọn danh mục từ danh sách"}
                 loading={isCatalogsLoading && !cropTypeOptions?.length}
                 options={cropTypeFormOptions}
                 showSearch
@@ -367,10 +368,6 @@ const CropEdit = () => {
                 }
                 disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
               />
-            </Form.Item>
-
-            <Form.Item name="scientificName" label="Tên khoa học">
-              <Input className="h-11 rounded-lg" placeholder="Nhập tên khoa học" />
             </Form.Item>
 
             <Form.Item name="growthDurationDays" label="Thời gian sinh trưởng (ngày)">
@@ -450,6 +447,10 @@ const CropEdit = () => {
               className="rounded-lg"
               placeholder="Nhập mô tả về cây trồng"
             />
+          </Form.Item>
+
+          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
+            <GrowthStages />
           </Form.Item>
 
           <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">

@@ -149,7 +149,7 @@ const CatalogDetail = () => {
       </div>
 
       <Row gutter={[24, 24]}>
-        <Col xs={24} lg={16}>
+        <Col xs={24}>
           <Space direction="vertical" size={24} className="w-full">
             {/* Basic Information */}
             <Card
@@ -198,34 +198,6 @@ const CatalogDetail = () => {
               </Card>
             )}
           </Space>
-        </Col>
-
-        <Col xs={24} lg={8}>
-          <Card className="rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 shadow-sm">
-            <div className="space-y-4 text-center">
-              <div className="flex justify-center">
-                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-                  <FileTextOutlined className="text-4xl text-green-600" />
-                </div>
-              </div>
-              <div>
-                <Text className="block text-sm text-gray-600">
-                  Danh mục cây trồng
-                </Text>
-                <Text strong className="block text-2xl text-gray-900">
-                  {displayValue(catalogDetail.name || catalogDetail.cropCatalogName)}
-                </Text>
-              </div>
-              <div className="pt-4">
-                <Tag
-                  color={isActive ? 'success' : 'error'}
-                  className="rounded-full px-4 py-1 text-sm"
-                >
-                  {getStatusLabel(catalogDetail)}
-                </Tag>
-              </div>
-            </div>
-          </Card>
         </Col>
       </Row>
     </div>

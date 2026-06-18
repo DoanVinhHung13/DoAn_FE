@@ -446,13 +446,6 @@ const CropCatalogs = () => {
         className="overflow-hidden rounded-lg shadow-sm"
         styles={{ body: { padding: 0 } }}
       >
-        <div className="flex items-center border-b border-gray-100 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <FileTextOutlined className="text-green-600" />
-            <Text strong>Danh sách danh mục cây trồng</Text>
-          </div>
-        </div>
-
         <Table
           rowKey={(record) => getItemId(record) || record.name}
           loading={isLoading}
