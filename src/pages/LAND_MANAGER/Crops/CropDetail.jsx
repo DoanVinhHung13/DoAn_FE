@@ -17,7 +17,6 @@ import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  EnvironmentOutlined,
   StopOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
@@ -192,17 +191,6 @@ const CropDetail = () => {
                 </Text>
               </div>
 
-              {cropDetail.scientificName && (
-                <div>
-                  <Text type="secondary" className="block text-sm">
-                    Tên khoa học
-                  </Text>
-                  <Text italic className="block text-base text-gray-700">
-                    {cropDetail.scientificName}
-                  </Text>
-                </div>
-              )}
-
               <div className="flex items-center gap-3">
                 <div
                   className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${
@@ -247,8 +235,19 @@ const CropDetail = () => {
                     {displayValue(cropDetail.cropCode)}
                   </Text>
                 </Descriptions.Item>
-                <Descriptions.Item label="Nhóm cây/Loại cây">
+                <Descriptions.Item label="Danh mục">
                   {displayValue(cropDetail.cropType)}
+                  {/* TODO: [BACKEND] Hiển thị badge cảnh báo khi danh mục đã ngừng hoạt động
+                  Yêu cầu: Backend cần trả về field "cropCatalogStatus" trong GET /api/crops/{id}
+                  Response mẫu: { ..., "cropCatalogStatus": "active" | "inactive", ... }
+                  
+                  Code để bật lại:
+                  {cropDetail.cropCatalogStatus === 'inactive' && (
+                    <Tag color="warning" className="!ml-2">
+                       Danh mục đã ngừng hoạt động
+                    </Tag>
+                  )}
+                  */}
                 </Descriptions.Item>
                 <Descriptions.Item label="Thời gian sinh trưởng">
                   <Space>
@@ -264,60 +263,31 @@ const CropDetail = () => {
             </Card>
 
             {/* Cultivation Conditions */}
-            {cropDetail.recommendedCultivationConditions && (
-              <Card
-                title={
-                  <span className="text-lg font-semibold text-green-600">
-                    Điều kiện canh tác khuyến nghị
-                  </span>
-                }
-                className="rounded-lg shadow-sm"
-              >
-                <Paragraph className="mb-0 whitespace-pre-wrap text-gray-700">
-                  {cropDetail.recommendedCultivationConditions}
-                </Paragraph>
-              </Card>
-            )}
-
-            {/* Description */}
-            {cropDetail.description && (
-              <Card
-                title={
-                  <span className="text-lg font-semibold text-green-600">
-                    Mô tả
-                  </span>
-                }
-                className="rounded-lg shadow-sm"
-              >
-                <Paragraph className="mb-0 whitespace-pre-wrap text-gray-700">
-                  {cropDetail.description}
-                </Paragraph>
-              </Card>
-            )}
-
-            {/* Land Information - Placeholder for future implementation */}
             <Card
               title={
-                <span className="flex items-center gap-2 text-lg font-semibold text-green-600">
-                  <EnvironmentOutlined />
-                  Thông tin mảnh đất
+                <span className="text-lg font-semibold text-green-600">
+                  Điều kiện canh tác khuyến nghị
                 </span>
               }
               className="rounded-lg shadow-sm"
             >
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={
-                  <div className="space-y-1">
-                    <Text type="secondary">
-                      Cây trồng chưa được trồng trên mảnh đất nào
-                    </Text>
-                    <Text type="secondary" className="block text-xs">
-                      Thông tin mảnh đất sẽ hiển thị khi cây được trồng
-                    </Text>
-                  </div>
-                }
-              />
+              <Paragraph className="mb-0 whitespace-pre-wrap text-gray-700">
+                {cropDetail.recommendedCultivationConditions || 'Chưa có thông tin điều kiện canh tác'}
+              </Paragraph>
+            </Card>
+
+            {/* Description */}
+            <Card
+              title={
+                <span className="text-lg font-semibold text-green-600">
+                  Mô tả
+                </span>
+              }
+              className="rounded-lg shadow-sm"
+            >
+              <Paragraph className="mb-0 whitespace-pre-wrap text-gray-700">
+                {cropDetail.description || 'Chưa có mô tả cho cây trồng này'}
+              </Paragraph>
             </Card>
           </Space>
         </Col>
