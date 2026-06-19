@@ -10,6 +10,7 @@ import {
   Modal,
   Select,
   Skeleton,
+  Tabs,
   Tag,
   Typography,
   message,
@@ -19,6 +20,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import 'dayjs/locale/vi';
 
 import {
@@ -26,11 +29,14 @@ import {
   markAllNotificationsAsRead,
   createNotification,
   getAllUsers,
+  getSentNotifications,
 } from 'src/services/NotificationService';
 import TitleCustom from 'src/components/TitleCustom';
 import ROUTER from 'src/router/ROUTER';
 
 dayjs.extend(relativeTime);
+dayjs.extend(utc);
+dayjs.extend(timezone);
 dayjs.locale('vi');
 
 const { Text } = Typography;
@@ -114,10 +120,26 @@ const FarmManagerNotifications = () => {
   const [category, setCategory] = useState('all');
   const [isCreating, setIsCreating] = useState(false);
   const [sendToAll, setSendToAll] = useState(true);
+  const [activeTab, setActiveTab] = useState('received'); // 'received' or 'sent'
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => normalizeNotifications(await getNotifications()),
+    refetchInterval: 30000,
+    retry: false,
+  });
+
+  const { data: sentData, isLoading: isSentLoading, isError: isSentError, refetch: refetchSent } = useQuery({
+    queryKey: ['sent-notifications'],
+    queryFn: async () => {
+      try {
+        return normalizeNotifications(await getSentNotifications());
+      } catch (error) {
+        // Nếu API chưa có, return empty data thay vì throw error
+        console.warn('API /notifications/sent chưa được implement:', error);
+        return { items: [], unreadCount: 0 };
+      }
+    },
     refetchInterval: 30000,
     retry: false,
   });
@@ -156,6 +178,8 @@ const FarmManagerNotifications = () => {
       form.resetFields();
       setSendToAll(true);
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['sent-notifications'] });
+      setActiveTab('sent'); // Chuyển sang tab "Đã gửi" sau khi tạo thành công
     },
     onError: (error) => {
       message.error(
@@ -184,8 +208,9 @@ const FarmManagerNotifications = () => {
 
   const filteredNotifications = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLocaleLowerCase('vi');
+    const sourceData = activeTab === 'received' ? data : sentData;
 
-    return (data?.items || []).filter((item) => {
+    return (sourceData?.items || []).filter((item) => {
       const matchesKeyword =
         !normalizedKeyword ||
         [item.title, item.message, item.content, getCategory(item)]
@@ -201,7 +226,7 @@ const FarmManagerNotifications = () => {
 
       return matchesKeyword && matchesStatus && matchesCategory;
     });
-  }, [category, data?.items, keyword, status]);
+  }, [category, data, sentData, keyword, status, activeTab]);
 
   const handleNotificationClick = (item) => {
     const id = item._id || item.id;
@@ -237,6 +262,35 @@ const FarmManagerNotifications = () => {
         </div>
       </div>
 
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={[
+          {
+            key: 'received',
+            label: (
+              <span className="flex items-center gap-2">
+                <BellOutlined />
+                Nhận được
+                {data?.unreadCount > 0 && (
+                  <Badge count={data.unreadCount} className="ml-1" />
+                )}
+              </span>
+            ),
+          },
+          {
+            key: 'sent',
+            label: (
+              <span className="flex items-center gap-2">
+                <CheckOutlined />
+                Đã gửi
+              </span>
+            ),
+          },
+        ]}
+        className="bg-white rounded-lg shadow-sm px-6"
+      />
+
       <Card variant="borderless" className="rounded-lg shadow-sm">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_200px_200px]">
           <Input
@@ -254,38 +308,46 @@ const FarmManagerNotifications = () => {
 
       <Card variant="borderless" className="overflow-hidden rounded-lg shadow-sm" styles={{ body: { padding: 0 } }}>
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <Text strong>Danh sách thông báo</Text>
-          <div className="flex items-center gap-2">
-            <Badge status={data?.unreadCount ? 'processing' : 'default'} />
-            <Text type="secondary" className="!text-sm">
-              {data?.unreadCount || 0} chưa đọc
-            </Text>
-          </div>
+          <Text strong>
+            {activeTab === 'received' ? 'Danh sách thông báo nhận được' : 'Danh sách thông báo đã gửi'}
+          </Text>
+          {activeTab === 'received' && (
+            <div className="flex items-center gap-2">
+              <Badge status={data?.unreadCount ? 'processing' : 'default'} />
+              <Text type="secondary" className="!text-sm">
+                {data?.unreadCount || 0} chưa đọc
+              </Text>
+            </div>
+          )}
         </div>
 
-        {isLoading ? (
+        {(activeTab === 'received' ? isLoading : isSentLoading) ? (
           <div className="space-y-3 p-5">
             {[1, 2, 3].map((item) => (
               <Skeleton key={item} active avatar paragraph={{ rows: 2 }} />
             ))}
           </div>
-        ) : isError ? (
+        ) : (activeTab === 'received' ? isError : isSentError) ? (
           <div className="py-16 text-center">
             <Text type="secondary" className="block">
               Không thể tải danh sách thông báo.
             </Text>
-            <Button type="link" onClick={() => refetch()}>
+            <Button type="link" onClick={() => activeTab === 'received' ? refetch() : refetchSent()}>
               Thử lại
             </Button>
           </div>
         ) : filteredNotifications.length === 0 ? (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="Không có thông báo nào"
+            description={
+              activeTab === 'sent' 
+                ? "Bạn chưa gửi thông báo nào hoặc API chưa được triển khai"
+                : "Không có thông báo nào"
+            }
             className="py-16"
           />
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="space-y-4 p-5">
             {filteredNotifications.map((item) => {
               const id = item._id || item.id;
               const createdAt = item.createdAt || item.timestamp || item.date;
@@ -296,24 +358,26 @@ const FarmManagerNotifications = () => {
                   key={id}
                   type="button"
                   onClick={() => handleNotificationClick(item)}
-                  className={`grid w-full grid-cols-[40px_1fr] gap-3 px-5 py-5 text-left transition-colors hover:bg-gray-50 sm:grid-cols-[40px_1fr_auto] ${
-                    item.isRead ? 'bg-white' : 'bg-green-50/50'
+                  className={`grid w-full grid-cols-[40px_1fr] gap-3 rounded-xl border p-4 text-left transition-all hover:shadow-md sm:grid-cols-[40px_1fr_auto] ${
+                    item.isRead 
+                      ? 'border-gray-200 bg-white hover:border-gray-300' 
+                      : 'border-green-200 bg-green-50/50 hover:border-green-300'
                   }`}
                 >
-                  <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
                     item.isRead ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-600'
                   }`}>
                     <BellOutlined />
                   </span>
                   <span className="min-w-0">
-                    <span className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className="mb-2 flex flex-wrap items-center gap-2">
                       <Text strong={!item.isRead} className="!text-sm">
                         {item.title || 'Thông báo'}
                       </Text>
-                      <Tag color={TYPE_COLORS[item.type] || 'default'} className="!m-0">
+                      <Tag color={TYPE_COLORS[item.type] || 'default'} className="!m-0 !text-xs">
                         {getCategory(item)}
                       </Tag>
-                      {!item.isRead && <Tag color="green" className="!m-0">Chưa đọc</Tag>}
+                      {!item.isRead && <Tag color="green" className="!m-0 !text-xs">Chưa đọc</Tag>}
                     </span>
                     <Text type="secondary" className="block !text-sm !leading-6">
                       {content}
@@ -322,10 +386,10 @@ const FarmManagerNotifications = () => {
                   <span className="col-start-2 flex items-center gap-2 sm:col-start-auto">
                     <Text type="secondary" className="whitespace-nowrap !text-xs">
                       {createdAt && dayjs(createdAt).isValid()
-                        ? dayjs(createdAt).fromNow()
+                        ? dayjs.utc(createdAt).tz('Asia/Ho_Chi_Minh').fromNow()
                         : 'Không rõ thời gian'}
                     </Text>
-                    {!item.isRead && <span className="h-2 w-2 rounded-full bg-green-500" />}
+                    {!item.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />}
                   </span>
                 </button>
               );
