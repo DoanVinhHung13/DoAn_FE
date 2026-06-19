@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -16,15 +16,16 @@ import {
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   EditOutlined,
   StopOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
 import CropManagementService from 'src/services/CropManagementService';
+import CropVarietiesModal from './CropVarietiesModal';
 import ROUTER from 'src/router/ROUTER';
 
 const { Text, Paragraph } = Typography;
@@ -66,6 +67,7 @@ const getCategoryTagStyle = (value) => {
 const CropDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [isVarietiesModalOpen, setIsVarietiesModalOpen] = useState(false);
 
   const {
     data: cropDetail,
@@ -160,14 +162,23 @@ const CropDetail = () => {
             Chi tiết cây trồng
           </TitleCustom>
         </div>
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          onClick={() => navigate(`${ROUTER.FM_CROPS}/${id}/edit`)}
-          className="h-10 rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-        >
-          Chỉnh sửa
-        </Button>
+        <Space>
+          <Button
+            icon={<AppstoreOutlined />}
+            onClick={() => setIsVarietiesModalOpen(true)}
+            className="h-10 rounded-lg font-semibold"
+          >
+            Quản lý giống cây
+          </Button>
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => navigate(`${ROUTER.FM_CROPS}/${id}/edit`)}
+            className="h-10 rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
+          >
+            Chỉnh sửa
+          </Button>
+        </Space>
       </div>
 
       <Row gutter={[24, 24]}>
@@ -260,16 +271,6 @@ const CropDetail = () => {
                   )}
                   */}
                 </Descriptions.Item>
-                <Descriptions.Item label="Thời gian sinh trưởng">
-                  <Space>
-                    <ClockCircleOutlined className="text-green-500" />
-                    <Text>
-                      {cropDetail.growthDurationDays
-                        ? `${cropDetail.growthDurationDays} ngày`
-                        : 'Chưa cập nhật'}
-                    </Text>
-                  </Space>
-                </Descriptions.Item>
               </Descriptions>
             </Card>
 
@@ -303,6 +304,14 @@ const CropDetail = () => {
           </Space>
         </Col>
       </Row>
+
+      {/* Crop Varieties Management Modal */}
+      <CropVarietiesModal
+        open={isVarietiesModalOpen}
+        onCancel={() => setIsVarietiesModalOpen(false)}
+        cropId={id}
+        cropName={cropDetail.name}
+      />
     </div>
   );
 };

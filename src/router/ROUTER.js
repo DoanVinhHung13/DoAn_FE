@@ -61,6 +61,8 @@ const ROUTER = {
   LM_TASKS:              '/land-manager/tasks',
   LM_LOGBOOKS:           '/land-manager/logbooks',
   LM_BATCHES:            '/land-manager/batches',
+  LM_NOTIFICATIONS:      '/land-manager/notifications',
+  LM_NOTIFICATION_DETAIL: '/land-manager/notifications/:id',
   LM_VIEW_CATALOGS:      '/land-manager/view-catalogs',
 
   // ── Material Manager Routes ────────────────────────────────────────────────

@@ -17,6 +17,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 import 'dayjs/locale/vi';
 
 import {
@@ -27,6 +29,8 @@ import TitleCustom from 'src/components/TitleCustom';
 import ROUTER from 'src/router/ROUTER';
 
 dayjs.extend(relativeTime);
+dayjs.extend(utc);
+dayjs.extend(timezone);
 dayjs.locale('vi');
 
 const { Text } = Typography;
@@ -141,8 +145,8 @@ const Notifications = () => {
   };
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+    <div className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2">
           <BellOutlined className="text-green-600" />
           Thông báo
@@ -153,14 +157,14 @@ const Notifications = () => {
           disabled={!data?.unreadCount}
           loading={markAllReadMutation.isPending}
           onClick={() => markAllReadMutation.mutate()}
-          className="h-10 rounded-lg font-semibold"
+          className="h-10 rounded-lg bg-green-500 font-semibold text-white hover:!bg-green-600"
         >
           Đánh dấu tất cả đã đọc
         </Button>
       </div>
 
-      <Card variant="borderless" className="shadow-sm">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_190px_190px]">
+      <Card variant="borderless" className="rounded-lg shadow-sm">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_200px_200px]">
           <Input
             allowClear
             value={keyword}
@@ -174,7 +178,7 @@ const Notifications = () => {
         </div>
       </Card>
 
-      <Card variant="borderless" className="overflow-hidden shadow-sm" styles={{ body: { padding: 0 } }}>
+      <Card variant="borderless" className="overflow-hidden rounded-lg shadow-sm" styles={{ body: { padding: 0 } }}>
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <Text strong>Danh sách thông báo</Text>
           <div className="flex items-center gap-2">
@@ -207,7 +211,7 @@ const Notifications = () => {
             className="py-16"
           />
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="space-y-4 p-5">
             {filteredNotifications.map((item) => {
               const id = item._id || item.id;
               const createdAt = item.createdAt || item.timestamp || item.date;
@@ -218,24 +222,30 @@ const Notifications = () => {
                   key={id}
                   type="button"
                   onClick={() => handleNotificationClick(item)}
-                  className={`grid w-full grid-cols-[40px_1fr] gap-3 px-5 py-5 text-left transition-colors hover:bg-gray-50 sm:grid-cols-[40px_1fr_auto] ${
-                    item.isRead ? 'bg-white' : 'bg-green-50/50'
+                  className={`grid w-full grid-cols-[40px_1fr] gap-3 rounded-xl border p-4 text-left transition-all hover:shadow-md sm:grid-cols-[40px_1fr_auto] ${
+                    item.isRead 
+                      ? 'border-gray-200 bg-white hover:border-gray-300' 
+                      : 'border-green-200 bg-green-50/50 hover:border-green-300'
                   }`}
                 >
-                  <span className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
                     item.isRead ? 'bg-gray-100 text-gray-400' : 'bg-green-100 text-green-600'
                   }`}>
                     <BellOutlined />
                   </span>
                   <span className="min-w-0">
-                    <span className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className="mb-2 flex flex-wrap items-center gap-2">
                       <Text strong={!item.isRead} className="!text-sm">
                         {item.title || 'Thông báo'}
                       </Text>
-                      <Tag color={TYPE_COLORS[item.type] || 'default'} className="!m-0">
+                      <Tag color={TYPE_COLORS[item.type] || 'default'} className="!m-0 !text-xs">
                         {getCategory(item)}
                       </Tag>
-                      {!item.isRead && <Tag color="green" className="!m-0">Chưa đọc</Tag>}
+                      {!item.isRead && (
+                        <Tag color="green" className="!m-0 !text-xs">
+                          Chưa đọc
+                        </Tag>
+                      )}
                     </span>
                     <Text type="secondary" className="block !text-sm !leading-6">
                       {content}
@@ -244,10 +254,10 @@ const Notifications = () => {
                   <span className="col-start-2 flex items-center gap-2 sm:col-start-auto">
                     <Text type="secondary" className="whitespace-nowrap !text-xs">
                       {createdAt && dayjs(createdAt).isValid()
-                        ? dayjs(createdAt).fromNow()
+                        ? dayjs.utc(createdAt).tz('Asia/Ho_Chi_Minh').fromNow()
                         : 'Không rõ thời gian'}
                     </Text>
-                    {!item.isRead && <span className="h-2 w-2 rounded-full bg-green-500" />}
+                    {!item.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />}
                   </span>
                 </button>
               );

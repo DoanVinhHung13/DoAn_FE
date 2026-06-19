@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Alert, Button, Card, Descriptions, Skeleton, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Skeleton, Tag, Typography } from 'antd';
 import {
   ArrowLeftOutlined,
   BellOutlined,
@@ -10,6 +10,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 import {
   getNotifications,
@@ -32,21 +37,52 @@ const normalizeItems = (response) => {
   );
 };
 
+const ROLE_LABELS = {
+  FARM_MANAGER: 'Quản lý trang trại',
+  LAND_MANAGER: 'Quản lý vùng trồng',
+  MATERIAL_MANAGER: 'Quản lý vật tư',
+  FARMER: 'Nông dân',
+  ADMIN: 'Quản trị viên',
+  SYSTEM: 'Hệ thống',
+};
+
 const getSenderName = (notification) => {
+  // Ưu tiên lấy từ object sender
   const sender =
     notification?.sender ||
     notification?.createdBy ||
     notification?.from ||
     notification?.author;
-  if (typeof sender === 'string') return sender;
-  return (
-    sender?.fullName ||
-    sender?.fullname ||
-    sender?.name ||
-    sender?.email ||
+  
+  if (sender) {
+    if (typeof sender === 'string') {
+      // Nếu là role, chuyển thành label tiếng Việt
+      return ROLE_LABELS[sender] || sender;
+    }
+    const name = 
+      sender?.fullName ||
+      sender?.fullname ||
+      sender?.name ||
+      sender?.displayName ||
+      sender?.username ||
+      sender?.email;
+    if (name) {
+      // Nếu name là role, chuyển thành label
+      return ROLE_LABELS[name] || name;
+    }
+  }
+  
+  // Fallback sang các field trực tiếp
+  const fallbackName = 
     notification?.senderName ||
-    'Hệ thống'
-  );
+    notification?.senderFullName ||
+    notification?.createdByName ||
+    notification?.fromName ||
+    notification?.senderRole ||
+    'Hệ thống';
+  
+  // Nếu fallback là role, chuyển thành label
+  return ROLE_LABELS[fallbackName] || fallbackName;
 };
 
 const NotificationDetail = () => {
@@ -77,8 +113,8 @@ const NotificationDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-[900px]">
-        <Card variant="borderless" className="shadow-sm">
+      <div className="space-y-6">
+        <Card variant="borderless" className="rounded-lg shadow-sm">
           <Skeleton active paragraph={{ rows: 8 }} />
         </Card>
       </div>
@@ -87,10 +123,17 @@ const NotificationDetail = () => {
 
   if (isError || !notification) {
     return (
-      <div className="mx-auto max-w-[900px] space-y-4">
-        <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate(listPath)}>
-          Quay lại danh sách
-        </Button>
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(listPath)}
+            className="h-10 rounded-lg"
+          >
+            Quay lại danh sách
+          </Button>
+        </div>
         <Alert
           showIcon
           type="error"
@@ -101,58 +144,112 @@ const NotificationDetail = () => {
     );
   }
 
-  const content = notification.content || notification.message || '';
+  const content = notification.content || notification.message || notification.body || '';
   const sentTime =
     notification.sentAt ||
+    notification.sentTime ||
     notification.createdAt ||
     notification.timestamp ||
-    notification.date;
+    notification.date ||
+    notification.time;
+
+  // Debug: Log toàn bộ notification để kiểm tra cấu trúc
+  console.log('📧 Notification Detail Data:', notification);
+  console.log('👤 Sender Info:', {
+    sender: notification.sender,
+    createdBy: notification.createdBy,
+    from: notification.from,
+    author: notification.author,
+    senderName: notification.senderName,
+    senderFullName: notification.senderFullName,
+  });
+  console.log('⏰ Time Info:', {
+    sentAt: notification.sentAt,
+    sentTime: notification.sentTime,
+    createdAt: notification.createdAt,
+    timestamp: notification.timestamp,
+    date: notification.date,
+    time: notification.time,
+    rawTime: sentTime,
+  });
   const category =
     notification.categoryLabel || notification.category || notification.type || 'Thông báo';
 
   return (
-    <div className="mx-auto max-w-[900px] space-y-4">
-      <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => navigate(listPath)}>
-        Quay lại danh sách
-      </Button>
-      <Card variant="borderless" className="overflow-hidden shadow-sm">
-        <div className="border-b border-gray-100 pb-5">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-50 text-xl text-green-600">
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button
+          type="text"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(listPath)}
+          className="h-10 rounded-lg"
+        >
+          Quay lại danh sách
+        </Button>
+      </div>
+
+      <Card variant="borderless" className="overflow-hidden rounded-lg shadow-sm">
+        <div className="border-b border-gray-100 pb-6">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-green-50 to-green-100 text-3xl text-green-600 shadow-sm">
             <BellOutlined />
           </div>
-          <div className="mb-3 flex gap-2">
-            <Tag className="!m-0">{category}</Tag>
-            <Tag color="green" className="!m-0">Đã đọc</Tag>
+          <div className="mb-4 flex flex-wrap gap-2">
+            <Tag color="blue" className="!m-0 !text-sm">
+              {category}
+            </Tag>
+            {notification.isRead && (
+              <Tag color="green" className="!m-0 !text-sm">
+                Đã đọc
+              </Tag>
+            )}
+            {!notification.isRead && (
+              <Tag color="orange" className="!m-0 !text-sm">
+                Chưa đọc
+              </Tag>
+            )}
           </div>
-          <Title level={2} className="!mb-0 !text-[28px]">
+          <Title level={1} className="!mb-0 !text-3xl !font-bold">
             {notification.title || 'Thông báo'}
           </Title>
         </div>
-        <Descriptions
-          column={{ xs: 1, sm: 2 }}
-          className="py-5"
-          items={[
-            {
-              key: 'sender',
-              label: <span className="flex items-center gap-2"><UserOutlined />Người gửi</span>,
-              children: <Text strong>{getSenderName(notification)}</Text>,
-            },
-            {
-              key: 'sent-time',
-              label: <span className="flex items-center gap-2"><CalendarOutlined />Thời gian gửi</span>,
-              children: (
-                <Text strong>
-                  {sentTime && dayjs(sentTime).isValid()
-                    ? dayjs(sentTime).format('HH:mm, DD/MM/YYYY')
-                    : 'Không rõ thời gian'}
+
+        <div className="border-b border-gray-100 py-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-gray-500">
+                <UserOutlined className="text-base" />
+                <Text type="secondary" className="!text-sm">
+                  Người gửi
                 </Text>
-              ),
-            },
-          ]}
-        />
-        <div className="border-t border-gray-100 pt-5">
-          <Text type="secondary" className="mb-3 block !text-sm">Nội dung thông báo</Text>
-          <Paragraph className="!mb-0 whitespace-pre-wrap !text-base !leading-7">
+              </div>
+              <Text strong className="!text-base">
+                {getSenderName(notification)}
+              </Text>
+            </div>
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-gray-500">
+                <CalendarOutlined className="text-base" />
+                <Text type="secondary" className="!text-sm">
+                  Thời gian gửi
+                </Text>
+              </div>
+              <Text strong className="!text-base">
+                {sentTime && dayjs(sentTime).isValid()
+                  ? dayjs.utc(sentTime).tz('Asia/Ho_Chi_Minh').format('HH:mm, DD/MM/YYYY')
+                  : 'Không rõ thời gian'}
+              </Text>
+            </div>
+          </div>
+        </div>
+
+        <div className="py-6">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="h-1 w-1 rounded-full bg-green-500" />
+            <Text strong className="!text-base">
+              Nội dung thông báo
+            </Text>
+          </div>
+          <Paragraph className="!mb-0 whitespace-pre-wrap !text-[15px] !leading-7 text-gray-700">
             {content || 'Thông báo này không có nội dung.'}
           </Paragraph>
         </div>

@@ -9,9 +9,7 @@ import {
   InputNumber,
   Modal,
   Select,
-  Space,
   Spin,
-  Typography,
   Upload,
   message,
 } from 'antd';
@@ -26,7 +24,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-import GrowthStages from 'src/components/GrowthStages';
+// import GrowthStages from 'src/components/GrowthStages'; // TODO: Sẽ quản lý riêng qua CropVarieties API
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
@@ -34,11 +32,7 @@ import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 
-const { Text } = Typography;
-
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
-
-const getItemId = (item) => item?.id || item?._id || item?.cropId;
 
 const CropEdit = () => {
   const navigate = useNavigate();
@@ -127,7 +121,7 @@ const CropEdit = () => {
         imageUrl: cropDetail.imageUrl || '',
         recommendedCultivationConditions:
           cropDetail.recommendedCultivationConditions || '',
-        growthStages: cropDetail.growthStages || [],
+        // growthStages: cropDetail.growthStages || [], // TODO: Quản lý riêng qua CropVarieties
       });
     }
   }, [cropDetail, form]);
@@ -143,11 +137,12 @@ const CropEdit = () => {
         imageUrl: values.imageUrl?.trim() || '', // Gửi string rỗng thay vì null
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
-        growthStages: values.growthStages || [],
         isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
       };
       console.log('🔄 Payload gửi lên server:', payload);
       console.log('📷 ImageUrl:', payload.imageUrl === '' ? 'EMPTY STRING (sẽ xóa ảnh)' : payload.imageUrl);
+      // TODO: Quản lý CropVarieties qua API riêng /api/crop-varieties
+      // const growthStages = values.growthStages || [];
       return CropManagementService.updateCrop(id, payload);
     },
     onSuccess: (response) => {
@@ -370,15 +365,6 @@ const CropEdit = () => {
               />
             </Form.Item>
 
-            <Form.Item name="growthDurationDays" label="Thời gian sinh trưởng (ngày)">
-              <InputNumber
-                min={1}
-                max={9999}
-                className="!h-11 !w-full rounded-lg"
-                placeholder="Số ngày"
-              />
-            </Form.Item>
-
             <Form.Item name="imageUrl" label="Ảnh minh họa">
               <div className="space-y-3">
                 <Upload
@@ -449,9 +435,10 @@ const CropEdit = () => {
             />
           </Form.Item>
 
-          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
+          {/* TODO: Giai đoạn sinh trưởng sẽ được quản lý riêng qua CropVarieties API */}
+          {/* <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
             <GrowthStages />
-          </Form.Item>
+          </Form.Item> */}
 
           <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
             <Button

@@ -132,6 +132,11 @@ export const landManagerItem = () => [
     icon: <InboxOutlined className="text-lg" />,
     label: 'Quản lý lô sản xuất',
   },
+  {
+    key: ROUTER.LM_NOTIFICATIONS,
+    icon: <BellOutlined className="text-lg" />,
+    label: 'Thông báo',
+  },
 ]
 
 // ─── MATERIAL_MANAGER MENU ────────────────────────────────────────────────────

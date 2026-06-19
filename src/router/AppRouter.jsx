@@ -61,6 +61,7 @@ const LandManagerProductionPlans = React.lazy(() => import('../pages/LAND_MANAGE
 const LandManagerTasks = React.lazy(() => import('../pages/LAND_MANAGER/Tasks'))
 const LandManagerLogbooks = React.lazy(() => import('../pages/LAND_MANAGER/Logbooks'))
 const LandManagerBatches = React.lazy(() => import('../pages/LAND_MANAGER/Batches'))
+const LandManagerNotifications = React.lazy(() => import('../pages/LAND_MANAGER/Notifications'))
 const LandManagerViewCatalogs = React.lazy(() => import('../pages/LAND_MANAGER/ViewCatalogs'))
 const LandManagerCatalogDetail = React.lazy(() => import('../pages/LAND_MANAGER/ViewCatalogs/CatalogDetail'))
 const LandManagerCrops = React.lazy(() => import('../pages/LAND_MANAGER/Crops'))
@@ -197,6 +198,8 @@ const routes = [
               { path: ROUTER.LM_TASKS, element: <Lazy><LandManagerTasks /></Lazy> },
               { path: ROUTER.LM_LOGBOOKS, element: <Lazy><LandManagerLogbooks /></Lazy> },
               { path: ROUTER.LM_BATCHES, element: <Lazy><LandManagerBatches /></Lazy> },
+              { path: ROUTER.LM_NOTIFICATIONS, element: <Lazy><LandManagerNotifications /></Lazy> },
+              { path: ROUTER.LM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
               { path: ROUTER.LM_CROP_CATALOGS, element: <Lazy><LandManagerViewCatalogs /></Lazy> },
               { path: ROUTER.LM_CROP_CATALOG_DETAIL, element: <Lazy><LandManagerCatalogDetail /></Lazy> },
               { path: ROUTER.LM_CROPS, element: <Lazy><LandManagerCrops /></Lazy> },
