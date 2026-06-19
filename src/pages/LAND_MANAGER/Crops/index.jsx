@@ -15,7 +15,6 @@ import {
   Typography,
 } from 'antd';
 import {
-  ClockCircleOutlined,
   CheckCircleOutlined,
   EyeOutlined,
   FileTextOutlined,
@@ -188,18 +187,12 @@ const Crops = () => {
     return [...rows].sort((first, second) => {
       const firstName = String(first.name || '').localeCompare(String(second.name || ''), 'vi');
       const firstCode = String(first.cropCode || '').localeCompare(String(second.cropCode || ''), 'vi');
-      const firstDuration = Number(first.growthDurationDays || 0);
-      const secondDuration = Number(second.growthDurationDays || 0);
 
       switch (sortBy) {
         case 'name-desc':
           return -firstName;
         case 'code-asc':
           return firstCode;
-        case 'duration-asc':
-          return firstDuration - secondDuration;
-        case 'duration-desc':
-          return secondDuration - firstDuration;
         case 'name-asc':
         default:
           return firstName;
@@ -274,19 +267,6 @@ const Crops = () => {
         >
           {displayValue(value)}
         </Tag>
-      ),
-    },
-    {
-      title: 'Thời gian sinh trưởng',
-      dataIndex: 'growthDurationDays',
-      key: 'growthDurationDays',
-      width: 140,
-      align: 'center',
-      render: (value) => (
-        <Space size={4}>
-          <ClockCircleOutlined className="text-green-500" />
-          <Text>{value ? `${value} ngày` : '-'}</Text>
-        </Space>
       ),
     },
     {
@@ -457,11 +437,6 @@ const Crops = () => {
               {/* <Descriptions.Item label="Tên khoa học">
                 {displayValue(cropDetail.scientificName)}
               </Descriptions.Item> */}
-              <Descriptions.Item label="Thời gian sinh trưởng">
-                {cropDetail.growthDurationDays
-                  ? `${cropDetail.growthDurationDays} ngày`
-                  : 'Chưa cập nhật'}
-              </Descriptions.Item>
               <Descriptions.Item label="Trạng thái">
                 <Tag color={isCropActive(cropDetail) ? 'success' : 'error'}>
                   {getStatusLabel(cropDetail)}

@@ -16,7 +16,6 @@ import {
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   StopOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
@@ -248,16 +247,6 @@ const CropDetail = () => {
                     </Tag>
                   )}
                   */}
-                </Descriptions.Item>
-                <Descriptions.Item label="Thời gian sinh trưởng">
-                  <Space>
-                    <ClockCircleOutlined className="text-green-500" />
-                    <Text>
-                      {cropDetail.growthDurationDays
-                        ? `${cropDetail.growthDurationDays} ngày`
-                        : 'Chưa cập nhật'}
-                    </Text>
-                  </Space>
                 </Descriptions.Item>
               </Descriptions>
             </Card>

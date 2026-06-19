@@ -21,7 +21,6 @@ import {
   message,
 } from 'antd';
 import {
-  ClockCircleOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -35,7 +34,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-import GrowthStages from 'src/components/GrowthStages';
+// import GrowthStages from 'src/components/GrowthStages'; // TODO: Sẽ dùng riêng cho CropVarieties
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
@@ -257,9 +256,10 @@ const Crops = () => {
         imageUrl: values.imageUrl?.trim() || null,
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
-        growthStages: values.growthStages || [],
         isActive: true,
       };
+      // TODO: Sau khi tạo Crop thành công, sẽ tạo CropVarieties riêng nếu cần
+      // const growthStages = values.growthStages || [];
       return CropManagementService.createCrop(payload);
     },
     onSuccess: () => {
@@ -310,9 +310,10 @@ const Crops = () => {
         imageUrl: values.imageUrl?.trim() || null,
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
-        growthStages: values.growthStages || [],
         isActive: typeof editingCrop?.isActive === 'boolean' ? editingCrop.isActive : true,
       };
+      // TODO: Quản lý CropVarieties riêng qua API /api/crop-varieties
+      // const growthStages = values.growthStages || [];
       return CropManagementService.updateCrop(id, payload);
     },
     onSuccess: (response) => {
@@ -353,7 +354,7 @@ const Crops = () => {
       imageUrl: record.imageUrl || '',
       recommendedCultivationConditions:
         record.recommendedCultivationConditions || '',
-      growthStages: record.growthStages || [],
+      // growthStages: record.growthStages || [], // TODO: Quản lý riêng qua CropVarieties
     });
   };
 
@@ -459,18 +460,12 @@ const Crops = () => {
     return [...rows].sort((first, second) => {
       const firstName = String(first.name || '').localeCompare(String(second.name || ''), 'vi');
       const firstCode = String(first.cropCode || '').localeCompare(String(second.cropCode || ''), 'vi');
-      const firstDuration = Number(first.growthDurationDays || 0);
-      const secondDuration = Number(second.growthDurationDays || 0);
 
       switch (sortBy) {
         case 'name-desc':
           return -firstName;
         case 'code-asc':
           return firstCode;
-        case 'duration-asc':
-          return firstDuration - secondDuration;
-        case 'duration-desc':
-          return secondDuration - firstDuration;
         case 'name-asc':
         default:
           return firstName;
@@ -574,19 +569,6 @@ const Crops = () => {
         >
           {displayValue(value)}
         </Tag>
-      ),
-    },
-    {
-      title: 'Thời gian sinh trưởng',
-      dataIndex: 'growthDurationDays',
-      key: 'growthDurationDays',
-      width: 140,
-      align: 'center',
-      render: (value) => (
-        <Space size={4}>
-          <ClockCircleOutlined className="text-green-500" />
-          <Text>{value ? `${value} ngày` : '-'}</Text>
-        </Space>
       ),
     },
     {
@@ -837,15 +819,6 @@ const Crops = () => {
               />
             </Form.Item>
 
-            <Form.Item name="growthDurationDays" label="Thời gian sinh trưởng">
-              <InputNumber
-                min={1}
-                max={9999}
-                className="!h-11 !w-full"
-                placeholder="Số ngày"
-              />
-            </Form.Item>
-
             <Form.Item name="imageUrl" label="Ảnh minh họa">
               <div className="space-y-3">
                 <Upload
@@ -908,9 +881,10 @@ const Crops = () => {
             <Input.TextArea rows={3} placeholder="Nhập mô tả" />
           </Form.Item>
 
-          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
+          {/* TODO: Giai đoạn sinh trưởng sẽ được quản lý riêng qua CropVarieties API */}
+          {/* <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
             <GrowthStages />
-          </Form.Item>
+          </Form.Item> */}
 
           <div className="flex justify-end gap-3 pt-2">
             <Button
@@ -966,11 +940,6 @@ const Crops = () => {
             </Descriptions.Item>
             <Descriptions.Item label="Nhóm cây">
               {displayValue(cropDetail.cropType)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Thời gian sinh trưởng">
-              {cropDetail.growthDurationDays
-                ? `${cropDetail.growthDurationDays} ngày`
-                : 'Chưa cập nhật'}
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
               <Tag color={isCropActive(cropDetail) ? 'success' : 'error'}>
@@ -1068,15 +1037,6 @@ const Crops = () => {
               />
             </Form.Item>
 
-            <Form.Item name="growthDurationDays" label="Thời gian sinh trưởng">
-              <InputNumber
-                min={1}
-                max={9999}
-                className="!h-11 !w-full"
-                placeholder="Số ngày"
-              />
-            </Form.Item>
-
             <Form.Item name="imageUrl" label={"\u1ea2nh minh h\u1ecda"}>
               <div className="space-y-3">
                 <Upload
@@ -1139,9 +1099,10 @@ const Crops = () => {
             <Input.TextArea rows={3} placeholder="Nhập mô tả" />
           </Form.Item>
 
-          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
+          {/* TODO: Giai đoạn sinh trưởng sẽ được quản lý riêng qua CropVarieties API */}
+          {/* <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
             <GrowthStages />
-          </Form.Item>
+          </Form.Item> */}
 
           <div className="flex justify-end gap-3 pt-2">
             <Button
