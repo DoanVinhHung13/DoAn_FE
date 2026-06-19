@@ -9,9 +9,7 @@ import {
   InputNumber,
   Modal,
   Select,
-  Space,
   Spin,
-  Typography,
   Upload,
   message,
 } from 'antd';
@@ -34,11 +32,7 @@ import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 
-const { Text } = Typography;
-
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
-
-const getItemId = (item) => item?.id || item?._id || item?.cropId;
 
 const CropEdit = () => {
   const navigate = useNavigate();

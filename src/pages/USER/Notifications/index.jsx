@@ -141,8 +141,8 @@ const Notifications = () => {
   };
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+    <div className="space-y-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2">
           <BellOutlined className="text-green-600" />
           Thông báo
@@ -153,14 +153,14 @@ const Notifications = () => {
           disabled={!data?.unreadCount}
           loading={markAllReadMutation.isPending}
           onClick={() => markAllReadMutation.mutate()}
-          className="h-10 rounded-lg font-semibold"
+          className="h-10 rounded-lg bg-green-500 font-semibold text-white hover:!bg-green-600"
         >
           Đánh dấu tất cả đã đọc
         </Button>
       </div>
 
-      <Card variant="borderless" className="shadow-sm">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_190px_190px]">
+      <Card variant="borderless" className="rounded-lg shadow-sm">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_200px_200px]">
           <Input
             allowClear
             value={keyword}
@@ -174,7 +174,7 @@ const Notifications = () => {
         </div>
       </Card>
 
-      <Card variant="borderless" className="overflow-hidden shadow-sm" styles={{ body: { padding: 0 } }}>
+      <Card variant="borderless" className="overflow-hidden rounded-lg shadow-sm" styles={{ body: { padding: 0 } }}>
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <Text strong>Danh sách thông báo</Text>
           <div className="flex items-center gap-2">
