@@ -259,7 +259,6 @@ const AccountInfo = () => {
               <Divider className="!my-7" />
               <div className="space-y-5 px-2 text-left">
                 {summaryRow(<MailOutlined />, 'Email đăng nhập', user?.email)}
-                {summaryRow(<ShopOutlined />, 'Tổ chức/Công ty', previewOrganization)}
               </div>
             </div>
           </Card>
@@ -400,33 +399,6 @@ const AccountInfo = () => {
                         />
                       </Form.Item>
                     </Col>
-                    <Col xs={24} md={12}>
-                      <Form.Item
-                        name="organization"
-                        label="Tổ chức/Công ty"
-                        rules={[
-                          {
-                            validator: (_, value) => {
-                              if (!value?.trim()) return Promise.resolve();
-                              const normalized = value.trim();
-                              const meaningful = normalized.match(/[\p{L}\d]/gu)?.length || 0;
-                              if (
-                                normalized.length < 2 ||
-                                meaningful < 2 ||
-                                !organizationPattern.test(normalized)
-                              ) {
-                                return Promise.reject(
-                                  new Error('Tên tổ chức/công ty không hợp lệ.')
-                                );
-                              }
-                              return Promise.resolve();
-                            },
-                          },
-                        ]}
-                      >
-                        <Input prefix={<ShopOutlined className="text-gray-300" />} className="h-11" />
-                      </Form.Item>
-                    </Col>
                   </Row>
 
                   <Divider orientation="left" plain>
@@ -436,42 +408,11 @@ const AccountInfo = () => {
                   </Divider>
 
                   <Row gutter={16}>
-                    <Col xs={24} md={12}>
-                      <Form.Item name="province" label="Tỉnh/Thành phố">
-                        <Select
-                          allowClear
-                          showSearch
-                          optionFilterProp="label"
-                          placeholder="Chọn tỉnh/thành phố"
-                          className="h-11"
-                          options={provinces.map((item) => ({
-                            value: item.code,
-                            label: item.fullName || item.name,
-                          }))}
-                          onChange={() => form.setFieldValue('ward', undefined)}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={24} md={12}>
-                      <Form.Item name="ward" label="Phường/Xã">
-                        <Select
-                          allowClear
-                          showSearch
-                          disabled={!watchedProvince}
-                          optionFilterProp="label"
-                          placeholder="Chọn phường/xã"
-                          className="h-11"
-                          options={wards.map((item) => ({
-                            value: item.code,
-                            label: item.fullName || item.name,
-                          }))}
-                        />
-                      </Form.Item>
-                    </Col>
+                    
                     <Col span={24}>
                       <Form.Item
                         name="address"
-                        label="Địa chỉ chi tiết"
+                        label=""
                         rules={[
                           {
                             validator: (_, value) => {

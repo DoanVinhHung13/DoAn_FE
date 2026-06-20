@@ -10,12 +10,22 @@ import {
   Modal,
   Select,
   Skeleton,
+  Spin,
   Tabs,
   Tag,
   Typography,
+  Upload,
   message,
 } from 'antd';
-import { BellOutlined, CheckOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { 
+  BellOutlined, 
+  CheckOutlined, 
+  DeleteOutlined, 
+  FileOutlined, 
+  PlusOutlined, 
+  SearchOutlined, 
+  UploadOutlined 
+} from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -31,6 +41,7 @@ import {
   getAllUsers,
   getSentNotifications,
 } from 'src/services/NotificationService';
+import UploadService from 'src/services/UploadService';
 import TitleCustom from 'src/components/TitleCustom';
 import ROUTER from 'src/router/ROUTER';
 
@@ -121,6 +132,8 @@ const FarmManagerNotifications = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [sendToAll, setSendToAll] = useState(true);
   const [activeTab, setActiveTab] = useState('received'); // 'received' or 'sent'
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [documents, setDocuments] = useState([]); // Danh sách tài liệu đã upload
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['notifications'],
@@ -169,6 +182,7 @@ const FarmManagerNotifications = () => {
         priority: values.priority || 'medium',
         recipientIds: sendToAll ? [] : (values.recipientIds || []),
         sendToAll: sendToAll,
+        attachments: documents.map(doc => doc.url), // Thêm attachments
       };
       return createNotification(payload);
     },
@@ -177,6 +191,7 @@ const FarmManagerNotifications = () => {
       setIsCreating(false);
       form.resetFields();
       setSendToAll(true);
+      setDocuments([]); // Reset documents
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['sent-notifications'] });
       setActiveTab('sent'); // Chuyển sang tab "Đã gửi" sau khi tạo thành công
@@ -189,6 +204,77 @@ const FarmManagerNotifications = () => {
       );
     },
   });
+
+  // Upload document handler
+  const handleDocumentUpload = async ({ file, onSuccess, onError }) => {
+    setUploadingDoc(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await UploadService.uploadImage(formData);
+      const payload = response?.data?.data || response?.data || {};
+      const fileUrl =
+        payload.imageUrl ||
+        payload.url ||
+        payload.secureUrl ||
+        payload.fileUrl ||
+        payload.path;
+
+      if (!fileUrl) {
+        throw new Error('Không nhận được đường dẫn file sau khi upload.');
+      }
+
+      const newDoc = {
+        uid: file.uid,
+        name: file.name,
+        url: fileUrl,
+        size: file.size,
+        type: file.type,
+      };
+
+      setDocuments(prev => [...prev, newDoc]);
+      message.success(`Tải lên ${file.name} thành công.`);
+      onSuccess(response);
+    } catch (error) {
+      message.error(
+        error?.response?.data?.message || 'Không thể tải file. Vui lòng thử lại.'
+      );
+      onError(error);
+    } finally {
+      setUploadingDoc(false);
+    }
+  };
+
+  const beforeDocumentUpload = (file) => {
+    const validTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+    ];
+    
+    if (!validTypes.includes(file.type)) {
+      message.error('Chỉ chấp nhận file PDF, Word, Excel hoặc ảnh.');
+      return Upload.LIST_IGNORE;
+    }
+    
+    if (file.size / 1024 / 1024 > 10) {
+      message.error('Dung lượng file không được vượt quá 10MB.');
+      return Upload.LIST_IGNORE;
+    }
+    
+    return true;
+  };
+
+  const handleRemoveDocument = (uid) => {
+    setDocuments(prev => prev.filter(doc => doc.uid !== uid));
+    message.success('Đã xóa tài liệu.');
+  };
 
   const categoryOptions = useMemo(() => {
     const categories = [...new Set((data?.items || []).map(getCategory).filter(Boolean))];
@@ -460,6 +546,57 @@ const FarmManagerNotifications = () => {
               showCount
               maxLength={1000}
             />
+          </Form.Item>
+
+          {/* Upload tài liệu */}
+          <Form.Item label="Tài liệu đính kèm">
+            <div className="space-y-3">
+              <Upload
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
+                showUploadList={false}
+                beforeUpload={beforeDocumentUpload}
+                customRequest={handleDocumentUpload}
+                disabled={uploadingDoc}
+              >
+                <Button 
+                  icon={<UploadOutlined />} 
+                  loading={uploadingDoc}
+                  className="h-11 rounded-lg"
+                >
+                  {uploadingDoc ? 'Đang tải lên...' : 'Tải tài liệu lên'}
+                </Button>
+              </Upload>
+
+              {/* Danh sách tài liệu đã upload */}
+              {documents.length > 0 && (
+                <div className="space-y-2">
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.uid}
+                      className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <FileOutlined className="text-lg text-blue-500" />
+                        <div className="min-w-0 flex-1">
+                          <Text className="block truncate font-medium">{doc.name}</Text>
+                          <Text type="secondary" className="text-xs">
+                            {(doc.size / 1024).toFixed(2)} KB
+                          </Text>
+                        </div>
+                      </div>
+                      <Button
+                        type="text"
+                        danger
+                        size="small"
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleRemoveDocument(doc.uid)}
+                        className="shrink-0"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </Form.Item>
 
           <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
