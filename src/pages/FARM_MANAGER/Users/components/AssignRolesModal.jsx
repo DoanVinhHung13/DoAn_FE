@@ -1,7 +1,6 @@
 import React from 'react'
 import { Form, Select, Button, Typography } from 'antd'
 import { SafetyCertificateOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import CustomModal from 'src/components/Modal/CustomModal'
 import UserService from 'src/services/UserService'
 import { ROLES } from 'src/constants/roles'
@@ -22,9 +21,9 @@ const ALL_ROLES = Object.entries(ROLE_CONFIG).map(([value, cfg]) => ({
   label: cfg.label,
 }))
 
-const AssignRolesModal = ({ open, onClose, user }) => {
+const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
   const [form] = Form.useForm()
-  const queryClient = useQueryClient()
+  const [loading, setLoading] = React.useState(false)
 
   React.useEffect(() => {
     if (open && user) {
@@ -32,15 +31,18 @@ const AssignRolesModal = ({ open, onClose, user }) => {
     }
   }, [open, user, form])
 
-  const mutation = useMutation({
-    mutationFn: (values) => UserService.assignRoles(user.id, { roles: values.roles }),
-    onSuccess: (res) => {
+  const handleSubmit = async (values) => {
+    try {
+      setLoading(true)
+      const res = await UserService.assignRoles(user.id, { roles: values.roles })
       if (res?.success === false) return
-      queryClient.invalidateQueries(['users'])
       Notice({ msg: 'Phân quyền thành công!', isSuccess: true })
       onClose()
-    },
-  })
+      onSuccess?.()
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <CustomModal
@@ -60,7 +62,7 @@ const AssignRolesModal = ({ open, onClose, user }) => {
       footer={null}
       width={440}
     >
-      <Form form={form} layout="vertical" onFinish={(v) => mutation.mutate(v)} className="mt-4">
+      <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
         <Form.Item
           name="roles"
           label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Vai trò được gán</span>}
@@ -92,7 +94,7 @@ const AssignRolesModal = ({ open, onClose, user }) => {
           <Button
             type="primary"
             htmlType="submit"
-            loading={mutation.isPending || mutation.isLoading}
+            loading={loading}
             className="h-10 px-6 rounded-xl bg-purple-600 border-0 font-bold"
           >
             Lưu phân quyền

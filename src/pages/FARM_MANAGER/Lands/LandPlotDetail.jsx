@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
@@ -7,58 +7,61 @@ import {
   Col,
   Descriptions,
   Empty,
-  Modal,
+  Image,
   Row,
-  Select,
   Spin,
   Tag,
 } from 'antd'
-import {
-  ArrowLeftOutlined,
-  EditOutlined,
-} from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons'
 
-import TitleCustom from 'src/components/TitleCustom'
 import LandPlotMap from 'src/components/LandPlotMap'
+import TitleCustom from 'src/components/TitleCustom'
 import LandPlotService from 'src/services/LandPlotService'
-import UserService from 'src/services/UserService'
-import { ROLES } from 'src/constants/roles'
 import {
   displayValue,
   formatLandArea,
-  getItemId,
   getOwnershipLabel,
   getStatusLabel,
   isLandPlotActive,
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const LandPlotDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { canManage, routes } = useLandPlotAccess()
 
+  // ── State: chi tiết vùng trồng ───────────────────────────────────────────
+  const [plot, setPlot] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const {
-    data: plot,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ['land-plot-detail', id],
-    queryFn: async () => {
+  // ── Fetch: lấy chi tiết vùng trồng ───────────────────────────────────────
+  const fetchPlotDetail = useCallback(async () => {
+    if (!id) return
+    try {
+      setLoading(true)
+      setError(null)
       const response = await LandPlotService.getLandPlotById(id)
       const payload = response?.data ?? response ?? {}
-      return payload?.data ?? payload
-    },
-    enabled: Boolean(id),
-  })
+      setPlot(payload?.data ?? payload)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [id])
 
-  const active = plot ? isLandPlotActive(plot) : false
+  useEffect(() => {
+    fetchPlotDetail()
+  }, [fetchPlotDetail])
 
-  if (isLoading) {
+  const isActive = plot ? isLandPlotActive(plot) : false
+
+  // ── Trạng thái loading ────────────────────────────────────────────────────
+  if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Spin size="large" />
@@ -66,7 +69,8 @@ const LandPlotDetail = () => {
     )
   }
 
-  if (isError) {
+  // ── Trạng thái lỗi ────────────────────────────────────────────────────────
+  if (error) {
     return (
       <div className="space-y-6">
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(routes.list)}>
@@ -76,12 +80,17 @@ const LandPlotDetail = () => {
           type="error"
           showIcon
           message="Không thể tải chi tiết vùng trồng."
-          action={<Button size="small" onClick={() => refetch()}>Thử lại</Button>}
+          action={
+            <Button size="small" onClick={fetchPlotDetail}>
+              Thử lại
+            </Button>
+          }
         />
       </div>
     )
   }
 
+  // ── Không tìm thấy dữ liệu ────────────────────────────────────────────────
   if (!plot) {
     return (
       <div className="space-y-6">
@@ -95,8 +104,11 @@ const LandPlotDetail = () => {
     )
   }
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
+
+      {/* Tiêu đề & nút chỉnh sửa */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(routes.list)}>
@@ -104,9 +116,9 @@ const LandPlotDetail = () => {
           </Button>
           <div>
             <TitleCustom className="!mb-0">Chi tiết vùng trồng</TitleCustom>
-            <p className="mt-1 text-slate-500">{plot.name}</p>
           </div>
         </div>
+
         {canManage && routes.edit && (
           <Button
             type="primary"
@@ -119,39 +131,62 @@ const LandPlotDetail = () => {
       </div>
 
       <Row gutter={[16, 16]}>
+
+        {/* Cột trái: thông tin hành chính */}
         <Col xs={24} xl={10}>
           <Card title="Thông tin hành chính">
             <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="Mã vùng trồng">{displayValue(plot.code)}</Descriptions.Item>
-              <Descriptions.Item label="Tên vùng trồng">{displayValue(plot.name)}</Descriptions.Item>
+              <Descriptions.Item label="Mã vùng trồng">
+                {displayValue(plot.code)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Tên vùng trồng">
+                {displayValue(plot.name)}
+              </Descriptions.Item>
               <Descriptions.Item label="Diện tích">
                 {formatLandArea(plot.area, plot.areaUnit)}
               </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ">{displayValue(plot.address)}</Descriptions.Item>
+              <Descriptions.Item label="Địa chỉ">
+                {displayValue(plot.address)}
+              </Descriptions.Item>
               <Descriptions.Item label="Loại sở hữu">
                 {getOwnershipLabel(plot.ownershipType)}
               </Descriptions.Item>
-
-              <Descriptions.Item label="Chứng nhận an toàn thực phẩm">
-                {displayValue(plot.foodSafetyCertificate || plot.certificate)}
+              <Descriptions.Item label="Giấy chứng nhận đất">
+                {plot.imageUrl ? (
+                  <Image
+                    src={plot.imageUrl}
+                    alt="Giấy chứng nhận đất"
+                    width={120}
+                    style={{ borderRadius: 8 }}
+                    placeholder
+                  />
+                ) : (
+                  'Chưa cập nhật'
+                )}
               </Descriptions.Item>
               <Descriptions.Item label="Trạng thái">
-                <Tag color={active ? 'success' : 'default'}>{getStatusLabel(plot)}</Tag>
+                <Tag color={isActive ? 'success' : 'default'}>
+                  {getStatusLabel(plot)}
+                </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Mô tả">{displayValue(plot.description)}</Descriptions.Item>
+              <Descriptions.Item label="Mô tả">
+                {displayValue(plot.description)}
+              </Descriptions.Item>
             </Descriptions>
           </Card>
-
         </Col>
 
+        {/* Cột phải: bản đồ GIS */}
         <Col xs={24} xl={14}>
-          <Card title="Bản đồ GIS">
-            <LandPlotMap mode="view" boundaryJson={plot.boundaryJson} height={560} />
+          <Card title="Bản đồ ranh giới (GIS)">
+            <LandPlotMap
+              mode="view"
+              height={560}
+              boundaryJson={plot.boundaryJson}
+            />
           </Card>
         </Col>
       </Row>
-
-
     </div>
   )
 }
