@@ -92,6 +92,19 @@ const PRIORITY_OPTIONS = [
   { value: 'high', label: 'Khẩn cấp' },
 ];
 
+const ROLE_OPTIONS = [
+  { value: 'FARMER', label: 'Nhân viên trồng cây (Farmer)' },
+  { value: 'LAND_MANAGER', label: 'Quản lý đất đai (Land Manager)' },
+  { value: 'FARM_MANAGER', label: 'Quản lý trang trại (Farm Manager)' },
+  { value: 'MATERIAL_MANAGER', label: 'Quản lý vật tư (Material Manager)' },
+];
+
+const RECIPIENT_TYPE = {
+  ALL: 'all',
+  BY_ROLE: 'by_role',
+  SPECIFIC_USERS: 'specific_users',
+};
+
 const normalizeNotifications = (response) => {
   const payload = response?.data ?? response ?? {};
   const nestedPayload = payload?.data ?? payload;
@@ -130,7 +143,7 @@ const FarmManagerNotifications = () => {
   const [status, setStatus] = useState('all');
   const [category, setCategory] = useState('all');
   const [isCreating, setIsCreating] = useState(false);
-  const [sendToAll, setSendToAll] = useState(true);
+  const [recipientType, setRecipientType] = useState(RECIPIENT_TYPE.ALL);
   const [activeTab, setActiveTab] = useState('received'); // 'received' or 'sent'
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [documents, setDocuments] = useState([]); // Danh sách tài liệu đã upload
@@ -176,13 +189,11 @@ const FarmManagerNotifications = () => {
     mutationFn: (values) => {
       const payload = {
         title: values.title.trim(),
-        message: values.message.trim(),
         content: values.message.trim(),
-        type: values.type || 'Announcement',
-        priority: values.priority || 'medium',
-        recipientIds: sendToAll ? [] : (values.recipientIds || []),
-        sendToAll: sendToAll,
-        attachments: documents.map(doc => doc.url), // Thêm attachments
+        type: 'Announcement', // Mặc định là Announcement
+        recipientUserIds: recipientType === RECIPIENT_TYPE.SPECIFIC_USERS ? (values.recipientUserIds || []) : [],
+        recipientRoles: recipientType === RECIPIENT_TYPE.BY_ROLE ? (values.recipientRoles || []) : [],
+        attachments: documents.map(doc => doc.url),
       };
       return createNotification(payload);
     },
@@ -190,11 +201,11 @@ const FarmManagerNotifications = () => {
       message.success('Tạo thông báo thành công.');
       setIsCreating(false);
       form.resetFields();
-      setSendToAll(true);
-      setDocuments([]); // Reset documents
+      setRecipientType(RECIPIENT_TYPE.ALL);
+      setDocuments([]);
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['sent-notifications'] });
-      setActiveTab('sent'); // Chuyển sang tab "Đã gửi" sau khi tạo thành công
+      setActiveTab('sent');
     },
     onError: (error) => {
       message.error(
@@ -599,54 +610,82 @@ const FarmManagerNotifications = () => {
             </div>
           </Form.Item>
 
-          <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
-            <Form.Item
-              name="type"
-              label="Loại thông báo"
-              initialValue="Announcement"
-              rules={[{ required: true, message: 'Vui lòng chọn loại thông báo.' }]}
-            >
-              <Select
-                className="h-11"
-                placeholder="Chọn loại thông báo"
-                options={TYPE_OPTIONS}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="priority"
-              label="Mức độ ưu tiên"
-              initialValue="medium"
-              rules={[{ required: true, message: 'Vui lòng chọn mức độ ưu tiên.' }]}
-            >
-              <Select
-                className="h-11"
-                placeholder="Chọn mức độ ưu tiên"
-                options={PRIORITY_OPTIONS}
-              />
-            </Form.Item>
-          </div>
-
-          <Form.Item label="Người nhận">
+          <Form.Item label="Đối tượng nhận">
             <div className="space-y-3">
-              <Checkbox
-                checked={sendToAll}
-                onChange={(e) => {
-                  setSendToAll(e.target.checked);
-                  if (e.target.checked) {
-                    form.setFieldsValue({ recipientIds: [] });
-                  }
-                }}
-              >
-                <Text strong>Gửi cho tất cả người dùng</Text>
-              </Checkbox>
+              {/* Radio buttons cho loại người nhận */}
+              <div className="space-y-2">
+                <div
+                  className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                    recipientType === RECIPIENT_TYPE.ALL
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-green-300'
+                  }`}
+                  onClick={() => {
+                    setRecipientType(RECIPIENT_TYPE.ALL);
+                    form.setFieldsValue({ recipientRoles: [], recipientUserIds: [] });
+                  }}
+                >
+                  <Text strong> Gửi cho tất cả người dùng</Text>
+                </div>
 
-              {!sendToAll && (
+                <div
+                  className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                    recipientType === RECIPIENT_TYPE.BY_ROLE
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-green-300'
+                  }`}
+                  onClick={() => {
+                    setRecipientType(RECIPIENT_TYPE.BY_ROLE);
+                    form.setFieldsValue({ recipientUserIds: [] });
+                  }}
+                >
+                  <Text strong>Gửi theo vai trò</Text>
+                </div>
+
+                <div
+                  className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
+                    recipientType === RECIPIENT_TYPE.SPECIFIC_USERS
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-green-300'
+                  }`}
+                  onClick={() => {
+                    setRecipientType(RECIPIENT_TYPE.SPECIFIC_USERS);
+                    form.setFieldsValue({ recipientRoles: [] });
+                  }}
+                >
+                  <Text strong>Chọn người dùng cụ thể</Text>
+                </div>
+              </div>
+
+              {/* Select vai trò */}
+              {recipientType === RECIPIENT_TYPE.BY_ROLE && (
                 <Form.Item
-                  name="recipientIds"
+                  name="recipientRoles"
                   rules={[
                     {
-                      required: !sendToAll,
+                      required: true,
+                      message: 'Vui lòng chọn ít nhất một vai trò.',
+                    },
+                  ]}
+                  className="!mb-0"
+                >
+                  <Select
+                    mode="multiple"
+                    className="w-full"
+                    placeholder="Chọn vai trò người nhận"
+                    options={ROLE_OPTIONS}
+                    maxTagCount="responsive"
+                  />
+                </Form.Item>
+              )}
+
+              {/* Select người dùng cụ thể */}
+              {recipientType === RECIPIENT_TYPE.SPECIFIC_USERS && (
+                <Form.Item
+                  name="recipientUserIds"
+                  rules={[
+                    {
+                      required: true,
                       message: 'Vui lòng chọn ít nhất một người nhận.',
                     },
                   ]}
@@ -674,7 +713,8 @@ const FarmManagerNotifications = () => {
               onClick={() => {
                 setIsCreating(false);
                 form.resetFields();
-                setSendToAll(true);
+                setRecipientType(RECIPIENT_TYPE.ALL);
+                setDocuments([]);
               }}
               className="h-10 min-w-[88px] rounded-lg font-semibold"
             >
