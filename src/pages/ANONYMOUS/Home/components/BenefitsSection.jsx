@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { Row, Col, Card, Typography, Tag } from 'antd'
 import {
   TrophyOutlined,
@@ -70,7 +70,7 @@ const BenefitsSection = () => {
             Giá trị mà doanh nghiệp nhận được
           </Title>
           <Paragraph className="text-lg text-gray-500">
-            Khi triển khai hệ thống truy xuất nguồn gốc với EBookFarm
+            Khi triển khai hệ thống truy xuất nguồn gốc với EAPLS
           </Paragraph>
         </div>
 

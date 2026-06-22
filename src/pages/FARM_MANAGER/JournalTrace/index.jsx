@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, Typography, Descriptions, Spin, Tag, Button, Image, Divider, Timeline, Row, Col, Statistic, Space, Modal, message, Tooltip, Avatar } from 'antd';
 import { CheckCircleOutlined, EnvironmentOutlined, CalendarOutlined, UserOutlined, SafetyOutlined, FileTextOutlined, HomeOutlined, QrcodeOutlined, EyeOutlined, ShareAltOutlined, SafetyCertificateOutlined, PictureOutlined, FacebookOutlined, LinkOutlined } from '@ant-design/icons';
@@ -23,7 +23,7 @@ const JournalTrace = () => {
   // Share functions
   const handleShare = (platform) => {
     const url = window.location.href;
-    const text = `Xem nguồn gốc sản phẩm ${journal?.schemaId?.name} - EBookFarm`;
+    const text = `Xem nguồn gốc sản phẩm ${journal?.schemaId?.name} - EAPLS`;
 
     let shareUrl = '';
     switch (platform) {
@@ -528,7 +528,7 @@ const JournalTrace = () => {
           <Divider />
           <div className="bg-white rounded-2xl shadow-md p-6 inline-block">
             <Text className="text-gray-600 block mb-2">Được cung cấp bởi</Text>
-            <Title level={3} className="!mb-2 text-green-600">🌿 EBookFarm</Title>
+            <Title level={3} className="!mb-2 text-green-600">🌿 EAPLS</Title>
             <Text className="text-gray-500">Hệ thống quản lý và truy xuất nguồn gốc nông sản</Text>
             <div className="mt-4">
               <Link to="/">

@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { Row, Col, Card, Typography, Tag } from 'antd'
 import {
   EditOutlined,
@@ -64,7 +64,7 @@ const FeaturesSection = () => {
             </Tag>
           </div>
           <Title level={2} className="!text-gray-900 !mb-0 md:!text-5xl font-black">
-            Nhật ký sản xuất điện tử EBookFarm
+            Nhật ký sản xuất điện tử EAPLS
           </Title>
           <Paragraph className="text-lg text-gray-500">
             Giải pháp chuyển đổi số toàn diện cho nông nghiệp hiện đại, minh bạch và hiệu quả.
@@ -73,7 +73,7 @@ const FeaturesSection = () => {
 
         <div className="scroll-reveal w-full max-w-5xl mx-auto rounded-[40px] overflow-hidden shadow-2xl border-[8px] border-white/50 bg-white hover-lift relative group">
           <div className="absolute inset-0 transition-opacity opacity-0 bg-gradient-to-t from-black/20 to-transparent group-hover:opacity-100"></div>
-          <img src="/images/smart_farming.png" alt="EBookFarm Dashboard" className="w-full h-auto" />
+          <img src="/images/smart_farming.png" alt="EAPLS Dashboard" className="w-full h-auto" />
         </div>
 
         <Row gutter={[20, 20]} className="mt-12">

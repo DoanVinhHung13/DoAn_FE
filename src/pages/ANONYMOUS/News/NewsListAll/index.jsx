@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Row, Col, Typography, Button, Skeleton, Space, Tag, Avatar, Divider, Card, Tabs } from 'antd';
 import {
     ArrowLeftOutlined,
@@ -114,7 +114,7 @@ const NewsListAll = () => {
                                                         }
                                                     </Avatar>
                                                     <Text className="font-bold text-[#242424] text-sm flex items-center gap-1.5">
-                                                        {(typeof news.author === 'object' ? (news.author.fullname || news.author.username) : news.author) || 'EBookFarm Editor'}
+                                                        {(typeof news.author === 'object' ? (news.author.fullname || news.author.username) : news.author) || 'EAPLS Editor'}
                                                         <CheckCircleFilled className="text-blue-500 text-[11px]" />
                                                     </Text>
                                                 </div>
@@ -197,7 +197,7 @@ const NewsListAll = () => {
                                 <Title level={4} className="!text-[#1877F2] !font-black !mb-2 flex items-center gap-2">
                                     <FacebookFilled /> Cộng đồng
                                 </Title>
-                                <Paragraph className="text-[#1877F2]/80 text-sm mb-6 font-medium">Gia nhập cộng đồng nông nghiệp số EBookFarm để cùng trao đổi và học hỏi.</Paragraph>
+                                <Paragraph className="text-[#1877F2]/80 text-sm mb-6 font-medium">Gia nhập cộng đồng nông nghiệp số EAPLS để cùng trao đổi và học hỏi.</Paragraph>
                                 <Button className="w-full rounded-full font-black border-[#1877F2] text-[#1877F2] hover:bg-[#1877F2] hover:text-white transition-all h-11">THAM GIA NGAY</Button>
                             </div>
 

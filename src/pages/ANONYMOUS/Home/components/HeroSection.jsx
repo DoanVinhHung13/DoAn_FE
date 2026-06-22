@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { Col, Row, Typography, Button, Space, Tag } from 'antd'
 import { ArrowRightOutlined, SearchOutlined, CheckCircleFilled } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -51,7 +51,7 @@ const HeroSection = () => {
               Nâng tầm <span className="gradient-text">Giá trị</span> Nông sản.
             </Title>
             <Paragraph className="max-w-2xl text-lg leading-relaxed text-gray-500 md:text-xl scroll-reveal">
-              EBookFarm cung cấp giải pháp chuyển đổi số toàn diện cho nông trại, HTX và doanh nghiệp: Từ Nhật ký sản xuất điện tử đến Truy xuất nguồn gốc bằng mã QR chuẩn quốc gia.
+              EAPLS cung cấp giải pháp chuyển đổi số toàn diện cho nông trại, HTX và doanh nghiệp: Từ Nhật ký sản xuất điện tử đến Truy xuất nguồn gốc bằng mã QR chuẩn quốc gia.
             </Paragraph>
             <Space size="middle" className="flex-wrap pt-4 scroll-reveal">
               <Button

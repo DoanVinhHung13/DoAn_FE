@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   CheckCircleFilled,
@@ -362,7 +362,7 @@ const ForgotPassword = () => {
         </div>
 
         <div className="absolute bottom-8 text-[10px] uppercase font-bold tracking-[3px] text-gray-400/50 pointer-events-none w-full text-center">
-          EBookFarm identity protection system
+          EAPLS identity protection system
         </div>
       </div>
     </div>

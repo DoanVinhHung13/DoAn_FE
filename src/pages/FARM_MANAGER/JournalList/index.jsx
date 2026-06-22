@@ -1,4 +1,4 @@
-// import React, { useState, useMemo } from 'react';
+﻿// import React, { useState, useMemo } from 'react';
 // import { Card, Table, Typography, Button, Space, Modal, Drawer, Select, QRCode, Tag, Badge, Row, Col, Form, Descriptions, Steps, Upload, message, Tooltip, Grid, Pagination } from 'antd';
 // import { PlusOutlined, EditOutlined, QrcodeOutlined, EyeOutlined, BarsOutlined, AppstoreOutlined, CalendarOutlined, EnvironmentOutlined, ProfileOutlined, TagOutlined, RightOutlined, FileOutlined, FileTextOutlined, DownloadOutlined, UploadOutlined, FileExcelOutlined, HistoryOutlined, CheckCircleOutlined, ClockCircleOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
 // import { Leaf } from 'lucide-react';
@@ -954,7 +954,7 @@ const JournalList = () => {
   //             <div className="absolute top-4 right-4">
   //                <Button shape="circle" icon={<span>✕</span>} onClick={() => setViewModalVisible(false)} className="border-0 bg-white/20 text-white hover:bg-white/40" />
   //             </div>
-  //             <Title level={2} className="!text-white !mb-2">EBookFarm Traceability</Title>
+  //             <Title level={2} className="!text-white !mb-2">EAPLS Traceability</Title>
   //             <p className="opacity-90">Transparent Agricultural Product Information</p>
   //             <div className="mt-4 inline-block bg-white text-green-700 px-4 py-1 rounded-full font-bold shadow-md">
   //                 ID: {fullJournal.qrCode}

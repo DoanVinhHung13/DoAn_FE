@@ -7,7 +7,7 @@ import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
 import { clearAuthStorage } from 'src/redux/storage';
 import { useSelector } from 'react-redux';
-import logo from 'src/assets/images/logo/logo-ebookfarm.jpg';
+import logo from 'src/assets/images/logo/logo-eapls.jpg';
 import ROUTER from 'src/router/ROUTER';
 
 const { Title, Text, Paragraph } = Typography;
@@ -36,7 +36,7 @@ const PublicFooter = () => {
                     <Col xs={24} md={8} className="space-y-6">
                         <div className="flex items-center gap-3">
                             <div className="flex items-center justify-center w-10 h-10 overflow-hidden bg-white border rounded-full shadow-sm border-gray-50">
-                                <img src={logo} alt="EBookFarm Logo" className="w-[140%] h-[140%] object-contain mix-blend-multiply" />
+                                <img src={logo} alt="EAPLS Logo" className="w-[140%] h-[140%] object-contain mix-blend-multiply" />
                             </div>
                             <div className="flex flex-col justify-center">
                                 <span className="text-green-400 font-extrabold text-[14px] leading-[1.1] uppercase tracking-tight">Nhật ký sản xuất</span>
@@ -140,7 +140,7 @@ const PublicFooter = () => {
                 <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="space-y-2 text-center md:text-left">
                         <Text className="text-gray-400 text-xs block">
-                            © 2026 EBookFarm. Tất cả quyền được bảo lưu.
+                            © 2026 EAPLS. Tất cả quyền được bảo lưu.
                         </Text>
                         <Text className="text-gray-500 text-xs block">
                             Minh bạch - Đồng bộ - Tin cậy - Phù hợp tiêu chuẩn Việt Nam & Quốc tế

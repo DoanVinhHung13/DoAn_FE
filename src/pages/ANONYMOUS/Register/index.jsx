@@ -6,7 +6,7 @@ import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
 import authSession from 'src/redux/authSession';
 
-import logo from 'src/assets/logo-ebookfarm.jpg';
+import logo from 'src/assets/logo-eapls.jpg';
 import AuthService from 'src/services/AuthService'
 import { normalizeRole } from 'src/constants/roles'
 import { getDashboardPathByRole } from 'src/router/roleRedirects'
@@ -118,7 +118,7 @@ const Register = () => {
 
             <div className="relative z-10 bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/10 text-center">
                 <Text className="text-white/80 text-xs font-medium italic">
-                    "EBookFarm giúp chúng tôi chuyên nghiệp hóa quy trình sản xuất và nâng cao giá trị thương phẩm."
+                    "EAPLS giúp chúng tôi chuyên nghiệp hóa quy trình sản xuất và nâng cao giá trị thương phẩm."
                 </Text>
             </div>
         </div>
@@ -130,7 +130,7 @@ const Register = () => {
                     <div className="w-14 h-14 rounded-2xl bg-white shadow-lg flex items-center justify-center overflow-hidden border border-gray-100 p-2">
                         <img src={logo} alt="Logo" className="w-full h-full object-contain" />
                     </div>
-                    <Text className="font-black text-2xl text-gray-800 tracking-tighter uppercase">EBookFarm</Text>
+                    <Text className="font-black text-2xl text-gray-800 tracking-tighter uppercase">EAPLS</Text>
                 </Link>
                 {/* Mobile Logo */}
                 <div className="block md:hidden mb-4">

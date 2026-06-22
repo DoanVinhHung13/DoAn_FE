@@ -1,8 +1,8 @@
-import { ConfigProvider, theme as antdTheme } from "antd"
+﻿import { ConfigProvider, theme as antdTheme } from "antd"
 import { useContext } from "react"
 import { StoreContext } from "src/contexts"
 
-// Màu primary của EBookFarm (xanh lá nông nghiệp)
+// Màu primary của EAPLS (xanh lá nông nghiệp)
 export const ColorPrimary = "#22c55e"
 
 function GlobalThemeConfig({ children }) {

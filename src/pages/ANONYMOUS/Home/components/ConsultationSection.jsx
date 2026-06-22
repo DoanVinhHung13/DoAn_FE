@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { Row, Col, Card, Form, Input, Button, Typography, Select } from 'antd'
 import { PhoneOutlined, MailOutlined, UserOutlined, ShopOutlined } from '@ant-design/icons'
 import ConsultationService from 'src/services/ConsultationService'
@@ -20,12 +20,12 @@ const ConsultationSection = () => {
       if (response.data.success) {
         if (response.data.data?.aiResponse) {
           message.success({
-            content: 'Gửi yêu cầu thành công! Vui lòng kiểm tra email để xem gợi ý sơ bộ từ AI EBookFarm.',
+            content: 'Gửi yêu cầu thành công! Vui lòng kiểm tra email để xem gợi ý sơ bộ từ AI EAPLS.',
             duration: 5,
           })
 
           Modal.success({
-            title: 'Gợi ý sơ bộ từ AI EBookFarm',
+            title: 'Gợi ý sơ bộ từ AI EAPLS',
             content: (
               <div className="p-4 mt-4 border border-blue-100 bg-blue-50 rounded-xl">
                 <div className="flex items-center gap-2 mb-3">

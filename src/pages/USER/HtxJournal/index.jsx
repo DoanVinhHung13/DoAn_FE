@@ -28,7 +28,7 @@ import JournalEntry from '../../FARM_MANAGER/JournalEntry';
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import logoEBookFarm from 'src/assets/logo-ebookfarm.jpg';
+import logoEAPLS from 'src/assets/logo-eapls.jpg';
 import JournalService from 'src/services/JournalService'
 import SchemaService from 'src/services/SchemaService'
 
@@ -989,7 +989,7 @@ const HtxJournalMgmt = () => {
 
             <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-3 rounded-xl border border-green-100">
               <SafetyCertificateOutlined className="text-xl" />
-              <Text className="text-green-700 font-bold uppercase tracking-tight text-xs">Chứng nhận bởi EBookFarm Systems</Text>
+              <Text className="text-green-700 font-bold uppercase tracking-tight text-xs">Chứng nhận bởi EAPLS Systems</Text>
             </div>
           </div>
         )}
