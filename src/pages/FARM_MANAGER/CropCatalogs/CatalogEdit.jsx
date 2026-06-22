@@ -72,6 +72,8 @@ const CatalogEdit = () => {
       message.success('Cập nhật danh mục cây trồng thành công.');
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail', id] });
+      // Invalidate SystemKey cache để form Crops cập nhật ngay
+      queryClient.invalidateQueries({ queryKey: ['system-key'] });
       navigate(ROUTER.FM_CROP_CATALOGS);
     },
     onError: (error) => {

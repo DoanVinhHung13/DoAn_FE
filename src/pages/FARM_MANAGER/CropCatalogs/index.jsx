@@ -105,7 +105,7 @@ const CropCatalogs = () => {
   const [inlineError, setInlineError] = useState('');
 
   // SystemKey hook
-  const { getCombo } = useSystemKey();
+  const { getCombo, refetchSystemKey } = useSystemKey();
   const catalogStatusOptions = getCombo(SYSTEM_KEY.CROP_STATUS);
 
   // Status filter options với SystemKey
@@ -164,12 +164,14 @@ const CropCatalogs = () => {
       };
       return CropService.createCrop(payload);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setInlineError('');
       setIsCreating(false);
       createForm.resetFields();
       message.success('Tạo danh mục cây trồng thành công.');
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+      // Refetch SystemKey để cập nhật dropdown trong form Crops
+      await refetchSystemKey();
     },
     onError: (error) => {
       const apiMessage =
@@ -189,13 +191,15 @@ const CropCatalogs = () => {
       };
       return CropService.updateCrop(id, payload);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setInlineError('');
       setEditingCatalog(null);
       form.resetFields();
       message.success('Cập nhật danh mục cây trồng thành công.');
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
+      // Refetch SystemKey để cập nhật dropdown trong form Crops
+      await refetchSystemKey();
     },
     onError: (error) => {
       if (error?.response?.status === 404) {
@@ -218,11 +222,19 @@ const CropCatalogs = () => {
       nextActive
         ? CropService.activateCrop(id)
         : CropService.deactivateCrop(id),
-    onSuccess: () => {
+    onSuccess: async () => {
+      console.log('🎯 statusMutation.onSuccess triggered');
       setInlineError('');
       message.success('Thay đổi trạng thái danh mục cây trồng thành công.');
+      
+      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
+      
+      // Refetch SystemKey để cập nhật dropdown trong form Crops
+      console.log('🔄 Refetching SystemKey...');
+      await refetchSystemKey();
+      console.log('✅ SystemKey refetched');
     },
     onError: (error) => {
       const statusCode = error?.response?.status;
@@ -259,10 +271,19 @@ const CropCatalogs = () => {
   });
 
   const handleConfirmStatusChange = () => {
-    if (!statusTarget) return;
+    console.log('🔔 handleConfirmStatusChange called, statusTarget:', statusTarget);
+    if (!statusTarget) {
+      console.warn('⚠️ statusTarget is null, aborting');
+      return;
+    }
+    
+    const id = getItemId(statusTarget);
+    const nextActive = !isCatalogActive(statusTarget);
+    console.log('📝 Mutating status:', { id, nextActive });
+    
     statusMutation.mutate({
-      id: getItemId(statusTarget),
-      nextActive: !isCatalogActive(statusTarget),
+      id,
+      nextActive,
     });
     setStatusTarget(null);
   };
@@ -300,7 +321,8 @@ const CropCatalogs = () => {
     {
       title: 'STT',
       key: 'index',
-      width: 80,
+      width: 70,
+      align: 'center',
       render: (_, __, index) => (
         <Text className="font-medium text-gray-400">{index + 1}</Text>
       ),
@@ -309,7 +331,7 @@ const CropCatalogs = () => {
       title: 'Tên loại cây trồng',
       key: 'name',
       dataIndex: 'name',
-      width: 280,
+      width: 220,
       render: (value, record) => (
         <Text strong className="block truncate text-gray-900">
           {displayValue(value || record.cropCatalogName)}
@@ -330,13 +352,16 @@ const CropCatalogs = () => {
     {
       title: 'Trạng thái',
       key: 'status',
-      width: 180,
+      width: 160,
+      align: 'center',
       render: (_, record) => <StatusBadge record={record} />,
     },
     {
       title: 'Hành động',
       key: 'action',
       width: 140,
+      align: 'center',
+      fixed: 'right',
       align: 'center',
       render: (_, record) => (
         <Space size={6} className="whitespace-nowrap">
@@ -447,6 +472,7 @@ const CropCatalogs = () => {
         styles={{ body: { padding: 0 } }}
       >
         <Table
+          bordered
           rowKey={(record) => getItemId(record) || record.name}
           loading={isLoading}
           dataSource={filteredCatalogs}

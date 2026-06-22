@@ -224,7 +224,7 @@ const Crops = () => {
       title: 'Mã cây',
       dataIndex: 'cropCode',
       key: 'cropCode',
-      width: 100,
+      width: 110,
       render: (value) => (
         <Text strong className="block truncate font-mono text-green-600">
           {displayValue(value)}
@@ -235,17 +235,18 @@ const Crops = () => {
       title: 'Tên cây trồng',
       dataIndex: 'name',
       key: 'name',
+      width: 220,
       render: (value, record) => (
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex min-w-0 items-center gap-3">
           {record.imageUrl ? (
             <img
               src={record.imageUrl}
               alt={displayValue(value)}
-              className="h-8 w-8 shrink-0 rounded-lg border border-gray-100 object-cover"
+              className="h-12 w-12 shrink-0 rounded-lg border border-gray-200 object-cover"
             />
           ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
-              <Sprout className="h-4 w-4" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
+              <Sprout className="h-5 w-5" />
             </div>
           )}
           <Text strong className="block truncate text-gray-900">
