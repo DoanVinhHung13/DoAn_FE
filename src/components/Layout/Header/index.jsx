@@ -16,7 +16,7 @@ import {
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import logo from "src/assets/images/logo/logo-ebookfarm.jpg";
+import logo from "src/assets/images/logo/logo-eapls.jpg";
 import { clearAuthStorage } from "src/redux/storage";
 import { getAvatarUrl } from "src/utils/helpers";
 import { useAppDispatch } from "src/redux/hooks";
@@ -76,7 +76,7 @@ const PublicNavbar = () => {
             <div className="flex items-center justify-center w-12 h-12 overflow-hidden bg-white border rounded-full shadow-sm border-gray-50">
               <img
                 src={logo}
-                alt="EBookFarm Logo"
+                alt="EAPLS Logo"
                 className="w-[140%] h-[140%] object-contain mix-blend-multiply"
               />
             </div>
@@ -194,14 +194,14 @@ const PublicNavbar = () => {
                 >
                   Đăng nhập
                 </Button>
-                <Button
+                {/* <Button
                   type="primary"
                   size="large"
                   className="px-4 font-bold bg-green-600 border-0 rounded-full shadow-lg hover:bg-green-700 md:px-6 shadow-green-100"
                   onClick={() => navigate(ROUTER.REGISTER)}
                 >
                   Đăng ký
-                </Button>
+                </Button> */}
               </Space>
             )}
 
@@ -221,7 +221,7 @@ const PublicNavbar = () => {
             <div className="flex items-center gap-2">
               <img src={logo} alt="Logo" className="object-contain w-8 h-8" />
               <span className="text-sm font-black text-green-600 uppercase">
-                EBookFarm
+                EAPLS
               </span>
             </div>
           }
@@ -287,7 +287,7 @@ const PublicNavbar = () => {
 
             <AntdDivider className="my-2" />
 
-            {!isLoginContext && (
+            {/* {!isLoginContext && (
               <Button
                 type="primary"
                 className="h-12 font-bold bg-green-600 border-0 rounded-xl"
@@ -298,7 +298,7 @@ const PublicNavbar = () => {
               >
                 Đăng ký
               </Button>
-            )}
+            )} */}
           </div>
         </Drawer>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { Row, Col, Card, Typography, Tag, Button, Modal, Divider } from 'antd'
 import { GlobalOutlined } from '@ant-design/icons'
 
@@ -15,7 +15,7 @@ const stories = [
     stats: ['500+ nông hộ', 'VietGAP', 'Xuất khẩu'],
     detail: {
       challenge: 'Trước đây, HTX gặp khó khăn trong việc kiểm soát nhật ký canh tác của hàng trăm hộ nông dân lẻ tẻ, dẫn đến chất lượng không đồng đều và khó đáp ứng tiêu chuẩn xuất khẩu.',
-      solution: 'Áp dụng EBookFarm để số hóa quy trình ghi chép. Mỗi nông hộ được cấp tài khoản mobile để cập nhật hoạt động hàng ngày. Cán bộ HTX giám sát thời gian thực qua bảng điều khiển trung tâm.',
+      solution: 'Áp dụng EAPLS để số hóa quy trình ghi chép. Mỗi nông hộ được cấp tài khoản mobile để cập nhật hoạt động hàng ngày. Cán bộ HTX giám sát thời gian thực qua bảng điều khiển trung tâm.',
       impact: '100% sản lượng đạt chuẩn VietGAP, giá bán tăng 20% nhờ minh bạch nguồn gốc, mở rộng thị trường sang Nhật Bản và Châu Âu.',
     },
   },
@@ -43,7 +43,7 @@ const stories = [
     stats: ['100+ ha', 'GMP', 'Dược phẩm'],
     detail: {
       challenge: 'Quản lý vùng nguyên liệu dược liệu trải dài trên nhiều tỉnh thành, cần đảm bảo tuân thủ nghiêm ngặt chuẩn GACP-WHO.',
-      solution: 'Sử dụng EBookFarm để theo dõi chi tiết từ khâu chọn giống, thổ nhưỡng đến khi thu hoạch và vận chuyển về nhà máy chiết xuất.',
+      solution: 'Sử dụng EAPLS để theo dõi chi tiết từ khâu chọn giống, thổ nhưỡng đến khi thu hoạch và vận chuyển về nhà máy chiết xuất.',
       impact: 'Số hóa hoàn toàn hồ sơ vùng trồng, nâng cao năng lực quản lý chuỗi cung ứng dược liệu sạch, đảm bảo 100% nguyên liệu đầu vào đạt chuẩn.',
     },
   },
@@ -80,7 +80,7 @@ const SuccessStoriesSection = () => {
               Câu chuyện thành công
             </Title>
             <Paragraph className="text-lg text-gray-500">
-              Hàng trăm doanh nghiệp và HTX đã tin tưởng sử dụng EBookFarm
+              Hàng trăm doanh nghiệp và HTX đã tin tưởng sử dụng EAPLS
             </Paragraph>
           </div>
 
@@ -188,7 +188,7 @@ const SuccessStoriesSection = () => {
                 </div>
                 <div>
                   <Title level={4} className="!text-blue-500 flex items-center gap-2">
-                    <div className="w-2 h-6 bg-blue-500 rounded-full"></div> Giải pháp từ EBookFarm
+                    <div className="w-2 h-6 bg-blue-500 rounded-full"></div> Giải pháp từ EAPLS
                   </Title>
                   <Paragraph className="text-base leading-relaxed text-gray-600">{selectedStory.detail.solution}</Paragraph>
                 </div>

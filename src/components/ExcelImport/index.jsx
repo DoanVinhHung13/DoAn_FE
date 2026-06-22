@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Upload, Button, message, Modal, Table, Space, Tag } from 'antd';
 import { FileExcelOutlined, UploadOutlined, CheckCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
@@ -74,7 +74,7 @@ const ExcelImport = ({ onImport, columns, title, templateData }) => {
     const ws = XLSX.utils.json_to_sheet(templateWithHeaders);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Danh sach mau");
-    XLSX.writeFile(wb, `EBookFarm_${title}_Mau.xlsx`);
+    XLSX.writeFile(wb, `EAPLS_${title}_Mau.xlsx`);
   };
 
   return (

@@ -1,7 +1,6 @@
 import React from 'react'
 import { Form, Input, Button } from 'antd'
 import { KeyOutlined, LockOutlined } from '@ant-design/icons'
-import { useMutation } from '@tanstack/react-query'
 import CustomModal from 'src/components/Modal/CustomModal'
 import UserService from 'src/services/UserService'
 import Notice from 'src/components/Notice'
@@ -13,17 +12,22 @@ const ResetPasswordModal = ({ open, onClose, user }) => {
     if (open) form.resetFields()
   }, [open, form])
 
-  const mutation = useMutation({
-    mutationFn: (values) => UserService.changeUserPassword(user.id, {
-      newPassword:        values.newPassword,
-      confirmNewPassword: values.confirmNewPassword,
-    }),
-    onSuccess: (res) => {
+  const [loading, setLoading] = React.useState(false)
+
+  const handleSubmit = async (values) => {
+    try {
+      setLoading(true)
+      const res = await UserService.changeUserPassword(user.id, {
+        newPassword:        values.newPassword,
+        confirmNewPassword: values.confirmNewPassword,
+      })
       if (res?.success === false) return
       Notice({ msg: 'Đặt lại mật khẩu thành công!', isSuccess: true })
       onClose()
-    },
-  })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <CustomModal
@@ -43,7 +47,7 @@ const ResetPasswordModal = ({ open, onClose, user }) => {
       footer={null}
       width={440}
     >
-      <Form form={form} layout="vertical" onFinish={(v) => mutation.mutate(v)} className="mt-4">
+      <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
         <Form.Item
           name="newPassword"
           label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mật khẩu mới</span>}
@@ -84,7 +88,7 @@ const ResetPasswordModal = ({ open, onClose, user }) => {
           <Button
             danger
             htmlType="submit"
-            loading={mutation.isPending || mutation.isLoading}
+            loading={loading}
             className="h-10 px-6 rounded-xl font-bold"
           >
             Đặt lại mật khẩu

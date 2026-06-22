@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import { Input, Spin } from 'antd'
 import { EnvironmentOutlined, SearchOutlined } from '@ant-design/icons'
 import L from 'src/lib/map/leafletGeoman'
+import geomanVi from 'src/lib/map/geomanVi'
 import {
   calculatePolygonArea,
   createGeoJSONPolygon,
@@ -196,6 +197,7 @@ const LandPlotMap = ({
     )
     osm.addTo(map)
     L.control.layers({ 'Bản đồ': osm, 'Vệ tinh': satellite }).addTo(map)
+    map.pm.setLang('vi', geomanVi, 'en')
 
     if (mode === 'draw' || mode === 'edit') {
       map.pm.addControls({
@@ -203,13 +205,14 @@ const LandPlotMap = ({
         drawMarker: false,
         drawCircleMarker: false,
         drawPolyline: false,
-        drawRectangle: true,
+        drawRectangle: false,
         drawPolygon: true,
         drawCircle: false,
-        editMode: mode === 'edit',
-        dragMode: mode === 'edit',
+        drawText: false,
+        editMode: true,
+        dragMode: true,
         cutPolygon: false,
-        removalMode: mode !== 'view',
+        removalMode: true,
       })
       map.pm.setGlobalOptions({
         pathOptions: {
@@ -225,11 +228,14 @@ const LandPlotMap = ({
 
       const handleCreate = (e) => {
         const { layer, shape } = e
-        if (shape !== 'Polygon' && shape !== 'Rectangle') return
+        if (shape !== 'Polygon') return
 
         clearActiveLayer()
         activeLayer.current = layer
         layer.setStyle({ color, fillColor: color, fillOpacity: 0.25 })
+        layer.pm?.enable({
+          allowSelfIntersection: false,
+        })
 
         const latLngs = layer.getLatLngs()[0]
         const geoJSON = createGeoJSONPolygon(latLngs)
@@ -306,7 +312,7 @@ const LandPlotMap = ({
 
     activeLayer.current = layer
 
-    if (mode === 'edit') {
+    if (mode === 'edit' || mode === 'draw') {
       layer.pm?.enable({
         allowSelfIntersection: false,
       })
@@ -381,42 +387,46 @@ const LandPlotMap = ({
     )
   }
 
+  const showToolbar = mode !== 'view'
+
   return (
     <div className={`land-plot-map ${className}`}>
-      <div className="land-plot-map__toolbar">
-        <div className="land-plot-map__search">
-          <Input
-            allowClear
-            prefix={<SearchOutlined className="text-slate-400" />}
-            placeholder="Tìm địa chỉ, xã, huyện, tỉnh..."
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value)
-              setSearchError('')
-              if (!e.target.value) {
-                setSearchResults([])
-                setShowResults(false)
-              }
-            }}
-            onPressEnter={() => handleAddressSearch()}
-            onFocus={() => {
-              if (searchResults.length) setShowResults(true)
-            }}
-          />
-          <button
-            type="button"
-            className="land-plot-map__search-btn"
-            onClick={() => handleAddressSearch()}
-            disabled={searchLoading}
-          >
-            {searchLoading ? 'Đang tìm...' : 'Tìm'}
+      {showToolbar && (
+        <div className="land-plot-map__toolbar">
+          <div className="land-plot-map__search">
+            <Input
+              allowClear
+              prefix={<SearchOutlined className="text-slate-400" />}
+              placeholder="Tìm địa chỉ, xã, huyện, tỉnh..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setSearchError('')
+                if (!e.target.value) {
+                  setSearchResults([])
+                  setShowResults(false)
+                }
+              }}
+              onPressEnter={() => handleAddressSearch()}
+              onFocus={() => {
+                if (searchResults.length) setShowResults(true)
+              }}
+            />
+            <button
+              type="button"
+              className="land-plot-map__search-btn"
+              onClick={() => handleAddressSearch()}
+              disabled={searchLoading}
+            >
+              {searchLoading ? 'Đang tìm...' : 'Tìm'}
+            </button>
+          </div>
+
+          <button type="button" className="land-plot-map__locate" onClick={handleLocate}>
+            <EnvironmentOutlined /> GPS
           </button>
         </div>
-
-        <button type="button" className="land-plot-map__locate" onClick={handleLocate}>
-          <EnvironmentOutlined /> GPS
-        </button>
-      </div>
+      )}
 
       {(mode === 'draw' || mode === 'edit') && (
         <div className="land-plot-map__hint-bar">
@@ -428,11 +438,11 @@ const LandPlotMap = ({
         <div className="land-plot-map__search-error">{overlapError}</div>
       )}
 
-      {searchError && (
+      {showToolbar && searchError && (
         <div className="land-plot-map__search-error">{searchError}</div>
       )}
 
-      {showResults && searchResults.length > 0 && (
+      {showToolbar && showResults && searchResults.length > 0 && (
         <ul className="land-plot-map__search-results">
           {searchResults.map((result) => (
             <li key={result.id}>
@@ -445,7 +455,7 @@ const LandPlotMap = ({
         </ul>
       )}
 
-      {searchLoading && (
+      {showToolbar && searchLoading && (
         <div className="land-plot-map__search-loading">
           <Spin size="small" /> Đang tìm địa chỉ...
         </div>

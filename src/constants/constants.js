@@ -1,5 +1,5 @@
-// Application-wide constants
-export const APP_NAME = "EBookFarm"
+﻿// Application-wide constants
+export const APP_NAME = "EAPLS"
 export const DEFAULT_PAGE_SIZE = 10
 
 export const GOOGLE_CLIENT_ID =

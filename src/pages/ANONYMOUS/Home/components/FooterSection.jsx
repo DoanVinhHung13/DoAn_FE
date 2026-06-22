@@ -1,4 +1,4 @@
-import React from 'react'
+﻿import React from 'react'
 import { Typography, Button } from 'antd'
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -25,7 +25,7 @@ const FooterSection = () => {
               Sẵn sàng để đưa nông trại của bạn lên tầm cao mới?
             </Title>
             <Paragraph className="text-xl leading-relaxed text-gray-400">
-              Hãy tham gia cùng hàng ngàn nông hộ và HTX đã số hóa quy trình sản xuất cùng EBookFarm.
+              Hãy tham gia cùng hàng ngàn nông hộ và HTX đã số hóa quy trình sản xuất cùng EAPLS.
             </Paragraph>
           </div>
           <div className="relative z-10 flex flex-wrap justify-center gap-6">

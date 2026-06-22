@@ -16,7 +16,7 @@ import {
 import { ChevronDown } from 'lucide-react'
 import { getMenuByRole } from 'src/router/MenuItem'
 import ROUTER from 'src/router/ROUTER'
-import logoImg from 'src/assets/images/logo/logo-ebookfarm.jpg'
+import logoImg from 'src/assets/images/logo/logo-eapls.jpg'
 
 const { Header, Sider, Content } = Layout
 const { Title, Text } = Typography
@@ -103,7 +103,7 @@ const LayoutAdmin = () => {
           </div>
         ) : (
           <div className="flex items-center gap-4 w-full justify-center">
-            <img src={logoImg} alt="EBook Farm Logo" className="w-[65px] h-[65px] object-contain mix-blend-multiply" />
+            <img src={logoImg} alt="EAPLS Logo" className="w-[65px] h-[65px] object-contain mix-blend-multiply" />
             <div className="flex flex-col text-center">
               <span className="text-green-600 font-bold text-[15px] leading-[1.2]">NHẬT KÝ SẢN XUẤT</span>
               <span className="text-green-600 font-bold text-[15px] leading-[1.2]">ĐIỆN TỬ</span>

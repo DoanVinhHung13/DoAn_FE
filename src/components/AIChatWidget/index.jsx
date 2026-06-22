@@ -23,7 +23,7 @@ const AIChatWidget = () => {
         {
             id: 1,
             type: 'bot',
-            text: 'Xin chào! 👋 Tôi là trợ lý ảo của EBookFarm. Tôi có thể giúp gì cho bạn?',
+            text: 'Xin chào! 👋 Tôi là trợ lý ảo của EAPLS. Tôi có thể giúp gì cho bạn?',
             timestamp: new Date()
         }
     ]);
@@ -36,8 +36,8 @@ const AIChatWidget = () => {
     const messagesEndRef = useRef(null);
 
     // Lấy thông tin user từ localStorage (key đồng nhất với STORAGE.TOKEN)
-    const token = localStorage.getItem('token-ebookfarm') || sessionStorage.getItem('token-ebookfarm');
-    const userStr = localStorage.getItem('user-info-ebookfarm') || sessionStorage.getItem('user-info-ebookfarm');
+    const token = localStorage.getItem('token-eapls') || sessionStorage.getItem('token-eapls');
+    const userStr = localStorage.getItem('user-info-eapls') || sessionStorage.getItem('user-info-eapls');
     const user = userStr ? JSON.parse(userStr) : null;
 
     // Lấy thông tin chat khi mở widget
@@ -87,14 +87,14 @@ const AIChatWidget = () => {
 
     const botResponses = {
         'greeting': 'Xin chào! 😊 Rất vui được hỗ trợ bạn. Tôi có thể giúp bạn tìm hiểu về:\n\n✅ Tính năng hệ thống\n💰 Bảng giá dịch vụ\n📞 Thông tin liên hệ\n🎓 Hướng dẫn sử dụng\n\nBạn quan tâm đến vấn đề nào?',
-        'tính năng': 'EBookFarm cung cấp giải pháp toàn diện:\n\n📝 **Nhật ký sản xuất điện tử**\n• Ghi chép trên mobile/web\n• Lưu trữ đám mây an toàn\n• Báo cáo tự động\n\n🔍 **Truy xuất nguồn gốc QR**\n• Tạo mã QR cho từng lô hàng\n• Người tiêu dùng quét để xem thông tin\n• Tuân thủ TCVN 35+ tiêu chuẩn\n\n⛓️ **Quản lý chuỗi cung ứng**\n• Kết nối nhà cung cấp - nông trại - HTX\n• Kiểm soát chất lượng toàn chuỗi\n• Báo cáo & phân tích\n\nBạn muốn demo thử không?',
+        'tính năng': 'EAPLS cung cấp giải pháp toàn diện:\n\n📝 **Nhật ký sản xuất điện tử**\n• Ghi chép trên mobile/web\n• Lưu trữ đám mây an toàn\n• Báo cáo tự động\n\n🔍 **Truy xuất nguồn gốc QR**\n• Tạo mã QR cho từng lô hàng\n• Người tiêu dùng quét để xem thông tin\n• Tuân thủ TCVN 35+ tiêu chuẩn\n\n⛓️ **Quản lý chuỗi cung ứng**\n• Kết nối nhà cung cấp - nông trại - HTX\n• Kiểm soát chất lượng toàn chuỗi\n• Báo cáo & phân tích\n\nBạn muốn demo thử không?',
         'giá': '💰 **Bảng giá linh hoạt theo nhu cầu:**\n\n🌱 **Gói Cơ bản** - Từ 500k/tháng\n• Phù hợp nông hộ nhỏ (< 5ha)\n• Nhật ký điện tử cơ bản\n• 100 mã QR/tháng\n\n🌿 **Gói Chuyên nghiệp** - Từ 2tr/tháng\n• Cho HTX và trang trại (5-50ha)\n• Đầy đủ tính năng\n• 1000 mã QR/tháng\n• Hỗ trợ ưu tiên\n\n🌳 **Gói Doanh nghiệp** - Báo giá riêng\n• Giải pháp toàn diện\n• Tùy chỉnh theo yêu cầu\n• Không giới hạn\n• Đào tạo & hỗ trợ 24/7\n\n📞 Gọi 1900 xxxx để nhận ưu đãi!',
-        'liên hệ': '📞 **Liên hệ với chúng tôi:**\n\n☎️ **Hotline:** 1900 xxxx\n📧 **Email:** contact@ebookfarm.vn\n🌐 **Website:** ebookfarm.vn\n🏢 **Văn phòng:** [Địa chỉ]\n\n⏰ **Giờ làm việc:**\nT2-T6: 8:00 - 17:30\nT7: 8:00 - 12:00\n\n💬 Hoặc để lại thông tin, chúng tôi sẽ gọi lại trong 30 phút!',
+        'liên hệ': '📞 **Liên hệ với chúng tôi:**\n\n☎️ **Hotline:** 1900 xxxx\n📧 **Email:** contact@eapls.vn\n🌐 **Website:** eapls.vn\n🏢 **Văn phòng:** [Địa chỉ]\n\n⏰ **Giờ làm việc:**\nT2-T6: 8:00 - 17:30\nT7: 8:00 - 12:00\n\n💬 Hoặc để lại thông tin, chúng tôi sẽ gọi lại trong 30 phút!',
         'hướng dẫn': '📚 **Tài liệu & Hỗ trợ:**\n\n🎥 **Video hướng dẫn**\n• Cài đặt & thiết lập ban đầu\n• Ghi nhật ký sản xuất\n• Tạo mã QR truy xuất\n• Quản lý chuỗi cung ứng\n\n📖 **Tài liệu PDF**\n• Hướng dẫn chi tiết từng tính năng\n• FAQ - Câu hỏi thường gặp\n• Best practices\n\n👨‍🏫 **Đào tạo trực tiếp**\n• Đào tạo tại văn phòng\n• Đào tạo tại nông trại\n• Webinar online\n\n🆘 **Hỗ trợ 24/7**\n• Hotline: 1900 xxxx\n• Live chat\n• Email support\n\nBạn muốn nhận tài liệu nào?',
         'tcvn': '📋 **Tiêu chuẩn TCVN:**\n\nHệ thống tuân thủ 35+ tiêu chuẩn TCVN về truy xuất nguồn gốc:\n\n🥬 Rau quả: TCVN 12827:2023\n🐷 Thịt lợn: TCVN 13166-4:2020\n☕ Cà phê: TCVN 13840:2023\n🐟 Thủy sản: TCVN 13841:2023\n🌾 Gạo: TCVN 13842:2023\n\nVà nhiều tiêu chuẩn khác...\n\n✅ Đảm bảo xuất khẩu quốc tế\n✅ Minh bạch 100%\n✅ Tích hợp Cổng TXNG Quốc gia',
         'demo': '🎯 **Đăng ký Demo miễn phí:**\n\nChúng tôi sẽ:\n✅ Giới thiệu chi tiết hệ thống\n✅ Demo trực tiếp các tính năng\n✅ Tư vấn giải pháp phù hợp\n✅ Báo giá chi tiết\n\n⏱️ Thời gian: 30-45 phút\n📍 Hình thức: Online hoặc tại văn phòng\n\n📞 Gọi ngay 1900 xxxx hoặc để lại SĐT, chúng tôi sẽ liên hệ!',
-        'thanks': 'Cảm ơn bạn đã quan tâm đến EBookFarm! 🙏\n\nNếu cần hỗ trợ thêm, đừng ngại liên hệ:\n📞 Hotline: 1900 xxxx\n📧 Email: contact@ebookfarm.vn\n\nChúc bạn một ngày tốt lành! 🌟',
-        'default': 'Cảm ơn bạn đã liên hệ! 😊\n\nTôi chưa hiểu rõ câu hỏi của bạn. Bạn có thể:\n\n1️⃣ Chọn câu hỏi gợi ý bên dưới\n2️⃣ Gọi hotline: 1900 xxxx\n3️⃣ Email: contact@ebookfarm.vn\n\nHoặc hỏi tôi về:\n• Tính năng hệ thống\n• Bảng giá\n• Hướng dẫn sử dụng\n• Tiêu chuẩn TCVN\n• Đăng ký demo'
+        'thanks': 'Cảm ơn bạn đã quan tâm đến EAPLS! 🙏\n\nNếu cần hỗ trợ thêm, đừng ngại liên hệ:\n📞 Hotline: 1900 xxxx\n📧 Email: contact@eapls.vn\n\nChúc bạn một ngày tốt lành! 🌟',
+        'default': 'Cảm ơn bạn đã liên hệ! 😊\n\nTôi chưa hiểu rõ câu hỏi của bạn. Bạn có thể:\n\n1️⃣ Chọn câu hỏi gợi ý bên dưới\n2️⃣ Gọi hotline: 1900 xxxx\n3️⃣ Email: contact@eapls.vn\n\nHoặc hỏi tôi về:\n• Tính năng hệ thống\n• Bảng giá\n• Hướng dẫn sử dụng\n• Tiêu chuẩn TCVN\n• Đăng ký demo'
     };
 
     const getBotResponse = (userMessage) => {
@@ -387,7 +387,7 @@ const AIChatWidget = () => {
                                                         img: ({ node, alt, src, ...props }) => {
                                                             if (alt === 'QR') {
                                                                 const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-                                                                const qrUrl = src ? src.replace('https://ebookfarm.vn', baseUrl) : `${baseUrl}/trace/demo-qr-123`;
+                                                                const qrUrl = src ? src.replace('https://eapls.vn', baseUrl) : `${baseUrl}/trace/demo-qr-123`;
                                                                 
                                                                 return (
                                                                     <div className="flex flex-col items-center justify-center bg-white p-4 my-4 rounded-xl border border-gray-200 shadow-sm">

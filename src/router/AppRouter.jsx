@@ -15,7 +15,7 @@ import { ROLES } from 'src/constants/roles'
 // ANONYMOUS
 const Home = React.lazy(() => import('../pages/ANONYMOUS/Home'))
 const Login = React.lazy(() => import('../pages/ANONYMOUS/Login'))
-const Register = React.lazy(() => import('../pages/ANONYMOUS/Register'))
+// const Register = React.lazy(() => import('../pages/ANONYMOUS/Register'))
 const ForgotPassword = React.lazy(() => import('../pages/ANONYMOUS/ForgotPassword'))
 const NotFound = React.lazy(() => import('../pages/SupportPage/NotFound'))
 const Forbidden = React.lazy(() => import('../pages/ANONYMOUS/Forbidden'))
@@ -122,10 +122,10 @@ const routes = [
     path: ROUTER.LOGIN,
     element: <Lazy><GuestRoute><Login /></GuestRoute></Lazy>,
   },
-  {
-    path: ROUTER.REGISTER,
-    element: <Lazy><GuestRoute><Register /></GuestRoute></Lazy>,
-  },
+  // {
+  //   path: ROUTER.REGISTER,
+  //   element: <Lazy><GuestRoute><Register /></GuestRoute></Lazy>,
+  // },
   {
     path: ROUTER.FORGOT_PASSWORD,
     element: <Lazy><GuestRoute><ForgotPassword /></GuestRoute></Lazy>,

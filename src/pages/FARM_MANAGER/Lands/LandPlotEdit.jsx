@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Alert,
@@ -12,13 +12,15 @@ import {
   Select,
   Space,
   Spin,
+  Upload,
+  message,
 } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeftOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons'
 
 import TitleCustom from 'src/components/TitleCustom'
 import LandPlotMap from 'src/components/LandPlotMap'
 import LandPlotService from 'src/services/LandPlotService'
+import UploadService from 'src/services/UploadService'
 import { areaToHectares, findOverlappingPlot, parseBoundaryJson } from 'src/utils/geoJsonUtils'
 import {
   AREA_UNIT_OPTIONS,
@@ -29,52 +31,60 @@ import {
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const LandPlotEdit = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { canManage, routes } = useLandPlotAccess()
   const [form] = Form.useForm()
-  const [polygonData, setPolygonData] = useState(null)
+
+  // ── State: dữ liệu bản đồ ────────────────────────────────────────────────
+  const [polygonData, setPolygonData] = useState(null)  // polygon mới vẽ (null = chưa vẽ lại)
   const [mapError, setMapError] = useState('')
 
+  // ── State: giấy chứng nhận đất ───────────────────────────────────────────
+  const [certFile, setCertFile] = useState(null)  // file mới (null = chưa đổi)
+  const [certPreview, setCertPreview] = useState('')
+
+  // ── State: chi tiết vùng trồng đang sửa ──────────────────────────────────
+  const [plot, setPlot] = useState(null)
+  const [plotLoading, setPlotLoading] = useState(false)
+  const [plotError, setPlotError] = useState(null)
+
+  // ── State: danh sách vùng trồng khác (kiểm tra chồng lấn) ────────────────
+  const [existingPlots, setExistingPlots] = useState([])
+
+  // ── State: loading submit ─────────────────────────────────────────────────
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+
+  // Nếu không có quyền thì về trang danh sách
   useEffect(() => {
-    if (!canManage) {
-      navigate(routes.list, { replace: true })
-    }
+    if (!canManage) navigate(routes.list, { replace: true })
   }, [canManage, navigate, routes.list])
 
-  const {
-    data: plot,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ['land-plot-detail', id],
-    queryFn: async () => {
+  // ── Fetch: lấy chi tiết vùng trồng cần sửa ───────────────────────────────
+  const fetchPlotDetail = useCallback(async () => {
+    if (!id) return
+    try {
+      setPlotLoading(true)
+      setPlotError(null)
       const response = await LandPlotService.getLandPlotById(id)
       const payload = response?.data ?? response ?? {}
-      return payload?.data ?? payload
-    },
-    enabled: Boolean(id),
-  })
+      setPlot(payload?.data ?? payload)
+    } catch (err) {
+      setPlotError(err)
+    } finally {
+      setPlotLoading(false)
+    }
+  }, [id])
 
-  const farmId = plot?.farmId || plot?.farm?.id
+  useEffect(() => {
+    fetchPlotDetail()
+  }, [fetchPlotDetail])
 
-  const { data: existingPlots = [] } = useQuery({
-    queryKey: ['land-plots-overlap-edit', id],
-    queryFn: async () => {
-      const response = await LandPlotService.getLandPlots({
-        PageIndex: 1,
-        PageSize: 200,
-      })
-      return normalizeLandPlotResponse(response).items.filter(
-        (item) => (item.id || item._id) !== id,
-      )
-    },
-    enabled: canManage && Boolean(id),
-  })
-
+  // Điền sẵn giá trị form khi có dữ liệu
   useEffect(() => {
     if (!plot) return
     form.setFieldsValue({
@@ -86,76 +96,128 @@ const LandPlotEdit = () => {
       ownershipType: plot.ownershipType,
       description: plot.description,
     })
+    setCertPreview(plot.imageUrl || '')
+    setCertFile(null)
   }, [plot, form])
 
-  const updateMutation = useMutation({
-    mutationFn: (body) => LandPlotService.updateLandPlot(id, body),
-    onSuccess: (res) => {
-      if (res?.success === false) {
-        const messageText = res?.message || res?.errors?.[0] || ''
-        if (messageText.toLowerCase().includes('overlap') || messageText.includes('chồng')) {
-          setMapError(MSG_LM_25)
-        }
-        return
-      }
-      queryClient.invalidateQueries({ queryKey: ['land-plots'] })
-      queryClient.invalidateQueries({ queryKey: ['land-plot-detail', id] })
-      queryClient.invalidateQueries({ queryKey: ['land-plots-overlap'] })
-      queryClient.invalidateQueries({ queryKey: ['land-plots-overlap-edit'] })
-      navigate(routes.detail(id))
-    },
-    onError: (error) => {
-      const messageText = error?.message || ''
-      if (messageText.toLowerCase().includes('overlap') || messageText.includes('chồng')) {
-        setMapError(MSG_LM_25)
-      }
-    },
-  })
+  // ── Fetch: lấy vùng trồng khác để kiểm tra chồng lấn ─────────────────────
+  // Loại trừ chính vùng trồng đang sửa
+  const fetchExistingPlots = useCallback(async () => {
+    if (!canManage || !id) return
+    try {
+      const response = await LandPlotService.getLandPlots({ PageIndex: 1, PageSize: 200 })
+      const allPlots = normalizeLandPlotResponse(response).items
+      setExistingPlots(allPlots.filter((item) => (item.id || item._id) !== id))
+    } catch {
+      // lỗi không ảnh hưởng UX chính, bỏ qua
+    }
+  }, [canManage, id])
 
+  useEffect(() => {
+    fetchExistingPlots()
+  }, [fetchExistingPlots])
+
+  // ── Action: bản đồ vẽ polygon xong ───────────────────────────────────────
   const handlePolygonChange = (data) => {
     setMapError('')
     setPolygonData(data)
     if (data?.areaM2) {
       const currentUnit = form.getFieldValue('areaUnit') || 'ha'
-      form.setFieldsValue({
-        area:
-          currentUnit === 'm2'
-            ? Number(data.areaM2.toFixed(2))
-            : areaToHectares(data.areaM2),
-      })
+      const area = currentUnit === 'm2'
+        ? Number(data.areaM2.toFixed(2))
+        : areaToHectares(data.areaM2)
+      form.setFieldsValue({ area })
     }
   }
 
+  // ── Action: chọn file giấy chứng nhận ────────────────────────────────────
+  const handleBeforeUpload = (file) => {
+    if (!file.type.startsWith('image/')) {
+      message.error('Chỉ chấp nhận file ảnh!')
+      return Upload.LIST_IGNORE
+    }
+    if (file.size / 1024 / 1024 > 5) {
+      message.error('Kích thước ảnh phải nhỏ hơn 5MB!')
+      return Upload.LIST_IGNORE
+    }
+    setCertFile(file)
+    const reader = new FileReader()
+    reader.onload = (e) => setCertPreview(e.target.result)
+    reader.readAsDataURL(file)
+    return false // ngăn upload tự động của Ant Design
+  }
+
+  // ── Action: submit form cập nhật ─────────────────────────────────────────
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
-      const boundary =
-        polygonData?.boundaryJson || plot?.boundaryJson || null
+
+      // Ưu tiên polygon mới vẽ; nếu chưa vẽ lại thì giữ ranh giới cũ
+      const boundary = polygonData?.boundaryJson || plot?.boundaryJson || null
       if (!boundary) {
         setMapError('Vui lòng vẽ hoặc giữ ranh giới vùng trồng trên bản đồ.')
         return
       }
 
+      // Kiểm tra chồng lấn với các vùng trồng khác
       const geoJSON = polygonData?.geoJSON || parseBoundaryJson(boundary)
       if (findOverlappingPlot(geoJSON, existingPlots, id)) {
         setMapError(MSG_LM_25)
         return
       }
 
-      const payload = buildLandPlotPayload(
-        values,
-        polygonData || { boundaryJson: boundary },
-        farmId,
-      )
-      updateMutation.mutate(payload)
-    } catch {
-      // validation handled by antd form
+      // Upload ảnh mới nếu người dùng chọn file khác
+      let imageUrl = plot?.imageUrl || null
+      if (certFile) {
+        setIsUploading(true)
+        try {
+          const formData = new FormData()
+          formData.append('file', certFile)
+          const uploadRes = await UploadService.uploadImage(formData, { skipNotice: true })
+          imageUrl = uploadRes?.data?.url || uploadRes?.url || null
+        } finally {
+          setIsUploading(false)
+        }
+      }
+
+      // Gọi API cập nhật vùng trồng
+      setIsSubmitting(true)
+      try {
+        const farmId = plot?.farmId || plot?.farm?.id
+        const payload = buildLandPlotPayload(
+          { ...values, imageUrl },
+          polygonData || { boundaryJson: boundary },
+          farmId,
+        )
+        const res = await LandPlotService.updateLandPlot(id, payload)
+
+        if (res?.success === false) {
+          const msg = res?.message || res?.errors?.[0] || ''
+          if (msg.toLowerCase().includes('overlap') || msg.includes('chồng')) {
+            setMapError(MSG_LM_25)
+          }
+          return
+        }
+
+        navigate(routes.detail(id))
+      } finally {
+        setIsSubmitting(false)
+      }
+    } catch (err) {
+      // Kiểm tra lỗi chồng lấn từ exception
+      const msg = err?.message || ''
+      if (msg.toLowerCase().includes('overlap') || msg.includes('chồng')) {
+        setMapError(MSG_LM_25)
+      }
+      // Các lỗi validation của Ant Design Form tự hiển thị, không cần xử lý
     }
   }
 
+  // ── Guard ─────────────────────────────────────────────────────────────────
   if (!canManage) return null
 
-  if (isLoading) {
+  // ── Trạng thái loading ────────────────────────────────────────────────────
+  if (plotLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Spin size="large" />
@@ -163,7 +225,8 @@ const LandPlotEdit = () => {
     )
   }
 
-  if (isError || !plot) {
+  // ── Trạng thái lỗi ────────────────────────────────────────────────────────
+  if (plotError || !plot) {
     return (
       <div className="space-y-6">
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(routes.list)}>
@@ -173,14 +236,23 @@ const LandPlotEdit = () => {
           type="error"
           showIcon
           message="Không thể tải thông tin vùng trồng để chỉnh sửa."
-          action={<Button size="small" onClick={() => refetch()}>Thử lại</Button>}
+          action={
+            <Button size="small" onClick={fetchPlotDetail}>
+              Thử lại
+            </Button>
+          }
         />
       </div>
     )
   }
 
+  const isSaving = isSubmitting || isUploading
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
+
+      {/* Tiêu đề & nút lưu */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button
@@ -194,7 +266,7 @@ const LandPlotEdit = () => {
         <Button
           type="primary"
           icon={<SaveOutlined />}
-          loading={updateMutation.isPending}
+          loading={isSaving}
           onClick={handleSubmit}
         >
           Lưu
@@ -202,6 +274,8 @@ const LandPlotEdit = () => {
       </div>
 
       <Row gutter={[16, 16]}>
+
+        {/* Cột trái: form thông tin */}
         <Col xs={24} xl={10}>
           <Card title="Thông tin vùng trồng">
             <Form form={form} layout="vertical">
@@ -249,12 +323,35 @@ const LandPlotEdit = () => {
               <Form.Item label="Mô tả" name="description">
                 <Input.TextArea rows={3} />
               </Form.Item>
+
+              <Form.Item label="Giấy chứng nhận đất">
+                <Upload
+                  listType="picture-card"
+                  showUploadList={false}
+                  accept="image/*"
+                  beforeUpload={handleBeforeUpload}
+                >
+                  {certPreview ? (
+                    <img
+                      src={certPreview}
+                      alt="Giấy chứng nhận"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div>
+                      <UploadOutlined />
+                      <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
+                    </div>
+                  )}
+                </Upload>
+              </Form.Item>
             </Form>
           </Card>
         </Col>
 
+        {/* Cột phải: bản đồ GIS */}
         <Col xs={24} xl={14}>
-          <Card title="Chỉnh sửa ranh giới trên bản đồ">
+          <Card title="Chỉnh sửa bản đồ ranh giới">
             {mapError && (
               <Alert className="mb-3" type="error" showIcon message={mapError} />
             )}
@@ -263,26 +360,25 @@ const LandPlotEdit = () => {
               height={520}
               boundaryJson={plot.boundaryJson}
               excludePlotId={id}
+              overlapPlots={existingPlots}
               onPolygonChange={handlePolygonChange}
               onOverlapError={(msg) => setMapError(msg || '')}
               onAddressSelect={({ address }) => {
                 if (address) form.setFieldsValue({ address })
               }}
-              overlapPlots={existingPlots}
             />
           </Card>
         </Col>
       </Row>
 
+      {/* Nút hành động cuối trang */}
       <div className="flex justify-end">
         <Space>
-          <Button onClick={() => navigate(routes.detail(id))}>
-            Hủy
-          </Button>
+          <Button onClick={() => navigate(routes.detail(id))}>Hủy</Button>
           <Button
             type="primary"
             icon={<SaveOutlined />}
-            loading={updateMutation.isPending}
+            loading={isSaving}
             onClick={handleSubmit}
           >
             Lưu

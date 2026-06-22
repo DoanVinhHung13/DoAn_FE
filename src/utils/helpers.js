@@ -80,7 +80,7 @@ export const formatArea = (area) => {
 export const trimData = (data) => {
   if (typeof data !== 'object' || data === null) return data;
   if (Array.isArray(data)) return data.map(item => trimData(item));
-  
+
   const newData = { ...data };
   for (const key in newData) {
     if (typeof newData[key] === 'string') {
@@ -126,7 +126,7 @@ export const PHONE_RULES = [
   {
     validator: (_, value) => {
       if (!value || isValidPhone(value)) return Promise.resolve();
-      return Promise.reject(new Error('Định dạng không hợp lệ'));
+      return Promise.reject(new Error('Số điện thoại không hợp lệ'));
     }
   }
 ];

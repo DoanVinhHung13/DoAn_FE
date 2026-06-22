@@ -1,80 +1,158 @@
-import React from 'react'
-import { Form, Input, Select, Switch, Button } from 'antd'
-import { UserAddOutlined, UserOutlined, MailOutlined, LockOutlined, PhoneOutlined } from '@ant-design/icons'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
-import CustomModal from 'src/components/Modal/CustomModal'
-import UserService from 'src/services/UserService'
-import Notice from 'src/components/Notice'
-import { ROLE_CONFIG } from './AssignRolesModal'
-import { FULL_NAME_RULES, EMAIL_RULES, PASSWORD_RULES, PHONE_RULES } from 'src/utils/helpers'
-import ROUTER from 'src/router/ROUTER'
-
-const { Option } = Select
-const ALL_ROLES = Object.entries(ROLE_CONFIG).map(([value, cfg]) => ({ value, label: cfg.label }))
+import {
+  LockOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  UserAddOutlined,
+  UserOutlined,
+  CameraOutlined,
+} from "@ant-design/icons"
+import { Avatar, Button, Form, Input, Select, DatePicker, Row, Col, Upload, message } from "antd"
+import React from "react"
+import dayjs from "dayjs"
+import { useNavigate } from "react-router-dom"
+import CustomModal from "src/components/Modal/CustomModal"
+import ROUTER from "src/router/ROUTER"
+import UserService from "src/services/UserService"
+import UploadService from "src/services/UploadService"
+import {
+  EMAIL_RULES,
+  FULL_NAME_RULES,
+  PASSWORD_RULES,
+  PHONE_RULES,
+  getAvatarUrl,
+} from "src/utils/helpers"
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import { useSystemKey } from "src/hooks/useSystemKey"
 
 const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   const [form] = Form.useForm()
-  const queryClient = useQueryClient()
+  const [loading, setLoading] = React.useState(false)
   const navigate = useNavigate()
   const isEdit = !!editingUser
+  const { getCombo } = useSystemKey()
+  const genderOptions = getCombo(SYSTEM_KEY.GENDER)
+  const roleOptions = getCombo(SYSTEM_KEY.ROLE)
+
+  const [avatarFile, setAvatarFile] = React.useState(null)
+  const [previewAvatar, setPreviewAvatar] = React.useState("")
 
   React.useEffect(() => {
     if (open) {
       if (isEdit) {
         form.setFieldsValue({
-          fullName: editingUser.fullName || '',
-          phoneNumber: editingUser.phoneNumber || '',
+          fullName: editingUser.fullName || "",
+          phoneNumber: editingUser.phoneNumber || "",
+          gender: editingUser.gender || undefined,
+          dateOfBirth: editingUser.dateOfBirth ? dayjs(editingUser.dateOfBirth) : null,
+          roles: editingUser.roles?.[0] || "FARMER",
           isActive: editingUser.isActive ?? true,
         })
+        setPreviewAvatar(editingUser.avatarUrl || "")
       } else {
         form.resetFields()
-        form.setFieldsValue({ isActive: true, roles: ['FARMER'] })
+        form.setFieldsValue({ isActive: true, roles: "FARMER" })
+        setPreviewAvatar("")
       }
+      setAvatarFile(null)
     }
   }, [open, editingUser, isEdit, form])
 
-  const mutation = useMutation({
-    mutationFn: (values) => {
+  const beforeUpload = (file) => {
+    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/webp"
+    if (!isJpgOrPng) {
+      message.error("Bạn chỉ có thể tải lên file JPG, PNG hoặc WEBP!")
+      return Upload.LIST_IGNORE
+    }
+    const isLt5M = file.size / 1024 / 1024 < 5
+    if (!isLt5M) {
+      message.error("Kích thước ảnh phải nhỏ hơn 5MB!")
+      return Upload.LIST_IGNORE
+    }
+
+    setAvatarFile(file)
+
+    // Create local preview
+    const reader = new FileReader()
+    reader.onload = (e) => setPreviewAvatar(e.target.result)
+    reader.readAsDataURL(file)
+
+    return false // Prevent automatic upload
+  }
+
+  const handleSubmit = async values => {
+    try {
+      setLoading(true)
+      let uploadedUrl = isEdit ? editingUser.avatarUrl : null
+
+      // If a new avatar file was selected, upload it first
+      if (avatarFile) {
+        const formData = new FormData()
+        formData.append("file", avatarFile)
+        const response = await UploadService.uploadImage(formData)
+        const payload = response?.data?.data || response?.data || {}
+        uploadedUrl = payload.avatarUrl || payload.avatar || payload.url || payload || uploadedUrl
+      }
+
+      let res
       if (isEdit) {
-        return UserService.updateUser(editingUser.id, {
+        // Cập nhật thông tin cơ bản
+        await UserService.updateUser(editingUser.id, {
           fullName: values.fullName,
           phoneNumber: values.phoneNumber || null,
+          gender: values.gender || null,
+          dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
+          avatarUrl: uploadedUrl || null,
           isActive: editingUser.isActive,
         })
+
+        // Cập nhật vai trò (gọi API assignRoles)
+        if (values.roles && values.roles !== editingUser.roles?.[0]) {
+          await UserService.assignRoles(editingUser.id, { roles: [values.roles] })
+        }
+        res = { success: true }
+      } else {
+        // Thêm người dùng mới
+        res = await UserService.createUser({
+          fullName: values.fullName,
+          email: values.email,
+          password: values.password,
+          phoneNumber: values.phoneNumber || null,
+          gender: values.gender || null,
+          dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
+          avatarUrl: uploadedUrl || null,
+          roles: values.roles ? [values.roles] : ["FARMER"],
+        })
       }
-      return UserService.createUser({
-        fullName: values.fullName,
-        email: values.email,
-        password: values.password,
-        roles: values.roles || ['FARMER'],
-      })
-    },
-    onSuccess: (res) => {
-      if (res?.success === false) return
-      queryClient.invalidateQueries(['users'])
+
+      if (res?.success === false) {
+        const errMsg = res.message || (res.errors && res.errors[0]) || ""
+        const lowerMsg = errMsg.toLowerCase()
+        if (lowerMsg.includes("email")) {
+          form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }])
+        } else if (lowerMsg.includes("phone") || lowerMsg.includes("điện thoại")) {
+          form.setFields([{ name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] }])
+        }
+        return
+      }
+
       onClose()
       onSuccess?.()
 
       if (isEdit && editingUser?.id) {
-        navigate(ROUTER.FM_USER_DETAIL.replace(':id', editingUser.id))
+        navigate(ROUTER.FM_USER_DETAIL.replace(":id", editingUser.id))
       }
-    },
-    onError: (error) => {
-      // Check if it's an email conflict
-      const errMsg = error.response?.data?.message || error.message;
-      if (errMsg && errMsg.toLowerCase().includes('email')) {
-        form.setFields([
-          {
-            name: 'email',
-            errors: ['Email đã tồn tại (MSG-UM-02)'],
-          },
-        ]);
-      } else {
-        Notice({ msg: errMsg || 'Có lỗi xảy ra', isSuccess: false });
+    } catch (error) {
+      const errMsg = error.response?.data?.message || error.message || ""
+      const lowerMsg = errMsg.toLowerCase()
+      if (lowerMsg.includes("email")) {
+        form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }])
+      } else if (lowerMsg.includes("phone") || lowerMsg.includes("điện thoại")) {
+        form.setFields([{ name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] }])
       }
+    } finally {
+      setLoading(false)
     }
-  })
+  }
 
   return (
     <CustomModal
@@ -82,75 +160,212 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
       onCancel={onClose}
       title={
         <div className="flex items-center gap-2 py-1">
-          <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-50">
             <UserAddOutlined className="text-green-600" />
           </div>
           <span className="font-bold">
-            {isEdit ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
+            {isEdit ? "Chỉnh sửa người dùng" : "Thêm người dùng mới"}
           </span>
         </div>
       }
       footer={null}
-      width={520}
+      width={700}
     >
-      <Form form={form} layout="vertical" onFinish={(v) => mutation.mutate(v)} className="mt-4">
-        <Form.Item
-          name="fullName"
-          label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Họ và tên</span>}
-          rules={FULL_NAME_RULES}
-        >
-          <Input prefix={<UserOutlined className="text-gray-300" />} placeholder="Nguyễn Văn A" className="h-10 rounded-lg" />
-        </Form.Item>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        className="mt-4"
+      >
+        <Row gutter={16}>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="fullName"
+              label={
+                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                  Họ và tên
+                </span>
+              }
+              rules={FULL_NAME_RULES}
+            >
+              <Input
+                prefix={<UserOutlined className="text-gray-300" />}
+                placeholder="Nguyễn Văn A"
+                className="h-10 rounded-lg"
+              />
+            </Form.Item>
+          </Col>
 
-        {!isEdit && (
-          <>
-            <Form.Item
-              name="email"
-              label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Email</span>}
-              rules={EMAIL_RULES}
-            >
-              <Input prefix={<MailOutlined className="text-gray-300" />} placeholder="example@eapls.com" className="h-10 rounded-lg" />
-            </Form.Item>
-            <Form.Item
-              name="password"
-              label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mật khẩu</span>}
-              rules={PASSWORD_RULES}
-            >
-              <Input.Password prefix={<LockOutlined className="text-gray-300" />} placeholder="••••••••" className="h-10 rounded-lg" />
-            </Form.Item>
+          {!isEdit && (
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="email"
+                label={
+                  <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                    Email
+                  </span>
+                }
+                rules={EMAIL_RULES}
+              >
+                <Input
+                  prefix={<MailOutlined className="text-gray-300" />}
+                  placeholder="example@eapls.com"
+                  className="h-10 rounded-lg"
+                />
+              </Form.Item>
+            </Col>
+          )}
+
+          {!isEdit && (
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="password"
+                label={
+                  <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                    Mật khẩu
+                  </span>
+                }
+                rules={PASSWORD_RULES}
+              >
+                <Input.Password
+                  prefix={<LockOutlined className="text-gray-300" />}
+                  placeholder="••••••••"
+                  className="h-10 rounded-lg"
+                />
+              </Form.Item>
+            </Col>
+          )}
+
+          <Col xs={24} md={12}>
             <Form.Item
               name="roles"
-              label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Vai trò</span>}
-              rules={[{ required: true, message: 'Chọn ít nhất một vai trò!' }]}
+              label={
+                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                  Vai trò
+                </span>
+              }
+              rules={[{ required: true, message: "Chọn một vai trò!" }]}
             >
-              <Select mode="multiple" placeholder="Chọn vai trò" className="rounded-lg">
-                {ALL_ROLES.map(r => <Option key={r.value} value={r.value}>{r.label}</Option>)}
-              </Select>
+              <Select
+                placeholder="Chọn vai trò"
+                className="rounded-lg h-10"
+                options={roleOptions}
+              />
             </Form.Item>
-          </>
-        )}
+          </Col>
 
-        {isEdit && (
-          <Form.Item
-            name="phoneNumber"
-            label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Số điện thoại</span>}
-            rules={PHONE_RULES}
-          >
-            <Input prefix={<PhoneOutlined className="text-gray-300" />} placeholder="0912345678" className="h-10 rounded-lg" />
-          </Form.Item>
-        )}
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="phoneNumber"
+              label={
+                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                  Số điện thoại
+                </span>
+              }
+              rules={PHONE_RULES}
+            >
+              <Input
+                prefix={<PhoneOutlined className="text-gray-300" />}
+                placeholder="0912345678"
+                className="h-10 rounded-lg"
+              />
+            </Form.Item>
+          </Col>
 
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="gender"
+              label={
+                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                  Giới tính
+                </span>
+              }
+            >
+              <Select
+                allowClear
+                placeholder="Chọn giới tính"
+                className="h-10 rounded-lg"
+                options={genderOptions}
+              />
+            </Form.Item>
+          </Col>
 
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="dateOfBirth"
+              label={
+                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                  Ngày sinh
+                </span>
+              }
+              rules={[
+                {
+                  required: true,
+                  message: "Vui lòng chọn ngày sinh.",
+                },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve()
+                    if (!dayjs(value).isValid() || value.isAfter(dayjs(), "day")) {
+                      return Promise.reject(new Error("Ngày sinh không hợp lệ."))
+                    }
+                    if (dayjs().diff(value, "year") < 15) {
+                      return Promise.reject(new Error("Người dùng phải từ đủ 15 tuổi."))
+                    }
+                    return Promise.resolve()
+                  },
+                },
+              ]}
+            >
+              <DatePicker
+                format="DD/MM/YYYY"
+                placeholder="Chọn ngày sinh"
+                className="w-full h-10 rounded-lg"
+                disabledDate={current => current && current > dayjs().endOf("day")}
+              />
+            </Form.Item>
+          </Col>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
-          <Button onClick={onClose} className="h-10 px-6 rounded-xl">Hủy</Button>
+          <Col xs={24} md={12}>
+            <Form.Item
+              label={
+                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                  Ảnh đại diện
+                </span>
+              }
+            >
+              <div className="flex items-center gap-4 mt-1">
+                <Avatar
+                  size={48}
+                  src={avatarFile ? previewAvatar : getAvatarUrl(previewAvatar)}
+                  icon={<UserOutlined />}
+                  className="bg-gray-100 border border-gray-200 shadow-sm"
+                />
+                <Upload
+                  showUploadList={false}
+                  beforeUpload={beforeUpload}
+                  accept="image/*"
+                >
+                  <Button className="h-10 rounded-lg" icon={<CameraOutlined />}>
+                    Đổi ảnh đại diện
+                  </Button>
+                </Upload>
+              </div>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <div className="flex justify-end gap-3 pt-4 mt-6 border-t border-gray-100">
+          <Button onClick={onClose} className="h-10 px-6 rounded-xl" disabled={loading}>
+            Hủy
+          </Button>
           <Button
             type="primary"
             htmlType="submit"
-            loading={mutation.isPending || mutation.isLoading}
-            className="h-10 px-6 rounded-xl bg-green-600 border-0 font-bold shadow-lg shadow-green-100"
+            loading={loading}
+            className="h-10 px-6 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
           >
-            {isEdit ? 'Lưu thay đổi' : 'Tạo tài khoản'}
+            {isEdit ? "Lưu thay đổi" : "Tạo tài khoản"}
           </Button>
         </div>
       </Form>

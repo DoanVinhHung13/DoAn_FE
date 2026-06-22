@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Button, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -69,7 +69,7 @@ const NotFound = () => {
         </div>
 
         <Text className="text-gray-300 text-xs block mt-10 tracking-widest uppercase font-bold">
-          EBookFarm · Hệ thống Nhật ký Sản xuất
+          EAPLS · Hệ thống Nhật ký Sản xuất
         </Text>
       </div>
     </div>

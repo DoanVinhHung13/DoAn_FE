@@ -1,16 +1,16 @@
-// Storage key constants — tất cả key của app tập trung tại đây
+﻿// Storage key constants — tất cả key của app tập trung tại đây
 const STORAGE = {
-  TOKEN:                    'token-ebookfarm',
-  REFRESH_TOKEN:            'refresh-token-ebookfarm',
-  USER_INFO:                'user-info-ebookfarm',
-  ACCESS_TOKEN_EXPIRES_AT:  'access-token-expires-at-ebookfarm',
-  REFRESH_TOKEN_EXPIRES_AT: 'refresh-token-expires-at-ebookfarm',
+  TOKEN:                    'token-eapls',
+  REFRESH_TOKEN:            'refresh-token-eapls',
+  USER_INFO:                'user-info-eapls',
+  ACCESS_TOKEN_EXPIRES_AT:  'access-token-expires-at-eapls',
+  REFRESH_TOKEN_EXPIRES_AT: 'refresh-token-expires-at-eapls',
   /** @deprecated giữ để tương thích phiên cũ — đồng bộ với REFRESH_TOKEN_EXPIRES_AT */
-  SESSION_EXPIRES_AT:       'session-expires-at-ebookfarm',
-  KEY_MENU_ACTIVE:          'key-active-ebookfarm',
-  DEV_MODE:                 'dev-mode-ebookfarm',
-  REMEMBERED_EMAIL:         'remembered-email-ebookfarm',
-  REMEMBERED_IDENTIFIER:    'remembered-identifier-ebookfarm',
+  SESSION_EXPIRES_AT:       'session-expires-at-eapls',
+  KEY_MENU_ACTIVE:          'key-active-eapls',
+  DEV_MODE:                 'dev-mode-eapls',
+  REMEMBERED_EMAIL:         'remembered-email-eapls',
+  REMEMBERED_IDENTIFIER:    'remembered-identifier-eapls',
 }
 
 /** Fallback khi API không trả refreshTokenExpiredAt */

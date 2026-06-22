@@ -16,7 +16,7 @@ import ROUTER from "src/router/ROUTER"
 import { normalizeRole } from "src/constants/roles"
 import { getDashboardPathByRole } from "src/router/roleRedirects"
 
-import logo from "src/assets/logo-ebookfarm.jpg"
+import logo from "src/assets/logo-eapls.jpg"
 import AuthService from "../../../services/AuthService"
 import { LOGIN_IDENTIFIER_RULES, PASSWORD_RULES } from "src/utils/helpers"
 
@@ -97,6 +97,7 @@ const Login = () => {
         lastLoginAt: meData.lastLoginAt,
         dateOfBirth: meData.dateOfBirth,
         gender: meData.gender,
+        address: meData.address,
         role: userRole,
         roles: meData.roles || [],
       }
@@ -138,7 +139,7 @@ const Login = () => {
               </div>
               <div className="flex flex-col text-white">
                 <span className="text-2xl font-black leading-none tracking-tighter uppercase">
-                  EBookFarm
+                  EAPLS
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-widest opacity-80 text-emerald-100">
                   Agri-tech Solution
@@ -268,7 +269,7 @@ const Login = () => {
       </div>
 
       {/* <div className="absolute bottom-8 left-0 right-0 text-center text-[10px] uppercase font-bold tracking-[3px] text-gray-400/50 pointer-events-none">
-        Copyright 2026 © EBookFarm Security Standard
+        Copyright 2026 © EAPLS Security Standard
       </div> */}
     </div>
   )

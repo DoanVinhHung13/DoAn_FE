@@ -1,205 +1,170 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import {
+  CameraOutlined,
+  EditOutlined,
+  MailOutlined,
+  UserOutlined,
+} from "@ant-design/icons"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   Avatar,
   Button,
   Card,
   Col,
-  DatePicker,
   Divider,
   Form,
-  Input,
   Row,
-  Select,
   Typography,
   Upload,
-  message,
-} from 'antd';
-import {
-  CalendarOutlined,
-  CameraOutlined,
-  EditOutlined,
-  EnvironmentOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  SaveOutlined,
-  ShopOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSelector } from 'react-redux';
-import dayjs from 'dayjs';
+} from "antd"
+import dayjs from "dayjs"
+import { useEffect, useMemo, useState } from "react"
+import { useSelector } from "react-redux"
 
-import { useAppDispatch } from 'src/redux/hooks';
-import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
-import TitleCustom from 'src/components/TitleCustom';
-import { getProvinces, getWardsByProvince } from 'src/services/LocationService';
-import UserService from 'src/services/UserService';
-import { getAvatarUrl, getInitialAvatar, isValidPhone } from 'src/utils/helpers';
+import TitleCustom from "src/components/TitleCustom"
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { useAppDispatch } from "src/redux/hooks"
+import authSession from "src/redux/authSession"
+import { setUserInfo } from "src/redux/slices/appGlobalSlice"
+import UserService from "src/services/UserService"
+import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers"
+import UpdateProfile from "./UpdateProfile"
 
-const { Text, Title } = Typography;
+const { Text, Title } = Typography
 
-const fullNamePattern = /^[\p{L}\s]+$/u;
-const organizationPattern = /^[\p{L}\d][\p{L}\d\s().,&/-]*$/u;
-const addressPattern = /^[\p{L}\d\s,./#()-]+$/u;
-
-const displayValue = (value) => value || 'Chưa cập nhật';
+const displayValue = value => value || "Chưa cập nhật"
 
 const AccountInfo = () => {
-  const { userInfo: user } = useSelector((state) => state.appGlobal);
-  const dispatch = useAppDispatch();
-  const queryClient = useQueryClient();
-  const [form] = Form.useForm();
-  const [editing, setEditing] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
-  const [uploadError, setUploadError] = useState('');
-  const [provinces, setProvinces] = useState([]);
-  const [wards, setWards] = useState([]);
+  const { userInfo: user } = useSelector(state => state.appGlobal)
+  const dispatch = useAppDispatch()
+  const queryClient = useQueryClient()
+  const { getCombo, getDescription } = useSystemKey()
+  const genderOptions = getCombo(SYSTEM_KEY.GENDER)
 
-  const watchedName = Form.useWatch('fullName', form);
-  const watchedOrganization = Form.useWatch('organization', form);
-  const watchedProvince = Form.useWatch('province', form);
+  const [form] = Form.useForm()
+  const [editing, setEditing] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "")
+  const [uploadError, setUploadError] = useState("")
+
+  const watchedName = Form.useWatch("fullName", form)
 
   const initialValues = useMemo(
     () => ({
-      fullName: user?.fullName || '',
-      email: user?.email || '',
-      phoneNumber: user?.phoneNumber || '',
+      fullName: user?.fullName || "",
+      email: user?.email || "",
+      phoneNumber: user?.phoneNumber || "",
       dateOfBirth: user?.dateOfBirth ? dayjs(user.dateOfBirth) : null,
       gender: user?.gender || undefined,
-      organization: user?.organization || '',
-      province: user?.province || undefined,
-      ward: user?.ward || undefined,
-      address: user?.address || '',
+      address: user?.address || "",
     }),
-    [user]
-  );
+    [user],
+  )
 
   useEffect(() => {
-    form.setFieldsValue(initialValues);
-    setAvatarUrl(user?.avatarUrl || '');
-  }, [form, initialValues, user?.avatarUrl]);
+    form.setFieldsValue(initialValues)
+    setAvatarUrl(user?.avatarUrl || "")
+  }, [form, initialValues, user?.avatarUrl])
 
-  useEffect(() => {
-    getProvinces().then(setProvinces);
-  }, []);
-
-  useEffect(() => {
-    if (!watchedProvince) {
-      setWards([]);
-      return;
-    }
-    getWardsByProvince(watchedProvince).then(setWards);
-  }, [watchedProvince]);
-
-  const updateMutation = useMutation({
-    mutationFn: (values) => {
+  const handleFinish = async values => {
+    setLoading(true)
+    try {
       const payload = {
-        fullName: values.fullName.trim().replace(/\s+/g, ' '),
+        fullName: values.fullName.trim().replace(/\s+/g, " "),
         phoneNumber: values.phoneNumber?.trim() || null,
-        dateOfBirth: values.dateOfBirth?.format('YYYY-MM-DD') || null,
-      };
-      return UserService.updateMyProfile(payload);
-    },
-    onSuccess: (response, values) => {
-      const updated = response?.data?.data || response?.data || {};
-      const province = provinces.find((item) => item.code === values.province);
-      const ward = wards.find((item) => item.code === values.ward);
-      const localValues = {
-        fullName: values.fullName.trim().replace(/\s+/g, ' '),
-        phoneNumber: values.phoneNumber?.trim() || null,
-        dateOfBirth: values.dateOfBirth?.format('YYYY-MM-DD') || null,
+        dateOfBirth: values.dateOfBirth?.toISOString() || null,
         gender: values.gender || null,
-        organization: values.organization?.trim().replace(/\s+/g, ' ') || null,
-        province: values.province || null,
-        provinceName: province?.fullName || province?.name || user?.provinceName,
-        ward: values.ward || null,
-        wardName: ward?.fullName || ward?.name || user?.wardName,
-        address: values.address?.trim().replace(/\s+/g, ' ') || null,
-      };
-      dispatch(setUserInfo({ ...user, ...localValues, ...updated }));
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      message.success('Thông tin cá nhân đã được cập nhật thành công.');
-      setEditing(false);
-    },
-    onError: (error) => {
-      const apiMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        error?.message ||
-        '';
+        address: values.address?.trim().replace(/\s+/g, " ") || null,
+      }
+
+      const response = await UserService.updateMyProfile(payload)
+      if (response?.success === false) return
+
+      const updated = response?.data || {}
+      const nextUser = {
+        ...user,
+        fullName: payload.fullName,
+        phoneNumber: payload.phoneNumber,
+        dateOfBirth: payload.dateOfBirth,
+        gender: payload.gender,
+        address: payload.address,
+        ...updated,
+      }
+
+      dispatch(setUserInfo(nextUser))
+      authSession.updateUser(nextUser)
+      queryClient.invalidateQueries({ queryKey: ["users"] })
+      setEditing(false)
+    } catch (error) {
+      const apiMessage = error?.message || ""
       const duplicatePhone =
-        error?.response?.status === 409 ||
         /phone|điện thoại|số điện thoại/i.test(apiMessage) &&
-          /exist|duplicate|đăng ký|tồn tại|trùng/i.test(apiMessage);
+        /exist|duplicate|đăng ký|tồn tại|trùng/i.test(apiMessage)
 
       if (duplicatePhone) {
         form.setFields([
           {
-            name: 'phoneNumber',
-            errors: ['Số điện thoại này đã được đăng ký. Vui lòng thử số khác.'],
+            name: "phoneNumber",
+            errors: [
+              "Số điện thoại này đã được đăng ký. Vui lòng thử số khác.",
+            ],
           },
-        ]);
-        return;
+        ])
       }
-      message.error(apiMessage || 'Không thể cập nhật thông tin cá nhân.');
-    },
-  });
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleCancel = () => {
-    form.setFieldsValue(initialValues);
-    form.setFields([]);
-    setEditing(false);
-  };
+    form.setFieldsValue(initialValues)
+    form.setFields([])
+    setEditing(false)
+  }
 
   const handleAvatarUpload = async ({ file, onSuccess, onError }) => {
-    const formData = new FormData();
-    formData.append('file', file);
+    const formData = new FormData()
+    formData.append("file", file)
     try {
-      const response = await UserService.uploadMyAvatar(formData);
-      const payload = response?.data?.data || response?.data || {};
-      const newAvatarUrl = payload.avatarUrl || payload.avatar || payload.url;
-      setAvatarUrl(newAvatarUrl);
-      dispatch(setUserInfo({ ...user, avatarUrl: newAvatarUrl }));
-      message.success('Ảnh đại diện đã được cập nhật.');
-      onSuccess(response);
+      const response = await UserService.uploadMyAvatar(formData)
+      const payload = response?.data?.data || response?.data || {}
+      const newAvatarUrl = payload.avatarUrl || payload.avatar || payload.url
+      setAvatarUrl(newAvatarUrl)
+      const nextUser = { ...user, avatarUrl: newAvatarUrl }
+      dispatch(setUserInfo(nextUser))
+      authSession.updateUser(nextUser)
+      onSuccess(response)
     } catch (error) {
       setUploadError(
-        error?.response?.data?.message || 'Không thể tải ảnh đại diện. Vui lòng thử lại.'
-      );
-      onError(error);
+        error?.message || "Không thể tải ảnh đại diện. Vui lòng thử lại.",
+      )
+      onError(error)
     }
-  };
+  }
 
-  const beforeAvatarUpload = (file) => {
-    setUploadError('');
-    const validType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+  const beforeAvatarUpload = file => {
+    setUploadError("")
+    const validType = ["image/jpeg", "image/png", "image/webp"].includes(
+      file.type,
+    )
     if (!validType) {
-      setUploadError('Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.');
-      return Upload.LIST_IGNORE;
+      setUploadError("Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.")
+      return Upload.LIST_IGNORE
     }
     if (file.size / 1024 / 1024 > 5) {
-      setUploadError('Dung lượng ảnh không được vượt quá 5MB.');
-      return Upload.LIST_IGNORE;
+      setUploadError("Dung lượng ảnh không được vượt quá 5MB.")
+      return Upload.LIST_IGNORE
     }
-    return true;
-  };
+    return true
+  }
 
-  const previewName = editing ? watchedName || user?.fullName : user?.fullName;
-  const previewOrganization = editing
-    ? watchedOrganization || user?.organization
-    : user?.organization;
-  const role = user?.role || user?.roles?.[0] || '';
-  const addressText = [
-    user?.address,
-    user?.wardName || user?.ward,
-    user?.provinceName || user?.province,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  const previewName = editing ? watchedName || user?.fullName : user?.fullName
+  const role = user?.role || user?.roles?.[0] || ""
+  const addressText = [user?.address].filter(Boolean).join(", ")
 
   const summaryRow = (icon, label, value) => (
     <div className="flex items-start gap-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-400">
+      <div className="flex items-center justify-center text-gray-400 rounded-lg h-9 w-9 shrink-0 bg-gray-50">
         {icon}
       </div>
       <div className="min-w-0">
@@ -211,7 +176,7 @@ const AccountInfo = () => {
         </Text>
       </div>
     </div>
-  );
+  )
 
   return (
     <div className="mx-auto max-w-[1180px] space-y-6">
@@ -223,13 +188,13 @@ const AccountInfo = () => {
       <Row gutter={[24, 24]} align="stretch">
         <Col xs={24} lg={8} className="flex">
           <Card variant="borderless" className="w-full rounded-lg shadow-sm">
-            <div className="flex h-full flex-col text-center">
-              <div className="relative mx-auto mt-2 inline-block">
+            <div className="flex flex-col h-full text-center">
+              <div className="relative inline-block mx-auto mt-2">
                 <Avatar
                   size={116}
                   src={getAvatarUrl(avatarUrl)}
                   icon={!avatarUrl && <UserOutlined />}
-                  className="border-4 border-white bg-green-50 text-5xl text-green-600 shadow-lg"
+                  className="text-5xl text-green-600 border-4 border-white shadow-lg bg-green-50"
                 >
                   {!avatarUrl && getInitialAvatar(previewName)}
                 </Avatar>
@@ -243,11 +208,15 @@ const AccountInfo = () => {
                     shape="circle"
                     size="small"
                     icon={<CameraOutlined />}
-                    className="absolute bottom-1 right-1 border-2 border-white bg-green-500 text-white"
+                    className="absolute text-white bg-green-500 border-2 border-white bottom-1 right-1"
                   />
                 </Upload>
               </div>
-              {uploadError && <Text type="danger" className="mt-2 !text-xs">{uploadError}</Text>}
+              {uploadError && (
+                <Text type="danger" className="mt-2 !text-xs">
+                  {uploadError}
+                </Text>
+              )}
 
               <Title level={4} className="!mb-1 !mt-7">
                 {displayValue(previewName)}
@@ -257,8 +226,8 @@ const AccountInfo = () => {
               </Text>
 
               <Divider className="!my-7" />
-              <div className="space-y-5 px-2 text-left">
-                {summaryRow(<MailOutlined />, 'Email đăng nhập', user?.email)}
+              <div className="px-2 space-y-5 text-left">
+                {summaryRow(<MailOutlined />, "Email đăng nhập", user?.email)}
               </div>
             </div>
           </Card>
@@ -280,20 +249,25 @@ const AccountInfo = () => {
                   <Text type="secondary">Ngày sinh</Text>
                   <Text strong>
                     {user?.dateOfBirth
-                      ? dayjs(user.dateOfBirth).format('DD/MM/YYYY')
-                      : 'Chưa cập nhật'}
+                      ? dayjs(user.dateOfBirth).format("DD/MM/YYYY")
+                      : "Chưa cập nhật"}
                   </Text>
                   <Text type="secondary">Giới tính</Text>
-                  <Text strong>{displayValue(user?.gender)}</Text>
+                  <Text strong>
+                    {displayValue(
+                      getDescription(SYSTEM_KEY.GENDER, user?.gender) ||
+                      user?.gender,
+                    )}
+                  </Text>
                   <Text type="secondary">Địa chỉ</Text>
                   <Text strong>{displayValue(addressText)}</Text>
                 </div>
-                <div className="mt-auto flex justify-end pt-10">
+                <div className="flex justify-end pt-10 mt-auto">
                   <Button
                     type="primary"
                     icon={<EditOutlined />}
                     onClick={() => setEditing(true)}
-                    className="h-10 bg-green-500 px-5 font-semibold"
+                    className="h-10 px-5 font-semibold bg-green-500"
                   >
                     Thay đổi thông tin
                   </Button>
@@ -305,7 +279,7 @@ const AccountInfo = () => {
                   <EditOutlined className="text-green-500" />
                   Thay đổi thông tin
                 </Title>
-                <Form
+                <UpdateProfile
                   form={form}
                   layout="vertical"
                   onFinish={(values) => updateMutation.mutate(values)}
@@ -462,7 +436,7 @@ const AccountInfo = () => {
         </Col>
       </Row>
     </div>
-  );
-};
+  )
+}
 
-export default AccountInfo;
+export default AccountInfo

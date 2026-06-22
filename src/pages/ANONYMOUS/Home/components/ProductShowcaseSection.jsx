@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+﻿import React, { useState } from 'react'
 import { Row, Col, Card, Typography, Tag, Button, Modal, Steps, Divider } from 'antd'
 import { QrcodeOutlined, ArrowRightOutlined, CheckCircleFilled, SafetyCertificateFilled } from '@ant-design/icons'
 import { useSelector } from 'react-redux'
@@ -240,7 +240,7 @@ const ProductShowcaseSection = () => {
                   ))}
                 </div>
                 <Text className="text-[10px] text-gray-400 block mt-4 text-center italic">
-                  * Toàn bộ dữ liệu được xác thực và bảo vệ bởi hệ thống EBookFarm Blockchain
+                  * Toàn bộ dữ liệu được xác thực và bảo vệ bởi hệ thống EAPLS Blockchain
                 </Text>
               </div>
 

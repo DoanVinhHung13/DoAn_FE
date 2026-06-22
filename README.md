@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/tandp53/DoAn_FE/main/src/assets/logo-ebookfarm.jpg" alt="EBookFarm Logo" width="120" />
-  <h1>🌱 EBookFarm - Nhật Ký Sản Xuất Nông Nghiệp Điện Tử</h1>
+  <img src="https://raw.githubusercontent.com/tandp53/DoAn_FE/main/src/assets/logo-eapls.jpg" alt="EAPLS Logo" width="120" />
+  <h1>🌱 EAPLS - Nhật Ký Sản Xuất Nông Nghiệp Điện Tử</h1>
   <p><i>Hệ thống quản lý quy trình sản xuất nông nghiệp thông minh, minh bạch và an toàn</i></p>
 
   [![React](https://img.shields.io/badge/React-19.x-61DAFB.svg?style=for-the-badge&logo=react)](https://reactjs.org/)
@@ -14,9 +14,9 @@
 
 ## 📖 Giới thiệu dự án
 
-**EBookFarm (Nhật ký sản xuất điện tử)** là nền tảng quản lý nông nghiệp số toàn diện, giúp các hợp tác xã, trang trại và nông dân số hóa toàn bộ quy trình sản xuất. 
+**EAPLS (Nhật ký sản xuất điện tử)** là nền tảng quản lý nông nghiệp số toàn diện, giúp các hợp tác xã, trang trại và nông dân số hóa toàn bộ quy trình sản xuất. 
 
-Dự án cung cấp một hệ sinh thái khép kín từ việc quản lý nhân sự, phân bổ vùng trồng, kiểm soát vật tư, đến việc truy xuất nguồn gốc nông sản bằng QR Code. Qua đó, EBookFarm giúp nâng cao tính minh bạch, tối ưu năng suất và đảm bảo an toàn chất lượng nông sản.
+Dự án cung cấp một hệ sinh thái khép kín từ việc quản lý nhân sự, phân bổ vùng trồng, kiểm soát vật tư, đến việc truy xuất nguồn gốc nông sản bằng QR Code. Qua đó, EAPLS giúp nâng cao tính minh bạch, tối ưu năng suất và đảm bảo an toàn chất lượng nông sản.
 
 ## ✨ Tính năng nổi bật
 

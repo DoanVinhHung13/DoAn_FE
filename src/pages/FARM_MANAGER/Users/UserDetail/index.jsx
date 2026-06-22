@@ -1,17 +1,18 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button, Avatar, Typography, Tag, Card, Row, Col, Spin, Divider } from 'antd'
 import {
   UserOutlined, CheckCircleOutlined, StopOutlined, ArrowLeftOutlined,
   MailOutlined, PhoneOutlined, ClockCircleOutlined, CalendarOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined, ManOutlined, WomanOutlined
 } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import UserService from 'src/services/UserService'
 import { formatDate, formatDateTime } from 'src/utils/dateFormatters'
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers'
 import { ROLE_CONFIG } from '../components/AssignRolesModal'
 import TitleCustom from 'src/components/TitleCustom'
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import { useSystemKey } from "src/hooks/useSystemKey"
 
 const { Text, Title } = Typography
 
@@ -27,14 +28,32 @@ const getRoleTag = (role) => {
 const UserDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { getDescription } = useSystemKey()
 
-  const { data: response, isLoading, isError } = useQuery({
-    queryKey: ['user', id],
-    queryFn: () => UserService.getUserById(id),
-    enabled: !!id,
-  })
+  const [user, setUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isError, setIsError] = useState(false)
 
-  const user = response?.data
+  useEffect(() => {
+    let isMounted = true
+    const fetchUser = async () => {
+      if (!id) return
+      setIsLoading(true)
+      setIsError(false)
+      try {
+        const res = await UserService.getUserById(id)
+        if (isMounted) {
+          setUser(res?.data?.data || res?.data)
+        }
+      } catch (err) {
+        if (isMounted) setIsError(true)
+      } finally {
+        if (isMounted) setIsLoading(false)
+      }
+    }
+    fetchUser()
+    return () => { isMounted = false }
+  }, [id])
 
   if (isLoading) {
     return (
@@ -54,6 +73,7 @@ const UserDetail = () => {
   }
 
   const displayName = user?.fullName || user?.email || '---';
+  const displayGender = user?.gender ? (getDescription(SYSTEM_KEY.GENDER, user.gender) || user.gender) : '—';
 
   return (
     <div>
@@ -101,19 +121,6 @@ const UserDetail = () => {
                   }
                 </div>
               </div>
-
-              {/* Nếu có dateOfBirth thì hiển thị, hiện API có thể chưa trả nhưng format sẵn để giống AccountInfo */}
-              {user?.dateOfBirth && (
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400">
-                    <CalendarOutlined />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <Text type="secondary" className="text-[10px] uppercase font-bold block">Ngày sinh</Text>
-                    <Text strong className="block truncate">{formatDate(user.dateOfBirth)}</Text>
-                  </div>
-                </div>
-              )}
             </div>
           </Card>
         </Col>
@@ -141,6 +148,22 @@ const UserDetail = () => {
                   <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Số điện thoại</Text>
                 </div>
                 <div className="text-base font-medium text-gray-800">{user.phoneNumber || '—'}</div>
+              </div>
+
+              <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <InfoCircleOutlined className="text-gray-400" />
+                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Giới tính</Text>
+                </div>
+                <div className="text-base font-medium text-gray-800">{displayGender}</div>
+              </div>
+
+              <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <CalendarOutlined className="text-gray-400" />
+                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Ngày sinh</Text>
+                </div>
+                <div className="text-base font-medium text-gray-800">{user.dateOfBirth ? formatDate(user.dateOfBirth) : '—'}</div>
               </div>
 
               <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
