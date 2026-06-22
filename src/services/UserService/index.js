@@ -13,13 +13,13 @@
  * PUT    /users/:id/password          → changeUserPassword(id, body)
  *
  * ─── Profile của user đang đăng nhập ─────────────────────
- * PUT  /users/me/profile              → updateMyProfile(body) — { fullName, phoneNumber, dateOfBirth }
+ * PUT  /users/me/profile              → updateMyProfile(body) — { fullName, phoneNumber?, dateOfBirth?, gender?, address? }
  * POST /users/me/avatar               → uploadMyAvatar(formData) — multipart, field: "file"
  *
  * Schemas thực tế (kiểm tra với Swagger):
  *   CreateUserRequest: { fullName, email, password, roles? }
  *   UpdateUserRequest: { fullName, phoneNumber?, avatarUrl?, isActive }
- *   UpdateProfileRequest: { fullName, phoneNumber?, dateOfBirth? }
+ *   UpdateProfileRequest: { fullName, phoneNumber?, dateOfBirth?, gender?, address? }
  *   UpdateUserStatusRequest: { isActive: boolean }
  *   AssignRolesRequest: { roles: string[] }
  */
@@ -83,7 +83,7 @@ const changeUserPassword = (id, body) => http.put(USER_URLS.password(id), body)
 
 /**
  * PUT /users/me/profile
- * Body: { fullName: string (required), phoneNumber?: string, dateOfBirth?: string (ISO) }
+ * Body: { fullName: string (required), phoneNumber?, dateOfBirth?, gender?, address? }
  * Response: UserDto đã cập nhật
  */
 const updateMyProfile = body => http.put(USER_URLS.myProfile, body)

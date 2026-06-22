@@ -97,6 +97,7 @@ const Login = () => {
         lastLoginAt: meData.lastLoginAt,
         dateOfBirth: meData.dateOfBirth,
         gender: meData.gender,
+        address: meData.address,
         role: userRole,
         roles: meData.roles || [],
       }

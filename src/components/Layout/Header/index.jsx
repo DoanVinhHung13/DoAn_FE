@@ -194,14 +194,14 @@ const PublicNavbar = () => {
                 >
                   Đăng nhập
                 </Button>
-                <Button
+                {/* <Button
                   type="primary"
                   size="large"
                   className="px-4 font-bold bg-green-600 border-0 rounded-full shadow-lg hover:bg-green-700 md:px-6 shadow-green-100"
                   onClick={() => navigate(ROUTER.REGISTER)}
                 >
                   Đăng ký
-                </Button>
+                </Button> */}
               </Space>
             )}
 
@@ -287,7 +287,7 @@ const PublicNavbar = () => {
 
             <AntdDivider className="my-2" />
 
-            {!isLoginContext && (
+            {/* {!isLoginContext && (
               <Button
                 type="primary"
                 className="h-12 font-bold bg-green-600 border-0 rounded-xl"
@@ -298,7 +298,7 @@ const PublicNavbar = () => {
               >
                 Đăng ký
               </Button>
-            )}
+            )} */}
           </div>
         </Drawer>
       </div>

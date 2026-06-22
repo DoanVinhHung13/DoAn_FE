@@ -108,11 +108,10 @@ const PublicFooter = () => {
                                         <Text className="text-red-400 hover:text-red-300 cursor-pointer transition-colors" onClick={() => { logout(); navigate(ROUTER.HOME); }}>
                                             Đăng xuất
                                         </Text>
-                                    ) : (
-                                        <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate(ROUTER.REGISTER)}>
-                                            Đăng ký
-                                        </Text>
-                                    )}
+                                    ) : null}
+                                    {/* <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate(ROUTER.REGISTER)}>
+                                        Đăng ký
+                                    </Text> */}
                                     <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors">
                                         Hướng dẫn sử dụng
                                     </Text>

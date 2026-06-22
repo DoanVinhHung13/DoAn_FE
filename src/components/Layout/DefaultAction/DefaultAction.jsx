@@ -64,6 +64,7 @@ const DefaultAction = ({ children }) => {
           lastLoginAt: meData.lastLoginAt,
           dateOfBirth: meData.dateOfBirth,
           gender: meData.gender,
+          address: meData.address,
           role: normalizeRole(meData.roles?.[0]),
           roles: meData.roles || [],
         }

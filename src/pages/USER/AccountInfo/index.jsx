@@ -15,7 +15,6 @@ import {
   Row,
   Typography,
   Upload,
-  message,
 } from "antd"
 import dayjs from "dayjs"
 import { useEffect, useMemo, useState } from "react"
@@ -25,6 +24,7 @@ import TitleCustom from "src/components/TitleCustom"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import { useAppDispatch } from "src/redux/hooks"
+import authSession from "src/redux/authSession"
 import { setUserInfo } from "src/redux/slices/appGlobalSlice"
 import UserService from "src/services/UserService"
 import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers"
@@ -78,29 +78,28 @@ const AccountInfo = () => {
       }
 
       const response = await UserService.updateMyProfile(payload)
-      const updated = response?.data?.data || response?.data || {}
+      if (response?.success === false) return
 
-      const localValues = {
+      const updated = response?.data || {}
+      const nextUser = {
+        ...user,
         fullName: payload.fullName,
         phoneNumber: payload.phoneNumber,
         dateOfBirth: payload.dateOfBirth,
         gender: payload.gender,
         address: payload.address,
+        ...updated,
       }
 
-      dispatch(setUserInfo({ ...user, ...localValues, ...updated }))
+      dispatch(setUserInfo(nextUser))
+      authSession.updateUser(nextUser)
       queryClient.invalidateQueries({ queryKey: ["users"] })
       setEditing(false)
     } catch (error) {
-      const apiMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        error?.message ||
-        ""
+      const apiMessage = error?.message || ""
       const duplicatePhone =
-        error?.response?.status === 409 ||
-        (/phone|điện thoại|số điện thoại/i.test(apiMessage) &&
-          /exist|duplicate|đăng ký|tồn tại|trùng/i.test(apiMessage))
+        /phone|điện thoại|số điện thoại/i.test(apiMessage) &&
+        /exist|duplicate|đăng ký|tồn tại|trùng/i.test(apiMessage)
 
       if (duplicatePhone) {
         form.setFields([
@@ -111,9 +110,7 @@ const AccountInfo = () => {
             ],
           },
         ])
-        return
       }
-      message.error(apiMessage || "Không thể cập nhật thông tin cá nhân.")
     } finally {
       setLoading(false)
     }
@@ -133,13 +130,13 @@ const AccountInfo = () => {
       const payload = response?.data?.data || response?.data || {}
       const newAvatarUrl = payload.avatarUrl || payload.avatar || payload.url
       setAvatarUrl(newAvatarUrl)
-      dispatch(setUserInfo({ ...user, avatarUrl: newAvatarUrl }))
-      message.success("Ảnh đại diện đã được cập nhật.")
+      const nextUser = { ...user, avatarUrl: newAvatarUrl }
+      dispatch(setUserInfo(nextUser))
+      authSession.updateUser(nextUser)
       onSuccess(response)
     } catch (error) {
       setUploadError(
-        error?.response?.data?.message ||
-        "Không thể tải ảnh đại diện. Vui lòng thử lại.",
+        error?.message || "Không thể tải ảnh đại diện. Vui lòng thử lại.",
       )
       onError(error)
     }

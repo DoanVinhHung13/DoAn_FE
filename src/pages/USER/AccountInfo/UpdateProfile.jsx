@@ -5,7 +5,7 @@ import {
   SaveOutlined,
   UserOutlined,
 } from "@ant-design/icons"
-import { Button, Col, DatePicker, Form, Input, Row, Select, message } from "antd"
+import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd"
 import dayjs from "dayjs"
 import { isValidPhone } from "src/utils/helpers"
 
@@ -18,11 +18,6 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
       form={form}
       layout="vertical"
       onFinish={onFinish}
-      onFinishFailed={() =>
-        message.error(
-          "Nhập liệu không hợp lệ. Vui lòng kiểm tra các trường được đánh dấu.",
-        )
-      }
       scrollToFirstError
     >
       <Row gutter={16}>
@@ -76,7 +71,7 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
                     return Promise.resolve()
                   return Promise.reject(
                     new Error(
-                      "Định dạng số điện thoại không hợp lệ. Vui lòng nhập số điện thoại hợp lệ.",
+                      "Định dạng số điện thoại không hợp lệ.",
                     ),
                   )
                 },
