@@ -72,6 +72,10 @@ const MaterialManagerDashboard = React.lazy(() => import('../pages/MATERIAL_MANA
 const MaterialManagerFertilizers = React.lazy(() => import('../pages/MATERIAL_MANAGER/Fertilizers'))
 const MaterialManagerCropProtections = React.lazy(() => import('../pages/MATERIAL_MANAGER/CropProtections'))
 const MaterialManagerMachinery = React.lazy(() => import('../pages/MATERIAL_MANAGER/Machinery'))
+const MaterialManagerMaterials = React.lazy(() => import('../pages/MATERIAL_MANAGER/Materials'))
+const MaterialManagerMaterialCreate = React.lazy(() => import('../pages/MATERIAL_MANAGER/Materials/MaterialCreate'))
+const MaterialManagerMaterialDetail = React.lazy(() => import('../pages/MATERIAL_MANAGER/Materials/MaterialDetail'))
+const MaterialManagerMaterialEdit = React.lazy(() => import('../pages/MATERIAL_MANAGER/Materials/MaterialEdit'))
 const MaterialManagerOtherMaterials = React.lazy(() => import('../pages/MATERIAL_MANAGER/OtherMaterials'))
 const MaterialManagerPurchaseReqs = React.lazy(() => import('../pages/MATERIAL_MANAGER/PurchaseReqs'))
 const MaterialManagerProductionPlans = React.lazy(() => import('../pages/MATERIAL_MANAGER/ProductionPlans'))
@@ -215,6 +219,10 @@ const routes = [
               { path: ROUTER.MM_FERTILIZERS, element: <Lazy><MaterialManagerFertilizers /></Lazy> },
               { path: ROUTER.MM_CROP_PROTECTIONS, element: <Lazy><MaterialManagerCropProtections /></Lazy> },
               { path: ROUTER.MM_MACHINERY, element: <Lazy><MaterialManagerMachinery /></Lazy> },
+              { path: ROUTER.MM_MATERIALS, element: <Lazy><MaterialManagerMaterials /></Lazy> },
+              { path: ROUTER.MM_MATERIAL_CREATE, element: <Lazy><MaterialManagerMaterialCreate /></Lazy> },
+              { path: ROUTER.MM_MATERIAL_DETAIL, element: <Lazy><MaterialManagerMaterialDetail /></Lazy> },
+              { path: ROUTER.MM_MATERIAL_EDIT, element: <Lazy><MaterialManagerMaterialEdit /></Lazy> },
               { path: ROUTER.MM_OTHER_MATERIALS, element: <Lazy><MaterialManagerOtherMaterials /></Lazy> },
               { path: ROUTER.MM_PURCHASE_REQS, element: <Lazy><MaterialManagerPurchaseReqs /></Lazy> },
               { path: ROUTER.MM_PRODUCTION_PLANS, element: <Lazy><MaterialManagerProductionPlans /></Lazy> },
