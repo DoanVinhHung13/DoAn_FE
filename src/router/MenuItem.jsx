@@ -162,9 +162,9 @@ export const materialManagerItem = () => [
     label: 'Quản lý máy móc',
   },
   {
-    key: ROUTER.MM_OTHER_MATERIALS,
+    key: ROUTER.MM_MATERIALS,
     icon: <InboxOutlined className="text-lg" />,
-    label: 'Vật tư khác',
+    label: 'Quản lý vật tư nông nghiệp',
   },
   {
     key: ROUTER.MM_PURCHASE_REQS,
