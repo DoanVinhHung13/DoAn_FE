@@ -1,7 +1,452 @@
-const ViewCropProtections = () => (
-  <div style={{ padding: 40, textAlign: "center" }}>
-    <h2 style={{ color: "#16a34a" }}>Tra cuu thuoc BVTV</h2>
-    <p style={{ color: "#6b7280" }}>Trang dang duoc phat trien.</p>
-  </div>
-)
+import {
+  BugOutlined,
+  EditOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+} from '@ant-design/icons'
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  message,
+  Select,
+  Switch,
+  Tooltip,
+  Tag,
+} from 'antd'
+import { useCallback, useEffect, useState } from 'react'
+
+import CustomModal from 'src/components/Modal/CustomModal'
+import CustomTable from 'src/components/Table/CustomTable'
+import TitleCustom from 'src/components/TitleCustom'
+import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
+import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
+
+import CropProtectionService from 'src/services/CropProtectionService'
+import { invalidCharsRegex } from 'src/utils/helpers'
+
+import CropProtectionDetailModal from './components/CropProtectionDetailModal'
+import CropProtectionFormModal from './components/CropProtectionFormModal'
+
+const STATUS_FILTER_OPTIONS = [
+  { value: 'all', label: 'Tất cả trạng thái' },
+  { value: 'active', label: 'Đang hoạt động' },
+  { value: 'inactive', label: 'Ngừng hoạt động' },
+]
+
+const ViewCropProtections = () => {
+  // ── State: filters ──────────────────────────────────────────────────────────
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+
+  // ── State: data ─────────────────────────────────────────────────────────────
+  const [listData, setListData] = useState([])
+  const [totalRecords, setTotalRecords] = useState(0)
+  const [loading, setLoading] = useState(false)
+  const [statusLoading, setStatusLoading] = useState(false)
+
+  // ── State: modals ───────────────────────────────────────────────────────────
+  const [formModal, setFormModal] = useState({ open: false, item: null })
+  const [detailModal, setDetailModal] = useState({ open: false, item: null })
+  const [statusModal, setStatusModal] = useState({ open: false, item: null })
+  const [inUseAlert, setInUseAlert] = useState(false)
+
+  // ── Fetch list ──────────────────────────────────────────────────────────────
+  const getList = useCallback(async () => {
+    try {
+      setLoading(true)
+      const params = {
+        PageIndex: page,
+        PageSize: pageSize,
+        SearchKeyword: search || undefined,
+        Status:
+          statusFilter === 'all'
+            ? undefined
+            : statusFilter === 'active'
+              ? true
+              : false,
+      }
+      const res = await CropProtectionService.getCropProtections(params)
+      if (res?.success === false) return
+      setListData(res?.data?.items || [])
+      setTotalRecords(res?.data?.totalItems || res?.data?.items?.length || 0)
+    } finally {
+      setLoading(false)
+    }
+  }, [page, pageSize, search, statusFilter])
+
+  useEffect(() => {
+    getList()
+  }, [getList])
+
+  // ── Handlers ────────────────────────────────────────────────────────────────
+  const handleSearch = useCallback(() => {
+    if (invalidCharsRegex.test(searchInput)) {
+      message.error('Ký tự tìm kiếm không hợp lệ')
+      return
+    }
+    setSearch(searchInput.trim())
+    setPage(1)
+  }, [searchInput])
+
+  const handleClearSearch = () => {
+    setSearchInput('')
+    setSearch('')
+    setPage(1)
+  }
+
+  const handleOpenEdit = (record) => {
+    if (record.isInActiveUse) {
+      setInUseAlert(true)
+      setTimeout(() => setInUseAlert(false), 5000)
+      return
+    }
+    setFormModal({ open: true, item: record })
+  }
+
+  const handleSwitchClick = (record) => {
+    if (record.isInActiveUse) {
+      setInUseAlert(true)
+      setTimeout(() => setInUseAlert(false), 5000)
+      return
+    }
+    setStatusModal({ open: true, item: record })
+  }
+
+  const handleStatusChange = async () => {
+    if (!statusModal.item) return
+    const { item } = statusModal
+    try {
+      setStatusLoading(true)
+      const res = await CropProtectionService.toggleCropProtectionStatus(item.id, {
+        isActive: !item.isActive,
+      })
+      if (res?.success === false) return
+      message.success('Cập nhật trạng thái thuốc BVTV thành công.')
+      setStatusModal({ open: false, item: null })
+      getList()
+    } finally {
+      setStatusLoading(false)
+    }
+  }
+
+  // ── Table columns ────────────────────────────────────────────────────────────
+  const columns = [
+    {
+      title: 'STT',
+      key: 'stt',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => (
+        <span className="text-sm font-medium text-gray-400">
+          {(page - 1) * pageSize + index + 1}
+        </span>
+      ),
+    },
+    {
+      title: 'Mã Thuốc',
+      dataIndex: 'code',
+      key: 'code',
+      width: 120,
+      render: (v) => (
+        <span className="px-2 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-lg font-mono">
+          {v || '—'}
+        </span>
+      ),
+    },
+    {
+      title: 'Tên Thuốc BVTV',
+      dataIndex: 'name',
+      key: 'name',
+      render: (v) => (
+        <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
+      ),
+    },
+    {
+      title: 'Nhà Sản Xuất',
+      dataIndex: 'manufacturer',
+      key: 'manufacturer',
+      width: 160,
+      render: (v) => (
+        <span className="text-sm text-gray-600">{v || '—'}</span>
+      ),
+    },
+    {
+      title: 'Đơn vị tính',
+      dataIndex: 'unit',
+      key: 'unit',
+      width: 110,
+      align: 'center',
+      render: (v) =>
+        v ? (
+          <Tag color="blue" className="rounded-full font-medium">
+            {v}
+          </Tag>
+        ) : (
+          <span className="text-gray-300">—</span>
+        ),
+    },
+    {
+      title: 'Tồn kho',
+      dataIndex: 'minimumStock',
+      key: 'minimumStock',
+      width: 120,
+      align: 'right',
+      render: (v, record) => (
+        <span className="text-sm font-semibold text-gray-700">
+          {v != null
+            ? `${Number(v).toLocaleString('vi-VN')} ${record.unit || ''}`
+            : '—'}
+        </span>
+      ),
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      width: 130,
+      align: 'center',
+      render: (isActive, record) => {
+        const locked = record.isInActiveUse
+        return (
+          <Tooltip
+            title={
+              locked
+                ? 'Thuốc đang được sử dụng'
+                : isActive
+                  ? 'Nhấn để vô hiệu hóa'
+                  : 'Nhấn để kích hoạt'
+            }
+          >
+            <Switch
+              checked={isActive !== false}
+              disabled={locked}
+              size="small"
+              onClick={() => handleSwitchClick(record)}
+              className={isActive !== false ? 'bg-green-500' : ''}
+            />
+          </Tooltip>
+        )
+      },
+    },
+    {
+      title: 'Hành động',
+      key: 'actions',
+      fixed: 'right',
+      width: 140,
+      align: 'center',
+      render: (_, record) => {
+        const locked = record.isInActiveUse
+        return (
+          <div className="flex items-center justify-center gap-1">
+            <Tooltip title="Xem chi tiết">
+              <Button
+                type="text"
+                icon={<EyeOutlined className="text-lg text-blue-500" />}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-blue-50"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setDetailModal({ open: true, item: record })
+                }}
+              />
+            </Tooltip>
+            <Tooltip
+              title={
+                locked
+                  ? 'Thuốc đang được sử dụng, không thể chỉnh sửa'
+                  : 'Chỉnh sửa'
+              }
+            >
+              <Button
+                type="text"
+                icon={
+                  <EditOutlined
+                    className={`text-lg ${locked ? 'text-gray-300' : 'text-green-500'}`}
+                  />
+                }
+                disabled={locked}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : 'hover:bg-green-50'
+                  }`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleOpenEdit(record)
+                }}
+              />
+            </Tooltip>
+          </div>
+        )
+      },
+    },
+  ]
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+  return (
+    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+      {/* ── Header ── */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <TitleCustom className="!mb-0 flex items-center gap-2">
+            <BugOutlined className="text-green-600" />
+            Quản lý Thuốc bảo vệ thực vật
+          </TitleCustom>
+        </div>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setFormModal({ open: true, item: null })}
+          className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
+        >
+          Thêm mới
+        </Button>
+      </div>
+
+      {/* Alert */}
+      {inUseAlert && (
+        <Alert
+          message="Thuốc bảo vệ thực vật đang được sử dụng, không thể chỉnh sửa hoặc vô hiệu hóa."
+          type="warning"
+          showIcon
+          closable
+          onClose={() => setInUseAlert(false)}
+          className="rounded-xl"
+        />
+      )}
+
+      {/* ── Table card ── */}
+      <Card
+        bordered={false}
+        className="shadow-sm rounded-2xl"
+        styles={{ body: { padding: 0 } }}
+      >
+        <div className="flex flex-col gap-3 p-5 border-b border-gray-100 sm:flex-row sm:flex-wrap">
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onPressEnter={handleSearch}
+            placeholder="Tìm theo mã, tên thuốc..."
+            prefix={<SearchOutlined className="text-gray-300" />}
+            className="w-64 h-10 rounded-xl"
+            allowClear
+            onClear={handleClearSearch}
+          />
+          <Select
+            value={statusFilter}
+            onChange={(val) => {
+              setStatusFilter(val)
+              setPage(1)
+            }}
+            className="h-10 rounded-xl min-w-[160px]"
+            options={STATUS_FILTER_OPTIONS}
+          />
+          <div className="flex gap-2 ml-auto">
+            <Button
+              onClick={handleSearch}
+              icon={<SearchOutlined />}
+              className="h-10 px-4 font-semibold rounded-xl bg-gray-50"
+            >
+              Tìm kiếm
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => getList()}
+              loading={loading}
+              className="h-10 px-3 rounded-xl bg-gray-50"
+            />
+          </div>
+        </div>
+
+        <CustomTable
+          dataSource={listData}
+          columns={columns}
+          rowKey="id"
+          loading={loading}
+          locale={{ emptyText: 'Không có dữ liệu thuốc bảo vệ thực vật.' }}
+          pagination={{
+            current: page,
+            pageSize,
+            total: totalRecords,
+            showSizeChanger: true,
+            pageSizeOptions: PAGE_SIZE,
+            showTotal: (total, range) => (
+              <span className="text-xs text-gray-500">
+                {range[0]}–{range[1]} /{' '}
+                <strong>{total}</strong>
+              </span>
+            ),
+            onChange: (p, ps) => {
+              setPage(p)
+              setPageSize(ps)
+            },
+          }}
+          rowClassName="hover:bg-green-50/30 transition-colors"
+        />
+      </Card>
+
+      {/* Create / Update */}
+      <CropProtectionFormModal
+        open={formModal.open}
+        editingItem={formModal.item}
+        onClose={() => setFormModal({ open: false, item: null })}
+        onSuccess={() => getList()}
+      />
+
+      {/* Detail (read-only) */}
+      <CropProtectionDetailModal
+        open={detailModal.open}
+        item={detailModal.item}
+        onClose={() => setDetailModal({ open: false, item: null })}
+      />
+
+      {/* Status confirm */}
+      <CustomModal
+        open={statusModal.open}
+        onCancel={() => setStatusModal({ open: false, item: null })}
+        title={
+          <div className="flex items-center">
+            <span className="font-bold">Thay đổi trạng thái</span>
+          </div>
+        }
+        footer={null}
+        width={420}
+      >
+        <div className="mt-4 mb-6 ml-4">
+          <p className="text-gray-600">
+            Bạn có chắc chắn muốn thay đổi trạng thái của thuốc BVTV này?
+          </p>
+          {statusModal.item && (
+            <p className="mt-2 text-sm font-semibold text-gray-800">
+              <span className="font-mono text-emerald-700">
+                {statusModal.item.code}
+              </span>{' '}
+              — {statusModal.item.name}
+            </p>
+          )}
+        </div>
+        <div className="flex justify-end gap-3">
+          <Button
+            onClick={() => setStatusModal({ open: false, item: null })}
+            className="h-10 px-6 rounded-xl"
+          >
+            Hủy
+          </Button>
+          <Button
+            type="primary"
+            loading={statusLoading}
+            onClick={handleStatusChange}
+            className="h-10 px-6 font-bold bg-orange-500 border-0 shadow-lg rounded-xl shadow-orange-100"
+          >
+            Xác nhận
+          </Button>
+        </div>
+      </CustomModal>
+    </div>
+  )
+}
+
 export default ViewCropProtections

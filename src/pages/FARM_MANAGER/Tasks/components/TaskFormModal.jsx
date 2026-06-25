@@ -31,25 +31,12 @@ import React from 'react'
 import CustomModal from 'src/components/Modal/CustomModal'
 import TaskService from 'src/services/taskService'
 
-// Loại công việc
-const TASK_TYPE_OPTIONS = [
-  { value: 'CULTIVATION', label: 'Canh tác' },
-  { value: 'IRRIGATION', label: 'Tưới tiêu' },
-  { value: 'FERTILIZATION', label: 'Bón phân' },
-  { value: 'PEST_CONTROL', label: 'Phòng trừ sâu bệnh' },
-  { value: 'HARVESTING', label: 'Thu hoạch' },
-  { value: 'PROCESSING', label: 'Chế biến' },
-  { value: 'INSPECTION', label: 'Kiểm tra, giám sát' },
-  { value: 'MAINTENANCE', label: 'Bảo trì thiết bị' },
-  { value: 'OTHER', label: 'Khác' },
-]
-
-// Mức độ ưu tiên
-const PRIORITY_OPTIONS = [
-  { value: 'CRITICAL', label: '🔴 Khẩn cấp' },
-  { value: 'HIGH', label: '🟠 Cao' },
-  { value: 'MEDIUM', label: '🟡 Trung bình' },
-  { value: 'LOW', label: '🟢 Thấp' },
+// Danh sách đối tượng (Mock data)
+const TARGET_OPTIONS = [
+  { value: 'Lô đất A', label: 'Lô đất A' },
+  { value: 'Lô đất B', label: 'Lô đất B' },
+  { value: 'Cây lúa', label: 'Cây lúa' },
+  { value: 'Cây ngô', label: 'Cây ngô' },
 ]
 
 const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
@@ -62,11 +49,9 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
     if (open) {
       if (isEdit) {
         form.setFieldsValue({
-          code:        editingItem.code || '',
-          name:        editingItem.name || '',
-          taskType:    editingItem.taskType || undefined,
-          priority:    editingItem.priority || undefined,
-          description: editingItem.description || '',
+          name:          editingItem.name || '',
+          targetObjects: editingItem.targetObjects || [],
+          description:   editingItem.description || '',
         })
       } else {
         form.resetFields()
@@ -79,11 +64,9 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
       setLoading(true)
 
       const body = {
-        code:        values.code?.trim(),
-        name:        values.name?.trim(),
-        taskType:    values.taskType || null,
-        priority:    values.priority || null,
-        description: values.description?.trim() || null,
+        name:          values.name?.trim(),
+        targetObjects: values.targetObjects || [],
+        description:   values.description?.trim() || null,
       }
 
       let res
@@ -94,15 +77,7 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
       }
 
       if (res?.success === false) {
-        const errMsg = (res.message || (res.errors && res.errors[0]) || '').toLowerCase()
-        if (errMsg.includes('code') || errMsg.includes('mã')) {
-          form.setFields([
-            {
-              name: 'code',
-              errors: ['Mã công việc đã tồn tại trong hệ thống.'],
-            },
-          ])
-        }
+        message.error(res.message || 'Có lỗi xảy ra khi lưu công việc.')
         return
       }
 
@@ -114,17 +89,7 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
       onClose()
       onSuccess?.()
     } catch (err) {
-      const errMsg = (err?.response?.data?.message || err?.message || '').toLowerCase()
-      if (errMsg.includes('code') || errMsg.includes('mã')) {
-        form.setFields([
-          {
-            name: 'code',
-            errors: ['Mã công việc đã tồn tại trong hệ thống.'],
-          },
-        ])
-      } else {
-        message.error('Vui lòng nhập đầy đủ các trường thông tin bắt buộc.')
-      }
+      message.error('Vui lòng nhập đầy đủ các trường thông tin bắt buộc.')
     } finally {
       setLoading(false)
     }
@@ -157,29 +122,23 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
         className="mt-4"
       >
         <Row gutter={16}>
-          {/* Mã công việc */}
+          {/* Đối tượng */}
           <Col xs={24} md={12}>
             <Form.Item
-              name="code"
+              name="targetObjects"
               label={
                 <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  Mã công việc <span className="text-red-500">*</span>
+                  <TagOutlined className="mr-1" />
+                  Đối tượng
                 </span>
               }
-              rules={[
-                { required: true, message: 'Vui lòng nhập mã công việc.' },
-                { max: 30, message: 'Mã công việc tối đa 30 ký tự.' },
-                {
-                  pattern: /^[A-Za-z0-9_-]+$/,
-                  message: 'Mã chỉ chứa chữ cái, số, dấu gạch dưới hoặc gạch ngang.',
-                },
-              ]}
             >
-              <Input
-                prefix={<BarcodeOutlined className="text-gray-300" />}
-                placeholder="VD: CV-TUOI-001"
-                className="h-10 rounded-lg"
-                disabled={isEdit}
+              <Select
+                mode="multiple"
+                allowClear
+                placeholder="Chọn đối tượng..."
+                className="rounded-lg"
+                options={TARGET_OPTIONS}
               />
             </Form.Item>
           </Col>
@@ -202,45 +161,6 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
                 prefix={<CheckSquareOutlined className="text-gray-300" />}
                 placeholder="VD: Tưới nước buổi sáng"
                 className="h-10 rounded-lg"
-              />
-            </Form.Item>
-          </Col>
-
-          {/* Loại công việc */}
-          <Col xs={24} md={12}>
-            <Form.Item
-              name="taskType"
-              label={
-                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  <TagOutlined className="mr-1" />
-                  Loại công việc
-                </span>
-              }
-            >
-              <Select
-                allowClear
-                placeholder="Chọn loại công việc"
-                className="h-10 rounded-lg"
-                options={TASK_TYPE_OPTIONS}
-              />
-            </Form.Item>
-          </Col>
-
-          {/* Mức độ ưu tiên */}
-          <Col xs={24} md={12}>
-            <Form.Item
-              name="priority"
-              label={
-                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  Mức độ ưu tiên
-                </span>
-              }
-            >
-              <Select
-                allowClear
-                placeholder="Chọn mức độ ưu tiên"
-                className="h-10 rounded-lg"
-                options={PRIORITY_OPTIONS}
               />
             </Form.Item>
           </Col>
