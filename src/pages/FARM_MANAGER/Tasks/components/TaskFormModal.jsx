@@ -170,7 +170,7 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
                 { required: true, message: 'Vui lòng nhập mã công việc.' },
                 { max: 30, message: 'Mã công việc tối đa 30 ký tự.' },
                 {
-                  pattern: /^[A-Za-z0-9_\-]+$/,
+                  pattern: /^[A-Za-z0-9_-]+$/,
                   message: 'Mã chỉ chứa chữ cái, số, dấu gạch dưới hoặc gạch ngang.',
                 },
               ]}
