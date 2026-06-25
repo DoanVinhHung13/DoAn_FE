@@ -5,6 +5,7 @@ import {
   BellOutlined,
   CalendarOutlined,
   UserOutlined,
+  PaperClipOutlined,
 } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -253,6 +254,68 @@ const NotificationDetail = () => {
             {content || 'Thông báo này không có nội dung.'}
           </Paragraph>
         </div>
+
+        {(() => {
+          let attachs = notification.attachments || notification.attachmentUrls || notification.fileUrls || notification.documents || notification.files || [];
+          if (typeof attachs === 'string') {
+            try {
+              attachs = JSON.parse(attachs);
+            } catch (e) {
+              attachs = [attachs];
+            }
+          }
+          if (!Array.isArray(attachs)) attachs = [attachs];
+          attachs = attachs.filter(Boolean);
+
+          if (attachs.length === 0) {
+             return (
+               <div style={{ display: 'none' }}>
+                 DEBUG DATA: {JSON.stringify(notification)}
+               </div>
+             );
+          }
+
+          return (
+            <div className="border-t border-gray-100 py-6">
+              <div className="mb-4 flex items-center gap-2">
+                <PaperClipOutlined className="text-gray-500" />
+                <Text strong className="!text-base">
+                  Tệp đính kèm
+                </Text>
+              </div>
+              <div className="flex flex-col gap-3">
+                {attachs.map((file, index) => {
+                  const url = typeof file === 'string' ? file : (file.url || file.link || file.path);
+                  if (!url) return null;
+                  const fileName = typeof file === 'string' ? url.split('/').pop() : (file.name || file.fileName || url.split('/').pop());
+                  
+                  return (
+                    <div key={index} className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition-colors">
+                      <div className="flex h-10 w-10 items-center justify-center rounded bg-blue-50 text-blue-600">
+                        <PaperClipOutlined />
+                      </div>
+                      <div className="flex flex-1 flex-col overflow-hidden">
+                        <Text ellipsis className="!font-medium" title={fileName}>
+                          {fileName}
+                        </Text>
+                      </div>
+                      <Button 
+                        type="primary" 
+                        ghost 
+                        href={url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        size="small"
+                      >
+                        Tải xuống
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
       </Card>
     </div>
   );
