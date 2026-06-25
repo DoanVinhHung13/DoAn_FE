@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -16,13 +16,18 @@ import {
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
+  EditOutlined,
   StopOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
+import GrowthStages from 'src/components/GrowthStages';
+import CropService from 'src/services/CropService';
 import CropManagementService from 'src/services/CropManagementService';
+import GrowthStageService from 'src/services/GrowthStageService';
 import ROUTER from 'src/router/ROUTER';
 
 const { Text, Paragraph } = Typography;
@@ -64,6 +69,7 @@ const getCategoryTagStyle = (value) => {
 const CropDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [isVarietiesModalOpen, setIsVarietiesModalOpen] = useState(false);
 
   const {
     data: cropDetail,
@@ -71,11 +77,59 @@ const CropDetail = () => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['crop-detail-lm', id],
+    queryKey: ['crop-detail', id],
     queryFn: async () => {
       const response = await CropManagementService.getCropById(id);
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
+    },
+    enabled: !!id,
+    retry: false,
+  });
+
+  const { data: cropCatalogsData } = useQuery({
+    queryKey: ['crop-catalogs-dropdown'],
+    queryFn: async () => {
+      try {
+        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
+        const payload = response?.data ?? response ?? {};
+        const data = payload?.data ?? payload;
+        const items = Array.isArray(data)
+          ? data
+          : data?.items ||
+            data?.results ||
+            data?.crops ||
+            data?.cropCatalogs ||
+            payload?.items ||
+            payload?.results ||
+            [];
+        return items;
+      } catch (err) {
+        return [];
+      }
+    },
+    retry: false,
+  });
+
+  const getCropCatalogName = (id) => {
+    if (!cropCatalogsData || !id) return id;
+    const catalog = cropCatalogsData.find(c => c.id === id || c.cropCatalogId === id);
+    return catalog ? (catalog.name || catalog.cropCatalogName) : id;
+  };
+
+  const { data: growthStagesData, isLoading: isGrowthStagesLoading } = useQuery({
+    queryKey: ['growth-stages', id],
+    queryFn: async () => {
+      try {
+        const response = await GrowthStageService.getGrowthStages({ cropId: id, PageSize: 100 });
+        const payload = response?.data ?? response ?? {};
+        const data = payload?.data ?? payload;
+        const items = Array.isArray(data) ? data : data?.items || [];
+        // Sort by orderIndex
+        return items.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+      } catch (err) {
+        return [];
+      }
     },
     enabled: !!id,
     retry: false,
@@ -143,19 +197,24 @@ const CropDetail = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header - Không có nút Chỉnh sửa */}
-      <div className="flex items-center gap-4">
-        <Button
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(ROUTER.LM_CROPS)}
-          className="h-10 rounded-lg"
-        >
-          Quay lại
-        </Button>
-        <TitleCustom className="!mb-0 flex items-center gap-2">
-          <Sprout className="h-6 w-6" />
-          Chi tiết cây trồng
-        </TitleCustom>
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTER.LM_CROPS)}
+            className="h-10 rounded-lg"
+          >
+            Quay lại
+          </Button>
+          <TitleCustom className="!mb-0 flex items-center gap-2">
+            <Sprout className="h-6 w-6" />
+            Chi tiết cây trồng
+          </TitleCustom>
+        </div>
+        <Space>      
+          
+        </Space>
       </div>
 
       <Row gutter={[24, 24]}>
@@ -202,12 +261,12 @@ const CropDetail = () => {
                   {getStatusLabel(cropDetail)}
                 </div>
 
-                {cropDetail.cropType && (
+                {cropDetail.cropCatalogId && (
                   <Tag
                     className="!m-0 rounded-full border-0 px-4 py-1.5 text-sm font-semibold"
-                    style={getCategoryTagStyle(cropDetail.cropType)}
+                    style={getCategoryTagStyle(getCropCatalogName(cropDetail.cropCatalogId))}
                   >
-                    {cropDetail.cropType}
+                    {getCropCatalogName(cropDetail.cropCatalogId)}
                   </Tag>
                 )}
               </div>
@@ -229,42 +288,14 @@ const CropDetail = () => {
               className="rounded-lg shadow-sm"
             >
               <Descriptions column={1} size="middle" className="[&_.ant-descriptions-item-label]:w-[200px]">
-                <Descriptions.Item label="Mã cây">
-                  <Text strong className="font-mono text-green-600">
-                    {displayValue(cropDetail.cropCode)}
-                  </Text>
-                </Descriptions.Item>
                 <Descriptions.Item label="Danh mục">
-                  {displayValue(cropDetail.cropType)}
-                  {/* TODO: [BACKEND] Hiển thị badge cảnh báo khi danh mục đã ngừng hoạt động
-                  Yêu cầu: Backend cần trả về field "cropCatalogStatus" trong GET /api/crops/{id}
-                  Response mẫu: { ..., "cropCatalogStatus": "active" | "inactive", ... }
-                  
-                  Code để bật lại:
-                  {cropDetail.cropCatalogStatus === 'inactive' && (
-                    <Tag color="warning" className="!ml-2">
-                       Danh mục đã ngừng hoạt động
-                    </Tag>
-                  )}
-                  */}
+                  {displayValue(getCropCatalogName(cropDetail.cropCatalogId))}
                 </Descriptions.Item>
               </Descriptions>
             </Card>
 
             {/* Cultivation Conditions */}
-            <Card
-              title={
-                <span className="text-lg font-semibold text-green-600">
-                  Điều kiện canh tác khuyến nghị
-                </span>
-              }
-              className="rounded-lg shadow-sm"
-            >
-              <Paragraph className="mb-0 whitespace-pre-wrap text-gray-700">
-                {cropDetail.recommendedCultivationConditions || 'Chưa có thông tin điều kiện canh tác'}
-              </Paragraph>
-            </Card>
-
+  
             {/* Description */}
             <Card
               title={
@@ -278,6 +309,16 @@ const CropDetail = () => {
                 {cropDetail.description || 'Chưa có mô tả cho cây trồng này'}
               </Paragraph>
             </Card>
+
+            {/* Growth Stages */}
+            <div className="relative">
+              {isGrowthStagesLoading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 rounded-lg">
+                  <Spin />
+                </div>
+              )}
+              <GrowthStages value={growthStagesData || []} readonly={true} />
+            </div>
           </Space>
         </Col>
       </Row>

@@ -479,9 +479,14 @@ const Crops = () => {
     ];
     return [
       { value: 'all', label: 'Tất cả danh mục' },
-      ...categories.map((item) => ({ value: item, label: item })),
+      ...categories.map((id) => {
+        const found = cropCatalogsData?.find(
+          (c) => c.id === id || c.cropCatalogId === id
+        );
+        return { value: id, label: found ? (found.name || found.cropCatalogName) : id };
+      }),
     ];
-  }, [data?.items]);
+  }, [data?.items, cropCatalogsData]);
 
   // Transform crop catalogs data into options
   const cropCatalogOptions = useMemo(() => {
