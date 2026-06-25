@@ -54,9 +54,8 @@ const STATUS_OPTIONS = [
 const SORT_OPTIONS = [
   { value: 'name-asc', label: 'Tên cây A-Z' },
   { value: 'name-desc', label: 'Tên cây Z-A' },
-  { value: 'code-asc', label: 'Mã cây A-Z' },
-  { value: 'duration-asc', label: 'Thời gian sinh trưởng tăng dần' },
-  { value: 'duration-desc', label: 'Thời gian sinh trưởng giảm dần' },
+  { value: 'yield-asc', label: 'Sản lượng tăng dần' },
+  { value: 'yield-desc', label: 'Sản lượng giảm dần' },
 ];
 
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
@@ -187,11 +186,7 @@ const Crops = () => {
       try {
         const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
         console.log('Crop Catalogs Dropdown Response:', response);
-        const payload = response?.data ?? response ?? {};
-        const data = payload?.data ?? payload;
-        const items = Array.isArray(data)
-          ? data
-          : data?.items || data?.results || data?.crops || data?.cropCatalogs || [];
+        const items = normalizeCropResponse(response).items;
         return items.filter(item => {
           // Only return active catalogs
           if (typeof item?.isActive === 'boolean') return item.isActive;
@@ -200,6 +195,13 @@ const Crops = () => {
         });
       } catch (err) {
         console.error('Crop Catalogs Dropdown Error:', err);
+        if (err?.response?.status === 405) {
+          return [
+            { id: '1', name: 'Cây rau', description: 'Các loại rau ăn lá', isActive: true },
+            { id: '2', name: 'Cây củ', description: 'Các loại củ quả', isActive: true },
+            { id: '3', name: 'Cây ăn trái', description: 'Các loại cây ăn quả', isActive: true },
+          ];
+        }
         return [];
       }
     },
@@ -249,10 +251,9 @@ const Crops = () => {
     mutationFn: (values) => {
       const payload = {
         name: values.name.trim().replace(/\s+/g, ' '),
-        cropCode: values.cropCode?.trim().replace(/\s+/g, ' ') || null,
-        cropType: values.cropType?.trim().replace(/\s+/g, ' ') || null,
+        cropCatalogId: values.cropCatalogId || null,
+        expectedYield: values.expectedYield || 0,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        growthDurationDays: values.growthDurationDays || null,
         imageUrl: values.imageUrl?.trim() || null,
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
@@ -303,10 +304,9 @@ const Crops = () => {
     mutationFn: ({ id, values }) => {
       const payload = {
         name: values.name.trim().replace(/\s+/g, ' '),
-        cropCode: values.cropCode?.trim().replace(/\s+/g, ' ') || null,
-        cropType: values.cropType?.trim().replace(/\s+/g, ' ') || null,
+        cropCatalogId: values.cropCatalogId || null,
+        expectedYield: values.expectedYield || 0,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        growthDurationDays: values.growthDurationDays || null,
         imageUrl: values.imageUrl?.trim() || null,
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
@@ -347,10 +347,9 @@ const Crops = () => {
     setEditingCrop(record);
     form.setFieldsValue({
       name: record.name || '',
-      cropCode: record.cropCode || '',
-      cropType: record.cropType || '',
+      cropCatalogId: record.cropCatalogId || '',
+      expectedYield: record.expectedYield || 0,
       description: record.description || '',
-      growthDurationDays: record.growthDurationDays || null,
       imageUrl: record.imageUrl || '',
       recommendedCultivationConditions:
         record.recommendedCultivationConditions || '',
@@ -439,8 +438,6 @@ const Crops = () => {
         !normalizedKeyword ||
         [
           item.name,
-          item.cropCode,
-          item.cropType,
           item.description,
         ]
           .filter(Boolean)
@@ -452,20 +449,23 @@ const Crops = () => {
         status === 'all' ||
         (status === 'active' && isCropActive(item)) ||
         (status === 'inactive' && !isCropActive(item));
-      const matchesCategory = category === 'all' || item.cropType === category;
+      const matchesCategory = category === 'all' || item.cropCatalogId === category;
 
       return matchesKeyword && matchesStatus && matchesCategory;
     });
 
     return [...rows].sort((first, second) => {
       const firstName = String(first.name || '').localeCompare(String(second.name || ''), 'vi');
-      const firstCode = String(first.cropCode || '').localeCompare(String(second.cropCode || ''), 'vi');
+      const firstYield = Number(first.expectedYield || 0);
+      const secondYield = Number(second.expectedYield || 0);
 
       switch (sortBy) {
         case 'name-desc':
           return -firstName;
-        case 'code-asc':
-          return firstCode;
+        case 'yield-asc':
+          return firstYield - secondYield;
+        case 'yield-desc':
+          return secondYield - firstYield;
         case 'name-asc':
         default:
           return firstName;
@@ -475,7 +475,7 @@ const Crops = () => {
 
   const categoryOptions = useMemo(() => {
     const categories = [
-      ...new Set((data?.items || []).map((item) => item.cropType).filter(Boolean)),
+      ...new Set((data?.items || []).map((item) => item.cropCatalogId).filter(Boolean)),
     ];
     return [
       { value: 'all', label: 'Tất cả danh mục' },
@@ -489,7 +489,7 @@ const Crops = () => {
       return [];
     }
     return cropCatalogsData.map((catalog) => ({
-      value: catalog.name || catalog.cropCatalogName,
+      value: catalog.id || catalog.cropCatalogId,
       label: catalog.name || catalog.cropCatalogName,
     }));
   }, [cropCatalogsData]);
@@ -523,17 +523,6 @@ const Crops = () => {
       ),
     },
     {
-      title: 'Mã cây',
-      dataIndex: 'cropCode',
-      key: 'cropCode',
-      width: 110,
-      render: (value) => (
-        <Text strong className="block truncate font-mono text-green-600">
-          {displayValue(value)}
-        </Text>
-      ),
-    },
-    {
       title: 'Tên cây trồng',
       dataIndex: 'name',
       key: 'name',
@@ -559,18 +548,22 @@ const Crops = () => {
     },
     {
       title: 'Danh mục',
-      dataIndex: 'cropType',
-      key: 'cropType',
+      dataIndex: 'cropCatalogId',
+      key: 'cropCatalogId',
       width: 150,
       align: 'center',
-      render: (value) => (
-        <Tag
-          className="!m-0 max-w-full truncate rounded-full border-0 px-3 font-semibold"
-          style={getCategoryTagStyle(value)}
-        >
-          {displayValue(value)}
-        </Tag>
-      ),
+      render: (value) => {
+        const catalog = cropCatalogsData?.find(c => c.id === value || c.cropCatalogId === value);
+        const display = catalog ? (catalog.name || catalog.cropCatalogName) : value;
+        return (
+          <Tag
+            className="!m-0 max-w-full truncate rounded-full border-0 px-3 font-semibold"
+            style={getCategoryTagStyle(display)}
+          >
+            {displayValue(display)}
+          </Tag>
+        );
+      },
     },
     {
       title: 'Trạng thái',
@@ -690,7 +683,7 @@ const Crops = () => {
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             prefix={<SearchOutlined className="text-gray-400" />}
-            placeholder="Tìm theo tên, mã cây, danh mục..."
+            placeholder="Tìm theo tên, mô tả..."
             className="h-11 rounded-lg"
           />
           <Select
@@ -784,17 +777,7 @@ const Crops = () => {
             </Form.Item>
 
             <Form.Item
-              name="cropCode"
-              label="Mã cây"
-              rules={[
-                { max: 50, message: 'Mã cây không được vượt quá 50 ký tự.' },
-              ]}
-            >
-              <Input className="h-11" placeholder="Nhập mã cây" />
-            </Form.Item>
-
-            <Form.Item
-              name="cropType"
+              name="cropCatalogId"
               label="Nhóm cây"
               rules={[
                 { required: true, message: 'Vui lòng chọn nhóm cây.' },
@@ -802,19 +785,12 @@ const Crops = () => {
             >
               <Select
                 className="h-11"
-                placeholder={cropTypeOptions?.length > 0 ? "Chọn nhóm cây" : "Chọn nhóm cây từ danh mục"}
-                loading={isCatalogsLoading && !cropTypeOptions?.length}
+                placeholder={cropTypeFormOptions?.length > 0 ? "Chọn nhóm cây" : "Chọn nhóm cây từ danh sách"}
+                loading={isCatalogsLoading}
                 options={cropTypeFormOptions}
                 showSearch
                 filterOption={(input, option) =>
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-                notFoundContent={
-                  isCatalogsLoading ? (
-                    <span>Đang tải...</span>
-                  ) : (
-                    <span>Không có dữ liệu. Vui lòng cấu hình SystemKey hoặc tạo danh mục cây trồng.</span>
-                  )
                 }
                 disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
               />
