@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { Alert, Button, Card, Skeleton, Tag, Typography } from 'antd';
 import {
   ArrowLeftOutlined,
   BellOutlined,
   CalendarOutlined,
   UserOutlined,
+  PaperClipOutlined,
 } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -18,6 +19,7 @@ dayjs.extend(timezone);
 
 import {
   getNotifications,
+  getNotificationById,
   markNotificationAsRead,
 } from 'src/services/NotificationService';
 import ROUTER from 'src/router/ROUTER';
@@ -93,23 +95,34 @@ const NotificationDetail = () => {
   const listPath =
     userInfo?.role === 'FARM_MANAGER' ? ROUTER.FM_NOTIFICATIONS : ROUTER.NOTIFICATIONS;
 
-  const { data: items = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['notification-detail-source', id],
-    queryFn: async () => normalizeItems(await getNotifications()),
+  const { data: notification, isLoading, isError, refetch } = useQuery({
+    queryKey: ['notification-detail', id],
+    queryFn: async () => {
+      // Thử gọi API chi tiết trước (có đầy đủ attachments)
+      try {
+        const res = await getNotificationById(id);
+        const payload = res?.data ?? res ?? {};
+        const item = payload?.data ?? payload;
+        if (item && (item.id || item._id)) return item;
+      } catch (e) {
+        // API /notifications/:id chưa có hoặc lỗi, fallback sang tìm trong danh sách
+        console.warn('getNotificationById failed, fallback to list:', e);
+      }
+      // Fallback: tìm trong danh sách
+      const items = normalizeItems(await getNotifications());
+      return items.find((item) => String(item._id || item.id) === String(id)) || null;
+    },
     retry: false,
   });
 
-  const notification = useMemo(
-    () => items.find((item) => String(item._id || item.id) === String(id)),
-    [id, items]
-  );
+  const notification_id = notification?._id || notification?.id;
 
   useEffect(() => {
     if (!notification || notification.isRead) return;
-    markNotificationAsRead(notification._id || notification.id)
+    markNotificationAsRead(notification_id)
       .catch(() => undefined)
       .finally(() => queryClient.invalidateQueries({ queryKey: ['notifications'] }));
-  }, [notification, queryClient]);
+  }, [notification, notification_id, queryClient]);
 
   if (isLoading) {
     return (
@@ -253,6 +266,68 @@ const NotificationDetail = () => {
             {content || 'Thông báo này không có nội dung.'}
           </Paragraph>
         </div>
+
+        {(() => {
+          let attachs = notification.attachments || notification.attachmentUrls || notification.fileUrls || notification.documents || notification.files || [];
+          if (typeof attachs === 'string') {
+            try {
+              attachs = JSON.parse(attachs);
+            } catch (e) {
+              attachs = [attachs];
+            }
+          }
+          if (!Array.isArray(attachs)) attachs = [attachs];
+          attachs = attachs.filter(Boolean);
+
+          if (attachs.length === 0) {
+             return (
+               <div style={{ display: 'none' }}>
+                 DEBUG DATA: {JSON.stringify(notification)}
+               </div>
+             );
+          }
+
+          return (
+            <div className="border-t border-gray-100 py-6">
+              <div className="mb-4 flex items-center gap-2">
+                <PaperClipOutlined className="text-gray-500" />
+                <Text strong className="!text-base">
+                  Tệp đính kèm
+                </Text>
+              </div>
+              <div className="flex flex-col gap-3">
+                {attachs.map((file, index) => {
+                  const url = typeof file === 'string' ? file : (file.url || file.link || file.path);
+                  if (!url) return null;
+                  const fileName = typeof file === 'string' ? url.split('/').pop() : (file.name || file.fileName || url.split('/').pop());
+                  
+                  return (
+                    <div key={index} className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition-colors">
+                      <div className="flex h-10 w-10 items-center justify-center rounded bg-blue-50 text-blue-600">
+                        <PaperClipOutlined />
+                      </div>
+                      <div className="flex flex-1 flex-col overflow-hidden">
+                        <Text ellipsis className="!font-medium" title={fileName}>
+                          {fileName}
+                        </Text>
+                      </div>
+                      <Button 
+                        type="primary" 
+                        ghost 
+                        href={url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        size="small"
+                      >
+                        Tải xuống
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
       </Card>
     </div>
   );

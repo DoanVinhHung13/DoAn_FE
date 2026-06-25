@@ -12,6 +12,8 @@ import {
   Spin,
   Upload,
   message,
+  Row,
+  Col,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -24,9 +26,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-// import GrowthStages from 'src/components/GrowthStages'; // TODO: Sẽ quản lý riêng qua CropVarieties API
+import GrowthStages from 'src/components/GrowthStages';
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
+import GrowthStageService from 'src/services/GrowthStageService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
@@ -63,6 +66,23 @@ const CropEdit = () => {
     retry: false,
   });
 
+  const { data: initialGrowthStages, isLoading: isGrowthStagesLoading } = useQuery({
+    queryKey: ['growth-stages', id],
+    queryFn: async () => {
+      try {
+        const response = await GrowthStageService.getGrowthStages({ cropId: id, PageSize: 100 });
+        const payload = response?.data ?? response ?? {};
+        const data = payload?.data ?? payload;
+        const items = Array.isArray(data) ? data : data?.items || [];
+        return items.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+      } catch (err) {
+        return [];
+      }
+    },
+    enabled: !!id,
+    retry: false,
+  });
+
   // Query to get crop catalogs for the dropdown
   const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
     queryKey: ['crop-catalogs-dropdown'],
@@ -73,13 +93,26 @@ const CropEdit = () => {
         const data = payload?.data ?? payload;
         const items = Array.isArray(data)
           ? data
-          : data?.items || data?.results || data?.crops || data?.cropCatalogs || [];
+          : data?.items ||
+            data?.results ||
+            data?.crops ||
+            data?.cropCatalogs ||
+            payload?.items ||
+            payload?.results ||
+            [];
         return items.filter(item => {
           if (typeof item?.isActive === 'boolean') return item.isActive;
           const status = String(item?.status || '').toLowerCase();
           return !['inactive', 'disabled', 'deleted'].includes(status);
         });
       } catch (err) {
+        if (err?.response?.status === 405) {
+          return [
+            { id: '1', name: 'Cây rau', description: 'Các loại rau ăn lá', isActive: true },
+            { id: '2', name: 'Cây củ', description: 'Các loại củ quả', isActive: true },
+            { id: '3', name: 'Cây ăn trái', description: 'Các loại cây ăn quả', isActive: true },
+          ];
+        }
         return [];
       }
     },
@@ -91,7 +124,7 @@ const CropEdit = () => {
       return [];
     }
     return cropCatalogsData.map((catalog) => ({
-      value: catalog.name || catalog.cropCatalogName,
+      value: catalog.id || catalog.cropCatalogId,
       label: catalog.name || catalog.cropCatalogName,
     }));
   }, [cropCatalogsData]);
@@ -114,42 +147,61 @@ const CropEdit = () => {
     if (cropDetail) {
       form.setFieldsValue({
         name: cropDetail.name || '',
-        cropCode: cropDetail.cropCode || '',
-        cropType: cropDetail.cropType || '',
+        cropCatalogId: cropDetail.cropCatalogId || '',
+        expectedYield: cropDetail.expectedYield || 0,
         description: cropDetail.description || '',
-        growthDurationDays: cropDetail.growthDurationDays || null,
         imageUrl: cropDetail.imageUrl || '',
         recommendedCultivationConditions:
           cropDetail.recommendedCultivationConditions || '',
-        // growthStages: cropDetail.growthStages || [], // TODO: Quản lý riêng qua CropVarieties
+        growthStages: initialGrowthStages || [],
       });
     }
-  }, [cropDetail, form]);
+  }, [cropDetail, initialGrowthStages, form]);
 
   const updateMutation = useMutation({
     mutationFn: (values) => {
       const payload = {
         name: values.name.trim().replace(/\s+/g, ' '),
-        cropCode: values.cropCode?.trim().replace(/\s+/g, ' ') || null,
-        cropType: values.cropType?.trim().replace(/\s+/g, ' ') || null,
+        cropCatalogId: values.cropCatalogId || null,
+        expectedYield: values.expectedYield || 0,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        growthDurationDays: values.growthDurationDays || null,
         imageUrl: values.imageUrl?.trim() || '', // Gửi string rỗng thay vì null
         recommendedCultivationConditions:
           values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
         isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
       };
-      console.log('🔄 Payload gửi lên server:', payload);
-      console.log('📷 ImageUrl:', payload.imageUrl === '' ? 'EMPTY STRING (sẽ xóa ảnh)' : payload.imageUrl);
-      // TODO: Quản lý CropVarieties qua API riêng /api/crop-varieties
-      // const growthStages = values.growthStages || [];
-      return CropManagementService.updateCrop(id, payload);
+      
+      return CropManagementService.updateCrop(id, payload).then(async (res) => {
+        // Sync GrowthStages
+        const currentStages = values.growthStages || [];
+        const originalStages = initialGrowthStages || [];
+
+        const stagesToCreate = currentStages.filter(s => String(s.id).startsWith('temp-'));
+        const stagesToUpdate = currentStages.filter(s => !String(s.id).startsWith('temp-'));
+        const currentIds = new Set(stagesToUpdate.map(s => s.id));
+        const stagesToDelete = originalStages.filter(s => !currentIds.has(s.id));
+
+        for (const stage of stagesToDelete) {
+          await GrowthStageService.deleteGrowthStage(stage.id);
+        }
+        for (const stage of stagesToUpdate) {
+          const payload = { ...stage, cropId: id };
+          await GrowthStageService.updateGrowthStage(stage.id, payload);
+        }
+        for (const stage of stagesToCreate) {
+          const payload = { ...stage, cropId: id };
+          delete payload.id;
+          await GrowthStageService.createGrowthStage(payload);
+        }
+
+        return res;
+      });
     },
     onSuccess: (response) => {
-      console.log('✅ Update Crop Response:', response);
       message.success('Cập nhật cây trồng thành công.');
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['growth-stages', id] });
       navigate(ROUTER.FM_CROPS);
     },
     onError: (error) => {
@@ -230,7 +282,7 @@ const CropEdit = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isGrowthStagesLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Spin size="large" />
@@ -302,163 +354,222 @@ const CropEdit = () => {
         </TitleCustom>
       </div>
 
-      <Card className="rounded-lg shadow-sm">
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={(values) => updateMutation.mutate(values)}
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
-          scrollToFirstError
-        >
-          <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
-            <Form.Item
-              name="name"
-              label="Tên cây trồng"
-              rules={[
-                {
-                  required: true,
-                  whitespace: true,
-                  message: 'Vui lòng nhập tên cây trồng.',
-                },
-                { max: 150, message: 'Tên cây trồng không được vượt quá 150 ký tự.' },
-              ]}
-            >
-              <Input className="h-11 rounded-lg" placeholder="Nhập tên cây trồng" />
-            </Form.Item>
-
-            <Form.Item
-              name="cropCode"
-              label="Mã cây"
-              rules={[
-                { max: 50, message: 'Mã cây không được vượt quá 50 ký tự.' },
-              ]}
-            >
-              <Input className="h-11 rounded-lg" placeholder="Nhập mã cây" />
-            </Form.Item>
-
-            <Form.Item
-              name="cropType"
-              label="Danh mục"
-              rules={[
-                { required: true, message: 'Vui lòng chọn danh mục.' },
-              ]}
-            >
-              <Select
-                className="h-11"
-                placeholder={cropTypeOptions?.length > 0 ? "Chọn danh mục" : "Chọn danh mục từ danh sách"}
-                loading={isCatalogsLoading && !cropTypeOptions?.length}
-                options={cropTypeFormOptions}
-                showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-                notFoundContent={
-                  isCatalogsLoading ? (
-                    <span>Đang tải...</span>
-                  ) : (
-                    <span>Không có dữ liệu. Vui lòng cấu hình SystemKey hoặc tạo danh mục cây trồng.</span>
-                  )
-                }
-                disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
-              />
-            </Form.Item>
-
-            <Form.Item name="imageUrl" label="Ảnh minh họa">
-              <div className="space-y-3">
-                <Upload
-                  accept="image/png,image/jpeg,image/webp"
-                  showUploadList={false}
-                  beforeUpload={beforeCropImageUpload}
-                  customRequest={(options) => handleCropImageUpload(options)}
-                >
-                  <Button 
-                    icon={<UploadOutlined />} 
-                    loading={uploading}
-                    className="h-11 rounded-lg"
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={(values) => updateMutation.mutate(values)}
+        onFinishFailed={() => message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')}
+        scrollToFirstError
+      >
+        <Row gutter={[24, 24]}>
+          <Col xs={24} lg={16}>
+            <div className="space-y-6">
+              {/* Basic Information Card */}
+              <Card 
+                className="rounded-lg shadow-sm"
+                title={<span className="text-lg font-semibold text-green-600">Thông tin cơ bản</span>}
+              >
+                <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
+                  <Form.Item
+                    name="name"
+                    label="Tên cây trồng"
+                    rules={[
+                      { required: true, whitespace: true, message: 'Vui lòng nhập tên cây trồng.' },
+                      { max: 150, message: 'Tên cây trồng không được vượt quá 150 ký tự.' },
+                    ]}
                   >
-                    {uploading ? 'Đang tải lên...' : 'Tải ảnh lên'}
-                  </Button>
-                </Upload>
+                    <Input className="h-11 rounded-lg" placeholder="Nhập tên cây trồng" />
+                  </Form.Item>
 
-                {/* Loading state */}
-                {uploading && !watchedImageUrl && (
-                  <div className="flex h-[120px] w-[140px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
-                    <Spin />
-                  </div>
-                )}
-
-                {/* Preview ảnh sau khi upload xong */}
-                {watchedImageUrl && !uploading && (
-                  <div className="group relative h-[120px] w-[140px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
-                    <img
-                      src={watchedImageUrl}
-                      alt="Ảnh minh họa cây trồng"
-                      className="h-full w-full rounded-md object-cover"
+                  <Form.Item
+                    name="cropCatalogId"
+                    label="Danh mục cây trồng"
+                    rules={[{ required: true, message: 'Vui lòng chọn danh mục.' }]}
+                  >
+                    <Select
+                      className="h-11"
+                      placeholder={cropTypeOptions?.length > 0 ? "Chọn danh mục" : "Chọn danh mục từ danh sách"}
+                      loading={isCatalogsLoading && !cropTypeOptions?.length}
+                      options={cropTypeFormOptions}
+                      showSearch
+                      filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                      disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
                     />
-                    <div className="absolute inset-1 flex items-center justify-center gap-2 rounded-md bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => setPreviewImage(watchedImageUrl)}
-                      />
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => form.setFieldsValue({ imageUrl: '' })}
-                      />
-                    </div>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="minGrowthDuration"
+                    label="Thời gian sinh trưởng tối thiểu"
+                  >
+                    <InputNumber
+                      className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
+                      placeholder="Nhập thời gian"
+                      min={0}
+                      addonAfter={
+                        <Form.Item name="minDurationUnit" noStyle initialValue="days">
+                          <Select className="w-24 h-11 bg-gray-50" bordered={false}>
+                            <Select.Option value="days">ngày</Select.Option>
+                            <Select.Option value="months">tháng</Select.Option>
+                            <Select.Option value="years">năm</Select.Option>
+                          </Select>
+                        </Form.Item>
+                      }
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="maxGrowthDuration"
+                    label="Thời gian sinh trưởng tối đa"
+                    dependencies={['minGrowthDuration', 'minDurationUnit', 'maxDurationUnit']}
+                    rules={[
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          const minVal = getFieldValue('minGrowthDuration');
+                          if (minVal === undefined || minVal === null || value === undefined || value === null) {
+                            return Promise.resolve();
+                          }
+                          const minUnit = getFieldValue('minDurationUnit') || 'days';
+                          const maxUnit = getFieldValue('maxDurationUnit') || 'days';
+                          const unitToDays = { days: 1, months: 30, years: 365 };
+                          
+                          const minDays = minVal * unitToDays[minUnit];
+                          const maxDays = value * unitToDays[maxUnit];
+                          
+                          if (maxDays < minDays) {
+                            return Promise.reject(new Error('Thời gian tối đa không được nhỏ hơn thời gian tối thiểu.'));
+                          }
+                          return Promise.resolve();
+                        },
+                      }),
+                    ]}
+                  >
+                    <InputNumber
+                      className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
+                      placeholder="Nhập thời gian"
+                      min={0}
+                      addonAfter={
+                        <Form.Item name="maxDurationUnit" noStyle initialValue="days">
+                          <Select className="w-24 h-11 bg-gray-50" bordered={false}>
+                            <Select.Option value="days">ngày</Select.Option>
+                            <Select.Option value="months">tháng</Select.Option>
+                            <Select.Option value="years">năm</Select.Option>
+                          </Select>
+                        </Form.Item>
+                      }
+                    />
+                  </Form.Item>
+                </div>
+              </Card>
+
+              {/* Detailed Information Card */}
+              <Card 
+                className="rounded-lg shadow-sm"
+                title={<span className="text-lg font-semibold text-green-600">Thông tin chi tiết</span>}
+              >
+                <Form.Item name="description" label="Mô tả">
+                  <Input.TextArea
+                    rows={4}
+                    className="rounded-lg"
+                    placeholder="Nhập mô tả về cây trồng"
+                  />
+                </Form.Item>
+              </Card>
+
+              {/* Growth Stages Section */}
+              <Form.Item name="growthStages">
+                <GrowthStages />
+              </Form.Item>
+            </div>
+          </Col>
+
+          <Col xs={24} lg={8}>
+            <div className="space-y-6">
+              {/* Image Upload Card */}
+              <Card 
+                className="rounded-lg shadow-sm"
+                title={<span className="text-lg font-semibold text-green-600">Ảnh minh họa</span>}
+              >
+                <Form.Item name="imageUrl" className="mb-0">
+                  <div className="flex flex-col items-center space-y-4">
+                    {/* Preview ảnh sau khi upload xong */}
+                    {watchedImageUrl && !uploading && (
+                      <div className="group relative w-full aspect-square overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-1">
+                        <img
+                          src={watchedImageUrl}
+                          alt="Ảnh minh họa cây trồng"
+                          className="h-full w-full rounded-lg object-cover"
+                        />
+                        <div className="absolute inset-1 flex items-center justify-center gap-3 rounded-lg bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
+                          <Button
+                            type="text"
+                            icon={<EyeOutlined />}
+                            className="!h-10 !w-10 !text-white hover:!bg-white/20"
+                            onClick={() => setPreviewImage(watchedImageUrl)}
+                          />
+                          <Button
+                            type="text"
+                            icon={<DeleteOutlined />}
+                            className="!h-10 !w-10 !text-white hover:!bg-white/20"
+                            onClick={() => form.setFieldsValue({ imageUrl: '' })}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Loading state */}
+                    {uploading && !watchedImageUrl && (
+                      <div className="flex w-full aspect-square items-center justify-center rounded-xl border border-gray-200 bg-gray-50">
+                        <Spin />
+                      </div>
+                    )}
+
+                    <Upload
+                      accept="image/png,image/jpeg,image/webp"
+                      showUploadList={false}
+                      beforeUpload={beforeCropImageUpload}
+                      customRequest={(options) => handleCropImageUpload(options)}
+                    >
+                      <Button 
+                        icon={<UploadOutlined />} 
+                        loading={uploading}
+                        className="h-11 rounded-lg w-full"
+                      >
+                        {uploading ? 'Đang tải...' : (watchedImageUrl ? 'Đổi ảnh khác' : 'Tải ảnh lên')}
+                      </Button>
+                    </Upload>
                   </div>
-                )}
-              </div>
-            </Form.Item>
-          </div>
+                </Form.Item>
+              </Card>
 
-          <Form.Item name="recommendedCultivationConditions" label="Điều kiện canh tác khuyến nghị">
-            <Input.TextArea
-              rows={4}
-              className="rounded-lg"
-              placeholder="Nhập điều kiện canh tác khuyến nghị"
-            />
-          </Form.Item>
-
-          <Form.Item name="description" label="Mô tả">
-            <Input.TextArea
-              rows={4}
-              className="rounded-lg"
-              placeholder="Nhập mô tả về cây trồng"
-            />
-          </Form.Item>
-
-          {/* TODO: Giai đoạn sinh trưởng sẽ được quản lý riêng qua CropVarieties API */}
-          {/* <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
-            <GrowthStages />
-          </Form.Item> */}
-
-          <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
-            <Button
-              onClick={() => navigate(-1)}
-              className="h-11 min-w-[100px] rounded-lg font-semibold"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              icon={<SaveOutlined />}
-              loading={updateMutation.isPending}
-              className="h-11 min-w-[120px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-            >
-              Lưu thay đổi
-            </Button>
-          </div>
-        </Form>
-      </Card>
+              <Card className="rounded-lg shadow-sm border-t-4 border-t-green-500">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="font-medium text-gray-700">Trạng thái</span>
+                  <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-semibold">
+                    Đang hoạt động
+                  </span>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    icon={<SaveOutlined />}
+                    loading={updateMutation.isPending}
+                    className="h-12 w-full rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100 text-base"
+                  >
+                    Lưu thay đổi
+                  </Button>
+                  <Button
+                    onClick={() => navigate(-1)}
+                    className="h-12 w-full rounded-lg font-semibold text-base"
+                  >
+                    Hủy bỏ
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          </Col>
+        </Row>
+      </Form>
 
       {/* Modal xem ảnh */}
       <Modal

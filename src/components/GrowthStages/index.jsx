@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button, Input, Checkbox, Card, Typography } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Button, Input, InputNumber, Card, Typography, Space } from 'antd';
+import { PlusOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
@@ -9,192 +9,140 @@ const { Text } = Typography;
  * @param {Array} value - Danh sách giai đoạn từ form
  * @param {Function} onChange - Callback khi thay đổi
  */
-const GrowthStages = ({ value = [], onChange }) => {
+const GrowthStages = ({ value = [], onChange, readonly = false }) => {
   const handleAddStage = () => {
     const newStage = {
-      id: Date.now(),
-      type: 'task', // 'task' hoặc 'status'
-      name: '',
-      tasks: [{ id: Date.now(), name: '', notAllowed: false }],
+      id: `temp-${Date.now()}`,
+      stageName: '',
+      durationDays: 0,
+      orderIndex: value.length + 1,
+      description: '',
     };
     onChange([...value, newStage]);
   };
 
-  const handleAddStatus = () => {
-    const newStatus = {
-      id: Date.now(),
-      type: 'status',
-      name: '',
-    };
-    onChange([...value, newStatus]);
+  const handleRemoveStage = (index) => {
+    const newValue = value.filter((_, i) => i !== index).map((item, i) => ({
+      ...item,
+      orderIndex: i + 1,
+    }));
+    onChange(newValue);
   };
 
-  const handleRemoveStage = (stageId) => {
-    onChange(value.filter((stage) => stage.id !== stageId));
+  const handleUpdateStage = (index, field, val) => {
+    const newValue = [...value];
+    newValue[index] = { ...newValue[index], [field]: val };
+    onChange(newValue);
   };
 
-  const handleUpdateStageName = (stageId, name) => {
-    onChange(
-      value.map((stage) =>
-        stage.id === stageId ? { ...stage, name } : stage
-      )
-    );
+  const handleMove = (index, direction) => {
+    if (direction === 'up' && index > 0) {
+      const newValue = [...value];
+      const temp = newValue[index];
+      newValue[index] = newValue[index - 1];
+      newValue[index - 1] = temp;
+      
+      // Update orderIndex
+      newValue[index].orderIndex = index + 1;
+      newValue[index - 1].orderIndex = index;
+      onChange(newValue);
+    } else if (direction === 'down' && index < value.length - 1) {
+      const newValue = [...value];
+      const temp = newValue[index];
+      newValue[index] = newValue[index + 1];
+      newValue[index + 1] = temp;
+      
+      // Update orderIndex
+      newValue[index].orderIndex = index + 1;
+      newValue[index + 1].orderIndex = index + 2;
+      onChange(newValue);
+    }
   };
-
-  const handleAddTask = (stageId) => {
-    onChange(
-      value.map((stage) =>
-        stage.id === stageId
-          ? {
-              ...stage,
-              tasks: [
-                ...(stage.tasks || []),
-                { id: Date.now(), name: '', notAllowed: false },
-              ],
-            }
-          : stage
-      )
-    );
-  };
-
-  const handleRemoveTask = (stageId, taskId) => {
-    onChange(
-      value.map((stage) =>
-        stage.id === stageId
-          ? {
-              ...stage,
-              tasks: stage.tasks.filter((task) => task.id !== taskId),
-            }
-          : stage
-      )
-    );
-  };
-
-  const handleUpdateTask = (stageId, taskId, field, taskValue) => {
-    onChange(
-      value.map((stage) =>
-        stage.id === stageId
-          ? {
-              ...stage,
-              tasks: stage.tasks.map((task) =>
-                task.id === taskId ? { ...task, [field]: taskValue } : task
-              ),
-            }
-          : stage
-      )
-    );
-  };
-
-  const stagesWithTasks = value.filter((s) => s.type === 'task');
-  const statuses = value.filter((s) => s.type === 'status');
 
   return (
-    <Card className="rounded-lg" title={<Text strong>Các Giai Đoạn Sinh Trưởng của cây</Text>}>
+    <Card className="rounded-lg shadow-sm" title={<span className="text-lg font-semibold text-green-600">Các Giai Đoạn Sinh Trưởng</span>}>
       <div className="space-y-4">
-        {/* Các giai đoạn có công việc */}
-        {stagesWithTasks.map((stage) => (
-          <div key={stage.id} className="border rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <Input
-                value={stage.name}
-                onChange={(e) => handleUpdateStageName(stage.id, e.target.value)}
-                placeholder="Tên giai đoạn (vd: Nảy Mầm)"
-                className="flex-1 h-10 rounded-lg"
-              />
-              <Button
-                danger
-                type="text"
-                icon={<DeleteOutlined />}
-                onClick={() => handleRemoveStage(stage.id)}
-                className="rounded-lg"
-              >
-                Xóa Giai Đoạn
-              </Button>
-            </div>
+        {value.map((stage, index) => (
+          <div key={stage.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="mb-1 text-sm font-medium text-gray-700">Tên giai đoạn</div>
+                  {readonly ? (
+                    <div className="font-semibold">{stage.stageName || 'Chưa cập nhật'}</div>
+                  ) : (
+                    <Input
+                      value={stage.stageName}
+                      onChange={(e) => handleUpdateStage(index, 'stageName', e.target.value)}
+                      placeholder="VD: Nảy mầm, Ra lá..."
+                      className="h-10 rounded-lg"
+                    />
+                  )}
+                </div>
+               
+                <div className="md:col-span-2">
+                  <div className="mb-1 text-sm font-medium text-gray-700">Mô tả</div>
+                  {readonly ? (
+                    <div className="whitespace-pre-wrap">{stage.description || 'Không có mô tả'}</div>
+                  ) : (
+                    <Input.TextArea
+                      value={stage.description}
+                      onChange={(e) => handleUpdateStage(index, 'description', e.target.value)}
+                      placeholder="Mô tả chi tiết giai đoạn"
+                      rows={2}
+                      className="rounded-lg"
+                    />
+                  )}
+                </div>
+              </div>
 
-            {/* Các công việc */}
-            <div className="space-y-2 pl-4 border-l-2 border-gray-200">
-              {stage.tasks?.map((task) => (
-                <div key={task.id} className="flex items-center gap-2">
-                  <Input
-                    value={task.name}
-                    onChange={(e) =>
-                      handleUpdateTask(stage.id, task.id, 'name', e.target.value)
-                    }
-                    placeholder="Tên công việc"
-                    className="flex-1 h-10 rounded-lg"
-                  />
-                  <Checkbox
-                    checked={task.notAllowed}
-                    onChange={(e) =>
-                      handleUpdateTask(stage.id, task.id, 'notAllowed', e.target.checked)
-                    }
-                  >
-                    Không được phép
-                  </Checkbox>
+              {!readonly && (
+                <div className="flex flex-col gap-2">
+                  <Space size={2} direction="vertical">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<ArrowUpOutlined />}
+                      disabled={index === 0}
+                      onClick={() => handleMove(index, 'up')}
+                      className="text-gray-500"
+                    />
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<ArrowDownOutlined />}
+                      disabled={index === value.length - 1}
+                      onClick={() => handleMove(index, 'down')}
+                      className="text-gray-500"
+                    />
+                  </Space>
                   <Button
                     danger
                     type="text"
-                    size="small"
                     icon={<DeleteOutlined />}
-                    onClick={() => handleRemoveTask(stage.id, task.id)}
-                    className="rounded-lg"
+                    onClick={() => handleRemoveStage(index)}
+                    className="mt-2"
                   />
                 </div>
-              ))}
-
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={() => handleAddTask(stage.id)}
-                className="w-full rounded-lg"
-              >
-                Thêm Công Việc
-              </Button>
+              )}
+            </div>
+            
+            <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+              Thứ tự: {stage.orderIndex}
             </div>
           </div>
         ))}
 
-        {/* Nút thêm giai đoạn mới */}
-        <Button
-          type="dashed"
-          icon={<PlusOutlined />}
-          onClick={handleAddStage}
-          className="w-full h-10 rounded-lg"
-        >
-          Thêm Giai Đoạn (có công việc)
-        </Button>
-
-        {/* Các tình trạng */}
-        {statuses.map((status) => (
-          <div key={status.id} className="flex items-center gap-3">
-            <Input
-              value={status.name}
-              onChange={(e) => handleUpdateStageName(status.id, e.target.value)}
-              placeholder="Tên tình trạng (vd: Ra Hoa, Ra quả)"
-              className="flex-1 h-10 rounded-lg"
-            />
-            <Button
-              danger
-              type="text"
-              icon={<DeleteOutlined />}
-              onClick={() => handleRemoveStage(status.id)}
-              className="rounded-lg"
-            >
-              Xóa Tình trạng
-            </Button>
-          </div>
-        ))}
-
-        {/* Nút thêm tình trạng */}
-        <Button
-          type="dashed"
-          icon={<PlusOutlined />}
-          onClick={handleAddStatus}
-          className="w-full h-10 rounded-lg"
-        >
-          Thêm Tình trạng
-        </Button>
+        {!readonly && (
+          <Button
+            type="dashed"
+            icon={<PlusOutlined />}
+            onClick={handleAddStage}
+            className="w-full h-11 rounded-lg"
+          >
+            Thêm Giai Đoạn Sinh Trưởng
+          </Button>
+        )}
       </div>
     </Card>
   );
