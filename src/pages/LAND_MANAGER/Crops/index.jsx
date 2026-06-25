@@ -479,9 +479,14 @@ const Crops = () => {
     ];
     return [
       { value: 'all', label: 'Tất cả danh mục' },
-      ...categories.map((item) => ({ value: item, label: item })),
+      ...categories.map((id) => {
+        const found = cropCatalogsData?.find(
+          (c) => c.id === id || c.cropCatalogId === id
+        );
+        return { value: id, label: found ? (found.name || found.cropCatalogName) : id };
+      }),
     ];
-  }, [data?.items]);
+  }, [data?.items, cropCatalogsData]);
 
   // Transform crop catalogs data into options
   const cropCatalogOptions = useMemo(() => {
@@ -594,40 +599,13 @@ const Crops = () => {
       fixed: 'right',
       render: (_, record) => (
         <Space size={4} className="whitespace-nowrap">
-          <Tooltip title="Sửa">
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
-              onClick={() => navigate(`${ROUTER.FM_CROPS}/${getItemId(record)}/edit`)}
-            />
-          </Tooltip>
           <Tooltip title="Xem chi tiết">
             <Button
               type="text"
               size="small"
               icon={<EyeOutlined />}
               className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
-              onClick={() => navigate(`${ROUTER.FM_CROPS}/${getItemId(record)}`)}
-            />
-          </Tooltip>
-          <Tooltip title={isCropActive(record) ? 'Vô hiệu hóa' : 'Kích hoạt'}>
-            <Button
-              type="text"
-              size="small"
-              danger={isCropActive(record)}
-              icon={isCropActive(record) ? <StopOutlined /> : <CheckCircleOutlined />}
-              loading={
-                statusMutation.isPending &&
-                statusMutation.variables?.id === getItemId(record)
-              }
-              className={
-                isCropActive(record)
-                  ? '!h-8 !w-8 rounded-lg text-red-500 hover:bg-red-50'
-                  : '!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50'
-              }
-              onClick={() => setStatusTarget(record)}
+              onClick={() => navigate(`${ROUTER.LM_CROPS}/${getItemId(record)}`)}
             />
           </Tooltip>
         </Space>
@@ -642,14 +620,6 @@ const Crops = () => {
           <Sprout className="h-6 w-6" />
           Cây trồng
         </TitleCustom>
-        <Button
-          type="primary"
-          icon={<Sprout className="h-4 w-4" />}
-          onClick={() => setIsCreating(true)}
-          className="h-10 rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-        >
-          Thêm cây trồng
-        </Button>
       </div>
 
       {isError && (

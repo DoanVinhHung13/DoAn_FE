@@ -151,7 +151,7 @@ const FarmManagerNotifications = () => {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => normalizeNotifications(await getNotifications()),
-    refetchInterval: 30000,
+    staleTime: 5 * 60 * 1000,
     retry: false,
   });
 
@@ -166,7 +166,7 @@ const FarmManagerNotifications = () => {
         return { items: [], unreadCount: 0 };
       }
     },
-    refetchInterval: 30000,
+    staleTime: 5 * 60 * 1000,
     retry: false,
   });
 

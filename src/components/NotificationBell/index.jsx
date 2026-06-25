@@ -43,7 +43,7 @@ const NotificationBell = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => normalizeNotifications(await getNotifications()),
-    refetchInterval: 10000,
+    staleTime: 5 * 60 * 1000, // cache 5 phút, không tự re-fetch
     retry: false,
   });
 

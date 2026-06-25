@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { Alert, Button, Card, Skeleton, Tag, Typography } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -19,6 +19,7 @@ dayjs.extend(timezone);
 
 import {
   getNotifications,
+  getNotificationById,
   markNotificationAsRead,
 } from 'src/services/NotificationService';
 import ROUTER from 'src/router/ROUTER';
@@ -94,23 +95,34 @@ const NotificationDetail = () => {
   const listPath =
     userInfo?.role === 'FARM_MANAGER' ? ROUTER.FM_NOTIFICATIONS : ROUTER.NOTIFICATIONS;
 
-  const { data: items = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['notification-detail-source', id],
-    queryFn: async () => normalizeItems(await getNotifications()),
+  const { data: notification, isLoading, isError, refetch } = useQuery({
+    queryKey: ['notification-detail', id],
+    queryFn: async () => {
+      // Thử gọi API chi tiết trước (có đầy đủ attachments)
+      try {
+        const res = await getNotificationById(id);
+        const payload = res?.data ?? res ?? {};
+        const item = payload?.data ?? payload;
+        if (item && (item.id || item._id)) return item;
+      } catch (e) {
+        // API /notifications/:id chưa có hoặc lỗi, fallback sang tìm trong danh sách
+        console.warn('getNotificationById failed, fallback to list:', e);
+      }
+      // Fallback: tìm trong danh sách
+      const items = normalizeItems(await getNotifications());
+      return items.find((item) => String(item._id || item.id) === String(id)) || null;
+    },
     retry: false,
   });
 
-  const notification = useMemo(
-    () => items.find((item) => String(item._id || item.id) === String(id)),
-    [id, items]
-  );
+  const notification_id = notification?._id || notification?.id;
 
   useEffect(() => {
     if (!notification || notification.isRead) return;
-    markNotificationAsRead(notification._id || notification.id)
+    markNotificationAsRead(notification_id)
       .catch(() => undefined)
       .finally(() => queryClient.invalidateQueries({ queryKey: ['notifications'] }));
-  }, [notification, queryClient]);
+  }, [notification, notification_id, queryClient]);
 
   if (isLoading) {
     return (

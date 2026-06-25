@@ -1,6 +1,7 @@
 import http from '../01_axios';
 import {
   apiGetNotifications,
+  apiGetNotificationById,
   apiMarkNotificationAsRead,
   apiMarkAllNotificationsAsRead,
   apiCreateNotification,
@@ -10,6 +11,7 @@ import {
 
 export const getNotifications = (params = { PageIndex: 1, PageSize: 100 }) =>
   http.get(apiGetNotifications, { params });
+export const getNotificationById = (id) => http.get(apiGetNotificationById(id));
 export const markNotificationAsRead = id => http.post(apiMarkNotificationAsRead(id));
 export const markAllNotificationsAsRead = () => http.post(apiMarkAllNotificationsAsRead);
 export const createNotification = (data) => http.post(apiCreateNotification, data);
