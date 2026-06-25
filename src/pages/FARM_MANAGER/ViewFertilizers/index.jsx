@@ -46,22 +46,23 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
-import FertilizerService from 'src/services/fertilizerService'
+import FertilizerService from 'src/services/FertilizerService'
 import { invalidCharsRegex } from 'src/utils/helpers'
 
 import FertilizerDetailModal from './components/FertilizerDetailModal'
 import FertilizerFormModal from './components/FertilizerFormModal'
 
-// ── Phân loại options cho bộ lọc ─────────────────────────────────────────────
+// ── Loại phân bón options cho bộ lọc ───────────────────────────────────────
 const CATEGORY_FILTER_OPTIONS = [
-  { value: 'all', label: 'Tất cả phân loại' },
+  { value: 'all', label: 'Tất cả loại' },
+  { value: 'Vô cơ', label: 'Vô cơ' },
+  { value: 'Hữu cơ', label: 'Hữu cơ' },
+  { value: 'Hữu cơ khoáng', label: 'Hữu cơ khoáng' },
+  { value: 'Vi sinh', label: 'Vi sinh' },
+  { value: 'Phức hợp', label: 'Phức hợp' },
   { value: 'NPK', label: 'Phân NPK' },
-  { value: 'UREA', label: 'Phân Urê' },
-  { value: 'ORGANIC', label: 'Phân hữu cơ' },
-  { value: 'INORGANIC', label: 'Phân vô cơ' },
-  { value: 'MICRONUTRIENT', label: 'Phân vi lượng' },
-  { value: 'BIOLOGICAL', label: 'Phân sinh học' },
-  { value: 'OTHER', label: 'Khác' },
+  { value: 'Urê', label: 'Phân Urê' },
+  { value: 'Khác', label: 'Khác' },
 ]
 
 const STATUS_FILTER_OPTIONS = [
@@ -70,15 +71,16 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'inactive', label: 'Ngừng hoạt động' },
 ]
 
-// ── Category tag color map ────────────────────────────────────────────────────
+// ── Type tag color map ───────────────────────────────────────────────────────
 const CATEGORY_COLOR = {
-  NPK: 'green',
-  UREA: 'blue',
-  ORGANIC: 'lime',
-  INORGANIC: 'orange',
-  MICRONUTRIENT: 'purple',
-  BIOLOGICAL: 'cyan',
-  OTHER: 'default',
+  'Vô cơ': 'orange',
+  'Hữu cơ': 'lime',
+  'Hữu cơ khoáng': 'green',
+  'Vi sinh': 'cyan',
+  'Phức hợp': 'purple',
+  'NPK': 'green',
+  'Urê': 'blue',
+  'Khác': 'default',
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -218,21 +220,32 @@ const ViewFertilizers = () => {
       ),
     },
     {
-      title: 'Phân loại',
-      dataIndex: 'category',
-      key: 'category',
-      width: 150,
-      render: (v) =>
-        v ? (
+      title: 'Nhà Sản Xuất',
+      dataIndex: 'manufacturer',
+      key: 'manufacturer',
+      width: 160,
+      render: (v) => (
+        <span className="text-sm text-gray-600">{v || '—'}</span>
+      ),
+    },
+    {
+      title: 'Loại Phân Bón',
+      dataIndex: 'fertilizerType',
+      key: 'fertilizerType',
+      width: 140,
+      render: (v, record) => {
+        const typeVal = v || record.category
+        return typeVal ? (
           <Tag
-            color={CATEGORY_COLOR[v] || 'default'}
+            color={CATEGORY_COLOR[typeVal] || 'default'}
             className="font-medium rounded-full"
           >
-            {CATEGORY_FILTER_OPTIONS.find((o) => o.value === v)?.label || v}
+            {typeVal}
           </Tag>
         ) : (
           <span className="text-gray-300">—</span>
-        ),
+        )
+      },
     },
     {
       title: 'Đơn vị tính',
@@ -331,9 +344,8 @@ const ViewFertilizers = () => {
                   />
                 }
                 disabled={locked}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                  locked ? 'opacity-40' : 'hover:bg-green-50'
-                }`}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : 'hover:bg-green-50'
+                  }`}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleOpenEdit(record)

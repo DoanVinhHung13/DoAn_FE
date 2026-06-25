@@ -1,22 +1,92 @@
 /**
  * FertilizerDetailModal — Xem chi tiết phân bón (Read-Only)
  * Triggered by: "Xem chi tiết" action in table row
+ *
+ * Hiển thị đầy đủ các trường theo Figma:
+ *   - Thông Tin Cơ Bản: mã, tên, nhà SX, nhà CC, tồn kho tối thiểu, đơn vị, loại PB, mô tả
+ *   - Thành Phần: bảng (Tên thành Phần | Hàm Lượng | Đơn Vị Tính)
+ *   - Liều Lượng: bảng (Số | Đơn vị Tính | Đơn Vị diện tích | Đối tượng)
  */
 import {
   BarcodeOutlined,
   CalendarOutlined,
-  ContainerOutlined,
   ExperimentOutlined,
-  InfoCircleOutlined,
+  ShopOutlined,
   TagOutlined,
 } from '@ant-design/icons'
-import { Badge, Descriptions, Divider, Spin, Tag } from 'antd'
+import { Badge, Descriptions, Divider, Empty, Table, Tag, Typography } from 'antd'
 import CustomModal from 'src/components/Modal/CustomModal'
+
+const { Text } = Typography
+
+// ── Sub-tables column definitions ────────────────────────────────────────────
+
+const componentColumns = [
+  {
+    title: 'Tên thành Phần',
+    dataIndex: 'name',
+    key: 'name',
+    render: (v) => <Text strong>{v || '—'}</Text>,
+  },
+  {
+    title: 'Hàm Lượng',
+    dataIndex: 'content',
+    key: 'content',
+    align: 'center',
+    width: 110,
+    render: (v) => <Text>{v != null && v !== '' ? v : '—'}</Text>,
+  },
+  {
+    title: 'Đơn Vị Tính (%, ppm, CFU/g)',
+    dataIndex: 'unit',
+    key: 'unit',
+    align: 'center',
+    width: 190,
+    render: (v) => v ? <Tag color="green" className="rounded-full font-medium">{v}</Tag> : '—',
+  },
+]
+
+const dosageColumns = [
+  {
+    title: 'Số',
+    dataIndex: 'quantity',
+    key: 'quantity',
+    align: 'center',
+    width: 80,
+    render: (v) => <Text strong>{v != null && v !== '' ? v : '—'}</Text>,
+  },
+  {
+    title: 'Đơn vị Tính (Kg/Lit)',
+    dataIndex: 'unit',
+    key: 'unit',
+    align: 'center',
+    width: 140,
+    render: (v) => <Text>{v || 'kg'}</Text>,
+  },
+  {
+    title: 'Đơn Vị diện tích',
+    dataIndex: 'areaUnit',
+    key: 'areaUnit',
+    align: 'center',
+    width: 140,
+    render: (v) => <Text>{v || 'ha'}</Text>,
+  },
+  {
+    title: 'Đối tượng',
+    dataIndex: 'target',
+    key: 'target',
+    render: (v) => <Text>{v || '—'}</Text>,
+  },
+]
+
+// ── Main Component ────────────────────────────────────────────────────────────
 
 const FertilizerDetailModal = ({ open, item, onClose }) => {
   if (!item) return null
 
   const isActive = item.isActive !== false
+  const components = item.components || []
+  const dosages = item.dosages || []
 
   return (
     <CustomModal
@@ -31,12 +101,16 @@ const FertilizerDetailModal = ({ open, item, onClose }) => {
         </div>
       }
       footer={null}
-      width={680}
+      width={760}
       destroyOnClose
+      styles={{ body: { maxHeight: '78vh', overflowY: 'auto', paddingRight: 8 } }}
     >
-      <div className="mt-2">
-        {/* Status badge */}
-        <div className="flex items-center justify-between mb-5">
+      <div className="mt-2 space-y-5">
+
+        {/* ════════════════════════════════════════════════════════════════
+            Header: mã + trạng thái
+        ═══════════════════════════════════════════════════════════════════ */}
+        <div className="flex items-center justify-between">
           <div>
             <p className="mb-0.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
               Mã phân bón
@@ -59,104 +133,184 @@ const FertilizerDetailModal = ({ open, item, onClose }) => {
           />
         </div>
 
-        <Divider className="my-4" />
-
-        <Descriptions
-          column={{ xs: 1, sm: 2 }}
-          size="small"
-          labelStyle={{
-            fontWeight: 600,
-            color: '#6b7280',
-            fontSize: 12,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em',
-          }}
-          contentStyle={{ color: '#1f2937', fontSize: 14 }}
-        >
-          <Descriptions.Item
-            label={
-              <span className="flex items-center gap-1">
-                <TagOutlined /> Tên phân bón
-              </span>
-            }
-            span={2}
+        {/* ════════════════════════════════════════════════════════════════
+            Section 1 – Thông Tin Cơ Bản
+        ═══════════════════════════════════════════════════════════════════ */}
+        <div>
+          <div
+            className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
+            style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
           >
-            <span className="font-semibold">{item.name || '—'}</span>
-          </Descriptions.Item>
+            Thông Tin Cơ Bản
+          </div>
 
-          <Descriptions.Item
-            label={
-              <span className="flex items-center gap-1">
-                <ContainerOutlined /> Phân loại
-              </span>
-            }
+          <Descriptions
+            column={{ xs: 1, sm: 2 }}
+            size="small"
+            labelStyle={{
+              fontWeight: 600,
+              color: '#6b7280',
+              fontSize: 12,
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+            contentStyle={{ color: '#1f2937', fontSize: 14 }}
           >
-            {item.category ? (
-              <Tag color="green" className="font-medium rounded-full">
-                {item.category}
-              </Tag>
-            ) : (
-              <span className="text-gray-400">—</span>
-            )}
-          </Descriptions.Item>
-
-          <Descriptions.Item
-            label={
-              <span className="flex items-center gap-1">
-                <BarcodeOutlined /> Đơn vị tính
-              </span>
-            }
-          >
-            <Tag color="blue" className="font-medium rounded-full">
-              {item.unit || '—'}
-            </Tag>
-          </Descriptions.Item>
-
-          <Descriptions.Item label="Số lượng tồn kho">
-            <span className="font-semibold text-emerald-600">
-              {item.minimumStock != null
-                ? `${Number(item.minimumStock).toLocaleString('vi-VN')} ${item.unit || ''}`
-                : '—'}
-            </span>
-          </Descriptions.Item>
-
-          <Descriptions.Item label="Nhà sản xuất">
-            {item.manufacturer || <span className="text-gray-400">—</span>}
-          </Descriptions.Item>
-
-          <Descriptions.Item label="Giá (VNĐ)">
-            {item.price != null
-              ? `${Number(item.price).toLocaleString('vi-VN')} ₫`
-              : <span className="text-gray-400">—</span>}
-          </Descriptions.Item>
-
-          {item.createdAt && (
+            {/* Tên phân bón – span 2 */}
             <Descriptions.Item
               label={
                 <span className="flex items-center gap-1">
-                  <CalendarOutlined /> Ngày tạo
+                  <TagOutlined /> Tên phân bón
+                </span>
+              }
+              span={2}
+            >
+              <span className="font-semibold">{item.name || '—'}</span>
+            </Descriptions.Item>
+
+            {/* Nhà Sản Xuất */}
+            <Descriptions.Item
+              label={
+                <span className="flex items-center gap-1">
+                  <ShopOutlined /> Nhà Sản Xuất
                 </span>
               }
             >
-              {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+              {item.manufacturer || <span className="text-gray-400">—</span>}
             </Descriptions.Item>
-          )}
-        </Descriptions>
 
-        {/* Description block */}
-        {item.description && (
-          <>
-            <Divider orientation="left" className="text-xs text-gray-400 my-4">
-              <InfoCircleOutlined className="mr-1" />
-              Hướng dẫn sử dụng
-            </Divider>
-            <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+            {/* Nhà Cung Cấp */}
+            <Descriptions.Item label="Nhà Cung Cấp">
+              {item.supplier || <span className="text-gray-400">—</span>}
+            </Descriptions.Item>
+
+            {/* Tồn Kho tối thiểu */}
+            <Descriptions.Item
+              label={
+                <span className="flex items-center gap-1">
+                  <BarcodeOutlined /> Tồn kho tối thiểu
+                </span>
+              }
+            >
+              <span className="font-semibold text-emerald-600">
+                {item.minimumStock != null
+                  ? `${Number(item.minimumStock).toLocaleString('vi-VN')} ${item.unit || ''}`
+                  : '—'}
+              </span>
+            </Descriptions.Item>
+
+            {/* Đơn vị tính */}
+            <Descriptions.Item label="Đơn vị tính (kg/lit)">
+              {item.unit
+                ? <Tag color="blue" className="font-medium rounded-full">{item.unit}</Tag>
+                : <span className="text-gray-400">—</span>}
+            </Descriptions.Item>
+
+            {/* Loại Phân Bón */}
+            <Descriptions.Item label="Loại Phân Bón" span={2}>
+              {(item.fertilizerType || item.category)
+                ? (
+                  <Tag color="green" className="font-medium rounded-full">
+                    {item.fertilizerType || item.category}
+                  </Tag>
+                )
+                : <span className="text-gray-400">—</span>}
+            </Descriptions.Item>
+
+            {/* Ngày tạo */}
+            {item.createdAt && (
+              <Descriptions.Item
+                label={
+                  <span className="flex items-center gap-1">
+                    <CalendarOutlined /> Ngày tạo
+                  </span>
+                }
+                span={2}
+              >
+                {new Date(item.createdAt).toLocaleDateString('vi-VN', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+
+          {/* Mô Tả */}
+          {item.description && (
+            <div className="mt-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
+              <p className="mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Mô tả
+              </p>
               <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line m-0">
                 {item.description}
               </p>
             </div>
-          </>
-        )}
+          )}
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════════
+            Section 2 – Thành Phần
+        ═══════════════════════════════════════════════════════════════════ */}
+        <div>
+          <div
+            className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
+            style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
+          >
+            Thành Phần
+          </div>
+
+          {components.length > 0 ? (
+            <Table
+              rowKey={(_, i) => i}
+              dataSource={components}
+              columns={componentColumns}
+              pagination={false}
+              size="small"
+              bordered
+              className="rounded-lg overflow-hidden"
+            />
+          ) : (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Chưa có thành phần"
+              className="py-4"
+            />
+          )}
+        </div>
+
+        {/* ════════════════════════════════════════════════════════════════
+            Section 3 – Liều Lượng
+        ═══════════════════════════════════════════════════════════════════ */}
+        <div>
+          <div
+            className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
+            style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
+          >
+            Liều Lượng
+          </div>
+
+          {dosages.length > 0 ? (
+            <Table
+              rowKey={(_, i) => i}
+              dataSource={dosages}
+              columns={dosageColumns}
+              pagination={false}
+              size="small"
+              bordered
+              className="rounded-lg overflow-hidden"
+            />
+          ) : (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Chưa có liều lượng"
+              className="py-4"
+            />
+          )}
+        </div>
+
       </div>
     </CustomModal>
   )
