@@ -22,24 +22,17 @@
  *   MSG-TSK-08: "Công việc đang được sử dụng trong kế hoạch sản xuất, không thể chỉnh sửa hoặc vô hiệu hóa."
  */
 import {
+  CheckCircleOutlined,
   CheckSquareOutlined,
   EditOutlined,
+  EyeOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
-import {
-  Alert,
-  Button,
-  Card,
-  Input,
-  message,
-  Select,
-  Switch,
-  Tag,
-  Tooltip,
-} from 'antd'
+import { Alert, Button, Card, Input, message, Select, Switch, Tag, Tooltip } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
@@ -47,10 +40,9 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
+
 import TaskService from 'src/services/taskService'
 import { invalidCharsRegex } from 'src/utils/helpers'
-
-import TaskFormModal from './components/TaskFormModal'
 
 // ── Filter options ────────────────────────────────────────────────────────────
 const TASK_TYPE_FILTER = [
@@ -88,6 +80,8 @@ const TASK_TYPE_LABEL = {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const TasksManagement = () => {
+  const navigate = useNavigate()
+
   // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -103,7 +97,6 @@ const TasksManagement = () => {
   const [statusLoading, setStatusLoading] = useState(false)
 
   // ── State: modals ───────────────────────────────────────────────────────────
-  const [formModal, setFormModal] = useState({ open: false, item: null })
   const [statusModal, setStatusModal] = useState({ open: false, item: null })
   const [inUseAlert, setInUseAlert] = useState(false)
 
@@ -152,14 +145,13 @@ const TasksManagement = () => {
     setPage(1)
   }
 
-  // BR_TSK_02 check before opening edit
   const handleOpenEdit = (record) => {
     if (record.isInActiveUse) {
       setInUseAlert(true)
       setTimeout(() => setInUseAlert(false), 5000)
       return
     }
-    setFormModal({ open: true, item: record })
+    navigate(ROUTER.FM_TASK_EDIT.replace(':id', record.id))
   }
 
   // BR_TSK_02 check before opening status confirm
@@ -275,6 +267,17 @@ const TasksManagement = () => {
         const locked = record.isInActiveUse
         return (
           <div className="flex items-center justify-center gap-1">
+            <Tooltip title="Chi tiết">
+              <Button
+                type="text"
+                icon={<EyeOutlined className="text-lg text-gray-500" />}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate(ROUTER.FM_TASK_DETAIL.replace(':id', record.id))
+                }}
+              />
+            </Tooltip>
             {/* Sửa — BR_TSK_02: disabled nếu isInActiveUse */}
             <Tooltip
               title={
@@ -312,14 +315,14 @@ const TasksManagement = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <CheckSquareOutlined className="text-blue-600" />
+            <CheckCircleOutlined className="text-lg" />
             Quản lý công việc
           </TitleCustom>
         </div>
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => setFormModal({ open: true, item: null })}
+          onClick={() => navigate(ROUTER.FM_TASK_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-blue-600 border-0 shadow-lg rounded-xl shadow-blue-100"
         >
           Thêm mới
@@ -420,14 +423,6 @@ const TasksManagement = () => {
       </Card>
 
       {/* ── Modals ── */}
-
-      {/* Create / Update */}
-      <TaskFormModal
-        open={formModal.open}
-        editingItem={formModal.item}
-        onClose={() => setFormModal({ open: false, item: null })}
-        onSuccess={() => getList()}
-      />
 
       {/* Status confirm — MSG-TSK-02 */}
       <CustomModal

@@ -39,6 +39,8 @@ import {
   Tooltip,
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import ROUTER from 'src/router/ROUTER'
 
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
@@ -48,9 +50,6 @@ import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
 import FertilizerService from 'src/services/FertilizerService'
 import { invalidCharsRegex } from 'src/utils/helpers'
-
-import FertilizerDetailModal from './components/FertilizerDetailModal'
-import FertilizerFormModal from './components/FertilizerFormModal'
 
 // ── Loại phân bón options cho bộ lọc ───────────────────────────────────────
 const CATEGORY_FILTER_OPTIONS = [
@@ -85,6 +84,8 @@ const CATEGORY_COLOR = {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const ViewFertilizers = () => {
+  const navigate = useNavigate()
+
   // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -100,8 +101,6 @@ const ViewFertilizers = () => {
   const [statusLoading, setStatusLoading] = useState(false)
 
   // ── State: modals ───────────────────────────────────────────────────────────
-  const [formModal, setFormModal] = useState({ open: false, item: null })
-  const [detailModal, setDetailModal] = useState({ open: false, item: null })
   const [statusModal, setStatusModal] = useState({ open: false, item: null })
   const [inUseAlert, setInUseAlert] = useState(false)
 
@@ -156,7 +155,7 @@ const ViewFertilizers = () => {
       setTimeout(() => setInUseAlert(false), 5000)
       return
     }
-    setFormModal({ open: true, item: record })
+    navigate(ROUTER.FM_VIEW_FERTILIZER_EDIT.replace(':id', record.id))
   }
 
   // Kiểm tra BR_FER_02 trước khi mở confirm toggle
@@ -323,7 +322,7 @@ const ViewFertilizers = () => {
                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-blue-50"
                 onClick={(e) => {
                   e.stopPropagation()
-                  setDetailModal({ open: true, item: record })
+                  navigate(ROUTER.FM_VIEW_FERTILIZER_DETAIL.replace(':id', record.id))
                 }}
               />
             </Tooltip>
@@ -372,7 +371,7 @@ const ViewFertilizers = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => setFormModal({ open: true, item: null })}
+          onClick={() => navigate(ROUTER.FM_VIEW_FERTILIZER_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
           Thêm mới
@@ -473,21 +472,6 @@ const ViewFertilizers = () => {
       </Card>
 
       {/* ── Modals ── */}
-
-      {/* Create / Update */}
-      <FertilizerFormModal
-        open={formModal.open}
-        editingItem={formModal.item}
-        onClose={() => setFormModal({ open: false, item: null })}
-        onSuccess={() => getList()}
-      />
-
-      {/* Detail (read-only) */}
-      <FertilizerDetailModal
-        open={detailModal.open}
-        item={detailModal.item}
-        onClose={() => setDetailModal({ open: false, item: null })}
-      />
 
       {/* Status confirm — MSG-FER-02 */}
       <CustomModal

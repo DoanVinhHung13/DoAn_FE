@@ -46,11 +46,20 @@ const FarmManagerCropDetail = React.lazy(() => import('../pages/FARM_MANAGER/Cro
 const FarmManagerCropEdit = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropEdit'))
 const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans'))
 const FarmManagerTasks = React.lazy(() => import('../pages/FARM_MANAGER/Tasks'))
+const FarmManagerTaskCreate = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskCreate'))
+const FarmManagerTaskDetail = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskDetail'))
+const FarmManagerTaskEdit = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskEdit'))
 const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
 const FarmManagerBatches = React.lazy(() => import('../pages/FARM_MANAGER/Batches'))
 const FarmManagerNotifications = React.lazy(() => import('../pages/FARM_MANAGER/Notifications'))
 const FarmManagerViewFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers'))
+const FarmManagerFertilizerCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers/FertilizerCreate'))
+const FarmManagerFertilizerDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers/FertilizerDetail'))
+const FarmManagerFertilizerEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers/FertilizerEdit'))
 const FarmManagerViewCropProtections = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections'))
+const FarmManagerCropProtectionCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionCreate'))
+const FarmManagerCropProtectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionDetail'))
+const FarmManagerCropProtectionEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionEdit'))
 
 // LAND_MANAGER pages
 const LandManagerDashboard = React.lazy(() => import('../pages/LAND_MANAGER/Dashboard'))
@@ -181,12 +190,21 @@ const routes = [
               { path: ROUTER.FM_CROP_EDIT, element: <Lazy><FarmManagerCropEdit /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
               { path: ROUTER.FM_TASKS, element: <Lazy><FarmManagerTasks /></Lazy> },
+              { path: ROUTER.FM_TASK_CREATE, element: <Lazy><FarmManagerTaskCreate /></Lazy> },
+              { path: ROUTER.FM_TASK_DETAIL, element: <Lazy><FarmManagerTaskDetail /></Lazy> },
+              { path: ROUTER.FM_TASK_EDIT, element: <Lazy><FarmManagerTaskEdit /></Lazy> },
               { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },
               { path: ROUTER.FM_BATCHES, element: <Lazy><FarmManagerBatches /></Lazy> },
               { path: ROUTER.FM_NOTIFICATIONS, element: <Lazy><FarmManagerNotifications /></Lazy> },
               { path: ROUTER.FM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
               { path: ROUTER.FM_VIEW_FERTILIZERS, element: <Lazy><FarmManagerViewFertilizers /></Lazy> },
+              { path: ROUTER.FM_VIEW_FERTILIZER_CREATE, element: <Lazy><FarmManagerFertilizerCreate /></Lazy> },
+              { path: ROUTER.FM_VIEW_FERTILIZER_DETAIL, element: <Lazy><FarmManagerFertilizerDetail /></Lazy> },
+              { path: ROUTER.FM_VIEW_FERTILIZER_EDIT, element: <Lazy><FarmManagerFertilizerEdit /></Lazy> },
               { path: ROUTER.FM_VIEW_CROP_PROTECTIONS, element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
+              { path: ROUTER.FM_VIEW_CROP_PROTECTION_CREATE, element: <Lazy><FarmManagerCropProtectionCreate /></Lazy> },
+              { path: ROUTER.FM_VIEW_CROP_PROTECTION_DETAIL, element: <Lazy><FarmManagerCropProtectionDetail /></Lazy> },
+              { path: ROUTER.FM_VIEW_CROP_PROTECTION_EDIT, element: <Lazy><FarmManagerCropProtectionEdit /></Lazy> },
             ],
           },
 

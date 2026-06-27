@@ -18,6 +18,8 @@ import {
   Tag,
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import ROUTER from 'src/router/ROUTER'
 
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
@@ -25,11 +27,8 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
-import CropProtectionService from 'src/services/CropProtectionService'
+import CropProtectionService from 'src/services/cropProtectionService'
 import { invalidCharsRegex } from 'src/utils/helpers'
-
-import CropProtectionDetailModal from './components/CropProtectionDetailModal'
-import CropProtectionFormModal from './components/CropProtectionFormModal'
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'all', label: 'Tất cả trạng thái' },
@@ -38,6 +37,7 @@ const STATUS_FILTER_OPTIONS = [
 ]
 
 const ViewCropProtections = () => {
+  const navigate = useNavigate()
   // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -52,8 +52,6 @@ const ViewCropProtections = () => {
   const [statusLoading, setStatusLoading] = useState(false)
 
   // ── State: modals ───────────────────────────────────────────────────────────
-  const [formModal, setFormModal] = useState({ open: false, item: null })
-  const [detailModal, setDetailModal] = useState({ open: false, item: null })
   const [statusModal, setStatusModal] = useState({ open: false, item: null })
   const [inUseAlert, setInUseAlert] = useState(false)
 
@@ -107,7 +105,7 @@ const ViewCropProtections = () => {
       setTimeout(() => setInUseAlert(false), 5000)
       return
     }
-    setFormModal({ open: true, item: record })
+    navigate(ROUTER.FM_VIEW_CROP_PROTECTION_EDIT.replace(':id', record.id))
   }
 
   const handleSwitchClick = (record) => {
@@ -252,7 +250,7 @@ const ViewCropProtections = () => {
                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-blue-50"
                 onClick={(e) => {
                   e.stopPropagation()
-                  setDetailModal({ open: true, item: record })
+                  navigate(ROUTER.FM_VIEW_CROP_PROTECTION_DETAIL.replace(':id', record.id))
                 }}
               />
             </Tooltip>
@@ -299,7 +297,7 @@ const ViewCropProtections = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => setFormModal({ open: true, item: null })}
+          onClick={() => navigate(ROUTER.FM_VIEW_CROP_PROTECTION_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
           Thêm mới
@@ -387,21 +385,6 @@ const ViewCropProtections = () => {
           rowClassName="hover:bg-green-50/30 transition-colors"
         />
       </Card>
-
-      {/* Create / Update */}
-      <CropProtectionFormModal
-        open={formModal.open}
-        editingItem={formModal.item}
-        onClose={() => setFormModal({ open: false, item: null })}
-        onSuccess={() => getList()}
-      />
-
-      {/* Detail (read-only) */}
-      <CropProtectionDetailModal
-        open={detailModal.open}
-        item={detailModal.item}
-        onClose={() => setDetailModal({ open: false, item: null })}
-      />
 
       {/* Status confirm */}
       <CustomModal

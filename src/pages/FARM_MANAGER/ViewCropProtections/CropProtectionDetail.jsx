@@ -1,12 +1,17 @@
 import {
+  ArrowLeftOutlined,
   BarcodeOutlined,
   BugOutlined,
   CalendarOutlined,
   ShopOutlined,
   TagOutlined,
 } from '@ant-design/icons'
-import { Badge, Descriptions, Empty, Table, Tag, Typography } from 'antd'
-import CustomModal from 'src/components/Modal/CustomModal'
+import { Badge, Button, Card, Descriptions, Empty, Skeleton, Table, Tag, Typography, message } from 'antd'
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import TitleCustom from 'src/components/TitleCustom'
+import ROUTER from 'src/router/ROUTER'
+import CropProtectionService from 'src/services/cropProtectionService'
 
 const { Text } = Typography
 
@@ -55,30 +60,73 @@ const usageColumns = [
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-const CropProtectionDetailModal = ({ open, item, onClose }) => {
+const CropProtectionDetail = () => {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [item, setItem] = useState(null)
+
+  useEffect(() => {
+    const fetchDetail = async () => {
+      try {
+        setInitialLoading(true)
+        const res = await CropProtectionService.getCropProtectionById(id)
+        if (res?.success === false) {
+          message.error('Không tìm thấy thuốc BVTV')
+          navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
+          return
+        }
+        setItem(res?.data)
+      } catch (err) {
+        message.error('Lấy thông tin thuốc BVTV thất bại')
+        navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+    if (id) fetchDetail()
+  }, [id, navigate])
+
+  if (initialLoading) {
+    return (
+      <div className="space-y-6">
+        <TitleCustom className="!mb-0 flex items-center gap-2">
+          <BugOutlined className="text-emerald-600" />
+          Chi tiết thuốc bảo vệ thực vật
+        </TitleCustom>
+        <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: '24px' }}>
+          <Skeleton active paragraph={{ rows: 8 }} />
+        </Card>
+      </div>
+    )
+  }
+
   if (!item) return null
 
   const isActive = item.isActive !== false
   const usages = item.usages || []
 
   return (
-    <CustomModal
-      open={open}
-      onCancel={onClose}
-      title={
-        <div className="flex items-center gap-2 py-1">
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-50">
+    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-4">
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)}>
+            Quay lại
+          </Button>
+          <TitleCustom className="!mb-0 flex items-center gap-2">
             <BugOutlined className="text-emerald-600" />
-          </div>
-          <span className="font-bold">Chi tiết thuốc bảo vệ thực vật</span>
+            Chi tiết thuốc bảo vệ thực vật
+          </TitleCustom>
         </div>
-      }
-      footer={null}
-      width={860}
-      destroyOnClose
-      styles={{ body: { maxHeight: '78vh', overflowY: 'auto', paddingRight: 8 } }}
-    >
-      <div className="mt-2 space-y-5">
+      </div>
+
+      <Card
+        bordered={false}
+        className="shadow-sm rounded-2xl"
+        bodyStyle={{ padding: '24px' }}
+      >
+        <div className="space-y-6">
+
         {/* Header: mã + trạng thái */}
         <div className="flex items-center justify-between">
           <div>
@@ -232,9 +280,20 @@ const CropProtectionDetailModal = ({ open, item, onClose }) => {
             />
           )}
         </div>
-      </div>
-    </CustomModal>
+        </div>
+
+        {/* ── Footer actions ── */}
+        <div className="flex justify-end gap-3 pt-4 mt-6 border-t border-gray-100">
+          <Button
+            onClick={() => navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)}
+            className="h-10 px-6 rounded-xl"
+          >
+            Quay lại
+          </Button>
+        </div>
+      </Card>
+    </div>
   )
 }
 
-export default CropProtectionDetailModal
+export default CropProtectionDetail
