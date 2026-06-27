@@ -226,6 +226,23 @@ const LandPlotMap = ({
         snapDistance: 20,
       })
 
+      // Helper: đăng ký sự kiện chỉnh sửa/kéo trên LAYER (không phải map)
+      // Geoman chỉ fire pm:edit, pm:dragend trên layer cụ thể
+      const attachLayerEditEvents = (layer) => {
+        layer.on('pm:edit', () => {
+          if (!layer?.getLatLngs) return
+          const latLngs = layer.getLatLngs()[0]
+          const geoJSON = createGeoJSONPolygon(latLngs)
+          validatePolygon(geoJSON, layer)
+        })
+        layer.on('pm:dragend', () => {
+          if (!layer?.getLatLngs) return
+          const latLngs = layer.getLatLngs()[0]
+          const geoJSON = createGeoJSONPolygon(latLngs)
+          validatePolygon(geoJSON, layer)
+        })
+      }
+
       const handleCreate = (e) => {
         const { layer, shape } = e
         if (shape !== 'Polygon') return
@@ -237,17 +254,12 @@ const LandPlotMap = ({
           allowSelfIntersection: false,
         })
 
+        // Đăng ký event edit/drag trên layer mới vẽ
+        attachLayerEditEvents(layer)
+
         const latLngs = layer.getLatLngs()[0]
         const geoJSON = createGeoJSONPolygon(latLngs)
         validatePolygon(geoJSON, layer, { isDraw: true })
-      }
-
-      const handleEdit = (e) => {
-        const { layer } = e
-        if (!layer?.getLatLngs) return
-        const latLngs = layer.getLatLngs()[0]
-        const geoJSON = createGeoJSONPolygon(latLngs)
-        validatePolygon(geoJSON, layer)
       }
 
       const handleRemove = () => {
@@ -258,8 +270,6 @@ const LandPlotMap = ({
       }
 
       map.on('pm:create', handleCreate)
-      map.on('pm:edit', handleEdit)
-      map.on('pm:dragend', handleEdit)
       map.on('pm:remove', handleRemove)
     }
 
@@ -315,6 +325,20 @@ const LandPlotMap = ({
     if (mode === 'edit' || mode === 'draw') {
       layer.pm?.enable({
         allowSelfIntersection: false,
+      })
+
+      // Đăng ký event edit/drag trên layer được load từ boundaryJson
+      layer.on('pm:edit', () => {
+        if (!layer?.getLatLngs) return
+        const latLngs = layer.getLatLngs()[0]
+        const updatedGeoJSON = createGeoJSONPolygon(latLngs)
+        validatePolygon(updatedGeoJSON, layer)
+      })
+      layer.on('pm:dragend', () => {
+        if (!layer?.getLatLngs) return
+        const latLngs = layer.getLatLngs()[0]
+        const updatedGeoJSON = createGeoJSONPolygon(latLngs)
+        validatePolygon(updatedGeoJSON, layer)
       })
     }
 

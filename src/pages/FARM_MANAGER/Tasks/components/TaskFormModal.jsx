@@ -49,9 +49,9 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
     if (open) {
       if (isEdit) {
         form.setFieldsValue({
-          name:          editingItem.name || '',
+          name: editingItem.name || '',
           targetObjects: editingItem.targetObjects || [],
-          description:   editingItem.description || '',
+          description: editingItem.description || '',
         })
       } else {
         form.resetFields()
@@ -64,9 +64,9 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
       setLoading(true)
 
       const body = {
-        name:          values.name?.trim(),
+        name: values.name?.trim(),
         targetObjects: values.targetObjects || [],
-        description:   values.description?.trim() || null,
+        description: values.description?.trim() || null,
       }
 
       let res
@@ -123,25 +123,7 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
       >
         <Row gutter={16}>
           {/* Đối tượng */}
-          <Col xs={24} md={12}>
-            <Form.Item
-              name="targetObjects"
-              label={
-                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  <TagOutlined className="mr-1" />
-                  Đối tượng
-                </span>
-              }
-            >
-              <Select
-                mode="multiple"
-                allowClear
-                placeholder="Chọn đối tượng..."
-                className="rounded-lg"
-                options={TARGET_OPTIONS}
-              />
-            </Form.Item>
-          </Col>
+
 
           {/* Tên công việc */}
           <Col xs={24} md={12}>
@@ -161,6 +143,25 @@ const TaskFormModal = ({ open, editingItem, onClose, onSuccess }) => {
                 prefix={<CheckSquareOutlined className="text-gray-300" />}
                 placeholder="VD: Tưới nước buổi sáng"
                 className="h-10 rounded-lg"
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item
+              name="targetObjects"
+              label={
+                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                  <TagOutlined className="mr-1" />
+                  Đối tượng
+                </span>
+              }
+            >
+              <Select
+                mode="multiple"
+                allowClear
+                placeholder="Chọn đối tượng..."
+                className="rounded-lg"
+                options={TARGET_OPTIONS}
               />
             </Form.Item>
           </Col>

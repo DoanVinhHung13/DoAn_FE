@@ -23,6 +23,7 @@ import {
   getOwnershipLabel,
   getStatusLabel,
   isLandPlotActive,
+  normalizeApiDetail,
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
 
@@ -45,8 +46,7 @@ const LandPlotDetail = () => {
       setLoading(true)
       setError(null)
       const response = await LandPlotService.getLandPlotById(id)
-      const payload = response?.data ?? response ?? {}
-      setPlot(payload?.data ?? payload)
+      setPlot(normalizeApiDetail(response))
     } catch (err) {
       setError(err)
     } finally {

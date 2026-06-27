@@ -1,36 +1,23 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Alert,
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  InputNumber,
-  Row,
-  Select,
-  Space,
-  Spin,
-  Upload,
-  message,
-} from 'antd'
-import { ArrowLeftOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Col, Form, Row, Space, Spin } from 'antd'
+import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 
 import TitleCustom from 'src/components/TitleCustom'
 import LandPlotMap from 'src/components/LandPlotMap'
 import LandPlotService from 'src/services/LandPlotService'
-import UploadService from 'src/services/UploadService'
 import FarmService from 'src/services/FarmService'
-import { areaToHectares, findOverlappingPlot } from 'src/utils/geoJsonUtils'
+import { findOverlappingPlot } from 'src/utils/geoJsonUtils'
 import {
-  AREA_UNIT_OPTIONS,
   MSG_LM_25,
-  OWNERSHIP_OPTIONS,
   buildLandPlotPayload,
+  isOverlapApiError,
+  normalizeApiDetail,
   normalizeLandPlotResponse,
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
+import { useLandPlotForm } from './useLandPlotForm'
+import LandPlotFormFields from './LandPlotFormFields'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -39,94 +26,61 @@ const LandPlotCreate = () => {
   const { canManage, routes } = useLandPlotAccess()
   const [form] = Form.useForm()
 
-  // ── State: dữ liệu bản đồ ────────────────────────────────────────────────
-  const [polygonData, setPolygonData] = useState(null)
-  const [mapError, setMapError] = useState('')
+  // ── Hook: logic form chung ─────────────────────────────────────────────────
+  const {
+    polygonData,
+    mapError,
+    certPreview,
+    isSaving,
+    setMapError,
+    setIsSubmitting,
+    handlePolygonChange,
+    handleBeforeUpload,
+    uploadCertImage,
+  } = useLandPlotForm(form)
 
-  // ── State: giấy chứng nhận đất ───────────────────────────────────────────
-  const [certFile, setCertFile] = useState(null)
-  const [certPreview, setCertPreview] = useState('')
-
-  // ── State: danh sách trang trại ──────────────────────────────────────────
+  // ── State riêng: trang trại & vùng trồng hiện có ──────────────────────────
   const [farms, setFarms] = useState([])
   const [farmsLoading, setFarmsLoading] = useState(false)
-
-  // ── State: danh sách vùng trồng hiện có (kiểm tra chồng lấn) ─────────────
   const [existingPlots, setExistingPlots] = useState([])
-
-  // ── State: loading submit ─────────────────────────────────────────────────
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
 
   // Nếu không có quyền thì về trang danh sách
   useEffect(() => {
     if (!canManage) navigate(routes.list, { replace: true })
   }, [canManage, navigate, routes.list])
 
-  // ── Fetch: lấy danh sách trang trại ──────────────────────────────────────
+  // ── Fetch: danh sách trang trại ────────────────────────────────────────────
   const fetchFarms = useCallback(async () => {
     try {
       setFarmsLoading(true)
       const response = await FarmService.getFarms({ PageIndex: 1, PageSize: 50 })
-      const payload = response?.data ?? response ?? {}
-      const data = payload?.data ?? payload
-      const items = data?.items || data?.results || (Array.isArray(data) ? data : [])
-      setFarms(items)
+      const data = normalizeApiDetail(response)
+      setFarms(data?.items || data?.results || (Array.isArray(data) ? data : []))
     } catch {
-      // không hiển thị lỗi trang trại — Alert "chưa có trang trại" đã đủ
+      // Alert "chưa có trang trại" sẽ hiển thị nếu farms rỗng
     } finally {
       setFarmsLoading(false)
     }
   }, [])
 
-  useEffect(() => {
-    fetchFarms()
-  }, [fetchFarms])
+  useEffect(() => { fetchFarms() }, [fetchFarms])
 
-  // ── Fetch: lấy vùng trồng hiện có để kiểm tra chồng lấn ─────────────────
+  // ── Fetch: vùng trồng hiện có (kiểm tra chồng lấn) ────────────────────────
   const fetchExistingPlots = useCallback(async () => {
     if (!canManage) return
     try {
       const response = await LandPlotService.getLandPlots({ PageIndex: 1, PageSize: 200 })
       setExistingPlots(normalizeLandPlotResponse(response).items)
     } catch {
-      // lỗi không ảnh hưởng UX chính, bỏ qua
+      // Không ảnh hưởng UX chính
     }
   }, [canManage])
 
-  useEffect(() => {
-    fetchExistingPlots()
-  }, [fetchExistingPlots])
+  useEffect(() => { fetchExistingPlots() }, [fetchExistingPlots])
 
   const defaultFarmId = farms?.[0]?.id || farms?.[0]?._id
 
-  // ── Action: bản đồ vẽ polygon xong ───────────────────────────────────────
-  const handlePolygonChange = (data) => {
-    setMapError('')
-    setPolygonData(data)
-    if (data?.areaM2) {
-      form.setFieldsValue({ area: areaToHectares(data.areaM2) })
-    }
-  }
-
-  // ── Action: chọn file giấy chứng nhận ────────────────────────────────────
-  const handleBeforeUpload = (file) => {
-    if (!file.type.startsWith('image/')) {
-      message.error('Chỉ chấp nhận file ảnh!')
-      return Upload.LIST_IGNORE
-    }
-    if (file.size / 1024 / 1024 > 5) {
-      message.error('Kích thước ảnh phải nhỏ hơn 5MB!')
-      return Upload.LIST_IGNORE
-    }
-    setCertFile(file)
-    const reader = new FileReader()
-    reader.onload = (e) => setCertPreview(e.target.result)
-    reader.readAsDataURL(file)
-    return false // ngăn upload tự động của Ant Design
-  }
-
-  // ── Action: submit form ───────────────────────────────────────────────────
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
@@ -141,51 +95,28 @@ const LandPlotCreate = () => {
       }
       if (!defaultFarmId) return
 
-      // Upload ảnh giấy chứng nhận nếu có
-      let imageUrl = null
-      if (certFile) {
-        setIsUploading(true)
-        try {
-          const formData = new FormData()
-          formData.append('file', certFile)
-          const uploadRes = await UploadService.uploadImage(formData, { skipNotice: true })
-          imageUrl = uploadRes?.data?.url || uploadRes?.url || null
-        } finally {
-          setIsUploading(false)
-        }
-      }
+      const imageUrl = await uploadCertImage()
 
-      // Gọi API tạo vùng trồng
       setIsSubmitting(true)
       try {
         const payload = buildLandPlotPayload({ ...values, imageUrl }, polygonData, defaultFarmId)
         const res = await LandPlotService.createLandPlot(payload)
 
         if (res?.success === false) {
-          const msg = res?.message || res?.errors?.[0] || ''
-          if (msg.toLowerCase().includes('overlap') || msg.includes('chồng')) {
-            setMapError(MSG_LM_25)
-          }
+          if (isOverlapApiError(res?.message || res?.errors?.[0])) setMapError(MSG_LM_25)
           return
         }
-
         navigate(routes.list)
       } finally {
         setIsSubmitting(false)
       }
     } catch (err) {
-      // Kiểm tra lỗi chồng lấn từ exception
-      const msg = err?.message || ''
-      if (msg.toLowerCase().includes('overlap') || msg.includes('chồng')) {
-        setMapError(MSG_LM_25)
-      }
-      // Các lỗi validation của Ant Design Form tự hiển thị, không cần xử lý
+      if (isOverlapApiError(err)) setMapError(MSG_LM_25)
     }
   }
 
-  // ── Guard ─────────────────────────────────────────────────────────────────
+  // ── Guard & Loading ────────────────────────────────────────────────────────
   if (!canManage) return null
-
   if (farmsLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -193,8 +124,6 @@ const LandPlotCreate = () => {
       </div>
     )
   }
-
-  const isSaving = isSubmitting || isUploading
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -237,78 +166,12 @@ const LandPlotCreate = () => {
               layout="vertical"
               initialValues={{ areaUnit: 'ha', ownershipType: 'Owned' }}
             >
-              <Form.Item
-                label="Tên vùng trồng"
-                name="name"
-                rules={[{ required: true, message: 'Vui lòng nhập tên vùng trồng' }]}
-              >
-                <Input placeholder="Ví dụ: Lô A1" maxLength={200} />
-              </Form.Item>
-
-              <Form.Item
-                label="Mã vùng trồng"
-                name="code"
-                rules={[{ required: true, message: 'Vui lòng nhập mã vùng trồng' }]}
-              >
-                <Input placeholder="Ví dụ: LP-001" maxLength={80} />
-              </Form.Item>
-              <Form.Item label="Địa chỉ" name="address" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}>
-                <Input.TextArea rows={2} maxLength={300} placeholder="Địa chỉ chi tiết" />
-              </Form.Item>
-
-              <Row gutter={12}>
-                <Col span={14}>
-                  <Form.Item label="Diện tích" name="area">
-                    <InputNumber
-                      className="w-full"
-                      min={0.0001}
-                      step={0.01}
-                      placeholder="Tự động từ bản đồ"
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={10}>
-                  <Form.Item
-                    label="Đơn vị"
-                    name="areaUnit"
-                    rules={[{ required: true, message: 'Chọn đơn vị diện tích' }]}
-                  >
-                    <Select options={AREA_UNIT_OPTIONS} />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-
-
-              <Form.Item label="Loại sở hữu" name="ownershipType">
-                <Select options={OWNERSHIP_OPTIONS} allowClear placeholder="Chọn loại sở hữu" />
-              </Form.Item>
-
-              <Form.Item label="Mô tả" name="description">
-                <Input.TextArea rows={3} placeholder="Ghi chú thêm về vùng trồng" />
-              </Form.Item>
-
-              <Form.Item label="Giấy chứng nhận đất">
-                <Upload
-                  listType="picture-card"
-                  showUploadList={false}
-                  accept="image/*"
-                  beforeUpload={handleBeforeUpload}
-                >
-                  {certPreview ? (
-                    <img
-                      src={certPreview}
-                      alt="Giấy chứng nhận"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div>
-                      <UploadOutlined />
-                      <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
-                    </div>
-                  )}
-                </Upload>
-              </Form.Item>
+              <LandPlotFormFields
+                certPreview={certPreview}
+                onBeforeUpload={handleBeforeUpload}
+                showAddressRequired
+                showAreaPlaceholder
+              />
             </Form>
           </Card>
         </Col>

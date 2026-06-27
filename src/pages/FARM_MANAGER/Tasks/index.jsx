@@ -66,33 +66,13 @@ const TASK_TYPE_FILTER = [
   { value: 'OTHER', label: 'Khác' },
 ]
 
-const PRIORITY_FILTER = [
-  { value: 'all', label: 'Tất cả mức độ ưu tiên' },
-  { value: 'CRITICAL', label: '🔴 Khẩn cấp' },
-  { value: 'HIGH', label: '🟠 Cao' },
-  { value: 'MEDIUM', label: '🟡 Trung bình' },
-  { value: 'LOW', label: '🟢 Thấp' },
-]
-
 const STATUS_FILTER = [
   { value: 'all', label: 'Tất cả trạng thái' },
   { value: 'active', label: 'Đang hoạt động' },
   { value: 'inactive', label: 'Ngừng hoạt động' },
 ]
 
-// ── Priority color map ────────────────────────────────────────────────────────
-const PRIORITY_COLOR = {
-  CRITICAL: 'red',
-  HIGH: 'orange',
-  MEDIUM: 'gold',
-  LOW: 'green',
-}
-const PRIORITY_LABEL = {
-  CRITICAL: 'Khẩn cấp',
-  HIGH: 'Cao',
-  MEDIUM: 'Trung bình',
-  LOW: 'Thấp',
-}
+
 
 const TASK_TYPE_LABEL = {
   CULTIVATION: 'Canh tác',
@@ -112,7 +92,6 @@ const TasksManagement = () => {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [taskTypeFilter, setTaskTypeFilter] = useState('all')
-  const [priorityFilter, setPriorityFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
@@ -137,7 +116,6 @@ const TasksManagement = () => {
         PageSize: pageSize,
         SearchKeyword: search || undefined,
         TaskType: taskTypeFilter === 'all' ? undefined : taskTypeFilter,
-        Priority: priorityFilter === 'all' ? undefined : priorityFilter,
         Status:
           statusFilter === 'all'
             ? undefined
@@ -152,7 +130,7 @@ const TasksManagement = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, taskTypeFilter, priorityFilter, statusFilter])
+  }, [page, pageSize, search, taskTypeFilter, statusFilter])
 
   useEffect(() => {
     getList()
@@ -259,24 +237,6 @@ const TasksManagement = () => {
         ),
     },
     {
-      title: 'Mức độ ưu tiên',
-      dataIndex: 'priority',
-      key: 'priority',
-      width: 155,
-      align: 'center',
-      render: (v) =>
-        v ? (
-          <Tag
-            color={PRIORITY_COLOR[v] || 'default'}
-            className="font-semibold rounded-full"
-          >
-            {PRIORITY_LABEL[v] || v}
-          </Tag>
-        ) : (
-          <span className="text-gray-300">—</span>
-        ),
-    },
-    {
       title: 'Trạng thái',
       dataIndex: 'isActive',
       key: 'isActive',
@@ -331,9 +291,8 @@ const TasksManagement = () => {
                   />
                 }
                 disabled={locked}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                  locked ? 'opacity-40' : 'hover:bg-blue-50'
-                }`}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : 'hover:bg-blue-50'
+                  }`}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleOpenEdit(record)
@@ -405,15 +364,6 @@ const TasksManagement = () => {
             }}
             className="h-10 rounded-xl min-w-[185px]"
             options={TASK_TYPE_FILTER}
-          />
-          <Select
-            value={priorityFilter}
-            onChange={(val) => {
-              setPriorityFilter(val)
-              setPage(1)
-            }}
-            className="h-10 rounded-xl min-w-[185px]"
-            options={PRIORITY_FILTER}
           />
           <Select
             value={statusFilter}
