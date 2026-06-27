@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import CropProtectionService from 'src/services/cropProtectionService'
+import CropProtectionService from 'src/services/CropProtectionService'
 
 import CropProtectionFormFields from './CropProtectionFormFields'
 

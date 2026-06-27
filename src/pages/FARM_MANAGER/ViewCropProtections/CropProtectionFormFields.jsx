@@ -19,7 +19,7 @@ import {
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
-import CropProtectionService from 'src/services/cropProtectionService'
+import CropProtectionService from 'src/services/CropProtectionService'
 
 const UNIT_OPTIONS = [
   { value: 'lít', label: 'Lít' },

@@ -27,7 +27,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
-import CropProtectionService from 'src/services/cropProtectionService'
+import CropProtectionService from 'src/services/CropProtectionService'
 import { invalidCharsRegex } from 'src/utils/helpers'
 
 const STATUS_FILTER_OPTIONS = [
