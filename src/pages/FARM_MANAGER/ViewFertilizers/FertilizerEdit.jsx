@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, ExperimentOutlined } from '@ant-design/icons'
-import { Card, message, Skeleton } from 'antd'
+import { Button, Card, message, Skeleton } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
