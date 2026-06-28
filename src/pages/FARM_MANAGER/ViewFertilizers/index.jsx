@@ -20,12 +20,13 @@
  *   MSG-FER-08: "Phân bón đang được sử dụng trong kế hoạch sản xuất, không thể chỉnh sửa hoặc vô hiệu hóa."
  */
 import {
+  CheckCircleOutlined,
   EditOutlined,
   ExperimentOutlined,
-  EyeOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
+  StopOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
@@ -279,28 +280,27 @@ const ViewFertilizers = () => {
       title: 'Trạng thái',
       dataIndex: 'isActive',
       key: 'isActive',
-      width: 130,
-      align: 'center',
-      render: (isActive, record) => {
-        const locked = record.isInActiveUse
+      width: 150,
+      render: (isActive) => {
+        const active = isActive !== false
         return (
-          <Tooltip
-            title={
-              locked
-                ? 'Phân bón đang được sử dụng'
-                : isActive
-                  ? 'Nhấn để vô hiệu hóa'
-                  : 'Nhấn để kích hoạt'
-            }
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${
+              active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+            }`}
           >
-            <Switch
-              checked={isActive !== false}
-              disabled={locked}
-              size="small"
-              onClick={() => handleSwitchClick(record)}
-              className={isActive !== false ? 'bg-green-500' : ''}
-            />
-          </Tooltip>
+            {active ? (
+              <>
+                <CheckCircleOutlined />
+                <span>Hoạt động</span>
+              </>
+            ) : (
+              <>
+                <StopOutlined />
+                <span>Vô hiệu</span>
+              </>
+            )}
+          </div>
         )
       },
     },
@@ -308,26 +308,13 @@ const ViewFertilizers = () => {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 140,
+      width: 100,
       align: 'center',
       render: (_, record) => {
         const locked = record.isInActiveUse
+        const active = record.isActive !== false
         return (
-          <div className="flex items-center justify-center gap-1">
-            {/* Xem chi tiết */}
-            <Tooltip title="Xem chi tiết">
-              <Button
-                type="text"
-                icon={<EyeOutlined className="text-lg text-blue-500" />}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-blue-50"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  navigate(ROUTER.FM_VIEW_FERTILIZER_DETAIL.replace(':id', record.id))
-                }}
-              />
-            </Tooltip>
-
-            {/* Sửa — BR_FER_02: disabled nếu isInActiveUse */}
+          <div className="flex items-center justify-center gap-2">
             <Tooltip
               title={
                 locked
@@ -343,11 +330,40 @@ const ViewFertilizers = () => {
                   />
                 }
                 disabled={locked}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : 'hover:bg-green-50'
-                  }`}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                  locked ? 'opacity-40' : 'hover:bg-green-50'
+                }`}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleOpenEdit(record)
+                }}
+              />
+            </Tooltip>
+            <Tooltip
+              title={
+                locked
+                  ? 'Phân bón đang được sử dụng'
+                  : active
+                  ? 'Vô hiệu hóa'
+                  : 'Kích hoạt'
+              }
+            >
+              <Button
+                type="text"
+                icon={
+                  active ? (
+                    <StopOutlined className={`text-lg ${locked ? 'text-gray-300' : 'text-red-500'}`} />
+                  ) : (
+                    <CheckCircleOutlined className={`text-lg ${locked ? 'text-gray-300' : 'text-green-500'}`} />
+                  )
+                }
+                disabled={locked}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                  locked ? 'opacity-40' : active ? 'hover:bg-red-50' : 'hover:bg-green-50'
+                }`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleSwitchClick(record)
                 }}
               />
             </Tooltip>
@@ -449,6 +465,10 @@ const ViewFertilizers = () => {
           columns={columns}
           rowKey="id"
           loading={loading}
+          onRow={(record) => ({
+            onClick: () => navigate(ROUTER.FM_VIEW_FERTILIZER_DETAIL.replace(':id', record.id)),
+            className: 'cursor-pointer',
+          })}
           locale={{ emptyText: 'Không có dữ liệu phân bón.' }}
           pagination={{
             current: page,

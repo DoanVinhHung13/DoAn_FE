@@ -154,220 +154,208 @@ const FertilizerDetail = () => {
       >
         <div className="space-y-6">
 
-        {/* ════════════════════════════════════════════════════════════════
+          {/* ════════════════════════════════════════════════════════════════
             Header: mã + trạng thái
         ═══════════════════════════════════════════════════════════════════ */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="mb-0.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-              Mã phân bón
-            </p>
-            <span className="text-lg font-bold text-gray-800 font-mono">
-              {item.code || '—'}
-            </span>
-          </div>
-          <Badge
-            status={isActive ? 'success' : 'error'}
-            text={
-              <span
-                className={`text-sm font-semibold ${
-                  isActive ? 'text-green-600' : 'text-red-500'
-                }`}
-              >
-                {isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="mb-0.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                Mã phân bón
+              </p>
+              <span className="text-lg font-bold text-gray-800 font-mono">
+                {item.code || '—'}
               </span>
-            }
-          />
-        </div>
+            </div>
+            <Badge
+              status={isActive ? 'success' : 'error'}
+              text={
+                <span
+                  className={`text-sm font-semibold ${isActive ? 'text-green-600' : 'text-red-500'
+                    }`}
+                >
+                  {isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                </span>
+              }
+            />
+          </div>
 
-        {/* ════════════════════════════════════════════════════════════════
+          {/* ════════════════════════════════════════════════════════════════
             Section 1 – Thông Tin Cơ Bản
         ═══════════════════════════════════════════════════════════════════ */}
-        <div>
-          <div
-            className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
-            style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
-          >
-            Thông Tin Cơ Bản
-          </div>
-
-          <Descriptions
-            column={{ xs: 1, sm: 2 }}
-            size="small"
-            labelStyle={{
-              fontWeight: 600,
-              color: '#6b7280',
-              fontSize: 12,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
-            contentStyle={{ color: '#1f2937', fontSize: 14 }}
-          >
-            {/* Tên phân bón – span 2 */}
-            <Descriptions.Item
-              label={
-                <span className="flex items-center gap-1">
-                  <TagOutlined /> Tên phân bón
-                </span>
-              }
-              span={2}
+          <div>
+            <div
+              className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
+              style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
             >
-              <span className="font-semibold">{item.name || '—'}</span>
-            </Descriptions.Item>
+              Thông Tin Cơ Bản
+            </div>
 
-            {/* Nhà Sản Xuất */}
-            <Descriptions.Item
-              label={
-                <span className="flex items-center gap-1">
-                  <ShopOutlined /> Nhà Sản Xuất
-                </span>
-              }
+            <Descriptions
+              column={{ xs: 1, sm: 2 }}
+              size="small"
+              labelStyle={{
+                fontWeight: 600,
+                color: '#6b7280',
+                fontSize: 12,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+              }}
+              contentStyle={{ color: '#1f2937', fontSize: 14 }}
             >
-              {item.manufacturer || <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-
-            {/* Nhà Cung Cấp */}
-            <Descriptions.Item label="Nhà Cung Cấp">
-              {item.supplier || <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-
-            {/* Tồn Kho tối thiểu */}
-            <Descriptions.Item
-              label={
-                <span className="flex items-center gap-1">
-                  <BarcodeOutlined /> Tồn kho tối thiểu
-                </span>
-              }
-            >
-              <span className="font-semibold text-emerald-600">
-                {item.minimumStock != null
-                  ? `${Number(item.minimumStock).toLocaleString('vi-VN')} ${item.unit || ''}`
-                  : '—'}
-              </span>
-            </Descriptions.Item>
-
-            {/* Đơn vị tính */}
-            <Descriptions.Item label="Đơn vị tính (kg/lit)">
-              {item.unit
-                ? <Tag color="blue" className="font-medium rounded-full">{item.unit}</Tag>
-                : <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-
-            {/* Loại Phân Bón */}
-            <Descriptions.Item label="Loại Phân Bón" span={2}>
-              {(item.fertilizerType || item.category)
-                ? (
-                  <Tag color="green" className="font-medium rounded-full">
-                    {item.fertilizerType || item.category}
-                  </Tag>
-                )
-                : <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-
-            {/* Ngày tạo */}
-            {item.createdAt && (
+              {/* Tên phân bón – span 2 */}
               <Descriptions.Item
                 label={
                   <span className="flex items-center gap-1">
-                    <CalendarOutlined /> Ngày tạo
+                    <TagOutlined /> Tên phân bón
                   </span>
                 }
                 span={2}
               >
-                {new Date(item.createdAt).toLocaleDateString('vi-VN', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                <span className="font-semibold">{item.name || '—'}</span>
               </Descriptions.Item>
+
+              {/* Nhà Sản Xuất */}
+              <Descriptions.Item
+                label={
+                  <span className="flex items-center gap-1">
+                    <ShopOutlined /> Nhà Sản Xuất
+                  </span>
+                }
+              >
+                {item.manufacturer || <span className="text-gray-400">—</span>}
+              </Descriptions.Item>
+
+              {/* Nhà Cung Cấp */}
+              <Descriptions.Item label="Nhà Cung Cấp">
+                {item.supplier || <span className="text-gray-400">—</span>}
+              </Descriptions.Item>
+
+              {/* Tồn Kho tối thiểu */}
+              <Descriptions.Item
+                label={
+                  <span className="flex items-center gap-1">
+                    <BarcodeOutlined /> Tồn kho tối thiểu
+                  </span>
+                }
+              >
+                <span className="font-semibold text-emerald-600">
+                  {item.minimumStock != null
+                    ? `${Number(item.minimumStock).toLocaleString('vi-VN')} ${item.unit || ''}`
+                    : '—'}
+                </span>
+              </Descriptions.Item>
+
+              {/* Đơn vị tính */}
+              <Descriptions.Item label="Đơn vị tính (kg/lit)">
+                {item.unit
+                  ? <Tag color="blue" className="font-medium rounded-full">{item.unit}</Tag>
+                  : <span className="text-gray-400">—</span>}
+              </Descriptions.Item>
+
+              {/* Loại Phân Bón */}
+              <Descriptions.Item label="Loại Phân Bón" span={2}>
+                {(item.fertilizerType || item.category)
+                  ? (
+                    <Tag color="green" className="font-medium rounded-full">
+                      {item.fertilizerType || item.category}
+                    </Tag>
+                  )
+                  : <span className="text-gray-400">—</span>}
+              </Descriptions.Item>
+
+              {/* Ngày tạo */}
+              {item.createdAt && (
+                <Descriptions.Item
+                  label={
+                    <span className="flex items-center gap-1">
+                      <CalendarOutlined /> Ngày tạo
+                    </span>
+                  }
+                  span={2}
+                >
+                  {new Date(item.createdAt).toLocaleDateString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+
+            {/* Mô Tả */}
+            {item.description && (
+              <div className="mt-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                <p className="mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Mô tả
+                </p>
+                <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line m-0">
+                  {item.description}
+                </p>
+              </div>
             )}
-          </Descriptions>
+          </div>
 
-          {/* Mô Tả */}
-          {item.description && (
-            <div className="mt-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
-              <p className="mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Mô tả
-              </p>
-              <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line m-0">
-                {item.description}
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* ════════════════════════════════════════════════════════════════
+          {/* ════════════════════════════════════════════════════════════════
             Section 2 – Thành Phần
         ═══════════════════════════════════════════════════════════════════ */}
-        <div>
-          <div
-            className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
-            style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
-          >
-            Thành Phần
+          <div>
+            <div
+              className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
+              style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
+            >
+              Thành Phần
+            </div>
+
+            {components.length > 0 ? (
+              <Table
+                rowKey={(_, i) => i}
+                dataSource={components}
+                columns={componentColumns}
+                pagination={false}
+                size="small"
+                bordered
+                className="rounded-lg overflow-hidden"
+              />
+            ) : (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Chưa có thành phần"
+                className="py-4"
+              />
+            )}
           </div>
 
-          {components.length > 0 ? (
-            <Table
-              rowKey={(_, i) => i}
-              dataSource={components}
-              columns={componentColumns}
-              pagination={false}
-              size="small"
-              bordered
-              className="rounded-lg overflow-hidden"
-            />
-          ) : (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Chưa có thành phần"
-              className="py-4"
-            />
-          )}
-        </div>
-
-        {/* ════════════════════════════════════════════════════════════════
+          {/* ════════════════════════════════════════════════════════════════
             Section 3 – Liều Lượng
         ═══════════════════════════════════════════════════════════════════ */}
-        <div>
-          <div
-            className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
-            style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
-          >
-            Liều Lượng
+          <div>
+            <div
+              className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
+              style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
+            >
+              Liều Lượng
+            </div>
+
+            {dosages.length > 0 ? (
+              <Table
+                rowKey={(_, i) => i}
+                dataSource={dosages}
+                columns={dosageColumns}
+                pagination={false}
+                size="small"
+                bordered
+                className="rounded-lg overflow-hidden"
+              />
+            ) : (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Chưa có liều lượng"
+                className="py-4"
+              />
+            )}
           </div>
-
-          {dosages.length > 0 ? (
-            <Table
-              rowKey={(_, i) => i}
-              dataSource={dosages}
-              columns={dosageColumns}
-              pagination={false}
-              size="small"
-              bordered
-              className="rounded-lg overflow-hidden"
-            />
-          ) : (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Chưa có liều lượng"
-              className="py-4"
-            />
-          )}
-        </div>
-
-        </div>
-
-        {/* ── Footer actions ── */}
-        <div className="flex justify-end gap-3 pt-4 mt-6 border-t border-gray-100">
-          <Button
-            onClick={() => navigate(ROUTER.FM_VIEW_FERTILIZERS)}
-            className="h-10 px-6 rounded-xl"
-          >
-            Quay lại
-          </Button>
         </div>
       </Card>
     </div>

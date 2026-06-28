@@ -25,10 +25,10 @@ import {
   CheckCircleOutlined,
   CheckSquareOutlined,
   EditOutlined,
-  EyeOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
+  StopOutlined,
 } from '@ant-design/icons'
 import { Alert, Button, Card, Input, message, Select, Switch, Tag, Tooltip } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
@@ -196,17 +196,6 @@ const TasksManagement = () => {
       ),
     },
     {
-      title: 'Mã công việc',
-      dataIndex: 'code',
-      key: 'code',
-      width: 150,
-      render: (v) => (
-        <span className="px-2 py-1 text-xs font-bold text-blue-700 bg-blue-50 rounded-lg font-mono">
-          {v || '—'}
-        </span>
-      ),
-    },
-    {
       title: 'Tên công việc',
       dataIndex: 'name',
       key: 'name',
@@ -215,47 +204,20 @@ const TasksManagement = () => {
       ),
     },
     {
-      title: 'Loại công việc',
-      dataIndex: 'taskType',
-      key: 'taskType',
-      width: 170,
-      render: (v) =>
-        v ? (
-          <Tag color="geekblue" className="font-medium rounded-full">
-            {TASK_TYPE_LABEL[v] || v}
-          </Tag>
-        ) : (
-          <span className="text-gray-300">—</span>
-        ),
+      title: 'Đối tượng',
+      dataIndex: 'typeOfObject',
+      key: 'typeOfObject',
+      render: (v) => (
+        <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
+      ),
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'isActive',
-      key: 'isActive',
-      width: 130,
-      align: 'center',
-      render: (isActive, record) => {
-        const locked = record.isInActiveUse
-        return (
-          <Tooltip
-            title={
-              locked
-                ? 'Công việc đang được sử dụng'
-                : isActive
-                  ? 'Nhấn để vô hiệu hóa'
-                  : 'Nhấn để kích hoạt'
-            }
-          >
-            <Switch
-              checked={isActive !== false}
-              disabled={locked}
-              size="small"
-              onClick={() => handleSwitchClick(record)}
-              className={isActive !== false ? 'bg-blue-500' : ''}
-            />
-          </Tooltip>
-        )
-      },
+      title: 'Mô tả',
+      dataIndex: 'description',
+      key: 'description',
+      render: (v) => (
+        <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
+      ),
     },
     {
       title: 'Hành động',
@@ -265,20 +227,9 @@ const TasksManagement = () => {
       align: 'center',
       render: (_, record) => {
         const locked = record.isInActiveUse
+        const active = record.isActive !== false
         return (
-          <div className="flex items-center justify-center gap-1">
-            <Tooltip title="Chi tiết">
-              <Button
-                type="text"
-                icon={<EyeOutlined className="text-lg text-gray-500" />}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  navigate(ROUTER.FM_TASK_DETAIL.replace(':id', record.id))
-                }}
-              />
-            </Tooltip>
-            {/* Sửa — BR_TSK_02: disabled nếu isInActiveUse */}
+          <div className="flex items-center justify-center gap-2">
             <Tooltip
               title={
                 locked
@@ -299,6 +250,33 @@ const TasksManagement = () => {
                 onClick={(e) => {
                   e.stopPropagation()
                   handleOpenEdit(record)
+                }}
+              />
+            </Tooltip>
+            <Tooltip
+              title={
+                locked
+                  ? 'Công việc đang được sử dụng'
+                  : active
+                    ? 'Vô hiệu hóa'
+                    : 'Kích hoạt'
+              }
+            >
+              <Button
+                type="text"
+                icon={
+                  active ? (
+                    <StopOutlined className={`text-lg ${locked ? 'text-gray-300' : 'text-red-500'}`} />
+                  ) : (
+                    <CheckCircleOutlined className={`text-lg ${locked ? 'text-gray-300' : 'text-green-500'}`} />
+                  )
+                }
+                disabled={locked}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : active ? 'hover:bg-red-50' : 'hover:bg-green-50'
+                  }`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleSwitchClick(record)
                 }}
               />
             </Tooltip>
@@ -400,6 +378,10 @@ const TasksManagement = () => {
           columns={columns}
           rowKey="id"
           loading={loading}
+          onRow={(record) => ({
+            onClick: () => navigate(ROUTER.FM_TASK_DETAIL.replace(':id', record.id)),
+            className: 'cursor-pointer',
+          })}
           locale={{ emptyText: 'Không có dữ liệu công việc.' }}
           pagination={{
             current: page,
