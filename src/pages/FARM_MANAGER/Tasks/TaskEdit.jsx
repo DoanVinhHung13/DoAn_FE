@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import TaskService from 'src/services/taskService'
+import TaskService from 'src/services/StandardTaskService'
 import TaskFormFields from './TaskFormFields'
 
 const TaskEdit = () => {
@@ -24,11 +24,28 @@ const TaskEdit = () => {
           navigate(ROUTER.FM_TASKS)
           return
         }
-        
+
         const data = res?.data || {}
+
+        let initialTargetType = 'SPECIFIC';
+        let initialTargetObjects = data.targetObjects || [];
+        let initialTargetCategories = [];
+
+        if (data.targetObjects?.includes('ALL')) {
+          initialTargetType = 'ALL';
+          initialTargetObjects = [];
+        } else if (data.targetObjects?.length && !data.targetObjects.some(id => typeof id === 'string' && id.includes('-'))) {
+          // Basic heuristic: backend might just return crop/catalog IDs.
+          // In reality, to be fully robust, we would need to know if the ID belongs to crop or catalog.
+          // Assuming we just bind them back to targetObjects for SPECIFIC for now, since we cannot easily distinguish.
+          initialTargetType = 'SPECIFIC';
+        }
+
         form.setFieldsValue({
           name: data.name || '',
-          targetObjects: data.targetObjects || [],
+          targetType: initialTargetType,
+          targetObjects: initialTargetObjects,
+          targetCategories: initialTargetCategories,
           description: data.description || '',
         })
       } catch (err) {
@@ -44,9 +61,18 @@ const TaskEdit = () => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
+      let finalTargets = [];
+      if (values.targetType === 'ALL') {
+        finalTargets = ['ALL'];
+      } else if (values.targetType === 'CATEGORY') {
+        finalTargets = values.targetCategories || [];
+      } else {
+        finalTargets = values.targetObjects || [];
+      }
+
       const body = {
         name: values.name?.trim(),
-        targetObjects: values.targetObjects || [],
+        targetObjects: finalTargets,
         description: values.description?.trim() || null,
       }
 

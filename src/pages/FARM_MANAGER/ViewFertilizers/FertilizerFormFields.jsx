@@ -48,38 +48,32 @@ const { Text } = Typography
 // ── Options ──────────────────────────────────────────────────────────────────
 
 const FERTILIZER_TYPE_OPTIONS = [
-  { value: 'Vô cơ', label: 'Vô cơ' },
   { value: 'Hữu cơ', label: 'Hữu cơ' },
   { value: 'Hữu cơ khoáng', label: 'Hữu cơ khoáng' },
-  { value: 'Vi sinh', label: 'Vi sinh' },
-  { value: 'Phức hợp', label: 'Phức hợp' },
-  { value: 'NPK', label: 'Phân NPK' },
-  { value: 'Urê', label: 'Phân Urê' },
+  { value: 'Hữu cơ sinh học', label: 'Hữu cơ sinh học' },
+  { value: 'Hữu cơ vi sinh', label: 'Hữu cơ vi sinh' },
+  { value: 'Vi sinh vật', label: 'Vi sinh vật' },
+  { value: 'Bón lá', label: 'Bón lá' },
   { value: 'Khác', label: 'Khác' },
 ]
 
 const UNIT_OPTIONS = [
-  { value: 'kg', label: 'kg' },
-  { value: 'g', label: 'g' },
-  { value: 'tấn', label: 'tấn' },
   { value: 'lít', label: 'lít' },
   { value: 'ml', label: 'ml' },
-  { value: 'bao', label: 'bao' },
-  { value: 'chai', label: 'chai' },
+  { value: 'g', label: 'g' },
+  { value: 'mg', label: 'mg' },
+  { value: 'kg', label: 'kg' },
 ]
 
 const COMPONENT_UNIT_OPTIONS = [
   { value: '%', label: '%' },
   { value: 'ppm', label: 'ppm' },
   { value: 'CFU/g', label: 'CFU/g' },
-  { value: 'mg/kg', label: 'mg/kg' },
 ]
 
 const AREA_UNIT_OPTIONS = [
   { value: 'ha', label: 'ha' },
   { value: 'm²', label: 'm²' },
-  { value: 'sào', label: 'sào' },
-  { value: 'công', label: 'công' },
 ]
 
 const TARGET_OPTIONS = [
@@ -97,15 +91,15 @@ const TARGET_OPTIONS = [
 ]
 
 const DEFAULT_COMPONENTS = [
-  { name: 'N', content: '', unit: '%' },
-  { name: 'P₂O₅', content: '', unit: '%' },
-  { name: 'K₂O', content: '', unit: '%' },
+  { name: 'N', value: '', unit: '%' },
+  { name: 'P₂O₅', value: '', unit: '%' },
+  { name: 'K₂O', value: '', unit: '%' },
 ]
 
 /** Số lượng thành phần mặc định (N, P, K) — không cho xóa, không cho sửa tên */
 const DEFAULT_COMPONENT_COUNT = DEFAULT_COMPONENTS.length
 
-const DEFAULT_DOSAGE = { quantity: '', unit: 'kg', areaUnit: 'ha', target: '' }
+const DEFAULT_DOSAGE = { amount: '', unit: 'kg', areaUnit: 'ha', target: '' }
 
 // ── Section header helper ─────────────────────────────────────────────────────
 const SectionTitle = ({ children }) => (
@@ -134,15 +128,18 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         manufacturer: editingItem.manufacturer || '',
         supplier: editingItem.supplier || '',
         minimumStock: editingItem.minimumStock ?? 0,
+        price: editingItem.price ?? 0,
         unit: editingItem.unit || undefined,
-        fertilizerType: editingItem.fertilizerType || editingItem.category || undefined,
+        type: editingItem.type || editingItem.fertilizerType || editingItem.category || undefined,
         description: editingItem.description || '',
       })
       // Thành phần
       setComponents(
-        editingItem.components?.length
-          ? editingItem.components
-          : DEFAULT_COMPONENTS,
+        editingItem.compositions?.length
+          ? editingItem.compositions
+          : editingItem.components?.length
+            ? editingItem.components
+            : DEFAULT_COMPONENTS,
       )
       // Liều lượng
       setDosages(
@@ -161,16 +158,30 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       setLoading(true)
 
       const body = {
-        code: values.code?.trim(),
         name: values.name?.trim(),
-        manufacturer: values.manufacturer?.trim() || '',
+        code: values.code?.trim(),
         supplier: values.supplier?.trim() || '',
-        minimumStock: values.minimumStock ?? 0,
         unit: values.unit,
-        fertilizerType: values.fertilizerType || '',
+        price: values.price ?? 0,
         description: values.description?.trim() || '',
-        components: components.filter((c) => c.name?.trim()),
-        dosages: dosages.filter((d) => d.quantity !== '' && d.quantity != null),
+        minimumStock: values.minimumStock ?? 0,
+        type: values.type ?? '',
+        manufacturer: values.manufacturer?.trim() || '',
+        compositions: components
+          .filter((c) => c.name?.trim())
+          .map((c) => ({
+            name: c.name,
+            value: c.value ?? 0,
+            unit: c.unit,
+          })),
+        dosages: dosages
+          .filter((d) => d.amount !== '' && d.amount != null)
+          .map((d) => ({
+            amount: d.amount,
+            unit: d.unit,
+            areaUnit: d.areaUnit,
+            target: d.target || '',
+          })),
       }
 
       let res
@@ -188,11 +199,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         return
       }
 
-      message.success(
-        isEdit
-          ? 'Cập nhật thông tin phân bón thành công.'
-          : 'Thêm mới phân bón thành công.',
-      )
       navigate(ROUTER.FM_VIEW_FERTILIZERS)
     } catch (err) {
       const errMsg = (
@@ -218,7 +224,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   }
 
   const handleAddComponent = () =>
-    setComponents([...components, { name: '', content: '', unit: '%' }])
+    setComponents([...components, { name: '', value: '', unit: '%' }])
 
   const handleRemoveComponent = (index) => {
     // Không cho xóa 3 thành phần mặc định (N, P₂O₅, K₂O)
@@ -355,7 +361,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             name="unit"
             label={
               <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Đơn Vị tính (kg/lit) <span className="text-red-500">*</span>
+                Đơn Vị tính
               </span>
             }
             rules={[{ required: true, message: 'Vui lòng chọn đơn vị tính.' }]}
@@ -373,18 +379,40 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         {/* Loại Phân Bón */}
         <Col xs={24} sm={8}>
           <Form.Item
-            name="fertilizerType"
+            name="type"
             label={
               <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
                 Loại Phân Bón
               </span>
             }
+            getValueFromEvent={(val) => val ?? ''}
           >
             <Select
               allowClear
               placeholder="Loại Phân Bón"
               className="h-10"
               options={FERTILIZER_TYPE_OPTIONS}
+            />
+          </Form.Item>
+        </Col>
+
+        {/* Giá */}
+        <Col xs={24} sm={8}>
+          <Form.Item
+            name="price"
+            label={
+              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                Giá (VNĐ)
+              </span>
+            }
+            rules={[{ type: 'number', min: 0, message: 'Giá phải >= 0.' }]}
+          >
+            <InputNumber
+              min={0}
+              placeholder="0"
+              className="w-full h-10 rounded-lg"
+              formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(v) => v?.replace(/,*/g, '')}
             />
           </Form.Item>
         </Col>
@@ -421,7 +449,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           <Text type="secondary" className="text-xs font-semibold">Tên thành Phần</Text>
         </Col>
         <Col flex="1 1 100px">
-          <Text type="secondary" className="text-xs font-semibold">Hàm Lượng</Text>
+          <Text type="secondary" className="text-xs font-semibold">Giá trị (value)</Text>
         </Col>
         <Col flex="1 1 120px">
           <Text type="secondary" className="text-xs font-semibold">
@@ -452,8 +480,8 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               </div>
               <div style={{ flex: '1 1 100px' }}>
                 <InputNumber
-                  value={comp.content}
-                  onChange={(val) => handleComponentChange(index, 'content', val)}
+                  value={comp.value}
+                  onChange={(val) => handleComponentChange(index, 'value', val)}
                   placeholder="0"
                   min={0}
                   className="w-full h-9 rounded-lg"
@@ -504,13 +532,13 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             key={index}
             className="flex flex-wrap items-end gap-2 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2"
           >
-            {/* Số */}
+            {/* Lượng (amount) */}
             <div style={{ flex: '0 0 80px' }}>
-              <Text type="secondary" className="block mb-1 text-xs">Số</Text>
+              <Text type="secondary" className="block mb-1 text-xs">Lượng</Text>
               <InputNumber
-                value={dosage.quantity}
-                onChange={(val) => handleDosageChange(index, 'quantity', val)}
-                placeholder="Số"
+                value={dosage.amount}
+                onChange={(val) => handleDosageChange(index, 'amount', val)}
+                placeholder="0"
                 min={0}
                 className="w-full h-9 rounded-lg"
               />

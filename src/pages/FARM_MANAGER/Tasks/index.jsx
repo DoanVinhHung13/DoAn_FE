@@ -41,7 +41,7 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 
-import TaskService from 'src/services/taskService'
+import TaskService from 'src/services/StandardTaskService'
 import { invalidCharsRegex } from 'src/utils/helpers'
 
 // ── Filter options ────────────────────────────────────────────────────────────

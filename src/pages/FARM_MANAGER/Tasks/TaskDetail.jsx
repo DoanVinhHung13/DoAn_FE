@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import TaskService from 'src/services/taskService'
+import TaskService from 'src/services/StandardTaskService'
 import TaskFormFields from './TaskFormFields'
 
 const TaskDetail = () => {
@@ -23,7 +23,7 @@ const TaskDetail = () => {
           navigate(ROUTER.FM_TASKS)
           return
         }
-        
+
         const data = res?.data || {}
         form.setFieldsValue({
           name: data.name || '',

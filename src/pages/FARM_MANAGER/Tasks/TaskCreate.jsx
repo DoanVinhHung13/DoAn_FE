@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import TaskService from 'src/services/taskService'
+import TaskService from 'src/services/StandardTaskService'
 import TaskFormFields from './TaskFormFields'
 
 const TaskCreate = () => {
@@ -15,9 +15,18 @@ const TaskCreate = () => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
+      let finalTargets = [];
+      if (values.targetType === 'ALL') {
+        finalTargets = ['ALL'];
+      } else if (values.targetType === 'CATEGORY') {
+        finalTargets = values.targetCategories || [];
+      } else {
+        finalTargets = values.targetObjects || [];
+      }
+
       const body = {
         name: values.name?.trim(),
-        targetObjects: values.targetObjects || [],
+        targetObjects: finalTargets,
         description: values.description?.trim() || null,
       }
 
