@@ -378,6 +378,7 @@ const TasksManagement = () => {
           columns={columns}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 1000 }}
           onRow={(record) => ({
             onClick: () => navigate(ROUTER.FM_TASK_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',

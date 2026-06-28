@@ -1,7 +1,6 @@
 import { CheckSquareOutlined, FileTextOutlined, TagOutlined } from '@ant-design/icons'
 import { Col, Form, Input, Row, Select, Radio } from 'antd'
-import React, { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import React, { useMemo, useState, useEffect } from 'react'
 import CropService from 'src/services/CropService'
 import CropManagementService from 'src/services/CropManagementService'
 
@@ -18,19 +17,48 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
   const targetType = Form.useWatch('targetType', form);
   const selectedCatalogId = Form.useWatch('cropCatalogId', form);
 
-  // Fetch crop catalogs
-  const { data: catalogsData, isLoading: isCatalogsLoading } = useQuery({
-    queryKey: ['task-crop-catalogs'],
-    queryFn: async () => normalizeResponse(await CropService.getCrops({ PageIndex: 1, PageSize: 100 })),
-    enabled: targetType === 'SPECIFIC' || targetType === 'CATEGORY',
-  });
+  const [catalogsData, setCatalogsData] = useState(null);
+  const [isCatalogsLoading, setIsCatalogsLoading] = useState(false);
+  const [cropsData, setCropsData] = useState(null);
+  const [isCropsLoading, setIsCropsLoading] = useState(false);
 
-  // Fetch crops
-  const { data: cropsData, isLoading: isCropsLoading } = useQuery({
-    queryKey: ['task-all-crops'],
-    queryFn: async () => normalizeResponse(await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000 })),
-    enabled: targetType === 'SPECIFIC',
-  });
+  useEffect(() => {
+    if (targetType === 'SPECIFIC' || targetType === 'CATEGORY') {
+      let isMounted = true;
+      const fetchCatalogs = async () => {
+        setIsCatalogsLoading(true);
+        try {
+          const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
+          if (isMounted) setCatalogsData(normalizeResponse(response));
+        } catch (error) {
+          console.error(error);
+        } finally {
+          if (isMounted) setIsCatalogsLoading(false);
+        }
+      };
+      if (!catalogsData) fetchCatalogs();
+      return () => { isMounted = false; };
+    }
+  }, [targetType, catalogsData]);
+
+  useEffect(() => {
+    if (targetType === 'SPECIFIC') {
+      let isMounted = true;
+      const fetchCrops = async () => {
+        setIsCropsLoading(true);
+        try {
+          const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000 });
+          if (isMounted) setCropsData(normalizeResponse(response));
+        } catch (error) {
+          console.error(error);
+        } finally {
+          if (isMounted) setIsCropsLoading(false);
+        }
+      };
+      if (!cropsData) fetchCrops();
+      return () => { isMounted = false; };
+    }
+  }, [targetType, cropsData]);
 
   const catalogOptions = useMemo(() => {
     if (!catalogsData) return [];

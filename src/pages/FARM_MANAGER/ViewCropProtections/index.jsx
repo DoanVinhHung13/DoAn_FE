@@ -383,6 +383,7 @@ const ViewCropProtections = () => {
           columns={columns}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 1000 }}
           onRow={(record) => ({
             onClick: () => navigate(ROUTER.FM_VIEW_CROP_PROTECTION_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',

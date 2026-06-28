@@ -20,20 +20,19 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import CropProtectionService from 'src/services/CropProtectionService'
+import CropManagementService from 'src/services/CropManagementService'
 
 const UNIT_OPTIONS = [
-  { value: 'lít', label: 'Lít' },
+  { value: 'lít', label: 'lít' },
   { value: 'ml', label: 'ml' },
-  { value: 'kg', label: 'Kg' },
   { value: 'g', label: 'g' },
-  { value: 'chai', label: 'Chai' },
-  { value: 'gói', label: 'Gói' },
+  { value: 'mg', label: 'mg' },
+  { value: 'kg', label: 'kg' },
 ]
 
 const AREA_UNIT_OPTIONS = [
   { value: 'ha', label: 'ha' },
   { value: 'm2', label: 'm2' },
-  { value: 'sào', label: 'Sào' },
 ]
 
 // ── Section header helper ─────────────────────────────────────────────────────
@@ -51,6 +50,45 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
 
+  const [cropsData, setCropsData] = React.useState(null);
+  const [isCropsLoading, setIsCropsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchCrops = async () => {
+      setIsCropsLoading(true);
+      try {
+        const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000 });
+        const payload = response?.data ?? response ?? {};
+        const data = payload?.data ?? payload;
+        const normalizedData = Array.isArray(data)
+          ? data
+          : data?.items || data?.results || data?.crops || data?.cropCatalogs || [];
+        if (isMounted) setCropsData(normalizedData);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (isMounted) setIsCropsLoading(false);
+      }
+    };
+    if (!cropsData) fetchCrops();
+    return () => { isMounted = false; };
+  }, [cropsData]);
+
+  const cropOptions = React.useMemo(() => {
+    if (!cropsData) return [];
+    return cropsData
+      .filter((c) => {
+        if (typeof c.isActive === 'boolean') return c.isActive;
+        const status = String(c.status || '').toLowerCase();
+        return !['inactive', 'disabled', 'deleted'].includes(status);
+      })
+      .map((c) => ({
+        value: c.name,
+        label: c.name,
+      }));
+  }, [cropsData]);
+
   React.useEffect(() => {
     if (isEdit) {
       form.setFieldsValue({
@@ -62,7 +100,10 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         unit: editingItem.unit || undefined,
         description: editingItem.description || '',
         usages: editingItem.usages && editingItem.usages.length > 0
-          ? editingItem.usages
+          ? editingItem.usages.map(u => ({
+              ...u,
+              targetCrop: typeof u.targetCrop === 'string' ? u.targetCrop.split(',').map(s => s.trim()).filter(Boolean) : u.targetCrop
+            }))
           : [{}], // start with 1 empty usage
       })
     } else {
@@ -85,7 +126,10 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         minimumStock: values.minimumStock || null,
         unit: values.unit || null,
         description: values.description?.trim() || null,
-        usages: values.usages || [],
+        usages: (values.usages || []).map(u => ({
+          ...u,
+          targetCrop: Array.isArray(u.targetCrop) ? u.targetCrop.join(', ') : u.targetCrop
+        })),
       }
 
       let res
@@ -236,7 +280,16 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                   <Row gutter={12}>
                     <Col xs={24} sm={12} md={6}>
                       <Form.Item {...restField} name={[name, 'targetCrop']} label="Đối tượng SD" className="mb-3">
-                        <Input placeholder="Lúa, Ngô..." className="rounded-lg h-9 text-sm" />
+                        <Select
+                          mode="multiple"
+                          options={cropOptions}
+                          loading={isCropsLoading}
+                          placeholder="Chọn cây trồng..."
+                          className="w-full text-sm min-h-[36px]"
+                          allowClear
+                          showSearch
+                          optionFilterProp="label"
+                        />
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12} md={6}>

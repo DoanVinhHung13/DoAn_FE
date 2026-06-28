@@ -216,18 +216,10 @@ const ViewFertilizers = () => {
       dataIndex: 'name',
       key: 'name',
       render: (v) => (
-        <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
+        <span className="">{v || '—'}</span>
       ),
     },
-    {
-      title: 'Nhà Sản Xuất',
-      dataIndex: 'manufacturer',
-      key: 'manufacturer',
-      width: 160,
-      render: (v) => (
-        <span className="text-sm text-gray-600">{v || '—'}</span>
-      ),
-    },
+
     {
       title: 'Loại Phân Bón',
       dataIndex: 'fertilizerType',
@@ -246,21 +238,6 @@ const ViewFertilizers = () => {
           <span className="text-gray-300">—</span>
         )
       },
-    },
-    {
-      title: 'Đơn vị tính',
-      dataIndex: 'unit',
-      key: 'unit',
-      width: 110,
-      align: 'center',
-      render: (v) =>
-        v ? (
-          <Tag color="blue" className="rounded-full font-medium">
-            {v}
-          </Tag>
-        ) : (
-          <span className="text-gray-300">—</span>
-        ),
     },
     {
       title: 'Tồn kho',
@@ -285,9 +262,8 @@ const ViewFertilizers = () => {
         const active = isActive !== false
         return (
           <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${
-              active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
-            }`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+              }`}
           >
             {active ? (
               <>
@@ -330,9 +306,8 @@ const ViewFertilizers = () => {
                   />
                 }
                 disabled={locked}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                  locked ? 'opacity-40' : 'hover:bg-green-50'
-                }`}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : 'hover:bg-green-50'
+                  }`}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleOpenEdit(record)
@@ -344,8 +319,8 @@ const ViewFertilizers = () => {
                 locked
                   ? 'Phân bón đang được sử dụng'
                   : active
-                  ? 'Vô hiệu hóa'
-                  : 'Kích hoạt'
+                    ? 'Vô hiệu hóa'
+                    : 'Kích hoạt'
               }
             >
               <Button
@@ -358,9 +333,8 @@ const ViewFertilizers = () => {
                   )
                 }
                 disabled={locked}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                  locked ? 'opacity-40' : active ? 'hover:bg-red-50' : 'hover:bg-green-50'
-                }`}
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : active ? 'hover:bg-red-50' : 'hover:bg-green-50'
+                  }`}
                 onClick={(e) => {
                   e.stopPropagation()
                   handleSwitchClick(record)
@@ -465,6 +439,7 @@ const ViewFertilizers = () => {
           columns={columns}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 1000 }}
           onRow={(record) => ({
             onClick: () => navigate(ROUTER.FM_VIEW_FERTILIZER_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',

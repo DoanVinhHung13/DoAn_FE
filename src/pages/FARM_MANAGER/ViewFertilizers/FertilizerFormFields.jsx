@@ -42,6 +42,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import FertilizerService from 'src/services/FertilizerService'
+import CropManagementService from 'src/services/CropManagementService'
 
 const { Text } = Typography
 
@@ -76,28 +77,14 @@ const AREA_UNIT_OPTIONS = [
   { value: 'm²', label: 'm²' },
 ]
 
-const TARGET_OPTIONS = [
-  { value: 'Cây ăn quả', label: 'Cây ăn quả' },
-  { value: 'Rau', label: 'Rau' },
-  { value: 'Cây lâu năm', label: 'Cây lâu năm' },
-  { value: 'Lúa', label: 'Lúa' },
-  { value: 'Ngô', label: 'Ngô' },
-  { value: 'Cây công nghiệp', label: 'Cây công nghiệp' },
-  { value: 'Cây hoa', label: 'Cây hoa' },
-  { value: 'Cây dược liệu', label: 'Cây dược liệu' },
-  { value: 'Cây cảnh', label: 'Cây cảnh' },
-  { value: 'Cỏ / Thảm cỏ', label: 'Cỏ / Thảm cỏ' },
-  { value: 'Khác', label: 'Khác' },
-]
-
-const DEFAULT_COMPONENTS = [
+const NPK_OPTION = [
   { name: 'N', value: '', unit: '%' },
   { name: 'P₂O₅', value: '', unit: '%' },
   { name: 'K₂O', value: '', unit: '%' },
 ]
 
 /** Số lượng thành phần mặc định (N, P, K) — không cho xóa, không cho sửa tên */
-const DEFAULT_COMPONENT_COUNT = DEFAULT_COMPONENTS.length
+const DEFAULT_NPK_OPTION = NPK_OPTION.length
 
 const DEFAULT_DOSAGE = { amount: '', unit: 'kg', areaUnit: 'ha', target: '' }
 
@@ -116,8 +103,47 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
-  const [components, setComponents] = React.useState(DEFAULT_COMPONENTS)
+  const [components, setComponents] = React.useState(NPK_OPTION)
   const [dosages, setDosages] = React.useState([DEFAULT_DOSAGE])
+
+  const [cropsData, setCropsData] = React.useState(null);
+  const [isCropsLoading, setIsCropsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const fetchCrops = async () => {
+      setIsCropsLoading(true);
+      try {
+        const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000 });
+        const payload = response?.data ?? response ?? {};
+        const data = payload?.data ?? payload;
+        const normalizedData = Array.isArray(data)
+          ? data
+          : data?.items || data?.results || data?.crops || data?.cropCatalogs || [];
+        if (isMounted) setCropsData(normalizedData);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (isMounted) setIsCropsLoading(false);
+      }
+    };
+    if (!cropsData) fetchCrops();
+    return () => { isMounted = false; };
+  }, [cropsData]);
+
+  const cropOptions = React.useMemo(() => {
+    if (!cropsData) return [];
+    return cropsData
+      .filter((c) => {
+        if (typeof c.isActive === 'boolean') return c.isActive;
+        const status = String(c.status || '').toLowerCase();
+        return !['inactive', 'disabled', 'deleted'].includes(status);
+      })
+      .map((c) => ({
+        value: c.name,
+        label: c.name,
+      }));
+  }, [cropsData]);
 
   // ── Populate form on open ──────────────────────────────────────────────────
   React.useEffect(() => {
@@ -128,26 +154,42 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         manufacturer: editingItem.manufacturer || '',
         supplier: editingItem.supplier || '',
         minimumStock: editingItem.minimumStock ?? 0,
-        price: editingItem.price ?? 0,
         unit: editingItem.unit || undefined,
         type: editingItem.type || editingItem.fertilizerType || editingItem.category || undefined,
         description: editingItem.description || '',
       })
       // Thành phần
-      setComponents(
-        editingItem.compositions?.length
-          ? editingItem.compositions
-          : editingItem.components?.length
-            ? editingItem.components
-            : DEFAULT_COMPONENTS,
-      )
+      const incomingComps = editingItem.compositions?.length
+        ? editingItem.compositions
+        : editingItem.components?.length
+          ? editingItem.components
+          : [];
+
+      if (incomingComps.length > 0) {
+        // Find existing standard components
+        const compN = incomingComps.find(c => c.name === 'N');
+        const compP = incomingComps.find(c => c.name === 'P₂O₅');
+        const compK = incomingComps.find(c => c.name === 'K₂O');
+
+        // Other components
+        const others = incomingComps.filter(c => !['N', 'P₂O₅', 'K₂O'].includes(c.name));
+
+        setComponents([
+          compN || { name: 'N', value: '', unit: '%' },
+          compP || { name: 'P₂O₅', value: '', unit: '%' },
+          compK || { name: 'K₂O', value: '', unit: '%' },
+          ...others
+        ]);
+      } else {
+        setComponents(NPK_OPTION);
+      }
       // Liều lượng
       setDosages(
         editingItem.dosages?.length ? editingItem.dosages : [DEFAULT_DOSAGE],
       )
     } else {
       form.resetFields()
-      setComponents(DEFAULT_COMPONENTS)
+      setComponents(NPK_OPTION)
       setDosages([DEFAULT_DOSAGE])
     }
   }, [editingItem, isEdit, form])
@@ -162,7 +204,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         code: values.code?.trim(),
         supplier: values.supplier?.trim() || '',
         unit: values.unit,
-        price: values.price ?? 0,
         description: values.description?.trim() || '',
         minimumStock: values.minimumStock ?? 0,
         type: values.type ?? '',
@@ -228,7 +269,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
   const handleRemoveComponent = (index) => {
     // Không cho xóa 3 thành phần mặc định (N, P₂O₅, K₂O)
-    if (index < DEFAULT_COMPONENT_COUNT) return
+    if (index < DEFAULT_NPK_OPTION) return
     setComponents(components.filter((_, i) => i !== index))
   }
 
@@ -396,26 +437,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           </Form.Item>
         </Col>
 
-        {/* Giá */}
-        <Col xs={24} sm={8}>
-          <Form.Item
-            name="price"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Giá (VNĐ)
-              </span>
-            }
-            rules={[{ type: 'number', min: 0, message: 'Giá phải >= 0.' }]}
-          >
-            <InputNumber
-              min={0}
-              placeholder="0"
-              className="w-full h-10 rounded-lg"
-              formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(v) => v?.replace(/,*/g, '')}
-            />
-          </Form.Item>
-        </Col>
+
 
         {/* Mô Tả */}
         <Col xs={24}>
@@ -462,7 +484,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       <div className="space-y-2 mb-3">
         {components.map((comp, index) => {
           // 3 thành phần đầu (N, P₂O₅, K₂O) là cố định: không xóa, không sửa tên
-          const isFixed = index < DEFAULT_COMPONENT_COUNT
+          const isFixed = index < DEFAULT_NPK_OPTION
 
           return (
             <div
@@ -570,7 +592,8 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 value={dosage.target || undefined}
                 onChange={(val) => handleDosageChange(index, 'target', val)}
                 placeholder="Chọn đối tượng..."
-                options={TARGET_OPTIONS}
+                options={cropOptions}
+                loading={isCropsLoading}
                 className="w-full h-9"
                 allowClear
                 showSearch

@@ -35,8 +35,8 @@ const componentColumns = [
   },
   {
     title: 'Hàm Lượng',
-    dataIndex: 'content',
-    key: 'content',
+    dataIndex: 'value',
+    key: 'value',
     align: 'center',
     width: 110,
     render: (v) => <Text>{v != null && v !== '' ? v : '—'}</Text>,
@@ -53,9 +53,9 @@ const componentColumns = [
 
 const dosageColumns = [
   {
-    title: 'Số',
-    dataIndex: 'quantity',
-    key: 'quantity',
+    title: 'Lượng',
+    dataIndex: 'amount',
+    key: 'amount',
     align: 'center',
     width: 80,
     render: (v) => <Text strong>{v != null && v !== '' ? v : '—'}</Text>,
@@ -130,7 +130,7 @@ const FertilizerDetail = () => {
   if (!item) return null
 
   const isActive = item.isActive !== false
-  const components = item.components || []
+  const components = item.compositions || item.components || []
   const dosages = item.dosages || []
 
   return (
@@ -214,6 +214,17 @@ const FertilizerDetail = () => {
                 <span className="font-semibold">{item.name || '—'}</span>
               </Descriptions.Item>
 
+              {/* Loại Phân Bón */}
+              <Descriptions.Item label="Loại Phân Bón" span={2}>
+                {(item.fertilizerType || item.category)
+                  ? (
+                    <Tag color="green" className="font-medium rounded-full">
+                      {item.fertilizerType || item.category}
+                    </Tag>
+                  )
+                  : <span className="text-gray-400">—</span>}
+              </Descriptions.Item>
+
               {/* Nhà Sản Xuất */}
               <Descriptions.Item
                 label={
@@ -246,22 +257,13 @@ const FertilizerDetail = () => {
               </Descriptions.Item>
 
               {/* Đơn vị tính */}
-              <Descriptions.Item label="Đơn vị tính (kg/lit)">
+              {/* <Descriptions.Item label="Đơn vị tính (kg/lit)">
                 {item.unit
                   ? <Tag color="blue" className="font-medium rounded-full">{item.unit}</Tag>
                   : <span className="text-gray-400">—</span>}
-              </Descriptions.Item>
+              </Descriptions.Item> */}
 
-              {/* Loại Phân Bón */}
-              <Descriptions.Item label="Loại Phân Bón" span={2}>
-                {(item.fertilizerType || item.category)
-                  ? (
-                    <Tag color="green" className="font-medium rounded-full">
-                      {item.fertilizerType || item.category}
-                    </Tag>
-                  )
-                  : <span className="text-gray-400">—</span>}
-              </Descriptions.Item>
+
 
               {/* Ngày tạo */}
               {item.createdAt && (
