@@ -13,6 +13,7 @@ import {
   Modal,
   Select,
   Space,
+  Spin,
   Table,
   Tag,
   Tooltip,
@@ -34,14 +35,22 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-// import GrowthStages from 'src/components/GrowthStages'; // TODO: Sẽ dùng riêng cho CropVarieties
+import GrowthStages from 'src/components/GrowthStages';
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
+import GrowthStageService from 'src/services/GrowthStageService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import TableCustom from 'src/components/Table/CustomTable';
+
+const formatDuration = (days) => {
+  if (!days) return 'Chưa cập nhật';
+  if (days % 365 === 0) return `${days / 365} năm`;
+  if (days % 30 === 0) return `${days / 30} tháng`;
+  return `${days} ngày`;
+};
 
 const { Text } = Typography;
 
@@ -249,19 +258,41 @@ const Crops = () => {
 
   const createMutation = useMutation({
     mutationFn: (values) => {
+      const unitToDays = {
+        days: 1,
+        months: 30,
+        years: 365,
+      };
+      
+      const minDays = values.minHarvestDays 
+        ? values.minHarvestDays * unitToDays[values.minDurationUnit || 'days'] 
+        : null;
+        
+      const maxDays = values.maxHarvestDays 
+        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || 'days'] 
+        : null;
+
       const payload = {
         name: values.name.trim().replace(/\s+/g, ' '),
         cropCatalogId: values.cropCatalogId || null,
-        expectedYield: values.expectedYield || 0,
+        minHarvestDays: minDays,
+        maxHarvestDays: maxDays,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         imageUrl: values.imageUrl?.trim() || null,
-        recommendedCultivationConditions:
-          values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
         isActive: true,
       };
-      // TODO: Sau khi tạo Crop thành công, sẽ tạo CropVarieties riêng nếu cần
-      // const growthStages = values.growthStages || [];
-      return CropManagementService.createCrop(payload);
+      
+      return CropManagementService.createCrop(payload).then(async (res) => {
+        const cropId = res?.data?.data?.id || res?.data?.data?._id || res?.data?.id || res?.data?._id;
+        if (cropId && values.growthStages && values.growthStages.length > 0) {
+          for (const stage of values.growthStages) {
+            const stagePayload = { ...stage, cropId };
+            delete stagePayload.id; // remove temp id
+            await GrowthStageService.createGrowthStage(stagePayload);
+          }
+        }
+        return res;
+      });
     },
     onSuccess: () => {
       setInlineError('');
@@ -275,25 +306,9 @@ const Crops = () => {
         error?.response?.data?.message ||
         error?.response?.data?.title ||
         'Không thể tạo cây trồng.';
-
-      // Check for specific error codes/messages
-      if (errorMessage.includes('Mã danh mục cây trồng đã tồn tại') || 
-          errorMessage.toLowerCase().includes('crop code') ||
-          errorMessage.toLowerCase().includes('duplicate')) {
-        createForm.setFields([
-          {
-            name: 'cropCode',
-            errors: ['Mã cây đã tồn tại trong hệ thống.'],
-          },
-        ]);
-      } else if (errorMessage.includes('Tên danh mục cây trồng đã tồn tại') ||
-                 errorMessage.toLowerCase().includes('crop name')) {
-        createForm.setFields([
-          {
-            name: 'name',
-            errors: ['Tên cây trồng đã tồn tại trong hệ thống.'],
-          },
-        ]);
+      if (errorMessage.toLowerCase().includes('crop name') ||
+          errorMessage.includes('Tên')) {
+        createForm.setFields([{ name: 'name', errors: ['Tên cây trồng đã tồn tại trong hệ thống.'] }]);
       } else {
         message.error(errorMessage);
       }
@@ -305,15 +320,12 @@ const Crops = () => {
       const payload = {
         name: values.name.trim().replace(/\s+/g, ' '),
         cropCatalogId: values.cropCatalogId || null,
-        expectedYield: values.expectedYield || 0,
+        minHarvestDays: values.minHarvestDays || null,
+        maxHarvestDays: values.maxHarvestDays || null,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         imageUrl: values.imageUrl?.trim() || null,
-        recommendedCultivationConditions:
-          values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
         isActive: typeof editingCrop?.isActive === 'boolean' ? editingCrop.isActive : true,
       };
-      // TODO: Quản lý CropVarieties riêng qua API /api/crop-varieties
-      // const growthStages = values.growthStages || [];
       return CropManagementService.updateCrop(id, payload);
     },
     onSuccess: (response) => {
@@ -348,12 +360,10 @@ const Crops = () => {
     form.setFieldsValue({
       name: record.name || '',
       cropCatalogId: record.cropCatalogId || '',
-      expectedYield: record.expectedYield || 0,
+      minHarvestDays: record.minHarvestDays || null,
+      maxHarvestDays: record.maxHarvestDays || null,
       description: record.description || '',
       imageUrl: record.imageUrl || '',
-      recommendedCultivationConditions:
-        record.recommendedCultivationConditions || '',
-      // growthStages: record.growthStages || [], // TODO: Quản lý riêng qua CropVarieties
     });
   };
 
@@ -855,18 +865,77 @@ const Crops = () => {
             </Form.Item>
           </div>
 
-          <Form.Item name="recommendedCultivationConditions" label="Điều kiện khuyến nghị">
-            <Input.TextArea rows={3} placeholder="Nhập điều kiện khuyến nghị" />
-          </Form.Item>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Form.Item
+              name="minHarvestDays"
+              label="Thời gian sinh trưởng tối thiểu"
+              rules={[
+                { type: 'number', min: 1, message: 'Phải lớn hơn 0.' },
+              ]}
+            >
+              <InputNumber
+                className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
+                placeholder="Nhập thời gian"
+                min={1}
+                addonAfter={
+                  <Form.Item name="minDurationUnit" noStyle initialValue="days">
+                    <Select className="w-24 h-11 bg-gray-50" bordered={false}>
+                      <Select.Option value="days">ngày</Select.Option>
+                      <Select.Option value="months">tháng</Select.Option>
+                      <Select.Option value="years">năm</Select.Option>
+                    </Select>
+                  </Form.Item>
+                }
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="maxHarvestDays"
+              label="Thời gian sinh trưởng tối đa"
+              dependencies={['minHarvestDays', 'minDurationUnit', 'maxDurationUnit']}
+              rules={[
+                { type: 'number', min: 1, message: 'Phải lớn hơn 0.' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const minVal = getFieldValue('minHarvestDays');
+                    if (minVal == null || value == null) return Promise.resolve();
+
+                    const unitToDays = { days: 1, months: 30, years: 365 };
+                    const minDays = minVal * unitToDays[getFieldValue('minDurationUnit') || 'days'];
+                    const maxDays = value * unitToDays[getFieldValue('maxDurationUnit') || 'days'];
+
+                    if (maxDays < minDays) {
+                      return Promise.reject(new Error('Thời gian tối đa phải ≥ tối thiểu.'));
+                    }
+                    return Promise.resolve();
+                  },
+                }),
+              ]}
+            >
+              <InputNumber
+                className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
+                placeholder="Nhập thời gian"
+                min={1}
+                addonAfter={
+                  <Form.Item name="maxDurationUnit" noStyle initialValue="days">
+                    <Select className="w-24 h-11 bg-gray-50" bordered={false}>
+                      <Select.Option value="days">ngày</Select.Option>
+                      <Select.Option value="months">tháng</Select.Option>
+                      <Select.Option value="years">năm</Select.Option>
+                    </Select>
+                  </Form.Item>
+                }
+              />
+            </Form.Item>
+          </div>
 
           <Form.Item name="description" label="Mô tả">
             <Input.TextArea rows={3} placeholder="Nhập mô tả" />
           </Form.Item>
 
-          {/* TODO: Giai đoạn sinh trưởng sẽ được quản lý riêng qua CropVarieties API */}
-          {/* <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
+          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
             <GrowthStages />
-          </Form.Item> */}
+          </Form.Item>
 
           <div className="flex justify-end gap-3 pt-2">
             <Button
@@ -928,8 +997,11 @@ const Crops = () => {
                 {getStatusLabel(cropDetail)}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Điều kiện khuyến nghị">
-              {displayValue(cropDetail.recommendedCultivationConditions)}
+            <Descriptions.Item label="Thời gian sinh trưởng tối thiểu">
+              {formatDuration(cropDetail.minHarvestDays)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Thời gian sinh trưởng tối đa">
+              {formatDuration(cropDetail.maxHarvestDays)}
             </Descriptions.Item>
             <Descriptions.Item label="Mô tả">
               {displayValue(cropDetail.description)}

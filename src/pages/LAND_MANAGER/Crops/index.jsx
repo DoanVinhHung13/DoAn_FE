@@ -43,6 +43,13 @@ import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import TableCustom from 'src/components/Table/CustomTable';
 
+const formatDuration = (days) => {
+  if (!days) return 'Chưa cập nhật';
+  if (days % 365 === 0) return `${days / 365} năm`;
+  if (days % 30 === 0) return `${days / 30} tháng`;
+  return `${days} ngày`;
+};
+
 const { Text } = Typography;
 
 const STATUS_OPTIONS = [
@@ -893,8 +900,11 @@ const Crops = () => {
                 {getStatusLabel(cropDetail)}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Điều kiện khuyến nghị">
-              {displayValue(cropDetail.recommendedCultivationConditions)}
+            <Descriptions.Item label="Thời gian sinh trưởng tối thiểu">
+              {formatDuration(cropDetail.minHarvestDays)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Thời gian sinh trưởng tối đa">
+              {formatDuration(cropDetail.maxHarvestDays)}
             </Descriptions.Item>
             <Descriptions.Item label="Mô tả">
               {displayValue(cropDetail.description)}
