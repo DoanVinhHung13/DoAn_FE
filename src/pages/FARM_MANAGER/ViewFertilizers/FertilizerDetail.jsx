@@ -216,12 +216,8 @@ const FertilizerDetail = () => {
 
               {/* Loại Phân Bón */}
               <Descriptions.Item label="Loại Phân Bón" span={2}>
-                {(item.fertilizerType || item.category)
-                  ? (
-                    <Tag color="green" className="font-medium rounded-full">
-                      {item.fertilizerType || item.category}
-                    </Tag>
-                  )
+                {(item.type)
+                  ? (item.type)
                   : <span className="text-gray-400">—</span>}
               </Descriptions.Item>
 

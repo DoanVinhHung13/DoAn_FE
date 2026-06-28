@@ -57,34 +57,20 @@ import { SYSTEM_KEY } from 'src/constants/systemKey'
 // ── Loại phân bón options cho bộ lọc ───────────────────────────────────────
 const CATEGORY_FILTER_OPTIONS = [
   { value: 'all', label: 'Tất cả loại' },
-  { value: 'Vô cơ', label: 'Vô cơ' },
   { value: 'Hữu cơ', label: 'Hữu cơ' },
   { value: 'Hữu cơ khoáng', label: 'Hữu cơ khoáng' },
-  { value: 'Vi sinh', label: 'Vi sinh' },
-  { value: 'Phức hợp', label: 'Phức hợp' },
-  { value: 'NPK', label: 'Phân NPK' },
-  { value: 'Urê', label: 'Phân Urê' },
+  { value: 'Hữu cơ sinh học', label: 'Hữu cơ sinh học' },
+  { value: 'Hữu cơ vi sinh', label: 'Hữu cơ vi sinh' },
+  { value: 'Vi sinh vật', label: 'Vi sinh vật' },
+  { value: 'Bón lá', label: 'Bón lá' },
   { value: 'Khác', label: 'Khác' },
 ]
-
-
-// ── Type tag color map ───────────────────────────────────────────────────────
-const CATEGORY_COLOR = {
-  'Vô cơ': 'orange',
-  'Hữu cơ': 'lime',
-  'Hữu cơ khoáng': 'green',
-  'Vi sinh': 'cyan',
-  'Phức hợp': 'purple',
-  'NPK': 'green',
-  'Urê': 'blue',
-  'Khác': 'default',
-}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const ViewFertilizers = () => {
   const navigate = useNavigate()
   const { getCombo, getDescription } = useSystemKey()
-  
+
   const statusOptions = getCombo(SYSTEM_KEY.STATUS)
   const selectStatusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
