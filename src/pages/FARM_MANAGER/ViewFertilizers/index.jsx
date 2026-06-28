@@ -51,6 +51,8 @@ import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
 import FertilizerService from 'src/services/FertilizerService'
 import { invalidCharsRegex } from 'src/utils/helpers'
+import { useSystemKey } from 'src/hooks/useSystemKey'
+import { SYSTEM_KEY } from 'src/constants/systemKey'
 
 // ── Loại phân bón options cho bộ lọc ───────────────────────────────────────
 const CATEGORY_FILTER_OPTIONS = [
@@ -65,11 +67,6 @@ const CATEGORY_FILTER_OPTIONS = [
   { value: 'Khác', label: 'Khác' },
 ]
 
-const STATUS_FILTER_OPTIONS = [
-  { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'inactive', label: 'Ngừng hoạt động' },
-]
 
 // ── Type tag color map ───────────────────────────────────────────────────────
 const CATEGORY_COLOR = {
@@ -86,6 +83,16 @@ const CATEGORY_COLOR = {
 // ── Main Component ────────────────────────────────────────────────────────────
 const ViewFertilizers = () => {
   const navigate = useNavigate()
+  const { getCombo, getDescription } = useSystemKey()
+  
+  const statusOptions = getCombo(SYSTEM_KEY.STATUS)
+  const selectStatusOptions = [
+    { value: 'all', label: 'Tất cả trạng thái' },
+    ...statusOptions.map(opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description,
+    })),
+  ]
 
   // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
@@ -116,9 +123,11 @@ const ViewFertilizers = () => {
         Status:
           statusFilter === 'all'
             ? undefined
-            : statusFilter === 'active'
+            : statusFilter === 'ACTIVE'
               ? true
-              : false,
+              : statusFilter === 'INACTIVE'
+                ? false
+                : statusFilter,
       }
       const res = await FertilizerService.getFertilizers(params)
       if (res?.success === false) return
@@ -222,16 +231,13 @@ const ViewFertilizers = () => {
 
     {
       title: 'Loại Phân Bón',
-      dataIndex: 'fertilizerType',
-      key: 'fertilizerType',
+      dataIndex: 'type',
+      key: 'type',
       width: 140,
       render: (v, record) => {
         const typeVal = v || record.category
         return typeVal ? (
-          <Tag
-            color={CATEGORY_COLOR[typeVal] || 'default'}
-            className="font-medium rounded-full"
-          >
+          <Tag>
             {typeVal}
           </Tag>
         ) : (
@@ -260,6 +266,8 @@ const ViewFertilizers = () => {
       width: 150,
       render: (isActive) => {
         const active = isActive !== false
+        const sysVal = active ? 'ACTIVE' : 'INACTIVE'
+        const label = getDescription(SYSTEM_KEY.STATUS, sysVal) || (active ? 'Hoạt động' : 'Vô hiệu')
         return (
           <div
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
@@ -268,12 +276,12 @@ const ViewFertilizers = () => {
             {active ? (
               <>
                 <CheckCircleOutlined />
-                <span>Hoạt động</span>
+                <span>{label}</span>
               </>
             ) : (
               <>
                 <StopOutlined />
-                <span>Vô hiệu</span>
+                <span>{label}</span>
               </>
             )}
           </div>
@@ -414,7 +422,7 @@ const ViewFertilizers = () => {
               setPage(1)
             }}
             className="h-10 rounded-xl min-w-[160px]"
-            options={STATUS_FILTER_OPTIONS}
+            options={selectStatusOptions}
           />
           <div className="flex gap-2 ml-auto">
             <Button

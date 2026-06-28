@@ -43,44 +43,23 @@ import ROUTER from 'src/router/ROUTER'
 
 import TaskService from 'src/services/StandardTaskService'
 import { invalidCharsRegex } from 'src/utils/helpers'
+import { useSystemKey } from 'src/hooks/useSystemKey'
+import { SYSTEM_KEY } from 'src/constants/systemKey'
 
-// ── Filter options ────────────────────────────────────────────────────────────
-const TASK_TYPE_FILTER = [
-  { value: 'all', label: 'Tất cả loại công việc' },
-  { value: 'CULTIVATION', label: 'Canh tác' },
-  { value: 'IRRIGATION', label: 'Tưới tiêu' },
-  { value: 'FERTILIZATION', label: 'Bón phân' },
-  { value: 'PEST_CONTROL', label: 'Phòng trừ sâu bệnh' },
-  { value: 'HARVESTING', label: 'Thu hoạch' },
-  { value: 'PROCESSING', label: 'Chế biến' },
-  { value: 'INSPECTION', label: 'Kiểm tra, giám sát' },
-  { value: 'MAINTENANCE', label: 'Bảo trì thiết bị' },
-  { value: 'OTHER', label: 'Khác' },
-]
-
-const STATUS_FILTER = [
-  { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'inactive', label: 'Ngừng hoạt động' },
-]
-
-
-
-const TASK_TYPE_LABEL = {
-  CULTIVATION: 'Canh tác',
-  IRRIGATION: 'Tưới tiêu',
-  FERTILIZATION: 'Bón phân',
-  PEST_CONTROL: 'Phòng trừ sâu bệnh',
-  HARVESTING: 'Thu hoạch',
-  PROCESSING: 'Chế biến',
-  INSPECTION: 'Kiểm tra',
-  MAINTENANCE: 'Bảo trì',
-  OTHER: 'Khác',
-}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const TasksManagement = () => {
   const navigate = useNavigate()
+  const { getCombo, getDescription } = useSystemKey()
+
+  const statusOptions = getCombo(SYSTEM_KEY.STATUS)
+  const selectStatusOptions = [
+    { value: 'all', label: 'Tất cả trạng thái' },
+    ...statusOptions.map(opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description,
+    })),
+  ]
 
   // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
@@ -112,9 +91,11 @@ const TasksManagement = () => {
         Status:
           statusFilter === 'all'
             ? undefined
-            : statusFilter === 'active'
+            : statusFilter === 'ACTIVE'
               ? true
-              : false,
+              : statusFilter === 'INACTIVE'
+                ? false
+                : statusFilter,
       }
       const res = await TaskService.getAll(params)
       if (res?.success === false) return
@@ -338,22 +319,13 @@ const TasksManagement = () => {
             onClear={handleClearSearch}
           />
           <Select
-            value={taskTypeFilter}
-            onChange={(val) => {
-              setTaskTypeFilter(val)
-              setPage(1)
-            }}
-            className="h-10 rounded-xl min-w-[185px]"
-            options={TASK_TYPE_FILTER}
-          />
-          <Select
             value={statusFilter}
             onChange={(val) => {
               setStatusFilter(val)
               setPage(1)
             }}
             className="h-10 rounded-xl min-w-[160px]"
-            options={STATUS_FILTER}
+            options={selectStatusOptions}
           />
           <div className="flex gap-2 ml-auto">
             <Button

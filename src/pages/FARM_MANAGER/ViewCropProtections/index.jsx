@@ -30,15 +30,22 @@ import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
 import CropProtectionService from 'src/services/CropProtectionService'
 import { invalidCharsRegex } from 'src/utils/helpers'
-
-const STATUS_FILTER_OPTIONS = [
-  { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'inactive', label: 'Ngừng hoạt động' },
-]
+import { useSystemKey } from 'src/hooks/useSystemKey'
+import { SYSTEM_KEY } from 'src/constants/systemKey'
 
 const ViewCropProtections = () => {
   const navigate = useNavigate()
+  const { getCombo, getDescription } = useSystemKey()
+  
+  const statusOptions = getCombo(SYSTEM_KEY.STATUS)
+  const selectStatusOptions = [
+    { value: 'all', label: 'Tất cả trạng thái' },
+    ...statusOptions.map(opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description,
+    })),
+  ]
+
   // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -67,9 +74,11 @@ const ViewCropProtections = () => {
         Status:
           statusFilter === 'all'
             ? undefined
-            : statusFilter === 'active'
+            : statusFilter === 'ACTIVE'
               ? true
-              : false,
+              : statusFilter === 'INACTIVE'
+                ? false
+                : statusFilter,
       }
       const res = await CropProtectionService.getCropProtections(params)
       if (res?.success === false) return
@@ -188,6 +197,8 @@ const ViewCropProtections = () => {
       width: 150,
       render: (isActive) => {
         const active = isActive !== false
+        const sysVal = active ? 'ACTIVE' : 'INACTIVE'
+        const label = getDescription(SYSTEM_KEY.STATUS, sysVal) || (active ? 'Hoạt động' : 'Vô hiệu')
         return (
           <div
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
@@ -196,12 +207,12 @@ const ViewCropProtections = () => {
             {active ? (
               <>
                 <CheckCircleOutlined />
-                <span>Hoạt động</span>
+                <span>{label}</span>
               </>
             ) : (
               <>
                 <StopOutlined />
-                <span>Vô hiệu</span>
+                <span>{label}</span>
               </>
             )}
           </div>
@@ -332,7 +343,7 @@ const ViewCropProtections = () => {
               setPage(1)
             }}
             className="h-10 rounded-xl min-w-[160px]"
-            options={STATUS_FILTER_OPTIONS}
+            options={selectStatusOptions}
           />
           <div className="flex gap-2 ml-auto">
             <Button
