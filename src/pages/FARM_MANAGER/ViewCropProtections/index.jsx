@@ -177,16 +177,12 @@ const ViewCropProtections = () => {
       ),
     },
     {
-      title: 'Tồn kho',
-      dataIndex: 'minimumStock',
-      key: 'minimumStock',
-      width: 120,
-      align: 'right',
-      render: (v, record) => (
-        <span className="text-sm font-semibold text-gray-700">
-          {v != null
-            ? `${Number(v).toLocaleString('vi-VN')} ${record.unit || ''}`
-            : '—'}
+      title: 'Mô tả',
+      dataIndex: 'description',
+      key: 'description',
+      render: (v) => (
+        <span className="text-sm text-gray-600 line-clamp-2">
+          {v || '—'}
         </span>
       ),
     },

@@ -81,7 +81,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
       const status = String(c.status || '').toLowerCase();
       return !['inactive', 'disabled', 'deleted'].includes(status);
     });
-    
+
     if (selectedCatalogId && selectedCatalogId.length > 0) {
       filtered = filtered.filter((c) => selectedCatalogId.includes(c.cropCatalogId || c.categoryId));
     }
@@ -98,7 +98,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
           name="name"
           label={
             <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-              Tên công việc {!readOnly && <span className="text-red-500">*</span>}
+              Tên công việc {!readOnly}
             </span>
           }
           rules={!readOnly ? [
@@ -122,12 +122,12 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
           label={
             <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
               <TagOutlined className="mr-1" />
-              Đối tượng áp dụng {!readOnly && <span className="text-red-500">*</span>}
+              Đối tượng áp dụng {!readOnly}
             </span>
           }
         >
-          <Radio.Group 
-            disabled={readOnly} 
+          <Radio.Group
+            disabled={readOnly}
             onChange={(e) => {
               form.setFieldsValue({ cropCatalogId: undefined, targetObjects: [], targetCategories: [] });
             }}
@@ -145,7 +145,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
             name="targetCategories"
             label={
               <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Danh mục cây trồng {!readOnly && <span className="text-red-500">*</span>}
+                Danh mục cây trồng {!readOnly}
               </span>
             }
             rules={!readOnly ? [
@@ -194,7 +194,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
               name="targetObjects"
               label={
                 <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  Cây trồng cụ thể {!readOnly && <span className="text-red-500">*</span>}
+                  Cây trồng cụ thể {!readOnly}
                 </span>
               }
               rules={!readOnly ? [

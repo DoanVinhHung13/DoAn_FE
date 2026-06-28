@@ -100,10 +100,18 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         unit: editingItem.unit || undefined,
         description: editingItem.description || '',
         usages: editingItem.usages && editingItem.usages.length > 0
-          ? editingItem.usages.map(u => ({
+          ? editingItem.usages.map(u => {
+            const parts = (u.dilutionRatio || '').split(':')
+            const unitParts = (u.dilutionUnit || '').split(':')
+            return {
               ...u,
-              targetCrop: typeof u.targetCrop === 'string' ? u.targetCrop.split(',').map(s => s.trim()).filter(Boolean) : u.targetCrop
-            }))
+              targetCrop: typeof u.targetCrop === 'string' ? u.targetCrop.split(',').map(s => s.trim()).filter(Boolean) : u.targetCrop,
+              chemicalRatio: parts[0] ? Number(parts[0]) : null,
+              waterRatio: parts[1] ? Number(parts[1]) : null,
+              chemicalUnit: unitParts[0] || undefined,
+              waterUnit: unitParts[1] || undefined,
+            }
+          })
           : [{}], // start with 1 empty usage
       })
     } else {
@@ -126,10 +134,28 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         minimumStock: values.minimumStock || null,
         unit: values.unit || null,
         description: values.description?.trim() || null,
-        usages: (values.usages || []).map(u => ({
-          ...u,
-          targetCrop: Array.isArray(u.targetCrop) ? u.targetCrop.join(', ') : u.targetCrop
-        })),
+        usages: (values.usages || []).map(u => {
+          let dilution = null;
+          if (u.chemicalRatio != null && u.waterRatio != null) {
+            dilution = `${u.chemicalRatio}:${u.waterRatio}`
+          } else if (u.dilutionRatio) {
+            dilution = u.dilutionRatio
+          }
+
+          let dilUnit = null;
+          if (u.chemicalUnit || u.waterUnit) {
+            dilUnit = `${u.chemicalUnit || ''}:${u.waterUnit || ''}`
+          } else if (u.dilutionUnit) {
+            dilUnit = u.dilutionUnit
+          }
+
+          return {
+            ...u,
+            dilutionRatio: dilution,
+            dilutionUnit: dilUnit,
+            targetCrop: Array.isArray(u.targetCrop) ? u.targetCrop.join(', ') : u.targetCrop
+          }
+        }),
       }
 
       let res
@@ -183,7 +209,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         <Col xs={24} md={12}>
           <Form.Item
             name="code"
-            label={<span className="font-semibold text-gray-700">Mã Thuốc bảo vệ thực vật <span className="text-red-500">*</span></span>}
+            label={<span className="font-semibold text-gray-700">Mã Thuốc bảo vệ thực vật </span>}
             rules={[{ required: true, message: 'Bắt buộc' }]}
           >
             <Input placeholder="Nhập mã..." className="h-10 rounded-xl" disabled={isEdit} />
@@ -192,7 +218,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         <Col xs={24} md={12}>
           <Form.Item
             name="name"
-            label={<span className="font-semibold text-gray-700">Tên Thuốc bảo vệ thực vật <span className="text-red-500">*</span></span>}
+            label={<span className="font-semibold text-gray-700">Tên Thuốc bảo vệ thực vật </span>}
             rules={[{ required: true, message: 'Bắt buộc' }]}
           >
             <Input placeholder="Nhập tên..." className="h-10 rounded-xl" />
@@ -279,7 +305,13 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                   />
                   <Row gutter={12}>
                     <Col xs={24} sm={12} md={6}>
-                      <Form.Item {...restField} name={[name, 'targetCrop']} label="Đối tượng SD" className="mb-3">
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'targetCrop']}
+                        label={<>Đối tượng SD </>}
+                        className="mb-3"
+                        rules={[{ required: true, message: 'Vui lòng chọn' }]}
+                      >
                         <Select
                           mode="multiple"
                           options={cropOptions}
@@ -293,37 +325,109 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
-                      <Form.Item {...restField} name={[name, 'targetPest']} label="Đối tượng DT" className="mb-3">
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'targetPest']}
+                        label={<>Đối tượng DT </>}
+                        className="mb-3"
+                        rules={[{ required: true, message: 'Vui lòng nhập' }]}
+                      >
                         <Input placeholder="Rầy nâu..." className="rounded-lg h-9 text-sm" />
                       </Form.Item>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
-                      <Form.Item {...restField} name={[name, 'dilutionRatio']} label="Nồng độ" className="mb-3">
-                        <Input placeholder="1:500" className="rounded-lg h-9 text-sm" />
+                    <Col xs={24} sm={24} md={12}>
+                      <Form.Item
+                        label={<>Nồng độ pha loãng </>}
+                        className="mb-3"
+                        required
+                      >
+                        <div className="flex items-center gap-3">
+                          {/* Thuốc */}
+                          <div className="flex items-center gap-2 flex-1">
+                            <Form.Item
+                              {...restField}
+                              name={[name, 'chemicalRatio']}
+                              className="mb-0 flex-1"
+                              rules={[{ required: true, message: 'Nhập số' }]}
+                            >
+                              <InputNumber min={0} placeholder="Số" className="w-full h-9 rounded-lg text-sm" />
+                            </Form.Item>
+                            <Form.Item
+                              {...restField}
+                              name={[name, 'chemicalUnit']}
+                              className="mb-0 w-[90px]"
+                              rules={[{ required: true, message: 'Chọn ĐV' }]}
+                            >
+                              <Select options={UNIT_OPTIONS} placeholder="Đơn vị" className="h-9 rounded-lg text-sm" allowClear />
+                            </Form.Item>
+                          </div>
+
+                          {/* Dấu hai chấm */}
+                          <span className="font-bold text-gray-400 text-lg leading-none pb-1">:</span>
+
+                          {/* Nước */}
+                          <div className="flex items-center gap-2 flex-1">
+                            <Form.Item
+                              {...restField}
+                              name={[name, 'waterRatio']}
+                              className="mb-0 flex-1"
+                              rules={[{ required: true, message: 'Nhập số' }]}
+                            >
+                              <InputNumber min={0} placeholder="Số" className="w-full h-9 rounded-lg text-sm" />
+                            </Form.Item>
+                            <Form.Item
+                              {...restField}
+                              name={[name, 'waterUnit']}
+                              className="mb-0 w-[90px]"
+                              rules={[{ required: true, message: 'Chọn ĐV' }]}
+                            >
+                              <Select options={UNIT_OPTIONS} placeholder="ĐV" className="h-9 rounded-lg text-sm" allowClear />
+                            </Form.Item>
+                          </div>
+                        </div>
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
-                      <Form.Item {...restField} name={[name, 'dilutionUnit']} label="ĐV Nồng độ" className="mb-3">
-                        <Select options={UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={24} sm={12} md={6}>
-                      <Form.Item {...restField} name={[name, 'dosage']} label="Liều lượng (Số)" className="mb-0">
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'dosage']}
+                        label={<>Liều lượng (Số) </>}
+                        className="mb-0"
+                        rules={[{ required: true, message: 'Vui lòng nhập' }]}
+                      >
                         <InputNumber min={0} placeholder="Số" className="w-full h-9 rounded-lg text-sm" />
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
-                      <Form.Item {...restField} name={[name, 'dosageUnit']} label="ĐV Tính" className="mb-0">
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'dosageUnit']}
+                        label={<>ĐV Tính </>}
+                        className="mb-0"
+                        rules={[{ required: true, message: 'Vui lòng chọn' }]}
+                      >
                         <Select options={UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
-                      <Form.Item {...restField} name={[name, 'areaUnit']} label="ĐV Diện tích" className="mb-0">
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'areaUnit']}
+                        label={<>ĐV Diện tích </>}
+                        className="mb-0"
+                        rules={[{ required: true, message: 'Vui lòng chọn' }]}
+                      >
                         <Select options={AREA_UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
-                      <Form.Item {...restField} name={[name, 'isolationDays']} label="Cách ly (Ngày)" className="mb-0">
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'isolationDays']}
+                        label={<>Cách ly (Ngày) </>}
+                        className="mb-0"
+                        rules={[{ required: true, message: 'Vui lòng nhập' }]}
+                      >
                         <InputNumber min={0} placeholder="Ngày" className="w-full rounded-lg h-9 text-sm" />
                       </Form.Item>
                     </Col>

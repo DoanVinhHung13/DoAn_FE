@@ -42,7 +42,7 @@ const componentColumns = [
     render: (v) => <Text>{v != null && v !== '' ? v : '—'}</Text>,
   },
   {
-    title: 'Đơn Vị Tính (%, ppm, CFU/g)',
+    title: 'Đơn vị Tính (%, ppm, CFU/g)',
     dataIndex: 'unit',
     key: 'unit',
     align: 'center',

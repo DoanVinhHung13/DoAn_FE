@@ -34,9 +34,15 @@ const usageColumns = [
     dataIndex: 'dilutionRatio',
     key: 'dilutionRatio',
     align: 'center',
-    render: (v, record) => (
-      <Text>{v ? `${v} ${record.dilutionUnit || ''}` : '—'}</Text>
-    ),
+    render: (v, record) => {
+      if (!v) return <Text>—</Text>;
+      const ratioParts = String(v).split(':');
+      const unitParts = String(record.dilutionUnit || '').split(':');
+      if (ratioParts.length === 2 && unitParts.length === 2) {
+        return <Text>{`${ratioParts[0]} ${unitParts[0]} : ${ratioParts[1]} ${unitParts[1]}`}</Text>;
+      }
+      return <Text>{`${v} ${record.dilutionUnit || ''}`}</Text>;
+    },
   },
   {
     title: 'Liều lượng',

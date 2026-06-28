@@ -197,12 +197,31 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (values) => {
     try {
+      // Custom validations
+      const missingNPK = components.slice(0, 3).some(c => c.value == null || c.value === '' || !c.unit);
+      if (missingNPK) {
+        message.error('Thành phần N, P₂O₅, K₂O bắt buộc phải có Giá trị và Đơn vị.');
+        return;
+      }
+
+      if (!dosages || dosages.length === 0) {
+        message.error('Phải có ít nhất 1 Liều lượng.');
+        return;
+      }
+
+      const missingDosageFields = dosages.some(d => d.amount == null || d.amount === '' || !d.unit || !d.areaUnit || !d.target);
+      if (missingDosageFields) {
+        message.error('Các Liều lượng phải nhập đầy đủ 4 trường: Lượng, Đơn vị Tính, Đơn vị diện tích và Đối tượng.');
+        return;
+      }
+
       setLoading(true)
 
       const body = {
         name: values.name?.trim(),
         code: values.code?.trim(),
         supplier: values.supplier?.trim() || '',
+        materialId: isEdit ? (editingItem.materialId || null) : null,
         unit: values.unit,
         description: values.description?.trim() || '',
         minimumStock: values.minimumStock ?? 0,
@@ -210,19 +229,28 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         manufacturer: values.manufacturer?.trim() || '',
         compositions: components
           .filter((c) => c.name?.trim())
-          .map((c) => ({
-            name: c.name,
-            value: c.value ?? 0,
-            unit: c.unit,
-          })),
+          .map((c) => {
+            const comp = {
+              name: c.name,
+              value: c.value ?? 0,
+              unit: c.unit,
+            }
+            if (isEdit && c.id) comp.id = c.id;
+            return comp;
+          }),
         dosages: dosages
           .filter((d) => d.amount !== '' && d.amount != null)
-          .map((d) => ({
-            amount: d.amount,
-            unit: d.unit,
-            areaUnit: d.areaUnit,
-            target: d.target || '',
-          })),
+          .map((d) => {
+            const dos = {
+              amount: d.amount,
+              unit: d.unit,
+              areaUnit: d.areaUnit,
+            }
+            if (isEdit && d.id) dos.id = d.id;
+            // Swagger PUT DTO does not have target, omitting it on update to prevent 400 Bad Request
+            if (!isEdit) dos.target = Array.isArray(d.target) ? d.target.join(', ') : (d.target || '');
+            return dos;
+          }),
       }
 
       let res
@@ -304,7 +332,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             name="code"
             label={
               <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Mã phân bón <span className="text-red-500">*</span>
+                Mã phân bón
               </span>
             }
             rules={[
@@ -331,7 +359,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             name="name"
             label={
               <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Tên phân bón <span className="text-red-500">*</span>
+                Tên phân bón
               </span>
             }
             rules={[
@@ -384,7 +412,10 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 Tồn Kho tối thiểu
               </span>
             }
-            rules={[{ type: 'number', min: 0, message: 'Số lượng phải >= 0.' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập tồn kho tối thiểu.' },
+              { type: 'number', min: 0, message: 'Số lượng phải >= 0.' }
+            ]}
           >
             <InputNumber
               min={0}
@@ -402,7 +433,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             name="unit"
             label={
               <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Đơn Vị tính
+                Đơn vị tính
               </span>
             }
             rules={[{ required: true, message: 'Vui lòng chọn đơn vị tính.' }]}
@@ -465,18 +496,15 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         ═══════════════════════════════════════════════════════════════════ */}
       <SectionTitle>Thành Phần</SectionTitle>
 
-      {/* Column header */}
       <Row gutter={8} className="mb-2 px-1">
         <Col flex="1 1 140px">
-          <Text type="secondary" className="text-xs font-semibold">Tên thành Phần</Text>
+          <Text type="secondary" className="text-xs font-semibold">Tên thành phần</Text>
         </Col>
         <Col flex="1 1 100px">
-          <Text type="secondary" className="text-xs font-semibold">Giá trị (value)</Text>
+          <Text type="secondary" className="text-xs font-semibold">Giá trị <span className="text-red-500">*</span></Text>
         </Col>
         <Col flex="1 1 120px">
-          <Text type="secondary" className="text-xs font-semibold">
-            Đơn Vị Tính(%, ppm,CFU/g)
-          </Text>
+          <Text type="secondary" className="text-xs font-semibold">Đơn Vị Tính <span className="text-red-500">*</span></Text>
         </Col>
         <Col flex="none" style={{ width: 36 }} />
       </Row>
@@ -504,8 +532,9 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 <InputNumber
                   value={comp.value}
                   onChange={(val) => handleComponentChange(index, 'value', val)}
-                  placeholder="0"
+                  placeholder="0.0"
                   min={0}
+                  step={0.1}
                   className="w-full h-9 rounded-lg"
                 />
               </div>
@@ -556,7 +585,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           >
             {/* Lượng (amount) */}
             <div style={{ flex: '0 0 80px' }}>
-              <Text type="secondary" className="block mb-1 text-xs">Lượng</Text>
+              <Text type="secondary" className="block mb-1 text-xs">Lượng </Text>
               <InputNumber
                 value={dosage.amount}
                 onChange={(val) => handleDosageChange(index, 'amount', val)}
@@ -567,7 +596,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             </div>
             {/* Đơn vị Tính */}
             <div style={{ flex: '1 1 100px' }}>
-              <Text type="secondary" className="block mb-1 text-xs">Đơn vị Tính (Kg/ Lit)</Text>
+              <Text type="secondary" className="block mb-1 text-xs">Đơn vị Tính (Kg/ Lit) </Text>
               <Select
                 value={dosage.unit}
                 onChange={(val) => handleDosageChange(index, 'unit', val)}
@@ -577,7 +606,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             </div>
             {/* Đơn Vị diện tích */}
             <div style={{ flex: '1 1 100px' }}>
-              <Text type="secondary" className="block mb-1 text-xs">Đơn Vị diện tích</Text>
+              <Text type="secondary" className="block mb-1 text-xs">Đơn Vị diện tích </Text>
               <Select
                 value={dosage.areaUnit}
                 onChange={(val) => handleDosageChange(index, 'areaUnit', val)}
@@ -587,7 +616,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             </div>
             {/* Đối tượng */}
             <div style={{ flex: '2 1 140px' }}>
-              <Text type="secondary" className="block mb-1 text-xs">Đối tượng</Text>
+              <Text type="secondary" className="block mb-1 text-xs">Đối tượng </Text>
               <Select
                 value={dosage.target || undefined}
                 onChange={(val) => handleDosageChange(index, 'target', val)}
