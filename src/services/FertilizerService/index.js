@@ -1,0 +1,72 @@
+/**
+ * fertilizerService — Tất cả API thuộc nhóm /api/fertilizers/*
+ * Swagger: https://api.eapls.io.vn/swagger/index.html → nhóm "Fertilizers"
+ *
+ * GET    /api/fertilizers              → getFertilizers(params)
+ * POST   /api/fertilizers              → createFertilizer(body)
+ * GET    /api/fertilizers/{id}         → getFertilizerById(id)
+ * PUT    /api/fertilizers/{id}         → updateFertilizer(id, body)
+ * DELETE /api/fertilizers/{id}         → deleteFertilizer(id)
+ * PUT    /api/fertilizers/{id}         → toggleFertilizerStatus(id, body) — { isActive }
+ *
+ * CreateFertilizerRequest / UpdateFertilizerRequest schema:
+ *   { name: string (req), code: string (req), unit: string (req),
+ *     supplierId?: uuid, materialId?: uuid, price?: number,
+ *     description?: string, minimumStock?: number }
+ */
+import http from '../01_axios'
+import {
+  apiGetFertilizers,
+  apiCreateFertilizer,
+  apiGetFertilizerById,
+  apiUpdateFertilizer,
+  apiDeleteFertilizer,
+  apiToggleFertilizerStatus,
+} from './urls'
+
+/**
+ * GET /api/fertilizers
+ * params: { PageIndex, PageSize, SearchKeyword, Status? }
+ */
+const getFertilizers = (params) => http.get(apiGetFertilizers, { params })
+
+/**
+ * GET /api/fertilizers/:id
+ */
+const getFertilizerById = (id) => http.get(apiGetFertilizerById(id))
+
+/**
+ * POST /api/fertilizers
+ * body: { name, code, unit, supplierId?, materialId?, price?, description?, minimumStock? }
+ */
+const createFertilizer = (body) => http.post(apiCreateFertilizer, body)
+
+/**
+ * PUT /api/fertilizers/:id
+ * body: { name, code, unit, supplierId?, materialId?, price?, description?, minimumStock? }
+ */
+const updateFertilizer = (id, body) => http.put(apiUpdateFertilizer(id), body)
+
+/**
+ * DELETE /api/fertilizers/:id — xóa mềm
+ */
+const deleteFertilizer = (id) => http.delete(apiDeleteFertilizer(id))
+
+/**
+ * PUT /api/fertilizers/:id — thay đổi trạng thái (isActive)
+ * body: { isActive: boolean }
+ * NOTE: Swagger không có endpoint riêng cho status —
+ *       dùng chung PUT với toàn bộ body update + trường isActive.
+ */
+const toggleFertilizerStatus = (id, body) => http.put(apiToggleFertilizerStatus(id), body)
+
+const FertilizerService = {
+  getFertilizers,
+  getFertilizerById,
+  createFertilizer,
+  updateFertilizer,
+  deleteFertilizer,
+  toggleFertilizerStatus,
+}
+
+export default FertilizerService

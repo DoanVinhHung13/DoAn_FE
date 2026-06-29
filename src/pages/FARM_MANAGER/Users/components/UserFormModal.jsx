@@ -1,19 +1,32 @@
 import {
+  CameraOutlined,
   LockOutlined,
   MailOutlined,
   PhoneOutlined,
   UserAddOutlined,
   UserOutlined,
-  CameraOutlined,
 } from "@ant-design/icons"
-import { Avatar, Button, Form, Input, Select, DatePicker, Row, Col, Upload, message } from "antd"
-import React from "react"
+import {
+  Avatar,
+  Button,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  Row,
+  Select,
+  Upload,
+  message,
+} from "antd"
 import dayjs from "dayjs"
+import React from "react"
 import { useNavigate } from "react-router-dom"
 import CustomModal from "src/components/Modal/CustomModal"
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import { useSystemKey } from "src/hooks/useSystemKey"
 import ROUTER from "src/router/ROUTER"
-import UserService from "src/services/UserService"
 import UploadService from "src/services/UploadService"
+import UserService from "src/services/UserService"
 import {
   EMAIL_RULES,
   FULL_NAME_RULES,
@@ -21,8 +34,6 @@ import {
   PHONE_RULES,
   getAvatarUrl,
 } from "src/utils/helpers"
-import { SYSTEM_KEY } from "src/constants/systemKey"
-import { useSystemKey } from "src/hooks/useSystemKey"
 
 const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   const [form] = Form.useForm()
@@ -43,7 +54,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           fullName: editingUser.fullName || "",
           phoneNumber: editingUser.phoneNumber || "",
           gender: editingUser.gender || undefined,
-          dateOfBirth: editingUser.dateOfBirth ? dayjs(editingUser.dateOfBirth) : null,
+          dateOfBirth: editingUser.dateOfBirth
+            ? dayjs(editingUser.dateOfBirth)
+            : null,
           roles: editingUser.roles?.[0] || "FARMER",
           isActive: editingUser.isActive ?? true,
         })
@@ -57,8 +70,11 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
     }
   }, [open, editingUser, isEdit, form])
 
-  const beforeUpload = (file) => {
-    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png" || file.type === "image/webp"
+  const beforeUpload = file => {
+    const isJpgOrPng =
+      file.type === "image/jpeg" ||
+      file.type === "image/png" ||
+      file.type === "image/webp"
     if (!isJpgOrPng) {
       message.error("Bạn chỉ có thể tải lên file JPG, PNG hoặc WEBP!")
       return Upload.LIST_IGNORE
@@ -73,10 +89,10 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
 
     // Create local preview
     const reader = new FileReader()
-    reader.onload = (e) => setPreviewAvatar(e.target.result)
+    reader.onload = e => setPreviewAvatar(e.target.result)
     reader.readAsDataURL(file)
 
-    return false // Prevent automatic upload
+    return false
   }
 
   const handleSubmit = async values => {
@@ -84,15 +100,18 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
       setLoading(true)
       let uploadedUrl = isEdit ? editingUser.avatarUrl : null
 
-      // If a new avatar file was selected, upload it first
       if (avatarFile) {
         const formData = new FormData()
         formData.append("file", avatarFile)
         const response = await UploadService.uploadImage(formData)
         const payload = response?.data?.data || response?.data || {}
-        uploadedUrl = payload.avatarUrl || payload.avatar || payload.url || payload || uploadedUrl
+        uploadedUrl =
+          payload.avatarUrl ||
+          payload.avatar ||
+          payload.url ||
+          payload ||
+          uploadedUrl
       }
-
       let res
       if (isEdit) {
         // Cập nhật thông tin cơ bản
@@ -100,14 +119,18 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           fullName: values.fullName,
           phoneNumber: values.phoneNumber || null,
           gender: values.gender || null,
-          dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
+          dateOfBirth: values.dateOfBirth
+            ? values.dateOfBirth.toISOString()
+            : null,
           avatarUrl: uploadedUrl || null,
           isActive: editingUser.isActive,
         })
 
         // Cập nhật vai trò (gọi API assignRoles)
         if (values.roles && values.roles !== editingUser.roles?.[0]) {
-          await UserService.assignRoles(editingUser.id, { roles: [values.roles] })
+          await UserService.assignRoles(editingUser.id, {
+            roles: [values.roles],
+          })
         }
         res = { success: true }
       } else {
@@ -118,7 +141,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           password: values.password,
           phoneNumber: values.phoneNumber || null,
           gender: values.gender || null,
-          dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
+          dateOfBirth: values.dateOfBirth
+            ? values.dateOfBirth.toISOString()
+            : null,
           avatarUrl: uploadedUrl || null,
           roles: values.roles ? [values.roles] : ["FARMER"],
         })
@@ -129,8 +154,13 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         const lowerMsg = errMsg.toLowerCase()
         if (lowerMsg.includes("email")) {
           form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }])
-        } else if (lowerMsg.includes("phone") || lowerMsg.includes("điện thoại")) {
-          form.setFields([{ name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] }])
+        } else if (
+          lowerMsg.includes("phone") ||
+          lowerMsg.includes("điện thoại")
+        ) {
+          form.setFields([
+            { name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] },
+          ])
         }
         return
       }
@@ -146,8 +176,13 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
       const lowerMsg = errMsg.toLowerCase()
       if (lowerMsg.includes("email")) {
         form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }])
-      } else if (lowerMsg.includes("phone") || lowerMsg.includes("điện thoại")) {
-        form.setFields([{ name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] }])
+      } else if (
+        lowerMsg.includes("phone") ||
+        lowerMsg.includes("điện thoại")
+      ) {
+        form.setFields([
+          { name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] },
+        ])
       }
     } finally {
       setLoading(false)
@@ -248,7 +283,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             >
               <Select
                 placeholder="Chọn vai trò"
-                className="rounded-lg h-10"
+                className="h-10 rounded-lg"
                 options={roleOptions}
               />
             </Form.Item>
@@ -306,11 +341,18 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                 {
                   validator: (_, value) => {
                     if (!value) return Promise.resolve()
-                    if (!dayjs(value).isValid() || value.isAfter(dayjs(), "day")) {
-                      return Promise.reject(new Error("Ngày sinh không hợp lệ."))
+                    if (
+                      !dayjs(value).isValid() ||
+                      value.isAfter(dayjs(), "day")
+                    ) {
+                      return Promise.reject(
+                        new Error("Ngày sinh không hợp lệ."),
+                      )
                     }
                     if (dayjs().diff(value, "year") < 15) {
-                      return Promise.reject(new Error("Người dùng phải từ đủ 15 tuổi."))
+                      return Promise.reject(
+                        new Error("Người dùng phải từ đủ 15 tuổi."),
+                      )
                     }
                     return Promise.resolve()
                   },
@@ -321,7 +363,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                 format="DD/MM/YYYY"
                 placeholder="Chọn ngày sinh"
                 className="w-full h-10 rounded-lg"
-                disabledDate={current => current && current > dayjs().endOf("day")}
+                disabledDate={current =>
+                  current && current > dayjs().endOf("day")
+                }
               />
             </Form.Item>
           </Col>
@@ -356,7 +400,11 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         </Row>
 
         <div className="flex justify-end gap-3 pt-4 mt-6 border-t border-gray-100">
-          <Button onClick={onClose} className="h-10 px-6 rounded-xl" disabled={loading}>
+          <Button
+            onClick={onClose}
+            className="h-10 px-6 rounded-xl"
+            disabled={loading}
+          >
             Hủy
           </Button>
           <Button

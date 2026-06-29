@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Button, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -25,39 +25,18 @@ const Forbidden = () => {
       <div className="absolute bottom-20 right-20 w-96 h-96 bg-red-100 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-pulse delay-700" />
 
       <div className="relative z-10 text-center max-w-xl">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-green-200">
-            <Leaf className="w-9 h-9" />
-          </div>
-        </div>
-
         {/* 403 Big number */}
         <div className="relative mb-6">
-          <span className="text-[180px] font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-200 to-orange-50 select-none leading-none block">
+          <span className="text-[180px] font-black text-transparent bg-clip-text bg-gradient-to-b from-green-400 to-green-100 select-none leading-none block">
             403
           </span>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white/80 backdrop-blur-sm border border-orange-100 rounded-3xl px-8 py-4 shadow-xl">
-              <div className="flex justify-center mb-2">
-                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                  <ShieldX className="w-6 h-6 text-orange-500" />
-                </div>
-              </div>
-              <Title level={4} className="!mb-0 text-orange-600">Truy cập bị từ chối</Title>
-            </div>
-          </div>
+
         </div>
 
         <Text className="text-gray-400 text-lg block mb-3 leading-relaxed">
           Bạn không có quyền truy cập vào trang này.
         </Text>
-        <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-100 rounded-2xl px-5 py-3 mb-8">
-          <ShieldX className="w-4 h-4 text-orange-400" />
-          <Text className="text-orange-500 font-semibold text-sm">
-            Đang đăng nhập với quyền: <span className="font-black">{user?.role || 'Khách'}</span>
-          </Text>
-        </div>
+
 
         <div className="flex gap-4 justify-center">
           <Button
