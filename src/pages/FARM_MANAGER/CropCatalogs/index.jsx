@@ -95,10 +95,8 @@ const CropCatalogs = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [createForm] = Form.useForm();
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('all');
-  const [isCreating, setIsCreating] = useState(false);
   const [editingCatalog, setEditingCatalog] = useState(null);
   const [selectedCatalogId, setSelectedCatalogId] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
@@ -155,33 +153,6 @@ const CropCatalogs = () => {
     retry: false,
   });
 
-  const createMutation = useMutation({
-    mutationFn: (values) => {
-      const payload = {
-        name: values.name.trim().replace(/\s+/g, ' '),
-        description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        isActive: values.isActive ?? true,
-      };
-      return CropService.createCrop(payload);
-    },
-    onSuccess: async () => {
-      setInlineError('');
-      setIsCreating(false);
-      createForm.resetFields();
-      message.success('Tạo danh mục cây trồng thành công.');
-      queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
-      // Refetch SystemKey để cập nhật dropdown trong form Crops
-      await refetchSystemKey();
-    },
-    onError: (error) => {
-      const apiMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        'Không thể tạo danh mục cây trồng.';
-      setInlineError(apiMessage);
-    },
-  });
-
   const updateMutation = useMutation({
     mutationFn: ({ id, values }) => {
       const payload = {
@@ -191,14 +162,14 @@ const CropCatalogs = () => {
       };
       return CropService.updateCrop(id, payload);
     },
-    onSuccess: async () => {
+    onSuccess: async (response) => {
       setInlineError('');
       setEditingCatalog(null);
       form.resetFields();
-      message.success('Cập nhật danh mục cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
-      // Refetch SystemKey để cập nhật dropdown trong form Crops
       await refetchSystemKey();
     },
     onError: (error) => {
@@ -209,11 +180,8 @@ const CropCatalogs = () => {
         queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
         return;
       }
-      message.error(
-        error?.response?.data?.message ||
-          error?.response?.data?.title ||
-          'Không thể cập nhật danh mục cây trồng.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
+      if (errorMsg) message.error(errorMsg);
     },
   });
 
@@ -222,36 +190,24 @@ const CropCatalogs = () => {
       nextActive
         ? CropService.activateCrop(id)
         : CropService.deactivateCrop(id),
-    onSuccess: async () => {
-      console.log('🎯 statusMutation.onSuccess triggered');
+    onSuccess: async (response) => {
       setInlineError('');
-      message.success('Thay đổi trạng thái danh mục cây trồng thành công.');
-      
-      // Invalidate queries
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
-      
-      // Refetch SystemKey để cập nhật dropdown trong form Crops
-      console.log('🔄 Refetching SystemKey...');
       await refetchSystemKey();
-      console.log('✅ SystemKey refetched');
     },
     onError: (error) => {
       const statusCode = error?.response?.status;
-      const apiMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        error?.message ||
-        '';
-
+      const apiMessage = error?.response?.data?.message || error?.response?.data?.title || error?.message || '';
       if (statusCode === 404) {
         setInlineError(EMPTY_MESSAGE);
         setSelectedCatalogId(null);
         queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
         return;
       }
-
-      message.error(apiMessage || 'Không thể thay đổi trạng thái danh mục cây trồng.');
+      if (apiMessage) message.error(apiMessage);
     },
   });
 
@@ -286,15 +242,6 @@ const CropCatalogs = () => {
       nextActive,
     });
     setStatusTarget(null);
-  };
-
-  const openUpdateForm = (record) => {
-    setInlineError('');
-    setEditingCatalog(record);
-    form.setFieldsValue({
-      name: record.name || record.cropCatalogName || '',
-      description: record.description || '',
-    });
   };
 
   const filteredCatalogs = useMemo(() => {
@@ -362,7 +309,6 @@ const CropCatalogs = () => {
       width: 140,
       align: 'center',
       fixed: 'right',
-      align: 'center',
       render: (_, record) => (
         <Space size={6} className="whitespace-nowrap">
           <Tooltip title="Sửa">
@@ -415,11 +361,11 @@ const CropCatalogs = () => {
         </TitleCustom>
         <Button
           type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setIsCreating(true)}
-          className="h-10 rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
+          icon={<FileTextOutlined />}
+          onClick={() => navigate(ROUTER.FM_CROP_CATALOG_CREATE)}
+          className="h-10 bg-green-600 px-5 font-medium hover:bg-green-700"
         >
-          Thêm danh mục cây trồng
+          Thêm danh mục cây trồng mới
         </Button>
       </div>
 
@@ -495,83 +441,6 @@ const CropCatalogs = () => {
       </Card>
 
       <Modal
-        open={isCreating}
-        title={
-          <span className="text-xl font-bold text-green-600">
-            Thêm danh mục cây trồng
-          </span>
-        }
-        footer={null}
-        width={560}
-        destroyOnClose
-        onCancel={() => {
-          setIsCreating(false);
-          createForm.resetFields();
-        }}
-      >
-        <Form
-          form={createForm}
-          layout="vertical"
-          initialValues={{ isActive: true }}
-          onFinish={(values) => createMutation.mutate(values)}
-        >
-          <Form.Item
-            name="name"
-            label="Tên loại cây trồng"
-            rules={[
-              { required: true, message: 'Vui lòng nhập tên loại cây trồng.' },
-              {
-                validator: (_, value) => {
-                  if (!value || value.trim()) return Promise.resolve();
-                  return Promise.reject(new Error('Tên loại cây trồng không được chỉ chứa khoảng trắng.'));
-                },
-              },
-            ]}
-          >
-            <Input className="h-11 rounded-lg" placeholder="Nhập tên loại cây trồng" />
-          </Form.Item>
-
-          <Form.Item name="description" label="Mô tả">
-            <Input.TextArea
-              rows={4}
-              className="rounded-lg"
-              placeholder="Nhập mô tả danh mục cây trồng"
-            />
-          </Form.Item>
-
-          <Form.Item name="isActive" label="Trạng thái">
-            <Select
-              className="h-11"
-              options={[
-                { value: true, label: 'Hoạt động' },
-                { value: false, label: 'Ngừng hoạt động' },
-              ]}
-            />
-          </Form.Item>
-
-          <div className="mt-6 flex justify-end gap-3">
-            <Button
-              onClick={() => {
-                setIsCreating(false);
-                createForm.resetFields();
-              }}
-              className="h-10 min-w-20 rounded-lg font-semibold"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={createMutation.isPending}
-              className="h-10 min-w-24 rounded-lg bg-green-500 font-semibold"
-            >
-              Lưu
-            </Button>
-          </div>
-        </Form>
-      </Modal>
-
-      <Modal
         open={!!editingCatalog}
         onCancel={() => {
           setEditingCatalog(null);
@@ -594,9 +463,7 @@ const CropCatalogs = () => {
           onFinish={(values) =>
             updateMutation.mutate({ id: getItemId(editingCatalog), values })
           }
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
+          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <Form.Item

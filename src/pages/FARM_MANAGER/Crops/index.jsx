@@ -27,6 +27,7 @@ import {
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
+  PlusOutlined,
   SearchOutlined,
   StopOutlined,
   UploadOutlined,
@@ -129,33 +130,26 @@ const Crops = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [createForm] = Form.useForm();
-  const watchedImageUrl = Form.useWatch('imageUrl', form);
-  const watchedCreateImageUrl = Form.useWatch('imageUrl', createForm);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('all');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name-asc');
   const [selectedCropId, setSelectedCropId] = useState(null);
   const [editingCrop, setEditingCrop] = useState(null);
-  const [isCreating, setIsCreating] = useState(false);
   const [statusTarget, setStatusTarget] = useState(null);
   const [inlineError, setInlineError] = useState('');
-  const [previewImage, setPreviewImage] = useState(null); // State cho modal xem ảnh
-  const [uploadingCreate, setUploadingCreate] = useState(false); // Loading state cho create form
-  const [uploadingEdit, setUploadingEdit] = useState(false); // Loading state cho edit form
+  const [uploadingUpdate, setUploadingUpdate] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
+  const watchedImageUrl = Form.useWatch('imageUrl', form);
 
-  // SystemKey hook
-  const { getCombo, getDescription } = useSystemKey();
+  const { getCombo } = useSystemKey();
   const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE);
   const cropStatusOptions = getCombo(SYSTEM_KEY.CROP_STATUS);
 
-  // Status filter options (dùng SystemKey nếu có, fallback về hardcode)
   const statusFilterOptions = useMemo(() => {
     const baseOptions = [{ value: 'all', label: 'Tất cả trạng thái' }];
     
     if (cropStatusOptions && cropStatusOptions.length > 0) {
-      // Dùng SystemKey từ backend
       return [
         ...baseOptions,
         ...cropStatusOptions.map(opt => ({
@@ -165,7 +159,6 @@ const Crops = () => {
       ];
     }
     
-    // Fallback nếu chưa có SystemKey
     return [
       ...baseOptions,
       { value: 'active', label: 'Đang hoạt động' },
@@ -178,44 +171,51 @@ const Crops = () => {
     queryFn: async () => {
       try {
         const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 200 });
-        console.log('Crops API Response:', response);
         return normalizeCropResponse(response);
       } catch (err) {
-        console.error('Crops API Error:', err);
         throw err;
       }
     },
     retry: false,
   });
 
-  // Query to get crop catalogs for the dropdown
   const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
     queryKey: ['crop-catalogs-dropdown'],
     queryFn: async () => {
       try {
         const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
-        console.log('Crop Catalogs Dropdown Response:', response);
-        const items = normalizeCropResponse(response).items;
-        return items.filter(item => {
-          // Only return active catalogs
-          if (typeof item?.isActive === 'boolean') return item.isActive;
-          const status = String(item?.status || '').toLowerCase();
-          return !['inactive', 'disabled', 'deleted'].includes(status);
-        });
+        return normalizeCropResponse(response).items;
       } catch (err) {
-        console.error('Crop Catalogs Dropdown Error:', err);
-        if (err?.response?.status === 405) {
-          return [
-            { id: '1', name: 'Cây rau', description: 'Các loại rau ăn lá', isActive: true },
-            { id: '2', name: 'Cây củ', description: 'Các loại củ quả', isActive: true },
-            { id: '3', name: 'Cây ăn trái', description: 'Các loại cây ăn quả', isActive: true },
-          ];
-        }
         return [];
       }
     },
     retry: false,
   });
+
+  const cropCatalogOptions = useMemo(() => {
+    if (!cropCatalogsData || cropCatalogsData.length === 0) {
+      return [];
+    }
+    return cropCatalogsData.map((catalog) => ({
+      value: catalog.id || catalog.cropCatalogId,
+      label: catalog.name || catalog.cropCatalogName,
+    }));
+  }, [cropCatalogsData]);
+
+  const cropTypeFormOptions = useMemo(() => {
+    if (cropTypeOptions && cropTypeOptions.length > 0) {
+      return cropTypeOptions.map((opt) => ({
+        value: opt.codeValue || opt.CodeValue,
+        label: opt.description || opt.Description,
+      }));
+    }
+    
+    if (cropCatalogOptions && cropCatalogOptions.length > 0) {
+      return cropCatalogOptions;
+    }
+    
+    return [];
+  }, [cropTypeOptions, cropCatalogOptions]);
 
   const statusMutation = useMutation({
     mutationFn: ({ id, nextActive }) =>
@@ -233,15 +233,11 @@ const Crops = () => {
     },
     onError: (error) => {
       const statusCode = error?.response?.status;
-      const apiMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        error?.message ||
-        '';
+      const apiMessage = error?.response?.data?.message || error?.message || '';
 
       if (statusCode === 404) {
         setInlineError(EMPTY_MESSAGE);
-        setSelectedCropId(null);
+        setStatusTarget(null);
         queryClient.invalidateQueries({ queryKey: ['crops'] });
         return;
       }
@@ -253,74 +249,14 @@ const Crops = () => {
   });
 
   const handleConfirmStatusChange = () => {
-    if (!statusTarget) return;
-    statusMutation.mutate({
-      id: getItemId(statusTarget),
-      nextActive: !isCropActive(statusTarget),
-    });
-    setStatusTarget(null);
-  };
-
-  const createMutation = useMutation({
-    mutationFn: (values) => {
-      const unitToDays = {
-        days: 1,
-        months: 30,
-        years: 365,
-      };
-      
-      const minDays = values.minHarvestDays 
-        ? values.minHarvestDays * unitToDays[values.minDurationUnit || 'days'] 
-        : null;
-        
-      const maxDays = values.maxHarvestDays 
-        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || 'days'] 
-        : null;
-
-      const payload = {
-        name: values.name.trim().replace(/\s+/g, ' '),
-        cropCatalogId: values.cropCatalogId || null,
-        minHarvestDays: minDays,
-        maxHarvestDays: maxDays,
-        description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        imageUrl: values.imageUrl?.trim() || null,
-        isActive: true,
-      };
-      
-      return CropManagementService.createCrop(payload).then(async (res) => {
-        const cropId = res?.data?.data?.id || res?.data?.data?._id || res?.data?.id || res?.data?._id;
-        if (cropId && values.growthStages && values.growthStages.length > 0) {
-          for (const stage of values.growthStages) {
-            const stagePayload = { ...stage, cropId };
-            delete stagePayload.id; // remove temp id
-            await GrowthStageService.createGrowthStage(stagePayload);
-          }
-        }
-        return res;
+    if (statusTarget) {
+      statusMutation.mutate({
+        id: getItemId(statusTarget),
+        nextActive: !isCropActive(statusTarget),
       });
-    },
-    onSuccess: (response) => {
-      setIsCreating(false);
-      createForm.resetFields();
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
-      queryClient.invalidateQueries({ queryKey: ['crops'] });
-    },
-    onError: (error) => {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        error?.message;
-      if (errorMessage && (errorMessage.toLowerCase().includes('crop name') ||
-          errorMessage.includes('Tên'))) {
-        createForm.setFields([{ name: 'name', errors: ['Tên cây trồng đã tồn tại trong hệ thống.'] }]);
-      } else if (errorMessage) {
-        message.error(errorMessage);
-      }
-    },
-  });
+      setStatusTarget(null);
+    }
+  };
 
   const updateMutation = useMutation({
     mutationFn: ({ id, values }) => {
@@ -361,73 +297,6 @@ const Crops = () => {
       }
     },
   });
-
-  const openUpdateForm = (record) => {
-    setInlineError('');
-    setEditingCrop(record);
-    form.setFieldsValue({
-      name: record.name || '',
-      cropCatalogId: record.cropCatalogId || '',
-      minHarvestDays: record.minHarvestDays || null,
-      maxHarvestDays: record.maxHarvestDays || null,
-      description: record.description || '',
-      imageUrl: record.imageUrl || '',
-    });
-  };
-
-  const beforeCropImageUpload = (file) => {
-    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
-    const isLt5M = file.size / 1024 / 1024 < 5;
-    return isJpgOrPng && isLt5M;
-  };
-
-  const handleCropImageUpload = async ({ file, onSuccess, onError }, targetForm, isEditForm = false) => {
-    // Set loading state
-    if (isEditForm) {
-      setUploadingEdit(true);
-    } else {
-      setUploadingCreate(true);
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await UploadService.uploadImage(formData);
-      const payload = response?.data?.data || response?.data || {};
-      const imageUrl =
-        payload.imageUrl ||
-        payload.url ||
-        payload.secureUrl ||
-        payload.fileUrl ||
-        payload.path;
-
-      if (!imageUrl) {
-        throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
-      }
-
-      // Cập nhật URL thật từ server sau khi upload xong
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
-      targetForm.setFieldsValue({ imageUrl });
-      onSuccess(response);
-    } catch (error) {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) {
-        message.error(errorMsg);
-      }
-      onError(error);
-    } finally {
-      // Tắt loading state
-      if (isEditForm) {
-        setUploadingEdit(false);
-      } else {
-        setUploadingCreate(false);
-      }
-    }
-  };
 
   const {
     data: cropDetail,
@@ -486,6 +355,56 @@ const Crops = () => {
     });
   }, [category, data?.items, keyword, sortBy, status]);
 
+  const beforeCropImageUpload = (file) => {
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    return isJpgOrPng && isLt5M;
+  };
+
+  const handleCropImageUpload = async ({ file, onSuccess, onError }, targetForm, isEditForm = false) => {
+    const targetFormToUse = isEditForm ? form : null;
+    if (!targetFormToUse) return;
+
+    if (isEditForm) {
+      setUploadingUpdate(true);
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await UploadService.uploadImage(formData);
+      const payload = response?.data?.data || response?.data || {};
+      const imageUrl =
+        payload.imageUrl ||
+        payload.url ||
+        payload.secureUrl ||
+        payload.fileUrl ||
+        payload.path;
+
+      if (!imageUrl) {
+        throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
+      }
+
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
+      targetFormToUse.setFieldsValue({ imageUrl });
+      onSuccess(response);
+    } catch (error) {
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
+      onError(error);
+    } finally {
+      if (isEditForm) {
+        setUploadingUpdate(false);
+      }
+    }
+  };
+
   const categoryOptions = useMemo(() => {
     const categories = [
       ...new Set((data?.items || []).map((item) => item.cropCatalogId).filter(Boolean)),
@@ -500,35 +419,6 @@ const Crops = () => {
       }),
     ];
   }, [data?.items, cropCatalogsData]);
-
-  // Transform crop catalogs data into options
-  const cropCatalogOptions = useMemo(() => {
-    if (!cropCatalogsData || cropCatalogsData.length === 0) {
-      return [];
-    }
-    return cropCatalogsData.map((catalog) => ({
-      value: catalog.id || catalog.cropCatalogId,
-      label: catalog.name || catalog.cropCatalogName,
-    }));
-  }, [cropCatalogsData]);
-
-  // Create options from SystemKey hoặc crop catalogs cho form
-  const cropTypeFormOptions = useMemo(() => {
-    // Ưu tiên dùng SystemKey nếu có
-    if (cropTypeOptions && cropTypeOptions.length > 0) {
-      return cropTypeOptions.map((opt) => ({
-        value: opt.codeValue || opt.CodeValue,
-        label: opt.description || opt.Description,
-      }));
-    }
-    
-    // Fallback: Dùng Crop Catalogs nếu chưa có SystemKey
-    if (cropCatalogOptions && cropCatalogOptions.length > 0) {
-      return cropCatalogOptions;
-    }
-    
-    return [];
-  }, [cropTypeOptions, cropCatalogOptions]);
 
   const columns = [
     {
@@ -627,7 +517,7 @@ const Crops = () => {
               size="small"
               icon={<EyeOutlined />}
               className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
-              onClick={() => navigate(`${ROUTER.FM_CROPS}/${getItemId(record)}`)}
+              onClick={() => setSelectedCropId(getItemId(record))}
             />
           </Tooltip>
           <Tooltip title={isCropActive(record) ? 'Vô hiệu hóa' : 'Kích hoạt'}>
@@ -662,11 +552,11 @@ const Crops = () => {
         </TitleCustom>
         <Button
           type="primary"
-          icon={<Sprout className="h-4 w-4" />}
-          onClick={() => setIsCreating(true)}
-          className="h-10 rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
+          icon={<Sprout />}
+          onClick={() => navigate(ROUTER.FM_CROP_CREATE)}
+          className="h-10 rounded-lg bg-green-600 px-5 font-medium hover:bg-green-700"
         >
-          Thêm cây trồng
+          Thêm cây trồng mới
         </Button>
       </div>
 
@@ -752,213 +642,7 @@ const Crops = () => {
         />
       </Card>
 
-      <Modal
-        open={!!isCreating}
-        onCancel={() => {
-          setIsCreating(false);
-          createForm.resetFields();
-        }}
-        footer={null}
-        centered
-        width={720}
-        destroyOnClose
-        title={
-          <span className="text-2xl font-bold text-green-600">
-            Thêm cây trồng
-          </span>
-        }
-      >
-        <Form
-          form={createForm}
-          layout="vertical"
-          className="pt-4"
-          onFinish={(values) => createMutation.mutate(values)}
-          onFinishFailed={() => {}}
-          scrollToFirstError
-        >
-          <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
-            <Form.Item
-              name="name"
-              label="Tên cây trồng"
-              rules={[
-                {
-                  required: true,
-                  whitespace: true,
-                  message: 'Vui lòng điền đầy đủ các thông tin bắt buộc.',
-                },
-                { max: 150, message: 'Tên cây trồng không được vượt quá 150 ký tự.' },
-              ]}
-            >
-              <Input className="h-11" placeholder="Nhập tên cây trồng" />
-            </Form.Item>
 
-            <Form.Item
-              name="cropCatalogId"
-              label="Nhóm cây"
-              rules={[
-                { required: true, message: 'Vui lòng chọn nhóm cây.' },
-              ]}
-            >
-              <Select
-                className="h-11"
-                placeholder={cropTypeFormOptions?.length > 0 ? "Chọn nhóm cây" : "Chọn nhóm cây từ danh sách"}
-                loading={isCatalogsLoading}
-                options={cropTypeFormOptions}
-                showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-                disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
-              />
-            </Form.Item>
-
-            <Form.Item name="imageUrl" label="Ảnh minh họa">
-              <div className="space-y-3">
-                <Upload
-                  accept="image/png,image/jpeg,image/webp"
-                  showUploadList={false}
-                  beforeUpload={beforeCropImageUpload}
-                  customRequest={(options) => handleCropImageUpload(options, createForm, false)}
-                >
-                  <Button 
-                    icon={<UploadOutlined />} 
-                    loading={uploadingCreate}
-                    className="h-11 rounded-lg"
-                  >
-                    {uploadingCreate ? 'Đang tải lên...' : 'Tải ảnh lên'}
-                  </Button>
-                </Upload>
-
-                {/* Loading state */}
-                {uploadingCreate && !watchedCreateImageUrl && (
-                  <div className="flex h-[96px] w-[112px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
-                    <Spin />
-                  </div>
-                )}
-
-                {/* Preview ảnh sau khi upload xong */}
-                {watchedCreateImageUrl && !uploadingCreate && (
-                  <div className="group relative h-[96px] w-[112px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
-                    <img
-                      src={watchedCreateImageUrl}
-                      alt="Ảnh minh họa cây trồng"
-                      className="h-full w-full rounded-md object-cover"
-                    />
-                    <div className="absolute inset-1 flex items-center justify-center gap-2 rounded-md bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => setPreviewImage(watchedCreateImageUrl)}
-                      />
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => createForm.setFieldsValue({ imageUrl: '' })}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Form.Item>
-          </div>
-
-          <div className="grid grid-cols-2 gap-x-4">
-            <Form.Item
-              name="minHarvestDays"
-              label="Thời gian sinh trưởng tối thiểu"
-              rules={[
-                { type: 'number', min: 1, message: 'Phải lớn hơn 0.' },
-              ]}
-            >
-              <InputNumber
-                className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
-                placeholder="Nhập thời gian"
-                min={1}
-                addonAfter={
-                  <Form.Item name="minDurationUnit" noStyle initialValue="days">
-                    <Select className="w-24 h-11 bg-gray-50" bordered={false}>
-                      <Select.Option value="days">ngày</Select.Option>
-                      <Select.Option value="months">tháng</Select.Option>
-                      <Select.Option value="years">năm</Select.Option>
-                    </Select>
-                  </Form.Item>
-                }
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="maxHarvestDays"
-              label="Thời gian sinh trưởng tối đa"
-              dependencies={['minHarvestDays', 'minDurationUnit', 'maxDurationUnit']}
-              rules={[
-                { type: 'number', min: 1, message: 'Phải lớn hơn 0.' },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    const minVal = getFieldValue('minHarvestDays');
-                    if (minVal == null || value == null) return Promise.resolve();
-
-                    const unitToDays = { days: 1, months: 30, years: 365 };
-                    const minDays = minVal * unitToDays[getFieldValue('minDurationUnit') || 'days'];
-                    const maxDays = value * unitToDays[getFieldValue('maxDurationUnit') || 'days'];
-
-                    if (maxDays < minDays) {
-                      return Promise.reject(new Error('Thời gian tối đa phải ≥ tối thiểu.'));
-                    }
-                    return Promise.resolve();
-                  },
-                }),
-              ]}
-            >
-              <InputNumber
-                className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
-                placeholder="Nhập thời gian"
-                min={1}
-                addonAfter={
-                  <Form.Item name="maxDurationUnit" noStyle initialValue="days">
-                    <Select className="w-24 h-11 bg-gray-50" bordered={false}>
-                      <Select.Option value="days">ngày</Select.Option>
-                      <Select.Option value="months">tháng</Select.Option>
-                      <Select.Option value="years">năm</Select.Option>
-                    </Select>
-                  </Form.Item>
-                }
-              />
-            </Form.Item>
-          </div>
-
-          <Form.Item name="description" label="Mô tả">
-            <Input.TextArea rows={3} placeholder="Nhập mô tả" />
-          </Form.Item>
-
-          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
-            <GrowthStages />
-          </Form.Item>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              onClick={() => {
-                setIsCreating(false);
-                createForm.resetFields();
-              }}
-              className="h-10 min-w-[88px] rounded-lg font-semibold"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={createMutation.isPending}
-              className="h-10 min-w-[112px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-            >
-              Lưu
-            </Button>
-          </div>
-        </Form>
-      </Modal>
 
       <Drawer
         title="Chi tiết cây trồng"
@@ -1100,22 +784,22 @@ const Crops = () => {
                 >
                   <Button 
                     icon={<UploadOutlined />} 
-                    loading={uploadingEdit}
+                    loading={uploadingUpdate}
                     className="h-11 rounded-lg"
                   >
-                    {uploadingEdit ? 'Đang tải lên...' : 'Tải ảnh lên'}
+                    {uploadingUpdate ? 'Đang tải lên...' : 'Tải ảnh lên'}
                   </Button>
                 </Upload>
 
                 {/* Loading state */}
-                {uploadingEdit && !watchedImageUrl && (
+                {uploadingUpdate && !watchedImageUrl && (
                   <div className="flex h-[96px] w-[112px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
                     <Spin />
                   </div>
                 )}
 
                 {/* Preview ảnh sau khi upload xong */}
-                {watchedImageUrl && !uploadingEdit && (
+                {watchedImageUrl && !uploadingUpdate && (
                   <div className="group relative h-[96px] w-[112px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
                     <img
                       src={watchedImageUrl}

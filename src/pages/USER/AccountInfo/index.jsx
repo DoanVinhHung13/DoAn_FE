@@ -101,7 +101,8 @@ const AccountInfo = () => {
       dispatch(setUserInfo(nextUser));
       authSession.updateUser(nextUser);
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      message.success("Cập nhật thông tin thành công.");
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       setEditing(false);
     },
     onError: (error) => {
@@ -117,8 +118,8 @@ const AccountInfo = () => {
             errors: ["Số điện thoại này đã được đăng ký. Vui lòng thử số khác."],
           },
         ]);
-      } else {
-        message.error(apiMessage || "Không thể cập nhật thông tin.");
+      } else if (apiMessage) {
+        message.error(apiMessage);
       }
     },
   });
@@ -142,12 +143,15 @@ const AccountInfo = () => {
       const nextUser = { ...user, avatarUrl: newAvatarUrl };
       dispatch(setUserInfo(nextUser));
       authSession.updateUser(nextUser);
-      message.success("Tải ảnh đại diện thành công.");
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       onSuccess(response);
     } catch (error) {
-      const errorMsg = error?.message || "Không thể tải ảnh đại diện. Vui lòng thử lại.";
-      setUploadError(errorMsg);
-      message.error(errorMsg);
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        setUploadError(errorMsg);
+        message.error(errorMsg);
+      }
       onError(error);
     }
   };
@@ -299,11 +303,7 @@ const AccountInfo = () => {
                   form={form}
                   layout="vertical"
                   onFinish={(values) => updateMutation.mutate(values)}
-                  onFinishFailed={() =>
-                    message.error(
-                      "Nhập liệu không hợp lệ. Vui lòng kiểm tra các trường được đánh dấu."
-                    )
-                  }
+                  onFinishFailed={() => {}}
                   scrollToFirstError
                 >
                   <Row gutter={16}>

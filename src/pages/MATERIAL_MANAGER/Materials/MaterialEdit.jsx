@@ -79,11 +79,12 @@ const MaterialEdit = () => {
   // Mutation để update vật tư
   const updateMutation = useMutation({
     mutationFn: (data) => MaterialService.updateMaterial(id, data),
-    onSuccess: () => {
-      message.success(MATERIAL_MESSAGES.UPDATE_SUCCESS); // MSG-AMM-03
+    onSuccess: (response) => {
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['materials'] });
       queryClient.invalidateQueries({ queryKey: ['material-detail', id] });
-      navigate(ROUTER.MM_MATERIALS); // Redirect về danh sách
+      navigate(ROUTER.MM_MATERIALS);
     },
     onError: (error) => {
       const apiMessage = error?.response?.data?.message || error?.message || '';
@@ -93,12 +94,11 @@ const MaterialEdit = () => {
         form.setFields([
           {
             name: 'name',
-            errors: [MATERIAL_MESSAGES.NAME_EXISTS], // MSG-AMM-06
+            errors: [MATERIAL_MESSAGES.NAME_EXISTS],
           },
         ]);
-        message.error(MATERIAL_MESSAGES.NAME_EXISTS);
-      } else {
-        message.error(apiMessage || 'Không thể cập nhật vật tư.');
+      } else if (apiMessage) {
+        message.error(apiMessage);
       }
     },
     onSettled: () => {

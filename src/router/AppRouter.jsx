@@ -39,9 +39,11 @@ const FarmManagerLandPlotCreate = React.lazy(() => import('../pages/FARM_MANAGER
 const FarmManagerLandPlotDetail = React.lazy(() => import('../pages/FARM_MANAGER/Lands/LandPlotDetail'))
 const FarmManagerLandPlotEdit = React.lazy(() => import('../pages/FARM_MANAGER/Lands/LandPlotEdit'))
 const FarmManagerCropCatalogs = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs'))
+const FarmManagerCropCatalogCreate = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs/CatalogCreate'))
 const FarmManagerCropCatalogDetail = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs/CatalogDetail'))
 const FarmManagerCropCatalogEdit = React.lazy(() => import('../pages/FARM_MANAGER/CropCatalogs/CatalogEdit'))
 const FarmManagerCrops = React.lazy(() => import('../pages/FARM_MANAGER/Crops'))
+const FarmManagerCropCreate = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropCreate'))
 const FarmManagerCropDetail = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropDetail'))
 const FarmManagerCropEdit = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropEdit'))
 const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans'))
@@ -65,6 +67,7 @@ const LandManagerNotifications = React.lazy(() => import('../pages/LAND_MANAGER/
 const LandManagerViewCatalogs = React.lazy(() => import('../pages/LAND_MANAGER/ViewCatalogs'))
 const LandManagerCatalogDetail = React.lazy(() => import('../pages/LAND_MANAGER/ViewCatalogs/CatalogDetail'))
 const LandManagerCrops = React.lazy(() => import('../pages/LAND_MANAGER/Crops'))
+const LandManagerCropCreate = React.lazy(() => import('../pages/LAND_MANAGER/Crops/CropCreate'))
 const LandManagerCropDetail = React.lazy(() => import('../pages/LAND_MANAGER/Crops/CropDetail'))
 
 // MATERIAL_MANAGER pages
@@ -174,9 +177,11 @@ const routes = [
               { path: ROUTER.FM_LAND_DETAIL, element: <Lazy><FarmManagerLandPlotDetail /></Lazy> },
               { path: ROUTER.FM_LAND_EDIT, element: <Lazy><FarmManagerLandPlotEdit /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOGS, element: <Lazy><FarmManagerCropCatalogs /></Lazy> },
+              { path: ROUTER.FM_CROP_CATALOG_CREATE, element: <Lazy><FarmManagerCropCatalogCreate /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOG_DETAIL, element: <Lazy><FarmManagerCropCatalogDetail /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOG_EDIT, element: <Lazy><FarmManagerCropCatalogEdit /></Lazy> },
               { path: ROUTER.FM_CROPS, element: <Lazy><FarmManagerCrops /></Lazy> },
+              { path: ROUTER.FM_CROP_CREATE, element: <Lazy><FarmManagerCropCreate /></Lazy> },
               { path: ROUTER.FM_CROP_DETAIL, element: <Lazy><FarmManagerCropDetail /></Lazy> },
               { path: ROUTER.FM_CROP_EDIT, element: <Lazy><FarmManagerCropEdit /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
@@ -205,8 +210,9 @@ const routes = [
               { path: ROUTER.LM_NOTIFICATIONS, element: <Lazy><LandManagerNotifications /></Lazy> },
               { path: ROUTER.LM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
               { path: ROUTER.LM_CROP_CATALOGS, element: <Lazy><LandManagerViewCatalogs /></Lazy> },
-              { path: ROUTER.LM_CROP_CATALOG_DETAIL, element: <Lazy><LandManagerCatalogDetail /></Lazy> },
+              { path: ROUTER.LM_CATALOG_DETAIL, element: <Lazy><LandManagerCatalogDetail /></Lazy> },
               { path: ROUTER.LM_CROPS, element: <Lazy><LandManagerCrops /></Lazy> },
+              { path: ROUTER.LM_CROP_CREATE, element: <Lazy><LandManagerCropCreate /></Lazy> },
               { path: ROUTER.LM_CROP_DETAIL, element: <Lazy><LandManagerCropDetail /></Lazy> },
             ],
           },

@@ -105,8 +105,9 @@ const LandsManagement = () => {
       if (res?.success === false) return
       setStatusTarget(null)
       fetchLandPlots() // tải lại danh sách sau khi đổi trạng thái
-    } catch {
-      message.error('Thay đổi trạng thái thất bại. Vui lòng thử lại.')
+    } catch (err) {
+      const errorMsg = err?.response?.data?.message || err?.message;
+      if (errorMsg) message.error(errorMsg);
     } finally {
       setStatusLoading(false)
     }
