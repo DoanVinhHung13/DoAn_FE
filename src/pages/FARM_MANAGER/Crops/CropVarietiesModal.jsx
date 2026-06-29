@@ -76,16 +76,20 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
       };
       return CropVarietyService.createCropVariety(payload);
     },
-    onSuccess: () => {
-      message.success('Tạo giống cây thành công.');
+    onSuccess: (response) => {
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
+      queryClient.invalidateQueries({ queryKey: ['crop-varieties', cropId] });
       setIsCreating(false);
       form.resetFields();
-      queryClient.invalidateQueries({ queryKey: ['crop-varieties', cropId] });
     },
     onError: (error) => {
-      message.error(
-        error?.response?.data?.message || 'Không thể tạo giống cây.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
     },
   });
 
@@ -101,29 +105,37 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
       };
       return CropVarietyService.updateCropVariety(id, payload);
     },
-    onSuccess: () => {
-      message.success('Cập nhật giống cây thành công.');
+    onSuccess: (response) => {
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
+      queryClient.invalidateQueries({ queryKey: ['crop-varieties', cropId] });
       setEditingVariety(null);
       form.resetFields();
-      queryClient.invalidateQueries({ queryKey: ['crop-varieties', cropId] });
     },
     onError: (error) => {
-      message.error(
-        error?.response?.data?.message || 'Không thể cập nhật giống cây.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => CropVarietyService.deleteCropVariety(id),
-    onSuccess: () => {
-      message.success('Xóa giống cây thành công.');
+    onSuccess: (response) => {
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       queryClient.invalidateQueries({ queryKey: ['crop-varieties', cropId] });
     },
     onError: (error) => {
-      message.error(
-        error?.response?.data?.message || 'Không thể xóa giống cây.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
     },
   });
 
@@ -147,12 +159,16 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
       }
 
       form.setFieldsValue({ imageUrl });
-      message.success('Tải ảnh thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       onSuccess(response);
     } catch (error) {
-      message.error(
-        error?.response?.data?.message || 'Không thể tải ảnh. Vui lòng thử lại.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
       onError(error);
     } finally {
       setUploading(false);
@@ -160,16 +176,9 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
   };
 
   const beforeUpload = (file) => {
-    const validType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-    if (!validType) {
-      message.error('Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.');
-      return Upload.LIST_IGNORE;
-    }
-    if (file.size / 1024 / 1024 > 5) {
-      message.error('Dung lượng ảnh không được vượt quá 5MB.');
-      return Upload.LIST_IGNORE;
-    }
-    return true;
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    return isJpgOrPng && isLt5M;
   };
 
   const openEditForm = (record) => {

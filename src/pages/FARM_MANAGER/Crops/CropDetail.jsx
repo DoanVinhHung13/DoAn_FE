@@ -134,8 +134,9 @@ const CropDetail = () => {
         const payload = response?.data ?? response ?? {};
         const data = payload?.data ?? payload;
         const items = Array.isArray(data) ? data : data?.items || [];
+        const cropStages = items.filter((s) => String(s.cropId) === String(id));
         // Sort by orderIndex
-        return items.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+        return cropStages.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
       } catch (err) {
         return [];
       }
