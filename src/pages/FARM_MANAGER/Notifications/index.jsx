@@ -178,11 +178,15 @@ const FarmManagerNotifications = () => {
 
   const markAllReadMutation = useMutation({
     mutationFn: markAllNotificationsAsRead,
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      message.success('Đã đánh dấu tất cả thông báo là đã đọc.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
     },
-    onError: () => message.error('Không thể đánh dấu tất cả là đã đọc.'),
+    onError: (error) => {
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) message.error(errorMsg);
+    },
   });
 
   const createMutation = useMutation({
@@ -197,8 +201,9 @@ const FarmManagerNotifications = () => {
       };
       return createNotification(payload);
     },
-    onSuccess: () => {
-      message.success('Tạo thông báo thành công.');
+    onSuccess: (response) => {
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       setIsCreating(false);
       form.resetFields();
       setRecipientType(RECIPIENT_TYPE.ALL);
@@ -208,11 +213,8 @@ const FarmManagerNotifications = () => {
       setActiveTab('sent');
     },
     onError: (error) => {
-      message.error(
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        'Không thể tạo thông báo.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
+      if (errorMsg) message.error(errorMsg);
     },
   });
 
@@ -245,12 +247,12 @@ const FarmManagerNotifications = () => {
       };
 
       setDocuments(prev => [...prev, newDoc]);
-      message.success(`Tải lên ${file.name} thành công.`);
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       onSuccess(response);
     } catch (error) {
-      message.error(
-        error?.response?.data?.message || 'Không thể tải file. Vui lòng thử lại.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) message.error(errorMsg);
       onError(error);
     } finally {
       setUploadingDoc(false);
@@ -284,7 +286,6 @@ const FarmManagerNotifications = () => {
 
   const handleRemoveDocument = (uid) => {
     setDocuments(prev => prev.filter(doc => doc.uid !== uid));
-    message.success('Đã xóa tài liệu.');
   };
 
   const categoryOptions = useMemo(() => {
@@ -505,7 +506,8 @@ const FarmManagerNotifications = () => {
         }}
         footer={null}
         centered
-        width={720}
+        wrapClassName="notification-create-modal"
+        style={{ width: 'min(92vw, 920px)', maxWidth: 'calc(100vw - 32px)' }}
         destroyOnClose
         title={
           <span className="text-2xl font-bold text-green-600">
@@ -518,9 +520,7 @@ const FarmManagerNotifications = () => {
           layout="vertical"
           className="pt-4"
           onFinish={(values) => createMutation.mutate(values)}
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
+          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <Form.Item

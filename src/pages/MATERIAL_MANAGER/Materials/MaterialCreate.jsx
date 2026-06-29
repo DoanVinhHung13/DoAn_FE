@@ -43,10 +43,11 @@ const MaterialCreate = () => {
   // Mutation để tạo vật tư mới
   const createMutation = useMutation({
     mutationFn: (data) => MaterialService.createMaterial(data),
-    onSuccess: () => {
-      message.success(MATERIAL_MESSAGES.CREATE_SUCCESS); // MSG-AMM-02
+    onSuccess: (response) => {
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['materials'] });
-      navigate(ROUTER.MM_MATERIALS); // Redirect về danh sách
+      navigate(ROUTER.MM_MATERIALS);
     },
     onError: (error) => {
       const apiMessage = error?.response?.data?.message || error?.message || '';
@@ -56,22 +57,20 @@ const MaterialCreate = () => {
         form.setFields([
           {
             name: 'materialCode',
-            errors: [MATERIAL_MESSAGES.CODE_EXISTS], // MSG-AMM-05
+            errors: [MATERIAL_MESSAGES.CODE_EXISTS],
           },
         ]);
-        message.error(MATERIAL_MESSAGES.CODE_EXISTS);
       }
       // BR-AMM-06: Kiểm tra tên vật tư đã tồn tại
       else if (/material.*name.*exist|tên.*tồn tại|duplicate.*name/i.test(apiMessage)) {
         form.setFields([
           {
             name: 'name',
-            errors: [MATERIAL_MESSAGES.NAME_EXISTS], // MSG-AMM-06
+            errors: [MATERIAL_MESSAGES.NAME_EXISTS],
           },
         ]);
-        message.error(MATERIAL_MESSAGES.NAME_EXISTS);
-      } else {
-        message.error(apiMessage || 'Không thể tạo vật tư.');
+      } else if (apiMessage) {
+        message.error(apiMessage);
       }
     },
     onSettled: () => {

@@ -68,25 +68,21 @@ const CatalogEdit = () => {
       };
       return CropService.updateCrop(id, payload);
     },
-    onSuccess: () => {
-      message.success('Cập nhật danh mục cây trồng thành công.');
+    onSuccess: (response) => {
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail', id] });
-      // Invalidate SystemKey cache để form Crops cập nhật ngay
       queryClient.invalidateQueries({ queryKey: ['system-key'] });
       navigate(ROUTER.FM_CROP_CATALOGS);
     },
     onError: (error) => {
       if (error?.response?.status === 404) {
-        message.error(EMPTY_MESSAGE);
         navigate(ROUTER.FM_CROP_CATALOGS);
         return;
       }
-      message.error(
-        error?.response?.data?.message ||
-          error?.response?.data?.title ||
-          'Không thể cập nhật danh mục cây trồng.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
+      if (errorMsg) message.error(errorMsg);
     },
   });
 
@@ -167,9 +163,7 @@ const CatalogEdit = () => {
           form={form}
           layout="vertical"
           onFinish={(values) => updateMutation.mutate(values)}
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
+          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <Form.Item

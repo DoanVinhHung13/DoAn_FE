@@ -33,9 +33,11 @@ const ROUTER = {
   FM_LAND_DETAIL:        '/farm-manager/lands/:id',
   FM_LAND_EDIT:          '/farm-manager/lands/:id/edit',
   FM_CROP_CATALOGS:      '/farm-manager/crop-catalogs',
+  FM_CROP_CATALOG_CREATE: '/farm-manager/crop-catalogs/create',
   FM_CROP_CATALOG_DETAIL: '/farm-manager/crop-catalogs/:id',
   FM_CROP_CATALOG_EDIT:  '/farm-manager/crop-catalogs/:id/edit',
   FM_CROPS:              '/farm-manager/crops',
+  FM_CROP_CREATE:        '/farm-manager/crops/create',
   FM_CROP_DETAIL:        '/farm-manager/crops/:id',
   FM_CROP_EDIT:          '/farm-manager/crops/:id/edit',
   FM_PRODUCTION_PLANS:   '/farm-manager/production-plans',
@@ -97,9 +99,10 @@ const ROUTER = {
 
   // ── Land Manager additional ───────────────────────────────────────────────
   LM_CROP_CATALOGS:     '/land-manager/crop-catalogs',
-  LM_CROP_CATALOG_DETAIL: '/land-manager/crop-catalogs/:id',
-  LM_CROPS:             '/land-manager/crops',
-  LM_CROP_DETAIL:       '/land-manager/crops/:id',
+  LM_CROP_CATALOG_DETAIL: '/land-manager/view-catalogs/:id',
+  LM_CROPS:              '/land-manager/crops',
+  LM_CROP_CREATE:        '/land-manager/crops/create',
+  LM_CROP_DETAIL:        '/land-manager/crops/:id',
 
   // ── Material Manager additional ──────────────────────────────────────────
   MM_PURCHASE_REQS:     '/material-manager/purchase-requisitions',

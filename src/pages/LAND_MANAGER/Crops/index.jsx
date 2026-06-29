@@ -26,6 +26,7 @@ import {
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
+  PlusOutlined,
   SearchOutlined,
   StopOutlined,
   UploadOutlined,
@@ -127,21 +128,16 @@ const Crops = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [createForm] = Form.useForm();
   const watchedImageUrl = Form.useWatch('imageUrl', form);
-  const watchedCreateImageUrl = Form.useWatch('imageUrl', createForm);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('all');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name-asc');
   const [selectedCropId, setSelectedCropId] = useState(null);
   const [editingCrop, setEditingCrop] = useState(null);
-  const [isCreating, setIsCreating] = useState(false);
   const [statusTarget, setStatusTarget] = useState(null);
   const [inlineError, setInlineError] = useState('');
-  const [previewImage, setPreviewImage] = useState(null); // State cho modal xem ảnh
-  const [uploadingCreate, setUploadingCreate] = useState(false); // Loading state cho create form
-  const [uploadingEdit, setUploadingEdit] = useState(false); // Loading state cho edit form
+  const [previewImage, setPreviewImage] = useState(null);
 
   // SystemKey hook
   const { getCombo, getDescription } = useSystemKey();
@@ -241,7 +237,7 @@ const Crops = () => {
         return;
       }
 
-      message.error(apiMessage || 'Không thể thay đổi trạng thái cây trồng.');
+      if (apiMessage) message.error(apiMessage);
     },
   });
 
@@ -253,59 +249,6 @@ const Crops = () => {
     });
     setStatusTarget(null);
   };
-
-  const createMutation = useMutation({
-    mutationFn: (values) => {
-      const payload = {
-        name: values.name.trim().replace(/\s+/g, ' '),
-        cropCatalogId: values.cropCatalogId || null,
-        expectedYield: values.expectedYield || 0,
-        description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        imageUrl: values.imageUrl?.trim() || null,
-        recommendedCultivationConditions:
-          values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
-        isActive: true,
-      };
-      // TODO: Sau khi tạo Crop thành công, sẽ tạo CropVarieties riêng nếu cần
-      // const growthStages = values.growthStages || [];
-      return CropManagementService.createCrop(payload);
-    },
-    onSuccess: () => {
-      setInlineError('');
-      setIsCreating(false);
-      createForm.resetFields();
-      message.success('Tạo cây trồng thành công.');
-      queryClient.invalidateQueries({ queryKey: ['crops'] });
-    },
-    onError: (error) => {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        'Không thể tạo cây trồng.';
-
-      // Check for specific error codes/messages
-      if (errorMessage.includes('Mã danh mục cây trồng đã tồn tại') || 
-          errorMessage.toLowerCase().includes('crop code') ||
-          errorMessage.toLowerCase().includes('duplicate')) {
-        createForm.setFields([
-          {
-            name: 'cropCode',
-            errors: ['Mã cây đã tồn tại trong hệ thống.'],
-          },
-        ]);
-      } else if (errorMessage.includes('Tên danh mục cây trồng đã tồn tại') ||
-                 errorMessage.toLowerCase().includes('crop name')) {
-        createForm.setFields([
-          {
-            name: 'name',
-            errors: ['Tên cây trồng đã tồn tại trong hệ thống.'],
-          },
-        ]);
-      } else {
-        message.error(errorMessage);
-      }
-    },
-  });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, values }) => {
@@ -324,11 +267,11 @@ const Crops = () => {
       return CropManagementService.updateCrop(id, payload);
     },
     onSuccess: (response) => {
-      console.log('✅ Update response:', response);
       setInlineError('');
       setEditingCrop(null);
       form.resetFields();
-      message.success('Cập nhật cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
     },
@@ -341,11 +284,8 @@ const Crops = () => {
         return;
       }
 
-      message.error(
-        error?.response?.data?.message ||
-          error?.response?.data?.title ||
-          'Không thể cập nhật cây trồng.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
+      if (errorMsg) message.error(errorMsg);
     },
   });
 
@@ -365,24 +305,17 @@ const Crops = () => {
   };
 
   const beforeCropImageUpload = (file) => {
-    const validType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-    if (!validType) {
-      message.error('Ch\u1ec9 ch\u1ea5p nh\u1eadn \u1ea3nh JPG, PNG ho\u1eb7c WEBP.');
-      return Upload.LIST_IGNORE;
-    }
-    if (file.size / 1024 / 1024 > 5) {
-      message.error('Dung l\u01b0\u1ee3ng \u1ea3nh kh\u00f4ng \u0111\u01b0\u1ee3c v\u01b0\u1ee3t qu\u00e1 5MB.');
-      return Upload.LIST_IGNORE;
-    }
-    return true;
+    const isJpgOrPng = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    return isJpgOrPng && isLt5M;
   };
 
   const handleCropImageUpload = async ({ file, onSuccess, onError }, targetForm, isEditForm = false) => {
-    // Set loading state
+    const targetFormToUse = isEditForm ? form : null;
+    if (!targetFormToUse) return;
+
     if (isEditForm) {
-      setUploadingEdit(true);
-    } else {
-      setUploadingCreate(true);
+      setUploadingUpdate(true);
     }
 
     const formData = new FormData();
@@ -402,23 +335,17 @@ const Crops = () => {
         throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
       }
 
-      // Cập nhật URL thật từ server sau khi upload xong
-      targetForm.setFieldsValue({ imageUrl });
-      message.success('Tải ảnh minh họa thành công.');
+      targetFormToUse.setFieldsValue({ imageUrl });
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       onSuccess(response);
     } catch (error) {
-      message.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          'Không thể tải ảnh minh họa. Vui lòng thử lại.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) message.error(errorMsg);
       onError(error);
     } finally {
-      // Tắt loading state
       if (isEditForm) {
-        setUploadingEdit(false);
-      } else {
-        setUploadingCreate(false);
+        setUploadingUpdate(false);
       }
     }
   };
@@ -627,6 +554,14 @@ const Crops = () => {
           <Sprout className="h-6 w-6" />
           Cây trồng
         </TitleCustom>
+        <Button
+          type="primary"
+          icon={<FileTextOutlined />}
+          onClick={() => navigate(ROUTER.LM_CROP_CREATE)}
+          className="h-10 bg-green-600 px-5 font-medium hover:bg-green-700"
+        >
+          Thêm danh mục cây trồng mới
+        </Button>
       </div>
 
       {isError && (
@@ -711,157 +646,6 @@ const Crops = () => {
         />
       </Card>
 
-      <Modal
-        open={!!isCreating}
-        onCancel={() => {
-          setIsCreating(false);
-          createForm.resetFields();
-        }}
-        footer={null}
-        centered
-        width={720}
-        destroyOnClose
-        title={
-          <span className="text-2xl font-bold text-green-600">
-            Thêm cây trồng
-          </span>
-        }
-      >
-        <Form
-          form={createForm}
-          layout="vertical"
-          className="pt-4"
-          onFinish={(values) => createMutation.mutate(values)}
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
-          scrollToFirstError
-        >
-          <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
-            <Form.Item
-              name="name"
-              label="Tên cây trồng"
-              rules={[
-                {
-                  required: true,
-                  whitespace: true,
-                  message: 'Vui lòng điền đầy đủ các thông tin bắt buộc.',
-                },
-                { max: 150, message: 'Tên cây trồng không được vượt quá 150 ký tự.' },
-              ]}
-            >
-              <Input className="h-11" placeholder="Nhập tên cây trồng" />
-            </Form.Item>
-
-            <Form.Item
-              name="cropCatalogId"
-              label="Nhóm cây"
-              rules={[
-                { required: true, message: 'Vui lòng chọn nhóm cây.' },
-              ]}
-            >
-              <Select
-                className="h-11"
-                placeholder={cropTypeFormOptions?.length > 0 ? "Chọn nhóm cây" : "Chọn nhóm cây từ danh sách"}
-                loading={isCatalogsLoading}
-                options={cropTypeFormOptions}
-                showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-                disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
-              />
-            </Form.Item>
-
-            <Form.Item name="imageUrl" label="Ảnh minh họa">
-              <div className="space-y-3">
-                <Upload
-                  accept="image/png,image/jpeg,image/webp"
-                  showUploadList={false}
-                  beforeUpload={beforeCropImageUpload}
-                  customRequest={(options) => handleCropImageUpload(options, createForm, false)}
-                >
-                  <Button 
-                    icon={<UploadOutlined />} 
-                    loading={uploadingCreate}
-                    className="h-11 rounded-lg"
-                  >
-                    {uploadingCreate ? 'Đang tải lên...' : 'Tải ảnh lên'}
-                  </Button>
-                </Upload>
-
-                {/* Loading state */}
-                {uploadingCreate && !watchedCreateImageUrl && (
-                  <div className="flex h-[96px] w-[112px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
-                    <Spin />
-                  </div>
-                )}
-
-                {/* Preview ảnh sau khi upload xong */}
-                {watchedCreateImageUrl && !uploadingCreate && (
-                  <div className="group relative h-[96px] w-[112px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
-                    <img
-                      src={watchedCreateImageUrl}
-                      alt="Ảnh minh họa cây trồng"
-                      className="h-full w-full rounded-md object-cover"
-                    />
-                    <div className="absolute inset-1 flex items-center justify-center gap-2 rounded-md bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => setPreviewImage(watchedCreateImageUrl)}
-                      />
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => createForm.setFieldsValue({ imageUrl: '' })}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Form.Item>
-          </div>
-
-          <Form.Item name="recommendedCultivationConditions" label="Điều kiện khuyến nghị">
-            <Input.TextArea rows={3} placeholder="Nhập điều kiện khuyến nghị" />
-          </Form.Item>
-
-          <Form.Item name="description" label="Mô tả">
-            <Input.TextArea rows={3} placeholder="Nhập mô tả" />
-          </Form.Item>
-
-          {/* TODO: Giai đoạn sinh trưởng sẽ được quản lý riêng qua CropVarieties API */}
-          {/* <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
-            <GrowthStages />
-          </Form.Item> */}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              onClick={() => {
-                setIsCreating(false);
-                createForm.resetFields();
-              }}
-              className="h-10 min-w-[88px] rounded-lg font-semibold"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={createMutation.isPending}
-              className="h-10 min-w-[112px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-            >
-              Lưu
-            </Button>
-          </div>
-        </Form>
-      </Modal>
-
       <Drawer
         title="Chi tiết cây trồng"
         width={520}
@@ -936,9 +720,7 @@ const Crops = () => {
           onFinish={(values) =>
             updateMutation.mutate({ id: getItemId(editingCrop), values })
           }
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
+          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">

@@ -79,21 +79,16 @@ const MaterialDetail = () => {
       nextActive
         ? MaterialService.activateMaterial(id)
         : MaterialService.deactivateMaterial(id),
-    onSuccess: () => {
-      message.success(MATERIAL_MESSAGES.STATUS_CHANGE_SUCCESS); // MSG-AMM-04
+    onSuccess: (response) => {
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['materials'] });
       queryClient.invalidateQueries({ queryKey: ['material-detail', id] });
       setIsStatusModalOpen(false);
     },
     onError: (error) => {
       const apiMessage = error?.response?.data?.message || error?.message || '';
-      
-      // BR-AMM-03: Kiểm tra nếu đang được sử dụng
-      if (/in use|đang sử dụng|active|đang hoạt động/i.test(apiMessage)) {
-        message.warning(MATERIAL_MESSAGES.CANNOT_DEACTIVATE); // MSG-AMM-10
-      } else {
-        message.error(apiMessage || 'Không thể thay đổi trạng thái vật tư.');
-      }
+      if (apiMessage) message.error(apiMessage);
       setIsStatusModalOpen(false);
     },
   });
