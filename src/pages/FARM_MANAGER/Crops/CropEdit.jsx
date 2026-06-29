@@ -74,7 +74,8 @@ const CropEdit = () => {
         const payload = response?.data ?? response ?? {};
         const data = payload?.data ?? payload;
         const items = Array.isArray(data) ? data : data?.items || [];
-        return items.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+        const cropStages = items.filter((s) => String(s.cropId) === String(id));
+        return cropStages.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
       } catch (err) {
         return [];
       }
@@ -143,16 +144,27 @@ const CropEdit = () => {
     return [];
   }, [cropTypeOptions, cropCatalogOptions]);
 
+  const calculateUnit = (days) => {
+    if (!days) return { value: null, unit: 'days' };
+    if (days % 365 === 0) return { value: days / 365, unit: 'years' };
+    if (days % 30 === 0) return { value: days / 30, unit: 'months' };
+    return { value: days, unit: 'days' };
+  };
+
   useEffect(() => {
     if (cropDetail) {
+      const minData = calculateUnit(cropDetail.minHarvestDays);
+      const maxData = calculateUnit(cropDetail.maxHarvestDays);
+
       form.setFieldsValue({
         name: cropDetail.name || '',
         cropCatalogId: cropDetail.cropCatalogId || '',
-        expectedYield: cropDetail.expectedYield || 0,
+        minHarvestDays: minData.value,
+        minDurationUnit: minData.unit,
+        maxHarvestDays: maxData.value,
+        maxDurationUnit: maxData.unit,
         description: cropDetail.description || '',
         imageUrl: cropDetail.imageUrl || '',
-        recommendedCultivationConditions:
-          cropDetail.recommendedCultivationConditions || '',
         growthStages: initialGrowthStages || [],
       });
     }
@@ -160,14 +172,27 @@ const CropEdit = () => {
 
   const updateMutation = useMutation({
     mutationFn: (values) => {
+      const unitToDays = {
+        days: 1,
+        months: 30,
+        years: 365,
+      };
+      
+      const minDays = values.minHarvestDays 
+        ? values.minHarvestDays * unitToDays[values.minDurationUnit || 'days'] 
+        : null;
+        
+      const maxDays = values.maxHarvestDays 
+        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || 'days'] 
+        : null;
+
       const payload = {
         name: values.name.trim().replace(/\s+/g, ' '),
         cropCatalogId: values.cropCatalogId || null,
-        expectedYield: values.expectedYield || 0,
+        minHarvestDays: minDays,
+        maxHarvestDays: maxDays,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        imageUrl: values.imageUrl?.trim() || '', // Gửi string rỗng thay vì null
-        recommendedCultivationConditions:
-          values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
+        imageUrl: values.imageUrl?.trim() || '',
         isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
       };
       
@@ -198,7 +223,10 @@ const CropEdit = () => {
       });
     },
     onSuccess: (response) => {
-      message.success('Cập nhật cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['growth-stages', id] });
@@ -210,42 +238,29 @@ const CropEdit = () => {
         navigate(ROUTER.FM_CROPS);
         return;
       }
-      message.error(
-        error?.response?.data?.message ||
-          error?.response?.data?.title ||
-          'Không thể cập nhật cây trồng.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
     },
   });
 
   const beforeCropImageUpload = (file) => {
-    const validType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-    if (!validType) {
-      message.error('Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.');
-      return Upload.LIST_IGNORE;
-    }
-    if (file.size / 1024 / 1024 > 5) {
-      message.error('Dung lượng ảnh không được vượt quá 5MB.');
-      return Upload.LIST_IGNORE;
-    }
-    return true;
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    return isJpgOrPng && isLt5M;
   };
 
   const handleCropImageUpload = async ({ file, onSuccess, onError }) => {
     setUploading(true);
 
-    console.log('📤 Bắt đầu upload ảnh:', file);
     const formData = new FormData();
     formData.append('file', file);
-    console.log('📦 FormData created');
 
     try {
-      console.log('🔄 Đang gọi API /v1/media/upload...');
       const response = await UploadService.uploadImage(formData);
-      console.log('✅ Upload response:', response);
       
       const payload = response?.data?.data || response?.data || {};
-      console.log('📦 Payload:', payload);
       
       const imageUrl =
         payload.imageUrl ||
@@ -254,28 +269,21 @@ const CropEdit = () => {
         payload.fileUrl ||
         payload.path;
 
-      console.log('🖼️ ImageUrl:', imageUrl);
-
       if (!imageUrl) {
         throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
       }
 
-      // Cập nhật URL thật từ server sau khi upload xong
       form.setFieldsValue({ imageUrl });
-      message.success('Tải ảnh minh họa thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       onSuccess(response);
     } catch (error) {
-      console.error('❌ Upload error:', error);
-      console.error('❌ Error details:', {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message
-      });
-      message.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          'Không thể tải ảnh minh họa. Vui lòng thử lại.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
       onError(error);
     } finally {
       setUploading(false);
@@ -358,7 +366,7 @@ const CropEdit = () => {
         form={form}
         layout="vertical"
         onFinish={(values) => updateMutation.mutate(values)}
-        onFinishFailed={() => message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')}
+        onFinishFailed={() => {}}
         scrollToFirstError
       >
         <Row gutter={[24, 24]}>
@@ -398,7 +406,7 @@ const CropEdit = () => {
                   </Form.Item>
 
                   <Form.Item
-                    name="minGrowthDuration"
+                    name="minHarvestDays"
                     label="Thời gian sinh trưởng tối thiểu"
                   >
                     <InputNumber
@@ -418,26 +426,42 @@ const CropEdit = () => {
                   </Form.Item>
 
                   <Form.Item
-                    name="maxGrowthDuration"
+                    name="maxHarvestDays"
                     label="Thời gian sinh trưởng tối đa"
-                    dependencies={['minGrowthDuration', 'minDurationUnit', 'maxDurationUnit']}
+                    dependencies={[
+                      'minHarvestDays',
+                      'minDurationUnit',
+                      'maxDurationUnit',
+                    ]}
                     rules={[
                       ({ getFieldValue }) => ({
                         validator(_, value) {
-                          const minVal = getFieldValue('minGrowthDuration');
-                          if (minVal === undefined || minVal === null || value === undefined || value === null) {
+                          const min = getFieldValue('minHarvestDays');
+
+                          if (min == null || value == null) {
                             return Promise.resolve();
                           }
-                          const minUnit = getFieldValue('minDurationUnit') || 'days';
-                          const maxUnit = getFieldValue('maxDurationUnit') || 'days';
-                          const unitToDays = { days: 1, months: 30, years: 365 };
-                          
-                          const minDays = minVal * unitToDays[minUnit];
-                          const maxDays = value * unitToDays[maxUnit];
-                          
+
+                          const unitToDays = {
+                            days: 1,
+                            months: 30,
+                            years: 365,
+                          };
+
+                          const minDays =
+                            min *
+                            unitToDays[getFieldValue('minDurationUnit') || 'days'];
+
+                          const maxDays =
+                            value *
+                            unitToDays[getFieldValue('maxDurationUnit') || 'days'];
+
                           if (maxDays < minDays) {
-                            return Promise.reject(new Error('Thời gian tối đa không được nhỏ hơn thời gian tối thiểu.'));
+                            return Promise.reject(
+                              new Error('Thời gian tối đa phải lớn hơn hoặc bằng thời gian tối thiểu.')
+                            );
                           }
+
                           return Promise.resolve();
                         },
                       }),

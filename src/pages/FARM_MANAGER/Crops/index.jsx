@@ -13,6 +13,7 @@ import {
   Modal,
   Select,
   Space,
+  Spin,
   Table,
   Tag,
   Tooltip,
@@ -34,14 +35,22 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-// import GrowthStages from 'src/components/GrowthStages'; // TODO: Sẽ dùng riêng cho CropVarieties
+import GrowthStages from 'src/components/GrowthStages';
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
+import GrowthStageService from 'src/services/GrowthStageService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import TableCustom from 'src/components/Table/CustomTable';
+
+const formatDuration = (days) => {
+  if (!days) return 'Chưa cập nhật';
+  if (days % 365 === 0) return `${days / 365} năm`;
+  if (days % 30 === 0) return `${days / 30} tháng`;
+  return `${days} ngày`;
+};
 
 const { Text } = Typography;
 
@@ -213,9 +222,12 @@ const Crops = () => {
       nextActive
         ? CropManagementService.activateCrop(id)
         : CropManagementService.deactivateCrop(id),
-    onSuccess: () => {
+    onSuccess: (response) => {
       setInlineError('');
-      message.success('Thay đổi trạng thái cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
     },
@@ -234,7 +246,9 @@ const Crops = () => {
         return;
       }
 
-      message.error(apiMessage || 'Không thể thay đổi trạng thái cây trồng.');
+      if (apiMessage) {
+        message.error(apiMessage);
+      }
     },
   });
 
@@ -249,52 +263,60 @@ const Crops = () => {
 
   const createMutation = useMutation({
     mutationFn: (values) => {
+      const unitToDays = {
+        days: 1,
+        months: 30,
+        years: 365,
+      };
+      
+      const minDays = values.minHarvestDays 
+        ? values.minHarvestDays * unitToDays[values.minDurationUnit || 'days'] 
+        : null;
+        
+      const maxDays = values.maxHarvestDays 
+        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || 'days'] 
+        : null;
+
       const payload = {
         name: values.name.trim().replace(/\s+/g, ' '),
         cropCatalogId: values.cropCatalogId || null,
-        expectedYield: values.expectedYield || 0,
+        minHarvestDays: minDays,
+        maxHarvestDays: maxDays,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         imageUrl: values.imageUrl?.trim() || null,
-        recommendedCultivationConditions:
-          values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
         isActive: true,
       };
-      // TODO: Sau khi tạo Crop thành công, sẽ tạo CropVarieties riêng nếu cần
-      // const growthStages = values.growthStages || [];
-      return CropManagementService.createCrop(payload);
+      
+      return CropManagementService.createCrop(payload).then(async (res) => {
+        const cropId = res?.data?.data?.id || res?.data?.data?._id || res?.data?.id || res?.data?._id;
+        if (cropId && values.growthStages && values.growthStages.length > 0) {
+          for (const stage of values.growthStages) {
+            const stagePayload = { ...stage, cropId };
+            delete stagePayload.id; // remove temp id
+            await GrowthStageService.createGrowthStage(stagePayload);
+          }
+        }
+        return res;
+      });
     },
-    onSuccess: () => {
-      setInlineError('');
+    onSuccess: (response) => {
       setIsCreating(false);
       createForm.resetFields();
-      message.success('Tạo cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       queryClient.invalidateQueries({ queryKey: ['crops'] });
     },
     onError: (error) => {
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.title ||
-        'Không thể tạo cây trồng.';
-
-      // Check for specific error codes/messages
-      if (errorMessage.includes('Mã danh mục cây trồng đã tồn tại') || 
-          errorMessage.toLowerCase().includes('crop code') ||
-          errorMessage.toLowerCase().includes('duplicate')) {
-        createForm.setFields([
-          {
-            name: 'cropCode',
-            errors: ['Mã cây đã tồn tại trong hệ thống.'],
-          },
-        ]);
-      } else if (errorMessage.includes('Tên danh mục cây trồng đã tồn tại') ||
-                 errorMessage.toLowerCase().includes('crop name')) {
-        createForm.setFields([
-          {
-            name: 'name',
-            errors: ['Tên cây trồng đã tồn tại trong hệ thống.'],
-          },
-        ]);
-      } else {
+        error?.message;
+      if (errorMessage && (errorMessage.toLowerCase().includes('crop name') ||
+          errorMessage.includes('Tên'))) {
+        createForm.setFields([{ name: 'name', errors: ['Tên cây trồng đã tồn tại trong hệ thống.'] }]);
+      } else if (errorMessage) {
         message.error(errorMessage);
       }
     },
@@ -305,23 +327,22 @@ const Crops = () => {
       const payload = {
         name: values.name.trim().replace(/\s+/g, ' '),
         cropCatalogId: values.cropCatalogId || null,
-        expectedYield: values.expectedYield || 0,
+        minHarvestDays: values.minHarvestDays || null,
+        maxHarvestDays: values.maxHarvestDays || null,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         imageUrl: values.imageUrl?.trim() || null,
-        recommendedCultivationConditions:
-          values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
         isActive: typeof editingCrop?.isActive === 'boolean' ? editingCrop.isActive : true,
       };
-      // TODO: Quản lý CropVarieties riêng qua API /api/crop-varieties
-      // const growthStages = values.growthStages || [];
       return CropManagementService.updateCrop(id, payload);
     },
     onSuccess: (response) => {
-      console.log('✅ Update response:', response);
       setInlineError('');
       setEditingCrop(null);
       form.resetFields();
-      message.success('Cập nhật cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
     },
@@ -334,11 +355,10 @@ const Crops = () => {
         return;
       }
 
-      message.error(
-        error?.response?.data?.message ||
-          error?.response?.data?.title ||
-          'Không thể cập nhật cây trồng.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
     },
   });
 
@@ -348,26 +368,17 @@ const Crops = () => {
     form.setFieldsValue({
       name: record.name || '',
       cropCatalogId: record.cropCatalogId || '',
-      expectedYield: record.expectedYield || 0,
+      minHarvestDays: record.minHarvestDays || null,
+      maxHarvestDays: record.maxHarvestDays || null,
       description: record.description || '',
       imageUrl: record.imageUrl || '',
-      recommendedCultivationConditions:
-        record.recommendedCultivationConditions || '',
-      // growthStages: record.growthStages || [], // TODO: Quản lý riêng qua CropVarieties
     });
   };
 
   const beforeCropImageUpload = (file) => {
-    const validType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-    if (!validType) {
-      message.error('Ch\u1ec9 ch\u1ea5p nh\u1eadn \u1ea3nh JPG, PNG ho\u1eb7c WEBP.');
-      return Upload.LIST_IGNORE;
-    }
-    if (file.size / 1024 / 1024 > 5) {
-      message.error('Dung l\u01b0\u1ee3ng \u1ea3nh kh\u00f4ng \u0111\u01b0\u1ee3c v\u01b0\u1ee3t qu\u00e1 5MB.');
-      return Upload.LIST_IGNORE;
-    }
-    return true;
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    return isJpgOrPng && isLt5M;
   };
 
   const handleCropImageUpload = async ({ file, onSuccess, onError }, targetForm, isEditForm = false) => {
@@ -396,15 +407,17 @@ const Crops = () => {
       }
 
       // Cập nhật URL thật từ server sau khi upload xong
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       targetForm.setFieldsValue({ imageUrl });
-      message.success('Tải ảnh minh họa thành công.');
       onSuccess(response);
     } catch (error) {
-      message.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          'Không thể tải ảnh minh họa. Vui lòng thử lại.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
       onError(error);
     } finally {
       // Tắt loading state
@@ -760,9 +773,7 @@ const Crops = () => {
           layout="vertical"
           className="pt-4"
           onFinish={(values) => createMutation.mutate(values)}
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
+          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
@@ -855,18 +866,77 @@ const Crops = () => {
             </Form.Item>
           </div>
 
-          <Form.Item name="recommendedCultivationConditions" label="Điều kiện khuyến nghị">
-            <Input.TextArea rows={3} placeholder="Nhập điều kiện khuyến nghị" />
-          </Form.Item>
+          <div className="grid grid-cols-2 gap-x-4">
+            <Form.Item
+              name="minHarvestDays"
+              label="Thời gian sinh trưởng tối thiểu"
+              rules={[
+                { type: 'number', min: 1, message: 'Phải lớn hơn 0.' },
+              ]}
+            >
+              <InputNumber
+                className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
+                placeholder="Nhập thời gian"
+                min={1}
+                addonAfter={
+                  <Form.Item name="minDurationUnit" noStyle initialValue="days">
+                    <Select className="w-24 h-11 bg-gray-50" bordered={false}>
+                      <Select.Option value="days">ngày</Select.Option>
+                      <Select.Option value="months">tháng</Select.Option>
+                      <Select.Option value="years">năm</Select.Option>
+                    </Select>
+                  </Form.Item>
+                }
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="maxHarvestDays"
+              label="Thời gian sinh trưởng tối đa"
+              dependencies={['minHarvestDays', 'minDurationUnit', 'maxDurationUnit']}
+              rules={[
+                { type: 'number', min: 1, message: 'Phải lớn hơn 0.' },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    const minVal = getFieldValue('minHarvestDays');
+                    if (minVal == null || value == null) return Promise.resolve();
+
+                    const unitToDays = { days: 1, months: 30, years: 365 };
+                    const minDays = minVal * unitToDays[getFieldValue('minDurationUnit') || 'days'];
+                    const maxDays = value * unitToDays[getFieldValue('maxDurationUnit') || 'days'];
+
+                    if (maxDays < minDays) {
+                      return Promise.reject(new Error('Thời gian tối đa phải ≥ tối thiểu.'));
+                    }
+                    return Promise.resolve();
+                  },
+                }),
+              ]}
+            >
+              <InputNumber
+                className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
+                placeholder="Nhập thời gian"
+                min={1}
+                addonAfter={
+                  <Form.Item name="maxDurationUnit" noStyle initialValue="days">
+                    <Select className="w-24 h-11 bg-gray-50" bordered={false}>
+                      <Select.Option value="days">ngày</Select.Option>
+                      <Select.Option value="months">tháng</Select.Option>
+                      <Select.Option value="years">năm</Select.Option>
+                    </Select>
+                  </Form.Item>
+                }
+              />
+            </Form.Item>
+          </div>
 
           <Form.Item name="description" label="Mô tả">
             <Input.TextArea rows={3} placeholder="Nhập mô tả" />
           </Form.Item>
 
-          {/* TODO: Giai đoạn sinh trưởng sẽ được quản lý riêng qua CropVarieties API */}
-          {/* <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
+          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
             <GrowthStages />
-          </Form.Item> */}
+          </Form.Item>
 
           <div className="flex justify-end gap-3 pt-2">
             <Button
@@ -928,8 +998,11 @@ const Crops = () => {
                 {getStatusLabel(cropDetail)}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Điều kiện khuyến nghị">
-              {displayValue(cropDetail.recommendedCultivationConditions)}
+            <Descriptions.Item label="Thời gian sinh trưởng tối thiểu">
+              {formatDuration(cropDetail.minHarvestDays)}
+            </Descriptions.Item>
+            <Descriptions.Item label="Thời gian sinh trưởng tối đa">
+              {formatDuration(cropDetail.maxHarvestDays)}
             </Descriptions.Item>
             <Descriptions.Item label="Mô tả">
               {displayValue(cropDetail.description)}
@@ -961,9 +1034,7 @@ const Crops = () => {
           onFinish={(values) =>
             updateMutation.mutate({ id: getItemId(editingCrop), values })
           }
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
+          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">

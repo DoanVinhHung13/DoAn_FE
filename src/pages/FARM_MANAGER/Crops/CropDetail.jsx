@@ -20,6 +20,7 @@ import {
   StopOutlined,
   AppstoreOutlined,
 } from '@ant-design/icons';
+import { SYSTEM_KEY } from 'src/constants/systemKey';
 import { useQuery } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
@@ -36,6 +37,13 @@ const { Text, Paragraph } = Typography;
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
 
 const displayValue = (value) => value || 'Chưa cập nhật';
+
+const formatDuration = (days) => {
+  if (!days) return 'Chưa cập nhật';
+  if (days % 365 === 0) return `${days / 365} năm`;
+  if (days % 30 === 0) return `${days / 30} tháng`;
+  return `${days} ngày`;
+};
 
 const isCropActive = (item) => {
   if (typeof item?.isActive === 'boolean') return item.isActive;
@@ -126,8 +134,9 @@ const CropDetail = () => {
         const payload = response?.data ?? response ?? {};
         const data = payload?.data ?? payload;
         const items = Array.isArray(data) ? data : data?.items || [];
+        const cropStages = items.filter((s) => String(s.cropId) === String(id));
         // Sort by orderIndex
-        return items.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+        return cropStages.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
       } catch (err) {
         return [];
       }
@@ -295,20 +304,15 @@ const CropDetail = () => {
               }
               className="rounded-lg shadow-sm"
             >
-              <Descriptions column={1} size="middle" className="[&_.ant-descriptions-item-label]:w-[200px]">
+              <Descriptions column={1} size="middle" className="[&_.ant-descriptions-item-label]:w-[260px]">
                 <Descriptions.Item label="Danh mục">
                   {displayValue(getCropCatalogName(cropDetail.cropCatalogId))}
-                  {/* TODO: [BACKEND] Hiển thị badge cảnh báo khi danh mục đã ngừng hoạt động
-                  Yêu cầu: Backend cần trả về field "cropCatalogStatus" trong GET /api/crops/{id}
-                  Response mẫu: { ..., "cropCatalogStatus": "active" | "inactive", ... }
-                  
-                  Code để bật lại:
-                  {cropDetail.cropCatalogStatus === 'inactive' && (
-                    <Tag color="warning" className="!ml-2">
-                      ⚠️ Danh mục đã ngừng hoạt động
-                    </Tag>
-                  )}
-                  */}
+                </Descriptions.Item>
+                <Descriptions.Item label="Thời gian sinh trưởng tối thiểu">
+                  {formatDuration(cropDetail.minHarvestDays)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Thời gian sinh trưởng tối đa">
+                  {formatDuration(cropDetail.maxHarvestDays)}
                 </Descriptions.Item>
               </Descriptions>
             </Card>

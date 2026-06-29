@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, Input, InputNumber, Card, Typography, Space } from 'antd';
+import { Button, Input, InputNumber, Card, Typography, Space, Table } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -59,6 +59,44 @@ const GrowthStages = ({ value = [], onChange, readonly = false }) => {
     }
   };
 
+  if (readonly) {
+    const columns = [
+      {
+        title: 'Thứ tự',
+        dataIndex: 'orderIndex',
+        key: 'orderIndex',
+        width: 80,
+        align: 'center',
+        render: (text) => <span className="font-semibold">{text}</span>,
+      },
+      {
+        title: 'Tên giai đoạn',
+        dataIndex: 'stageName',
+        key: 'stageName',
+        width: 250,
+        render: (text) => <span className="font-medium text-green-700">{text || 'Chưa cập nhật'}</span>,
+      },
+      {
+        title: 'Mô tả',
+        dataIndex: 'description',
+        key: 'description',
+        render: (text) => <div className="whitespace-pre-wrap">{text || 'Không có mô tả'}</div>,
+      },
+    ];
+
+    return (
+      <Card className="rounded-lg shadow-sm" title={<span className="text-lg font-semibold text-green-600">Các Giai Đoạn Sinh Trưởng</span>}>
+        <Table 
+          columns={columns} 
+          dataSource={value.map((v, i) => ({ ...v, key: v.id || i }))} 
+          pagination={false}
+          bordered
+          size="middle"
+        />
+      </Card>
+    );
+  }
+
   return (
     <Card className="rounded-lg shadow-sm" title={<span className="text-lg font-semibold text-green-600">Các Giai Đoạn Sinh Trưởng</span>}>
       <div className="space-y-4">
@@ -68,63 +106,53 @@ const GrowthStages = ({ value = [], onChange, readonly = false }) => {
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div className="mb-1 text-sm font-medium text-gray-700">Tên giai đoạn</div>
-                  {readonly ? (
-                    <div className="font-semibold">{stage.stageName || 'Chưa cập nhật'}</div>
-                  ) : (
-                    <Input
-                      value={stage.stageName}
-                      onChange={(e) => handleUpdateStage(index, 'stageName', e.target.value)}
-                      placeholder="VD: Nảy mầm, Ra lá..."
-                      className="h-10 rounded-lg"
-                    />
-                  )}
+                  <Input
+                    value={stage.stageName}
+                    onChange={(e) => handleUpdateStage(index, 'stageName', e.target.value)}
+                    placeholder="VD: Nảy mầm, Ra lá..."
+                    className="h-10 rounded-lg"
+                  />
                 </div>
                
                 <div className="md:col-span-2">
                   <div className="mb-1 text-sm font-medium text-gray-700">Mô tả</div>
-                  {readonly ? (
-                    <div className="whitespace-pre-wrap">{stage.description || 'Không có mô tả'}</div>
-                  ) : (
-                    <Input.TextArea
-                      value={stage.description}
-                      onChange={(e) => handleUpdateStage(index, 'description', e.target.value)}
-                      placeholder="Mô tả chi tiết giai đoạn"
-                      rows={2}
-                      className="rounded-lg"
-                    />
-                  )}
+                  <Input.TextArea
+                    value={stage.description}
+                    onChange={(e) => handleUpdateStage(index, 'description', e.target.value)}
+                    placeholder="Mô tả chi tiết giai đoạn"
+                    rows={2}
+                    className="rounded-lg"
+                  />
                 </div>
               </div>
 
-              {!readonly && (
-                <div className="flex flex-col gap-2">
-                  <Space size={2} direction="vertical">
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<ArrowUpOutlined />}
-                      disabled={index === 0}
-                      onClick={() => handleMove(index, 'up')}
-                      className="text-gray-500"
-                    />
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<ArrowDownOutlined />}
-                      disabled={index === value.length - 1}
-                      onClick={() => handleMove(index, 'down')}
-                      className="text-gray-500"
-                    />
-                  </Space>
+              <div className="flex flex-col gap-2">
+                <Space size={2} direction="vertical">
                   <Button
-                    danger
                     type="text"
-                    icon={<DeleteOutlined />}
-                    onClick={() => handleRemoveStage(index)}
-                    className="mt-2"
+                    size="small"
+                    icon={<ArrowUpOutlined />}
+                    disabled={index === 0}
+                    onClick={() => handleMove(index, 'up')}
+                    className="text-gray-500"
                   />
-                </div>
-              )}
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<ArrowDownOutlined />}
+                    disabled={index === value.length - 1}
+                    onClick={() => handleMove(index, 'down')}
+                    className="text-gray-500"
+                  />
+                </Space>
+                <Button
+                  danger
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleRemoveStage(index)}
+                  className="mt-2"
+                />
+              </div>
             </div>
             
             <div className="text-xs text-gray-400 font-medium uppercase tracking-wider">
@@ -133,16 +161,14 @@ const GrowthStages = ({ value = [], onChange, readonly = false }) => {
           </div>
         ))}
 
-        {!readonly && (
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={handleAddStage}
-            className="w-full h-11 rounded-lg"
-          >
-            Thêm Giai Đoạn Sinh Trưởng
-          </Button>
-        )}
+        <Button
+          type="dashed"
+          icon={<PlusOutlined />}
+          onClick={handleAddStage}
+          className="w-full h-11 rounded-lg"
+        >
+          Thêm Giai Đoạn Sinh Trưởng
+        </Button>
       </div>
     </Card>
   );
