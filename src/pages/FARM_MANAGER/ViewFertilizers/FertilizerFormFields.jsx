@@ -166,6 +166,19 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           : [];
 
       if (incomingComps.length > 0) {
+        const mapToDisplay = (c) => {
+          if (!c) return c;
+          if (c.unit === 'CFU/g' && c.value != null) {
+            const val = Number(c.value);
+            if (val > 0) {
+              const exponent = Math.floor(Math.log10(val));
+              const base = Number((val / Math.pow(10, exponent)).toFixed(2));
+              return { ...c, base, exponent };
+            }
+          }
+          return c;
+        };
+
         // Find existing standard components
         const compN = incomingComps.find(c => c.name === 'N');
         const compP = incomingComps.find(c => c.name === 'P₂O₅');
@@ -175,10 +188,10 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         const others = incomingComps.filter(c => !['N', 'P₂O₅', 'K₂O'].includes(c.name));
 
         setComponents([
-          compN || { name: 'N', value: '', unit: '%' },
-          compP || { name: 'P₂O₅', value: '', unit: '%' },
-          compK || { name: 'K₂O', value: '', unit: '%' },
-          ...others
+          { ...(mapToDisplay(compN) || { value: '' }), name: 'N', unit: '%' },
+          { ...(mapToDisplay(compP) || { value: '' }), name: 'P₂O₅', unit: '%' },
+          { ...(mapToDisplay(compK) || { value: '' }), name: 'K₂O', unit: '%' },
+          ...others.map(mapToDisplay)
         ]);
       } else {
         setComponents(NPK_OPTION);
@@ -198,9 +211,55 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const handleSubmit = async (values) => {
     try {
       // Custom validations
-      const missingNPK = components.slice(0, 3).some(c => c.value == null || c.value === '' || !c.unit);
+      const missingNPK = components.slice(0, 3).some(c => {
+        if (c.unit === 'CFU/g') return c.base == null || c.base === '' || c.exponent == null || c.exponent === '';
+        return c.value == null || c.value === '' || !c.unit;
+      });
       if (missingNPK) {
         message.error('Thành phần N, P₂O₅, K₂O bắt buộc phải có Giá trị và Đơn vị.');
+        return;
+      }
+
+      // Unit-specific validations
+      let totalPercentage = 0;
+      for (const comp of components) {
+        if (!comp.name?.trim()) continue;
+
+        let val;
+        if (comp.unit === 'CFU/g') {
+          if (comp.base == null || comp.base === '' || comp.exponent == null || comp.exponent === '') continue;
+          val = Number(comp.base) * Math.pow(10, Number(comp.exponent));
+        } else {
+          if (comp.value == null || comp.value === '') continue;
+          val = Number(comp.value);
+        }
+        
+        if (Number.isNaN(val)) {
+          message.error(`Giá trị của ${comp.name} không hợp lệ.`);
+          return;
+        }
+
+        if (comp.unit === '%') {
+          if (val < 0 || val > 100) {
+            message.error(`Giá trị của ${comp.name} (%) phải nằm trong khoảng 0 đến 100.`);
+            return;
+          }
+          totalPercentage += val;
+        } else if (comp.unit === 'ppm') {
+          if (val < 0) {
+            message.error(`Giá trị của ${comp.name} (ppm) không được âm.`);
+            return;
+          }
+        } else if (comp.unit === 'CFU/g') {
+          if (val <= 0) {
+            message.error(`Giá trị của ${comp.name} (CFU/g) phải lớn hơn 0.`);
+            return;
+          }
+        }
+      }
+
+      if (totalPercentage > 100) {
+        message.error('Tổng các thành phần có đơn vị (%) không được vượt quá 100%.');
         return;
       }
 
@@ -228,11 +287,21 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         type: values.type ?? '',
         manufacturer: values.manufacturer?.trim() || '',
         compositions: components
-          .filter((c) => c.name?.trim())
+          .filter((c) => {
+            if (!c.name?.trim()) return false;
+            if (c.unit === 'CFU/g') return c.base != null && c.base !== '' && c.exponent != null && c.exponent !== '';
+            return c.value != null && c.value !== '';
+          })
           .map((c) => {
+            let finalValue;
+            if (c.unit === 'CFU/g') {
+              finalValue = Number(c.base) * Math.pow(10, Number(c.exponent));
+            } else {
+              finalValue = Number(c.value) ?? 0;
+            }
             const comp = {
               name: c.name,
-              value: c.value ?? 0,
+              value: finalValue,
               unit: c.unit,
             }
             if (isEdit && c.id) comp.id = c.id;
@@ -529,14 +598,41 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 />
               </div>
               <div style={{ flex: '1 1 100px' }}>
-                <InputNumber
-                  value={comp.value}
-                  onChange={(val) => handleComponentChange(index, 'value', val)}
-                  placeholder="0.0"
-                  min={0}
-                  step={0.1}
-                  className="w-full h-9 rounded-lg"
-                />
+                {comp.unit === 'CFU/g' ? (
+                  <div className="flex items-center gap-1 w-full bg-white border border-gray-300 rounded-lg overflow-hidden focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500 h-9 px-1">
+                    <Input
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      value={comp.base}
+                      onChange={(e) => handleComponentChange(index, 'base', e.target.value)}
+                      placeholder="Cơ số"
+                      className="border-none shadow-none p-1 text-center bg-transparent h-full min-w-[30px]"
+                      style={{ flex: 1, boxShadow: 'none' }}
+                    />
+                    <span className="text-gray-500 font-semibold select-none whitespace-nowrap text-xs">
+                      x 10<sup className="ml-0.5 mt-1 text-[10px]">^</sup>
+                    </span>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={comp.exponent}
+                      onChange={(e) => handleComponentChange(index, 'exponent', e.target.value)}
+                      placeholder="Mũ"
+                      className="border-none shadow-none p-1 text-center bg-transparent h-full min-w-[30px]"
+                      style={{ flex: 1, boxShadow: 'none' }}
+                    />
+                  </div>
+                ) : (
+                  <InputNumber
+                    value={comp.value}
+                    onChange={(val) => handleComponentChange(index, 'value', val)}
+                    placeholder="0.0"
+                    min={0}
+                    step={0.1}
+                    className="w-full h-9 rounded-lg"
+                  />
+                )}
               </div>
               <div style={{ flex: '1 1 120px' }}>
                 <Select
@@ -544,6 +640,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                   onChange={(val) => handleComponentChange(index, 'unit', val)}
                   options={COMPONENT_UNIT_OPTIONS}
                   className="w-full h-9"
+                  disabled={isFixed}
                 />
               </div>
               {isFixed ? (
