@@ -222,9 +222,12 @@ const Crops = () => {
       nextActive
         ? CropManagementService.activateCrop(id)
         : CropManagementService.deactivateCrop(id),
-    onSuccess: () => {
+    onSuccess: (response) => {
       setInlineError('');
-      message.success('Thay đổi trạng thái cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
     },
@@ -243,7 +246,9 @@ const Crops = () => {
         return;
       }
 
-      message.error(apiMessage || 'Không thể thay đổi trạng thái cây trồng.');
+      if (apiMessage) {
+        message.error(apiMessage);
+      }
     },
   });
 
@@ -294,22 +299,24 @@ const Crops = () => {
         return res;
       });
     },
-    onSuccess: () => {
-      setInlineError('');
+    onSuccess: (response) => {
       setIsCreating(false);
       createForm.resetFields();
-      message.success('Tạo cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       queryClient.invalidateQueries({ queryKey: ['crops'] });
     },
     onError: (error) => {
       const errorMessage =
         error?.response?.data?.message ||
         error?.response?.data?.title ||
-        'Không thể tạo cây trồng.';
-      if (errorMessage.toLowerCase().includes('crop name') ||
-          errorMessage.includes('Tên')) {
+        error?.message;
+      if (errorMessage && (errorMessage.toLowerCase().includes('crop name') ||
+          errorMessage.includes('Tên'))) {
         createForm.setFields([{ name: 'name', errors: ['Tên cây trồng đã tồn tại trong hệ thống.'] }]);
-      } else {
+      } else if (errorMessage) {
         message.error(errorMessage);
       }
     },
@@ -329,11 +336,13 @@ const Crops = () => {
       return CropManagementService.updateCrop(id, payload);
     },
     onSuccess: (response) => {
-      console.log('✅ Update response:', response);
       setInlineError('');
       setEditingCrop(null);
       form.resetFields();
-      message.success('Cập nhật cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
     },
@@ -346,11 +355,10 @@ const Crops = () => {
         return;
       }
 
-      message.error(
-        error?.response?.data?.message ||
-          error?.response?.data?.title ||
-          'Không thể cập nhật cây trồng.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
     },
   });
 
@@ -368,16 +376,9 @@ const Crops = () => {
   };
 
   const beforeCropImageUpload = (file) => {
-    const validType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-    if (!validType) {
-      message.error('Ch\u1ec9 ch\u1ea5p nh\u1eadn \u1ea3nh JPG, PNG ho\u1eb7c WEBP.');
-      return Upload.LIST_IGNORE;
-    }
-    if (file.size / 1024 / 1024 > 5) {
-      message.error('Dung l\u01b0\u1ee3ng \u1ea3nh kh\u00f4ng \u0111\u01b0\u1ee3c v\u01b0\u1ee3t qu\u00e1 5MB.');
-      return Upload.LIST_IGNORE;
-    }
-    return true;
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    return isJpgOrPng && isLt5M;
   };
 
   const handleCropImageUpload = async ({ file, onSuccess, onError }, targetForm, isEditForm = false) => {
@@ -406,15 +407,17 @@ const Crops = () => {
       }
 
       // Cập nhật URL thật từ server sau khi upload xong
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       targetForm.setFieldsValue({ imageUrl });
-      message.success('Tải ảnh minh họa thành công.');
       onSuccess(response);
     } catch (error) {
-      message.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          'Không thể tải ảnh minh họa. Vui lòng thử lại.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
       onError(error);
     } finally {
       // Tắt loading state
@@ -770,9 +773,7 @@ const Crops = () => {
           layout="vertical"
           className="pt-4"
           onFinish={(values) => createMutation.mutate(values)}
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
+          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
@@ -1033,9 +1034,7 @@ const Crops = () => {
           onFinish={(values) =>
             updateMutation.mutate({ id: getItemId(editingCrop), values })
           }
-          onFinishFailed={() =>
-            message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')
-          }
+          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">

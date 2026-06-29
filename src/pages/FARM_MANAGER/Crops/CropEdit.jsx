@@ -74,7 +74,8 @@ const CropEdit = () => {
         const payload = response?.data ?? response ?? {};
         const data = payload?.data ?? payload;
         const items = Array.isArray(data) ? data : data?.items || [];
-        return items.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+        const cropStages = items.filter((s) => String(s.cropId) === String(id));
+        return cropStages.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
       } catch (err) {
         return [];
       }
@@ -222,7 +223,10 @@ const CropEdit = () => {
       });
     },
     onSuccess: (response) => {
-      message.success('Cập nhật cây trồng thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['growth-stages', id] });
@@ -234,42 +238,29 @@ const CropEdit = () => {
         navigate(ROUTER.FM_CROPS);
         return;
       }
-      message.error(
-        error?.response?.data?.message ||
-          error?.response?.data?.title ||
-          'Không thể cập nhật cây trồng.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
     },
   });
 
   const beforeCropImageUpload = (file) => {
-    const validType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-    if (!validType) {
-      message.error('Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.');
-      return Upload.LIST_IGNORE;
-    }
-    if (file.size / 1024 / 1024 > 5) {
-      message.error('Dung lượng ảnh không được vượt quá 5MB.');
-      return Upload.LIST_IGNORE;
-    }
-    return true;
+    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
+    const isLt5M = file.size / 1024 / 1024 < 5;
+    return isJpgOrPng && isLt5M;
   };
 
   const handleCropImageUpload = async ({ file, onSuccess, onError }) => {
     setUploading(true);
 
-    console.log('📤 Bắt đầu upload ảnh:', file);
     const formData = new FormData();
     formData.append('file', file);
-    console.log('📦 FormData created');
 
     try {
-      console.log('🔄 Đang gọi API /v1/media/upload...');
       const response = await UploadService.uploadImage(formData);
-      console.log('✅ Upload response:', response);
       
       const payload = response?.data?.data || response?.data || {};
-      console.log('📦 Payload:', payload);
       
       const imageUrl =
         payload.imageUrl ||
@@ -278,28 +269,21 @@ const CropEdit = () => {
         payload.fileUrl ||
         payload.path;
 
-      console.log('🖼️ ImageUrl:', imageUrl);
-
       if (!imageUrl) {
         throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
       }
 
-      // Cập nhật URL thật từ server sau khi upload xong
       form.setFieldsValue({ imageUrl });
-      message.success('Tải ảnh minh họa thành công.');
+      const successMsg = response?.data?.message || response?.message;
+      if (successMsg) {
+        message.success(successMsg);
+      }
       onSuccess(response);
     } catch (error) {
-      console.error('❌ Upload error:', error);
-      console.error('❌ Error details:', {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message
-      });
-      message.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          'Không thể tải ảnh minh họa. Vui lòng thử lại.'
-      );
+      const errorMsg = error?.response?.data?.message || error?.message;
+      if (errorMsg) {
+        message.error(errorMsg);
+      }
       onError(error);
     } finally {
       setUploading(false);
@@ -382,7 +366,7 @@ const CropEdit = () => {
         form={form}
         layout="vertical"
         onFinish={(values) => updateMutation.mutate(values)}
-        onFinishFailed={() => message.error('Vui lòng điền đầy đủ các thông tin bắt buộc.')}
+        onFinishFailed={() => {}}
         scrollToFirstError
       >
         <Row gutter={[24, 24]}>
