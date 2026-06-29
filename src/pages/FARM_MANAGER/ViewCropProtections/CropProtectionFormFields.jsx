@@ -114,6 +114,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
               waterUnit: unitParts[1] || undefined,
               dosage: u.dosage,
               dosageUnit: u.dosageUnitId || u.dosageUnit,
+              area: u.area,
               areaUnit: u.areaUnitId || u.areaUnit,
               isolationDays: u.quarantineDays ?? u.isolationDays,
             }
@@ -159,6 +160,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
             concentrationUnitId: dilUnit || '',
             dosage: u.dosage || 0,
             dosageUnitId: u.dosageUnit || '',
+            area: u.area || 0,
             areaUnitId: u.areaUnit || '',
             quarantineDays: u.isolationDays || 0
           }
@@ -416,13 +418,28 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                     </Col>
                     <Col xs={24} sm={12} md={6}>
                       <Form.Item
-                        {...restField}
-                        name={[name, 'areaUnit']}
-                        label={<>ĐV Diện tích </>}
+                        label={<>Diện tích </>}
                         className="mb-0"
-                        rules={[{ required: true, message: 'Vui lòng chọn' }]}
+                        required
                       >
-                        <Select options={AREA_UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
+                        <div className="flex items-center gap-2">
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'area']}
+                            className="mb-0 flex-1"
+                            rules={[{ required: true, message: 'Nhập số' }]}
+                          >
+                            <InputNumber min={0} placeholder="Số" className="w-full h-9 rounded-lg text-sm" />
+                          </Form.Item>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'areaUnit']}
+                            className="mb-0 w-[90px]"
+                            rules={[{ required: true, message: 'Chọn ĐV' }]}
+                          >
+                            <Select options={AREA_UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
+                          </Form.Item>
+                        </div>
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12} md={6}>

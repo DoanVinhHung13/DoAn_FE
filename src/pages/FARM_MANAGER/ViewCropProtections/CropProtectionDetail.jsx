@@ -52,10 +52,11 @@ const usageColumns = [
     align: 'center',
     render: (v, record) => {
       const dUnit = record.dosageUnitId || record.dosageUnit || '';
+      const aVal = record.area != null ? record.area : '';
       const aUnit = record.areaUnitId || record.areaUnit || '';
       return (
         <Text>
-          {v != null ? `${v} ${dUnit} / ${aUnit}` : '—'}
+          {v != null ? `${v} ${dUnit} / ${aVal} ${aUnit}`.trim() : '—'}
         </Text>
       )
     },
