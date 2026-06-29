@@ -21,19 +21,9 @@ import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import CropProtectionService from 'src/services/CropProtectionService'
 import CropManagementService from 'src/services/CropManagementService'
+import { useSystemKey } from 'src/hooks/useSystemKey'
+import { SYSTEM_KEY } from 'src/constants/systemKey'
 
-const UNIT_OPTIONS = [
-  { value: 'lít', label: 'lít' },
-  { value: 'ml', label: 'ml' },
-  { value: 'g', label: 'g' },
-  { value: 'mg', label: 'mg' },
-  { value: 'kg', label: 'kg' },
-]
-
-const AREA_UNIT_OPTIONS = [
-  { value: 'ha', label: 'ha' },
-  { value: 'm2', label: 'm2' },
-]
 
 // ── Section header helper ─────────────────────────────────────────────────────
 const SectionTitle = ({ children }) => (
@@ -49,6 +39,16 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
+
+  const { getCombo } = useSystemKey()
+  const UNIT_OPTIONS = getCombo(SYSTEM_KEY.FERTILIZER_UNIT).map(opt => ({
+    value: opt.codeValue || opt.value,
+    label: opt.label || opt.description,
+  }))
+  const AREA_UNIT_OPTIONS = getCombo(SYSTEM_KEY.AREA_UNIT).map(opt => ({
+    value: opt.codeValue || opt.value,
+    label: opt.label || opt.description,
+  }))
 
   const [cropsData, setCropsData] = React.useState(null);
   const [isCropsLoading, setIsCropsLoading] = React.useState(false);
@@ -84,7 +84,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         return !['inactive', 'disabled', 'deleted'].includes(status);
       })
       .map((c) => ({
-        value: c.name,
+        value: c.id,
         label: c.name,
       }));
   }, [cropsData]);
@@ -95,14 +95,16 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         code: editingItem.code || '',
         name: editingItem.name || '',
         manufacturer: editingItem.manufacturer || '',
-        supplierId: editingItem.supplierId || undefined,
-        minimumStock: editingItem.minimumStock || undefined,
-        unit: editingItem.unit || undefined,
+        supplier: editingItem.supplier || '',
+        minimumStock: editingItem.minInventory ?? editingItem.minimumStock ?? 0,
+        unit: editingItem.unitId || editingItem.unit || undefined,
         description: editingItem.description || '',
         usages: editingItem.usages && editingItem.usages.length > 0
           ? editingItem.usages.map(u => {
-            const parts = (u.dilutionRatio || '').split(':')
-            const unitParts = (u.dilutionUnit || '').split(':')
+            const conc = u.concentration || u.dilutionRatio || '';
+            const concUnit = u.concentrationUnitId || u.dilutionUnit || '';
+            const parts = conc.split(':')
+            const unitParts = concUnit.split(':')
             return {
               ...u,
               targetCrop: typeof u.targetCrop === 'string' ? u.targetCrop.split(',').map(s => s.trim()).filter(Boolean) : u.targetCrop,
@@ -110,14 +112,18 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
               waterRatio: parts[1] ? Number(parts[1]) : null,
               chemicalUnit: unitParts[0] || undefined,
               waterUnit: unitParts[1] || undefined,
+              dosage: u.dosage,
+              dosageUnit: u.dosageUnitId || u.dosageUnit,
+              areaUnit: u.areaUnitId || u.areaUnit,
+              isolationDays: u.quarantineDays ?? u.isolationDays,
             }
           })
-          : [{}], // start with 1 empty usage
+          : [{}],
       })
     } else {
       form.resetFields()
       form.setFieldsValue({
-        usages: [{}], // default 1 usage block
+        usages: [{}],
       })
     }
   }, [editingItem, isEdit, form])
@@ -127,34 +133,37 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
       setLoading(true)
 
       const body = {
-        code: values.code?.trim(),
         name: values.name?.trim(),
-        manufacturer: values.manufacturer?.trim(),
-        supplierId: values.supplierId || null,
-        minimumStock: values.minimumStock || null,
-        unit: values.unit || null,
-        description: values.description?.trim() || null,
+        code: values.code?.trim(),
+        manufacturer: values.manufacturer?.trim() || '',
+        supplier: values.supplier?.trim() || '',
+        minInventory: values.minimumStock || 0,
+        unitId: values.unit || '',
+        description: values.description?.trim() || '',
+        isActive: isEdit ? editingItem.isActive : true,
         usages: (values.usages || []).map(u => {
           let dilution = null;
           if (u.chemicalRatio != null && u.waterRatio != null) {
             dilution = `${u.chemicalRatio}:${u.waterRatio}`
-          } else if (u.dilutionRatio) {
-            dilution = u.dilutionRatio
           }
 
           let dilUnit = null;
           if (u.chemicalUnit || u.waterUnit) {
             dilUnit = `${u.chemicalUnit || ''}:${u.waterUnit || ''}`
-          } else if (u.dilutionUnit) {
-            dilUnit = u.dilutionUnit
           }
 
-          return {
-            ...u,
-            dilutionRatio: dilution,
-            dilutionUnit: dilUnit,
-            targetCrop: Array.isArray(u.targetCrop) ? u.targetCrop.join(', ') : u.targetCrop
+          const usageObj = {
+            targetCrop: Array.isArray(u.targetCrop) ? u.targetCrop.join(', ') : (u.targetCrop || ''),
+            targetPest: u.targetPest || '',
+            concentration: dilution || '',
+            concentrationUnitId: dilUnit || '',
+            dosage: u.dosage || 0,
+            dosageUnitId: u.dosageUnit || '',
+            areaUnitId: u.areaUnit || '',
+            quarantineDays: u.isolationDays || 0
           }
+          if (isEdit && u.id) usageObj.id = u.id;
+          return usageObj;
         }),
       }
 
@@ -235,14 +244,10 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         </Col>
         <Col xs={24} md={12}>
           <Form.Item
-            name="supplierId"
+            name="supplier"
             label={<span className="font-semibold text-gray-700">Nhà Cung Cấp</span>}
           >
-            <Select placeholder="Chọn nhà cung cấp..." className="h-10 rounded-xl" allowClear>
-              {/* Mock options, replace with API later */}
-              <Select.Option value="SUP-001">Công ty Nông Nghiệp Xanh</Select.Option>
-              <Select.Option value="SUP-002">Đại lý Vật tư Y</Select.Option>
-            </Select>
+            <Input placeholder="Nhập nhà cung cấp..." className="h-10 rounded-xl" />
           </Form.Item>
         </Col>
 

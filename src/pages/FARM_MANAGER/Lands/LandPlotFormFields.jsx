@@ -47,7 +47,11 @@ const LandPlotFormFields = ({
 
     <Row gutter={12}>
       <Col span={14}>
-        <Form.Item label="Diện tích" name="area">
+        <Form.Item 
+          label="Diện tích" 
+          name="area"
+          rules={[{ required: true, message: 'Vui lòng nhập diện tích' }]}
+        >
           <InputNumber
             className="w-full"
             min={0.0001}

@@ -71,14 +71,7 @@ const ViewCropProtections = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
-        Status:
-          statusFilter === 'all'
-            ? undefined
-            : statusFilter === 'ACTIVE'
-              ? true
-              : statusFilter === 'INACTIVE'
-                ? false
-                : statusFilter,
+        Status: statusFilter === 'all' ? undefined : statusFilter,
       }
       const res = await CropProtectionService.getCropProtections(params)
       if (res?.success === false) return

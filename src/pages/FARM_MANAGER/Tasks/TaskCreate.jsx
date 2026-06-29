@@ -15,19 +15,21 @@ const TaskCreate = () => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
-      let finalTargets = [];
-      if (values.targetType === 'ALL') {
-        finalTargets = ['ALL'];
-      } else if (values.targetType === 'CATEGORY') {
-        finalTargets = values.targetCategories || [];
-      } else {
-        finalTargets = values.targetObjects || [];
+      const body = {
+        title: values.title?.trim(),
+        description: values.description?.trim() || '',
+        isActive: true,
+        applyTarget: values.targetType,
       }
 
-      const body = {
-        name: values.name?.trim(),
-        targetObjects: finalTargets,
-        description: values.description?.trim() || null,
+      if (values.targetType === 'CATEGORY') {
+        const catId = Array.isArray(values.targetCategories) ? values.targetCategories[0] : values.targetCategories;
+        if (catId) body.cropCatalogId = catId;
+      } else if (values.targetType === 'SPECIFIC') {
+        const catId = Array.isArray(values.cropCatalogId) ? values.cropCatalogId[0] : values.cropCatalogId;
+        if (catId) body.cropCatalogId = catId;
+        
+        body.cropIds = Array.isArray(values.targetObjects) ? values.targetObjects : [values.targetObjects].filter(Boolean);
       }
 
       const res = await TaskService.create(body)

@@ -28,7 +28,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
       const fetchCatalogs = async () => {
         setIsCatalogsLoading(true);
         try {
-          const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
+          const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100, Status: true });
           if (isMounted) setCatalogsData(normalizeResponse(response));
         } catch (error) {
           console.error(error);
@@ -47,7 +47,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
       const fetchCrops = async () => {
         setIsCropsLoading(true);
         try {
-          const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000 });
+          const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000, Status: true });
           if (isMounted) setCropsData(normalizeResponse(response));
         } catch (error) {
           console.error(error);
@@ -82,8 +82,8 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
       return !['inactive', 'disabled', 'deleted'].includes(status);
     });
 
-    if (selectedCatalogId && selectedCatalogId.length > 0) {
-      filtered = filtered.filter((c) => selectedCatalogId.includes(c.cropCatalogId || c.categoryId));
+    if (selectedCatalogId) {
+      filtered = filtered.filter((c) => (c.cropCatalogId || c.categoryId) === selectedCatalogId);
     }
     return filtered.map((c) => ({
       value: c.id || c._id || c.cropId,
@@ -95,7 +95,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
     <Row gutter={16}>
       <Col xs={24} md={12}>
         <Form.Item
-          name="name"
+          name="title"
           label={
             <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
               Tên công việc {!readOnly}
@@ -149,11 +149,10 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
               </span>
             }
             rules={!readOnly ? [
-              { required: true, message: 'Vui lòng chọn ít nhất 1 danh mục.' },
+              { required: true, message: 'Vui lòng chọn danh mục.' },
             ] : []}
           >
             <Select
-              mode="multiple"
               allowClear
               placeholder="Chọn danh mục..."
               className="rounded-lg"
@@ -172,19 +171,21 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
               name="cropCatalogId"
               label={
                 <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  Lọc theo danh mục
+                  Danh mục cây trồng
                 </span>
               }
+              rules={!readOnly ? [
+                { required: true, message: 'Vui lòng chọn danh mục.' },
+              ] : []}
             >
               <Select
-                mode="multiple"
                 allowClear
                 placeholder="Chọn danh mục để lọc..."
                 className="rounded-lg"
                 options={catalogOptions}
                 disabled={readOnly || isCatalogsLoading}
                 loading={isCatalogsLoading}
-                onChange={() => form.setFieldsValue({ targetObjects: [] })}
+                onChange={() => form.setFieldsValue({ targetObjects: undefined })}
               />
             </Form.Item>
           </Col>
@@ -198,7 +199,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
                 </span>
               }
               rules={!readOnly ? [
-                { required: true, message: 'Vui lòng chọn ít nhất 1 cây trồng.' },
+                { required: true, message: 'Vui lòng chọn cây trồng.' },
               ] : []}
             >
               <Select

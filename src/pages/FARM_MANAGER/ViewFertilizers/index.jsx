@@ -54,18 +54,6 @@ import { invalidCharsRegex } from 'src/utils/helpers'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 
-// ── Loại phân bón options cho bộ lọc ───────────────────────────────────────
-const CATEGORY_FILTER_OPTIONS = [
-  { value: 'all', label: 'Tất cả loại' },
-  { value: 'Hữu cơ', label: 'Hữu cơ' },
-  { value: 'Hữu cơ khoáng', label: 'Hữu cơ khoáng' },
-  { value: 'Hữu cơ sinh học', label: 'Hữu cơ sinh học' },
-  { value: 'Hữu cơ vi sinh', label: 'Hữu cơ vi sinh' },
-  { value: 'Vi sinh vật', label: 'Vi sinh vật' },
-  { value: 'Bón lá', label: 'Bón lá' },
-  { value: 'Khác', label: 'Khác' },
-]
-
 // ── Main Component ────────────────────────────────────────────────────────────
 const ViewFertilizers = () => {
   const navigate = useNavigate()
@@ -75,6 +63,15 @@ const ViewFertilizers = () => {
   const selectStatusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
     ...statusOptions.map(opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description,
+    })),
+  ]
+
+  const fertilizerTypeOptions = getCombo(SYSTEM_KEY.FERTILIZER_TYPE)
+  const selectCategoryOptions = [
+    { value: 'all', label: 'Tất cả loại' },
+    ...fertilizerTypeOptions.map(opt => ({
       value: opt.codeValue || opt.value,
       label: opt.label || opt.description,
     })),
@@ -106,14 +103,8 @@ const ViewFertilizers = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
-        Status:
-          statusFilter === 'all'
-            ? undefined
-            : statusFilter === 'ACTIVE'
-              ? true
-              : statusFilter === 'INACTIVE'
-                ? false
-                : statusFilter,
+        Type: categoryFilter === 'all' ? undefined : categoryFilter,
+        Status: statusFilter === 'all' ? undefined : statusFilter,
       }
       const res = await FertilizerService.getFertilizers(params)
       if (res?.success === false) return
@@ -122,7 +113,7 @@ const ViewFertilizers = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, statusFilter])
+  }, [page, pageSize, search, categoryFilter, statusFilter])
 
   useEffect(() => {
     getList()
@@ -399,7 +390,7 @@ const ViewFertilizers = () => {
               setPage(1)
             }}
             className="h-10 rounded-xl min-w-[160px]"
-            options={CATEGORY_FILTER_OPTIONS}
+            options={selectCategoryOptions}
           />
           <Select
             value={statusFilter}

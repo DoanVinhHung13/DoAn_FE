@@ -39,7 +39,23 @@ const componentColumns = [
     key: 'value',
     align: 'center',
     width: 110,
-    render: (v) => <Text>{v != null && v !== '' ? v : '—'}</Text>,
+    render: (v, record) => {
+      if (v == null || v === '') return <Text>—</Text>
+      
+      if (record.unit === 'CFU/g') {
+        const val = Number(v)
+        if (val > 0) {
+          const exponent = Math.floor(Math.log10(val))
+          const base = Number((val / Math.pow(10, exponent)).toFixed(2))
+          return (
+            <Text>
+              {base} x 10<sup className="text-[10px] ml-[1px]">{exponent}</sup>
+            </Text>
+          )
+        }
+      }
+      return <Text>{v}</Text>
+    },
   },
   {
     title: 'Đơn vị Tính (%, ppm, CFU/g)',

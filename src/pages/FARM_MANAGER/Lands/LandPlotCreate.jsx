@@ -178,7 +178,7 @@ const LandPlotCreate = () => {
 
         {/* Cột phải: bản đồ GIS */}
         <Col xs={24} xl={14}>
-          <Card title="Bản đồ ranh giới (GIS)">
+          <Card title={<span>Bản đồ ranh giới (GIS) <span className="text-red-500">*</span></span>}>
             {mapError && (
               <Alert className="mb-3" type="error" showIcon message={mapError} />
             )}

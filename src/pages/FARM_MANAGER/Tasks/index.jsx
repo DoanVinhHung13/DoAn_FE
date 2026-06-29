@@ -178,19 +178,20 @@ const TasksManagement = () => {
     },
     {
       title: 'Tên công việc',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'title',
+      key: 'title',
       render: (v) => (
         <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
       ),
     },
     {
       title: 'Đối tượng',
-      dataIndex: 'typeOfObject',
-      key: 'typeOfObject',
-      render: (v) => (
-        <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
-      ),
+      key: 'applyTarget',
+      render: (_, record) => {
+        if (record.cropId) return <span className="text-sm font-semibold text-gray-800">Cây trồng: {record.cropName}</span>
+        if (record.cropCatalogId) return <span className="text-sm font-semibold text-gray-800">Danh mục: {record.cropCatalogName}</span>
+        return <span className="text-sm font-semibold text-gray-800">Tất cả cây trồng</span>
+      },
     },
     {
       title: 'Mô tả',
@@ -400,7 +401,7 @@ const TasksManagement = () => {
               <span className="font-mono text-blue-700">
                 {statusModal.item.code}
               </span>{' '}
-              — {statusModal.item.name}
+              — {statusModal.item.title}
             </p>
           )}
         </div>

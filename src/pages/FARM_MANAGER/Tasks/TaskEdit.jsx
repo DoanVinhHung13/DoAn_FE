@@ -27,25 +27,24 @@ const TaskEdit = () => {
 
         const data = res?.data || {}
 
-        let initialTargetType = 'SPECIFIC';
-        let initialTargetObjects = data.targetObjects || [];
-        let initialTargetCategories = [];
+        let initialTargetType = 'ALL';
+        let initialCropIds = data.cropIds || (data.cropId ? [data.cropId] : []);
+        let initialCropCatalogId = data.cropCatalogId;
 
-        if (data.targetObjects?.includes('ALL')) {
-          initialTargetType = 'ALL';
-          initialTargetObjects = [];
-        } else if (data.targetObjects?.length && !data.targetObjects.some(id => typeof id === 'string' && id.includes('-'))) {
-          // Basic heuristic: backend might just return crop/catalog IDs.
-          // In reality, to be fully robust, we would need to know if the ID belongs to crop or catalog.
-          // Assuming we just bind them back to targetObjects for SPECIFIC for now, since we cannot easily distinguish.
+        if (initialCropIds && initialCropIds.length > 0) {
           initialTargetType = 'SPECIFIC';
+        } else if (initialCropCatalogId) {
+          initialTargetType = 'CATEGORY';
+        } else {
+          initialTargetType = 'ALL';
         }
 
         form.setFieldsValue({
-          name: data.name || '',
+          title: data.title || '',
           targetType: initialTargetType,
-          targetObjects: initialTargetObjects,
-          targetCategories: initialTargetCategories,
+          cropCatalogId: initialCropCatalogId,
+          targetObjects: initialCropIds,
+          targetCategories: initialCropCatalogId,
           description: data.description || '',
         })
       } catch (err) {
@@ -61,19 +60,22 @@ const TaskEdit = () => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
-      let finalTargets = [];
-      if (values.targetType === 'ALL') {
-        finalTargets = ['ALL'];
-      } else if (values.targetType === 'CATEGORY') {
-        finalTargets = values.targetCategories || [];
-      } else {
-        finalTargets = values.targetObjects || [];
+      
+      const body = {
+        title: values.title?.trim(),
+        description: values.description?.trim() || '',
+        isActive: true,
+        applyTarget: values.targetType,
       }
 
-      const body = {
-        name: values.name?.trim(),
-        targetObjects: finalTargets,
-        description: values.description?.trim() || null,
+      if (values.targetType === 'CATEGORY') {
+        const catId = Array.isArray(values.targetCategories) ? values.targetCategories[0] : values.targetCategories;
+        if (catId) body.cropCatalogId = catId;
+      } else if (values.targetType === 'SPECIFIC') {
+        const catId = Array.isArray(values.cropCatalogId) ? values.cropCatalogId[0] : values.cropCatalogId;
+        if (catId) body.cropCatalogId = catId;
+        
+        body.cropIds = Array.isArray(values.targetObjects) ? values.targetObjects : [values.targetObjects].filter(Boolean);
       }
 
       const res = await TaskService.update(id, body)

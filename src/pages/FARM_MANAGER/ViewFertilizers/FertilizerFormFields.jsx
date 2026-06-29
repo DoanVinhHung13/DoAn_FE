@@ -43,39 +43,12 @@ import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import FertilizerService from 'src/services/FertilizerService'
 import CropManagementService from 'src/services/CropManagementService'
+import { useSystemKey } from 'src/hooks/useSystemKey'
+import { SYSTEM_KEY } from 'src/constants/systemKey'
 
 const { Text } = Typography
 
 // ── Options ──────────────────────────────────────────────────────────────────
-
-const FERTILIZER_TYPE_OPTIONS = [
-  { value: 'Hữu cơ', label: 'Hữu cơ' },
-  { value: 'Hữu cơ khoáng', label: 'Hữu cơ khoáng' },
-  { value: 'Hữu cơ sinh học', label: 'Hữu cơ sinh học' },
-  { value: 'Hữu cơ vi sinh', label: 'Hữu cơ vi sinh' },
-  { value: 'Vi sinh vật', label: 'Vi sinh vật' },
-  { value: 'Bón lá', label: 'Bón lá' },
-  { value: 'Khác', label: 'Khác' },
-]
-
-const UNIT_OPTIONS = [
-  { value: 'lít', label: 'lít' },
-  { value: 'ml', label: 'ml' },
-  { value: 'g', label: 'g' },
-  { value: 'mg', label: 'mg' },
-  { value: 'kg', label: 'kg' },
-]
-
-const COMPONENT_UNIT_OPTIONS = [
-  { value: '%', label: '%' },
-  { value: 'ppm', label: 'ppm' },
-  { value: 'CFU/g', label: 'CFU/g' },
-]
-
-const AREA_UNIT_OPTIONS = [
-  { value: 'ha', label: 'ha' },
-  { value: 'm²', label: 'm²' },
-]
 
 const NPK_OPTION = [
   { name: 'N', value: '', unit: '%' },
@@ -102,6 +75,27 @@ const SectionTitle = ({ children }) => (
 const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
+  const { getCombo } = useSystemKey()
+
+  const FERTILIZER_TYPE_OPTIONS = getCombo(SYSTEM_KEY.FERTILIZER_TYPE).map(opt => ({
+    value: opt.codeValue || opt.value,
+    label: opt.label || opt.description,
+  }))
+
+  const UNIT_OPTIONS = getCombo(SYSTEM_KEY.FERTILIZER_UNIT).map(opt => ({
+    value: opt.codeValue || opt.value,
+    label: opt.label || opt.description,
+  }))
+
+  const COMPONENT_UNIT_OPTIONS = getCombo(SYSTEM_KEY.COMPONENT_UNIT).map(opt => ({
+    value: opt.codeValue || opt.value,
+    label: opt.label || opt.description,
+  }))
+
+  const AREA_UNIT_OPTIONS = getCombo(SYSTEM_KEY.AREA_UNIT).map(opt => ({
+    value: opt.codeValue || opt.value,
+    label: opt.label || opt.description,
+  }))
   const [loading, setLoading] = React.useState(false)
   const [components, setComponents] = React.useState(NPK_OPTION)
   const [dosages, setDosages] = React.useState([DEFAULT_DOSAGE])
@@ -140,7 +134,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         return !['inactive', 'disabled', 'deleted'].includes(status);
       })
       .map((c) => ({
-        value: c.name,
+        value: c.id,
         label: c.name,
       }));
   }, [cropsData]);
@@ -233,7 +227,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           if (comp.value == null || comp.value === '') continue;
           val = Number(comp.value);
         }
-        
+
         if (Number.isNaN(val)) {
           message.error(`Giá trị của ${comp.name} không hợp lệ.`);
           return;
@@ -301,7 +295,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             }
             const comp = {
               name: c.name,
-              value: finalValue,
+              value: finalValue.toString(),
               unit: c.unit,
             }
             if (isEdit && c.id) comp.id = c.id;
@@ -311,13 +305,12 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           .filter((d) => d.amount !== '' && d.amount != null)
           .map((d) => {
             const dos = {
-              amount: d.amount,
+              amount: d.amount.toString(),
               unit: d.unit,
               areaUnit: d.areaUnit,
+              target: Array.isArray(d.target) ? d.target.join(', ') : (d.target || '')
             }
             if (isEdit && d.id) dos.id = d.id;
-            // Swagger PUT DTO does not have target, omitting it on update to prevent 400 Bad Request
-            if (!isEdit) dos.target = Array.isArray(d.target) ? d.target.join(', ') : (d.target || '');
             return dos;
           }),
       }
@@ -346,8 +339,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       ).toLowerCase()
       if (errMsg.includes('code') || errMsg.includes('mã')) {
         form.setFields([{ name: 'code', errors: ['Mã phân bón đã tồn tại trong hệ thống.'] }])
-      } else {
-        message.error('Vui lòng nhập đầy đủ các trường thông tin bắt buộc.')
       }
     } finally {
       setLoading(false)

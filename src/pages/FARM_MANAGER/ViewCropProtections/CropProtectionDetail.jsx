@@ -31,17 +31,18 @@ const usageColumns = [
   },
   {
     title: 'Nồng độ pha loãng',
-    dataIndex: 'dilutionRatio',
-    key: 'dilutionRatio',
+    dataIndex: 'concentration',
+    key: 'concentration',
     align: 'center',
     render: (v, record) => {
-      if (!v) return <Text>—</Text>;
-      const ratioParts = String(v).split(':');
-      const unitParts = String(record.dilutionUnit || '').split(':');
+      const conc = v || record.dilutionRatio;
+      if (!conc) return <Text>—</Text>;
+      const ratioParts = String(conc).split(':');
+      const unitParts = String(record.concentrationUnitId || record.dilutionUnit || '').split(':');
       if (ratioParts.length === 2 && unitParts.length === 2) {
         return <Text>{`${ratioParts[0]} ${unitParts[0]} : ${ratioParts[1]} ${unitParts[1]}`}</Text>;
       }
-      return <Text>{`${v} ${record.dilutionUnit || ''}`}</Text>;
+      return <Text>{`${conc} ${record.concentrationUnitId || record.dilutionUnit || ''}`}</Text>;
     },
   },
   {
@@ -49,18 +50,25 @@ const usageColumns = [
     dataIndex: 'dosage',
     key: 'dosage',
     align: 'center',
-    render: (v, record) => (
-      <Text>
-        {v != null ? `${v} ${record.dosageUnit || ''} / ${record.areaUnit || ''}` : '—'}
-      </Text>
-    ),
+    render: (v, record) => {
+      const dUnit = record.dosageUnitId || record.dosageUnit || '';
+      const aUnit = record.areaUnitId || record.areaUnit || '';
+      return (
+        <Text>
+          {v != null ? `${v} ${dUnit} / ${aUnit}` : '—'}
+        </Text>
+      )
+    },
   },
   {
     title: 'Cách ly (Ngày)',
-    dataIndex: 'isolationDays',
-    key: 'isolationDays',
+    dataIndex: 'quarantineDays',
+    key: 'quarantineDays',
     align: 'center',
-    render: (v) => (v != null ? <Tag color="red">{v} ngày</Tag> : '—'),
+    render: (v, record) => {
+      const days = v != null ? v : record.isolationDays;
+      return days != null ? <Tag color="red">{days} ngày</Tag> : '—';
+    },
   },
 ]
 
@@ -200,7 +208,7 @@ const CropProtectionDetail = () => {
             </Descriptions.Item>
 
             <Descriptions.Item label="Nhà Cung Cấp">
-              {item.supplierId || <span className="text-gray-400">—</span>}
+              {item.supplier || item.supplierId || <span className="text-gray-400">—</span>}
             </Descriptions.Item>
 
             <Descriptions.Item
@@ -211,16 +219,16 @@ const CropProtectionDetail = () => {
               }
             >
               <span className="font-semibold text-emerald-600">
-                {item.minimumStock != null
-                  ? `${Number(item.minimumStock).toLocaleString('vi-VN')} ${item.unit || ''}`
+                {item.minInventory != null || item.minimumStock != null
+                  ? `${Number(item.minInventory ?? item.minimumStock).toLocaleString('vi-VN')} ${item.unitId || item.unit || ''}`
                   : '—'}
               </span>
             </Descriptions.Item>
 
             <Descriptions.Item label="Đơn vị tính">
-              {item.unit ? (
+              {item.unitId || item.unit ? (
                 <Tag color="blue" className="font-medium rounded-full">
-                  {item.unit}
+                  {item.unitId || item.unit}
                 </Tag>
               ) : (
                 <span className="text-gray-400">—</span>
