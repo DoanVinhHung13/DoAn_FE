@@ -76,7 +76,7 @@ const LandManagerNotifications = React.lazy(() => import('../pages/LAND_MANAGER/
 const LandManagerViewCatalogs = React.lazy(() => import('../pages/LAND_MANAGER/ViewCatalogs'))
 const LandManagerCatalogDetail = React.lazy(() => import('../pages/LAND_MANAGER/ViewCatalogs/CatalogDetail'))
 const LandManagerCrops = React.lazy(() => import('../pages/LAND_MANAGER/Crops'))
-const LandManagerCropCreate = React.lazy(() => import('../pages/LAND_MANAGER/Crops/CropCreate'))
+
 const LandManagerCropDetail = React.lazy(() => import('../pages/LAND_MANAGER/Crops/CropDetail'))
 
 // MATERIAL_MANAGER pages
@@ -268,7 +268,7 @@ const routes = [
               
               // Crop Management
               { path: ROUTER.LM_CROPS, element: <Lazy><LandManagerCrops /></Lazy> },
-              { path: ROUTER.LM_CROP_CREATE, element: <Lazy><LandManagerCropCreate /></Lazy> },
+
               { path: ROUTER.LM_CROP_DETAIL, element: <Lazy><LandManagerCropDetail /></Lazy> },
             ],
           },

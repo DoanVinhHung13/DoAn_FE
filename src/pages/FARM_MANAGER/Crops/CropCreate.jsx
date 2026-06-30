@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Input, InputNumber, Select, Upload, Spin, message, Row, Col } from 'antd';
+import { Button, Card, Form, Input, InputNumber, Select, Upload, Spin, message, Row, Col, Modal } from 'antd';
 import { ArrowLeftOutlined, DeleteOutlined, EyeOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
@@ -52,7 +52,7 @@ const CropCreate = () => {
         return items.filter(item => {
           if (typeof item?.isActive === 'boolean') return item.isActive;
           const status = String(item?.status || '').toLowerCase();
-          return !['inactive', 'disabled', 'deleted'].includes(status);
+          return !['inactive', 'disabled', 'deleted', 'ngừng hoạt động'].includes(status);
         });
       } catch (err) {
         if (err?.response?.status === 405) {
@@ -77,17 +77,8 @@ const CropCreate = () => {
   }, [cropCatalogsData]);
 
   const cropTypeFormOptions = useMemo(() => {
-    if (cropTypeOptions && cropTypeOptions.length > 0) {
-      return cropTypeOptions.map((opt) => ({
-        value: opt.codeValue || opt.CodeValue,
-        label: opt.description || opt.Description,
-      }));
-    }
-    if (cropCatalogOptions && cropCatalogOptions.length > 0) {
-      return cropCatalogOptions;
-    }
-    return [];
-  }, [cropTypeOptions, cropCatalogOptions]);
+    return cropCatalogOptions || [];
+  }, [cropCatalogOptions]);
 
   const beforeCropImageUpload = (file) => {
     const isJpgOrPng = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
@@ -407,6 +398,32 @@ const CropCreate = () => {
           </Button>
         </div>
       </Form>
+
+      {/* Modal xem ảnh */}
+      <Modal
+        open={!!previewImage}
+        onCancel={() => setPreviewImage(null)}
+        footer={null}
+        centered
+        width="auto"
+        styles={{
+          body: { padding: 0 },
+        }}
+        closeIcon={
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
+            ×
+          </span>
+        }
+      >
+        <div className="relative max-h-[80vh] max-w-[90vw]">
+          <img
+            src={previewImage}
+            alt="Xem ảnh"
+            className="max-h-[80vh] max-w-full rounded-lg object-contain"
+            style={{ display: 'block' }}
+          />
+        </div>
+      </Modal>
     </div>
   );
 };

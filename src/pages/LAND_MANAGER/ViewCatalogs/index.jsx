@@ -84,7 +84,6 @@ const ViewCatalogs = () => {
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('all');
-  const [selectedCatalogId, setSelectedCatalogId] = useState(null);
 
   // SystemKey hook
   const { getCombo } = useSystemKey();
@@ -120,20 +119,6 @@ const ViewCatalogs = () => {
     retry: false,
   });
 
-  const {
-    data: catalogDetail,
-    isLoading: isDetailLoading,
-    isError: isDetailError,
-  } = useQuery({
-    queryKey: ['crop-catalog-detail-view', selectedCatalogId],
-    queryFn: async () => {
-      const response = await CropService.getCropById(selectedCatalogId);
-      const payload = response?.data ?? {};
-      return payload?.data ?? payload;
-    },
-    enabled: !!selectedCatalogId,
-    retry: false,
-  });
 
   const filteredCatalogs = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLocaleLowerCase('vi');
@@ -278,44 +263,7 @@ const ViewCatalogs = () => {
         />
       </Card>
 
-      {/* Drawer chi tiết (Read-only) */}
-      <Drawer
-        title="Chi tiết danh mục cây trồng"
-        width={520}
-        open={!!selectedCatalogId}
-        onClose={() => setSelectedCatalogId(null)}
-      >
-        {isDetailLoading && (
-          <div className="space-y-3">
-            <div className="h-10 animate-pulse rounded bg-gray-100" />
-            <div className="h-10 animate-pulse rounded bg-gray-100" />
-            <div className="h-24 animate-pulse rounded bg-gray-100" />
-          </div>
-        )}
 
-        {isDetailError && (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={EMPTY_MESSAGE}
-          />
-        )}
-
-        {!isDetailLoading && !isDetailError && catalogDetail && (
-          <Descriptions column={1} bordered size="middle">
-            <Descriptions.Item label="Tên loại cây trồng">
-              {displayValue(catalogDetail.name || catalogDetail.cropCatalogName)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              <Tag color={isCatalogActive(catalogDetail) ? 'success' : 'error'}>
-                {getStatusLabel(catalogDetail)}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Mô tả">
-              {displayValue(catalogDetail.description)}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-      </Drawer>
     </div>
   );
 };

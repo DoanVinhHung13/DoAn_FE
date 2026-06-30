@@ -72,6 +72,7 @@ const CatalogEdit = () => {
       const successMsg = response?.data?.message || response?.message;
       if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+      queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['system-key'] });
       navigate(ROUTER.FM_CROP_CATALOGS);
