@@ -133,12 +133,7 @@ const Crops = () => {
   const [status, setStatus] = useState('all');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name-asc');
-  const [selectedCropId, setSelectedCropId] = useState(null);
-  const [editingCrop, setEditingCrop] = useState(null);
-  const [statusTarget, setStatusTarget] = useState(null);
   const [inlineError, setInlineError] = useState('');
-  const [previewImage, setPreviewImage] = useState(null);
-
   // SystemKey hook
   const { getCombo, getDescription } = useSystemKey();
   const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE);
@@ -211,159 +206,6 @@ const Crops = () => {
     retry: false,
   });
 
-  const statusMutation = useMutation({
-    mutationFn: ({ id, nextActive }) =>
-      nextActive
-        ? CropManagementService.activateCrop(id)
-        : CropManagementService.deactivateCrop(id),
-    onSuccess: () => {
-      setInlineError('');
-      message.success('Thay đổi trạng thái cây trồng thành công.');
-      queryClient.invalidateQueries({ queryKey: ['crops'] });
-      queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
-    },
-    onError: (error) => {
-      const statusCode = error?.response?.status;
-      const apiMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.title ||
-        error?.message ||
-        '';
-
-      if (statusCode === 404) {
-        setInlineError(EMPTY_MESSAGE);
-        setSelectedCropId(null);
-        queryClient.invalidateQueries({ queryKey: ['crops'] });
-        return;
-      }
-
-      if (apiMessage) message.error(apiMessage);
-    },
-  });
-
-  const handleConfirmStatusChange = () => {
-    if (!statusTarget) return;
-    statusMutation.mutate({
-      id: getItemId(statusTarget),
-      nextActive: !isCropActive(statusTarget),
-    });
-    setStatusTarget(null);
-  };
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, values }) => {
-      const payload = {
-        name: values.name.trim().replace(/\s+/g, ' '),
-        cropCatalogId: values.cropCatalogId || null,
-        expectedYield: values.expectedYield || 0,
-        description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        imageUrl: values.imageUrl?.trim() || null,
-        recommendedCultivationConditions:
-          values.recommendedCultivationConditions?.trim().replace(/\s+/g, ' ') || null,
-        isActive: typeof editingCrop?.isActive === 'boolean' ? editingCrop.isActive : true,
-      };
-      // TODO: Quản lý CropVarieties riêng qua API /api/crop-varieties
-      // const growthStages = values.growthStages || [];
-      return CropManagementService.updateCrop(id, payload);
-    },
-    onSuccess: (response) => {
-      setInlineError('');
-      setEditingCrop(null);
-      form.resetFields();
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
-      queryClient.invalidateQueries({ queryKey: ['crops'] });
-      queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
-    },
-    onError: (error) => {
-      if (error?.response?.status === 404) {
-        setInlineError(EMPTY_MESSAGE);
-        setEditingCrop(null);
-        form.resetFields();
-        queryClient.invalidateQueries({ queryKey: ['crops'] });
-        return;
-      }
-
-      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
-      if (errorMsg) message.error(errorMsg);
-    },
-  });
-
-  const openUpdateForm = (record) => {
-    setInlineError('');
-    setEditingCrop(record);
-    form.setFieldsValue({
-      name: record.name || '',
-      cropCatalogId: record.cropCatalogId || '',
-      expectedYield: record.expectedYield || 0,
-      description: record.description || '',
-      imageUrl: record.imageUrl || '',
-      recommendedCultivationConditions:
-        record.recommendedCultivationConditions || '',
-      // growthStages: record.growthStages || [], // TODO: Quản lý riêng qua CropVarieties
-    });
-  };
-
-  const beforeCropImageUpload = (file) => {
-    const isJpgOrPng = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-    const isLt5M = file.size / 1024 / 1024 < 5;
-    return isJpgOrPng && isLt5M;
-  };
-
-  const handleCropImageUpload = async ({ file, onSuccess, onError }, targetForm, isEditForm = false) => {
-    const targetFormToUse = isEditForm ? form : null;
-    if (!targetFormToUse) return;
-
-    if (isEditForm) {
-      setUploadingUpdate(true);
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await UploadService.uploadImage(formData);
-      const payload = response?.data?.data || response?.data || {};
-      const imageUrl =
-        payload.imageUrl ||
-        payload.url ||
-        payload.secureUrl ||
-        payload.fileUrl ||
-        payload.path;
-
-      if (!imageUrl) {
-        throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
-      }
-
-      targetFormToUse.setFieldsValue({ imageUrl });
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
-      onSuccess(response);
-    } catch (error) {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) message.error(errorMsg);
-      onError(error);
-    } finally {
-      if (isEditForm) {
-        setUploadingUpdate(false);
-      }
-    }
-  };
-
-  const {
-    data: cropDetail,
-    isLoading: isDetailLoading,
-    isError: isDetailError,
-  } = useQuery({
-    queryKey: ['crop-detail', selectedCropId],
-    queryFn: async () => {
-      const response = await CropManagementService.getCropById(selectedCropId);
-      const payload = response?.data ?? {};
-      return payload?.data ?? payload;
-    },
-    enabled: !!selectedCropId,
-    retry: false,
-  });
 
   const filteredCrops = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLocaleLowerCase('vi');
@@ -422,35 +264,6 @@ const Crops = () => {
     ];
   }, [data?.items, cropCatalogsData]);
 
-  // Transform crop catalogs data into options
-  const cropCatalogOptions = useMemo(() => {
-    if (!cropCatalogsData || cropCatalogsData.length === 0) {
-      return [];
-    }
-    return cropCatalogsData.map((catalog) => ({
-      value: catalog.id || catalog.cropCatalogId,
-      label: catalog.name || catalog.cropCatalogName,
-    }));
-  }, [cropCatalogsData]);
-
-  // Create options from SystemKey hoặc crop catalogs cho form
-  const cropTypeFormOptions = useMemo(() => {
-    // Ưu tiên dùng SystemKey nếu có
-    if (cropTypeOptions && cropTypeOptions.length > 0) {
-      return cropTypeOptions.map((opt) => ({
-        value: opt.codeValue || opt.CodeValue,
-        label: opt.description || opt.Description,
-      }));
-    }
-    
-    // Fallback: Dùng Crop Catalogs nếu chưa có SystemKey
-    if (cropCatalogOptions && cropCatalogOptions.length > 0) {
-      return cropCatalogOptions;
-    }
-    
-    return [];
-  }, [cropTypeOptions, cropCatalogOptions]);
-
   const columns = [
     {
       title: 'STT',
@@ -466,24 +279,27 @@ const Crops = () => {
       dataIndex: 'name',
       key: 'name',
       width: 220,
-      render: (value, record) => (
-        <div className="flex min-w-0 items-center gap-3">
-          {record.imageUrl ? (
-            <img
-              src={record.imageUrl}
-              alt={displayValue(value)}
-              className="h-12 w-12 shrink-0 rounded-lg border border-gray-200 object-cover"
-            />
-          ) : (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
-              <Sprout className="h-5 w-5" />
-            </div>
-          )}
-          <Text strong className="block truncate text-gray-900">
-            {displayValue(value)}
-          </Text>
-        </div>
-      ),
+      render: (value, record) => {
+        const imgUrl = record.imageUrl || record.image || record.thumbnail || record.thumbnailUrl || record.photo || record.picture;
+        return (
+          <div className="flex min-w-0 items-center gap-3">
+            {imgUrl ? (
+              <img
+                src={imgUrl}
+                alt={displayValue(value)}
+                className="h-12 w-12 shrink-0 rounded-lg border border-gray-200 object-cover"
+              />
+            ) : (
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
+                <Sprout className="h-5 w-5" />
+              </div>
+            )}
+            <Text strong className="block truncate text-gray-900">
+              {displayValue(value)}
+            </Text>
+          </div>
+        );
+      },
     },
     {
       title: 'Danh mục',
@@ -542,6 +358,7 @@ const Crops = () => {
               onClick={() => navigate(`${ROUTER.LM_CROPS}/${getItemId(record)}`)}
             />
           </Tooltip>
+
         </Space>
       ),
     },
@@ -554,14 +371,6 @@ const Crops = () => {
           <Sprout className="h-6 w-6" />
           Cây trồng
         </TitleCustom>
-        <Button
-          type="primary"
-          icon={<FileTextOutlined />}
-          onClick={() => navigate(ROUTER.LM_CROP_CREATE)}
-          className="h-10 bg-green-600 px-5 font-medium hover:bg-green-700"
-        >
-          Thêm danh mục cây trồng mới
-        </Button>
       </div>
 
       {isError && (
@@ -646,280 +455,6 @@ const Crops = () => {
         />
       </Card>
 
-      <Drawer
-        title="Chi tiết cây trồng"
-        width={520}
-        open={!!selectedCropId}
-        onClose={() => setSelectedCropId(null)}
-      >
-        {isDetailLoading && (
-          <div className="space-y-3">
-            <div className="h-10 animate-pulse rounded bg-gray-100" />
-            <div className="h-10 animate-pulse rounded bg-gray-100" />
-            <div className="h-10 animate-pulse rounded bg-gray-100" />
-            <div className="h-24 animate-pulse rounded bg-gray-100" />
-          </div>
-        )}
-
-        {isDetailError && (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={EMPTY_MESSAGE}
-          />
-        )}
-
-        {!isDetailLoading && !isDetailError && cropDetail && (
-          <Descriptions column={1} bordered size="middle">
-            <Descriptions.Item label="Mã cây">
-              {displayValue(cropDetail.cropCode)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Tên cây trồng">
-              {displayValue(cropDetail.name)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Nhóm cây">
-              {displayValue(cropDetail.cropType)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              <Tag color={isCropActive(cropDetail) ? 'success' : 'error'}>
-                {getStatusLabel(cropDetail)}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Thời gian sinh trưởng tối thiểu">
-              {formatDuration(cropDetail.minHarvestDays)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Thời gian sinh trưởng tối đa">
-              {formatDuration(cropDetail.maxHarvestDays)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Mô tả">
-              {displayValue(cropDetail.description)}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-      </Drawer>
-
-      <Modal
-        open={!!editingCrop}
-        onCancel={() => {
-          setEditingCrop(null);
-          form.resetFields();
-        }}
-        footer={null}
-        centered
-        width={720}
-        destroyOnHidden
-        title={
-          <span className="text-2xl font-bold text-green-600">
-            Cập nhật cây trồng
-          </span>
-        }
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          className="pt-4"
-          onFinish={(values) =>
-            updateMutation.mutate({ id: getItemId(editingCrop), values })
-          }
-          onFinishFailed={() => {}}
-          scrollToFirstError
-        >
-          <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
-            <Form.Item
-              name="name"
-              label="Tên cây trồng"
-              rules={[
-                {
-                  required: true,
-                  whitespace: true,
-                  message: 'Vui lòng điền đầy đủ các thông tin bắt buộc.',
-                },
-                { max: 150, message: 'Tên cây trồng không được vượt quá 150 ký tự.' },
-              ]}
-            >
-              <Input className="h-11" placeholder="Nhập tên cây trồng" />
-            </Form.Item>
-
-            <Form.Item
-              name="cropCode"
-              label="Mã cây"
-              rules={[
-                { max: 50, message: 'Mã cây không được vượt quá 50 ký tự.' },
-              ]}
-            >
-              <Input className="h-11" placeholder="Nhập mã cây" />
-            </Form.Item>
-
-            <Form.Item
-              name="cropType"
-              label="Nhóm cây"
-              rules={[
-                { required: true, message: 'Vui lòng chọn nhóm cây.' },
-              ]}
-            >
-              <Select
-                className="h-11"
-                placeholder={cropTypeOptions?.length > 0 ? "Chọn nhóm cây" : "Chọn nhóm cây từ danh mục"}
-                loading={isCatalogsLoading && !cropTypeOptions?.length}
-                options={cropTypeFormOptions}
-                showSearch
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-                notFoundContent={
-                  isCatalogsLoading ? (
-                    <span>Đang tải...</span>
-                  ) : (
-                    <span>Không có dữ liệu. Vui lòng cấu hình SystemKey hoặc tạo danh mục cây trồng.</span>
-                  )
-                }
-                disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
-              />
-            </Form.Item>
-
-            <Form.Item name="imageUrl" label={"\u1ea2nh minh h\u1ecda"}>
-              <div className="space-y-3">
-                <Upload
-                  accept="image/png,image/jpeg,image/webp"
-                  showUploadList={false}
-                  beforeUpload={beforeCropImageUpload}
-                  customRequest={(options) => handleCropImageUpload(options, form, true)}
-                >
-                  <Button 
-                    icon={<UploadOutlined />} 
-                    loading={uploadingEdit}
-                    className="h-11 rounded-lg"
-                  >
-                    {uploadingEdit ? 'Đang tải lên...' : 'Tải ảnh lên'}
-                  </Button>
-                </Upload>
-
-                {/* Loading state */}
-                {uploadingEdit && !watchedImageUrl && (
-                  <div className="flex h-[96px] w-[112px] items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
-                    <Spin />
-                  </div>
-                )}
-
-                {/* Preview ảnh sau khi upload xong */}
-                {watchedImageUrl && !uploadingEdit && (
-                  <div className="group relative h-[96px] w-[112px] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-1">
-                    <img
-                      src={watchedImageUrl}
-                      alt={"\u1ea2nh minh h\u1ecda c\u00e2y tr\u1ed3ng"}
-                      className="h-full w-full rounded-md object-cover"
-                    />
-                    <div className="absolute inset-1 flex items-center justify-center gap-2 rounded-md bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => setPreviewImage(watchedImageUrl)}
-                      />
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        className="!h-8 !w-8 !text-white hover:!bg-white/20"
-                        onClick={() => form.setFieldsValue({ imageUrl: '' })}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Form.Item>
-          </div>
-
-          <Form.Item name="description" label="Mô tả">
-            <Input.TextArea rows={3} placeholder="Nhập mô tả" />
-          </Form.Item>
-
-          {/* TODO: Giai đoạn sinh trưởng sẽ được quản lý riêng qua CropVarieties API */}
-          {/* <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
-            <GrowthStages />
-          </Form.Item> */}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              onClick={() => {
-                setEditingCrop(null);
-                form.resetFields();
-              }}
-              className="h-10 min-w-[88px] rounded-lg font-semibold"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={updateMutation.isPending}
-              className="h-10 min-w-[112px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-            >
-              Lưu
-            </Button>
-          </div>
-        </Form>
-      </Modal>
-
-      <Modal
-        open={!!statusTarget}
-        onCancel={() => setStatusTarget(null)}
-        footer={null}
-        centered
-        width={400}
-        closeIcon={<span className="text-2xl leading-none text-gray-900">×</span>}
-      >
-        <div className="px-3 pb-1 pt-2">
-          <h2 className="mb-3 border-b border-gray-100 pb-4 text-[24px] font-bold text-green-600">
-            Thay đổi trạng thái
-          </h2>
-          <p className="mb-7 text-base leading-6 text-gray-600">
-            Bạn có chắc muốn thay đổi trạng thái của cây trồng này không?
-          </p>
-          <div className="flex justify-end gap-3">
-            <Button
-              onClick={() => setStatusTarget(null)}
-              className="h-10 min-w-[80px] rounded-lg font-semibold"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              loading={statusMutation.isPending}
-              onClick={handleConfirmStatusChange}
-              className="h-10 min-w-[104px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-            >
-              Xác nhận
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Modal xem ảnh */}
-      <Modal
-        open={!!previewImage}
-        onCancel={() => setPreviewImage(null)}
-        footer={null}
-        centered
-        width="auto"
-        styles={{
-          body: { padding: 0 },
-        }}
-        closeIcon={
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70">
-            ×
-          </span>
-        }
-      >
-        <div className="relative max-h-[80vh] max-w-[90vw]">
-          <img
-            src={previewImage}
-            alt="Xem ảnh"
-            className="max-h-[80vh] max-w-full rounded-lg object-contain"
-            style={{ display: 'block' }}
-          />
-        </div>
-      </Modal>
     </div>
   );
 };

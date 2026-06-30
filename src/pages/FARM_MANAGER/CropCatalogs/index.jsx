@@ -169,6 +169,7 @@ const CropCatalogs = () => {
       const successMsg = response?.data?.message || response?.message;
       if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+      queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
       await refetchSystemKey();
     },
@@ -178,6 +179,7 @@ const CropCatalogs = () => {
         setEditingCatalog(null);
         form.resetFields();
         queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+        queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
         return;
       }
       const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
@@ -195,6 +197,7 @@ const CropCatalogs = () => {
       const successMsg = response?.data?.message || response?.message;
       if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+      queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
       await refetchSystemKey();
     },
@@ -205,6 +208,7 @@ const CropCatalogs = () => {
         setInlineError(EMPTY_MESSAGE);
         setSelectedCatalogId(null);
         queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+        queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
         return;
       }
       if (apiMessage) message.error(apiMessage);

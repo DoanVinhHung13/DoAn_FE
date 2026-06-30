@@ -104,7 +104,7 @@ const CropEdit = () => {
         return items.filter(item => {
           if (typeof item?.isActive === 'boolean') return item.isActive;
           const status = String(item?.status || '').toLowerCase();
-          return !['inactive', 'disabled', 'deleted'].includes(status);
+          return !['inactive', 'disabled', 'deleted', 'ngừng hoạt động'].includes(status);
         });
       } catch (err) {
         if (err?.response?.status === 405) {
@@ -130,19 +130,10 @@ const CropEdit = () => {
     }));
   }, [cropCatalogsData]);
 
-  // Create options ưu tiên SystemKey, fallback Crop Catalogs
+  // Dùng Crop Catalogs data
   const cropTypeFormOptions = useMemo(() => {
-    if (cropTypeOptions && cropTypeOptions.length > 0) {
-      return cropTypeOptions.map((opt) => ({
-        value: opt.codeValue || opt.CodeValue,
-        label: opt.description || opt.Description,
-      }));
-    }
-    if (cropCatalogOptions && cropCatalogOptions.length > 0) {
-      return cropCatalogOptions;
-    }
-    return [];
-  }, [cropTypeOptions, cropCatalogOptions]);
+    return cropCatalogOptions || [];
+  }, [cropCatalogOptions]);
 
   const calculateUnit = (days) => {
     if (!days) return { value: null, unit: 'days' };

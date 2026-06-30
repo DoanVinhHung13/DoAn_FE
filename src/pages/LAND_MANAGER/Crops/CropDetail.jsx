@@ -36,6 +36,13 @@ const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
 
 const displayValue = (value) => value || 'Chưa cập nhật';
 
+const formatDuration = (days) => {
+  if (!days) return 'Chưa cập nhật';
+  if (days % 365 === 0) return `${days / 365} năm`;
+  if (days % 30 === 0) return `${days / 30} tháng`;
+  return `${days} ngày`;
+};
+
 const isCropActive = (item) => {
   if (typeof item?.isActive === 'boolean') return item.isActive;
   const status = String(item?.status || '').toLowerCase();
@@ -125,8 +132,9 @@ const CropDetail = () => {
         const payload = response?.data ?? response ?? {};
         const data = payload?.data ?? payload;
         const items = Array.isArray(data) ? data : data?.items || [];
+        const cropStages = items.filter((s) => String(s.cropId) === String(id));
         // Sort by orderIndex
-        return items.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+        return cropStages.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
       } catch (err) {
         return [];
       }
@@ -287,9 +295,15 @@ const CropDetail = () => {
               }
               className="rounded-lg shadow-sm"
             >
-              <Descriptions column={1} size="middle" className="[&_.ant-descriptions-item-label]:w-[200px]">
+              <Descriptions column={1} size="middle" className="[&_.ant-descriptions-item-label]:w-[260px]">
                 <Descriptions.Item label="Danh mục">
                   {displayValue(getCropCatalogName(cropDetail.cropCatalogId))}
+                </Descriptions.Item>
+                <Descriptions.Item label="Thời gian sinh trưởng tối thiểu">
+                  {formatDuration(cropDetail.minHarvestDays)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Thời gian sinh trưởng tối đa">
+                  {formatDuration(cropDetail.maxHarvestDays)}
                 </Descriptions.Item>
               </Descriptions>
             </Card>

@@ -30,6 +30,7 @@ const CatalogCreate = () => {
       const successMsg = response?.data?.message || response?.message;
       if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+      queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       await refetchSystemKey();
       navigate(ROUTER.FM_CROP_CATALOGS);
     },

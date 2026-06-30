@@ -99,13 +99,13 @@ const ROUTER = {
 
   // ── Land Manager additional ───────────────────────────────────────────────
   LM_CROP_CATALOGS:     '/land-manager/crop-catalogs',
-  LM_CROP_CATALOG_DETAIL: '/land-manager/view-catalogs/:id',
+  LM_CROP_CATALOG_DETAIL: '/land-manager/crop-catalogs/:id',
   LM_CROPS:              '/land-manager/crops',
-  LM_CROP_CREATE:        '/land-manager/crops/create',
+
   LM_CROP_DETAIL:        '/land-manager/crops/:id',
 
   // ── Material Manager additional ──────────────────────────────────────────
-  MM_PURCHASE_REQS:     '/material-manager/purchase-requisitions',
+
 
   // ── Legacy shortcuts (redirects) ──────────────────────────────────────────
   TCVN_AUTH:             '/tcvn',
