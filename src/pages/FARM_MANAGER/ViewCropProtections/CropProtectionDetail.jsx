@@ -35,14 +35,14 @@ const usageColumns = [
     key: 'concentration',
     align: 'center',
     render: (v, record) => {
-      const conc = v || record.dilutionRatio;
-      if (!conc) return <Text>—</Text>;
-      const ratioParts = String(conc).split(':');
-      const unitParts = String(record.concentrationUnitId || record.dilutionUnit || '').split(':');
-      if (ratioParts.length === 2 && unitParts.length === 2) {
-        return <Text>{`${ratioParts[0]} ${unitParts[0]} : ${ratioParts[1]} ${unitParts[1]}`}</Text>;
-      }
-      return <Text>{`${conc} ${record.concentrationUnitId || record.dilutionUnit || ''}`}</Text>;
+      const chemicalAmount = record.concentration || '';
+      const chemicalUnit = record.concentrationUnit || '';
+      const waterAmount = record.dilutionVolume || '';
+      const waterUnit = record.dilutionUnit || '';
+
+      if (!chemicalAmount && !waterAmount) return <Text>—</Text>;
+
+      return <Text>{`${chemicalAmount} ${chemicalUnit} : ${waterAmount} ${waterUnit}`}</Text>;
     },
   },
   {
@@ -51,12 +51,16 @@ const usageColumns = [
     key: 'dosage',
     align: 'center',
     render: (v, record) => {
-      const dUnit = record.dosageUnitId || record.dosageUnit || '';
+      const dosage = v != null ? v : '';
+      const dUnit = record.dosageUnit || '';
       const aVal = record.area != null ? record.area : '';
-      const aUnit = record.areaUnitId || record.areaUnit || '';
+      const aUnit = record.areaUnit || '';
+
+      if (dosage === '' && aVal === '') return <Text>—</Text>;
+
       return (
         <Text>
-          {v != null ? `${v} ${dUnit} / ${aVal} ${aUnit}`.trim() : '—'}
+          {`${dosage} ${dUnit} / ${aVal} ${aUnit}`.trim()}
         </Text>
       )
     },

@@ -101,21 +101,17 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         description: editingItem.description || '',
         usages: editingItem.usages && editingItem.usages.length > 0
           ? editingItem.usages.map(u => {
-            const conc = u.concentration || u.dilutionRatio || '';
-            const concUnit = u.concentrationUnitId || u.dilutionUnit || '';
-            const parts = conc.split(':')
-            const unitParts = concUnit.split(':')
             return {
               ...u,
               targetCrop: typeof u.targetCrop === 'string' ? u.targetCrop.split(',').map(s => s.trim()).filter(Boolean) : u.targetCrop,
-              chemicalRatio: parts[0] ? Number(parts[0]) : null,
-              waterRatio: parts[1] ? Number(parts[1]) : null,
-              chemicalUnit: unitParts[0] || undefined,
-              waterUnit: unitParts[1] || undefined,
+              chemicalRatio: u.concentration ? Number(u.concentration) : null,
+              chemicalUnit: u.concentrationUnit || undefined,
+              waterRatio: u.dilutionVolume ? Number(u.dilutionVolume) : null,
+              waterUnit: u.dilutionUnit || undefined,
               dosage: u.dosage,
-              dosageUnit: u.dosageUnitId || u.dosageUnit,
+              dosageUnit: u.dosageUnit || undefined,
               area: u.area,
-              areaUnit: u.areaUnitId || u.areaUnit,
+              areaUnit: u.areaUnit || undefined,
               isolationDays: u.quarantineDays ?? u.isolationDays,
             }
           })
@@ -139,29 +135,21 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         manufacturer: values.manufacturer?.trim() || '',
         supplier: values.supplier?.trim() || '',
         minInventory: values.minimumStock || 0,
-        unitId: values.unit || '',
+        unit: values.unit || '',
         description: values.description?.trim() || '',
         isActive: isEdit ? editingItem.isActive : true,
         usages: (values.usages || []).map(u => {
-          let dilution = null;
-          if (u.chemicalRatio != null && u.waterRatio != null) {
-            dilution = `${u.chemicalRatio}:${u.waterRatio}`
-          }
-
-          let dilUnit = null;
-          if (u.chemicalUnit || u.waterUnit) {
-            dilUnit = `${u.chemicalUnit || ''}:${u.waterUnit || ''}`
-          }
-
           const usageObj = {
             targetCrop: Array.isArray(u.targetCrop) ? u.targetCrop.join(', ') : (u.targetCrop || ''),
             targetPest: u.targetPest || '',
-            concentration: dilution || '',
-            concentrationUnitId: dilUnit || '',
+            concentration: u.chemicalRatio != null ? String(u.chemicalRatio) : '',
+            concentrationUnit: u.chemicalUnit || '',
+            dilutionVolume: u.waterRatio != null ? String(u.waterRatio) : '',
+            dilutionUnit: u.waterUnit || '',
             dosage: u.dosage || 0,
-            dosageUnitId: u.dosageUnit || '',
+            dosageUnit: u.dosageUnit || '',
             area: u.area || 0,
-            areaUnitId: u.areaUnit || '',
+            areaUnit: u.areaUnit || '',
             quarantineDays: u.isolationDays || 0
           }
           if (isEdit && u.id) usageObj.id = u.id;
@@ -394,29 +382,33 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                         </div>
                       </Form.Item>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={8}>
                       <Form.Item
-                        {...restField}
-                        name={[name, 'dosage']}
-                        label={<>Liều lượng (Số) </>}
+                        label={<>Liều lượng </>}
                         className="mb-0"
-                        rules={[{ required: true, message: 'Vui lòng nhập' }]}
+                        required
                       >
-                        <InputNumber min={0} placeholder="Số" className="w-full h-9 rounded-lg text-sm" />
+                        <div className="flex items-center gap-2">
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'dosage']}
+                            className="mb-0 flex-1"
+                            rules={[{ required: true, message: 'Nhập số' }]}
+                          >
+                            <InputNumber min={0} placeholder="Số" className="w-full h-9 rounded-lg text-sm" />
+                          </Form.Item>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'dosageUnit']}
+                            className="mb-0 w-[90px]"
+                            rules={[{ required: true, message: 'Chọn ĐV' }]}
+                          >
+                            <Select options={UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
+                          </Form.Item>
+                        </div>
                       </Form.Item>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'dosageUnit']}
-                        label={<>ĐV Tính </>}
-                        className="mb-0"
-                        rules={[{ required: true, message: 'Vui lòng chọn' }]}
-                      >
-                        <Select options={UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={8}>
                       <Form.Item
                         label={<>Diện tích </>}
                         className="mb-0"
@@ -442,7 +434,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                         </div>
                       </Form.Item>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={8}>
                       <Form.Item
                         {...restField}
                         name={[name, 'isolationDays']}

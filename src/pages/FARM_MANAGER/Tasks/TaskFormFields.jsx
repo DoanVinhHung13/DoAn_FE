@@ -14,7 +14,7 @@ const normalizeResponse = (response) => {
 
 const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
   const form = Form.useFormInstance();
-  const targetType = Form.useWatch('targetType', form);
+  const applyTarget = Form.useWatch('applyTarget', form);
   const selectedCatalogId = Form.useWatch('cropCatalogId', form);
 
   const [catalogsData, setCatalogsData] = useState(null);
@@ -23,7 +23,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
   const [isCropsLoading, setIsCropsLoading] = useState(false);
 
   useEffect(() => {
-    if (targetType === 'SPECIFIC' || targetType === 'CATEGORY') {
+    if (applyTarget === 'SPECIFIC' || applyTarget === 'CATEGORY') {
       let isMounted = true;
       const fetchCatalogs = async () => {
         setIsCatalogsLoading(true);
@@ -39,10 +39,10 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
       if (!catalogsData) fetchCatalogs();
       return () => { isMounted = false; };
     }
-  }, [targetType, catalogsData]);
+  }, [applyTarget, catalogsData]);
 
   useEffect(() => {
-    if (targetType === 'SPECIFIC') {
+    if (applyTarget === 'SPECIFIC') {
       let isMounted = true;
       const fetchCrops = async () => {
         setIsCropsLoading(true);
@@ -58,7 +58,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
       if (!cropsData) fetchCrops();
       return () => { isMounted = false; };
     }
-  }, [targetType, cropsData]);
+  }, [applyTarget, cropsData]);
 
   const catalogOptions = useMemo(() => {
     if (!catalogsData) return [];
@@ -117,7 +117,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
 
       <Col xs={24} md={12}>
         <Form.Item
-          name="targetType"
+          name="applyTarget"
           initialValue="ALL"
           label={
             <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
@@ -129,7 +129,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
           <Radio.Group
             disabled={readOnly}
             onChange={(e) => {
-              form.setFieldsValue({ cropCatalogId: undefined, targetObjects: [], targetCategories: [] });
+              form.setFieldsValue({ cropCatalogId: undefined, cropIds: [] });
             }}
           >
             <Radio value="ALL">Tất cả cây trồng</Radio>
@@ -139,10 +139,10 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
         </Form.Item>
       </Col>
 
-      {targetType === 'CATEGORY' && (
+      {applyTarget === 'CATEGORY' && (
         <Col xs={24} md={12}>
           <Form.Item
-            name="targetCategories"
+            name="cropCatalogId"
             label={
               <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
                 Danh mục cây trồng {!readOnly}
@@ -164,7 +164,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
         </Col>
       )}
 
-      {targetType === 'SPECIFIC' && (
+      {applyTarget === 'SPECIFIC' && (
         <>
           <Col xs={24} md={12}>
             <Form.Item
@@ -185,14 +185,14 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
                 options={catalogOptions}
                 disabled={readOnly || isCatalogsLoading}
                 loading={isCatalogsLoading}
-                onChange={() => form.setFieldsValue({ targetObjects: undefined })}
+                onChange={() => form.setFieldsValue({ cropIds: undefined })}
               />
             </Form.Item>
           </Col>
 
           <Col xs={24} md={12}>
             <Form.Item
-              name="targetObjects"
+              name="cropIds"
               label={
                 <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
                   Cây trồng cụ thể {!readOnly}

@@ -19,17 +19,19 @@ const TaskCreate = () => {
         title: values.title?.trim(),
         description: values.description?.trim() || '',
         isActive: true,
-        applyTarget: values.targetType,
+        applyTarget: values.applyTarget,
       }
 
-      if (values.targetType === 'CATEGORY') {
-        const catId = Array.isArray(values.targetCategories) ? values.targetCategories[0] : values.targetCategories;
-        if (catId) body.cropCatalogId = catId;
-      } else if (values.targetType === 'SPECIFIC') {
-        const catId = Array.isArray(values.cropCatalogId) ? values.cropCatalogId[0] : values.cropCatalogId;
-        if (catId) body.cropCatalogId = catId;
-        
-        body.cropIds = Array.isArray(values.targetObjects) ? values.targetObjects : [values.targetObjects].filter(Boolean);
+      if (values.applyTarget === 'CATEGORY') {
+        if (values.cropCatalogId) {
+          body.cropCatalogId = values.cropCatalogId;
+        }
+      } else if (values.applyTarget === 'SPECIFIC') {
+        if (values.cropCatalogId) {
+          body.cropCatalogId = values.cropCatalogId;
+        }
+
+        body.cropIds = Array.isArray(values.cropIds) ? values.cropIds : [values.cropIds].filter(Boolean);
       }
 
       const res = await TaskService.create(body)

@@ -27,24 +27,15 @@ const TaskEdit = () => {
 
         const data = res?.data || {}
 
-        let initialTargetType = 'ALL';
-        let initialCropIds = data.cropIds || (data.cropId ? [data.cropId] : []);
-        let initialCropCatalogId = data.cropCatalogId;
-
-        if (initialCropIds && initialCropIds.length > 0) {
-          initialTargetType = 'SPECIFIC';
-        } else if (initialCropCatalogId) {
-          initialTargetType = 'CATEGORY';
-        } else {
-          initialTargetType = 'ALL';
-        }
+        const applyTarget = data.applyTarget || 'ALL';
+        const cropIds = data.cropIds || [];
+        const cropCatalogId = data.cropCatalogId;
 
         form.setFieldsValue({
           title: data.title || '',
-          targetType: initialTargetType,
-          cropCatalogId: initialCropCatalogId,
-          targetObjects: initialCropIds,
-          targetCategories: initialCropCatalogId,
+          applyTarget: applyTarget,
+          cropCatalogId: cropCatalogId,
+          cropIds: cropIds,
           description: data.description || '',
         })
       } catch (err) {
@@ -60,22 +51,24 @@ const TaskEdit = () => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
-      
+
       const body = {
         title: values.title?.trim(),
         description: values.description?.trim() || '',
         isActive: true,
-        applyTarget: values.targetType,
+        applyTarget: values.applyTarget,
       }
 
-      if (values.targetType === 'CATEGORY') {
-        const catId = Array.isArray(values.targetCategories) ? values.targetCategories[0] : values.targetCategories;
-        if (catId) body.cropCatalogId = catId;
-      } else if (values.targetType === 'SPECIFIC') {
-        const catId = Array.isArray(values.cropCatalogId) ? values.cropCatalogId[0] : values.cropCatalogId;
-        if (catId) body.cropCatalogId = catId;
-        
-        body.cropIds = Array.isArray(values.targetObjects) ? values.targetObjects : [values.targetObjects].filter(Boolean);
+      if (values.applyTarget === 'CATEGORY') {
+        if (values.cropCatalogId) {
+          body.cropCatalogId = values.cropCatalogId;
+        }
+      } else if (values.applyTarget === 'SPECIFIC') {
+        if (values.cropCatalogId) {
+          body.cropCatalogId = values.cropCatalogId;
+        }
+
+        body.cropIds = Array.isArray(values.cropIds) ? values.cropIds : [values.cropIds].filter(Boolean);
       }
 
       const res = await TaskService.update(id, body)

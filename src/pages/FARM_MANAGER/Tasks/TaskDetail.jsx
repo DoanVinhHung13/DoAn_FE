@@ -25,9 +25,16 @@ const TaskDetail = () => {
         }
 
         const data = res?.data || {}
+
+        const applyTarget = data.applyTarget || 'ALL';
+        const cropCatalogId = data.cropCatalogId;
+        const cropIds = data.cropId ? [data.cropId] : (data.cropIds || []);
+
         form.setFieldsValue({
-          name: data.name || '',
-          targetObjects: data.targetObjects || [],
+          title: data.title || '',
+          applyTarget: applyTarget,
+          cropCatalogId: cropCatalogId,
+          cropIds: cropIds,
           description: data.description || '',
         })
       } catch (err) {

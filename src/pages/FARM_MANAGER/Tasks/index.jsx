@@ -188,9 +188,30 @@ const TasksManagement = () => {
       title: 'Đối tượng',
       key: 'applyTarget',
       render: (_, record) => {
-        if (record.cropId) return <span className="text-sm font-semibold text-gray-800">Cây trồng: {record.cropName}</span>
-        if (record.cropCatalogId) return <span className="text-sm font-semibold text-gray-800">Danh mục: {record.cropCatalogName}</span>
-        return <span className="text-sm font-semibold text-gray-800">Tất cả cây trồng</span>
+        const applyTarget = record.applyTarget;
+
+        if (applyTarget === 'ALL') {
+          return <span className="text-sm text-gray-800">Tất cả cây trồng</span>;
+        }
+
+        if (applyTarget === 'CATEGORY') {
+          const catalogName = record.cropCatalogName || 'Danh mục';
+          return <span className="text-sm text-gray-800">Danh mục: <span className="font-semibold">{catalogName}</span></span>;
+        }
+
+        if (applyTarget === 'SPECIFIC') {
+          const cropNames = record.cropNames || [];
+          if (cropNames.length === 0) {
+            return <span className="text-sm text-gray-800">Cây trồng cụ thể</span>;
+          }
+          return (
+            <span className="text-sm text-gray-800">
+              Cây trồng: <span className="font-semibold">{cropNames.join(', ')}</span>
+            </span>
+          );
+        }
+
+        return <span className="text-sm text-gray-400">—</span>;
       },
     },
     {
