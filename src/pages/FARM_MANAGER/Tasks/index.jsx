@@ -178,19 +178,41 @@ const TasksManagement = () => {
     },
     {
       title: 'Tên công việc',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'title',
+      key: 'title',
       render: (v) => (
         <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
       ),
     },
     {
       title: 'Đối tượng',
-      dataIndex: 'typeOfObject',
-      key: 'typeOfObject',
-      render: (v) => (
-        <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
-      ),
+      key: 'applyTarget',
+      render: (_, record) => {
+        const applyTarget = record.applyTarget;
+
+        if (applyTarget === 'ALL') {
+          return <span className="text-sm text-gray-800">Tất cả cây trồng</span>;
+        }
+
+        if (applyTarget === 'CATEGORY') {
+          const catalogName = record.cropCatalogName || 'Danh mục';
+          return <span className="text-sm text-gray-800">Danh mục: <span className="font-semibold">{catalogName}</span></span>;
+        }
+
+        if (applyTarget === 'SPECIFIC') {
+          const cropNames = record.cropNames || [];
+          if (cropNames.length === 0) {
+            return <span className="text-sm text-gray-800">Cây trồng cụ thể</span>;
+          }
+          return (
+            <span className="text-sm text-gray-800">
+              Cây trồng: <span className="font-semibold">{cropNames.join(', ')}</span>
+            </span>
+          );
+        }
+
+        return <span className="text-sm text-gray-400">—</span>;
+      },
     },
     {
       title: 'Mô tả',
@@ -400,7 +422,7 @@ const TasksManagement = () => {
               <span className="font-mono text-blue-700">
                 {statusModal.item.code}
               </span>{' '}
-              — {statusModal.item.name}
+              — {statusModal.item.title}
             </p>
           )}
         </div>

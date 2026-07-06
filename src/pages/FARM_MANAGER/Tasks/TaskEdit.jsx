@@ -27,25 +27,15 @@ const TaskEdit = () => {
 
         const data = res?.data || {}
 
-        let initialTargetType = 'SPECIFIC';
-        let initialTargetObjects = data.targetObjects || [];
-        let initialTargetCategories = [];
-
-        if (data.targetObjects?.includes('ALL')) {
-          initialTargetType = 'ALL';
-          initialTargetObjects = [];
-        } else if (data.targetObjects?.length && !data.targetObjects.some(id => typeof id === 'string' && id.includes('-'))) {
-          // Basic heuristic: backend might just return crop/catalog IDs.
-          // In reality, to be fully robust, we would need to know if the ID belongs to crop or catalog.
-          // Assuming we just bind them back to targetObjects for SPECIFIC for now, since we cannot easily distinguish.
-          initialTargetType = 'SPECIFIC';
-        }
+        const applyTarget = data.applyTarget || 'ALL';
+        const cropIds = data.cropIds || [];
+        const cropCatalogId = data.cropCatalogId;
 
         form.setFieldsValue({
-          name: data.name || '',
-          targetType: initialTargetType,
-          targetObjects: initialTargetObjects,
-          targetCategories: initialTargetCategories,
+          title: data.title || '',
+          applyTarget: applyTarget,
+          cropCatalogId: cropCatalogId,
+          cropIds: cropIds,
           description: data.description || '',
         })
       } catch (err) {
@@ -61,19 +51,24 @@ const TaskEdit = () => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
-      let finalTargets = [];
-      if (values.targetType === 'ALL') {
-        finalTargets = ['ALL'];
-      } else if (values.targetType === 'CATEGORY') {
-        finalTargets = values.targetCategories || [];
-      } else {
-        finalTargets = values.targetObjects || [];
-      }
 
       const body = {
-        name: values.name?.trim(),
-        targetObjects: finalTargets,
-        description: values.description?.trim() || null,
+        title: values.title?.trim(),
+        description: values.description?.trim() || '',
+        isActive: true,
+        applyTarget: values.applyTarget,
+      }
+
+      if (values.applyTarget === 'CATEGORY') {
+        if (values.cropCatalogId) {
+          body.cropCatalogId = values.cropCatalogId;
+        }
+      } else if (values.applyTarget === 'SPECIFIC') {
+        if (values.cropCatalogId) {
+          body.cropCatalogId = values.cropCatalogId;
+        }
+
+        body.cropIds = Array.isArray(values.cropIds) ? values.cropIds : [values.cropIds].filter(Boolean);
       }
 
       const res = await TaskService.update(id, body)

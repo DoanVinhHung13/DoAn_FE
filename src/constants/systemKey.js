@@ -11,4 +11,8 @@ export const SYSTEM_KEY = {
   CROP_TYPE: "CROP_TYPE",           // Loại cây trồng (Cây rau, Cây củ, Cây ăn trái...)
   CROP_STATUS: "CROP_STATUS",       // Trạng thái cây trồng
   CROP_PROCESS: "CROP_PROCESS",     // Quy trình canh tác (VietGAP, Organic, GlobalGAP...)
+  FERTILIZER_UNIT: "FERTILIZER_UNIT",
+  COMPONENT_UNIT: "COMPONENT_UNIT",
+  AREA_UNIT: "AREA_UNIT",
+  FERTILIZER_TYPE: "FERTILIZER_TYPE",
 }

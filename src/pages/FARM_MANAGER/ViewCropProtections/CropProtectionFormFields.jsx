@@ -21,19 +21,9 @@ import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import CropProtectionService from 'src/services/CropProtectionService'
 import CropManagementService from 'src/services/CropManagementService'
+import { useSystemKey } from 'src/hooks/useSystemKey'
+import { SYSTEM_KEY } from 'src/constants/systemKey'
 
-const UNIT_OPTIONS = [
-  { value: 'lít', label: 'lít' },
-  { value: 'ml', label: 'ml' },
-  { value: 'g', label: 'g' },
-  { value: 'mg', label: 'mg' },
-  { value: 'kg', label: 'kg' },
-]
-
-const AREA_UNIT_OPTIONS = [
-  { value: 'ha', label: 'ha' },
-  { value: 'm2', label: 'm2' },
-]
 
 // ── Section header helper ─────────────────────────────────────────────────────
 const SectionTitle = ({ children }) => (
@@ -49,6 +39,16 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
+
+  const { getCombo } = useSystemKey()
+  const UNIT_OPTIONS = getCombo(SYSTEM_KEY.FERTILIZER_UNIT).map(opt => ({
+    value: opt.codeValue || opt.value,
+    label: opt.label || opt.description,
+  }))
+  const AREA_UNIT_OPTIONS = getCombo(SYSTEM_KEY.AREA_UNIT).map(opt => ({
+    value: opt.codeValue || opt.value,
+    label: opt.label || opt.description,
+  }))
 
   const [cropsData, setCropsData] = React.useState(null);
   const [isCropsLoading, setIsCropsLoading] = React.useState(false);
@@ -84,7 +84,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         return !['inactive', 'disabled', 'deleted'].includes(status);
       })
       .map((c) => ({
-        value: c.name,
+        value: c.id,
         label: c.name,
       }));
   }, [cropsData]);
@@ -95,29 +95,32 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         code: editingItem.code || '',
         name: editingItem.name || '',
         manufacturer: editingItem.manufacturer || '',
-        supplierId: editingItem.supplierId || undefined,
-        minimumStock: editingItem.minimumStock || undefined,
-        unit: editingItem.unit || undefined,
+        supplier: editingItem.supplier || '',
+        minimumStock: editingItem.minInventory ?? editingItem.minimumStock ?? 0,
+        unit: editingItem.unitId || editingItem.unit || undefined,
         description: editingItem.description || '',
         usages: editingItem.usages && editingItem.usages.length > 0
           ? editingItem.usages.map(u => {
-            const parts = (u.dilutionRatio || '').split(':')
-            const unitParts = (u.dilutionUnit || '').split(':')
             return {
               ...u,
               targetCrop: typeof u.targetCrop === 'string' ? u.targetCrop.split(',').map(s => s.trim()).filter(Boolean) : u.targetCrop,
-              chemicalRatio: parts[0] ? Number(parts[0]) : null,
-              waterRatio: parts[1] ? Number(parts[1]) : null,
-              chemicalUnit: unitParts[0] || undefined,
-              waterUnit: unitParts[1] || undefined,
+              chemicalRatio: u.concentration ? Number(u.concentration) : null,
+              chemicalUnit: u.concentrationUnit || undefined,
+              waterRatio: u.dilutionVolume ? Number(u.dilutionVolume) : null,
+              waterUnit: u.dilutionUnit || undefined,
+              dosage: u.dosage,
+              dosageUnit: u.dosageUnit || undefined,
+              area: u.area,
+              areaUnit: u.areaUnit || undefined,
+              isolationDays: u.quarantineDays ?? u.isolationDays,
             }
           })
-          : [{}], // start with 1 empty usage
+          : [{}],
       })
     } else {
       form.resetFields()
       form.setFieldsValue({
-        usages: [{}], // default 1 usage block
+        usages: [{}],
       })
     }
   }, [editingItem, isEdit, form])
@@ -127,34 +130,30 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
       setLoading(true)
 
       const body = {
-        code: values.code?.trim(),
         name: values.name?.trim(),
-        manufacturer: values.manufacturer?.trim(),
-        supplierId: values.supplierId || null,
-        minimumStock: values.minimumStock || null,
-        unit: values.unit || null,
-        description: values.description?.trim() || null,
+        code: values.code?.trim(),
+        manufacturer: values.manufacturer?.trim() || '',
+        supplier: values.supplier?.trim() || '',
+        minInventory: values.minimumStock || 0,
+        unit: values.unit || '',
+        description: values.description?.trim() || '',
+        isActive: isEdit ? editingItem.isActive : true,
         usages: (values.usages || []).map(u => {
-          let dilution = null;
-          if (u.chemicalRatio != null && u.waterRatio != null) {
-            dilution = `${u.chemicalRatio}:${u.waterRatio}`
-          } else if (u.dilutionRatio) {
-            dilution = u.dilutionRatio
+          const usageObj = {
+            targetCrop: Array.isArray(u.targetCrop) ? u.targetCrop.join(', ') : (u.targetCrop || ''),
+            targetPest: u.targetPest || '',
+            concentration: u.chemicalRatio != null ? String(u.chemicalRatio) : '',
+            concentrationUnit: u.chemicalUnit || '',
+            dilutionVolume: u.waterRatio != null ? String(u.waterRatio) : '',
+            dilutionUnit: u.waterUnit || '',
+            dosage: u.dosage || 0,
+            dosageUnit: u.dosageUnit || '',
+            area: u.area || 0,
+            areaUnit: u.areaUnit || '',
+            quarantineDays: u.isolationDays || 0
           }
-
-          let dilUnit = null;
-          if (u.chemicalUnit || u.waterUnit) {
-            dilUnit = `${u.chemicalUnit || ''}:${u.waterUnit || ''}`
-          } else if (u.dilutionUnit) {
-            dilUnit = u.dilutionUnit
-          }
-
-          return {
-            ...u,
-            dilutionRatio: dilution,
-            dilutionUnit: dilUnit,
-            targetCrop: Array.isArray(u.targetCrop) ? u.targetCrop.join(', ') : u.targetCrop
-          }
+          if (isEdit && u.id) usageObj.id = u.id;
+          return usageObj;
         }),
       }
 
@@ -235,14 +234,10 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         </Col>
         <Col xs={24} md={12}>
           <Form.Item
-            name="supplierId"
+            name="supplier"
             label={<span className="font-semibold text-gray-700">Nhà Cung Cấp</span>}
           >
-            <Select placeholder="Chọn nhà cung cấp..." className="h-10 rounded-xl" allowClear>
-              {/* Mock options, replace with API later */}
-              <Select.Option value="SUP-001">Công ty Nông Nghiệp Xanh</Select.Option>
-              <Select.Option value="SUP-002">Đại lý Vật tư Y</Select.Option>
-            </Select>
+            <Input placeholder="Nhập nhà cung cấp..." className="h-10 rounded-xl" />
           </Form.Item>
         </Col>
 
@@ -387,40 +382,59 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                         </div>
                       </Form.Item>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={8}>
                       <Form.Item
-                        {...restField}
-                        name={[name, 'dosage']}
-                        label={<>Liều lượng (Số) </>}
+                        label={<>Liều lượng </>}
                         className="mb-0"
-                        rules={[{ required: true, message: 'Vui lòng nhập' }]}
+                        required
                       >
-                        <InputNumber min={0} placeholder="Số" className="w-full h-9 rounded-lg text-sm" />
+                        <div className="flex items-center gap-2">
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'dosage']}
+                            className="mb-0 flex-1"
+                            rules={[{ required: true, message: 'Nhập số' }]}
+                          >
+                            <InputNumber min={0} placeholder="Số" className="w-full h-9 rounded-lg text-sm" />
+                          </Form.Item>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'dosageUnit']}
+                            className="mb-0 w-[90px]"
+                            rules={[{ required: true, message: 'Chọn ĐV' }]}
+                          >
+                            <Select options={UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
+                          </Form.Item>
+                        </div>
                       </Form.Item>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={8}>
                       <Form.Item
-                        {...restField}
-                        name={[name, 'dosageUnit']}
-                        label={<>ĐV Tính </>}
+                        label={<>Diện tích </>}
                         className="mb-0"
-                        rules={[{ required: true, message: 'Vui lòng chọn' }]}
+                        required
                       >
-                        <Select options={UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
+                        <div className="flex items-center gap-2">
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'area']}
+                            className="mb-0 flex-1"
+                            rules={[{ required: true, message: 'Nhập số' }]}
+                          >
+                            <InputNumber min={0} placeholder="Số" className="w-full h-9 rounded-lg text-sm" />
+                          </Form.Item>
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'areaUnit']}
+                            className="mb-0 w-[90px]"
+                            rules={[{ required: true, message: 'Chọn ĐV' }]}
+                          >
+                            <Select options={AREA_UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
+                          </Form.Item>
+                        </div>
                       </Form.Item>
                     </Col>
-                    <Col xs={24} sm={12} md={6}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'areaUnit']}
-                        label={<>ĐV Diện tích </>}
-                        className="mb-0"
-                        rules={[{ required: true, message: 'Vui lòng chọn' }]}
-                      >
-                        <Select options={AREA_UNIT_OPTIONS} placeholder="Chọn" className="h-9 rounded-lg text-sm" allowClear />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={24} sm={12} md={6}>
+                    <Col xs={24} sm={12} md={8}>
                       <Form.Item
                         {...restField}
                         name={[name, 'isolationDays']}

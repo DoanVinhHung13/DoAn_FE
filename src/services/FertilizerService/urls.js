@@ -1,8 +1,8 @@
 // fertilizerService/urls.js
 // Swagger: https://api.eapls.io.vn/swagger/index.html → nhóm "Fertilizers"
 //
-// GET    /api/fertilizers              → getList (PageIndex, PageSize, SearchKeyword)
-// POST   /api/fertilizers              → create   { name, code, unit, supplierId?, materialId?, price?, description?, minimumStock? }
+// GET    /api/fertilizers              → getList (PageIndex, PageSize, SearchKeyword, Type?, Status?)
+// POST   /api/fertilizers              → create   { name, code, unit, supplier?, manufacturer?, materialId?, price?, description?, minimumStock?, type?, compositions?, dosages? }
 // GET    /api/fertilizers/{id}         → getById
 // PUT    /api/fertilizers/{id}         → update   { same as create + isActive? }
 // DELETE /api/fertilizers/{id}         → soft-delete
