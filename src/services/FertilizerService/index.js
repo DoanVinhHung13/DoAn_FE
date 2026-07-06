@@ -11,8 +11,11 @@
  *
  * CreateFertilizerRequest / UpdateFertilizerRequest schema:
  *   { name: string (req), code: string (req), unit: string (req),
- *     supplierId?: uuid, materialId?: uuid, price?: number,
- *     description?: string, minimumStock?: number }
+ *     supplier?: string, manufacturer?: string, materialId?: uuid,
+ *     price?: number, description?: string, minimumStock?: number,
+ *     type?: string,
+ *     compositions?: Array<{ name: string, value: string, unit: string }>,
+ *     dosages?: Array<{ amount: string, unit: string, areaUnit: string, target: string }> }
  */
 import http from '../01_axios'
 import {
@@ -26,7 +29,7 @@ import {
 
 /**
  * GET /api/fertilizers
- * params: { PageIndex, PageSize, SearchKeyword, Status? }
+ * params: { PageIndex, PageSize, SearchKeyword, Type?, Status? }
  */
 const getFertilizers = (params) => http.get(apiGetFertilizers, { params })
 
@@ -37,13 +40,15 @@ const getFertilizerById = (id) => http.get(apiGetFertilizerById(id))
 
 /**
  * POST /api/fertilizers
- * body: { name, code, unit, supplierId?, materialId?, price?, description?, minimumStock? }
+ * body: { name, code, unit, supplier?, manufacturer?, materialId?, price?,
+ *         description?, minimumStock?, type?, compositions?, dosages? }
  */
 const createFertilizer = (body) => http.post(apiCreateFertilizer, body)
 
 /**
  * PUT /api/fertilizers/:id
- * body: { name, code, unit, supplierId?, materialId?, price?, description?, minimumStock? }
+ * body: { name, code, unit, supplier?, manufacturer?, materialId?, price?,
+ *         description?, minimumStock?, type?, compositions?, dosages? }
  */
 const updateFertilizer = (id, body) => http.put(apiUpdateFertilizer(id), body)
 

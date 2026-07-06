@@ -14,7 +14,7 @@ const normalizeResponse = (response) => {
 
 const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
   const form = Form.useFormInstance();
-  const targetType = Form.useWatch('targetType', form);
+  const applyTarget = Form.useWatch('applyTarget', form);
   const selectedCatalogId = Form.useWatch('cropCatalogId', form);
 
   const [catalogsData, setCatalogsData] = useState(null);
@@ -23,12 +23,12 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
   const [isCropsLoading, setIsCropsLoading] = useState(false);
 
   useEffect(() => {
-    if (targetType === 'SPECIFIC' || targetType === 'CATEGORY') {
+    if (applyTarget === 'SPECIFIC' || applyTarget === 'CATEGORY') {
       let isMounted = true;
       const fetchCatalogs = async () => {
         setIsCatalogsLoading(true);
         try {
-          const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
+          const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100, Status: true });
           if (isMounted) setCatalogsData(normalizeResponse(response));
         } catch (error) {
           console.error(error);
@@ -39,15 +39,15 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
       if (!catalogsData) fetchCatalogs();
       return () => { isMounted = false; };
     }
-  }, [targetType, catalogsData]);
+  }, [applyTarget, catalogsData]);
 
   useEffect(() => {
-    if (targetType === 'SPECIFIC') {
+    if (applyTarget === 'SPECIFIC') {
       let isMounted = true;
       const fetchCrops = async () => {
         setIsCropsLoading(true);
         try {
-          const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000 });
+          const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000, Status: true });
           if (isMounted) setCropsData(normalizeResponse(response));
         } catch (error) {
           console.error(error);
@@ -58,7 +58,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
       if (!cropsData) fetchCrops();
       return () => { isMounted = false; };
     }
-  }, [targetType, cropsData]);
+  }, [applyTarget, cropsData]);
 
   const catalogOptions = useMemo(() => {
     if (!catalogsData) return [];
@@ -82,8 +82,8 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
       return !['inactive', 'disabled', 'deleted'].includes(status);
     });
 
-    if (selectedCatalogId && selectedCatalogId.length > 0) {
-      filtered = filtered.filter((c) => selectedCatalogId.includes(c.cropCatalogId || c.categoryId));
+    if (selectedCatalogId) {
+      filtered = filtered.filter((c) => (c.cropCatalogId || c.categoryId) === selectedCatalogId);
     }
     return filtered.map((c) => ({
       value: c.id || c._id || c.cropId,
@@ -95,7 +95,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
     <Row gutter={16}>
       <Col xs={24} md={12}>
         <Form.Item
-          name="name"
+          name="title"
           label={
             <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
               Tên công việc {!readOnly}
@@ -117,7 +117,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
 
       <Col xs={24} md={12}>
         <Form.Item
-          name="targetType"
+          name="applyTarget"
           initialValue="ALL"
           label={
             <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
@@ -129,7 +129,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
           <Radio.Group
             disabled={readOnly}
             onChange={(e) => {
-              form.setFieldsValue({ cropCatalogId: undefined, targetObjects: [], targetCategories: [] });
+              form.setFieldsValue({ cropCatalogId: undefined, cropIds: [] });
             }}
           >
             <Radio value="ALL">Tất cả cây trồng</Radio>
@@ -139,21 +139,20 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
         </Form.Item>
       </Col>
 
-      {targetType === 'CATEGORY' && (
+      {applyTarget === 'CATEGORY' && (
         <Col xs={24} md={12}>
           <Form.Item
-            name="targetCategories"
+            name="cropCatalogId"
             label={
               <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
                 Danh mục cây trồng {!readOnly}
               </span>
             }
             rules={!readOnly ? [
-              { required: true, message: 'Vui lòng chọn ít nhất 1 danh mục.' },
+              { required: true, message: 'Vui lòng chọn danh mục.' },
             ] : []}
           >
             <Select
-              mode="multiple"
               allowClear
               placeholder="Chọn danh mục..."
               className="rounded-lg"
@@ -165,40 +164,42 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
         </Col>
       )}
 
-      {targetType === 'SPECIFIC' && (
+      {applyTarget === 'SPECIFIC' && (
         <>
           <Col xs={24} md={12}>
             <Form.Item
               name="cropCatalogId"
               label={
                 <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  Lọc theo danh mục
+                  Danh mục cây trồng
                 </span>
               }
+              rules={!readOnly ? [
+                { required: true, message: 'Vui lòng chọn danh mục.' },
+              ] : []}
             >
               <Select
-                mode="multiple"
                 allowClear
                 placeholder="Chọn danh mục để lọc..."
                 className="rounded-lg"
                 options={catalogOptions}
                 disabled={readOnly || isCatalogsLoading}
                 loading={isCatalogsLoading}
-                onChange={() => form.setFieldsValue({ targetObjects: [] })}
+                onChange={() => form.setFieldsValue({ cropIds: undefined })}
               />
             </Form.Item>
           </Col>
 
           <Col xs={24} md={12}>
             <Form.Item
-              name="targetObjects"
+              name="cropIds"
               label={
                 <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
                   Cây trồng cụ thể {!readOnly}
                 </span>
               }
               rules={!readOnly ? [
-                { required: true, message: 'Vui lòng chọn ít nhất 1 cây trồng.' },
+                { required: true, message: 'Vui lòng chọn cây trồng.' },
               ] : []}
             >
               <Select

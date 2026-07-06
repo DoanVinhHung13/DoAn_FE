@@ -1,104 +1,71 @@
-const generateId = () => Math.random().toString(36).substring(2, 9) + Date.now().toString(36)
+/**
+ * CropProtectionService — API thuốc bảo vệ thực vật
+ * Swagger: https://api.eapls.io.vn/swagger/index.html → nhóm "CropProtection"
+ *
+ * GET    /api/crop-protection              → getCropProtections(params)
+ * POST   /api/crop-protection              → createCropProtection(body)
+ * GET    /api/crop-protection/{id}         → getCropProtectionById(id)
+ * PUT    /api/crop-protection/{id}         → updateCropProtection(id, body)
+ * DELETE /api/crop-protection/{id}         → deleteCropProtection(id)
+ * PATCH  /api/crop-protection/{id}/status  → toggleCropProtectionStatus(id, body)
+ *
+ * CreateCropProtectionRequest / UpdateCropProtectionRequest schema:
+ *   { name: string (req), code: string (req),
+ *     manufacturer?: string, supplier?: string,
+ *     minInventory: number (min 0), unit?: string,
+ *     description?: string, isActive: boolean,
+ *     usages?: Array<{
+ *       targetCrop?: string, targetPest?: string,
+ *       concentration?: string, concentrationUnit?: string,
+ *       dilutionVolume?: string, dilutionUnit?: string,
+ *       dosage: number, dosageUnit?: string,
+ *       area: number, areaUnit?: string,
+ *       quarantineDays?: int
+ *     }> }
+ */
+import http from '../01_axios'
+import {
+  apiGetCropProtections,
+  apiCreateCropProtection,
+  apiGetCropProtectionById,
+  apiUpdateCropProtection,
+  apiDeleteCropProtection,
+  apiToggleCropProtectionStatus,
+} from './urls'
 
-// Mock Data
-let mockData = [
-  {
-    id: generateId(),
-    code: 'CP-001',
-    name: 'Thuốc trừ sâu sinh học A',
-    manufacturer: 'Công ty TNHH Hóa Chất Nông Nghiệp',
-    supplierId: 'SUP-001', // id nhà cung cấp
-    minimumStock: 100,
-    unit: 'lít',
-    description: 'Thuốc trừ sâu phổ rộng, an toàn cho môi trường.',
-    usages: [
-      {
-        id: generateId(),
-        targetCrop: 'Lúa',
-        targetPest: 'Rầy nâu',
-        dilutionRatio: '1:500',
-        dilutionUnit: 'lít',
-        dosage: 500,
-        dosageUnit: 'ml',
-        areaUnit: 'ha',
-        isolationDays: 14,
-      },
-    ],
-    isActive: true,
-  },
-]
+/**
+ * GET /api/crop-protection
+ * params: { PageIndex, PageSize, SearchKeyword, Status? }
+ */
+const getCropProtections = (params) => http.get(apiGetCropProtections, { params })
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+/**
+ * GET /api/crop-protection/{id}
+ */
+const getCropProtectionById = (id) => http.get(apiGetCropProtectionById(id))
 
-const getCropProtections = async (params = {}) => {
-  await delay(500)
-  const { SearchKeyword, Status } = params
+/**
+ * POST /api/crop-protection
+ * body: { name, code, manufacturer?, supplier?, minInventory, unit?, description?, isActive, usages? }
+ */
+const createCropProtection = (body) => http.post(apiCreateCropProtection, body)
 
-  let filtered = [...mockData]
-  if (SearchKeyword) {
-    const kw = SearchKeyword.toLowerCase()
-    filtered = filtered.filter(
-      (item) =>
-        item.name?.toLowerCase().includes(kw) || item.code?.toLowerCase().includes(kw),
-    )
-  }
+/**
+ * PUT /api/crop-protection/{id}
+ * body: { name, code, manufacturer?, supplier?, minInventory, unit?, description?, isActive, usages? }
+ */
+const updateCropProtection = (id, body) => http.put(apiUpdateCropProtection(id), body)
 
-  if (Status === 'active') {
-    filtered = filtered.filter((item) => item.isActive)
-  } else if (Status === 'inactive') {
-    filtered = filtered.filter((item) => !item.isActive)
-  }
+/**
+ * DELETE /api/crop-protection/{id}
+ */
+const deleteCropProtection = (id) => http.delete(apiDeleteCropProtection(id))
 
-  return {
-    data: {
-      items: filtered,
-      totalCount: filtered.length,
-      pageIndex: params.PageIndex || 1,
-      totalPages: 1,
-    },
-  }
-}
-
-const getCropProtectionById = async (id) => {
-  await delay(500)
-  const item = mockData.find((x) => x.id === id)
-  return { data: item }
-}
-
-const createCropProtection = async (body) => {
-  await delay(500)
-  const newItem = {
-    ...body,
-    id: generateId(),
-    isActive: true,
-  }
-  mockData.push(newItem)
-  return { success: true, data: newItem }
-}
-
-const updateCropProtection = async (id, body) => {
-  await delay(500)
-  const idx = mockData.findIndex((x) => x.id === id)
-  if (idx === -1) return { success: false, message: 'Not found' }
-
-  mockData[idx] = { ...mockData[idx], ...body }
-  return { success: true, data: mockData[idx] }
-}
-
-const deleteCropProtection = async (id) => {
-  await delay(500)
-  mockData = mockData.filter((x) => x.id !== id)
-  return { success: true }
-}
-
-const toggleCropProtectionStatus = async (id, body) => {
-  await delay(500)
-  const idx = mockData.findIndex((x) => x.id === id)
-  if (idx === -1) return { success: false, message: 'Not found' }
-
-  mockData[idx].isActive = body.isActive
-  return { success: true, data: mockData[idx] }
-}
+/**
+ * PATCH /api/crop-protection/{id}/status
+ * body: { isActive: boolean }
+ */
+const toggleCropProtectionStatus = (id, body) => http.patch(apiToggleCropProtectionStatus(id), body)
 
 const CropProtectionService = {
   getCropProtections,
