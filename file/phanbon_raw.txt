@@ -1,0 +1,349 @@
+
+--- PAGE 1 ---
+TT Tên phân bón Đơn vị Thành phần, hàm lượng đăng ký 
+Tổ chức, cá
+nhân đăng ký
+% HC: 22; N-P2O5-K2O: 2,5-1,5-1; Ca: 0,05; Mg: 0,15; Độ ẩm: 20
+ppm Zn: 500; Cu: 300; B: 300
+2 Gia Tường % HC: 22; N-P2O5-K2O: 2,5-1-1; Độ ẩm: 25 
+CT TNHH Gia
+Tường
+% HC: 25; Axit Humic: 4,5; N-P2O5: 2,5-3 Độ ẩm: 25
+pH: 6,5-7
+4 
+CON Ó No 3 (EFFECT) cho cây
+ngắn ngày 
+% HC: 65; N-P2O5: 2,5-1,6; Độ ẩm: 25 
+CT CP PB Miền
+Nam
+% 
+HC: 31; N-P2O5-K2O: 3,16-3,35-3,37; CaO: 9,07; MgO: 1,02; Fe: 0,33; Độ
+ẩm: 25
+ppm Zn: 300; Mn: 280; B: 47
+% 
+HC: 25; Axit Humic: 5; Axit Fulvic: 1,5; N: 2,5; Azadirachitin: 2; Nicotoids:
+2; Mg: 0,04; Độ ẩm: 25
+ppm Cu: 200; Zn: 200; Bo: 500; Fe: 200
+% 
+HC: 25; Axit Humic: 6; Axit Fulvic: 2; N: 2,5; CaO: 2; S: 0,05; Mg: 0,04; Độ
+ẩm: 25
+ppm Cu: 200; Zn: 200; Bo: 500; Fe: 200
+TT Tên phân bón Đơn vị Thành phần, hàm lượng đăng ký 
+Tổ chức, cá
+nhân đăng ký
+% 
+HC: 25; Axit Humic: 1,8; N-P2O5-K2O: 5-2-2; CaO: 3,5; MgO: 2; S: 4; SiO2:
+4; Độ ẩm: 25
+CT CP Bình
+Điền MEKONG
+I. PHÂN HỮU CƠ
+PHỤ LỤC 01: DANH MỤC BỔ SUNG CÁC LOẠI PHÂN BÓN
+ĐƯỢC PHÉP SẢN XUẤT, KINH DOANH VÀ SỬ DỤNG TẠI VIỆT NAM
+(Ban hành kèm theo Thông tư số 38/2013/TT-BNNPTNT ngày 9 tháng 8 năm 2013 của Bộ trưởng Bộ NN & PTNT)
+CT TNHH
+SXTM Đại Nam
+II. PHÂN HỮU CƠ KHOÁNG
+7 TNP-Đồng tiền vàng 08
+CT TNHH SX
+TM Thuận Nông
+Phát
+3
+CT TNHH Phát
+Lộc
+Đầu Trâu HC MK 11
+TNP-Đồng tiền vàng 06
+1 
+VIAN 5-2-2-TE+25% HC cho
+cây dài ngày
+Phát Lộc 7 (PL CaO) cho cây
+ngắn ngày
+Ong Biển
+5
+6
+1
+--- PAGE 2 ---
+ppm B: 1500; Zn: 200; Fe: 200; Mn: 200; Cu: 200
+% 
+HC: 25; Axit Humic: 1,8; N-P2O5-K2O: 6-4-2; CaO: 12; MgO: 4; S: 4; SiO2:
+15; Độ ẩm: 25
+ppm B: 1500; Zn: 500
+% 
+HC: 25; Axit Humic: 1,8; N-P2O5-K2O: 4-3-4; CaO: 3; MgO: 2; SiO2: 6; Độ
+ẩm: 25
+ppm Zn: 1000
+% 
+HC: 25; Axit Humic: 1,8; N-P2O5-K2O: 3,5-3,5-3,5; CaO: 6,5; MgO: 3; SiO2:
+10; Độ ẩm: 25
+ppm B: 1500; Zn: 500; Fe: 200; Mn: 200; Cu: 200
+% HC:15; Axit Humic: 3; N-P2O5-K2O: 4-2-2; CaO: 1; MgO: 0,5; Độ ẩm: 20
+ppm Cu: 200; Zn: 300; Mn: 200; Fe: 300; B: 100
+% HC: 15; Axit Humic: 2; N-P2O5-K2O: 6-3-6; CaO: 1; MgO: 0,5; Độ ẩm: 20
+ppm Cu: 200; Zn: 300; Mn: 200; Fe: 300; B: 100
+% HC: 15; N-P2O5-K2O: 4-4-2; Ca: 0,5; Mg: 0,05; Độ ẩm: 25
+ppm Fe: 200; Zn: 100; Cu: 100; B: 50; Mn: 100
+% HC: 15; Axit Humic: 1,5; N-P2O5-K2O: 4-2-2; CaO: 0,5; Độ ẩm: 25
+ppm MgO: 100; B2O3: 100; FeO: 100
+% HC: 18; N-P2O5-K2O: 4-4-2; Ca: 0,05; Mg: 0,15; Độ ẩm: 20
+ppm Zn: 500; Cu: 300; B: 300
+% HC: 15; N-P2O5-K2O: 12-3-1; Ca: 0,05; Mg: 0,15; Độ ẩm: 20
+ppm Zn: 500; Cu: 300; B: 300 
+CT CP Bình
+Điền MEKONG
+CT TNHH Anh
+Phước Nguyên
+Đầu Trâu HC MK 3
+Đầu Trâu HC MK 2
+3
+VIAN 6-4-2-TE+25% HC cho
+cây dài ngày
+2
+1 
+VIAN 5-2-2-TE+25% HC cho
+cây dài ngày
+10
+AUMY-4.2.2 cho cây ngắn ngày
+APN 4 -4-2
+9
+6
+7
+CT TNHH MTV
+HC QT Âu Mỹ
+8
+CT CP BVTV
+An Giang
+CTTNHH MTV
+An Nhất
+5
+AN-OGR 6-3-6
+VIAN 4-3-4-TE+25% HC cho
+cây dài ngày
+4 
+VIAN 3,5-3,5-3,5-TE+25% HC
+cho cây dài ngày
+AN-OGR 4-2-2
+2
+--- PAGE 3 ---
+% HC: 15; N-P2O5-K2O: 7-5-3; Ca: 0,05; Mg: 0,15; Độ ẩm: 20
+ppm Zn: 500; Cu: 300; B: 300
+% HC: 15; N-P2O5-K2O: 4-2-4; Ca: 0,05; Mg: 0,15; Độ ẩm: 20
+ppm Zn: 500; Cu: 300; B: 300
+% HC: 39; N-P2O5-K2O: 3,3-2,97-1,74; Ca: 2,5 S: 0,7; Mg: 0,4; Độ ẩm: 20
+ppm Mn: 300; Fe: 250; Zn: 300
+% HC: 19; N-P2O5-K2O: 12-3-3; Ca: 2,4; S: 7; Độ ẩm 16
+ppm Fe: 2000; Zn: 35; Cu: 6
+% HC: 15; N-P2O5-K2O: 4-4-2; Mg: 0,6; Ca: 0,3; Độ ẩm: 25
+ppm B: 50; Zn: 50; Cu: 50; Mn: 50
+16 Hải Phong - 05 % HC: 15; N-P2O5-K2O: 2-5-1; SiO2: 6; MgO: 3; CaO: 2,5; Độ ẩm: 25
+17 Hải Phong - 06 % HC: 15; Axit Humic: 3; P2O5: 8; SiO2: 4; MgO: 3; CaO: 5; Độ ẩm: 25
+18 Hải Phong - 07 % HC: 15; N-P2O5: 5-3; SiO2: 6; MgO: 3; CaO: 3; Độ ẩm: 25
+% HC: 15; N-P2O5-K2O: 5-5-5; Độ ẩm: 25
+ppm Fe: 200; Mn: 100; Zn: 150; Cu: 100
+20 Hợp Trí CÒ VÀNG-HCK % HC: 15; N-P2O5-K2O: 3-3-2; Độ ẩm: 25 
+CT TNHH Hoá
+Nông Hợp Trí
+21 
+LIO Thái 18-03-03+15HC cho
+cây dài ngày 
+% HC: 15; N-P2O5-K2O: 18-3-3; Độ ẩm: 20
+22 
+LIO Thái 14,5-0,5-01+15HC cho
+cây dài ngày 
+% HC: 15; N-P2O5-K2O: 14,5-0,5-01; Độ ẩm: 20
+CT CP Bình
+Điền MEKONG
+CT TNHH
+Foundan Agro
+CT TNHH SX
+PB Hải Phong
+CT TNHH QT
+Đức &Việt [NK
+từ Úc]
+Hoà Bình - 04
+CTTNHH TM
+GOLD STAR
+CT TNHH DV
+MTĐT Hoà Bình
+CT TNHH
+PBHC Green
+Field
+FOUNDAN AGRO NPK 12-3-
+3+OM+TE
+Đầu Trâu HC MK 512
+Gold Star 9
+11 Đầu Trâu HC MK 4
+13 Dynamic Lifter Standard Pellets
+15
+14
+19
+3
+--- PAGE 4 ---
+23 Lam Sơn 4-4-2-15 HC % HC: 15; N-P2O5-K2O: 4-4-2; Độ ẩm: 25
+24 Lam Sơn 5-1-5-15 HC % HC: 15; N-P2O5-K2O: 5-1-5; Độ ẩm: 25
+25 Lam Sơn 6-4-2-15 HC % HC: 15; N-P2O5-K2O: 6-4-2; Độ ẩm: 25
+26 Lam Sơn 6-4-4-15 HC % HC: 15; N-P2O5-K2O: 6-4-4; Độ ẩm: 15
+% HC: 18; N-P2O5-K2O: 4-2-2; Độ ẩm: 25
+ppm Zn: 300; Fe: 200; B: 200
+28 
+Phân HCK CON Ó No 1 (Super
+Organic) cho cây ngắn ngày 
+% 
+HC: 32; N-P2O5-K2O: 3,5-8-0,5; S: 3,2; SiO2: 5; CaO: 12; MgO: 1,6 Độ ẩm:
+25
+29 
+Phân HCK CON Ó No 2 (BiO
+Tech) cho cây ngắn ngày 
+% HC: 30; N-P2O5-K2O: 5-5-5; Độ ẩm: 25
+30 
+Phân HCK CON Ó No 4
+(SUCCES) cho cây ngắn ngày 
+% HC: 15; N-P2O5-K2O: 5-2-2; Độ ẩm: 25
+% HC: 16; N-P2O5-K2O: 4-2-3; CaO: 3; MgO: 1,5; Độ ẩm: 20
+ppm Zn: 250; B: 200; Fe: 200; Mn: 50
+% HC: 15; N-P2O5-K2O: 3-3-2; Mg: 0,2; Ca: 0,5; S: 2; SiO2: 2; Độ ẩm: 25
+ppm B: 50; Zn: 50; Cu: 50; Mn: 50
+% HC: 50; N-P2O5-K2O: 7-2-3; CaO: 2; MgO: 1; Độ ẩm: 25
+ppm Cu: 20; Zn: 132; Fe: 4652; Mn: 132
+% HC: 40; N-P2O5-K2O: 2-3-4; CaO: 2,7; MgO: 0,8; Độ ẩm: 25
+ppm Cu: 42; Zn: 132; Fe: 4652; Mn: 132
+% HC: 40; N-P2O5-K2O: 5-10-5; CaO: 2; MgO: 0,7; Độ ẩm: 25
+CT TNHH Ngân
+Anh [NK từ
+Malaysia]
+CT TNHH PB
+Nam Bình
+CT TNHH SX
+TM DV MI SA
+32
+MISA-Gấu Nâu (Bio-Grow) cho
+cây ngắn ngày
+31
+35
+34 Biofert 2-3-4
+Nabimix 1
+33
+Ích Nông IN2 4-2-2
+CT TNHH
+TMDV XNK
+Lộc Vừng
+CT CP PB Miền
+Nam
+CT CP PB Lam
+Sơn
+27
+Biofert 5-10-5
+Biofert 7-2-3
+4
+--- PAGE 5 ---
+ppm Cu: 10; Zn: 105; Fe: 3.600; Mn: 90
+% HC: 50; N-P2O5-K2O: 8-8-8; CaO: 6; MgO: 3; Độ ẩm: 25
+ppm Cu: 50; Zn: 168; Fe: 600; Mn: 202
+37 Mù a Vàng cho cây ngắn ngày % HC: 15; N-P2O5-K2O: 4-3-3; Độ ẩm: 20 
+CT TNHH TM
+Nông Phát
+38 
+Phát Lộc (PL AMI) cho cây ngắn
+ngày 
+%
+HC: 15; N-P2O5-K2O: 3-3-3; Axit Amin (Alanine, Istidine, Lysine, Betaine,
+Methionine, Axit Glutamic, Tryptophane, Threonine, Cysteine ): 5; Fe: 0,05;
+S: 5; Si: 0,7; Độ ẩm: 25
+CT TNHH Phát
+Lộc
+39 Phú Hưng % HC: 16; N-P2O5-K2O: 3-2,5-2,5; Độ ẩm: 25 
+HKD CS Phân
+bón lá Phú Hưng
+40 Đầu Bò 1 % HC: 15; N-P2O5-K2O: 5-5-5; Độ ẩm: 25
+41 Đầu Bò 2 % HC: 15; N-K2O: 8-8; Độ ẩm: 25
+42 Đầu Bò 3 % HC: 15; N-P2O5: 8-5; Độ ẩm: 25
+43 Đầu Bò 4 % HC: 15; N-P2O5-K2O: 8-8-8; Độ ẩm: 25
+% HC: 15; Axit Humic: 5; N-P2O5-K2O: 3-3-3; Độ ẩm: 25
+pH: 6,5
+% HC: 15; Axit Humic: 5; N-P2O5-K2O: 5-2-4; Độ ẩm: 25
+pH: 6,5
+% HC: 15; Axit Humic: 5; N-P2O5-K2O: 3-2-5; Độ ẩm: 25
+pH: 6,5
+% HC: 15; N-P2O5-K2O: 3-3-2; Ca: 0,3; Mg: 0,2; S: 0,2; Fe: 0,05; Độ ẩm: 25
+ppm Cu: 100; Zn: 100
+% HC: 15; N-P2O5-K2O: 3-2-6; Ca: 0,3; Mg: 0,2; S: 0,2; Fe: 0,05; Độ ẩm: 25
+ppm Cu: 100; Zn: 100
+% HC: 15; N-P2O5-K2O: 4-4-5; Ca: 0,3; Mg: 0,2; S: 0,2; Fe: 0,05; Độ ẩm: 25
+ppm Cu: 100; Zn: 100
+CT TNHH TM-
+SX Phước
+Hưng; CS SX
+PBHC Long
+Khánh
+Đầu Bò 645
+46 Đầu Bò 7
+CT TNHH SX-
+XD-TM Phước
+Thắng
+Phước Thắng số 9-PT09
+Malaysia]
+CT TNHH TM-
+SX Phước Hưng
+48 Phước Thắng số 8-PT08
+49
+Phước Thắng số 7-PT07
+Đầu Bò 544
+47
+35 Biofert 5-10-5
+36 Biofert 8-8-8
+5
+--- PAGE 6 ---
+% HC: 15; N-P2O5-K2O: 6-2-3; Ca: 0,3; Mg: 0,2; S: 0,2; Fe: 0,05; Độ ẩm: 25
+ppm Cu: 100; Zn: 100
+% HC: 15; N-P2O5-K2O: 3-2-3; Độ ẩm: 25
+ppm B: 70; Zn: 40; Cu: 50; Mn: 30; Fe: 30
+52 HC5 % 
+HC: 20; N-P2O5-K2O: 2,5-3-2,5; Ca: 0,5; Mg: 0,2; S: 0,3; Cu: 0,01; Zn: 0,01;
+Fe: 0,01; Mn: 0,001; Mo: 0,01; Độ ẩm: 25
+CT TNHH PB
+Sao Mai
+53 Sông Gianh 2-4-2 % 
+HC: 15; Axit Humic: 1; N-P2O5-K2O: 2-4-2; SiO2: 2,5; CaO: 2,5; MgO: 2; Độ
+ẩm: 25
+54 Sông Gianh 3-4-1 % 
+HC: 15; Axit Humic: 1; N-P2O5-K2O: 3-4-1; SiO2: 2,5; CaO: 2,5; MgO: 2; Độ
+ẩm: 25
+55 Sông Gianh 5-2-2 % 
+HC: 15; Axit Humic: 1; N-P2O5-K2O: 5-2-2; SiO2: 2,5; CaO: 2,5; MgO: 2; Độ
+ẩm: 25
+56 Sông Gianh 5-5-5 % 
+HC: 15; Axit Humic: 1; N-P2O5-K2O: 5-5-5; SiO2: 2,5; CaO: 2,5; MgO: 2; Độ
+ẩm: 25
+% 
+HC: 15; Axit Humic: 10; Axit Fulvic: 1; N-P2O5-K2O: 7-7-3; Chitosan: 0,4;
+Độ ẩm: 25
+Cfu/g Mycorrhizae : 1x10
+6
+% HC: 19; N-P2O5-K2O: 6-4-4; Ca: 0,5; Mg: 0,5; S: 1; Độ ẩm: 25
+ppm Fe: 50; Cu: 50; Zn: 30; Mn: 20; B: 20
+pH: 5-7
+% HC: 19; N-P2O5-K2O: 7-1-3; Ca: 0,5; Mg: 0,5; S: 1; Độ ẩm: 25
+ppm Fe: 50; Cu: 50; Zn: 30; Mn: 20; B: 20
+pH: 5-7
+% HC: 19; N-P2O5-K2O: 2-3-7; Ca: 0,5; Mg: 0,5; S: 1; Độ ẩm: 25
+ppm Fe: 50; Cu: 50; Zn: 30; Mn: 20; B: 20
+58
+CT CP TCT
+Sông Gianh
+CT TNHH
+TVĐT SX TM
+DV Thuận Thảo
+Thiện
+Bông Sen 1 (NPK)
+51
+TAVI 7-7-3
+QT IV 
+CTTNHH PT
+KHKT Quốc Tế
+CT TNHH TM
+DV ĐT &
+PTNN Tân Việt
+57
+Phước Thắng số 10-PT1050
+59
+60 Bông Sen 4
+Bông Sen 2
+6

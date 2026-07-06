@@ -83,6 +83,15 @@ export const farmManagerItem = () => [
       { key: ROUTER.FM_VIEW_CROP_PROTECTIONS, label: 'Nông dược' },
     ],
   },
+  {
+    key: 'reference-submenu',
+    icon: <BookOutlined className="text-lg" />,
+    label: 'Tra cứu cấp phép',
+    children: [
+      { key: ROUTER.FM_REF_FERTILIZER, label: 'Danh mục phân bón' },
+      { key: ROUTER.FM_REF_PESTICIDE, label: 'Danh mục thuốc BVTV' },
+    ],
+  },
 ]
 
 // ─── LAND_MANAGER MENU ────────────────────────────────────────────────────────

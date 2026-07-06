@@ -49,6 +49,8 @@ const ROUTER = {
   FM_BATCHES:            '/farm-manager/batches',
   FM_NOTIFICATIONS:      '/farm-manager/notifications',
   FM_NOTIFICATION_DETAIL: '/farm-manager/notifications/:id',
+  FM_REF_FERTILIZER:     '/farm-manager/reference/fertilizers',
+  FM_REF_PESTICIDE:      '/farm-manager/reference/pesticides',
   FM_VIEW_FERTILIZERS:   '/farm-manager/view-fertilizers',
   FM_VIEW_FERTILIZER_CREATE: '/farm-manager/view-fertilizers/create',
   FM_VIEW_FERTILIZER_DETAIL: '/farm-manager/view-fertilizers/:id',
