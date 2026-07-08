@@ -1,5 +1,5 @@
 /**
- * ProductionPlanDetail — Chi tiết Kế hoạch sản xuất (Màn 2)
+ * ProductionPlanDetail — Chi tiết Nhật ký canh tác (Màn 2)
  * Route: /farm-manager/production-plans/:id  (ROUTER.FM_PRODUCTION_PLAN_DETAIL)
  *
  * Architecture mirrors FertilizerDetail:
@@ -92,10 +92,6 @@ const ProductionPlanDetail = () => {
   const label = getDescription(SYSTEM_KEY.STATUS, sysVal) || (isActive ? 'Hoạt động' : 'Vô hiệu')
 
   const stages = item.stages || []
-
-  const handleMapClick = () => {
-    console.log('Open map/QR detail for production plan:', item.id)
-  }
 
   const handleStageClick = (stage) => {
     const details = getStageDetails(stage.id)
@@ -204,19 +200,6 @@ const ProductionPlanDetail = () => {
               {item.startDate || <span className="text-gray-400">—</span>}
             </Descriptions.Item>
           </Descriptions>
-
-          {/* Bản đồ thu nhỏ placeholder */}
-          <div className="mt-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
-            <p className="mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              Mã Truy Xuất Nguồn Gốc
-            </p>
-            <button
-              onClick={handleMapClick}
-              className="w-full max-w-xs h-24 bg-gradient-to-br from-green-100 to-green-50 flex items-center justify-center rounded-lg cursor-pointer border-2 border-gray-200 hover:border-green-300 transition-colors"
-            >
-              <EnvironmentOutlined className="text-3xl text-green-400" />
-            </button>
-          </div>
 
           {/* ── Section 2: Quy Trình Kỹ Thuật ── */}
           <SectionTitle>Quy Trình Kỹ Thuật (Stages Sequence)</SectionTitle>

@@ -1,5 +1,5 @@
 /**
- * ProductionPlans — Danh sách Kế hoạch sản xuất (Màn 5)
+ * ProductionPlans — Danh sách Nhật ký canh tác (Màn 5)
  * Route: /farm-manager/production-plans  (ROUTER.FM_PRODUCTION_PLANS)
  *
  * Architecture mirrors /farm-manager/view-fertilizers:
@@ -228,7 +228,7 @@ const ProductionPlanList = () => {
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <CalendarOutlined className="text-green-600" />
-            Kế hoạch sản xuất
+            Nhật ký canh tác
           </TitleCustom>
         </div>
         <Button
@@ -237,7 +237,7 @@ const ProductionPlanList = () => {
           onClick={() => navigate(ROUTER.FM_PRODUCTION_PLAN_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
-          Tạo kế hoạch mới
+          Tạo nhật ký mới
         </Button>
       </div>
 
@@ -253,7 +253,7 @@ const ProductionPlanList = () => {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
-            placeholder="Tìm kiếm kế hoạch, mã ID..."
+            placeholder="Tìm kiếm nhật ký canh tác, mã ID..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="w-64 h-10 rounded-xl"
             allowClear
@@ -296,7 +296,7 @@ const ProductionPlanList = () => {
             onClick: () => navigate(ROUTER.FM_PRODUCTION_PLAN_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
-          locale={{ emptyText: 'Chưa có kế hoạch sản xuất nào.' }}
+          locale={{ emptyText: 'Chưa có nhật ký canh tác nào.' }}
           pagination={{
             current: page,
             pageSize,

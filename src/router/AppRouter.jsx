@@ -227,8 +227,7 @@ const routes = [
               { path: ROUTER.FM_TASK_DETAIL, element: <Lazy><FarmManagerTaskDetail /></Lazy> },
               { path: ROUTER.FM_TASK_EDIT, element: <Lazy><FarmManagerTaskEdit /></Lazy> },
 
-              // Logbooks & Batches
-              { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },
+              // Batches
               { path: ROUTER.FM_BATCHES, element: <Lazy><FarmManagerBatches /></Lazy> },
 
               // Notification Management

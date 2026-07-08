@@ -59,7 +59,7 @@ export const farmManagerItem = () => [
   {
     key: ROUTER.FM_PLAN_TEMPLATES,
     icon: <ProfileOutlined className="text-lg" />,
-    label: 'Kế hoạch mẫu',
+    label: 'Nhật ký canh tác',
   },
   {
     key: ROUTER.FM_TASKS,
@@ -67,14 +67,9 @@ export const farmManagerItem = () => [
     label: 'Quản lý nhiệm vụ',
   },
   {
-    key: ROUTER.FM_LOGBOOKS,
-    icon: <BookOutlined className="text-lg" />,
-    label: 'Nhật ký sản xuất',
-  },
-  {
     key: ROUTER.FM_BATCHES,
     icon: <InboxOutlined className="text-lg" />,
-    label: 'Quản lý lô sản xuất',
+    label: 'Quản lý lô thu hoạch',
   },
   {
     key: ROUTER.FM_NOTIFICATIONS,
@@ -141,12 +136,12 @@ export const landManagerItem = () => [
   {
     key: ROUTER.LM_LOGBOOKS,
     icon: <BookOutlined className="text-lg" />,
-    label: 'Nhật ký sản xuất',
+    label: 'Nhật ký canh tác',
   },
   {
     key: ROUTER.LM_BATCHES,
     icon: <InboxOutlined className="text-lg" />,
-    label: 'Quản lý lô sản xuất',
+    label: 'Quản lý lô thu hoạch',
   },
   {
     key: ROUTER.LM_NOTIFICATIONS,
@@ -209,7 +204,7 @@ export const farmerItem = () => [
   {
     key: ROUTER.FARMER_LOGBOOKS,
     icon: <FileTextOutlined className="text-lg" />,
-    label: 'Nhật ký sản xuất',
+    label: 'Nhật ký canh tác',
   },
   {
     key: ROUTER.FARMER_SUPPLIES,
