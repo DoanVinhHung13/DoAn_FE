@@ -50,7 +50,6 @@ const ROUTER = {
   FM_TASK_CREATE:        '/farm-manager/tasks/create',
   FM_TASK_DETAIL:        '/farm-manager/tasks/:id',
   FM_TASK_EDIT:          '/farm-manager/tasks/:id/edit',
-  FM_LOGBOOKS:           '/farm-manager/logbooks',
   FM_BATCHES:            '/farm-manager/batches',
   FM_NOTIFICATIONS:      '/farm-manager/notifications',
   FM_NOTIFICATION_DETAIL: '/farm-manager/notifications/:id',

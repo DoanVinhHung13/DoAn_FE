@@ -218,7 +218,7 @@ const PlanTemplateList = () => {
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <ProfileOutlined className="text-green-600" />
-            Thư viện Kế hoạch Mẫu
+            Thư viện mẫu
           </TitleCustom>
         </div>
         <Button

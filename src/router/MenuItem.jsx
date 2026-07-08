@@ -54,12 +54,12 @@ export const farmManagerItem = () => [
   {
     key: ROUTER.FM_PRODUCTION_PLANS,
     icon: <ContainerOutlined className="text-lg" />,
-    label: 'Kế hoạch sản xuất',
+    label: 'Nhật ký canh tác',
   },
   {
     key: ROUTER.FM_PLAN_TEMPLATES,
     icon: <ProfileOutlined className="text-lg" />,
-    label: 'Nhật ký canh tác',
+    label: 'Thư viện mẫu',
   },
   {
     key: ROUTER.FM_TASKS,
