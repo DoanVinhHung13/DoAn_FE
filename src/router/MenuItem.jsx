@@ -17,6 +17,8 @@ import {
   BookOutlined,
   ContainerOutlined,
   ProfileOutlined,
+  CalendarOutlined,
+  FormOutlined,
 } from '@ant-design/icons'
 import { Sprout } from 'lucide-react'
 import ROUTER from './ROUTER'
@@ -53,6 +55,11 @@ export const farmManagerItem = () => [
     key: ROUTER.FM_PRODUCTION_PLANS,
     icon: <ContainerOutlined className="text-lg" />,
     label: 'Kế hoạch sản xuất',
+  },
+  {
+    key: ROUTER.FM_PLAN_TEMPLATES,
+    icon: <ProfileOutlined className="text-lg" />,
+    label: 'Kế hoạch mẫu',
   },
   {
     key: ROUTER.FM_TASKS,
@@ -145,6 +152,11 @@ export const landManagerItem = () => [
     key: ROUTER.LM_NOTIFICATIONS,
     icon: <BellOutlined className="text-lg" />,
     label: 'Thông báo',
+  },
+  {
+    key: ROUTER.LM_FIELD_LOG,
+    icon: <FormOutlined className="text-lg" />,
+    label: 'Ghi chép thực tế',
   },
 ]
 

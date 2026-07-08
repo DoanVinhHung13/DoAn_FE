@@ -47,6 +47,11 @@ const FarmManagerCropCreate = React.lazy(() => import('../pages/FARM_MANAGER/Cro
 const FarmManagerCropDetail = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropDetail'))
 const FarmManagerCropEdit = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropEdit'))
 const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans'))
+const FarmManagerProductionPlanCreate = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans/ProductionPlanCreate'))
+const FarmManagerProductionPlanDetail = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans/ProductionPlanDetail'))
+const FarmManagerPlanTemplates = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates'))
+const FarmManagerPlanTemplateDetail = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates/PlanTemplateDetail'))
+const FarmManagerPlanTemplateCreate = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates/PlanTemplateCreate'))
 const FarmManagerTasks = React.lazy(() => import('../pages/FARM_MANAGER/Tasks'))
 const FarmManagerTaskCreate = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskCreate'))
 const FarmManagerTaskDetail = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskDetail'))
@@ -66,6 +71,7 @@ const FarmManagerReferenceFertilizers = React.lazy(() => import('../pages/FARM_M
 const FarmManagerReferencePesticides = React.lazy(() => import('../pages/FARM_MANAGER/Reference/PesticideList'))
 
 // LAND_MANAGER pages
+const LandManagerFieldLog = React.lazy(() => import('../pages/LAND_MANAGER/FieldLog'))
 const LandManagerDashboard = React.lazy(() => import('../pages/LAND_MANAGER/Dashboard'))
 const LandManagerFarmers = React.lazy(() => import('../pages/LAND_MANAGER/Farmers'))
 const LandManagerLands = React.lazy(() => import('../pages/LAND_MANAGER/Lands'))
@@ -182,52 +188,59 @@ const routes = [
             children: [
               // Dashboard
               { path: ROUTER.FM_DASHBOARD, element: <Lazy><FarmManagerDashboard /></Lazy> },
-              
+
               // User Management
               { path: ROUTER.FM_USERS, element: <Lazy><FarmManagerUsers /></Lazy> },
               { path: ROUTER.FM_USER_DETAIL, element: <Lazy><FarmManagerUserDetail /></Lazy> },
-              
+
               // Land Management
               { path: ROUTER.FM_LANDS, element: <Lazy><FarmManagerLands /></Lazy> },
               { path: ROUTER.FM_LAND_CREATE, element: <Lazy><FarmManagerLandPlotCreate /></Lazy> },
               { path: ROUTER.FM_LAND_DETAIL, element: <Lazy><FarmManagerLandPlotDetail /></Lazy> },
               { path: ROUTER.FM_LAND_EDIT, element: <Lazy><FarmManagerLandPlotEdit /></Lazy> },
-              
+
               // Crop Catalog Management
               { path: ROUTER.FM_CROP_CATALOGS, element: <Lazy><FarmManagerCropCatalogs /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOG_CREATE, element: <Lazy><FarmManagerCropCatalogCreate /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOG_DETAIL, element: <Lazy><FarmManagerCropCatalogDetail /></Lazy> },
               { path: ROUTER.FM_CROP_CATALOG_EDIT, element: <Lazy><FarmManagerCropCatalogEdit /></Lazy> },
-              
+
               // Crop Management
               { path: ROUTER.FM_CROPS, element: <Lazy><FarmManagerCrops /></Lazy> },
               { path: ROUTER.FM_CROP_CREATE, element: <Lazy><FarmManagerCropCreate /></Lazy> },
               { path: ROUTER.FM_CROP_DETAIL, element: <Lazy><FarmManagerCropDetail /></Lazy> },
               { path: ROUTER.FM_CROP_EDIT, element: <Lazy><FarmManagerCropEdit /></Lazy> },
-              
+
               // Production Plan Management
               { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
-              
+              { path: ROUTER.FM_PRODUCTION_PLAN_CREATE, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
+              { path: ROUTER.FM_PRODUCTION_PLAN_DETAIL, element: <Lazy><FarmManagerProductionPlanDetail /></Lazy> },
+
+              // Plan Template Management
+              { path: ROUTER.FM_PLAN_TEMPLATES, element: <Lazy><FarmManagerPlanTemplates /></Lazy> },
+              { path: ROUTER.FM_PLAN_TEMPLATE_CREATE, element: <Lazy><FarmManagerPlanTemplateCreate /></Lazy> },
+              { path: ROUTER.FM_PLAN_TEMPLATE_DETAIL, element: <Lazy><FarmManagerPlanTemplateDetail /></Lazy> },
+
               // Task Management
               { path: ROUTER.FM_TASKS, element: <Lazy><FarmManagerTasks /></Lazy> },
               { path: ROUTER.FM_TASK_CREATE, element: <Lazy><FarmManagerTaskCreate /></Lazy> },
               { path: ROUTER.FM_TASK_DETAIL, element: <Lazy><FarmManagerTaskDetail /></Lazy> },
               { path: ROUTER.FM_TASK_EDIT, element: <Lazy><FarmManagerTaskEdit /></Lazy> },
-              
+
               // Logbooks & Batches
               { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },
               { path: ROUTER.FM_BATCHES, element: <Lazy><FarmManagerBatches /></Lazy> },
-              
+
               // Notification Management
               { path: ROUTER.FM_NOTIFICATIONS, element: <Lazy><FarmManagerNotifications /></Lazy> },
               { path: ROUTER.FM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
-              
+
               // Fertilizer Management
               { path: ROUTER.FM_VIEW_FERTILIZERS, element: <Lazy><FarmManagerViewFertilizers /></Lazy> },
               { path: ROUTER.FM_VIEW_FERTILIZER_CREATE, element: <Lazy><FarmManagerFertilizerCreate /></Lazy> },
               { path: ROUTER.FM_VIEW_FERTILIZER_DETAIL, element: <Lazy><FarmManagerFertilizerDetail /></Lazy> },
               { path: ROUTER.FM_VIEW_FERTILIZER_EDIT, element: <Lazy><FarmManagerFertilizerEdit /></Lazy> },
-              
+
               // Crop Protection Management
               { path: ROUTER.FM_VIEW_CROP_PROTECTIONS, element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
               { path: ROUTER.FM_VIEW_CROP_PROTECTION_CREATE, element: <Lazy><FarmManagerCropProtectionCreate /></Lazy> },
@@ -246,32 +259,35 @@ const routes = [
             children: [
               // Dashboard
               { path: ROUTER.LM_DASHBOARD, element: <Lazy><LandManagerDashboard /></Lazy> },
-              
+
               // Farmer Management
               { path: ROUTER.LM_FARMERS, element: <Lazy><LandManagerFarmers /></Lazy> },
-              
+
               // Land Management
               { path: ROUTER.LM_LANDS, element: <Lazy><LandManagerLands /></Lazy> },
               { path: ROUTER.LM_LAND_DETAIL, element: <Lazy><LandManagerLandPlotDetail /></Lazy> },
-              
+
               // Production Plan Management
               { path: ROUTER.LM_PRODUCTION_PLANS, element: <Lazy><LandManagerProductionPlans /></Lazy> },
-              
+
               // Task Management
               { path: ROUTER.LM_TASKS, element: <Lazy><LandManagerTasks /></Lazy> },
-              
+
               // Logbooks & Batches
               { path: ROUTER.LM_LOGBOOKS, element: <Lazy><LandManagerLogbooks /></Lazy> },
               { path: ROUTER.LM_BATCHES, element: <Lazy><LandManagerBatches /></Lazy> },
-              
+
+              // Field Log
+              { path: ROUTER.LM_FIELD_LOG, element: <Lazy><LandManagerFieldLog /></Lazy> },
+
               // Notification Management
               { path: ROUTER.LM_NOTIFICATIONS, element: <Lazy><LandManagerNotifications /></Lazy> },
               { path: ROUTER.LM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
-              
+
               // Crop Catalog Management
               { path: ROUTER.LM_CROP_CATALOGS, element: <Lazy><LandManagerViewCatalogs /></Lazy> },
               { path: ROUTER.LM_CROP_CATALOG_DETAIL, element: <Lazy><LandManagerCatalogDetail /></Lazy> },
-              
+
               // Crop Management
               { path: ROUTER.LM_CROPS, element: <Lazy><LandManagerCrops /></Lazy> },
 
@@ -285,31 +301,31 @@ const routes = [
             children: [
               // Dashboard
               { path: ROUTER.MM_DASHBOARD, element: <Lazy><MaterialManagerDashboard /></Lazy> },
-              
+
               // Fertilizer Management
               { path: ROUTER.MM_FERTILIZERS, element: <Lazy><MaterialManagerFertilizers /></Lazy> },
-              
+
               // Crop Protection Management
               { path: ROUTER.MM_CROP_PROTECTIONS, element: <Lazy><MaterialManagerCropProtections /></Lazy> },
-              
+
               // Machinery Management
               { path: ROUTER.MM_MACHINERY, element: <Lazy><MaterialManagerMachinery /></Lazy> },
-              
+
               // Material Management
               { path: ROUTER.MM_MATERIALS, element: <Lazy><MaterialManagerMaterials /></Lazy> },
               { path: ROUTER.MM_MATERIAL_CREATE, element: <Lazy><MaterialManagerMaterialCreate /></Lazy> },
               { path: ROUTER.MM_MATERIAL_DETAIL, element: <Lazy><MaterialManagerMaterialDetail /></Lazy> },
               { path: ROUTER.MM_MATERIAL_EDIT, element: <Lazy><MaterialManagerMaterialEdit /></Lazy> },
-              
+
               // Other Materials
               { path: ROUTER.MM_OTHER_MATERIALS, element: <Lazy><MaterialManagerOtherMaterials /></Lazy> },
-              
+
               // Purchase Requests
               { path: ROUTER.MM_PURCHASE_REQS, element: <Lazy><MaterialManagerPurchaseReqs /></Lazy> },
-              
+
               // Production Plan Management
               { path: ROUTER.MM_PRODUCTION_PLANS, element: <Lazy><MaterialManagerProductionPlans /></Lazy> },
-              
+
               // Task Management
               { path: ROUTER.MM_TASKS, element: <Lazy><MaterialManagerTasks /></Lazy> },
             ],
