@@ -135,7 +135,7 @@ const Dashboard = () => {
     { title: 'Danh mục cây trồng', icon: <FileText className="w-8 h-8" />, path: ROUTER.LM_CROP_CATALOGS, color: '#10b981' },
     { title: 'Cây trồng', icon: <Sprout className="w-8 h-8" />, path: ROUTER.LM_CROPS, color: '#84cc16' },
     { title: 'Kế hoạch sản xuất', icon: <ClipboardList className="w-8 h-8" />, path: ROUTER.LM_PRODUCTION_PLANS, color: '#f59e0b' },
-    { title: 'Nhật ký sản xuất', icon: <BookOpenText className="w-8 h-8" />, path: ROUTER.LM_LOGBOOKS, color: '#06b6d4' },
+    { title: 'Nhật ký canh tác', icon: <BookOpenText className="w-8 h-8" />, path: ROUTER.LM_LOGBOOKS, color: '#06b6d4' },
   ];
 
   return (
