@@ -220,6 +220,7 @@ const routes = [
               // Plan Template Management
               { path: ROUTER.FM_PLAN_TEMPLATES, element: <Lazy><FarmManagerPlanTemplates /></Lazy> },
               { path: ROUTER.FM_PLAN_TEMPLATE_CREATE, element: <Lazy><FarmManagerPlanTemplateCreate /></Lazy> },
+              { path: ROUTER.FM_PLAN_TEMPLATE_EDIT, element: <Lazy><FarmManagerPlanTemplateCreate /></Lazy> },
               { path: ROUTER.FM_PLAN_TEMPLATE_DETAIL, element: <Lazy><FarmManagerPlanTemplateDetail /></Lazy> },
 
               // Task Management

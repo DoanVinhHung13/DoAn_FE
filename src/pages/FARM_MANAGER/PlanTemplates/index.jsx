@@ -22,7 +22,6 @@ import {
   Card,
   Input,
   message,
-  Select,
   Tag,
   Tooltip,
 } from 'antd'
@@ -36,7 +35,16 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 import PlanTemplateService from 'src/services/PlanTemplateService'
+import ProcessStepService from 'src/services/ProcessStepService'
 import { invalidCharsRegex } from 'src/utils/helpers'
+
+const normalizeItems = (response) => {
+  const payload = response?.data ?? response ?? {}
+  const data = payload?.data ?? payload
+  return Array.isArray(data)
+    ? data
+    : data?.items || data?.results || data?.processSteps || []
+}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const PlanTemplateList = () => {
@@ -66,10 +74,33 @@ const PlanTemplateList = () => {
         PageSize: pageSize,
         SearchKeyword: search || undefined,
       }
-      const res = await PlanTemplateService.getAll(params)
-      if (res?.success === false) return
-      setListData(res?.data?.items || [])
-      setTotalRecords(res?.data?.totalItems || 0)
+      const [templateResponse, stepResponse] = await Promise.all([
+        PlanTemplateService.getAll(params),
+        ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
+      ])
+      if (templateResponse?.success === false) return
+
+      const stepCountByTemplate = normalizeItems(stepResponse).reduce(
+        (counts, step) => {
+          const processTemplateId =
+            step.processTemplateId || step.processTemplate?.id
+          if (processTemplateId) {
+            counts[processTemplateId] =
+              (counts[processTemplateId] || 0) + 1
+          }
+          return counts
+        },
+        {}
+      )
+      const templateItems = normalizeItems(templateResponse).map((template) => ({
+        ...template,
+        _stepCount: stepCountByTemplate[template.id] || 0,
+      }))
+
+      setListData(templateItems)
+      setTotalRecords(
+        templateResponse?.data?.totalItems || templateItems.length
+      )
     } finally {
       setLoading(false)
     }
@@ -101,7 +132,7 @@ const PlanTemplateList = () => {
       setDeleteLoading(true)
       const res = await PlanTemplateService.remove(deleteModal.item.id)
       if (res?.success === false) return
-      message.success('Xóa kế hoạch mẫu thành công.')
+      message.success('Xóa mẫu quy trình thành công.')
       setDeleteModal({ open: false, item: null })
       getList()
     } finally {
@@ -123,7 +154,7 @@ const PlanTemplateList = () => {
       ),
     },
     {
-      title: 'Tên kế hoạch mẫu',
+      title: 'Tên mẫu quy trình',
       dataIndex: 'name',
       key: 'name',
       render: (v) => (
@@ -131,28 +162,30 @@ const PlanTemplateList = () => {
       ),
     },
     {
-      title: 'Cây trồng mục tiêu',
+      title: 'Cây trồng áp dụng',
       key: 'targetCrop',
       width: 180,
       render: (_, record) => {
-        const crop = record.targetCrop
-        if (!crop) return <span className="text-gray-300">—</span>
-        const label = typeof crop === 'string' ? crop : crop.label
-        return (
-          <Tag>
-            🌿 {label}
-          </Tag>
-        )
+        const label =
+          record.cropName ||
+          record.crop?.name ||
+          record.cropCatalogName ||
+          record.cropCatalog?.name ||
+          record.targetCrop?.label ||
+          record.targetCrop
+        if (!label) return <span className="text-gray-300">—</span>
+        return <Tag>{label}</Tag>
       },
     },
     {
-      title: 'Số giai đoạn',
-      dataIndex: 'stageCount',
-      key: 'stageCount',
+      title: 'Số bước',
+      key: 'stepCount',
       width: 120,
       align: 'center',
-      render: (v) => (
-        <span className="text-sm font-semibold text-gray-700">{v ?? '—'}</span>
+      render: (_, record) => (
+        <span className="text-sm font-semibold text-gray-700">
+          {record._stepCount}
+        </span>
       ),
     },
     {
@@ -190,7 +223,9 @@ const PlanTemplateList = () => {
               className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
               onClick={(e) => {
                 e.stopPropagation()
-                navigate(ROUTER.FM_PLAN_TEMPLATE_CREATE)
+                navigate(
+                  ROUTER.FM_PLAN_TEMPLATE_EDIT.replace(':id', record.id)
+                )
               }}
             />
           </Tooltip>
@@ -218,7 +253,7 @@ const PlanTemplateList = () => {
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <ProfileOutlined className="text-green-600" />
-            Thư viện mẫu
+            Thư viện mẫu quy trình
           </TitleCustom>
         </div>
         <Button
@@ -227,7 +262,7 @@ const PlanTemplateList = () => {
           onClick={() => navigate(ROUTER.FM_PLAN_TEMPLATE_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
-          Tạo mẫu mới
+          Tạo mẫu quy trình
         </Button>
       </div>
 
@@ -243,7 +278,7 @@ const PlanTemplateList = () => {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
-            placeholder="Tìm theo tên kế hoạch mẫu..."
+            placeholder="Tìm theo tên mẫu quy trình..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="w-64 h-10 rounded-xl"
             allowClear
@@ -277,7 +312,7 @@ const PlanTemplateList = () => {
             onClick: () => navigate(ROUTER.FM_PLAN_TEMPLATE_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
-          locale={{ emptyText: 'Chưa có kế hoạch mẫu nào.' }}
+          locale={{ emptyText: 'Chưa có mẫu quy trình nào.' }}
           pagination={{
             current: page,
             pageSize,
@@ -313,7 +348,7 @@ const PlanTemplateList = () => {
       >
         <div className="mt-4 mb-6 ml-4">
           <p className="text-gray-600">
-            Bạn có chắc chắn muốn xóa kế hoạch mẫu này? Thao tác này không thể hoàn tác.
+            Bạn có chắc chắn muốn xóa mẫu quy trình này? Thao tác này không thể hoàn tác.
           </p>
           {deleteModal.item && (
             <p className="mt-2 text-sm font-semibold text-gray-800">
