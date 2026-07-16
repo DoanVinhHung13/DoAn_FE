@@ -1,74 +1,136 @@
-/**
- * ProductionPlanDetail — Chi tiết Nhật ký canh tác (Màn 2)
- * Route: /farm-manager/production-plans/:id  (ROUTER.FM_PRODUCTION_PLAN_DETAIL)
- *
- * Architecture mirrors FertilizerDetail:
- *   - Button "Quay lại" + TitleCustom header
- *   - Single Card with SectionTitle green-bar headers
- *   - Descriptions for info grid
- */
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
-  CheckCircleOutlined,
+  ClockCircleOutlined,
+  EditOutlined,
   EnvironmentOutlined,
-  StopOutlined,
-  UserOutlined,
+  FileTextOutlined,
+  TeamOutlined,
 } from '@ant-design/icons'
-import { Badge, Button, Card, Descriptions, Empty, Skeleton, Tag, Typography, message } from 'antd'
+import {
+  Button,
+  Card,
+  Empty,
+  Skeleton,
+  Tag,
+  Typography,
+  message,
+} from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import ProductionPlanService from 'src/services/ProductionPlanService'
-import { getStageDetails } from 'src/services/ProductionPlanService/mockDataStageDetails'
-import StageDetailModal from 'src/components/ProductionPlan/StageDetailModal'
-import { useSystemKey } from 'src/hooks/useSystemKey'
-import { SYSTEM_KEY } from 'src/constants/systemKey'
+import { formatDate, formatDateTime } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
 
-// ── Section header (Fertilizer-style) ─────────────────────────────────────────
-const SectionTitle = ({ children }) => (
-  <div
-    className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
-    style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
-  >
-    {children}
+const PLAN_STATUS = {
+  DRAFT: { label: 'Bản nháp', color: 'default' },
+  PLANNED: { label: 'Đã lên kế hoạch', color: 'blue' },
+  IN_PROGRESS: { label: 'Đang thực hiện', color: 'gold' },
+  COMPLETED: { label: 'Đã hoàn thành', color: 'green' },
+  CANCELLED: { label: 'Đã hủy', color: 'red' },
+}
+
+const REVIEW_STATUS = {
+  DRAFT: { label: 'Chưa gửi duyệt', color: 'default' },
+  PENDING: { label: 'Chờ duyệt', color: 'gold' },
+  PENDING_REVIEW: { label: 'Chờ duyệt', color: 'gold' },
+  APPROVED: { label: 'Đã duyệt', color: 'green' },
+  REJECTED: { label: 'Bị từ chối', color: 'red' },
+}
+
+const SCOPE = {
+  OVERALL: 'Kế hoạch tổng thể',
+  SPECIFIC: 'Kế hoạch chi tiết',
+}
+
+const SectionTitle = ({ children, extra }) => (
+  <div className="flex items-center justify-between gap-3 mb-5">
+    <div className="flex items-center gap-3">
+      <span className="w-1 h-6 bg-green-500 rounded-full" />
+      <h3 className="m-0 text-base font-bold text-gray-800">{children}</h3>
+    </div>
+    {extra}
   </div>
 )
 
-// ── Main Component ────────────────────────────────────────────────────────────
+const EmptyValue = ({ children }) =>
+  children || <span className="text-gray-400">Chưa cập nhật</span>
+
+const StatusTag = ({ value, config }) => {
+  const status = config[value] || {
+    label: value || 'Chưa cập nhật',
+    color: 'default',
+  }
+  return (
+    <Tag color={status.color} className="px-3 py-1 m-0 font-semibold rounded-full">
+      {status.label}
+    </Tag>
+  )
+}
+
+const getStageName = (stage, index) =>
+  stage.stageName || stage.title || stage.name || `Giai đoạn ${index + 1}`
+
+const getStageNote = (stage) => stage.note || stage.description
+
+const getTaskName = (task, index) =>
+  task.taskName || task.title || task.name || `Công việc ${index + 1}`
+
 const ProductionPlanDetail = () => {
   const navigate = useNavigate()
   const { id } = useParams()
-  const { getDescription } = useSystemKey()
 
   const [initialLoading, setInitialLoading] = useState(true)
   const [item, setItem] = useState(null)
-  const [selectedStage, setSelectedStage] = useState(null)
-  const [stageModalOpen, setStageModalOpen] = useState(false)
+  const [parentPlanName, setParentPlanName] = useState('')
 
   useEffect(() => {
+    let isMounted = true
+
     const fetchDetail = async () => {
       try {
         setInitialLoading(true)
-        const res = await ProductionPlanService.getById(id)
-        if (res?.success === false) {
+        const response = await ProductionPlanService.getById(id)
+        if (response?.success === false || !response?.data) {
           message.error('Không tìm thấy kế hoạch sản xuất')
           navigate(ROUTER.FM_PRODUCTION_PLANS)
           return
         }
-        setItem(res?.data)
-      } catch (err) {
+
+        const plan = response.data
+        if (!isMounted) return
+        setItem(plan)
+
+        if (plan.scope === 'SPECIFIC' && plan.parentPlanId) {
+          try {
+            const parentResponse = await ProductionPlanService.getById(
+              plan.parentPlanId
+            )
+            if (isMounted && parentResponse?.data) {
+              setParentPlanName(
+                parentResponse.data.planName || parentResponse.data.name || ''
+              )
+            }
+          } catch {
+            // Vẫn hiển thị parentPlanId nếu không tải được tên kế hoạch cha.
+          }
+        }
+      } catch {
         message.error('Lấy thông tin kế hoạch sản xuất thất bại')
         navigate(ROUTER.FM_PRODUCTION_PLANS)
       } finally {
-        setInitialLoading(false)
+        if (isMounted) setInitialLoading(false)
       }
     }
+
     if (id) fetchDetail()
+    return () => {
+      isMounted = false
+    }
   }, [id, navigate])
 
   if (initialLoading) {
@@ -78,8 +140,8 @@ const ProductionPlanDetail = () => {
           <CalendarOutlined className="text-green-600" />
           Chi tiết Kế hoạch sản xuất
         </TitleCustom>
-        <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: '24px' }}>
-          <Skeleton active paragraph={{ rows: 8 }} />
+        <Card bordered={false} className="shadow-sm rounded-2xl">
+          <Skeleton active paragraph={{ rows: 10 }} />
         </Card>
       </div>
     )
@@ -87,29 +149,17 @@ const ProductionPlanDetail = () => {
 
   if (!item) return null
 
-  const sysVal = item.status
-  const isActive = sysVal === true || String(sysVal || '').toLowerCase() === 'active'
-  const label = getDescription(SYSTEM_KEY.STATUS, sysVal) || (isActive ? 'Hoạt động' : 'Vô hiệu')
-
-  const stages = item.stages || []
-
-  const handleStageClick = (stage) => {
-    const details = getStageDetails(stage.id)
-    setSelectedStage({ ...stage, ...details })
-    setStageModalOpen(true)
-  }
-
-  const handleCloseStageModal = () => {
-    setStageModalOpen(false)
-    setSelectedStage(null)
-  }
+  const stages = item.productionStages || item.stages || []
+  const tasks = item.tasks || []
 
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      {/* ── Header ── */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_PRODUCTION_PLANS)}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTER.FM_PRODUCTION_PLANS)}
+          >
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
@@ -117,179 +167,262 @@ const ProductionPlanDetail = () => {
             Chi tiết Kế hoạch sản xuất
           </TitleCustom>
         </div>
+        <Button
+          type="primary"
+          icon={<EditOutlined />}
+          className="h-10 px-5 font-semibold bg-green-600 border-0 shadow-md rounded-xl shadow-green-100"
+          onClick={() =>
+            navigate(ROUTER.FM_PRODUCTION_PLAN_EDIT.replace(':id', item.id))
+          }
+        >
+          Sửa kế hoạch
+        </Button>
       </div>
 
-      {/* ── Main Card ── */}
-      <Card
-        bordered={false}
-        className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: '24px' }}
-      >
-        <div className="space-y-6">
-
-          {/* ── Header: Tên + Trạng thái ── */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="mb-0.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-                Kế hoạch sản xuất
-              </p>
-              <span className="text-lg font-bold text-gray-800">
-                {item.name || '—'}
-              </span>
+      <div className="relative overflow-hidden bg-gradient-to-br from-green-600 via-green-600 to-emerald-700 shadow-lg rounded-3xl shadow-green-100">
+        <div className="absolute w-48 h-48 rounded-full pointer-events-none -right-12 -top-20 bg-white/10" />
+        <div className="absolute w-32 h-32 rounded-full pointer-events-none right-32 -bottom-20 bg-white/5" />
+        <div className="relative p-6 md:p-8">
+          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-green-100">
+                <CalendarOutlined />
+                <span>Kế hoạch sản xuất</span>
+                <span className="opacity-50">•</span>
+                <span>{SCOPE[item.scope] || item.scope || 'Chưa cập nhật'}</span>
+              </div>
+              <h1 className="max-w-4xl m-0 text-2xl font-bold leading-tight text-white md:text-3xl">
+                {item.planName || item.name || 'Chưa đặt tên kế hoạch'}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-sm text-green-50">
+                <span>
+                  <EnvironmentOutlined className="mr-2" />
+                  {item.landPlotName || 'Chưa chọn vùng trồng'}
+                </span>
+                <span>
+                  <TeamOutlined className="mr-2" />
+                  {item.supervisorName || 'Chưa chỉ định người giám sát'}
+                </span>
+              </div>
             </div>
-            <Badge
-              status={isActive ? 'success' : 'error'}
-              text={
-                <span className={`text-sm font-semibold ${isActive ? 'text-green-600' : 'text-gray-500'}`}>
-                  {label}
-                </span>
-              }
-            />
+            <div className="flex flex-wrap flex-none gap-2">
+              <div className="px-1 py-1 rounded-full bg-white/95">
+                <StatusTag value={item.status} config={PLAN_STATUS} />
+              </div>
+              <div className="px-1 py-1 rounded-full bg-white/95">
+                <StatusTag value={item.reviewStatus} config={REVIEW_STATUS} />
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
 
-          {/* ── Section 1: Thông Tin Tổng Quan ── */}
-          <SectionTitle>Thông Tin Tổng Quan</SectionTitle>
-
-          <Descriptions
-            column={{ xs: 1, sm: 2, lg: 3 }}
-            size="small"
-            labelStyle={{
-              fontWeight: 600,
-              color: '#6b7280',
-              fontSize: 12,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
-            contentStyle={{ color: '#1f2937', fontSize: 14 }}
-          >
-            <Descriptions.Item
-              label={
-                <span className="flex items-center gap-1">
-                  <UserOutlined /> Người giám sát
-                </span>
-              }
-            >
-              {item.supervisor?.name || <span className="text-gray-400">Chưa chỉ định</span>}
-            </Descriptions.Item>
-
-            <Descriptions.Item
-              label={
-                <span className="flex items-center gap-1">
-                  <EnvironmentOutlined /> Vùng trồng
-                </span>
-              }
-            >
-              {item.area || <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-
-            <Descriptions.Item label="Danh mục cây trồng">
-              {item.category || <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-
-            <Descriptions.Item label="Cây trồng cụ thể">
-              {item.specificCrop || <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-
-            <Descriptions.Item
-              label={
-                <span className="flex items-center gap-1">
-                  <CalendarOutlined /> Ngày bắt đầu
-                </span>
-              }
-            >
-              {item.startDate || <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-          </Descriptions>
-
-          {/* ── Section 2: Quy Trình Kỹ Thuật ── */}
-          <SectionTitle>Quy Trình Kỹ Thuật (Stages Sequence)</SectionTitle>
-
-          {stages.length > 0 ? (
-            <div className="relative">
-              {stages.map((stage, index) => {
-                const isLast = index === stages.length - 1
-                const status = stage.status || 'notStarted'
-
-                let circleClass = ''
-                let innerContent = null
-                if (status === 'done') {
-                  circleClass = 'bg-green-500'
-                  innerContent = <CheckCircleOutlined className="text-white text-sm" />
-                } else if (status === 'inProgress') {
-                  circleClass = 'bg-white border-2 border-green-500'
-                  innerContent = <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-                } else {
-                  circleClass = 'bg-gray-100 border-2 border-gray-200'
-                  innerContent = null
-                }
-
-                const statusConfig = {
-                  done: { label: 'Hoàn thành', cls: 'bg-green-50 text-green-700' },
-                  inProgress: { label: 'Đang thực hiện', cls: 'bg-amber-50 text-amber-700' },
-                  notStarted: { label: 'Chưa bắt đầu', cls: 'bg-gray-50 text-gray-500' },
-                }
-                const sc = statusConfig[status] || statusConfig.notStarted
-
-                return (
-                  <div key={stage.id || index} className="relative flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className={`relative z-10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${circleClass}`}>
-                        {innerContent}
-                      </div>
-                      {!isLast && <div className="w-0 flex-1 border-l-2 border-gray-200 my-1" />}
-                    </div>
-
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="space-y-6">
+          <Card bordered={false} className="shadow-sm rounded-2xl">
+            <SectionTitle>Thông tin kế hoạch</SectionTitle>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                {
+                  label: 'Cây trồng',
+                  value: item.cropName,
+                  icon: <FileTextOutlined />,
+                },
+                {
+                  label: 'Ngày bắt đầu',
+                  value: item.startDate ? formatDate(item.startDate) : null,
+                  icon: <CalendarOutlined />,
+                },
+                {
+                  label: 'Kết thúc dự kiến',
+                  value: item.expectedEndDate
+                    ? formatDate(item.expectedEndDate)
+                    : null,
+                  icon: <ClockCircleOutlined />,
+                },
+                {
+                  label: 'Kết thúc thực tế',
+                  value: item.actualEndDate
+                    ? formatDate(item.actualEndDate)
+                    : 'Chưa hoàn thành',
+                  icon: <ClockCircleOutlined />,
+                },
+                {
+                  label: 'Phạm vi',
+                  value: SCOPE[item.scope] || item.scope,
+                  icon: <EnvironmentOutlined />,
+                },
+                ...(item.scope === 'SPECIFIC'
+                  ? [
+                      {
+                        label: 'Kế hoạch cha',
+                        value: parentPlanName || item.parentPlanId,
+                        icon: <CalendarOutlined />,
+                      },
+                    ]
+                  : []),
+              ].map((field) => (
+                <div
+                  key={field.label}
+                  className="flex min-w-0 gap-3 p-4 border border-gray-100 rounded-2xl bg-gray-50/70"
+                >
+                  <div className="flex items-center justify-center flex-none w-10 h-10 text-green-600 bg-green-100 rounded-xl">
+                    {field.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="mb-1 text-xs font-semibold tracking-wide text-gray-400 uppercase">
+                      {field.label}
+                    </p>
                     <div
-                      className={`flex-1 ${!isLast ? 'pb-5' : 'pb-0'} cursor-pointer hover:bg-green-50/30 rounded-lg p-3 -ml-3 transition-colors`}
-                      onClick={() => handleStageClick(stage)}
+                      className="text-sm font-semibold text-gray-800 break-words"
+                      title={field.value || ''}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <Text strong className="text-gray-800">
-                          Giai đoạn {stage.order || index + 1}: {stage.title}
-                        </Text>
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold ${sc.cls}`}>
-                          {sc.label}
-                        </span>
-                      </div>
-
-                      {(stage.dateFrom || stage.dateTo) && (
-                        <p className="text-xs text-gray-400 m-0 mb-1">
-                          Thời gian từ {stage.dateFrom || '...'} đến {stage.dateTo || '...'}
-                        </p>
-                      )}
-
-                      {stage.description && (
-                        <div className="bg-gray-50 rounded-lg p-3 mt-1 border border-gray-100">
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap m-0 leading-relaxed">
-                            {stage.description}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="mt-2 text-xs text-green-600 font-semibold">
-                        → Nhấn để xem chi tiết
-                      </div>
+                      <EmptyValue>{field.value}</EmptyValue>
                     </div>
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
-          ) : (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Chưa có giai đoạn nào"
-              className="py-4"
-            />
-          )}
-        </div>
-      </Card>
+          </Card>
 
-      {/* ── Stage Detail Modal ── */}
-      <StageDetailModal
-        open={stageModalOpen}
-        onClose={handleCloseStageModal}
-        stage={selectedStage}
-      />
+          <Card bordered={false} className="shadow-sm rounded-2xl">
+            <SectionTitle>Giai đoạn sản xuất</SectionTitle>
+            {stages.length ? (
+              <div>
+                {stages.map((stage, index) => (
+                  <div
+                    key={stage.id || `${getStageName(stage, index)}-${index}`}
+                    className="relative flex gap-4 pb-6 last:pb-0"
+                  >
+                    {index < stages.length - 1 && (
+                      <div className="absolute w-px bg-green-100 left-5 top-10 bottom-0" />
+                    )}
+                    <div className="relative z-10 flex items-center justify-center flex-none w-10 h-10 font-bold text-white bg-green-600 rounded-full shadow-md shadow-green-100">
+                      {stage.order || index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0 p-4 -mt-1 border border-gray-100 rounded-2xl bg-gray-50/60">
+                      <Text strong className="text-base text-gray-800">
+                        {getStageName(stage, index)}
+                      </Text>
+                      {getStageNote(stage) && (
+                        <p className="mt-2 mb-0 text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">
+                          {getStageNote(stage)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Kế hoạch chưa có giai đoạn sản xuất"
+              />
+            )}
+          </Card>
+
+          <Card bordered={false} className="shadow-sm rounded-2xl">
+            <SectionTitle>Công việc trong kế hoạch</SectionTitle>
+            {tasks.length ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {tasks.map((task, index) => (
+                  <div
+                    key={task.id || `${getTaskName(task, index)}-${index}`}
+                    className="p-4 transition-shadow border border-gray-100 rounded-2xl bg-gray-50/60 hover:shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <Text strong>{getTaskName(task, index)}</Text>
+                      {task.status && (
+                        <Tag className="m-0">{task.status}</Tag>
+                      )}
+                    </div>
+                    {(task.startDate || task.dueDate || task.endDate) && (
+                      <p className="mt-2 mb-0 text-xs text-gray-500">
+                        <ClockCircleOutlined className="mr-1" />
+                        {task.startDate ? formatDate(task.startDate) : '...'}
+                        {' — '}
+                        {task.dueDate || task.endDate
+                          ? formatDate(task.dueDate || task.endDate)
+                          : '...'}
+                      </p>
+                    )}
+                    {task.description && (
+                      <p className="mt-2 mb-0 text-sm text-gray-600">
+                        {task.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Kế hoạch chưa có công việc"
+              />
+            )}
+          </Card>
+        </div>
+
+        <div className="space-y-6 xl:sticky xl:top-6">
+          <Card bordered={false} className="shadow-sm rounded-2xl">
+            <SectionTitle>Thông tin xét duyệt</SectionTitle>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3 pb-4 border-b border-gray-100">
+                <span className="text-sm text-gray-500">Trạng thái</span>
+                <StatusTag value={item.reviewStatus} config={REVIEW_STATUS} />
+              </div>
+              {[
+                {
+                  label: 'Gửi duyệt',
+                  value: item.submittedAt
+                    ? formatDateTime(item.submittedAt)
+                    : 'Chưa gửi duyệt',
+                },
+                {
+                  label: 'Xét duyệt',
+                  value: item.reviewedAt
+                    ? formatDateTime(item.reviewedAt)
+                    : 'Chưa xét duyệt',
+                },
+                {
+                  label: 'Người xét duyệt',
+                  value:
+                    item.reviewedByName ||
+                    item.reviewerName ||
+                    item.reviewedBy ||
+                    'Chưa chỉ định',
+                },
+              ].map((field) => (
+                <div key={field.label}>
+                  <p className="mb-1 text-xs font-semibold tracking-wide text-gray-400 uppercase">
+                    {field.label}
+                  </p>
+                  <p className="m-0 text-sm font-medium text-gray-700 break-words">
+                    {field.value}
+                  </p>
+                </div>
+              ))}
+              {item.rejectionReason && (
+                <div className="p-3 text-sm text-red-700 border border-red-100 rounded-xl bg-red-50">
+                  <p className="mb-1 font-semibold">Lý do từ chối</p>
+                  <p className="m-0">{item.rejectionReason}</p>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          <Card bordered={false} className="shadow-sm rounded-2xl">
+            <SectionTitle>Mô tả kế hoạch</SectionTitle>
+            <div className="text-sm leading-6 text-gray-600 whitespace-pre-wrap">
+              {item.description || (
+                <span className="italic text-gray-400">
+                  Chưa có mô tả cho kế hoạch này.
+                </span>
+              )}
+            </div>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

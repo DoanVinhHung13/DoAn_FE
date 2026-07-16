@@ -43,6 +43,7 @@ const ROUTER = {
   FM_PRODUCTION_PLANS:   '/farm-manager/production-plans',
   FM_PRODUCTION_PLAN_CREATE: '/farm-manager/production-plans/create',
   FM_PRODUCTION_PLAN_DETAIL: '/farm-manager/production-plans/:id',
+  FM_PRODUCTION_PLAN_EDIT:   '/farm-manager/production-plans/:id/edit',
   FM_PLAN_TEMPLATES:        '/farm-manager/plan-templates',
   FM_PLAN_TEMPLATE_CREATE:  '/farm-manager/plan-templates/create',
   FM_PLAN_TEMPLATE_DETAIL:  '/farm-manager/plan-templates/:id',
