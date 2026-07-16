@@ -14,6 +14,7 @@ import {
   EditOutlined,
   MinusCircleOutlined,
   PlusOutlined,
+  SearchOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
 import {
@@ -28,6 +29,7 @@ import {
   Row,
   Select,
   Spin,
+  Tag,
   Typography,
 } from 'antd'
 import React, { useCallback, useEffect, useState } from 'react'
@@ -39,6 +41,7 @@ import ROUTER from 'src/router/ROUTER'
 import ProductionPlanService from 'src/services/ProductionPlanService'
 import ProductionStageService from 'src/services/ProductionStageService'
 import PlanTemplateService from 'src/services/PlanTemplateService'
+import ProcessStepService from 'src/services/ProcessStepService'
 import CropService from 'src/services/CropService'
 import CropManagementService from 'src/services/CropManagementService'
 import LandPlotService from 'src/services/LandPlotService'
@@ -69,8 +72,10 @@ const formatApiDate = (date) =>
 const getCreatedPlanId = (response) =>
   response?.data?.id ||
   response?.data?.productionPlanId ||
+  response?.data?.processTemplateId ||
   response?.id ||
   response?.productionPlanId ||
+  response?.processTemplateId ||
   null
 
 const PRODUCTION_PLAN_SCOPE_OPTIONS = [
@@ -139,6 +144,7 @@ const ProductionPlanCreate = () => {
   const [templateModal, setTemplateModal] = useState(false)
   const [templates, setTemplates] = useState([])
   const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [templateSearch, setTemplateSearch] = useState('')
 
   React.useEffect(() => {
     let isMounted = true;
@@ -422,16 +428,33 @@ const ProductionPlanCreate = () => {
     if (!templateIdFromQuery || isEdit) return
     const loadTemplate = async () => {
       try {
-        const res = await PlanTemplateService.getById(templateIdFromQuery)
-        if (res?.success === false || !res?.data) return
-        const t = res.data
-        if (t.stages?.length) {
+        const [templateResponse, stepsResponse] = await Promise.all([
+          PlanTemplateService.getById(templateIdFromQuery),
+          ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
+        ])
+        if (templateResponse?.success === false) return
+        const templateSteps = normalizeResponse(stepsResponse)
+          .filter(
+            (step) =>
+              (step.processTemplateId || step.processTemplate?.id) ===
+              templateIdFromQuery
+          )
+          .sort(
+            (first, second) =>
+              (first.stepOrder || 0) - (second.stepOrder || 0)
+          )
+        if (templateSteps.length) {
           setStages(
-            t.stages.map((s, i) => ({
+            templateSteps.map((step, i) => ({
               _key: `tpl-${Date.now()}-${i}`,
               order: i + 1,
-              title: s.title || '',
-              description: s.description || '',
+              title: step.stepName || '',
+              description: [step.description, step.note]
+                .filter(Boolean)
+                .join('\n'),
+              startDate: null,
+              endDate: null,
+              status: 'ACTIVE',
             }))
           )
         }
@@ -552,10 +575,31 @@ const ProductionPlanCreate = () => {
   // ── Choose from template library ──
   const handleOpenTemplateModal = async () => {
     setTemplateModal(true)
+    setTemplateSearch('')
     try {
       setTemplatesLoading(true)
-      const res = await PlanTemplateService.getAll({ PageSize: 50 })
-      setTemplates(res?.data?.items || [])
+      const [templateResponse, stepResponse] = await Promise.all([
+        PlanTemplateService.getAll({ PageIndex: 1, PageSize: 1000 }),
+        ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
+      ])
+      const stepCountByTemplate = normalizeResponse(stepResponse).reduce(
+        (counts, step) => {
+          const processTemplateId =
+            step.processTemplateId || step.processTemplate?.id
+          if (processTemplateId) {
+            counts[processTemplateId] =
+              (counts[processTemplateId] || 0) + 1
+          }
+          return counts
+        },
+        {}
+      )
+      setTemplates(
+        normalizeResponse(templateResponse).map((template) => ({
+          ...template,
+          _stepCount: stepCountByTemplate[template.id] || 0,
+        }))
+      )
     } catch {
       // silent
     } finally {
@@ -563,19 +607,42 @@ const ProductionPlanCreate = () => {
     }
   }
 
-  const handleSelectTemplate = (template) => {
-    if (template.stages?.length) {
-      setStages(
-        template.stages.map((s, i) => ({
-          _key: `tpl-${Date.now()}-${i}`,
-          order: i + 1,
-          title: s.title || '',
-          description: s.description || '',
-        }))
-      )
+  const handleSelectTemplate = async (template) => {
+    try {
+      setTemplatesLoading(true)
+      const stepsResponse = await ProcessStepService.getAll({
+        PageIndex: 1,
+        PageSize: 1000,
+      })
+      const templateSteps = normalizeResponse(stepsResponse)
+        .filter(
+          (step) =>
+            (step.processTemplateId || step.processTemplate?.id) === template.id
+        )
+        .sort(
+          (first, second) =>
+            (first.stepOrder || 0) - (second.stepOrder || 0)
+        )
+      if (templateSteps.length) {
+        setStages(
+          templateSteps.map((step, i) => ({
+            _key: `tpl-${Date.now()}-${i}`,
+            order: i + 1,
+            title: step.stepName || '',
+            description: [step.description, step.note]
+              .filter(Boolean)
+              .join('\n'),
+            startDate: null,
+            endDate: null,
+            status: 'ACTIVE',
+          }))
+        )
+      }
+      setTemplateModal(false)
+      message.success(`Đã áp dụng mẫu "${template.name}"`)
+    } finally {
+      setTemplatesLoading(false)
     }
-    setTemplateModal(false)
-    message.success(`Đã áp dụng mẫu "${template.name}"`)
   }
 
   // ── Submit: Tạo Kế hoạch Sản xuất Mới ──
@@ -724,24 +791,50 @@ const ProductionPlanCreate = () => {
       message.warning('Vui lòng nhập tên kế hoạch trước.')
       return
     }
+    if (!values.category) {
+      message.warning('Vui lòng chọn danh mục cây trồng trước.')
+      return
+    }
 
     const body = {
       name: `Mẫu từ: ${values.name.trim()}`,
-      cropType: values.category,
-      description: '',
-      stages: stages.map((s) => ({
-        order: s.order,
-        title: s.title,
-        description: s.description,
-        materials: [],
-      })),
+      cropCatalogId: values.category,
+      cropId: values.cropVariety || null,
+      description: values.description?.trim() || null,
+      estimatedDurationDays:
+        values.expectedStartDate && values.expectedEndDate
+          ? values.expectedEndDate.diff(values.expectedStartDate, 'day')
+          : null,
     }
 
     try {
       setSavingTemplate(true)
-      const res = await PlanTemplateService.create(body)
+      const res = await PlanTemplateService.create(body, { skipNotice: true })
       if (res?.success === false) return
-      message.success('Đã lưu làm kế hoạch mẫu!')
+      const processTemplateId = getCreatedPlanId(res)
+      if (!processTemplateId) {
+        throw new Error(
+          'API đã tạo mẫu nhưng không trả về ID để lưu các bước quy trình.'
+        )
+      }
+      const validStages = stages.filter((stage) => stage.title?.trim())
+      for (const [index, stage] of validStages.entries()) {
+        await ProcessStepService.create({
+          processTemplateId,
+          stepName: stage.title.trim(),
+          stepOrder: index + 1,
+          description: stage.description?.trim() || null,
+          estimatedDay:
+            stage.startDate && values.expectedStartDate
+              ? stage.startDate.diff(values.expectedStartDate, 'day')
+              : null,
+          requiredMaterialType: null,
+          note: null,
+        })
+      }
+      message.success('Đã lưu thành mẫu quy trình.')
+    } catch (error) {
+      message.error(error.message || 'Không thể lưu thành mẫu quy trình.')
     } finally {
       setSavingTemplate(false)
     }
@@ -1064,7 +1157,7 @@ const ProductionPlanCreate = () => {
                   />
                 </div>
                 <Row gutter={[12, 8]}>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} md={12}>
                     <Text type="secondary" className="block mb-1 text-xs">
                       Ngày bắt đầu giai đoạn
                     </Text>
@@ -1084,7 +1177,7 @@ const ProductionPlanCreate = () => {
                       }
                     />
                   </Col>
-                  <Col xs={24} md={8}>
+                  <Col xs={24} md={12}>
                     <Text type="secondary" className="block mb-1 text-xs">
                       Ngày kết thúc giai đoạn
                     </Text>
@@ -1104,22 +1197,6 @@ const ProductionPlanCreate = () => {
                         (stage.startDate &&
                           !current.isAfter(stage.startDate, 'day'))
                       }
-                    />
-                  </Col>
-                  <Col xs={24} md={8}>
-                    <Text type="secondary" className="block mb-1 text-xs">
-                      Trạng thái giai đoạn
-                    </Text>
-                    <Select
-                      value={stage.status || 'ACTIVE'}
-                      onChange={(value) =>
-                        updateStage(index, 'status', value)
-                      }
-                      options={[
-                        { value: 'ACTIVE', label: 'Hoạt động' },
-                        { value: 'INACTIVE', label: 'Ngừng hoạt động' },
-                      ]}
-                      className="w-full h-9"
                     />
                   </Col>
                 </Row>
@@ -1170,9 +1247,24 @@ const ProductionPlanCreate = () => {
       <Modal
         open={templateModal}
         onCancel={() => setTemplateModal(false)}
-        title={<span className="font-bold text-gray-800">Chọn kế hoạch mẫu</span>}
+        title={
+          <div>
+            <div className="text-lg font-bold text-gray-800">
+              Chọn mẫu quy trình
+            </div>
+            <div className="mt-1 text-xs font-normal text-gray-400">
+              Chọn một mẫu để tự động thêm các giai đoạn sản xuất
+            </div>
+          </div>
+        }
         footer={null}
-        width={520}
+        width={680}
+        centered
+        styles={{
+          content: { borderRadius: 18, padding: 0, overflow: 'hidden' },
+          header: { padding: '20px 24px 14px', margin: 0 },
+          body: { padding: '0 24px 22px' },
+        }}
       >
         {templatesLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -1181,23 +1273,71 @@ const ProductionPlanCreate = () => {
         ) : templates.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
             <BookOutlined className="text-4xl mb-3" />
-            <p className="text-sm">Chưa có kế hoạch mẫu nào.</p>
+            <p className="text-sm">Chưa có mẫu quy trình nào.</p>
           </div>
         ) : (
-          <div className="space-y-2 max-h-80 overflow-y-auto">
-            {templates.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => handleSelectTemplate(t)}
-                className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50/50 transition-all cursor-pointer bg-white"
-              >
-                <div className="font-semibold text-gray-800 text-sm">{t.name}</div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {t.stageCount || t.stages?.length || 0} giai đoạn
-                  {t.description && ` · ${t.description}`}
-                </div>
-              </button>
-            ))}
+          <div>
+            <Input
+              value={templateSearch}
+              onChange={(event) => setTemplateSearch(event.target.value)}
+              prefix={<SearchOutlined className="text-gray-300" />}
+              allowClear
+              placeholder="Tìm theo tên mẫu hoặc cây trồng..."
+              className="mb-4 h-10 rounded-xl"
+            />
+            <div className="space-y-3 max-h-[430px] overflow-y-auto pr-1">
+              {templates
+                .filter((template) => {
+                  const keyword = templateSearch.trim().toLowerCase()
+                  if (!keyword) return true
+                  const cropName =
+                    template.cropName ||
+                    template.crop?.name ||
+                    template.cropCatalogName ||
+                    template.cropCatalog?.name ||
+                    ''
+                  return `${template.name || ''} ${cropName}`
+                    .toLowerCase()
+                    .includes(keyword)
+                })
+                .map((template) => {
+                  const cropName =
+                    template.cropName ||
+                    template.crop?.name ||
+                    template.cropCatalogName ||
+                    template.cropCatalog?.name
+                  return (
+                    <button
+                      key={template.id}
+                      type="button"
+                      onClick={() => handleSelectTemplate(template)}
+                      className="group w-full cursor-pointer rounded-xl border border-gray-100 bg-white p-4 text-left transition-all hover:border-green-300 hover:bg-green-50/40 hover:shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-bold text-gray-800 group-hover:text-green-700">
+                            {template.name}
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <Tag color="green" className="m-0">
+                              {template._stepCount} bước
+                            </Tag>
+                            {cropName && (
+                              <Tag className="m-0">{cropName}</Tag>
+                            )}
+                          </div>
+                          <p className="mb-0 mt-2 line-clamp-2 text-xs leading-5 text-gray-500">
+                            {template.description || 'Chưa có mô tả.'}
+                          </p>
+                        </div>
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-600 opacity-0 transition-opacity group-hover:opacity-100">
+                          <PlusOutlined />
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })}
+            </div>
           </div>
         )}
       </Modal>
