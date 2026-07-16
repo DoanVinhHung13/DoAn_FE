@@ -1,5 +1,5 @@
 /**
- * ProductionPlans — Danh sách Nhật ký canh tác (Màn 5)
+ * ProductionPlans — Danh sách Kế hoạch sản xuất (Màn 5)
  * Route: /farm-manager/production-plans  (ROUTER.FM_PRODUCTION_PLANS)
  *
  * Architecture mirrors /farm-manager/view-fertilizers:
@@ -10,6 +10,7 @@
 import {
   CalendarOutlined,
   CheckCircleOutlined,
+  EditOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -21,6 +22,7 @@ import {
   Input,
   message,
   Select,
+  Space,
   Tooltip,
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
@@ -32,9 +34,14 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 import ProductionPlanService from 'src/services/ProductionPlanService'
+import { formatDate } from 'src/utils/dateFormatters'
 import { invalidCharsRegex } from 'src/utils/helpers'
-import { useSystemKey } from 'src/hooks/useSystemKey'
-import { SYSTEM_KEY } from 'src/constants/systemKey'
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tất cả trạng thái' },
+  { value: 'active', label: 'Hoạt động' },
+  { value: 'inactive', label: 'Ngừng hoạt động' },
+]
 
 // ── Avatar helpers ────────────────────────────────────────────────────────────
 const AVATAR_COLORS = [
@@ -51,11 +58,47 @@ const getInitials = (name) => {
   return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
+const getSupervisorName = (plan) => {
+  const supervisor =
+    plan.assignedFarmSupervisor ||
+    plan.farmSupervisor ||
+    plan.supervisor
+
+  return (
+    plan.assignedFarmSupervisorName ||
+    plan.assignedFarmSupervisorFullName ||
+    plan.assignedSupervisorName ||
+    plan.farmSupervisorName ||
+    plan.farmSupervisorFullName ||
+    plan.supervisorName ||
+    (typeof supervisor === 'string' ? supervisor : null) ||
+    supervisor?.fullName ||
+    supervisor?.name ||
+    null
+  )
+}
+
+const normalizeProductionPlan = (plan) => ({
+  ...plan,
+  id: plan.id || plan.productionPlanId,
+  planName: plan.planName || plan.name,
+  cropName:
+    plan.cropName ||
+    plan.crop?.name ||
+    (typeof plan.crop === 'string' ? plan.crop : null),
+  supervisorName: getSupervisorName(plan),
+  startDate: plan.startDate || plan.expectedStartDate,
+  isActive:
+    typeof plan.isActive === 'boolean'
+      ? plan.isActive
+      : typeof plan.active === 'boolean'
+        ? plan.active
+        : !plan.isDeleted,
+})
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const ProductionPlanList = () => {
   const navigate = useNavigate()
-  const { getCombo, getDescription } = useSystemKey()
-  const statusOptions = [{ value: 'all', label: 'Tất cả trạng thái' }, ...getCombo(SYSTEM_KEY.STATUS)]
 
   // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
@@ -77,16 +120,22 @@ const ProductionPlanList = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
-        Status: statusFilter === 'all' ? undefined : statusFilter,
       }
       const res = await ProductionPlanService.getAll(params)
       if (res?.success === false) return
-      setListData(res?.data?.items || [])
+      setListData((res?.data?.items || []).map(normalizeProductionPlan))
       setTotalRecords(res?.data?.totalItems || 0)
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, statusFilter])
+  }, [page, pageSize, search])
+
+  const displayedData =
+    statusFilter === 'all'
+      ? listData
+      : listData.filter((plan) =>
+          statusFilter === 'active' ? plan.isActive : !plan.isActive
+        )
 
   useEffect(() => {
     getList()
@@ -122,28 +171,17 @@ const ProductionPlanList = () => {
       ),
     },
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 140,
-      render: (v) => (
-        <span className="px-2 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-lg font-mono">
-          {v || '—'}
-        </span>
-      ),
-    },
-    {
       title: 'Tên kế hoạch',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'planName',
+      key: 'planName',
       render: (v) => (
-        <span className="">{v || '—'}</span>
+        <span className="font-medium text-gray-800">{v || '—'}</span>
       ),
     },
     {
       title: 'Cây trồng',
-      dataIndex: 'crop',
-      key: 'crop',
+      dataIndex: 'cropName',
+      key: 'cropName',
       render: (v) => (
         <span className="text-sm text-gray-700">{v || '—'}</span>
       ),
@@ -152,8 +190,8 @@ const ProductionPlanList = () => {
       title: 'Người giám sát',
       key: 'supervisor',
       render: (_, record) => {
-        const sup = record.supervisor
-        if (!sup || !sup.name) {
+        const supervisorName = record.supervisorName
+        if (!supervisorName) {
           return (
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-400">--</span>
@@ -161,13 +199,13 @@ const ProductionPlanList = () => {
             </div>
           )
         }
-        const color = sup.avatarColor || getAvatarColor(sup.name)
+        const color = getAvatarColor(supervisorName)
         return (
           <div className="flex items-center gap-2">
             <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${color}`}>
-              {getInitials(sup.name)}
+              {getInitials(supervisorName)}
             </div>
-            <span className="text-sm text-gray-700">{sup.name}</span>
+            <span className="text-sm text-gray-700">{supervisorName}</span>
           </div>
         )
       },
@@ -176,36 +214,27 @@ const ProductionPlanList = () => {
       title: 'Ngày bắt đầu',
       key: 'startDate',
       width: 150,
-      render: (_, record) => {
-        if (record.isPlanned) {
-          return (
-            <span className="text-sm text-gray-400 italic">
-              Dự kiến {record.startDate || '—'}
-            </span>
-          )
-        }
-        return <span className="text-sm text-gray-700">{record.startDate || '—'}</span>
-      },
+      render: (_, record) => (
+        <span className="text-sm text-gray-700">
+          {record.startDate ? formatDate(record.startDate) : '—'}
+        </span>
+      ),
     },
     {
       title: 'Trạng thái',
       key: 'status',
       width: 150,
       render: (_, record) => {
-        const sysVal = record.status
-        const isActive = sysVal === true || String(sysVal || '').toLowerCase() === 'active'
-        const label = getDescription(SYSTEM_KEY.STATUS, sysVal) || (isActive ? 'Hoạt động' : 'Vô hiệu')
-
         return (
           <div
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${
-              isActive
+              record.isActive
                 ? 'bg-green-50 text-green-700'
-                : 'bg-gray-100 text-gray-600'
+                : 'bg-red-50 text-red-600'
             }`}
           >
-            {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
-            <span>{label}</span>
+            {record.isActive ? <CheckCircleOutlined /> : <StopOutlined />}
+            <span>{record.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}</span>
           </div>
         )
       },
@@ -214,9 +243,45 @@ const ProductionPlanList = () => {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 80,
+      width: 120,
       align: 'center',
-      render: () => <span className="text-gray-300">⋯</span>,
+      render: (_, record) => (
+        <Space size={4}>
+          <Tooltip title="Sửa">
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
+              onClick={(event) => {
+                event.stopPropagation()
+                navigate(
+                  ROUTER.FM_PRODUCTION_PLAN_EDIT.replace(':id', record.id)
+                )
+              }}
+            />
+          </Tooltip>
+          <Tooltip title={record.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}>
+            <Button
+              type="text"
+              size="small"
+              danger={record.isActive}
+              icon={record.isActive ? <StopOutlined /> : <CheckCircleOutlined />}
+              className={
+                record.isActive
+                  ? '!h-8 !w-8 rounded-lg text-red-500 hover:bg-red-50'
+                  : '!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50'
+              }
+              onClick={(event) => {
+                event.stopPropagation()
+                message.warning(
+                  'API kế hoạch sản xuất chưa hỗ trợ kích hoạt/vô hiệu hóa.'
+                )
+              }}
+            />
+          </Tooltip>
+        </Space>
+      ),
     },
   ]
 
@@ -228,7 +293,7 @@ const ProductionPlanList = () => {
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <CalendarOutlined className="text-green-600" />
-            Nhật ký canh tác
+            Kế hoạch sản xuất
           </TitleCustom>
         </div>
         <Button
@@ -237,7 +302,7 @@ const ProductionPlanList = () => {
           onClick={() => navigate(ROUTER.FM_PRODUCTION_PLAN_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
-          Tạo nhật ký mới
+          Tạo kế hoạch mới
         </Button>
       </div>
 
@@ -253,7 +318,7 @@ const ProductionPlanList = () => {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
-            placeholder="Tìm kiếm nhật ký canh tác, mã ID..."
+            placeholder="Tìm kiếm kế hoạch sản xuất..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="w-64 h-10 rounded-xl"
             allowClear
@@ -266,7 +331,7 @@ const ProductionPlanList = () => {
               setPage(1)
             }}
             className="h-10 rounded-xl min-w-[160px]"
-            options={statusOptions}
+            options={STATUS_OPTIONS}
           />
           <div className="flex gap-2 ml-auto">
             <Button
@@ -287,7 +352,7 @@ const ProductionPlanList = () => {
 
         {/* Table */}
         <CustomTable
-          dataSource={listData}
+          dataSource={displayedData}
           columns={columns}
           rowKey="id"
           loading={loading}
@@ -296,7 +361,7 @@ const ProductionPlanList = () => {
             onClick: () => navigate(ROUTER.FM_PRODUCTION_PLAN_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
-          locale={{ emptyText: 'Chưa có nhật ký canh tác nào.' }}
+          locale={{ emptyText: 'Chưa có kế hoạch sản xuất nào.' }}
           pagination={{
             current: page,
             pageSize,

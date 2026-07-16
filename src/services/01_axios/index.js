@@ -190,7 +190,13 @@ instance.interceptors.response.use(
       if (!originalRequest?.skipNotice && msg) {
         notice({ msg, isSuccess: false })
       }
-      return Promise.reject(new Error(msg || "Yêu cầu thất bại"))
+      const apiError = new Error(msg || "Yêu cầu thất bại")
+      apiError.status = error.response?.status
+      apiError.responseData = errorData
+      apiError.requestUrl = requestUrl
+      apiError.requestMethod = originalRequest?.method
+      apiError.requestData = originalRequest?.data
+      return Promise.reject(apiError)
     }
 
     if (

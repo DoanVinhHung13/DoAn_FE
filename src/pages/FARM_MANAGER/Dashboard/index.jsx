@@ -134,7 +134,7 @@ const Dashboard = () => {
     { title: 'Quản lý người dùng', icon: <Users className="w-8 h-8" />, path: ROUTER.FM_USERS, color: '#6366f1' },
     { title: 'Quản lý vùng trồng', icon: <MapPinned className="w-8 h-8" />, path: ROUTER.FM_LANDS, color: '#22c55e' },
     { title: 'Danh mục cây trồng', icon: <Sprout className="w-8 h-8" />, path: ROUTER.FM_CROP_CATALOGS, color: '#10b981' },
-    { title: 'Nhật ký canh tác', icon: <ClipboardList className="w-8 h-8" />, path: ROUTER.FM_PRODUCTION_PLANS, color: '#f59e0b' },
+    { title: 'Kế hoạch sản xuất', icon: <ClipboardList className="w-8 h-8" />, path: ROUTER.FM_PRODUCTION_PLANS, color: '#f59e0b' },
     { title: 'Thư viện mẫu', icon: <BookOpenText className="w-8 h-8" />, path: ROUTER.FM_PLAN_TEMPLATES, color: '#06b6d4' },
     { title: 'Quản lý vật tư', icon: <Package className="w-8 h-8" />, path: ROUTER.FM_VIEW_FERTILIZERS, color: '#ec4899' },
   ];

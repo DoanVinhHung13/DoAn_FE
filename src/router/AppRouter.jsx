@@ -214,6 +214,7 @@ const routes = [
               // Production Plan Management
               { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLAN_CREATE, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
+              { path: ROUTER.FM_PRODUCTION_PLAN_EDIT, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLAN_DETAIL, element: <Lazy><FarmManagerProductionPlanDetail /></Lazy> },
 
               // Plan Template Management
