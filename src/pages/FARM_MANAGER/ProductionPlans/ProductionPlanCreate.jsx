@@ -680,11 +680,23 @@ const ProductionPlanCreate = () => {
           parentPlanId:
             values.scope === 'SPECIFIC' ? values.parentPlanId : null,
           assignedFarmSupervisorId: values.supervisorId || null,
+          productionStages: normalizedStages.map((stage) => ({
+            stageName: stage.stageName,
+            note: stage.note,
+          })),
         }
 
     try {
       if (isEdit && !immutablePlanFields) {
         message.error('Chưa tải xong dữ liệu gốc của kế hoạch.')
+        return
+      }
+      if (
+        !isEdit &&
+        values.expectedStartDate &&
+        values.expectedStartDate.isBefore(dayjs().startOf('day'), 'day')
+      ) {
+        message.error('Ngày bắt đầu dự kiến không được trước ngày hiện tại.')
         return
       }
       if (
@@ -748,13 +760,7 @@ const ProductionPlanCreate = () => {
         }
       }
 
-      if (!productionPlanId && normalizedStages.length) {
-        throw new Error(
-          'Kế hoạch đã được tạo nhưng API không trả về ID để thêm giai đoạn sản xuất.'
-        )
-      }
-
-      if (productionPlanId && normalizedStages.length) {
+      if (isEdit && productionPlanId && normalizedStages.length) {
         await syncProductionStages(
           productionPlanId,
           normalizedStages,
@@ -981,6 +987,9 @@ const ProductionPlanCreate = () => {
                   placeholder="dd/mm/yyyy"
                   className="w-full h-10 rounded-lg"
                   format="DD/MM/YYYY"
+                  disabledDate={(current) =>
+                    !isEdit && current.isBefore(dayjs().startOf('day'), 'day')
+                  }
                   onChange={(value) =>
                     updatePlanDate(selectedPlanStartDate, 'startDate', value)
                   }
