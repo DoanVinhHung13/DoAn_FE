@@ -18,6 +18,7 @@ import {
   ContainerOutlined,
   ProfileOutlined,
   FormOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { Sprout } from 'lucide-react'
 import ROUTER from './ROUTER'
@@ -54,6 +55,11 @@ export const farmManagerItem = () => [
     key: ROUTER.FM_PRODUCTION_PLANS,
     icon: <ContainerOutlined className="text-lg" />,
     label: 'Nhật ký canh tác',
+  },
+  {
+    key: ROUTER.FM_QUALITY_INSPECTIONS,
+    icon: <SafetyCertificateOutlined className="text-lg" />,
+    label: 'Kiểm tra chất lượng',
   },
   {
     key: ROUTER.FM_PLAN_TEMPLATES,
