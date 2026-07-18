@@ -22,6 +22,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import ProductionPlanService from 'src/services/ProductionPlanService'
+import CultivationTaskService from 'src/services/CultivationTaskService'
 import { formatDate, formatDateTime } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
@@ -40,11 +41,6 @@ const REVIEW_STATUS = {
   PENDING_REVIEW: { label: 'Chờ duyệt', color: 'gold' },
   APPROVED: { label: 'Đã duyệt', color: 'green' },
   REJECTED: { label: 'Bị từ chối', color: 'red' },
-}
-
-const SCOPE = {
-  OVERALL: 'Kế hoạch tổng thể',
-  SPECIFIC: 'Kế hoạch chi tiết',
 }
 
 const SectionTitle = ({ children, extra }) => (
@@ -86,7 +82,6 @@ const ProductionPlanDetail = () => {
 
   const [initialLoading, setInitialLoading] = useState(true)
   const [item, setItem] = useState(null)
-  const [parentPlanName, setParentPlanName] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -96,31 +91,37 @@ const ProductionPlanDetail = () => {
         setInitialLoading(true)
         const response = await ProductionPlanService.getById(id)
         if (response?.success === false || !response?.data) {
-          message.error('Không tìm thấy kế hoạch sản xuất')
+          message.error('Không tìm thấy nhật ký canh tác')
           navigate(ROUTER.FM_PRODUCTION_PLANS)
           return
         }
 
         const plan = response.data
-        if (!isMounted) return
-        setItem(plan)
-
-        if (plan.scope === 'SPECIFIC' && plan.parentPlanId) {
-          try {
-            const parentResponse = await ProductionPlanService.getById(
-              plan.parentPlanId
-            )
-            if (isMounted && parentResponse?.data) {
-              setParentPlanName(
-                parentResponse.data.planName || parentResponse.data.name || ''
-              )
-            }
-          } catch {
-            // Vẫn hiển thị parentPlanId nếu không tải được tên kế hoạch cha.
-          }
+        let planTasks = plan.tasks || plan.cultivationTasks || []
+        try {
+          const taskResponse = await CultivationTaskService.getAll({
+            PageIndex: 1,
+            PageSize: 1000,
+          })
+          const taskPayload = taskResponse?.data?.data ?? taskResponse?.data
+          const allTasks = Array.isArray(taskPayload)
+            ? taskPayload
+            : taskPayload?.items || []
+          const tasksByLogbook = allTasks.filter(
+            (task) =>
+              (task.cultivationLogbookId ||
+                task.productionPlanId ||
+                task.logbookId) === id
+          )
+          if (tasksByLogbook.length) planTasks = tasksByLogbook
+        } catch (error) {
+          console.error('Không thể lấy công việc canh tác:', error)
         }
+        if (!isMounted) return
+        setItem({ ...plan, tasks: planTasks })
+
       } catch {
-        message.error('Lấy thông tin kế hoạch sản xuất thất bại')
+        message.error('Lấy thông tin nhật ký canh tác thất bại')
         navigate(ROUTER.FM_PRODUCTION_PLANS)
       } finally {
         if (isMounted) setInitialLoading(false)
@@ -138,7 +139,7 @@ const ProductionPlanDetail = () => {
       <div className="space-y-6">
         <TitleCustom className="!mb-0 flex items-center gap-2">
           <CalendarOutlined className="text-green-600" />
-          Chi tiết Kế hoạch sản xuất
+          Chi tiết Nhật ký canh tác
         </TitleCustom>
         <Card bordered={false} className="shadow-sm rounded-2xl">
           <Skeleton active paragraph={{ rows: 10 }} />
@@ -149,7 +150,8 @@ const ProductionPlanDetail = () => {
 
   if (!item) return null
 
-  const stages = item.productionStages || item.stages || []
+  const stages =
+    item.cultivationStages || item.productionStages || item.stages || []
   const tasks = item.tasks || []
 
   return (
@@ -164,7 +166,7 @@ const ProductionPlanDetail = () => {
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <CalendarOutlined className="text-green-600" />
-            Chi tiết Kế hoạch sản xuất
+            Chi tiết Nhật ký canh tác
           </TitleCustom>
         </div>
         <Button
@@ -175,7 +177,7 @@ const ProductionPlanDetail = () => {
             navigate(ROUTER.FM_PRODUCTION_PLAN_EDIT.replace(':id', item.id))
           }
         >
-          Sửa kế hoạch
+          Sửa nhật ký
         </Button>
       </div>
 
@@ -187,12 +189,10 @@ const ProductionPlanDetail = () => {
             <div className="min-w-0">
               <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-green-100">
                 <CalendarOutlined />
-                <span>Kế hoạch sản xuất</span>
-                <span className="opacity-50">•</span>
-                <span>{SCOPE[item.scope] || item.scope || 'Chưa cập nhật'}</span>
+                <span>Nhật ký canh tác</span>
               </div>
               <h1 className="max-w-4xl m-0 text-2xl font-bold leading-tight text-white md:text-3xl">
-                {item.planName || item.name || 'Chưa đặt tên kế hoạch'}
+                  {item.planName || item.name || 'Chưa đặt tên nhật ký'}
               </h1>
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-sm text-green-50">
                 <span>
@@ -220,13 +220,26 @@ const ProductionPlanDetail = () => {
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="space-y-6">
           <Card bordered={false} className="shadow-sm rounded-2xl">
-            <SectionTitle>Thông tin kế hoạch</SectionTitle>
+            <SectionTitle>Thông tin nhật ký</SectionTitle>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 {
                   label: 'Cây trồng',
                   value: item.cropName,
                   icon: <FileTextOutlined />,
+                },
+                {
+                  label: 'Nông dân thực hiện',
+                  value:
+                    item.farmerNames?.join?.(', ') ||
+                    item.farmers
+                      ?.map(
+                        (farmer) =>
+                          farmer.fullName || farmer.name || farmer.email
+                      )
+                      .filter(Boolean)
+                      .join(', '),
+                  icon: <TeamOutlined />,
                 },
                 {
                   label: 'Ngày bắt đầu',
@@ -247,20 +260,6 @@ const ProductionPlanDetail = () => {
                     : 'Chưa hoàn thành',
                   icon: <ClockCircleOutlined />,
                 },
-                {
-                  label: 'Phạm vi',
-                  value: SCOPE[item.scope] || item.scope,
-                  icon: <EnvironmentOutlined />,
-                },
-                ...(item.scope === 'SPECIFIC'
-                  ? [
-                      {
-                        label: 'Kế hoạch cha',
-                        value: parentPlanName || item.parentPlanId,
-                        icon: <CalendarOutlined />,
-                      },
-                    ]
-                  : []),
               ].map((field) => (
                 <div
                   key={field.label}
@@ -286,7 +285,7 @@ const ProductionPlanDetail = () => {
           </Card>
 
           <Card bordered={false} className="shadow-sm rounded-2xl">
-            <SectionTitle>Giai đoạn sản xuất</SectionTitle>
+            <SectionTitle>Giai đoạn canh tác</SectionTitle>
             {stages.length ? (
               <div>
                 {stages.map((stage, index) => (
@@ -316,13 +315,13 @@ const ProductionPlanDetail = () => {
             ) : (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="Kế hoạch chưa có giai đoạn sản xuất"
+                description="Nhật ký chưa có giai đoạn canh tác"
               />
             )}
           </Card>
 
           <Card bordered={false} className="shadow-sm rounded-2xl">
-            <SectionTitle>Công việc trong kế hoạch</SectionTitle>
+            <SectionTitle>Công việc trong nhật ký</SectionTitle>
             {tasks.length ? (
               <div className="grid gap-4 md:grid-cols-2">
                 {tasks.map((task, index) => (
@@ -357,7 +356,7 @@ const ProductionPlanDetail = () => {
             ) : (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description="Kế hoạch chưa có công việc"
+                description="Nhật ký chưa có công việc"
               />
             )}
           </Card>
@@ -412,11 +411,11 @@ const ProductionPlanDetail = () => {
           </Card>
 
           <Card bordered={false} className="shadow-sm rounded-2xl">
-            <SectionTitle>Mô tả kế hoạch</SectionTitle>
+            <SectionTitle>Mô tả nhật ký</SectionTitle>
             <div className="text-sm leading-6 text-gray-600 whitespace-pre-wrap">
               {item.description || (
                 <span className="italic text-gray-400">
-                  Chưa có mô tả cho kế hoạch này.
+                  Chưa có mô tả cho nhật ký này.
                 </span>
               )}
             </div>

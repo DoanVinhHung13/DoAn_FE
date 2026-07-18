@@ -17,7 +17,6 @@ import {
   BookOutlined,
   ContainerOutlined,
   ProfileOutlined,
-  CalendarOutlined,
   FormOutlined,
 } from '@ant-design/icons'
 import { Sprout } from 'lucide-react'
@@ -54,7 +53,7 @@ export const farmManagerItem = () => [
   {
     key: ROUTER.FM_PRODUCTION_PLANS,
     icon: <ContainerOutlined className="text-lg" />,
-    label: 'Kế hoạch sản xuất',
+    label: 'Nhật ký canh tác',
   },
   {
     key: ROUTER.FM_PLAN_TEMPLATES,
@@ -126,7 +125,7 @@ export const landManagerItem = () => [
   {
     key: ROUTER.LM_PRODUCTION_PLANS,
     icon: <ContainerOutlined className="text-lg" />,
-    label: 'Kế hoạch sản xuất',
+    label: 'Nhật ký canh tác',
   },
   {
     key: ROUTER.LM_TASKS,
@@ -213,10 +212,24 @@ export const farmerItem = () => [
   },
 ]
 
+export const farmSupervisorItem = () => [
+  {
+    key: ROUTER.FS_LOGBOOKS,
+    icon: <ContainerOutlined className="text-lg" />,
+    label: 'Nhật ký canh tác',
+  },
+  {
+    key: ROUTER.NOTIFICATIONS,
+    icon: <BellOutlined className="text-lg" />,
+    label: 'Thông báo',
+  },
+]
+
 // ─── HELPER: Lấy menu theo role ───────────────────────────────────────────────
 export const getMenuByRole = (role) => {
   switch (role) {
     case ROLES.FARM_MANAGER:     return farmManagerItem()
+    case ROLES.FARM_SUPERVISOR:  return farmSupervisorItem()
     case ROLES.LAND_MANAGER:     return landManagerItem()
     case ROLES.MATERIAL_MANAGER: return materialManagerItem()
     case ROLES.FARMER:           return farmerItem()
@@ -236,6 +249,7 @@ export default {
   landManagerItem,
   materialManagerItem,
   farmerItem,
+  farmSupervisorItem,
   getMenuByRole,
   publicMenu,
 }

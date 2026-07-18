@@ -56,7 +56,6 @@ const FarmManagerTasks = React.lazy(() => import('../pages/FARM_MANAGER/Tasks'))
 const FarmManagerTaskCreate = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskCreate'))
 const FarmManagerTaskDetail = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskDetail'))
 const FarmManagerTaskEdit = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskEdit'))
-const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
 const FarmManagerBatches = React.lazy(() => import('../pages/FARM_MANAGER/Batches'))
 const FarmManagerNotifications = React.lazy(() => import('../pages/FARM_MANAGER/Notifications'))
 const FarmManagerViewFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers'))
@@ -107,6 +106,9 @@ const FarmerTasks = React.lazy(() => import('../pages/FARM_MANAGER/Tasks'))
 const FarmerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
 const FarmerPlans = React.lazy(() => import('../pages/USER/ProductionProcess'))
 const FarmerSupplies = React.lazy(() => import('../pages/FARM_MANAGER/Supplies'))
+const FarmSupervisorLogbooks = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks'))
+const FarmSupervisorLogbookDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks/LogbookDetail'))
+const FarmSupervisorStageLog = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks/StageLog'))
 
 // ── Spinner fallback dùng chung ───────────────────────────────────────────────
 function Lazy({ children }) {
@@ -333,6 +335,15 @@ const routes = [
           },
 
           // ── Farmer Routes ──────────────────────────────────────────────────
+          {
+            element: <ProtectedRoute allowedRoles={[ROLES.FARM_SUPERVISOR]} />,
+            children: [
+              { path: ROUTER.FS_LOGBOOKS, element: <Lazy><FarmSupervisorLogbooks /></Lazy> },
+              { path: ROUTER.FS_LOGBOOK_DETAIL, element: <Lazy><FarmSupervisorLogbookDetail /></Lazy> },
+              { path: ROUTER.FS_STAGE_LOG, element: <Lazy><FarmSupervisorStageLog /></Lazy> },
+            ],
+          },
+
           {
             element: <ProtectedRoute allowedRoles={[ROLES.FARMER]} />,
             children: [
