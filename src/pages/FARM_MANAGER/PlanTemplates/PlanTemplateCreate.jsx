@@ -390,9 +390,14 @@ const PlanTemplateCreate = () => {
                     allowClear
                     options={cropOptions}
                     loading={loadingOptions}
+                    disabled={!selectedCatalogId}
                     showSearch
                     optionFilterProp="label"
-                    placeholder="Không bắt buộc"
+                    placeholder={
+                      selectedCatalogId
+                        ? 'Không bắt buộc'
+                        : 'Chọn danh mục cây trồng trước'
+                    }
                   />
                 </Form.Item>
               </Col>

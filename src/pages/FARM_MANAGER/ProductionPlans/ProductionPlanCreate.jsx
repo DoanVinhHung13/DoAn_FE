@@ -46,6 +46,8 @@ import CropService from 'src/services/CropService'
 import CropManagementService from 'src/services/CropManagementService'
 import LandPlotService from 'src/services/LandPlotService'
 import UserService from 'src/services/UserService'
+import StandardTaskService from 'src/services/StandardTaskService'
+import CultivationTaskService from 'src/services/CultivationTaskService'
 import { ROLES } from 'src/constants/roles'
 
 const normalizeResponse = (response) => {
@@ -70,18 +72,16 @@ const formatApiDate = (date) =>
   date ? date.format('YYYY-MM-DD[T]00:00:00') : undefined
 
 const getCreatedPlanId = (response) =>
+  response?.data?.data?.id ||
+  response?.data?.data?.cultivationLogbookId ||
   response?.data?.id ||
+  response?.data?.cultivationLogbookId ||
   response?.data?.productionPlanId ||
   response?.data?.processTemplateId ||
   response?.id ||
   response?.productionPlanId ||
   response?.processTemplateId ||
   null
-
-const PRODUCTION_PLAN_SCOPE_OPTIONS = [
-  { value: 'OVERALL', label: 'Kế hoạch tổng thể' },
-  { value: 'SPECIFIC', label: 'Kế hoạch chi tiết' },
-]
 
 // ── Section header (Fertilizer-style) ─────────────────────────────────────────
 const SectionTitle = ({ children, extra }) => (
@@ -105,6 +105,18 @@ const createEmptyStage = (order) => ({
   status: 'ACTIVE',
 })
 
+const createEmptyTask = (order, stageKey) => ({
+  _key: `task-${Date.now()}-${order}`,
+  id: null,
+  stageKey,
+  taskLibraryId: null,
+  name: '',
+  description: '',
+  startDate: null,
+  dueDate: null,
+  assigneeIds: [],
+})
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const ProductionPlanCreate = () => {
   const navigate = useNavigate()
@@ -114,13 +126,14 @@ const ProductionPlanCreate = () => {
   const templateIdFromQuery = searchParams.get('templateId')
   const [form] = Form.useForm()
   const selectedCatalogId = Form.useWatch('category', form);
-  const selectedScope = Form.useWatch('scope', form);
   const selectedPlanStartDate = Form.useWatch('expectedStartDate', form);
   const selectedPlanEndDate = Form.useWatch('expectedEndDate', form);
 
   // ── Stages state ──
   const [stages, setStages] = useState([createEmptyStage(1)])
   const [originalStages, setOriginalStages] = useState([])
+  const [workTasks, setWorkTasks] = useState([])
+  const [originalWorkTasks, setOriginalWorkTasks] = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [loadingPlan, setLoadingPlan] = useState(false)
@@ -130,6 +143,10 @@ const ProductionPlanCreate = () => {
   // ── Dropdown options ──
   const [supervisorOptions, setSupervisorOptions] = useState([])
   const [isSupervisorsLoading, setIsSupervisorsLoading] = useState(false)
+  const [farmerOptions, setFarmerOptions] = useState([])
+  const [isFarmersLoading, setIsFarmersLoading] = useState(false)
+  const [taskLibraryOptions, setTaskLibraryOptions] = useState([])
+  const [isTaskLibrariesLoading, setIsTaskLibrariesLoading] = useState(false)
 
   const [catalogsData, setCatalogsData] = useState(null);
   const [isCatalogsLoading, setIsCatalogsLoading] = useState(false);
@@ -137,9 +154,6 @@ const ProductionPlanCreate = () => {
   const [isCropsLoading, setIsCropsLoading] = useState(false);
   const [landsData, setLandsData] = useState(null);
   const [isLandsLoading, setIsLandsLoading] = useState(false);
-  const [parentPlansData, setParentPlansData] = useState(null);
-  const [isParentPlansLoading, setIsParentPlansLoading] = useState(false);
-
   // ── Template modal ──
   const [templateModal, setTemplateModal] = useState(false)
   const [templates, setTemplates] = useState([])
@@ -179,6 +193,75 @@ const ProductionPlanCreate = () => {
     return () => { isMounted = false; };
   }, []);
 
+  React.useEffect(() => {
+    let isMounted = true
+    const fetchFarmers = async () => {
+      setIsFarmersLoading(true)
+      try {
+        const response = await UserService.getUsers({
+          PageIndex: 1,
+          PageSize: 1000,
+          Role: ROLES.FARMER,
+          IsActive: true,
+        })
+        if (!isMounted) return
+        setFarmerOptions(
+          normalizeResponse(response)
+            .filter((user) => user.isActive !== false)
+            .map((user) => ({
+              value: user.id || user._id || user.userId,
+              label: user.fullName || user.name || user.email,
+            }))
+            .filter((option) => option.value)
+        )
+      } catch (error) {
+        console.error(error)
+        if (isMounted) setFarmerOptions([])
+      } finally {
+        if (isMounted) setIsFarmersLoading(false)
+      }
+    }
+
+    fetchFarmers()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  React.useEffect(() => {
+    let isMounted = true
+    const fetchTaskLibraries = async () => {
+      setIsTaskLibrariesLoading(true)
+      try {
+        const response = await StandardTaskService.getAll({
+          PageIndex: 1,
+          PageSize: 1000,
+          Status: true,
+        })
+        if (!isMounted) return
+        setTaskLibraryOptions(
+          normalizeResponse(response)
+            .filter((task) => task.isActive !== false)
+            .map((task) => ({
+              value: task.id || task.taskLibraryId,
+              label: task.title || task.name,
+              description: task.description || '',
+            }))
+            .filter((option) => option.value && option.label)
+        )
+      } catch (error) {
+        console.error(error)
+        if (isMounted) setTaskLibraryOptions([])
+      } finally {
+        if (isMounted) setIsTaskLibrariesLoading(false)
+      }
+    }
+    fetchTaskLibraries()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   useEffect(() => {
     if (!isEdit) return
 
@@ -192,15 +275,14 @@ const ProductionPlanCreate = () => {
 
         const crop = plan.crop || {}
         const supervisor = plan.assignedFarmSupervisor || plan.farmSupervisor || {}
-        let planStages = plan.productionStages || plan.stages || []
+        let planStages =
+          plan.cultivationStages || plan.productionStages || plan.stages || []
+        let planTasks = plan.tasks || plan.cultivationTasks || []
         const originalSupervisorId =
           plan.assignedFarmSupervisorId ||
           supervisor.id ||
           supervisor.userId ||
           null
-        const originalScope = plan.scope || 'OVERALL'
-        const originalParentPlanId =
-          plan.parentPlanId || plan.parentPlan?.id || null
         const selectedCropId = plan.cropId || crop.id
         let selectedCropCatalogId =
           plan.cropCatalogId ||
@@ -222,6 +304,24 @@ const ProductionPlanCreate = () => {
           }
         } catch (error) {
           console.error('Không thể lấy giai đoạn sản xuất:', error)
+        }
+
+        try {
+          const tasksResponse = await CultivationTaskService.getAll({
+            PageIndex: 1,
+            PageSize: 1000,
+          })
+          const tasksByPlan = normalizeResponse(tasksResponse).filter(
+            (task) =>
+              (task.cultivationLogbookId ||
+                task.productionPlanId ||
+                task.logbookId) === id
+          )
+          if (tasksByPlan.length) {
+            planTasks = tasksByPlan
+          }
+        } catch (error) {
+          console.error('Không thể lấy công việc canh tác:', error)
         }
 
         // API chi tiết kế hoạch chỉ trả cropId/cropName. Lấy chi tiết cây trồng
@@ -248,9 +348,10 @@ const ProductionPlanCreate = () => {
           expectedStartDate: plan.startDate ? dayjs(plan.startDate) : null,
           expectedEndDate: plan.expectedEndDate ? dayjs(plan.expectedEndDate) : null,
           supervisorId: originalSupervisorId,
-          scope: originalScope,
-          parentPlanId: originalParentPlanId,
-          description: plan.description || '',
+          farmerIds:
+            plan.farmerIds ||
+            plan.farmers?.map((farmer) => farmer.id || farmer.userId) ||
+            [],
         }
         form.setFieldsValue(loadedPlanValues)
         setOriginalPlanValues({
@@ -259,11 +360,9 @@ const ProductionPlanCreate = () => {
           planName: loadedPlanValues.name?.trim() || '',
           startDate: formatApiDate(loadedPlanValues.expectedStartDate),
           expectedEndDate: formatApiDate(loadedPlanValues.expectedEndDate),
-          description: loadedPlanValues.description?.trim() || null,
+          farmerIds: [...(loadedPlanValues.farmerIds || [])].sort().join(','),
         })
         setImmutablePlanFields({
-          scope: originalScope,
-          parentPlanId: originalParentPlanId,
           assignedFarmSupervisorId: originalSupervisorId,
           status: plan.status || 'DRAFT',
         })
@@ -285,6 +384,46 @@ const ProductionPlanCreate = () => {
         })
         setOriginalStages(mappedStages)
         setStages(mappedStages.length ? mappedStages : [createEmptyStage(1)])
+
+        const mappedTasks = planTasks.map((task, index) => {
+          const taskStartDate = task.startDate ? dayjs(task.startDate) : null
+          const taskDueDate = task.dueDate ? dayjs(task.dueDate) : null
+          const matchedStage = mappedStages.find((stage) => {
+            const stageStartDate =
+              stage.startDate || loadedPlanValues.expectedStartDate
+            const stageEndDate =
+              stage.endDate || loadedPlanValues.expectedEndDate
+            return (
+              taskStartDate &&
+              taskDueDate &&
+              stageStartDate &&
+              stageEndDate &&
+              !taskStartDate.isBefore(stageStartDate, 'day') &&
+              !taskDueDate.isAfter(stageEndDate, 'day')
+            )
+          })
+          return {
+            _key: `task-${task.id || index}-${Date.now()}`,
+            id: task.id || task.cultivationTaskId || null,
+            stageKey: matchedStage?._key || mappedStages[0]?._key,
+            taskLibraryId:
+              task.taskLibraryId ||
+              task.standardTaskId ||
+              task.taskLibrary?.id,
+            name: task.name || task.title || '',
+            description: task.description || '',
+            startDate: taskStartDate,
+            dueDate: taskDueDate,
+            assigneeIds:
+              task.assigneeIds ||
+              task.assignees?.map(
+                (assignee) => assignee.id || assignee.userId
+              ) ||
+              [],
+          }
+        })
+        setOriginalWorkTasks(mappedTasks)
+        setWorkTasks(mappedTasks)
       } finally {
         if (isMounted) setLoadingPlan(false)
       }
@@ -347,29 +486,6 @@ const ProductionPlanCreate = () => {
     return () => { isMounted = false; };
   }, [landsData]);
 
-  React.useEffect(() => {
-    let isMounted = true;
-    const fetchParentPlans = async () => {
-      setIsParentPlansLoading(true);
-      try {
-        const response = await ProductionPlanService.getAll({
-          PageIndex: 1,
-          PageSize: 1000,
-          Scope: 'OVERALL',
-        });
-        if (isMounted) setParentPlansData(normalizeResponse(response));
-      } catch (error) {
-        console.error(error);
-        if (isMounted) setParentPlansData([]);
-      } finally {
-        if (isMounted) setIsParentPlansLoading(false);
-      }
-    };
-
-    if (selectedScope === 'SPECIFIC' && !parentPlansData) fetchParentPlans();
-    return () => { isMounted = false; };
-  }, [parentPlansData, selectedScope]);
-
   const categoryOptions = React.useMemo(() => {
     if (!catalogsData) return [];
     return catalogsData
@@ -408,20 +524,6 @@ const ProductionPlanCreate = () => {
       label: c.name,
     }));
   }, [landsData]);
-
-  const parentPlanOptions = React.useMemo(() => {
-    if (!parentPlansData) return [];
-    return parentPlansData
-      .filter((plan) => {
-        const planId = plan.id || plan._id || plan.productionPlanId
-        return (!plan.scope || plan.scope === 'OVERALL') && planId !== id
-      })
-      .map((plan) => ({
-        value: plan.id || plan._id || plan.productionPlanId,
-        label: plan.planName || plan.name,
-      }))
-      .filter((option) => option.value && option.label);
-  }, [id, parentPlansData]);
 
   // ── Load template if templateId from query ──
   useEffect(() => {
@@ -472,15 +574,56 @@ const ProductionPlanCreate = () => {
 
   const removeStage = (index) => {
     if (stages.length <= 1) return
+    const removedStageKey = stages[index]?._key
     setStages((prev) => {
       const next = prev.filter((_, i) => i !== index)
       return next.map((s, i) => ({ ...s, order: i + 1 }))
     })
+    setWorkTasks((prev) =>
+      prev.filter((task) => task.stageKey !== removedStageKey)
+    )
   }
 
   const updateStage = (index, field, value) => {
     setStages((prev) =>
       prev.map((s, i) => (i === index ? { ...s, [field]: value } : s))
+    )
+  }
+
+  const addWorkTask = (stageKey) => {
+    setWorkTasks((prev) => [
+      ...prev,
+      createEmptyTask(prev.length + 1, stageKey),
+    ])
+  }
+
+  const removeWorkTask = (index) => {
+    setWorkTasks((prev) => prev.filter((_, taskIndex) => taskIndex !== index))
+  }
+
+  const updateWorkTask = (index, field, value) => {
+    setWorkTasks((prev) =>
+      prev.map((task, taskIndex) =>
+        taskIndex === index ? { ...task, [field]: value } : task
+      )
+    )
+  }
+
+  const selectTaskLibrary = (index, taskLibraryId) => {
+    const selectedTask = taskLibraryOptions.find(
+      (option) => option.value === taskLibraryId
+    )
+    setWorkTasks((prev) =>
+      prev.map((task, taskIndex) =>
+        taskIndex === index
+          ? {
+              ...task,
+              taskLibraryId,
+              name: selectedTask?.label || task.name,
+              description: selectedTask?.description || task.description,
+            }
+          : task
+      )
     )
   }
 
@@ -572,6 +715,47 @@ const ProductionPlanCreate = () => {
     }
   }
 
+  const syncWorkTasks = async (cultivationLogbookId, nextTasks) => {
+    const nextIds = new Set(nextTasks.map((task) => task.id).filter(Boolean))
+    const removedTasks = originalWorkTasks.filter(
+      (task) => task.id && !nextIds.has(task.id)
+    )
+
+    for (const task of removedTasks) {
+      await CultivationTaskService.remove(task.id)
+    }
+
+    for (const task of nextTasks) {
+      const commonTaskPayload = {
+        name: task.name,
+        description: task.description,
+        startDate: formatApiDate(task.startDate),
+        dueDate: formatApiDate(task.dueDate),
+      }
+      const original = task.id
+        ? originalWorkTasks.find((item) => item.id === task.id)
+        : null
+      const changed =
+        !original ||
+        original.name?.trim() !== task.name ||
+        (original.description?.trim() || null) !== task.description ||
+        formatApiDate(original.startDate) !== commonTaskPayload.startDate ||
+        formatApiDate(original.dueDate) !== commonTaskPayload.dueDate
+
+      if (!changed) continue
+
+      if (task.id) {
+        await CultivationTaskService.update(task.id, commonTaskPayload)
+      } else {
+        await CultivationTaskService.create({
+          cultivationLogbookId,
+          taskLibraryId: task.taskLibraryId,
+          ...commonTaskPayload,
+        })
+      }
+    }
+  }
+
   // ── Choose from template library ──
   const handleOpenTemplateModal = async () => {
     setTemplateModal(true)
@@ -637,6 +821,7 @@ const ProductionPlanCreate = () => {
             status: 'ACTIVE',
           }))
         )
+        setWorkTasks([])
       }
       setTemplateModal(false)
       message.success(`Đã áp dụng mẫu "${template.name}"`)
@@ -654,33 +839,39 @@ const ProductionPlanCreate = () => {
         stageName: stage.title.trim(),
         note: stage.description?.trim() || null,
       }))
+    const normalizedTasks = workTasks
+      .filter(
+        (task) =>
+          task.taskLibraryId ||
+          task.name?.trim() ||
+          task.description?.trim() ||
+          task.startDate ||
+          task.dueDate
+      )
+      .map((task) => ({
+        ...task,
+        name: task.name?.trim() || '',
+        description: task.description?.trim() || null,
+      }))
 
-    const description = values.description?.trim()
     const commonBody = {
       landPlotId: values.area,
       cropId: values.cropVariety,
       planName: values.name?.trim(),
       startDate: formatApiDate(values.expectedStartDate),
       expectedEndDate: formatApiDate(values.expectedEndDate),
-      description: description || null,
+      farmerIds: values.farmerIds || [],
     }
     const body = isEdit
       ? {
           ...commonBody,
           status: immutablePlanFields?.status || 'DRAFT',
-          scope: immutablePlanFields?.scope || 'OVERALL',
-          parentPlanId: immutablePlanFields?.parentPlanId || null,
-          assignedFarmSupervisorId:
-            immutablePlanFields?.assignedFarmSupervisorId || null,
         }
       : {
           ...commonBody,
           status: 'DRAFT',
-          scope: values.scope,
-          parentPlanId:
-            values.scope === 'SPECIFIC' ? values.parentPlanId : null,
           assignedFarmSupervisorId: values.supervisorId || null,
-          productionStages: normalizedStages.map((stage) => ({
+          cultivationStages: normalizedStages.map((stage) => ({
             stageName: stage.stageName,
             note: stage.note,
           })),
@@ -688,7 +879,7 @@ const ProductionPlanCreate = () => {
 
     try {
       if (isEdit && !immutablePlanFields) {
-        message.error('Chưa tải xong dữ liệu gốc của kế hoạch.')
+        message.error('Chưa tải xong dữ liệu gốc của nhật ký.')
         return
       }
       if (
@@ -734,7 +925,58 @@ const ProductionPlanCreate = () => {
       })
       if (stageOutsidePlan) {
         message.error(
-          `Thời gian của giai đoạn "${stageOutsidePlan.stageName}" phải nằm trong thời gian dự kiến của kế hoạch.`
+          `Thời gian của giai đoạn "${stageOutsidePlan.stageName}" phải nằm trong thời gian dự kiến của nhật ký.`
+        )
+        return
+      }
+      const incompleteTask = normalizedTasks.find(
+        (task) =>
+          !task.taskLibraryId ||
+          !task.name ||
+          !task.startDate ||
+          !task.dueDate
+      )
+      if (incompleteTask) {
+        message.error(
+          'Mỗi công việc cần có công việc mẫu, tên, ngày bắt đầu và hạn hoàn thành.'
+        )
+        return
+      }
+      const invalidTask = normalizedTasks.find(
+        (task) => task.startDate.isAfter(task.dueDate, 'day')
+      )
+      if (invalidTask) {
+        message.error(
+          `Ngày bắt đầu công việc "${invalidTask.name}" không được sau hạn hoàn thành.`
+        )
+        return
+      }
+      const taskOutsidePlan = normalizedTasks.find(
+        (task) =>
+          task.startDate.isBefore(values.expectedStartDate, 'day') ||
+          task.dueDate.isAfter(values.expectedEndDate, 'day')
+      )
+      if (taskOutsidePlan) {
+        message.error(
+          `Thời gian công việc "${taskOutsidePlan.name}" phải nằm trong thời gian của nhật ký.`
+        )
+        return
+      }
+      const taskOutsideStage = normalizedTasks.find((task) => {
+        const parentStage = stages.find(
+          (stage) => stage._key === task.stageKey
+        )
+        if (!parentStage) return true
+        const stageStart = parentStage.startDate || values.expectedStartDate
+        const stageEnd = parentStage.endDate || values.expectedEndDate
+        return (
+          task.startDate.isBefore(stageStart, 'day') ||
+          task.dueDate.isAfter(stageEnd, 'day')
+        )
+      })
+      if (taskOutsideStage) {
+        message.error(
+          `Thời gian công việc "${taskOutsideStage.name}" phải nằm trong giai đoạn canh tác đã chọn.`
         )
         return
       }
@@ -747,7 +989,8 @@ const ProductionPlanCreate = () => {
         originalPlanValues.planName !== commonBody.planName ||
         originalPlanValues.startDate !== commonBody.startDate ||
         originalPlanValues.expectedEndDate !== commonBody.expectedEndDate ||
-        originalPlanValues.description !== commonBody.description
+        originalPlanValues.farmerIds !==
+          [...commonBody.farmerIds].sort().join(',')
 
       let productionPlanId = id
       if (planHasChanged) {
@@ -760,7 +1003,11 @@ const ProductionPlanCreate = () => {
         }
       }
 
-      if (isEdit && productionPlanId && normalizedStages.length) {
+      if (
+        isEdit &&
+        productionPlanId &&
+        (normalizedStages.length || originalStages.length)
+      ) {
         await syncProductionStages(
           productionPlanId,
           normalizedStages,
@@ -769,14 +1016,23 @@ const ProductionPlanCreate = () => {
         )
       }
 
+      if (normalizedTasks.length || originalWorkTasks.length) {
+        if (!productionPlanId) {
+          throw new Error(
+            'API chưa trả mã nhật ký nên không thể lưu chi tiết công việc.'
+          )
+        }
+        await syncWorkTasks(productionPlanId, normalizedTasks)
+      }
+
       message.success(
         isEdit
-          ? 'Cập nhật kế hoạch sản xuất thành công!'
-          : 'Tạo kế hoạch sản xuất thành công!'
+          ? 'Cập nhật nhật ký canh tác thành công!'
+          : 'Tạo nhật ký canh tác thành công!'
       )
       navigate(ROUTER.FM_PRODUCTION_PLANS)
     } catch (error) {
-      message.error(error.message || 'Không thể cập nhật kế hoạch sản xuất.')
+      message.error(error.message || 'Không thể lưu nhật ký canh tác.')
       console.error('Production plan submit failed:', {
         id,
         requestUrl: error.requestUrl || `/production-plans/${id}`,
@@ -794,7 +1050,7 @@ const ProductionPlanCreate = () => {
   const handleSaveAsTemplate = useCallback(async () => {
     const values = form.getFieldsValue()
     if (!values.name?.trim()) {
-      message.warning('Vui lòng nhập tên kế hoạch trước.')
+      message.warning('Vui lòng nhập tên nhật ký trước.')
       return
     }
     if (!values.category) {
@@ -806,7 +1062,6 @@ const ProductionPlanCreate = () => {
       name: `Mẫu từ: ${values.name.trim()}`,
       cropCatalogId: values.category,
       cropId: values.cropVariety || null,
-      description: values.description?.trim() || null,
       estimatedDurationDays:
         values.expectedStartDate && values.expectedEndDate
           ? values.expectedEndDate.diff(values.expectedStartDate, 'day')
@@ -846,6 +1101,8 @@ const ProductionPlanCreate = () => {
     }
   }, [form, stages])
 
+  const stage = stages[0]
+
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       {/* ── Header ── */}
@@ -856,7 +1113,7 @@ const ProductionPlanCreate = () => {
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <CalendarOutlined className="text-green-600" />
-            {isEdit ? 'Cập nhật Kế hoạch Sản xuất' : 'Tạo Kế hoạch Sản xuất'}
+            {isEdit ? 'Cập nhật Nhật ký Canh tác' : 'Tạo Nhật ký Canh tác'}
           </TitleCustom>
         </div>
       </div>
@@ -872,9 +1129,6 @@ const ProductionPlanCreate = () => {
           form={form}
           layout="vertical"
           onFinish={handleSubmit}
-          initialValues={{
-            scope: 'OVERALL',
-          }}
         >
           {/* ════ Section 1 – Thông Tin Chung ════ */}
           <SectionTitle
@@ -898,13 +1152,13 @@ const ProductionPlanCreate = () => {
                 name="name"
                 label={
                   <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                    Tên kế hoạch sản xuất
+                    Tên nhật ký canh tác
                   </span>
                 }
-                rules={[{ required: true, message: 'Vui lòng nhập tên kế hoạch sản xuất.' }]}
+                rules={[{ required: true, message: 'Vui lòng nhập tên nhật ký canh tác.' }]}
               >
                 <Input
-                  placeholder="VD: Kế hoạch Xuân Hè 2024"
+                  placeholder="VD: Nhật ký canh tác vụ Xuân Hè 2024"
                   className="h-10 rounded-lg"
                 />
               </Form.Item>
@@ -937,6 +1191,12 @@ const ProductionPlanCreate = () => {
                     Danh mục cây trồng
                   </span>
                 }
+                rules={[
+                  {
+                    required: true,
+                    message: 'Vui lòng chọn danh mục cây trồng.',
+                  },
+                ]}
               >
                 <Select
                   placeholder="Chọn danh mục..."
@@ -945,6 +1205,9 @@ const ProductionPlanCreate = () => {
                   className="h-10"
                   showSearch
                   optionFilterProp="label"
+                  onChange={() =>
+                    form.setFieldValue('cropVariety', undefined)
+                  }
                 />
               </Form.Item>
             </Col>
@@ -962,6 +1225,7 @@ const ProductionPlanCreate = () => {
                   placeholder="Chọn giống cây trồng..."
                   options={cropVarietyOptions}
                   loading={isCropsLoading}
+                  disabled={!selectedCatalogId}
                   className="h-10"
                   showSearch
                   optionFilterProp="label"
@@ -1059,83 +1323,40 @@ const ProductionPlanCreate = () => {
             </Col>
             <Col xs={24} md={12}>
               <Form.Item
-                name="scope"
+                name="farmerIds"
                 label={
                   <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                    Phạm vi kế hoạch
+                    <TeamOutlined /> Nông dân thực hiện
                   </span>
                 }
-                rules={[{ required: true, message: 'Vui lòng chọn phạm vi kế hoạch.' }]}
               >
                 <Select
-                  options={PRODUCTION_PLAN_SCOPE_OPTIONS}
-                  disabled={isEdit}
+                  mode="multiple"
+                  allowClear
+                  placeholder="Chọn một hoặc nhiều nông dân..."
+                  options={farmerOptions}
+                  loading={isFarmersLoading}
                   className="h-10"
-                  onChange={(value) => {
-                    if (value === 'OVERALL') {
-                      form.setFieldValue('parentPlanId', undefined)
-                    }
-                  }}
-                />
-              </Form.Item>
-            </Col>
-            {selectedScope === 'SPECIFIC' && (
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name="parentPlanId"
-                  label={
-                    <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                      Kế hoạch cha
-                    </span>
-                  }
-                  rules={[{ required: true, message: 'Vui lòng chọn kế hoạch cha.' }]}
-                >
-                  <Select
-                    placeholder="Chọn kế hoạch tổng thể..."
-                    options={parentPlanOptions}
-                    loading={isParentPlansLoading}
-                    disabled={isEdit}
-                    className="h-10"
-                    showSearch
-                    optionFilterProp="label"
-                  />
-                </Form.Item>
-              </Col>
-            )}
-            <Col xs={24}>
-              <Form.Item
-                name="description"
-                label={
-                  <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                    Mô tả kế hoạch
-                  </span>
-                }
-              >
-                <Input.TextArea
-                  placeholder="Nhập mô tả chung cho kế hoạch sản xuất..."
-                  rows={3}
-                  className="rounded-lg"
+                  showSearch
+                  optionFilterProp="label"
+                  maxTagCount="responsive"
                 />
               </Form.Item>
             </Col>
           </Row>
 
           {/* ════ Section 2 – Giai Đoạn Sản Xuất ════ */}
-          <SectionTitle>Giai Đoạn Sản Xuất</SectionTitle>
+          <SectionTitle>Giai đoạn Canh tác</SectionTitle>
 
-          <div className="space-y-2 mb-3">
+          <div className="relative ml-4 pl-7 mb-4 space-y-4 border-l-2 border-green-100">
             {stages.map((stage, index) => (
               <div
                 key={stage._key}
-                className="flex flex-col gap-3 rounded-lg bg-gray-50 border border-gray-100 px-4 py-3"
+                className="relative flex flex-col gap-4 px-5 py-4 bg-white border border-gray-200 shadow-sm rounded-xl"
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                      index === 0
-                        ? 'bg-green-600 text-white shadow-md shadow-green-200'
-                        : 'bg-white border-2 border-gray-200 text-gray-400'
-                    }`}
+                    className="absolute -left-[46px] top-4 flex h-7 w-7 items-center justify-center rounded-full border-2 border-green-700 bg-white text-xs font-bold text-green-800"
                   >
                     {index + 1}
                   </div>
@@ -1143,7 +1364,7 @@ const ProductionPlanCreate = () => {
                     value={stage.title}
                     onChange={(e) => updateStage(index, 'title', e.target.value)}
                     placeholder={`Tên giai đoạn ${index + 1}`}
-                    className="flex-1 h-9 rounded-lg font-semibold"
+                    className="flex-1 h-10 text-base font-bold text-green-950 rounded-lg"
                   />
                   {stages.length > 1 && (
                     <Button
@@ -1156,16 +1377,18 @@ const ProductionPlanCreate = () => {
                   )}
                 </div>
                 <div>
-                  <Text type="secondary" className="block mb-1 text-xs">Mô tả kỹ thuật</Text>
+                  <Text className="block mb-2 text-xs font-medium text-gray-600">
+                    Mô tả
+                  </Text>
                   <Input.TextArea
                     value={stage.description}
                     onChange={(e) => updateStage(index, 'description', e.target.value)}
                     placeholder="Nhập hướng dẫn kỹ thuật chi tiết..."
                     rows={3}
-                    className="rounded-lg text-sm"
+                    className="text-sm bg-white rounded-lg"
                   />
                 </div>
-                <Row gutter={[12, 8]}>
+                <Row gutter={[12, 8]} className="hidden">
                   <Col xs={24} md={12}>
                     <Text type="secondary" className="block mb-1 text-xs">
                       Ngày bắt đầu giai đoạn
@@ -1175,7 +1398,7 @@ const ProductionPlanCreate = () => {
                       onChange={(value) =>
                         updateStage(index, 'startDate', value)
                       }
-                      placeholder="Theo ngày bắt đầu kế hoạch"
+                      placeholder="Theo ngày bắt đầu nhật ký"
                       format="DD/MM/YYYY"
                       className="w-full h-9 rounded-lg"
                       disabledDate={(current) =>
@@ -1195,7 +1418,7 @@ const ProductionPlanCreate = () => {
                       onChange={(value) =>
                         updateStage(index, 'endDate', value)
                       }
-                      placeholder="Theo ngày kết thúc kế hoạch"
+                      placeholder="Theo ngày kết thúc nhật ký"
                       format="DD/MM/YYYY"
                       className="w-full h-9 rounded-lg"
                       disabledDate={(current) =>
@@ -1209,6 +1432,154 @@ const ProductionPlanCreate = () => {
                     />
                   </Col>
                 </Row>
+                <div className="pt-3 border-t border-green-100">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                      <Text strong className="text-sm text-green-800">
+                        Chi tiết công việc
+                      </Text>
+                      <Text type="secondary" className="block text-xs">
+                        Công việc thuộc giai đoạn {index + 1}
+                      </Text>
+                    </div>
+                    <Button
+                      type="dashed"
+                      size="small"
+                      icon={<PlusOutlined />}
+                      onClick={() => addWorkTask(stage._key)}
+                      className="text-green-700 border-green-400 rounded-lg"
+                    >
+                      Thêm Công việc
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {workTasks.map((task, taskIndex) =>
+                      task.stageKey === stage._key ? (
+                        <div
+                          key={task._key}
+                          className="p-3 bg-white border border-green-100 rounded-xl"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <Text strong>
+                              Công việc{' '}
+                              {workTasks
+                                .slice(0, taskIndex)
+                                .filter(
+                                  (item) => item.stageKey === stage._key
+                                ).length + 1}
+                            </Text>
+                            <Button
+                              type="text"
+                              danger
+                              icon={<MinusCircleOutlined />}
+                              onClick={() => removeWorkTask(taskIndex)}
+                            />
+                          </div>
+                          <Row gutter={[12, 10]}>
+                            <Col xs={24} md={12}>
+                              <Select
+                                value={task.taskLibraryId}
+                                onChange={(value) =>
+                                  selectTaskLibrary(taskIndex, value)
+                                }
+                                options={taskLibraryOptions}
+                                loading={isTaskLibrariesLoading}
+                                placeholder="Chọn công việc mẫu..."
+                                showSearch
+                                optionFilterProp="label"
+                                className="w-full"
+                                disabled={Boolean(task.id)}
+                              />
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <Input
+                                value={task.name}
+                                onChange={(event) =>
+                                  updateWorkTask(
+                                    taskIndex,
+                                    'name',
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Tên công việc..."
+                              />
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <DatePicker
+                                value={task.startDate}
+                                onChange={(value) =>
+                                  updateWorkTask(
+                                    taskIndex,
+                                    'startDate',
+                                    value
+                                  )
+                                }
+                                placeholder="Ngày bắt đầu"
+                                format="DD/MM/YYYY"
+                                className="w-full"
+                                disabledDate={(current) => {
+                                  const stageStart =
+                                    stage.startDate || selectedPlanStartDate
+                                  const stageEnd =
+                                    stage.endDate || selectedPlanEndDate
+                                  return (
+                                    (stageStart &&
+                                      current.isBefore(stageStart, 'day')) ||
+                                    (stageEnd &&
+                                      current.isAfter(stageEnd, 'day'))
+                                  )
+                                }}
+                              />
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <DatePicker
+                                value={task.dueDate}
+                                onChange={(value) =>
+                                  updateWorkTask(
+                                    taskIndex,
+                                    'dueDate',
+                                    value
+                                  )
+                                }
+                                placeholder="Hạn hoàn thành"
+                                format="DD/MM/YYYY"
+                                className="w-full"
+                                disabledDate={(current) => {
+                                  const stageStart =
+                                    stage.startDate || selectedPlanStartDate
+                                  const stageEnd =
+                                    stage.endDate || selectedPlanEndDate
+                                  return (
+                                    (stageStart &&
+                                      current.isBefore(stageStart, 'day')) ||
+                                    (stageEnd &&
+                                      current.isAfter(stageEnd, 'day')) ||
+                                    (task.startDate &&
+                                      current.isBefore(task.startDate, 'day'))
+                                  )
+                                }}
+                              />
+                            </Col>
+                            <Col xs={24}>
+                              <Input.TextArea
+                                value={task.description}
+                                onChange={(event) =>
+                                  updateWorkTask(
+                                    taskIndex,
+                                    'description',
+                                    event.target.value
+                                  )
+                                }
+                                rows={2}
+                                placeholder="Mô tả và hướng dẫn thực hiện..."
+                              />
+                            </Col>
+                          </Row>
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -1221,6 +1592,359 @@ const ProductionPlanCreate = () => {
           >
             Thêm Giai Đoạn
           </Button>
+
+          <div className="hidden">
+          <SectionTitle>Chi tiết Công việc</SectionTitle>
+
+          <div className="mb-3 space-y-3">
+            {workTasks.map((task, index) => (
+              <div
+                key={task._key}
+                className="p-4 border border-gray-100 rounded-xl bg-gray-50/70"
+              >
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-2 font-semibold text-gray-700">
+                    <span className="flex items-center justify-center w-8 h-8 text-sm font-bold text-green-700 bg-green-100 rounded-full">
+                      {index + 1}
+                    </span>
+                    Công việc {index + 1}
+                  </div>
+                  <Button
+                    type="text"
+                    danger
+                    icon={<MinusCircleOutlined />}
+                    onClick={() => removeWorkTask(index)}
+                  />
+                </div>
+
+                <Row gutter={[12, 12]}>
+                  <Col xs={24} md={12}>
+                    <Text type="secondary" className="block mb-1 text-xs">
+                      Công việc mẫu <span className="text-red-500">*</span>
+                    </Text>
+                    <Select
+                      value={task.taskLibraryId}
+                      onChange={(value) => selectTaskLibrary(index, value)}
+                      options={taskLibraryOptions}
+                      loading={isTaskLibrariesLoading}
+                      placeholder="Chọn công việc từ thư viện..."
+                      showSearch
+                      optionFilterProp="label"
+                      className="w-full"
+                      disabled={Boolean(task.id)}
+                    />
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Text type="secondary" className="block mb-1 text-xs">
+                      Tên công việc <span className="text-red-500">*</span>
+                    </Text>
+                    <Input
+                      value={task.name}
+                      onChange={(event) =>
+                        updateWorkTask(index, 'name', event.target.value)
+                      }
+                      placeholder="Nhập tên công việc..."
+                    />
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Text type="secondary" className="block mb-1 text-xs">
+                      Ngày bắt đầu <span className="text-red-500">*</span>
+                    </Text>
+                    <DatePicker
+                      value={task.startDate}
+                      onChange={(value) =>
+                        updateWorkTask(index, 'startDate', value)
+                      }
+                      format="DD/MM/YYYY"
+                      className="w-full"
+                      disabledDate={(current) =>
+                        (selectedPlanStartDate &&
+                          current.isBefore(selectedPlanStartDate, 'day')) ||
+                        (selectedPlanEndDate &&
+                          current.isAfter(selectedPlanEndDate, 'day'))
+                      }
+                    />
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Text type="secondary" className="block mb-1 text-xs">
+                      Hạn hoàn thành <span className="text-red-500">*</span>
+                    </Text>
+                    <DatePicker
+                      value={task.dueDate}
+                      onChange={(value) =>
+                        updateWorkTask(index, 'dueDate', value)
+                      }
+                      format="DD/MM/YYYY"
+                      className="w-full"
+                      disabledDate={(current) =>
+                        (selectedPlanStartDate &&
+                          current.isBefore(selectedPlanStartDate, 'day')) ||
+                        (selectedPlanEndDate &&
+                          current.isAfter(selectedPlanEndDate, 'day')) ||
+                        (task.startDate &&
+                          current.isBefore(task.startDate, 'day'))
+                      }
+                    />
+                  </Col>
+                  <Col xs={24}>
+                    <Text type="secondary" className="block mb-1 text-xs">
+                      Nông dân thực hiện
+                    </Text>
+                    <Select
+                      mode="multiple"
+                      allowClear
+                      value={task.assigneeIds}
+                      onChange={(value) =>
+                        updateWorkTask(index, 'assigneeIds', value)
+                      }
+                      options={farmerOptions}
+                      loading={isFarmersLoading}
+                      placeholder="Chọn nông dân phụ trách công việc..."
+                      showSearch
+                      optionFilterProp="label"
+                      maxTagCount="responsive"
+                      className="w-full"
+                    />
+                  </Col>
+                  <Col xs={24}>
+                    <Text type="secondary" className="block mb-1 text-xs">
+                      Mô tả công việc
+                    </Text>
+                    <Input.TextArea
+                      value={task.description}
+                      onChange={(event) =>
+                        updateWorkTask(
+                          index,
+                          'description',
+                          event.target.value
+                        )
+                      }
+                      rows={2}
+                      placeholder="Nhập hướng dẫn thực hiện công việc..."
+                    />
+                  </Col>
+                </Row>
+
+                <div className="pt-3 mt-1 border-t border-green-100">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                      <Text strong className="text-sm text-green-800">
+                        Công việc trong giai đoạn
+                      </Text>
+                      <Text type="secondary" className="block mt-0.5 text-xs">
+                        Thêm các công việc cần thực hiện cho riêng giai đoạn này
+                      </Text>
+                    </div>
+                    <Button
+                      type="dashed"
+                      size="small"
+                      icon={<PlusOutlined />}
+                      onClick={() => addWorkTask(stage._key)}
+                      className="text-green-700 border-green-400 rounded-lg"
+                    >
+                      Thêm Công việc
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {workTasks.map((task, taskIndex) =>
+                      task.stageKey === stage._key ? (
+                        <div
+                          key={task._key}
+                          className="p-4 bg-white border border-green-100 rounded-xl"
+                        >
+                          <div className="flex items-center justify-between gap-3 mb-3">
+                            <Text strong>Công việc {taskIndex + 1}</Text>
+                            <Button
+                              type="text"
+                              danger
+                              icon={<MinusCircleOutlined />}
+                              onClick={() => removeWorkTask(taskIndex)}
+                            />
+                          </div>
+                          <Row gutter={[12, 12]}>
+                            <Col xs={24} md={12}>
+                              <Text
+                                type="secondary"
+                                className="block mb-1 text-xs"
+                              >
+                                Công việc mẫu{' '}
+                                <span className="text-red-500">*</span>
+                              </Text>
+                              <Select
+                                value={task.taskLibraryId}
+                                onChange={(value) =>
+                                  selectTaskLibrary(taskIndex, value)
+                                }
+                                options={taskLibraryOptions}
+                                loading={isTaskLibrariesLoading}
+                                placeholder="Chọn công việc từ thư viện..."
+                                showSearch
+                                optionFilterProp="label"
+                                className="w-full"
+                                disabled={Boolean(task.id)}
+                              />
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <Text
+                                type="secondary"
+                                className="block mb-1 text-xs"
+                              >
+                                Tên công việc{' '}
+                                <span className="text-red-500">*</span>
+                              </Text>
+                              <Input
+                                value={task.name}
+                                onChange={(event) =>
+                                  updateWorkTask(
+                                    taskIndex,
+                                    'name',
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Nhập tên công việc..."
+                              />
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <Text
+                                type="secondary"
+                                className="block mb-1 text-xs"
+                              >
+                                Ngày bắt đầu{' '}
+                                <span className="text-red-500">*</span>
+                              </Text>
+                              <DatePicker
+                                value={task.startDate}
+                                onChange={(value) =>
+                                  updateWorkTask(
+                                    taskIndex,
+                                    'startDate',
+                                    value
+                                  )
+                                }
+                                format="DD/MM/YYYY"
+                                className="w-full"
+                                disabledDate={(current) => {
+                                  const stageStart =
+                                    stage.startDate || selectedPlanStartDate
+                                  const stageEnd =
+                                    stage.endDate || selectedPlanEndDate
+                                  return (
+                                    (stageStart &&
+                                      current.isBefore(stageStart, 'day')) ||
+                                    (stageEnd &&
+                                      current.isAfter(stageEnd, 'day'))
+                                  )
+                                }}
+                              />
+                            </Col>
+                            <Col xs={24} md={12}>
+                              <Text
+                                type="secondary"
+                                className="block mb-1 text-xs"
+                              >
+                                Hạn hoàn thành{' '}
+                                <span className="text-red-500">*</span>
+                              </Text>
+                              <DatePicker
+                                value={task.dueDate}
+                                onChange={(value) =>
+                                  updateWorkTask(
+                                    taskIndex,
+                                    'dueDate',
+                                    value
+                                  )
+                                }
+                                format="DD/MM/YYYY"
+                                className="w-full"
+                                disabledDate={(current) => {
+                                  const stageStart =
+                                    stage.startDate || selectedPlanStartDate
+                                  const stageEnd =
+                                    stage.endDate || selectedPlanEndDate
+                                  return (
+                                    (stageStart &&
+                                      current.isBefore(stageStart, 'day')) ||
+                                    (stageEnd &&
+                                      current.isAfter(stageEnd, 'day')) ||
+                                    (task.startDate &&
+                                      current.isBefore(task.startDate, 'day'))
+                                  )
+                                }}
+                              />
+                            </Col>
+                            <Col xs={24}>
+                              <Text
+                                type="secondary"
+                                className="block mb-1 text-xs"
+                              >
+                                Nông dân thực hiện
+                              </Text>
+                              <Select
+                                mode="multiple"
+                                allowClear
+                                value={task.assigneeIds}
+                                onChange={(value) =>
+                                  updateWorkTask(
+                                    taskIndex,
+                                    'assigneeIds',
+                                    value
+                                  )
+                                }
+                                options={farmerOptions}
+                                loading={isFarmersLoading}
+                                placeholder="Chọn nông dân phụ trách công việc..."
+                                showSearch
+                                optionFilterProp="label"
+                                maxTagCount="responsive"
+                                className="w-full"
+                              />
+                            </Col>
+                            <Col xs={24}>
+                              <Text
+                                type="secondary"
+                                className="block mb-1 text-xs"
+                              >
+                                Mô tả công việc
+                              </Text>
+                              <Input.TextArea
+                                value={task.description}
+                                onChange={(event) =>
+                                  updateWorkTask(
+                                    taskIndex,
+                                    'description',
+                                    event.target.value
+                                  )
+                                }
+                                rows={2}
+                                placeholder="Nhập hướng dẫn thực hiện công việc..."
+                              />
+                            </Col>
+                          </Row>
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Button
+            type="dashed"
+            icon={<PlusOutlined />}
+            onClick={addWorkTask}
+            className="w-full mb-3 text-green-700 border-green-400 rounded-lg hover:border-green-500"
+          >
+            Thêm Công việc
+          </Button>
+          </div>
+
+          <div className="px-4 py-3 mb-5 text-sm text-amber-700 border border-amber-200 rounded-xl bg-amber-50">
+            Vật tư thực tế được ghi nhận khi thực hiện công việc. API nhật ký
+            hoạt động hiện hỗ trợ lưu vật tư; API công việc chưa có trường định
+            mức để tự động đối chiếu với hướng dẫn sử dụng.
+          </div>
 
           {/* ── Footer actions ── */}
           <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
@@ -1246,7 +1970,7 @@ const ProductionPlanCreate = () => {
               icon={isEdit ? <EditOutlined /> : <PlusOutlined />}
               className="h-10 px-6 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
             >
-              {isEdit ? 'Lưu thay đổi' : 'Tạo Kế hoạch Mới'}
+              {isEdit ? 'Lưu thay đổi' : 'Tạo Nhật ký Mới'}
             </Button>
           </div>
         </Form>
@@ -1262,7 +1986,7 @@ const ProductionPlanCreate = () => {
               Chọn mẫu quy trình
             </div>
             <div className="mt-1 text-xs font-normal text-gray-400">
-              Chọn một mẫu để tự động thêm các giai đoạn sản xuất
+              Chọn một mẫu để tự động thêm các giai đoạn canh tác
             </div>
           </div>
         }

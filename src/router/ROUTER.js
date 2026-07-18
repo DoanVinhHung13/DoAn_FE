@@ -71,6 +71,11 @@ const ROUTER = {
   FM_THONGMINH:          '/farm-manager/thongminh/:subCategory',
   FM_JOURNAL_ENTRY:      '/farm-manager/journals/view/:id',
 
+  // ── Farm Supervisor Routes ────────────────────────────────────────────────
+  FS_LOGBOOKS:           '/farm-supervisor/logbooks',
+  FS_LOGBOOK_DETAIL:     '/farm-supervisor/logbooks/:planId',
+  FS_STAGE_LOG:          '/farm-supervisor/logbooks/:planId/stages/:stageId',
+
   // ── Land Manager Routes ────────────────────────────────────────────────────
   LM_DASHBOARD:          '/land-manager/dashboard',
   LM_FARMERS:            '/land-manager/farmers',
