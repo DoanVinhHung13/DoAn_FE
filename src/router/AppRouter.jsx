@@ -49,6 +49,8 @@ const FarmManagerCropEdit = React.lazy(() => import('../pages/FARM_MANAGER/Crops
 const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans'))
 const FarmManagerProductionPlanCreate = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans/ProductionPlanCreate'))
 const FarmManagerProductionPlanDetail = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans/ProductionPlanDetail'))
+const FarmManagerQualityInspections = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections'))
+const FarmManagerQualityInspectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections/QualityInspectionDetail'))
 const FarmManagerPlanTemplates = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates'))
 const FarmManagerPlanTemplateDetail = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates/PlanTemplateDetail'))
 const FarmManagerPlanTemplateCreate = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates/PlanTemplateCreate'))
@@ -218,6 +220,10 @@ const routes = [
               { path: ROUTER.FM_PRODUCTION_PLAN_CREATE, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLAN_EDIT, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLAN_DETAIL, element: <Lazy><FarmManagerProductionPlanDetail /></Lazy> },
+
+              // Quality inspection for Farm Supervisor log entries
+              { path: ROUTER.FM_QUALITY_INSPECTIONS, element: <Lazy><FarmManagerQualityInspections /></Lazy> },
+              { path: ROUTER.FM_QUALITY_INSPECTION_DETAIL, element: <Lazy><FarmManagerQualityInspectionDetail /></Lazy> },
 
               // Plan Template Management
               { path: ROUTER.FM_PLAN_TEMPLATES, element: <Lazy><FarmManagerPlanTemplates /></Lazy> },
