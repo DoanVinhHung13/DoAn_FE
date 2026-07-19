@@ -31,6 +31,10 @@ const DefaultAction = ({ children }) => {
   useEffect(() => {
     if (!authSession.isAuthenticated()) return
 
+    // Nếu Redux đã có user (do Login component dispatch) → không fetch lại
+    // Chỉ fetch khi reload trang (Redux trống nhưng token vẫn còn)
+    if (userInfo?._id) return
+
     const fetchProfile = async () => {
       let meRes = await AuthService.getProfile()
 
@@ -77,7 +81,7 @@ const DefaultAction = ({ children }) => {
     }
 
     restoreUser()
-  }, [])
+  }, [userInfo?._id])
 
   return <>{children}</>
 }

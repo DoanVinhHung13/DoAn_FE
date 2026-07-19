@@ -58,6 +58,14 @@ const FarmManagerTasks = React.lazy(() => import('../pages/FARM_MANAGER/Tasks'))
 const FarmManagerTaskCreate = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskCreate'))
 const FarmManagerTaskDetail = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskDetail'))
 const FarmManagerTaskEdit = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskEdit'))
+const FarmSupervisorPlans = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans'))
+const FarmSupervisorPlanDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans/PlanDetail'))
+const FarmSupervisorTaskDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans/TaskDetail'))
+const FarmLeaderTasks = React.lazy(() => import('../pages/FARM_LEADER/Tasks'))
+const FarmLeaderDailyLog = React.lazy(() => import('../pages/FARM_LEADER/Tasks/DailyLog'))
+const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
+const FarmManagerLogbookReview = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks/LogbookReview'))
+
 const FarmManagerBatches = React.lazy(() => import('../pages/FARM_MANAGER/Batches'))
 const FarmManagerNotifications = React.lazy(() => import('../pages/FARM_MANAGER/Notifications'))
 const FarmManagerViewFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers'))
@@ -71,36 +79,13 @@ const FarmManagerCropProtectionEdit = React.lazy(() => import('../pages/FARM_MAN
 const FarmManagerReferenceFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/Reference/FertilizerList'))
 const FarmManagerReferencePesticides = React.lazy(() => import('../pages/FARM_MANAGER/Reference/PesticideList'))
 
-// LAND_MANAGER pages
+// LAND_MANAGER pages - moved to FARM_SUPERVISOR
 const LandManagerFieldLog = React.lazy(() => import('../pages/LAND_MANAGER/FieldLog'))
 const LandManagerDashboard = React.lazy(() => import('../pages/LAND_MANAGER/Dashboard'))
 const LandManagerFarmers = React.lazy(() => import('../pages/LAND_MANAGER/Farmers'))
 const LandManagerLands = React.lazy(() => import('../pages/LAND_MANAGER/Lands'))
 const LandManagerLandPlotDetail = React.lazy(() => import('../pages/LAND_MANAGER/Lands/LandPlotDetail'))
-const LandManagerProductionPlans = React.lazy(() => import('../pages/LAND_MANAGER/ProductionPlans'))
-const LandManagerTasks = React.lazy(() => import('../pages/LAND_MANAGER/Tasks'))
-const LandManagerLogbooks = React.lazy(() => import('../pages/LAND_MANAGER/Logbooks'))
-const LandManagerBatches = React.lazy(() => import('../pages/LAND_MANAGER/Batches'))
 const LandManagerNotifications = React.lazy(() => import('../pages/LAND_MANAGER/Notifications'))
-const LandManagerViewCatalogs = React.lazy(() => import('../pages/LAND_MANAGER/ViewCatalogs'))
-const LandManagerCatalogDetail = React.lazy(() => import('../pages/LAND_MANAGER/ViewCatalogs/CatalogDetail'))
-const LandManagerCrops = React.lazy(() => import('../pages/LAND_MANAGER/Crops'))
-
-const LandManagerCropDetail = React.lazy(() => import('../pages/LAND_MANAGER/Crops/CropDetail'))
-
-// MATERIAL_MANAGER pages
-const MaterialManagerDashboard = React.lazy(() => import('../pages/MATERIAL_MANAGER/Dashboard'))
-const MaterialManagerFertilizers = React.lazy(() => import('../pages/MATERIAL_MANAGER/Fertilizers'))
-const MaterialManagerCropProtections = React.lazy(() => import('../pages/MATERIAL_MANAGER/CropProtections'))
-const MaterialManagerMachinery = React.lazy(() => import('../pages/MATERIAL_MANAGER/Machinery'))
-const MaterialManagerMaterials = React.lazy(() => import('../pages/MATERIAL_MANAGER/Materials'))
-const MaterialManagerMaterialCreate = React.lazy(() => import('../pages/MATERIAL_MANAGER/Materials/MaterialCreate'))
-const MaterialManagerMaterialDetail = React.lazy(() => import('../pages/MATERIAL_MANAGER/Materials/MaterialDetail'))
-const MaterialManagerMaterialEdit = React.lazy(() => import('../pages/MATERIAL_MANAGER/Materials/MaterialEdit'))
-const MaterialManagerOtherMaterials = React.lazy(() => import('../pages/MATERIAL_MANAGER/OtherMaterials'))
-const MaterialManagerPurchaseReqs = React.lazy(() => import('../pages/MATERIAL_MANAGER/PurchaseReqs'))
-const MaterialManagerProductionPlans = React.lazy(() => import('../pages/MATERIAL_MANAGER/ProductionPlans'))
-const MaterialManagerTasks = React.lazy(() => import('../pages/MATERIAL_MANAGER/Tasks'))
 
 // FARMER pages (mapped to USER/ since FARMER folder doesn't exist)
 const FarmerDashboard = React.lazy(() => import('../pages/USER/FarmerManagement'))
@@ -259,97 +244,45 @@ const routes = [
               // Reference Management
               { path: ROUTER.FM_REF_FERTILIZER, element: <Lazy><FarmManagerReferenceFertilizers /></Lazy> },
               { path: ROUTER.FM_REF_PESTICIDE, element: <Lazy><FarmManagerReferencePesticides /></Lazy> },
+
+              // Logbook Review (duyệt nhật ký canh tác)
+              { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },
+              { path: ROUTER.FM_LOGBOOK_REVIEW, element: <Lazy><FarmManagerLogbookReview /></Lazy> },
             ],
           },
 
-          // ── Land Manager Routes ────────────────────────────────────────────
-          {
-            element: <ProtectedRoute allowedRoles={[ROLES.LAND_MANAGER]} />,
-            children: [
-              // Dashboard
-              { path: ROUTER.LM_DASHBOARD, element: <Lazy><LandManagerDashboard /></Lazy> },
-
-              // Farmer Management
-              { path: ROUTER.LM_FARMERS, element: <Lazy><LandManagerFarmers /></Lazy> },
-
-              // Land Management
-              { path: ROUTER.LM_LANDS, element: <Lazy><LandManagerLands /></Lazy> },
-              { path: ROUTER.LM_LAND_DETAIL, element: <Lazy><LandManagerLandPlotDetail /></Lazy> },
-
-              // Production Plan Management
-              { path: ROUTER.LM_PRODUCTION_PLANS, element: <Lazy><LandManagerProductionPlans /></Lazy> },
-
-              // Task Management
-              { path: ROUTER.LM_TASKS, element: <Lazy><LandManagerTasks /></Lazy> },
-
-              // Logbooks & Batches
-              { path: ROUTER.LM_LOGBOOKS, element: <Lazy><LandManagerLogbooks /></Lazy> },
-              { path: ROUTER.LM_BATCHES, element: <Lazy><LandManagerBatches /></Lazy> },
-
-              // Field Log
-              { path: ROUTER.LM_FIELD_LOG, element: <Lazy><LandManagerFieldLog /></Lazy> },
-
-              // Notification Management
-              { path: ROUTER.LM_NOTIFICATIONS, element: <Lazy><LandManagerNotifications /></Lazy> },
-              { path: ROUTER.LM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
-
-              // Crop Catalog Management
-              { path: ROUTER.LM_CROP_CATALOGS, element: <Lazy><LandManagerViewCatalogs /></Lazy> },
-              { path: ROUTER.LM_CROP_CATALOG_DETAIL, element: <Lazy><LandManagerCatalogDetail /></Lazy> },
-
-              // Crop Management
-              { path: ROUTER.LM_CROPS, element: <Lazy><LandManagerCrops /></Lazy> },
-
-              { path: ROUTER.LM_CROP_DETAIL, element: <Lazy><LandManagerCropDetail /></Lazy> },
-            ],
-          },
-
-          // ── Material Manager Routes ────────────────────────────────────────
-          {
-            element: <ProtectedRoute allowedRoles={[ROLES.MATERIAL_MANAGER]} />,
-            children: [
-              // Dashboard
-              { path: ROUTER.MM_DASHBOARD, element: <Lazy><MaterialManagerDashboard /></Lazy> },
-
-              // Fertilizer Management
-              { path: ROUTER.MM_FERTILIZERS, element: <Lazy><MaterialManagerFertilizers /></Lazy> },
-
-              // Crop Protection Management
-              { path: ROUTER.MM_CROP_PROTECTIONS, element: <Lazy><MaterialManagerCropProtections /></Lazy> },
-
-              // Machinery Management
-              { path: ROUTER.MM_MACHINERY, element: <Lazy><MaterialManagerMachinery /></Lazy> },
-
-              // Material Management
-              { path: ROUTER.MM_MATERIALS, element: <Lazy><MaterialManagerMaterials /></Lazy> },
-              { path: ROUTER.MM_MATERIAL_CREATE, element: <Lazy><MaterialManagerMaterialCreate /></Lazy> },
-              { path: ROUTER.MM_MATERIAL_DETAIL, element: <Lazy><MaterialManagerMaterialDetail /></Lazy> },
-              { path: ROUTER.MM_MATERIAL_EDIT, element: <Lazy><MaterialManagerMaterialEdit /></Lazy> },
-
-              // Other Materials
-              { path: ROUTER.MM_OTHER_MATERIALS, element: <Lazy><MaterialManagerOtherMaterials /></Lazy> },
-
-              // Purchase Requests
-              { path: ROUTER.MM_PURCHASE_REQS, element: <Lazy><MaterialManagerPurchaseReqs /></Lazy> },
-
-              // Production Plan Management
-              { path: ROUTER.MM_PRODUCTION_PLANS, element: <Lazy><MaterialManagerProductionPlans /></Lazy> },
-
-              // Task Management
-              { path: ROUTER.MM_TASKS, element: <Lazy><MaterialManagerTasks /></Lazy> },
-            ],
-          },
-
-          // ── Farmer Routes ──────────────────────────────────────────────────
+          // ── Farm Supervisor Routes ────────────────────────────────────────
           {
             element: <ProtectedRoute allowedRoles={[ROLES.FARM_SUPERVISOR]} />,
             children: [
-              { path: ROUTER.FS_LOGBOOKS, element: <Lazy><FarmSupervisorLogbooks /></Lazy> },
-              { path: ROUTER.FS_LOGBOOK_DETAIL, element: <Lazy><FarmSupervisorLogbookDetail /></Lazy> },
+              // Farm Supervisor - Plans & Tasks
+              { path: ROUTER.FS_PLANS, element: <Lazy><FarmSupervisorPlans /></Lazy> },
+              { path: ROUTER.FS_PLAN_DETAIL, element: <Lazy><FarmSupervisorPlanDetail /></Lazy> },
+              { path: ROUTER.FS_TASK_DETAIL, element: <Lazy><FarmSupervisorTaskDetail /></Lazy> },
               { path: ROUTER.FS_STAGE_LOG, element: <Lazy><FarmSupervisorStageLog /></Lazy> },
+
+              // Land Manager features moved to Farm Supervisor
+              { path: ROUTER.LM_DASHBOARD, element: <Lazy><LandManagerDashboard /></Lazy> },
+              { path: ROUTER.LM_FARMERS, element: <Lazy><LandManagerFarmers /></Lazy> },
+              { path: ROUTER.LM_LANDS, element: <Lazy><LandManagerLands /></Lazy> },
+              { path: ROUTER.LM_LAND_DETAIL, element: <Lazy><LandManagerLandPlotDetail /></Lazy> },
+              { path: ROUTER.LM_FIELD_LOG, element: <Lazy><LandManagerFieldLog /></Lazy> },
+              { path: ROUTER.LM_NOTIFICATIONS, element: <Lazy><LandManagerNotifications /></Lazy> },
+              { path: ROUTER.LM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
             ],
           },
 
+          // ── Farm Leader Routes ────────────────────────────────────────────
+          // Guard tạm: cả FARM_SUPERVISOR + FARM_LEADER đều vào được (demo)
+          {
+            element: <ProtectedRoute allowedRoles={[ROLES.FARM_LEADER, ROLES.FARM_SUPERVISOR]} />,
+            children: [
+              { path: ROUTER.FL_TASKS, element: <Lazy><FarmLeaderTasks /></Lazy> },
+              { path: ROUTER.FL_TASK_LOG, element: <Lazy><FarmLeaderDailyLog /></Lazy> },
+            ],
+          },
+
+          // ── Farmer Routes ──────────────────────────────────────────────
           {
             element: <ProtectedRoute allowedRoles={[ROLES.FARMER]} />,
             children: [

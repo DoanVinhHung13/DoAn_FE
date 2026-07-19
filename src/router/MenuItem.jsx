@@ -1,5 +1,5 @@
 // src/router/MenuItem.jsx
-// 4 Role: FARM_MANAGER, LAND_MANAGER, MATERIAL_MANAGER, FARMER
+// 4 Role: FARM_MANAGER, FARM_SUPERVISOR, FARM_LEADER, FARMER
 // Sidebar được lọc theo user?.role
 
 import {
@@ -54,7 +54,12 @@ export const farmManagerItem = () => [
   {
     key: ROUTER.FM_PRODUCTION_PLANS,
     icon: <ContainerOutlined className="text-lg" />,
-    label: 'Nhật ký canh tác',
+    label: 'Kế hoạch sản xuất',
+  },
+  {
+    key: ROUTER.FM_LOGBOOKS,
+    icon: <BookOutlined className="text-lg" />,
+    label: 'Duyệt nhật ký canh tác',
   },
   {
     key: ROUTER.FM_QUALITY_INSPECTIONS,
@@ -101,12 +106,12 @@ export const farmManagerItem = () => [
   },
 ]
 
-// ─── LAND_MANAGER MENU ────────────────────────────────────────────────────────
-export const landManagerItem = () => [
+// ─── FARM SUPERVISOR MENU ─────────────────────────────────────────────────────
+export const farmSupervisorItem = () => [
   {
-    key: ROUTER.LM_DASHBOARD,
-    icon: <AppstoreOutlined className="text-lg" />,
-    label: 'Tổng quan',
+    key: ROUTER.FS_PLANS,
+    icon: <ContainerOutlined className="text-lg" />,
+    label: 'Kế hoạch & Nhật ký',
   },
   {
     key: ROUTER.LM_FARMERS,
@@ -119,78 +124,28 @@ export const landManagerItem = () => [
     label: 'Quản lý vùng trồng',
   },
   {
-    key: ROUTER.LM_CROP_CATALOGS,
-    icon: <FileTextOutlined className="text-lg" />,
-    label: 'Danh mục cây trồng',
-  },
-  {
-    key: ROUTER.LM_CROPS,
-    icon: <Sprout className="w-5 h-5" />,
-    label: 'Cây trồng',
-  },
-  {
-    key: ROUTER.LM_PRODUCTION_PLANS,
-    icon: <ContainerOutlined className="text-lg" />,
-    label: 'Nhật ký canh tác',
-  },
-  {
-    key: ROUTER.LM_TASKS,
-    icon: <CheckCircleOutlined className="text-lg" />,
-    label: 'Quản lý nhiệm vụ',
-  },
-  {
-    key: ROUTER.LM_LOGBOOKS,
-    icon: <BookOutlined className="text-lg" />,
-    label: 'Nhật ký canh tác',
-  },
-  {
-    key: ROUTER.LM_BATCHES,
-    icon: <InboxOutlined className="text-lg" />,
-    label: 'Quản lý lô thu hoạch',
-  },
-  {
-    key: ROUTER.LM_NOTIFICATIONS,
-    icon: <BellOutlined className="text-lg" />,
-    label: 'Thông báo',
-  },
-  {
     key: ROUTER.LM_FIELD_LOG,
     icon: <FormOutlined className="text-lg" />,
     label: 'Ghi chép thực tế',
   },
+  {
+    key: ROUTER.NOTIFICATIONS,
+    icon: <BellOutlined className="text-lg" />,
+    label: 'Thông báo',
+  },
 ]
 
-// ─── MATERIAL_MANAGER MENU ────────────────────────────────────────────────────
-export const materialManagerItem = () => [
+// ─── FARM LEADER MENU ─────────────────────────────────────────────────────────
+export const farmLeaderItem = () => [
   {
-    key: ROUTER.MM_DASHBOARD,
-    icon: <AppstoreOutlined className="text-lg" />,
-    label: 'Tổng quan',
+    key: ROUTER.FL_TASKS,
+    icon: <CheckCircleOutlined className="text-lg" />,
+    label: 'Công việc của tôi',
   },
   {
-    key: ROUTER.MM_FERTILIZERS,
-    icon: <InboxOutlined className="text-lg" />,
-    label: 'Quản lý phân bón',
-  },
-  {
-    key: ROUTER.MM_CROP_PROTECTIONS,
-    icon: <ShopOutlined className="text-lg" />,
-    label: 'Quản lý thuốc BVTV',
-  },
-  {
-    key: ROUTER.MM_MACHINERY,
-    icon: <ToolOutlined className="text-lg" />,
-    label: 'Quản lý máy móc',
-  },
-  {
-    key: ROUTER.MM_MATERIALS,
-    icon: <InboxOutlined className="text-lg" />,
-    label: 'Quản lý vật tư nông nghiệp',
-  },
-  {
-    key: ROUTER.MM_PURCHASE_REQS,
-    icon: <ShoppingCartOutlined className="text-lg" />,
-    label: 'Yêu cầu mua vật tư',
+    key: ROUTER.NOTIFICATIONS,
+    icon: <BellOutlined className="text-lg" />,
+    label: 'Thông báo',
   },
 ]
 
@@ -218,44 +173,29 @@ export const farmerItem = () => [
   },
 ]
 
-export const farmSupervisorItem = () => [
-  {
-    key: ROUTER.FS_LOGBOOKS,
-    icon: <ContainerOutlined className="text-lg" />,
-    label: 'Nhật ký canh tác',
-  },
-  {
-    key: ROUTER.NOTIFICATIONS,
-    icon: <BellOutlined className="text-lg" />,
-    label: 'Thông báo',
-  },
-]
-
 // ─── HELPER: Lấy menu theo role ───────────────────────────────────────────────
 export const getMenuByRole = (role) => {
   switch (role) {
-    case ROLES.FARM_MANAGER:     return farmManagerItem()
-    case ROLES.FARM_SUPERVISOR:  return farmSupervisorItem()
-    case ROLES.LAND_MANAGER:     return landManagerItem()
-    case ROLES.MATERIAL_MANAGER: return materialManagerItem()
-    case ROLES.FARMER:           return farmerItem()
-    default:                 return []
+    case ROLES.FARM_MANAGER: return farmManagerItem()
+    case ROLES.FARM_SUPERVISOR: return farmSupervisorItem()
+    case ROLES.FARM_LEADER: return farmLeaderItem()
+    case ROLES.FARMER: return farmerItem()
+    default: return []
   }
 }
 
 // ─── PUBLIC MENU (landing navigation) ────────────────────────────────────────
 export const publicMenu = () => [
-  { key: ROUTER.HOME,  label: 'Trang chủ' },
-  { key: ROUTER.NEWS,  label: 'Tin tức' },
-  { key: ROUTER.TCVN,  label: 'Tra cứu TCVN' },
+  { key: ROUTER.HOME, label: 'Trang chủ' },
+  { key: ROUTER.NEWS, label: 'Tin tức' },
+  { key: ROUTER.TCVN, label: 'Tra cứu TCVN' },
 ]
 
 export default {
   farmManagerItem,
-  landManagerItem,
-  materialManagerItem,
   farmerItem,
   farmSupervisorItem,
+  farmLeaderItem,
   getMenuByRole,
   publicMenu,
 }

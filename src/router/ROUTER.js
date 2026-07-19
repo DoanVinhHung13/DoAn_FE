@@ -72,11 +72,18 @@ const ROUTER = {
   FM_HUUCO:              '/farm-manager/huuco/:subCategory',
   FM_THONGMINH:          '/farm-manager/thongminh/:subCategory',
   FM_JOURNAL_ENTRY:      '/farm-manager/journals/view/:id',
+  FM_LOGBOOKS:           '/farm-manager/logbooks',
+  FM_LOGBOOK_REVIEW:     '/farm-manager/logbooks/:id/review',
 
   // ── Farm Supervisor Routes ────────────────────────────────────────────────
-  FS_LOGBOOKS:           '/farm-supervisor/logbooks',
-  FS_LOGBOOK_DETAIL:     '/farm-supervisor/logbooks/:planId',
-  FS_STAGE_LOG:          '/farm-supervisor/logbooks/:planId/stages/:stageId',
+  FS_PLANS:              '/farm-supervisor/plans',
+  FS_PLAN_DETAIL:        '/farm-supervisor/plans/:planId',
+  FS_STAGE_LOG:          '/farm-supervisor/plans/:planId/stages/:stageId',
+  FS_TASK_DETAIL:        '/farm-supervisor/plans/:planId/tasks/:taskId',
+
+  // ── Farm Leader Routes ────────────────────────────────────────────────────
+  FL_TASKS:              '/farm-leader/tasks',
+  FL_TASK_LOG:           '/farm-leader/tasks/:taskId/log',
 
   // ── Land Manager Routes ────────────────────────────────────────────────────
   LM_DASHBOARD:          '/land-manager/dashboard',

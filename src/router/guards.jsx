@@ -3,27 +3,32 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import authSession from 'src/redux/authSession'
 import ROUTER from './ROUTER'
-import { normalizeRole } from 'src/constants/roles'
 import { getDashboardPathByRole } from './roleRedirects'
+import { hasRoleAccess } from './authUtils'
+
+export { hasRoleAccess } from './authUtils'
 
 /**
- * Helper function to check role access
+ * ProtectedRoute — chỉ cho vào nếu đã đăng nhập và đúng role.
+ *
+ * Logic:
+ *  1. Không có token → redirect /login
+ *  2. Cần check role nhưng Redux chưa có user (DefaultAction đang fetch /me) → spinner
+ *  3. Có user nhưng sai role → /forbidden
+ *  4. Đúng hết → render
  */
-export const hasRoleAccess = (userRole, allowedRoles) => {
-  if (!userRole) return false
-  return allowedRoles.includes(normalizeRole(userRole))
-}
-
-export const ProtectedRoute = ({ children, allowedRoles }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => {
   const user = useSelector((state) => state.appGlobal.userInfo)
   const token = authSession.isAuthenticated()
 
+  // Không có token → về login
   if (!token) {
     return <Navigate to={ROUTER.LOGIN} replace />
   }
 
-  // Chờ load user info từ DefaultAction
-  if (!user?._id) {
+  // Có token nhưng Redux chưa load xong user (DefaultAction đang fetch /me)
+  // → Chỉ block khi cần check role. Nếu không cần check role → cho qua ngay.
+  if (allowedRoles && !user?._id) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
@@ -34,7 +39,8 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
     )
   }
 
-  if (allowedRoles && !hasRoleAccess(user?.role, allowedRoles)) {
+  // Có user, check quyền
+  if (allowedRoles && user?._id && !hasRoleAccess(user?.role, allowedRoles)) {
     return <Navigate to={ROUTER.FORBIDDEN} replace />
   }
 
@@ -45,7 +51,7 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
  * GuestRoute — chỉ cho vào nếu chưa đăng nhập.
  * Nếu đã login thì redirect về dashboard tương ứng.
  */
-export const GuestRoute = ({ children }) => {
+const GuestRoute = ({ children }) => {
   const { userInfo } = useSelector((state) => state.appGlobal)
   const isLoggedIn = authSession.isAuthenticated() || Boolean(userInfo?._id)
 
@@ -56,3 +62,5 @@ export const GuestRoute = ({ children }) => {
 
   return children ?? <Outlet />
 }
+
+export { ProtectedRoute, GuestRoute }
