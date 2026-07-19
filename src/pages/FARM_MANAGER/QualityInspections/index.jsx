@@ -15,10 +15,14 @@ import { useNavigate } from 'react-router-dom'
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import {
-  QUALITY_STATUS,
-  qualityInspectionRecords,
-} from './mockData'
+
+const QUALITY_STATUS = {
+  PENDING: { label: 'Chờ kiểm tra', color: 'default' },
+  APPROVED: { label: 'Đạt chất lượng', color: 'success' },
+  REJECTED: { label: 'Không đạt', color: 'error' },
+}
+
+const qualityInspectionRecords = []
 
 const statusMeta = {
   [QUALITY_STATUS.PENDING]: {

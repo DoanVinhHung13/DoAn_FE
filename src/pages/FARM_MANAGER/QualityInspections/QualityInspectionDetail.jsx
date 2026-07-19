@@ -31,11 +31,17 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import ROUTER from 'src/router/ROUTER'
-import {
-  QUALITY_STATUS,
-  findInspection,
-  qualityCriteria,
-} from './mockData'
+import CultivationLogService from 'src/services/CultivationLogService'
+
+const QUALITY_STATUS = {
+  PENDING: 'PENDING',
+  REVIEWING: 'REVIEWING',
+  PASSED: 'PASSED',
+  NEEDS_ACTION: 'NEEDS_ACTION',
+}
+
+const findInspection = () => null
+const qualityCriteria = []
 
 const { TextArea } = Input
 

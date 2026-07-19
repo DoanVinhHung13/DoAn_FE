@@ -50,16 +50,11 @@ import dayjs from 'dayjs'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
+import CultivationTaskService from 'src/services/CultivationTaskService'
+import CultivationLogService from 'src/services/CultivationLogService'
+import UserService from 'src/services/UserService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  FakeCultivationService,
-  getMockDailyLogsByTask,
-  getMockTask,
-  MOCK_FARMERS,
-  MOCK_LEADERS,
-  MOCK_SUPERVISOR_PLAN,
-  MOCK_SUPERVISOR_STAGES,
-} from '../Logbooks/mockData'
+import { ROLES } from 'src/constants/roles'
 
 const { Text, Title, Paragraph } = Typography
 const { TextArea } = Input

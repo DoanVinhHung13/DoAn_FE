@@ -27,10 +27,6 @@ import ROUTER from 'src/router/ROUTER'
 import ProductionPlanService from 'src/services/CultivationLogbookService'
 import ProductionStageService from 'src/services/ProductionStageService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  MOCK_SUPERVISOR_PLAN,
-  MOCK_SUPERVISOR_STAGES,
-} from './mockData'
 
 const { Text } = Typography
 

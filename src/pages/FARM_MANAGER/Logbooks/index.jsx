@@ -29,11 +29,8 @@ import { useNavigate } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
+import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  FakeCultivationService,
-  MOCK_SUBMITTED_LOGBOOKS,
-} from 'src/pages/FARM_SUPERVISOR/Logbooks/mockData'
 
 const { Text } = Typography
 

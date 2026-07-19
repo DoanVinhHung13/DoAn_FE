@@ -46,11 +46,6 @@ import ProductionLogService from 'src/services/ProductionLogService'
 import ProductionPlanService from 'src/services/CultivationLogbookService'
 import ProductionStageService from 'src/services/ProductionStageService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  getMockStage,
-  MOCK_PRODUCTION_LOGS,
-  MOCK_SUPERVISOR_PLAN,
-} from './mockData'
 
 const { Text } = Typography
 const { Dragger } = Upload

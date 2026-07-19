@@ -45,13 +45,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
+import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import CultivationStageService from 'src/services/CultivationStageService'
+import CultivationLogService from 'src/services/CultivationLogService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  FakeCultivationService,
-  MOCK_SUBMITTED_LOGBOOKS,
-  MOCK_SUPERVISOR_PLAN,
-  MOCK_SUPERVISOR_STAGES,
-} from 'src/pages/FARM_SUPERVISOR/Logbooks/mockData'
 
 const { Text, Title, Paragraph } = Typography
 
