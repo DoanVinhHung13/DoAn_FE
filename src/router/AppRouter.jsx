@@ -200,7 +200,12 @@ const routes = [
               { path: ROUTER.FM_CROP_DETAIL, element: <Lazy><FarmManagerCropDetail /></Lazy> },
               { path: ROUTER.FM_CROP_EDIT, element: <Lazy><FarmManagerCropEdit /></Lazy> },
 
-              // Production Plan Management
+              // Cultivation Logbook Management (Nhật ký canh tác)
+              { path: ROUTER.FM_CULTIVATION_LOGBOOKS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
+              { path: ROUTER.FM_CULTIVATION_LOGBOOK_CREATE, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
+              { path: ROUTER.FM_CULTIVATION_LOGBOOK_EDIT, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
+              { path: ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL, element: <Lazy><FarmManagerProductionPlanDetail /></Lazy> },
+              // Legacy routes - kept for backward compatibility
               { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLAN_CREATE, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLAN_EDIT, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },

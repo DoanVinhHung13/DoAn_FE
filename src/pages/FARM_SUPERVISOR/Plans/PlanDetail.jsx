@@ -52,16 +52,10 @@ import 'dayjs/locale/vi'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import ProductionPlanService from 'src/services/ProductionPlanService'
-import ProductionStageService from 'src/services/ProductionStageService'
+import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import CultivationStageService from 'src/services/CultivationStageService'
+import CultivationTaskService from 'src/services/CultivationTaskService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  FakeCultivationService,
-  getMockTasksByStage,
-  MOCK_SUPERVISOR_PLAN,
-  MOCK_SUPERVISOR_STAGES,
-  MOCK_CULTIVATION_TASKS,
-} from '../Logbooks/mockData'
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
@@ -79,11 +73,6 @@ const taskStatusConfig = {
   PENDING: { color: 'default', label: 'Chờ kích hoạt', icon: <ClockCircleOutlined /> },
   ACTIVE: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
   COMPLETED: { color: 'success', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
-}
-
-const mergeItems = (apiItems, mockItems) => {
-  if (apiItems.length) return apiItems
-  return mockItems
 }
 
 // ── Component: Task Card nhỏ trong giai đoạn ─────────────────────────────────
@@ -149,46 +138,42 @@ const FarmSupervisorPlanDetail = () => {
   const loadData = async () => {
     setLoading(true)
     try {
-      let planData = null
-      let stageData = []
-      let tasksMap = {}
-
       // Load plan
-      try {
-        const res = await ProductionPlanService.getById(planId)
-        planData = res?.data ?? res
-      } catch { /* fallback mock */ }
+      const planRes = await CultivationLogbookService.getById(planId)
+      const planData = planRes?.data ?? planRes
 
-      if (!planData || planData?.success === false) {
-        planData = MOCK_SUPERVISOR_PLAN
-        stageData = MOCK_SUPERVISOR_STAGES
-      } else {
-        // Load stages
-        try {
-          const stagesRes = await ProductionStageService.getAll({ PageIndex: 1, PageSize: 1000 })
-          const all = stagesRes?.data?.data || stagesRes?.data || []
-          stageData = (Array.isArray(all) ? all : []).filter(
-            (s) => s.cultivationLogbookId === planId || s.productionPlanId === planId
-          )
-        } catch { stageData = MOCK_SUPERVISOR_STAGES }
+      if (!planData) {
+        message.error('Không tìm thấy kế hoạch.')
+        navigate(ROUTER.FS_PLANS)
+        return
       }
 
-      if (!stageData.length) stageData = MOCK_SUPERVISOR_STAGES
+      // Load stages by logbook ID
+      const stagesRes = await CultivationStageService.getByLogbookId(planId)
+      const all = stagesRes?.data?.data || stagesRes?.data || []
+      const stageData = Array.isArray(all) ? all : []
 
       // Load tasks per stage
+      const tasksMap = {}
       for (const stage of stageData) {
         try {
-          const tasksRes = await FakeCultivationService.getTasksByStage(stage.id)
-          const items = tasksRes?.data?.data || []
-          tasksMap[stage.id] = items.length ? items : getMockTasksByStage(stage.id)
-        } catch {
-          tasksMap[stage.id] = getMockTasksByStage(stage.id)
+          const tasksRes = await CultivationTaskService.getAll({ 
+            stageId: stage.id,
+            PageIndex: 1, 
+            PageSize: 100 
+          })
+          const items = tasksRes?.data?.data || tasksRes?.data || []
+          tasksMap[stage.id] = Array.isArray(items) ? items : []
+        } catch (error) {
+          console.error(`Failed to load tasks for stage ${stage.id}:`, error)
+          tasksMap[stage.id] = []
         }
       }
 
       setPlan(planData)
       setStages(stageData)
       setTasks(tasksMap)
+      
       // Auto-expand stages in progress
       const inProgressIds = stageData
         .filter((s) => s.status === 'IN_PROGRESS')
@@ -197,11 +182,7 @@ const FarmSupervisorPlanDetail = () => {
     } catch (error) {
       console.error(error)
       message.error('Không thể tải dữ liệu kế hoạch.')
-      setPlan(MOCK_SUPERVISOR_PLAN)
-      setStages(MOCK_SUPERVISOR_STAGES)
-      const tasksMap = {}
-      MOCK_SUPERVISOR_STAGES.forEach((s) => { tasksMap[s.id] = getMockTasksByStage(s.id) })
-      setTasks(tasksMap)
+      navigate(ROUTER.FS_PLANS)
     } finally {
       setLoading(false)
     }
@@ -233,38 +214,28 @@ const FarmSupervisorPlanDetail = () => {
     try {
       const values = await taskForm.validateFields()
       setSavingTask(true)
-      const stageName = stages.find((s) => s.id === activeStageId)?.stageName || ''
       const tasksToCreate = (values.tasks || [{ name: values.name, description: values.description }])
         .filter((t) => t.name?.trim())
 
       for (const task of tasksToCreate) {
-        const newTask = {
-          id: `mock-ctask-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          planId,
+        const payload = {
           stageId: activeStageId,
-          stageName,
           name: task.name.trim(),
           description: task.description?.trim() || '',
-          status: 'PENDING',
-          progress: 0,
-          farmLeaderId: null,
-          farmLeaderName: null,
-          farmerIds: [],
-          farmerNames: [],
-          startDate: null,
-          leaderSummary: null,
-          officialLog: null,
         }
-        setTasks((prev) => ({
-          ...prev,
-          [activeStageId]: [...(prev[activeStageId] || []), newTask],
-        }))
+        await CultivationTaskService.create(payload)
       }
 
       message.success(`Đã thêm ${tasksToCreate.length} công việc vào giai đoạn!`)
       setAddTaskModal(false)
       taskForm.resetFields()
-    } catch { /* validation */ } finally {
+      
+      // Reload data to get fresh tasks
+      loadData()
+    } catch (error) {
+      console.error(error)
+      message.error('Không thể tạo công việc. Vui lòng thử lại.')
+    } finally {
       setSavingTask(false)
     }
   }
@@ -272,16 +243,13 @@ const FarmSupervisorPlanDetail = () => {
   const handleSubmitLogbook = async () => {
     try {
       setSubmitting(true)
-      const response = await FakeCultivationService.submitLogbook(planId)
-      if (response?.data?.success) {
-        message.success('Đã gửi nhật ký lên Farm Manager thành công!')
-        setSubmitModal(false)
-        navigate(ROUTER.FS_PLANS)
-      } else {
-        message.error(response?.data?.message || 'Gửi nhật ký thất bại.')
-      }
+      await CultivationLogbookService.submitReview(planId)
+      message.success('Đã gửi nhật ký lên Farm Manager thành công!')
+      setSubmitModal(false)
+      navigate(ROUTER.FS_PLANS)
     } catch (error) {
-      message.error('Gửi nhật ký thất bại.')
+      console.error(error)
+      message.error(error.message || 'Gửi nhật ký thất bại.')
     } finally {
       setSubmitting(false)
     }
@@ -323,7 +291,6 @@ const FarmSupervisorPlanDetail = () => {
           <TitleCustom className="!mb-1">{plan.planName || 'Kế hoạch canh tác'}</TitleCustom>
           <div className="flex flex-wrap gap-2">
             <Tag color="processing" className="rounded-full">Đang thực hiện</Tag>
-            {plan.isMock && <Tag color="blue" className="rounded-full">Dữ liệu mẫu</Tag>}
           </div>
         </div>
         <Tooltip title={!allCompleted ? 'Cần hoàn thành tất cả công việc trước khi gửi.' : ''}>

@@ -43,7 +43,7 @@ import CropProtectionService from 'src/services/CropProtectionService'
 import FertilizerService from 'src/services/FertilizerService'
 import MaterialService from 'src/services/MaterialService'
 import ProductionLogService from 'src/services/ProductionLogService'
-import ProductionPlanService from 'src/services/ProductionPlanService'
+import ProductionPlanService from 'src/services/CultivationLogbookService'
 import ProductionStageService from 'src/services/ProductionStageService'
 import { formatDate } from 'src/utils/dateFormatters'
 import {

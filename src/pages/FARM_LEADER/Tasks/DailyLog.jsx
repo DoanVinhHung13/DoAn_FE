@@ -51,23 +51,18 @@ import dayjs from 'dayjs'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
+import CultivationTaskService from 'src/services/CultivationTaskService'
+import CultivationLogService from 'src/services/CultivationLogService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  AREA_UNITS,
-  FakeCultivationService,
-  FERTILIZER_QUANTITY_UNITS,
-  getMockDailyLogsByTask,
-  getMockTask,
-  MOCK_FERTILIZER_OPTIONS,
-  MOCK_PESTICIDE_OPTIONS,
-  MOCK_SUPERVISOR_PLAN,
-  MOCK_SUPERVISOR_STAGES,
-  PESTICIDE_QUANTITY_UNITS,
-} from 'src/pages/FARM_SUPERVISOR/Logbooks/mockData'
 
 const { Text, Title, Paragraph } = Typography
 const { TextArea } = Input
 const { Dragger } = Upload
+
+// Constants
+const FERTILIZER_QUANTITY_UNITS = ['kg', 'tấn', 'lít']
+const PESTICIDE_QUANTITY_UNITS = ['kg', 'lít', 'ml']
+const AREA_UNITS = ['m²', 'ha', 'sào']
 
 const taskStatusConfig = {
   PENDING: { label: 'Chờ kích hoạt', color: 'default' },
@@ -79,8 +74,6 @@ const DailyLog = () => {
   const { taskId } = useParams()
   const navigate = useNavigate()
   const [task, setTask] = useState(null)
-  const [plan, setPlan] = useState(MOCK_SUPERVISOR_PLAN)
-  const [stage, setStage] = useState(null)
   const [dailyLogs, setDailyLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [form] = Form.useForm()
@@ -91,31 +84,47 @@ const DailyLog = () => {
   const [fileList, setFileList] = useState([])
 
   useEffect(() => {
-    const loadTask = async () => {
+    const loadTaskData = async () => {
       setLoading(true)
       try {
-        const foundTask = getMockTask(taskId)
-        if (foundTask) {
-          setTask(foundTask)
-          setDailyLogs(getMockDailyLogsByTask(taskId))
-          const foundStage = MOCK_SUPERVISOR_STAGES.find((s) => s.id === foundTask.stageId)
-          setStage(foundStage || null)
-          // Tự động set ngày hiện tại
-          form.setFieldsValue({
-            date: dayjs(),
-            progress: foundTask.progress || 0,
-            fertilizers: [],
-            pesticides: [],
-          })
-        } else {
+        // Load task details
+        const taskRes = await CultivationTaskService.getById(taskId)
+        const taskData = taskRes?.data ?? taskRes
+
+        if (!taskData) {
           message.error('Không tìm thấy công việc.')
           navigate(ROUTER.FL_TASKS)
+          return
         }
+
+        setTask(taskData)
+
+        // Load existing cultivation logs for this task
+        const logsRes = await CultivationLogService.getAll({
+          taskId: taskId,
+          PageIndex: 1,
+          PageSize: 100,
+        })
+        const logsData = logsRes?.data?.data || logsRes?.data || []
+        const logsList = Array.isArray(logsData) ? logsData : logsData?.items || []
+        setDailyLogs(logsList)
+
+        // Set default form values
+        form.setFieldsValue({
+          date: dayjs(),
+          progress: taskData.progress || 0,
+          fertilizers: [],
+          pesticides: [],
+        })
+      } catch (error) {
+        console.error(error)
+        message.error('Không thể tải dữ liệu công việc.')
+        navigate(ROUTER.FL_TASKS)
       } finally {
         setLoading(false)
       }
     }
-    loadTask()
+    loadTaskData()
   }, [taskId, navigate, form])
 
   const handleSave = async (isSubmit = false) => {
@@ -125,20 +134,21 @@ const DailyLog = () => {
 
       const payload = {
         taskId,
-        date: values.date.format('YYYY-MM-DD'),
+        date: values.date ? values.date.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
         fertilizers: values.fertilizers || [],
         pesticides: values.pesticides || [],
         description: values.description || '',
         progress: values.progress || 0,
         images: fileList.map((file) => ({
           id: file.uid,
-          url: file.url || file.response?.url || URL.createObjectURL(file.originFileObj),
+          url: file.url || file.response?.url || '',
         })),
       }
 
-      await FakeCultivationService.addDailyLog(payload)
+      // POST /api/cultivation-logs
+      await CultivationLogService.create(payload)
 
-      // Update task progress locally
+      // Check if task is completed
       if (values.progress >= 100) {
         setSubmitModal(true)
       } else {
@@ -146,10 +156,11 @@ const DailyLog = () => {
         navigate(ROUTER.FL_TASKS)
       }
     } catch (error) {
+      console.error(error)
       if (error.errorFields) {
         message.warning('Vui lòng kiểm tra lại các trường nhập.')
       } else {
-        message.error('Lưu nhật ký thất bại.')
+        message.error(error.message || 'Lưu nhật ký thất bại.')
       }
     } finally {
       setSaving(false)
@@ -160,91 +171,30 @@ const DailyLog = () => {
     try {
       setSubmitting(true)
       const summaryValues = await summaryForm.validateFields()
-      const currentFormValues = form.getFieldsValue()
 
-      // Aggregate fertilizers
-      const allEntriesForAgg = [
-        ...dailyLogs,
-        {
-          date: currentFormValues.date?.format('YYYY-MM-DD') || '',
-          fertilizers: currentFormValues.fertilizers || [],
-          pesticides: currentFormValues.pesticides || [],
-          images: fileList.map((file) => ({
-            id: file.uid,
-            url: file.url || file.response?.url || '',
-          })),
-        },
-      ]
-
-      const fertilizerMap = {}
-      allEntriesForAgg.forEach((entry) => {
-        ; (entry.fertilizers || []).forEach((f) => {
-          if (!f.name) return
-          if (!fertilizerMap[f.name]) {
-            fertilizerMap[f.name] = {
-              name: f.name,
-              totalQuantity: 0,
-              quantityUnit: f.quantityUnit,
-              totalArea: 0,
-              areaUnit: f.areaUnit,
-              dailyBreakdown: [],
-            }
-          }
-          fertilizerMap[f.name].totalQuantity += f.quantity || 0
-          fertilizerMap[f.name].totalArea += f.area || 0
-          fertilizerMap[f.name].dailyBreakdown.push({
-            date: entry.date,
-            quantity: f.quantity,
-            area: f.area,
-          })
-        })
-      })
-
-      const pesticideMap = {}
-      allEntriesForAgg.forEach((entry) => {
-        ; (entry.pesticides || []).forEach((p) => {
-          if (!p.name) return
-          if (!pesticideMap[p.name]) {
-            pesticideMap[p.name] = {
-              name: p.name,
-              totalQuantity: 0,
-              quantityUnit: p.quantityUnit,
-              totalArea: 0,
-              areaUnit: p.areaUnit,
-              dailyBreakdown: [],
-            }
-          }
-          pesticideMap[p.name].totalQuantity += p.quantity || 0
-          pesticideMap[p.name].totalArea += p.area || 0
-          pesticideMap[p.name].dailyBreakdown.push({
-            date: entry.date,
-            quantity: p.quantity,
-            area: p.area,
-          })
-        })
-      })
-
-      const allImages = []
-      allEntriesForAgg.forEach((e) => {
-        if (e.images) allImages.push(...e.images)
-      })
-
-      const summaryPayload = {
-        totalFertilizers: Object.values(fertilizerMap),
-        totalPesticides: Object.values(pesticideMap),
-        images: allImages,
-        descriptionSummary: summaryValues.descriptionSummary || '',
-        completedAt: dayjs().format('YYYY-MM-DD'),
+      // Prepare final summary payload
+      const payload = {
+        taskId,
+        summary: summaryValues.summary || summaryValues.descriptionSummary,
+        completedDate: dayjs().format('YYYY-MM-DD'),
       }
 
-      await FakeCultivationService.submitSummary(taskId, summaryPayload)
-      message.success('Đã gửi báo cáo hoàn thành lên Farm Supervisor!')
+      // Mark task as completed
+      await CultivationTaskService.update(taskId, {
+        status: 'COMPLETED',
+        progress: 100,
+        summary: payload.summary,
+      })
+
+      message.success('Đã hoàn thành công việc và gửi báo cáo lên Farm Supervisor!')
+      setSubmitModal(false)
       navigate(ROUTER.FL_TASKS)
     } catch (error) {
+      console.error(error)
       if (error.errorFields) {
         message.warning('Vui lòng nhập mô tả tổng kết trước khi gửi.')
       } else {
-        message.error('Gửi báo cáo thất bại.')
+        message.error(error.message || 'Gửi báo cáo thất bại.')
       }
     } finally {
       setSubmitting(false)
@@ -290,30 +240,12 @@ const DailyLog = () => {
         </Button>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex-1">
-            <div className="mb-1 flex flex-wrap items-center gap-2">
-              <Tag color="blue" className="rounded-full">{stage?.stageName || 'Giai đoạn'}</Tag>
-              <Tag color={cfg.color} className="rounded-full">{cfg.label}</Tag>
-            </div>
             <TitleCustom className="!mb-0 text-xl md:text-2xl">{task.name}</TitleCustom>
             {task.description && (
               <div className="mt-2 text-sm text-gray-600">
                 {task.description}
               </div>
             )}
-          </div>
-          <div className="shrink-0 flex gap-4 items-center">
-            {!hideProgress && (
-              <Progress type="circle" percent={task.progress} size={64}
-                strokeColor={task.status === 'COMPLETED' ? '#16a34a' : '#3b82f6'}
-              />
-            )}
-            <Card bordered={false} className="shadow-sm rounded-2xl p-1" bodyStyle={{ padding: 12 }}>
-              <Steps current={task.status === 'COMPLETED' ? 2 : task.status === 'ACTIVE' ? 1 : 0} size="small" direction="horizontal">
-                <Steps.Step title="Kích hoạt" />
-                <Steps.Step title="Ghi nhật ký" />
-                <Steps.Step title="Hoàn thành" />
-              </Steps>
-            </Card>
           </div>
         </div>
       </div>
@@ -355,8 +287,8 @@ const DailyLog = () => {
                         </div>
                         <Row gutter={12}>
                           <Col xs={24} md={8}>
-                            <Form.Item {...field} name={[field.name, 'name']} rules={[{ required: true }]}>
-                              <Select options={MOCK_FERTILIZER_OPTIONS.map((f) => ({ value: f.name, label: f.name }))} placeholder="Loại phân bón" disabled={isViewOnly} />
+                            <Form.Item {...field} name={[field.name, 'name']} rules={[{ required: true, message: 'Chọn loại phân bón' }]}>
+                              <Input placeholder="Tên phân bón" disabled={isViewOnly} />
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={5}>
@@ -408,8 +340,8 @@ const DailyLog = () => {
                         </div>
                         <Row gutter={12}>
                           <Col xs={24} md={8}>
-                            <Form.Item {...field} name={[field.name, 'name']} rules={[{ required: true }]}>
-                              <Select options={MOCK_PESTICIDE_OPTIONS.map((p) => ({ value: p.name, label: p.name }))} placeholder="Loại thuốc" disabled={isViewOnly} />
+                            <Form.Item {...field} name={[field.name, 'name']} rules={[{ required: true, message: 'Chọn loại thuốc' }]}>
+                              <Input placeholder="Tên thuốc bảo vệ thực vật" disabled={isViewOnly} />
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={5}>

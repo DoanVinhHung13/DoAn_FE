@@ -1,6 +1,7 @@
 /**
- * ProductionPlans — Danh sách Kế hoạch sản xuất (Màn 5)
- * Route: /farm-manager/production-plans  (ROUTER.FM_PRODUCTION_PLANS)
+ * ProductionPlans — Danh sách Nhật ký Canh tác (Cultivation Logbooks)
+ * Route: /farm-manager/cultivation-logbooks  (ROUTER.FM_CULTIVATION_LOGBOOKS)
+ * API: GET /api/cultivation-logbooks
  *
  * Architecture mirrors /farm-manager/view-fertilizers:
  *   - TitleCustom header + action button
@@ -33,7 +34,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
-import ProductionPlanService from 'src/services/ProductionPlanService'
+import ProductionPlanService from 'src/services/CultivationLogbookService'
 import { formatDate } from 'src/utils/dateFormatters'
 import { invalidCharsRegex } from 'src/utils/helpers'
 

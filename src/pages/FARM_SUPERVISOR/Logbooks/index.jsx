@@ -31,7 +31,7 @@ import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
-import ProductionPlanService from 'src/services/ProductionPlanService'
+import ProductionPlanService from 'src/services/CultivationLogbookService'
 import ProductionStageService from 'src/services/ProductionStageService'
 import { formatDate } from 'src/utils/dateFormatters'
 import {

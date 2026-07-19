@@ -24,7 +24,7 @@ import { useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import ROUTER from 'src/router/ROUTER'
-import ProductionPlanService from 'src/services/ProductionPlanService'
+import ProductionPlanService from 'src/services/CultivationLogbookService'
 import ProductionStageService from 'src/services/ProductionStageService'
 import { formatDate } from 'src/utils/dateFormatters'
 import {

@@ -35,12 +35,9 @@ import { useNavigate } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
+import CultivationStageService from 'src/services/CultivationStageService'
+import CultivationTaskService from 'src/services/CultivationTaskService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  MOCK_SUPERVISOR_PLAN,
-  MOCK_SUPERVISOR_STAGES,
-  getMockTasksByLeader,
-} from '../Logbooks/mockData'
 
 const { Text } = Typography
 
@@ -48,6 +45,7 @@ const { Text } = Typography
 const taskStatusConfig = {
   PENDING: { color: 'default', label: 'Chờ kích hoạt', icon: <ClockCircleOutlined /> },
   ACTIVE: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
+  IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
   COMPLETED: { color: 'success', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
 }
 
@@ -69,7 +67,11 @@ const TaskRow = ({ task }) => {
       className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 transition hover:border-green-300 hover:bg-green-50/30 hover:shadow-sm"
       onClick={handleClick}
     >
-      <div className={`min-h-8 min-w-8 rounded-full flex items-center justify-center text-xs font-bold ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : task.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+      <div className={`min-h-8 min-w-8 rounded-full flex items-center justify-center text-xs font-bold ${
+        task.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 
+        (task.status === 'ACTIVE' || task.status === 'IN_PROGRESS') ? 'bg-blue-100 text-blue-700' : 
+        'bg-gray-100 text-gray-500'
+      }`}>
         {cfg.icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -80,7 +82,7 @@ const TaskRow = ({ task }) => {
         <Tag color={cfg.color} className="rounded-full m-0">{cfg.label}</Tag>
       </div>
 
-      {task.status === 'ACTIVE' ? (
+      {(task.status === 'ACTIVE' || task.status === 'IN_PROGRESS') ? (
         <Button type="primary" size="small" className="bg-green-600 rounded-lg shrink-0 ml-2">
           Ghi nhật ký
         </Button>
@@ -99,11 +101,8 @@ const TaskRow = ({ task }) => {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 const FarmLeaderFieldLog = () => {
-  // Lấy userInfo để biết đang là leader nào (ở đây mock leader)
-  // const { userInfo } = useSelector((state) => state.auth)
-  const leaderId = 'mock-leader-002' // Fake luôn leaderId theo mock data
+  const navigate = useNavigate()
 
-  const [plan, setPlan] = useState(null)
   const [stages, setStages] = useState([])
   const [tasks, setTasks] = useState({}) // { stageId: [tasks] }
   const [loading, setLoading] = useState(true)
@@ -113,47 +112,81 @@ const FarmLeaderFieldLog = () => {
     const loadData = async () => {
       setLoading(true)
       try {
-        await new Promise((r) => setTimeout(r, 400)) // giả lập API
-        // Fake kế hoạch (Chỉ lấy kế hoạch mà leader này được gán, ở đây mock 1 kế hoạch duy nhất)
-        setPlan(MOCK_SUPERVISOR_PLAN)
+        // Only get tasks assigned to current Farm Leader
+        const tasksRes = await CultivationTaskService.getAll({
+          PageIndex: 1,
+          PageSize: 1000,
+        })
+        
+        // Handle API response structure: { success, data: { items: [] } }
+        const responseData = tasksRes?.data?.data || tasksRes?.data
+        const tasksList = responseData?.items || responseData || []
+        
+        console.log('Tasks loaded:', tasksList) // Debug log
 
-        // Lấy tất cả task của leader này
-        const leaderTasks = getMockTasksByLeader(leaderId)
+        if (!Array.isArray(tasksList) || tasksList.length === 0) {
+          setStages([])
+          setTasks({})
+          return
+        }
 
-        // Lấy ra các stageId có chứa task của leader
-        const activeStageIds = [...new Set(leaderTasks.map(t => t.stageId))]
+        // Get unique stage IDs from tasks
+        const stageIds = [...new Set(tasksList.map(t => t.stageId).filter(Boolean))]
 
-        // Filter stages từ MOCK
-        const relatedStages = MOCK_SUPERVISOR_STAGES.filter(s => activeStageIds.includes(s.id))
-        setStages(relatedStages)
+        if (stageIds.length === 0) {
+          // No stages, but we have tasks - just show them ungrouped
+          setStages([{
+            id: 'ungrouped',
+            stageName: 'Công việc chưa phân giai đoạn',
+            order: 0
+          }])
+          setTasks({ 'ungrouped': tasksList })
+          setExpandedStages(['ungrouped'])
+          return
+        }
+
+        // Load stages (just for display grouping)
+        const stagesPromises = stageIds.map(id => 
+          CultivationStageService.getById(id).catch(() => null)
+        )
+        const stagesResults = await Promise.all(stagesPromises)
+        const stagesData = stagesResults
+          .filter(Boolean)
+          .map(res => res?.data ?? res)
+          .filter(Boolean)
+        
+        setStages(stagesData)
 
         // Group tasks by stage
         const tasksMap = {}
-        relatedStages.forEach(stage => {
-          tasksMap[stage.id] = leaderTasks.filter(t => t.stageId === stage.id)
+        stagesData.forEach(stage => {
+          tasksMap[stage.id] = tasksList.filter(t => t.stageId === stage.id)
         })
         setTasks(tasksMap)
 
-        // Mở sẵn các stage có task ACTIVE
-        const activeStageKeys = relatedStages
-          .filter(s => tasksMap[s.id].some(t => t.status === 'ACTIVE'))
+        // Auto-expand stages with ACTIVE or IN_PROGRESS tasks
+        const activeStageKeys = stagesData
+          .filter(s => tasksMap[s.id]?.some(t => 
+            t.status === 'ACTIVE' || t.status === 'IN_PROGRESS'
+          ))
           .map(s => s.id)
-        setExpandedStages(activeStageKeys.length > 0 ? activeStageKeys : [relatedStages[0]?.id].filter(Boolean))
+        setExpandedStages(activeStageKeys.length > 0 ? activeStageKeys : [stagesData[0]?.id].filter(Boolean))
 
       } catch (error) {
-        message.error('Không thể tải dữ liệu kế hoạch.')
+        console.error('Error loading tasks:', error)
+        message.error('Không thể tải danh sách công việc.')
       } finally {
         setLoading(false)
       }
     }
     loadData()
-  }, [leaderId])
+  }, [])
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-96"><Spin size="large" /></div>
   }
 
-  if (!plan || stages.length === 0) {
+  if (stages.length === 0) {
     return (
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -170,38 +203,10 @@ const FarmLeaderFieldLog = () => {
         <div className="flex items-center gap-3">
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <FormOutlined className="text-green-600" />
-            Ghi chép Thực tế (Kế hoạch)
+            Công việc của tôi
           </TitleCustom>
         </div>
       </div>
-
-      {/* Thông tin kế hoạch */}
-      <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: '20px' }}>
-        <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600">
-            <BookOutlined className="text-2xl" />
-          </div>
-          <div>
-            <div className="text-lg font-bold text-gray-900">{plan.planName}</div>
-            <div className="text-sm text-gray-500">Mã kế hoạch: {plan.planCode || plan.id}</div>
-          </div>
-        </div>
-
-        <Descriptions column={{ xs: 1, sm: 2, md: 4 }} size="small" className="mt-2">
-          <Descriptions.Item label={<><EnvironmentOutlined className="mr-1 text-green-600" />Vùng trồng</>}>
-            <span className="font-semibold text-gray-800">{plan.landPlotName || '—'}</span>
-          </Descriptions.Item>
-          <Descriptions.Item label={<><BookOutlined className="mr-1" />Cây trồng</>}>
-            {plan.cropName || '—'}
-          </Descriptions.Item>
-          <Descriptions.Item label={<><UserOutlined className="mr-1" />Giám sát viên</>}>
-            {plan.supervisorName || '—'}
-          </Descriptions.Item>
-          <Descriptions.Item label={<><CalendarOutlined className="mr-1" />Thời gian</>}>
-            {plan.startDate ? formatDate(plan.startDate) : '—'} - {plan.expectedEndDate ? formatDate(plan.expectedEndDate) : '—'}
-          </Descriptions.Item>
-        </Descriptions>
-      </Card>
 
       {/* Danh sách giai đoạn */}
       <div className="mb-2 text-base font-bold text-gray-800">

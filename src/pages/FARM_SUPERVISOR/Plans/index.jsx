@@ -35,10 +35,9 @@ import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
-import ProductionPlanService from 'src/services/ProductionPlanService'
-import ProductionStageService from 'src/services/ProductionStageService'
+import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import CultivationStageService from 'src/services/CultivationStageService'
 import { formatDate } from 'src/utils/dateFormatters'
-import { MOCK_SUPERVISOR_PLAN, MOCK_SUPERVISOR_STAGES } from '../Logbooks/mockData'
 
 const { Text } = Typography
 
@@ -53,13 +52,6 @@ const supervisorIdOf = (plan) =>
   plan.assignedFarmSupervisorId ||
   plan.assignedFarmSupervisor?.id ||
   plan.farmSupervisor?.id
-
-const mockPlanOf = (user) => ({
-  ...MOCK_SUPERVISOR_PLAN,
-  isMock: true,
-  supervisorName: user?.fullName || user?.name || MOCK_SUPERVISOR_PLAN.supervisorName,
-  stageCount: MOCK_SUPERVISOR_STAGES.length,
-})
 
 const statusOf = (status) => {
   const value = String(status || '').toUpperCase()
@@ -105,15 +97,15 @@ const FarmSupervisorPlans = () => {
       try {
         setLoading(true)
         const [planResponse, stageResponse] = await Promise.all([
-          ProductionPlanService.getAll({ PageIndex: 1, PageSize: 1000 }),
-          ProductionStageService.getAll({ PageIndex: 1, PageSize: 1000 }),
+          CultivationLogbookService.getAll({ PageIndex: 1, PageSize: 1000 }),
+          CultivationStageService.getAll({ PageIndex: 1, PageSize: 1000 }),
         ])
         const planItems = itemsOf(planResponse)
         const allStages = itemsOf(stageResponse)
         const detailed = await Promise.all(
           planItems.map(async (plan) => {
             try {
-              const response = await ProductionPlanService.getById(plan.id)
+              const response = await CultivationLogbookService.getById(plan.id)
               return { ...plan, ...(response?.data ?? response) }
             } catch { return plan }
           })
@@ -129,17 +121,12 @@ const FarmSupervisorPlans = () => {
             ).length,
           }))
 
-        setPlans(
-          assignedPlans.length || !import.meta.env.DEV
-            ? assignedPlans
-            : [mockPlanOf(user)]
-        )
+        setPlans(assignedPlans)
       } catch (error) {
-        if (import.meta.env.DEV && mounted) {
-          setPlans([mockPlanOf(user)])
-          message.info('API chưa có dữ liệu. Đang hiển thị kế hoạch mẫu.')
-        } else {
+        if (mounted) {
+          console.error(error)
           message.error(error.message || 'Không thể tải kế hoạch được giao.')
+          setPlans([])
         }
       } finally {
         if (mounted) setLoading(false)
@@ -147,13 +134,10 @@ const FarmSupervisorPlans = () => {
     }
 
     if (currentUserId) load()
-    else if (import.meta.env.DEV) {
-      setPlans([mockPlanOf(user)])
-      setLoading(false)
-    } else setLoading(false)
+    else setLoading(false)
 
     return () => { mounted = false }
-  }, [currentUserId, reloadKey, user?.fullName, user?.name])
+  }, [currentUserId, reloadKey])
 
   const visiblePlans = useMemo(() => {
     const keyword = search.trim().toLowerCase()
@@ -193,7 +177,6 @@ const FarmSupervisorPlans = () => {
       render: (value, plan) => (
         <div>
           <div className="font-semibold text-gray-900">{value || 'Kế hoạch chưa đặt tên'}</div>
-          {plan.isMock && <Tag color="blue" className="mt-1 rounded-full">Dữ liệu mẫu</Tag>}
         </div>
       ),
     },
@@ -233,7 +216,7 @@ const FarmSupervisorPlans = () => {
       title: 'Hành động', key: 'action', align: 'center', width: 85,
       render: (_, plan) => (
         <Button type="text" size="small" icon={<EyeOutlined />}
-          onClick={(e) => { e.stopPropagation(); openDetail(plan.id || plan.isMock && 'mock-logbook-001') }}
+          onClick={(e) => { e.stopPropagation(); openDetail(plan.id) }}
           className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50" title="Xem chi tiết"
         />
       ),
@@ -280,7 +263,6 @@ const FarmSupervisorPlans = () => {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <Text type="secondary" className="text-xs">Tìm thấy <strong>{visiblePlans.length}</strong> kế hoạch</Text>
             <div className="inline-flex overflow-hidden border border-gray-200 shadow-sm rounded-lg">
               {[{ mode: 'table', icon: <UnorderedListOutlined />, label: 'Bảng' }, { mode: 'card', icon: <AppstoreOutlined />, label: 'Thẻ' }].map(({ mode, icon, label }) => (
                 <Button key={mode} type={viewMode === mode ? 'primary' : 'text'} icon={icon}
@@ -296,11 +278,11 @@ const FarmSupervisorPlans = () => {
           <div className="p-5"><Skeleton active paragraph={{ rows: 8 }} /></div>
         ) : viewMode === 'table' ? (
           <CustomTable
-            rowKey={(r) => r.id || 'mock'}
+            rowKey={(r) => r.id}
             columns={columns}
             dataSource={visiblePlans}
             scroll={{ x: 1000 }}
-            onRow={(plan) => ({ onClick: () => openDetail(plan.id || (plan.isMock && 'mock-logbook-001')), className: 'cursor-pointer' })}
+            onRow={(plan) => ({ onClick: () => openDetail(plan.id), className: 'cursor-pointer' })}
             rowClassName="hover:bg-green-50/30 transition-colors"
             locale={{ emptyText: 'Không có kế hoạch phù hợp.' }}
             pagination={{ current: page, pageSize, total: visiblePlans.length, showSizeChanger: true, pageSizeOptions: PAGE_SIZE, onChange: (p, ps) => { setPage(p); setPageSize(ps) } }}
@@ -311,12 +293,11 @@ const FarmSupervisorPlans = () => {
               {pagedCards.map((plan) => {
                 const status = statusOf(plan.status)
                 const lbStatus = logbookStatusTag(plan.logbookStatus)
-                const planId = plan.id || (plan.isMock && 'mock-logbook-001')
                 return (
-                  <Card key={planId} bordered={false}
+                  <Card key={plan.id} bordered={false}
                     className="overflow-hidden transition border border-gray-100 shadow-sm rounded-2xl hover:border-green-300 hover:shadow-md cursor-pointer"
                     bodyStyle={{ padding: 0 }}
-                    onClick={() => openDetail(planId)}
+                    onClick={() => openDetail(plan.id)}
                   >
                     <div className="p-5 border-b border-green-100 bg-gradient-to-r from-green-50 to-white">
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -324,7 +305,6 @@ const FarmSupervisorPlans = () => {
                           <Tag color={status.color} className="rounded-full">{status.label}</Tag>
                           <Tag color={lbStatus.color} className="rounded-full">{lbStatus.label}</Tag>
                         </div>
-                        {plan.isMock && <Tag color="blue" className="rounded-full">Dữ liệu mẫu</Tag>}
                       </div>
                       <h2 className="mt-3 mb-1 text-lg font-bold text-gray-900">{plan.planName || 'Kế hoạch chưa đặt tên'}</h2>
                       <Text type="secondary">{plan.cropName || 'Chưa có cây trồng'}</Text>
@@ -348,7 +328,7 @@ const FarmSupervisorPlans = () => {
                           <div className="mt-1 font-semibold">{plan.stageCount || 0} giai đoạn canh tác</div>
                         </div>
                       </div>
-                      <Button type="primary" icon={<EyeOutlined />} onClick={() => openDetail(planId)} className="w-full h-10 mt-5 font-semibold bg-green-600 rounded-lg">
+                      <Button type="primary" icon={<EyeOutlined />} onClick={() => openDetail(plan.id)} className="w-full h-10 mt-5 font-semibold bg-green-600 rounded-lg">
                         Xem kế hoạch & Công việc
                       </Button>
                     </div>

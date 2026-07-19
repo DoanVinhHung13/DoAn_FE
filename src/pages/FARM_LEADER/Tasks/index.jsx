@@ -28,13 +28,8 @@ import { useNavigate } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
+import CultivationTaskService from 'src/services/CultivationTaskService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  FakeCultivationService,
-  getMockTasksByLeader,
-  MOCK_CULTIVATION_TASKS,
-  MOCK_SUPERVISOR_PLAN,
-} from 'src/pages/FARM_SUPERVISOR/Logbooks/mockData'
 
 const { Text } = Typography
 
@@ -61,28 +56,30 @@ const FarmLeaderTasks = () => {
     const load = async () => {
       try {
         setLoading(true)
-        // Trong môi trường dev, dùng mock data
-        if (import.meta.env.DEV) {
-          const mockTasks = getMockTasksByLeader(currentUserId || 'mock-leader-001')
-          if (mounted) setTasks(mockTasks)
-        } else {
-          const response = await FakeCultivationService.getTasksByLeader(currentUserId)
-          if (mounted) setTasks(response?.data?.data || [])
-        }
+        // Lấy danh sách tasks được giao cho Farm Leader
+        const response = await CultivationTaskService.getAll({
+          farmLeaderId: currentUserId,
+          PageIndex: 1,
+          PageSize: 1000,
+        })
+        const data = response?.data?.data || response?.data || []
+        const tasksList = Array.isArray(data) ? data : data?.items || []
+        
+        if (mounted) setTasks(tasksList)
       } catch (error) {
-        if (import.meta.env.DEV && mounted) {
-          const mockTasks = getMockTasksByLeader('mock-leader-001')
-          setTasks(mockTasks)
-          message.info('API chưa có dữ liệu. Đang hiển thị công việc mẫu.')
-        } else {
+        console.error(error)
+        if (mounted) {
           message.error(error.message || 'Không thể tải công việc.')
+          setTasks([])
         }
       } finally {
         if (mounted) setLoading(false)
       }
     }
 
-    load()
+    if (currentUserId) load()
+    else setLoading(false)
+    
     return () => { mounted = false }
   }, [currentUserId, reloadKey])
 

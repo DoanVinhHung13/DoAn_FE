@@ -21,7 +21,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import ProductionPlanService from 'src/services/ProductionPlanService'
+import ProductionPlanService from 'src/services/CultivationLogbookService'
 import CultivationTaskService from 'src/services/CultivationTaskService'
 import { formatDate, formatDateTime } from 'src/utils/dateFormatters'
 

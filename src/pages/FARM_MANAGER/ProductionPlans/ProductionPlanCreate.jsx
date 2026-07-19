@@ -1,9 +1,10 @@
 /**
- * ProductionPlanCreate — Tạo Kế hoạch Sản xuất (Màn 7)
- * Route: /farm-manager/production-plans/create  (ROUTER.FM_PRODUCTION_PLAN_CREATE)
+ * ProductionPlanCreate — Tạo Nhật ký Canh tác
+ * Route: /farm-manager/cultivation-logbooks/create  (ROUTER.FM_CULTIVATION_LOGBOOK_CREATE)
+ * API: POST /api/cultivation-logbooks (CultivationLogbooks)
  *
  * Theo implementation_plan.md:
- * - Farm Manager chỉ tạo kế hoạch tổng thể (tên, mô tả, vùng trồng, giai đoạn)
+ * - Farm Manager chỉ tạo nhật ký tổng thể (tên, mô tả, vùng trồng, giai đoạn)
  * - Không tạo Work Tasks (Work Tasks do Farm Supervisor tạo sau)
  */
 import {
@@ -34,9 +35,10 @@ import dayjs from 'dayjs'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import ProductionPlanService from 'src/services/ProductionPlanService'
+import ProductionPlanService from 'src/services/CultivationLogbookService'
 import PlanTemplateService from 'src/services/PlanTemplateService'
 import CropService from 'src/services/CropService'
+import CropManagementService from 'src/services/CropManagementService'
 import LandPlotService from 'src/services/LandPlotService'
 import UserService from 'src/services/UserService'
 import { ROLES } from 'src/constants/roles'
@@ -151,12 +153,13 @@ const ProductionPlanCreate = () => {
     return () => { isMounted = false }
   }, [])
 
+  // Fetch crop catalogs (danh mục cây trồng) - same as /farm-manager/tasks/create
   React.useEffect(() => {
     let isMounted = true
     const fetchCatalogs = async () => {
       setIsCatalogsLoading(true)
       try {
-        const response = await CropService.getCropCatalogs({
+        const response = await CropService.getCrops({
           PageIndex: 1,
           PageSize: 1000,
           Status: true,
@@ -175,21 +178,30 @@ const ProductionPlanCreate = () => {
     return () => { isMounted = false }
   }, [])
 
+  // Fetch crops (cây trồng) - same as /farm-manager/tasks/create
   React.useEffect(() => {
-    if (!selectedCatalogId) return
+    if (!selectedCatalogId) {
+      setCropsData([])
+      return
+    }
 
     let isMounted = true
     const fetchCrops = async () => {
       setIsCropsLoading(true)
       try {
-        const response = await CropService.getCrops({
+        const response = await CropManagementService.getCrops({
           PageIndex: 1,
           PageSize: 1000,
-          CropCatalogId: selectedCatalogId,
           Status: true,
         })
         if (!isMounted) return
-        setCropsData(normalizeResponse(response))
+        const allCrops = normalizeResponse(response)
+        // Filter by selected catalog
+        const filteredCrops = allCrops.filter((crop) => {
+          const cropCatalogId = crop.cropCatalogId || crop.categoryId
+          return cropCatalogId === selectedCatalogId
+        })
+        setCropsData(filteredCrops)
       } catch (error) {
         console.error(error)
         if (isMounted) setCropsData([])
@@ -202,18 +214,26 @@ const ProductionPlanCreate = () => {
     return () => { isMounted = false }
   }, [selectedCatalogId])
 
+  // Fetch land plots with active status only (vùng trồng hoạt động)
   React.useEffect(() => {
     let isMounted = true
     const fetchLands = async () => {
       setIsLandsLoading(true)
       try {
-        const response = await LandPlotService.getAll({
+        const response = await LandPlotService.getLandPlots({
           PageIndex: 1,
           PageSize: 1000,
           Status: true,
         })
         if (!isMounted) return
-        setLandsData(normalizeResponse(response))
+        const lands = normalizeResponse(response)
+        // Filter only active land plots
+        const activeLands = lands.filter((land) => {
+          if (typeof land.isActive === 'boolean') return land.isActive
+          const status = String(land.status || '').toLowerCase()
+          return !['inactive', 'disabled', 'deleted'].includes(status)
+        })
+        setLandsData(activeLands)
       } catch (error) {
         console.error(error)
         if (isMounted) setLandsData([])
@@ -353,34 +373,28 @@ const ProductionPlanCreate = () => {
     }
   }
 
-  const applyTemplate = (template) => {
-    Modal.confirm({
-      title: 'Áp dụng mẫu kế hoạch',
-      content: `Bạn có chắc chắn muốn áp dụng mẫu "${template.templateName}" cho kế hoạch này? Các giai đoạn hiện tại sẽ bị thay thế.`,
-      onOk: async () => {
-        try {
-          const response = await PlanTemplateService.getById(template.id)
-          const templateData = response?.data ?? response
-          const steps = templateData.processSteps || []
+  const applyTemplate = async (template) => {
+    try {
+      const response = await PlanTemplateService.getById(template.id)
+      const templateData = response?.data ?? response
+      const steps = templateData.processSteps || []
 
-          const normalizedStages = steps.map((step, index) => ({
-            _key: `stage-${step.id || Date.now()}-${index}`,
-            order: index + 1,
-            title: step.stepName || step.title || '',
-            description: step.description || step.note || '',
-            startDate: null,
-            endDate: null,
-          }))
+      const normalizedStages = steps.map((step, index) => ({
+        _key: `stage-${step.id || Date.now()}-${index}`,
+        order: index + 1,
+        title: step.stepName || step.title || '',
+        description: step.description || step.note || '',
+        startDate: null,
+        endDate: null,
+      }))
 
-          setStages(normalizedStages.length ? normalizedStages : [createEmptyStage(1)])
-          setTemplateModal(false)
-          message.success('Đã áp dụng mẫu kế hoạch thành công.')
-        } catch (error) {
-          console.error(error)
-          message.error('Không thể áp dụng mẫu kế hoạch.')
-        }
-      },
-    })
+      setStages(normalizedStages.length ? normalizedStages : [createEmptyStage(1)])
+      setTemplateModal(false)
+      message.success(`Đã áp dụng mẫu "${template.templateName || template.name}" thành công.`)
+    } catch (error) {
+      console.error(error)
+      message.error('Không thể áp dụng mẫu kế hoạch.')
+    }
   }
 
   // ── Stage handlers ───────────────────────────────────────────────
@@ -426,17 +440,16 @@ const ProductionPlanCreate = () => {
       setSubmitting(true)
       const payload = {
         planName: values.planName,
-        cropCatalogId: values.category,
         cropId: values.cropId,
         landPlotId: values.landPlotId,
-        area: values.area,
         startDate: formatApiDate(values.expectedStartDate),
         expectedEndDate: formatApiDate(values.expectedEndDate),
         assignedFarmSupervisorId: values.assignedFarmSupervisorId,
         description: values.description,
-        cultivationStages: stages.map((stage) => ({
+        cultivationStages: stages.map((stage, index) => ({
           stageName: stage.title,
           description: stage.description,
+          order: index + 1,
           startDate: formatApiDate(stage.startDate),
           endDate: formatApiDate(stage.endDate),
         })),
@@ -451,14 +464,14 @@ const ProductionPlanCreate = () => {
 
       const createdPlanId = getCreatedPlanId(response)
       if (createdPlanId) {
-        message.success(isEdit ? 'Cập nhật kế hoạch thành công!' : 'Tạo kế hoạch thành công!')
+        message.success(isEdit ? 'Cập nhật nhật ký canh tác thành công!' : 'Tạo nhật ký canh tác thành công!')
         navigate(ROUTER.FM_PRODUCTION_PLAN_DETAIL.replace(':id', createdPlanId))
       } else {
-        message.error('Không thể lấy ID kế hoạch mới.')
+        message.error('Không thể lấy ID nhật ký canh tác.')
       }
     } catch (error) {
       console.error(error)
-      message.error(error.message || 'Lưu kế hoạch thất bại.')
+      message.error(error.message || 'Lưu nhật ký canh tác thất bại.')
     } finally {
       setSubmitting(false)
     }
@@ -507,7 +520,7 @@ const ProductionPlanCreate = () => {
             Quay lại danh sách
           </Button>
           <TitleCustom className="!mb-1">
-            {isEdit ? 'Chỉnh sửa kế hoạch sản xuất' : 'Tạo kế hoạch sản xuất'}
+            {isEdit ? 'Chỉnh sửa nhật ký canh tác' : 'Tạo nhật ký canh tác'}
           </TitleCustom>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -526,7 +539,7 @@ const ProductionPlanCreate = () => {
             loading={submitting}
             className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
           >
-            {isEdit ? 'Cập nhật kế hoạch' : 'Lưu kế hoạch'}
+            {isEdit ? 'Cập nhật nhật ký' : 'Lưu nhật ký'}
           </Button>
         </div>
       </div>
@@ -538,8 +551,8 @@ const ProductionPlanCreate = () => {
           <Row gutter={24}>
             <Col xs={24} md={12} lg={8}>
               <Form.Item
-                name="planName" label="Tên kế hoạch"
-                rules={[{ required: true, message: 'Vui lòng nhập tên kế hoạch' }]}
+                name="planName" label="Tên nhật ký"
+                rules={[{ required: true, message: 'Vui lòng nhập tên nhật ký' }]}
               >
                 <Input placeholder="VD: Vụ Đông Xuân 2026 - Lúa ST25" />
               </Form.Item>
@@ -550,7 +563,10 @@ const ProductionPlanCreate = () => {
                 rules={[{ required: true, message: 'Vui lòng chọn danh mục cây trồng' }]}
               >
                 <Select
-                  options={catalogsData?.map((cat) => ({ value: cat.id, label: cat.catalogName }))}
+                  options={catalogsData?.map((cat) => ({
+                    value: cat.id || cat._id || cat.cropCatalogId,
+                    label: cat.name || cat.catalogName
+                  }))}
                   placeholder="Chọn danh mục..."
                   showSearch
                   filterOption={(input, option) =>
@@ -558,6 +574,10 @@ const ProductionPlanCreate = () => {
                   }
                   loading={isCatalogsLoading}
                   disabled={!!immutablePlanFields?.category}
+                  onChange={() => {
+                    form.setFieldsValue({ cropId: undefined })
+                    setCropsData([])
+                  }}
                 />
               </Form.Item>
             </Col>
@@ -567,7 +587,10 @@ const ProductionPlanCreate = () => {
                 rules={[{ required: true, message: 'Vui lòng chọn cây trồng' }]}
               >
                 <Select
-                  options={cropsData?.map((crop) => ({ value: crop.id, label: crop.cropName }))}
+                  options={cropsData?.map((crop) => ({
+                    value: crop.id || crop._id || crop.cropId,
+                    label: crop.name || crop.cropName
+                  }))}
                   placeholder="Chọn cây trồng..."
                   showSearch
                   filterOption={(input, option) =>
@@ -584,8 +607,11 @@ const ProductionPlanCreate = () => {
                 rules={[{ required: true, message: 'Vui lòng chọn vùng trồng' }]}
               >
                 <Select
-                  options={landsData?.map((land) => ({ value: land.id, label: land.landPlotName }))}
-                  placeholder="Chọn vùng trồng..."
+                  options={landsData?.map((land) => ({
+                    value: land.id || land._id || land.landPlotId,
+                    label: land.landPlotName || land.name
+                  }))}
+                  placeholder="Chọn vùng trồng hoạt động..."
                   showSearch
                   filterOption={(input, option) =>
                     String(option?.label || '').toLowerCase().includes(input.toLowerCase())
@@ -612,8 +638,8 @@ const ProductionPlanCreate = () => {
               </Form.Item>
             </Col>
             <Col xs={24}>
-              <Form.Item name="description" label="Mô tả kế hoạch">
-                <Input.TextArea rows={3} placeholder="Mô tả tổng quan về kế hoạch, mục tiêu, yêu cầu kỹ thuật..." />
+              <Form.Item name="description" label="Mô tả nhật ký">
+                <Input.TextArea rows={3} placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..." />
               </Form.Item>
             </Col>
           </Row>
@@ -683,7 +709,7 @@ const ProductionPlanCreate = () => {
             loading={submitting}
             className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
           >
-            {isEdit ? 'Cập nhật kế hoạch' : 'Lưu kế hoạch'}
+            {isEdit ? 'Cập nhật nhật ký' : 'Lưu nhật ký'}
           </Button>
         </div>
       </Form>
@@ -692,64 +718,89 @@ const ProductionPlanCreate = () => {
       <Modal
         open={templateModal}
         onCancel={() => setTemplateModal(false)}
-        title="Áp dụng mẫu kế hoạch"
+        title={
+          <div className="flex items-center gap-2 text-lg font-bold text-gray-800">
+            <BookOutlined className="text-green-600" />
+            <span>Chọn mẫu nhật ký canh tác</span>
+          </div>
+        }
         footer={null}
-        width={800}
-        className="rounded-2xl"
+        width={900}
+        centered
+        className="template-modal"
+        styles={{
+          body: { padding: '24px' },
+        }}
       >
-        <div className="space-y-4">
+        <div className="space-y-5">
           <Input.Search
             placeholder="Tìm kiếm mẫu kế hoạch..."
             value={templateSearch}
             onChange={(e) => setTemplateSearch(e.target.value)}
             onSearch={(value) => loadTemplates(value)}
+            size="large"
             className="rounded-xl"
           />
           {templatesLoading ? (
-            <div className="py-8 text-center"><Spin tip="Đang tải mẫu kế hoạch..." /></div>
+            <div className="flex items-center justify-center py-12">
+              <Spin size="large" tip="Đang tải mẫu kế hoạch..." />
+            </div>
           ) : templates.length ? (
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
               {templates.map((template) => (
                 <Card
                   key={template.id}
+                  hoverable
                   bordered={false}
-                  className="overflow-hidden transition border border-gray-100 shadow-sm rounded-2xl hover:border-green-300 hover:shadow-md cursor-pointer"
+                  className="overflow-hidden transition-all duration-200 border border-gray-200 shadow-sm rounded-xl hover:border-green-400 hover:shadow-md"
                   onClick={() => applyTemplate(template)}
+                  bodyStyle={{ padding: '20px' }}
                 >
-                  <div className="p-4 border-b border-green-100 bg-gradient-to-r from-green-50 to-white">
-                    <h3 className="mb-1 text-base font-bold text-gray-900">{template.templateName}</h3>
-                    <Text type="secondary" className="text-sm line-clamp-2">{template.description}</Text>
-                  </div>
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <BookOutlined className="text-green-600" />
-                      <span className="text-sm font-semibold">
-                        {template.processSteps?.length || 0} giai đoạn
-                      </span>
+                  <div className="flex items-center justify-between gap-6">
+                    {/* Left: Template Info */}
+                    <div className="flex items-start flex-1 min-w-0 gap-4">
+                      <div className="flex items-center justify-center flex-shrink-0 w-12 h-12 rounded-lg bg-green-50">
+                        <BookOutlined className="text-xl text-green-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="mb-1 text-base font-bold text-gray-900 line-clamp-1">
+                          {template.templateName || template.name}
+                        </h3>
+                        <Text type="secondary" className="block text-sm leading-relaxed line-clamp-2">
+                          {template.description || 'Chưa có mô tả'}
+                        </Text>
+                      </div>
                     </div>
-                    <Button type="primary" className="w-full h-9 font-semibold bg-green-600 rounded-lg">
-                      Áp dụng mẫu này
-                    </Button>
+
+                    {/* Right: Stage Count & Action */}
+                    <div className="flex items-center flex-shrink-0 gap-4">
+                      <div className="px-3 py-1.5 rounded-lg bg-green-50">
+                        <span className="text-sm font-semibold text-green-700">
+                          {template.processStepsCount} giai đoạn
+                        </span>
+                      </div>
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        className="h-9 px-5 font-semibold text-white bg-green-600 border-0 rounded-lg hover:bg-green-700"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          applyTemplate(template)
+                        }}
+                      >
+                        Áp dụng
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
             </div>
           ) : (
-            <Empty description="Không tìm thấy mẫu kế hoạch phù hợp." />
+            <Empty
+              description="Không tìm thấy mẫu kế hoạch phù hợp."
+              className="py-12"
+            />
           )}
-          <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">
-            <Button onClick={() => setTemplateModal(false)} className="rounded-xl">
-              Hủy
-            </Button>
-            <Button
-              type="primary" icon={<PlusOutlined />}
-              onClick={handleSaveAsTemplate}
-              loading={savingTemplate}
-              className="bg-green-600 rounded-xl"
-            >
-              Lưu kế hoạch hiện tại thành mẫu
-            </Button>
-          </div>
         </div>
       </Modal>
     </div>
