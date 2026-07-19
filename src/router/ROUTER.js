@@ -1,5 +1,6 @@
 // src/router/ROUTER.js
-// 4 Role: FARM_MANAGER, LAND_MANAGER, MATERIAL_MANAGER, FARMER
+// Main roles: FARM_MANAGER, FARM_SUPERVISOR, FARMER
+// Legacy routes (LAND_MANAGER) now accessed by FARM_SUPERVISOR
 // URL structure mới theo Role prefix
 
 const ROUTER = {
@@ -85,19 +86,19 @@ const ROUTER = {
   FL_TASKS:              '/farm-leader/tasks',
   FL_TASK_LOG:           '/farm-leader/tasks/:taskId/log',
 
-  // ── Land Manager Routes ────────────────────────────────────────────────────
-  LM_DASHBOARD:          '/land-manager/dashboard',
-  LM_FARMERS:            '/land-manager/farmers',
-  LM_LANDS:              '/land-manager/lands',
-  LM_LAND_DETAIL:        '/land-manager/lands/:id',
-  LM_PRODUCTION_PLANS:   '/land-manager/production-plans',
-  LM_TASKS:              '/land-manager/tasks',
-  LM_LOGBOOKS:           '/land-manager/logbooks',
-  LM_BATCHES:            '/land-manager/batches',
-  LM_FIELD_LOG:          '/land-manager/field-log',
-  LM_NOTIFICATIONS:      '/land-manager/notifications',
-  LM_NOTIFICATION_DETAIL: '/land-manager/notifications/:id',
-  LM_VIEW_CATALOGS:      '/land-manager/view-catalogs',
+  // ── Land Manager Routes (Refactored to FS / FL) ────────────────────────────
+  LM_DASHBOARD:          '/farm-supervisor/dashboard',
+  LM_FARMERS:            '/farm-supervisor/farmers',
+  LM_LANDS:              '/farm-supervisor/lands',
+  LM_LAND_DETAIL:        '/farm-supervisor/lands/:id',
+  LM_PRODUCTION_PLANS:   '/farm-supervisor/production-plans',
+  LM_TASKS:              '/farm-supervisor/tasks',
+  LM_LOGBOOKS:           '/farm-supervisor/logbooks',
+  LM_BATCHES:            '/farm-supervisor/batches',
+  LM_FIELD_LOG:          '/farm-leader/field-log',
+  LM_NOTIFICATIONS:      '/farm-supervisor/notifications',
+  LM_NOTIFICATION_DETAIL: '/farm-supervisor/notifications/:id',
+  LM_VIEW_CATALOGS:      '/farm-supervisor/view-catalogs',
 
   // ── Material Manager Routes ────────────────────────────────────────────────
   MM_DASHBOARD:          '/material-manager/dashboard',
@@ -120,12 +121,11 @@ const ROUTER = {
   FARMER_PLANS:          '/farmer/production-plans',
   FARMER_SUPPLIES:       '/farmer/supplies',
 
-  // ── Land Manager additional ───────────────────────────────────────────────
-  LM_CROP_CATALOGS:     '/land-manager/crop-catalogs',
-  LM_CROP_CATALOG_DETAIL: '/land-manager/crop-catalogs/:id',
-  LM_CROPS:              '/land-manager/crops',
-
-  LM_CROP_DETAIL:        '/land-manager/crops/:id',
+  // ── Land Manager additional (Refactored to FS) ────────────────────────────
+  LM_CROP_CATALOGS:     '/farm-supervisor/crop-catalogs',
+  LM_CROP_CATALOG_DETAIL: '/farm-supervisor/crop-catalogs/:id',
+  LM_CROPS:              '/farm-supervisor/crops',
+  LM_CROP_DETAIL:        '/farm-supervisor/crops/:id',
 
   // ── Material Manager additional ──────────────────────────────────────────
 

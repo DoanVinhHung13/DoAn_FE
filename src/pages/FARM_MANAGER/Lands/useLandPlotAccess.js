@@ -29,12 +29,12 @@ export const useLandPlotAccess = () => {
 
   return useMemo(() => {
     const isFarmManager = role === ROLES.FARM_MANAGER
-    const isLandManager = role === ROLES.LAND_MANAGER
+    const isFarmSupervisor = role === ROLES.FARM_SUPERVISOR
 
     return {
       role,
       isFarmManager,
-      isLandManager,
+      isFarmSupervisor,
       canManage: isFarmManager,
       routes: getLandPlotRoutes(role),
     }

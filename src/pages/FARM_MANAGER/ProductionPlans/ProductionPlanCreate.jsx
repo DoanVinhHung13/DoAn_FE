@@ -25,6 +25,8 @@ import {
   Select,
   Spin,
   Typography,
+  InputNumber,
+  Empty
 } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -507,9 +509,6 @@ const ProductionPlanCreate = () => {
           <TitleCustom className="!mb-1">
             {isEdit ? 'Chỉnh sửa kế hoạch sản xuất' : 'Tạo kế hoạch sản xuất'}
           </TitleCustom>
-          <Text type="secondary">
-            {isEdit ? 'Chỉnh sửa thông tin kế hoạch và giai đoạn canh tác' : 'Tạo kế hoạch tổng thể cho vụ mùa'}
-          </Text>
         </div>
         <div className="flex flex-wrap gap-2">
           {!isEdit && (
@@ -597,11 +596,6 @@ const ProductionPlanCreate = () => {
               </Form.Item>
             </Col>
             <Col xs={24} md={12} lg={8}>
-              <Form.Item name="area" label="Diện tích (ha)" rules={[{ required: true, message: 'Vui lòng nhập diện tích' }]}>
-                <InputNumber min={0} step={0.1} className="w-full" placeholder="VD: 20.5" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={12} lg={8}>
               <Form.Item
                 name="assignedFarmSupervisorId" label="Giám sát viên phụ trách"
                 rules={[{ required: true, message: 'Vui lòng chọn giám sát viên' }]}
@@ -615,25 +609,6 @@ const ProductionPlanCreate = () => {
                   }
                   loading={isSupervisorsLoading}
                 />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={12}>
-              <Form.Item label="Thời gian dự kiến">
-                <Input.Group compact>
-                  <Form.Item name="expectedStartDate" noStyle rules={[{ required: true, message: 'Chọn ngày bắt đầu' }]}>
-                    <DatePicker className="w-full" placeholder="Bắt đầu" disabledDate={(current) => current && current < dayjs().startOf('day')} />
-                  </Form.Item>
-                  <span className="mx-2 text-gray-400">—</span>
-                  <Form.Item name="expectedEndDate" noStyle rules={[{ required: true, message: 'Chọn ngày kết thúc' }]}>
-                    <DatePicker
-                      className="w-full"
-                      placeholder="Kết thúc"
-                      disabledDate={(current) =>
-                        current && (selectedPlanStartDate ? current < selectedPlanStartDate : current < dayjs().startOf('day'))
-                      }
-                    />
-                  </Form.Item>
-                </Input.Group>
               </Form.Item>
             </Col>
             <Col xs={24}>
@@ -668,7 +643,7 @@ const ProductionPlanCreate = () => {
                 )}
               </div>
               <Row gutter={12}>
-                <Col xs={24} md={12}>
+                <Col xs={24} md={24}>
                   <Form.Item label="Tên giai đoạn" required>
                     <Input
                       value={stage.title}
@@ -677,7 +652,7 @@ const ProductionPlanCreate = () => {
                     />
                   </Form.Item>
                 </Col>
-                <Col xs={24} md={12}>
+                <Col xs={24} md={24}>
                   <Form.Item label="Mô tả công việc cần làm">
                     <Input.TextArea
                       value={stage.description}
@@ -685,31 +660,6 @@ const ProductionPlanCreate = () => {
                       rows={2}
                       placeholder="Mô tả chi tiết công việc cần thực hiện trong giai đoạn này..."
                     />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={12}>
-                  <Form.Item label="Thời gian dự kiến">
-                    <Input.Group compact>
-                      <DatePicker
-                        className="w-full"
-                        placeholder="Bắt đầu"
-                        value={stage.startDate}
-                        onChange={(date) => updateStage(index, 'startDate', date)}
-                        disabledDate={(current) =>
-                          current && (selectedPlanStartDate ? current < selectedPlanStartDate : current < dayjs().startOf('day'))
-                        }
-                      />
-                      <span className="mx-2 text-gray-400">—</span>
-                      <DatePicker
-                        className="w-full"
-                        placeholder="Kết thúc"
-                        value={stage.endDate}
-                        onChange={(date) => updateStage(index, 'endDate', date)}
-                        disabledDate={(current) =>
-                          current && (stage.startDate ? current < stage.startDate : current < dayjs().startOf('day'))
-                        }
-                      />
-                    </Input.Group>
                   </Form.Item>
                 </Col>
               </Row>

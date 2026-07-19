@@ -247,7 +247,6 @@ const FarmSupervisorPlans = () => {
           <FileTextOutlined className="text-green-600" />
           Kế hoạch canh tác được giao
         </TitleCustom>
-        <Text type="secondary">Chọn một kế hoạch để xem giai đoạn và quản lý công việc chi tiết.</Text>
       </div>
 
       <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: 0 }}>

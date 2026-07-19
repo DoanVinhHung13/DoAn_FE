@@ -2,29 +2,33 @@
  * Farm Supervisor: Chi tiết Kế hoạch - Quản lý Giai đoạn & Công việc
  * Route: /farm-supervisor/plans/:planId  (ROUTER.FS_PLAN_DETAIL)
  *
- * Luồng: Xem giai đoạn → Thêm Work Task vào từng giai đoạn → Xem Task Detail
+ * Luồng:
+ * - Xem danh sách giai đoạn
+ * - Thêm Work Task cho giai đoạn chưa hoàn thành
+ * - Xem chi tiết Work Task
+ * - Gửi Logbook lên Manager khi tất cả giai đoạn hoàn thành
  */
 import {
   ArrowLeftOutlined,
   BookOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
-  DownOutlined,
   EnvironmentOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
   FileTextOutlined,
+  InfoCircleOutlined,
   PlusOutlined,
   SendOutlined,
   TeamOutlined,
   UserOutlined,
+  ClockCircleOutlined
 } from '@ant-design/icons'
 import {
+  Alert,
   Badge,
   Button,
   Card,
-  Col,
   Collapse,
   Descriptions,
   Empty,
@@ -34,7 +38,6 @@ import {
   Modal,
   Progress,
   Row,
-  Space,
   Spin,
   Tag,
   Timeline,
@@ -67,14 +70,15 @@ const { Text, Title, Paragraph } = Typography
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const stageStatusConfig = {
-  PENDING:     { color: 'default',    bg: 'bg-gray-50',    text: 'text-gray-600',  label: 'Chờ thực hiện', dot: '🔵' },
-  IN_PROGRESS: { color: 'processing', bg: 'bg-blue-50',    text: 'text-blue-700',  label: 'Đang thực hiện', dot: '🟡' },
-  COMPLETED:   { color: 'success',    bg: 'bg-green-50',   text: 'text-green-700', label: 'Hoàn thành', dot: '🟢' },
+  PENDING: { color: 'default', bg: 'bg-gray-50', text: 'text-gray-600', label: 'Chưa bắt đầu', dot: '🔵' },
+  IN_PROGRESS: { color: 'processing', bg: 'bg-blue-50', text: 'text-blue-700', label: 'Đang thực hiện', dot: '🟡' },
+  COMPLETED: { color: 'success', bg: 'bg-green-50', text: 'text-green-700', label: 'Hoàn thành', dot: '🟢' },
 }
+
 const taskStatusConfig = {
-  PENDING:   { color: 'default',    label: 'Chờ kích hoạt',  icon: <ClockCircleOutlined /> },
-  ACTIVE:    { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
-  COMPLETED: { color: 'success',    label: 'Hoàn thành',     icon: <CheckCircleOutlined /> },
+  PENDING: { color: 'default', label: 'Chờ kích hoạt', icon: <ClockCircleOutlined /> },
+  ACTIVE: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
+  COMPLETED: { color: 'success', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
 }
 
 const mergeItems = (apiItems, mockItems) => {
@@ -120,10 +124,6 @@ const TaskRow = ({ task, planId, stageId }) => {
       </div>
       <div className="flex flex-col items-end gap-1 shrink-0">
         <Tag color={cfg.color} className="rounded-full m-0">{cfg.label}</Tag>
-        <Progress percent={task.progress} size="small" className="!w-28" showInfo={false}
-          strokeColor={task.status === 'COMPLETED' ? '#16a34a' : task.status === 'ACTIVE' ? '#3b82f6' : '#d1d5db'}
-        />
-        <Text type="secondary" className="text-[10px]">{task.progress}%</Text>
       </div>
       <EyeOutlined className="text-gray-400 shrink-0" />
     </div>
@@ -217,13 +217,13 @@ const FarmSupervisorPlanDetail = () => {
     () => allStageTasks.length > 0 && allStageTasks.every((t) => t.status === 'COMPLETED'),
     [allStageTasks]
   )
-  const hasOfficialLog = useMemo(
-    () => allStageTasks.filter((t) => t.status === 'COMPLETED').every((t) => !!t.officialLog),
-    [allStageTasks]
-  )
-  const canSubmit = allCompleted && hasOfficialLog
 
   const openAddTask = (stageId) => {
+    const stage = stages.find((s) => s.id === stageId)
+    if (stage?.status === 'COMPLETED') {
+      message.warning('Giai đoạn đã hoàn thành 100%. Không thể thêm công việc mới.')
+      return
+    }
     setActiveStageId(stageId)
     taskForm.resetFields()
     setAddTaskModal(true)
@@ -272,11 +272,15 @@ const FarmSupervisorPlanDetail = () => {
   const handleSubmitLogbook = async () => {
     try {
       setSubmitting(true)
-      await FakeCultivationService.submitLogbook(planId)
-      message.success('Đã gửi nhật ký lên Farm Manager thành công!')
-      setSubmitModal(false)
-      navigate(ROUTER.FS_PLANS)
-    } catch {
+      const response = await FakeCultivationService.submitLogbook(planId)
+      if (response?.data?.success) {
+        message.success('Đã gửi nhật ký lên Farm Manager thành công!')
+        setSubmitModal(false)
+        navigate(ROUTER.FS_PLANS)
+      } else {
+        message.error(response?.data?.message || 'Gửi nhật ký thất bại.')
+      }
+    } catch (error) {
       message.error('Gửi nhật ký thất bại.')
     } finally {
       setSubmitting(false)
@@ -322,10 +326,10 @@ const FarmSupervisorPlanDetail = () => {
             {plan.isMock && <Tag color="blue" className="rounded-full">Dữ liệu mẫu</Tag>}
           </div>
         </div>
-        <Tooltip title={!canSubmit ? 'Cần hoàn thành tất cả công việc và biên soạn nhật ký chính thức trước khi gửi.' : ''}>
+        <Tooltip title={!allCompleted ? 'Cần hoàn thành tất cả công việc trước khi gửi.' : ''}>
           <Button
             type="primary" icon={<SendOutlined />} size="large"
-            disabled={!canSubmit}
+            disabled={!allCompleted}
             onClick={() => setSubmitModal(true)}
             className="h-11 rounded-xl bg-green-600 px-6 font-semibold"
           >
@@ -345,13 +349,6 @@ const FarmSupervisorPlanDetail = () => {
               </Descriptions.Item>
               <Descriptions.Item label={<><BookOutlined className="mr-1" />Cây trồng</>}>
                 {plan.cropName || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Diện tích">{plan.area ? `${plan.area} ha` : '—'}</Descriptions.Item>
-              <Descriptions.Item label={<><CalendarOutlined className="mr-1" />Bắt đầu</>}>
-                {plan.startDate ? formatDate(plan.startDate) : '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label={<><CalendarOutlined className="mr-1" />Kết thúc dự kiến</>}>
-                {plan.expectedEndDate ? formatDate(plan.expectedEndDate) : '—'}
               </Descriptions.Item>
               <Descriptions.Item label={<><UserOutlined className="mr-1" />Giám sát viên</>}>
                 {plan.supervisorName || '—'}
@@ -400,7 +397,7 @@ const FarmSupervisorPlanDetail = () => {
                 header={
                   <div className="flex flex-wrap items-center justify-between gap-3 py-1">
                     <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 flex items-center justify-center rounded-full text-sm font-bold text-white ${stage.status === 'COMPLETED' ? 'bg-green-600' : stage.status === 'IN_PROGRESS' ? 'bg-blue-500' : 'bg-gray-300'}`}>
+                      <div className={`h-8 w-8 flex items-center justify-center rounded-full text-sm font-bold ${stage.status === 'COMPLETED' ? 'bg-green-600' : stage.status === 'IN_PROGRESS' ? 'bg-blue-500' : 'bg-gray-300'} text-white`}>
                         {idx + 1}
                       </div>
                       <div>
@@ -441,13 +438,49 @@ const FarmSupervisorPlanDetail = () => {
                   )}
                 </div>
 
-                <Button
-                  type="dashed" icon={<PlusOutlined />}
-                  onClick={(e) => { e.stopPropagation(); openAddTask(stage.id) }}
-                  className="w-full mt-3 h-10 rounded-xl border-green-300 text-green-700 hover:border-green-500"
-                >
-                  + Thêm công việc vào giai đoạn này
-                </Button>
+                {/* Nhật ký chính thức - chỉ hiển thị khi giai đoạn hoàn thành 100% */}
+                {stage.status === 'COMPLETED' && stageTasks.length > 0 && stageTasks.every(t => t.status === 'COMPLETED') && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-center gap-2 mb-3">
+                      <FileTextOutlined className="text-green-600" />
+                      <span className="font-semibold text-green-700">Nhật ký chính thức của giai đoạn</span>
+                    </div>
+                    <div className="space-y-3">
+                      {stageTasks.map((task) => (
+                        <Card key={task.id} bordered={false} className="shadow-sm rounded-xl border border-green-100">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <CheckCircleOutlined className="text-green-600" />
+                              <span className="font-semibold">{task.name}</span>
+                            </div>
+                            <Tag color="success" className="rounded-full">Hoàn thành</Tag>
+                          </div>
+                          <div className="mt-2 text-sm">
+                            {task.officialLog ? (
+                              <div className="space-y-2">
+                                <div className="font-mono bg-gray-50 rounded-lg p-2">{task.officialLog.dataSentence}</div>
+                                <div className="italic bg-blue-50 rounded-lg p-2">{task.officialLog.supervisorDescription}</div>
+                              </div>
+                            ) : (
+                              <Alert message="Chưa biên soạn nhật ký chính thức" type="info" showIcon className="rounded-lg" />
+                            )}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add Task Button - chỉ hiển thị khi giai đoạn chưa hoàn thành */}
+                {stage.status !== 'COMPLETED' && (
+                  <Button
+                    type="dashed" icon={<PlusOutlined />}
+                    onClick={(e) => { e.stopPropagation(); openAddTask(stage.id) }}
+                    className="w-full mt-3 h-10 rounded-xl border-green-300 text-green-700 hover:border-green-500"
+                  >
+                    + Thêm công việc vào giai đoạn này
+                  </Button>
+                )}
               </Collapse.Panel>
             )
           })}
@@ -528,10 +561,13 @@ const FarmSupervisorPlanDetail = () => {
         okButtonProps={{ className: 'bg-green-600' }}
       >
         <div className="space-y-3 text-sm">
-          <div className="rounded-xl bg-green-50 p-4 border border-green-100">
-            <div className="font-semibold text-green-800 mb-2">✅ Tất cả công việc đã hoàn thành!</div>
-            <div className="text-green-700">Nhật ký canh tác sẽ được gửi đến Farm Manager để duyệt.</div>
-          </div>
+          <Alert
+            message="✅ Tất cả công việc đã hoàn thành!"
+            description="Nhật ký canh tác sẽ được gửi đến Farm Manager để duyệt."
+            type="success"
+            showIcon
+            className="rounded-xl"
+          />
           <div className="text-gray-500">
             Sau khi gửi, bạn không thể chỉnh sửa. Farm Manager sẽ duyệt hoặc từ chối kèm lý do.
           </div>

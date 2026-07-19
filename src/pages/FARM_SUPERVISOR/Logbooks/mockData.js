@@ -50,6 +50,17 @@ export const MOCK_SUPERVISOR_STAGES = [
     completedTaskCount: 2,
   },
   {
+    id: 'mock-stage-005',
+    cultivationLogbookId: MOCK_SUPERVISOR_PLAN.id,
+    stageName: 'Chăm sóc làm đòng',
+    startDate: '2026-08-21T00:00:00',
+    endDate: '2026-09-10T00:00:00',
+    status: 'IN_PROGRESS',
+    note: 'Bón phân thúc đòng, điều tiết nước, phòng trừ sâu bệnh. Theo dõi sự phát triển của đòng lúa.',
+    taskCount: 2,
+    completedTaskCount: 0,
+  },
+  {
     id: 'mock-stage-003',
     cultivationLogbookId: MOCK_SUPERVISOR_PLAN.id,
     stageName: 'Quản lý đòng trổ',
@@ -146,10 +157,79 @@ export const MOCK_CULTIVATION_TASKS = [
       descriptionSummary: 'Hoàn thành xuống giống 20ha. Lượng giống sử dụng 90 kg/ha, tổng 1800 kg. Tỷ lệ nảy mầm tốt, mật độ cây đều.',
       completedAt: '2026-07-25',
     },
-    officialLog: null, // chưa biên soạn
+    officialLog: {
+      dataSentence: 'Đã xuống giống lúa ST25 trên toàn bộ 20 ha. Lượng giống sử dụng 1800 kg (90 kg/ha). Tỷ lệ nảy mầm >90%.',
+      supervisorDescription: 'Giống lúa ST25 được ngâm ủ đúng kỹ thuật, sạ thưa bằng máy đảm bảo mật độ đều. Toàn bộ diện tích 20 ha đã hoàn thành xuống giống đúng lịch thời vụ.',
+      images: [
+        { id: 'sum-img-003', url: 'https://images.unsplash.com/photo-1536633125620-8a3245c11ffa?auto=format&fit=crop&w=480&q=80' },
+      ],
+      compiledAt: '2026-07-26',
+    },
   },
 
-  // ── Stage 003: Quản lý đòng trổ (đang thực hiện) ──
+  // ── Stage 002: Chăm sóc đẻ nhánh ──
+  {
+    id: 'mock-ctask-002b',
+    planId: 'mock-logbook-001',
+    stageId: 'mock-stage-002',
+    stageName: 'Chăm sóc đẻ nhánh',
+    name: 'Bón phân đợt 1 (thúc đẻ nhánh)',
+    description: 'Bón phân NPK 20-20-15 giai đoạn 15-18 ngày sau sạ. Lượng bón 100-120 kg/ha. Kết hợp kiểm tra và xử lý ốc bươu vàng.',
+    status: 'COMPLETED',
+    progress: 100,
+    farmLeaderId: 'mock-leader-001',
+    farmLeaderName: 'Nguyễn Văn Leader',
+    farmerIds: ['mock-farmer-001', 'mock-farmer-002'],
+    farmerNames: ['Lê Văn Nông', 'Phạm Thị Bình'],
+    startDate: '2026-07-30T00:00:00',
+    leaderSummary: {
+      totalFertilizers: [
+        {
+          name: 'Phân NPK 20-20-15',
+          totalQuantity: 2200,
+          quantityUnit: 'kg',
+          totalArea: 20,
+          areaUnit: 'ha',
+          dailyBreakdown: [
+            { date: '2026-07-30T00:00:00', quantity: 1100, area: 10 },
+            { date: '2026-07-31T00:00:00', quantity: 1100, area: 10 },
+          ],
+        },
+      ],
+      totalPesticides: [],
+      images: [
+        { id: 'sum-img-007', url: 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=480&q=80' },
+      ],
+      descriptionSummary: 'Đã bón phân đợt 1 cho toàn bộ 20ha trong 2 ngày. Lúa đang đẻ nhánh đều, mật độ ốc bươu vàng thấp, không cần xử lý thêm.',
+      completedAt: '2026-07-31',
+    },
+    officialLog: {
+      dataSentence: 'Đã bón 2200 kg Phân NPK 20-20-15 trên 20 ha trong 2 ngày (30/07: 10ha; 31/07: 10ha).',
+      supervisorDescription: 'Bón phân đợt 1 thúc đẻ nhánh đúng thời điểm 15-18 ngày sau sạ. Cây lúa phát triển tốt, đẻ nhánh đều. Không phát hiện dịch hại vượt ngưỡng.',
+      images: [
+        { id: 'sum-img-007', url: 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=480&q=80' },
+      ],
+      compiledAt: '2026-08-01',
+    },
+  },
+  {
+    id: 'mock-ctask-002c',
+    planId: 'mock-logbook-001',
+    stageId: 'mock-stage-002',
+    stageName: 'Chăm sóc đẻ nhánh',
+    name: 'Bón phân đón đòng (đợt 2 & quản lý nước)',
+    description: 'Bón phân Urê đợt 2 giai đoạn 25-28 ngày sau sạ. Duy trì mực nước nông 2-5 cm. Kiểm tra cỏ dại và phun thuốc diệt cỏ nếu cần.',
+    status: 'ACTIVE',
+    progress: 80,
+    farmLeaderId: 'mock-leader-002',
+    farmLeaderName: 'Trần Thị Leader',
+    farmerIds: ['mock-farmer-003', 'mock-farmer-004'],
+    farmerNames: ['Hoàng Văn Cường', 'Nguyễn Thị Dung'],
+    startDate: '2026-08-10T00:00:00',
+    leaderSummary: null,
+    officialLog: null,
+  },
+
   {
     id: 'mock-ctask-003',
     planId: 'mock-logbook-001',
@@ -394,32 +474,80 @@ export const MOCK_PRODUCTION_LOGS = [
     materials: [],
     images: [],
   },
-]
-
-// ── Logbook chờ Manager duyệt ─────────────────────────────────────────────────
-export const MOCK_SUBMITTED_LOGBOOKS = [
   {
-    id: 'mock-submitted-001',
-    planId: 'mock-logbook-001',
-    planName: 'Vụ Đông Xuân 2026 - Lúa ST25',
-    supervisorId: 'mock-supervisor-001',
-    supervisorName: 'Nguyễn Thanh Giám Sát',
-    landPlotName: 'Khu vực A1 - Sóc Trăng',
-    cropName: 'Lúa gạo ST25',
-    submittedAt: '2026-10-21T08:30:00',
-    status: 'PENDING_REVIEW',
-    revisionHistory: [
+    id: 'mock-log-006',
+    taskId: 'mock-ctask-002c',
+    date: '2026-08-21T00:00:00',
+    description: 'Bón phân đón đòng đợt 1',
+    progress: 40,
+    isSystemLog: false,
+    performedBy: 'mock-leader-002',
+    performedByName: 'Trần Thị Leader',
+    materials: [
       {
-        version: 1,
-        editedAt: '2026-10-21T08:30:00',
-        editedBy: 'Nguyễn Thanh Giám Sát',
-        reason: 'Gửi lần đầu',
-        changes: [],
+        materialId: 'fert-001',
+        materialName: 'Phân Urê 46%',
+        quantity: 40,
+        unit: 'kg',
+        area: 10,
+        areaUnit: 'ha',
+        type: 'FERTILIZER',
       },
     ],
-    stages: MOCK_SUPERVISOR_STAGES,
+    images: [],
+  },
+  {
+    id: 'mock-log-007',
+    taskId: 'mock-ctask-002c',
+    date: '2026-08-22T00:00:00',
+    description: 'Bón phân đón đòng đợt 2',
+    progress: 80,
+    isSystemLog: false,
+    performedBy: 'mock-leader-002',
+    performedByName: 'Trần Thị Leader',
+    materials: [
+      {
+        materialId: 'fert-001',
+        materialName: 'Phân Urê 46%',
+        quantity: 40,
+        unit: 'kg',
+        area: 10,
+        areaUnit: 'ha',
+        type: 'FERTILIZER',
+      },
+    ],
+    images: [],
   },
 ]
+
+// ── Logbook chờ Manager duyệt (ban đầu rỗng — phải submit mới có) ─────────────
+export const MOCK_SUBMITTED_LOGBOOKS = []
+
+// ─── Kiểm tra tất cả tasks trong plan đã COMPLETED chưa ──────────────────────
+export const checkAllTasksCompleted = (planId) =>
+  MOCK_CULTIVATION_TASKS
+    .filter((t) => t.planId === planId)
+    .every((t) => t.status === 'COMPLETED')
+
+// ─── Kiểm tra tất cả tasks trong stage đã COMPLETED chưa ─────────────────────
+export const checkStageAllTasksCompleted = (stageId) => {
+  const stageTasks = MOCK_CULTIVATION_TASKS.filter((t) => t.stageId === stageId)
+  if (!stageTasks.length) return false
+  return stageTasks.every((t) => t.status === 'COMPLETED')
+}
+
+// ─── Kiểm tra tất cả tasks trước stage này đã COMPLETED chưa ─────────────────
+export const canActivateTaskInStage = (stageId) => {
+  const stages = MOCK_SUPERVISOR_STAGES
+  const stageIndex = stages.findIndex((s) => s.id === stageId)
+  if (stageIndex === 0) return true // stage đầu tiên luôn được activate
+  // Tất cả stage trước phải có tất cả tasks COMPLETED
+  for (let i = 0; i < stageIndex; i++) {
+    if (!checkStageAllTasksCompleted(stages[i].id)) return false
+  }
+  return true
+}
+
 
 // ── Fertilizer / Pesticide Options (cho form Leader) ─────────────────────────
 export const MOCK_FERTILIZER_OPTIONS = [
@@ -568,9 +696,32 @@ export const FakeCultivationService = {
     return { data: { success: true } }
   },
 
-  // Supervisor gửi logbook lên Manager
+  // Supervisor gửi logbook lên Manager (chỉ khi kế hoạch hoàn thành 100%)
   submitLogbook: async (planId) => {
     await new Promise((r) => setTimeout(r, 600))
+    if (!checkAllTasksCompleted(planId)) {
+      return { data: { success: false, message: 'Kế hoạch chưa hoàn thành 100%. Cần hoàn thành tất cả công việc trước khi gửi.' } }
+    }
+    // Cập nhật plan status
+    MOCK_SUPERVISOR_PLAN.logbookStatus = 'SUBMITTED'
+    MOCK_SUPERVISOR_PLAN.submittedAt = new Date().toISOString()
+    // Thêm vào danh sách chờ duyệt
+    const existing = MOCK_SUBMITTED_LOGBOOKS.find((lb) => lb.planId === planId)
+    if (!existing) {
+      MOCK_SUBMITTED_LOGBOOKS.push({
+        id: `submitted-${planId}-${Date.now()}`,
+        planId,
+        planName: MOCK_SUPERVISOR_PLAN.planName,
+        supervisorId: MOCK_SUPERVISOR_PLAN.supervisorId,
+        supervisorName: MOCK_SUPERVISOR_PLAN.supervisorName,
+        landPlotName: MOCK_SUPERVISOR_PLAN.landPlotName,
+        cropName: MOCK_SUPERVISOR_PLAN.cropName,
+        submittedAt: new Date().toISOString(),
+        status: 'PENDING_REVIEW',
+        revisionHistory: [{ version: 1, editedAt: new Date().toISOString(), editedBy: MOCK_SUPERVISOR_PLAN.supervisorName, reason: 'Gửi lần đầu', changes: [] }],
+        stages: MOCK_SUPERVISOR_STAGES,
+      })
+    }
     return { data: { success: true, logbookId: `submitted-${planId}` } }
   },
 

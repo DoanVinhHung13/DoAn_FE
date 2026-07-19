@@ -124,19 +124,24 @@ export const farmSupervisorItem = () => [
     label: 'Quản lý vùng trồng',
   },
   {
-    key: ROUTER.LM_FIELD_LOG,
-    icon: <FormOutlined className="text-lg" />,
-    label: 'Ghi chép thực tế',
-  },
-  {
     key: ROUTER.NOTIFICATIONS,
     icon: <BellOutlined className="text-lg" />,
     label: 'Thông báo',
+  },
+  {
+    key: ROUTER.LM_FIELD_LOG,
+    icon: <FormOutlined className="text-lg" />,
+    label: 'Kế hoạch & Ghi chép',
   },
 ]
 
 // ─── FARM LEADER MENU ─────────────────────────────────────────────────────────
 export const farmLeaderItem = () => [
+  {
+    key: ROUTER.LM_FIELD_LOG,
+    icon: <FormOutlined className="text-lg" />,
+    label: 'Kế hoạch & Ghi chép',
+  },
   {
     key: ROUTER.FL_TASKS,
     icon: <CheckCircleOutlined className="text-lg" />,

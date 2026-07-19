@@ -79,13 +79,13 @@ const FarmManagerCropProtectionEdit = React.lazy(() => import('../pages/FARM_MAN
 const FarmManagerReferenceFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/Reference/FertilizerList'))
 const FarmManagerReferencePesticides = React.lazy(() => import('../pages/FARM_MANAGER/Reference/PesticideList'))
 
-// LAND_MANAGER pages - moved to FARM_SUPERVISOR
-const LandManagerFieldLog = React.lazy(() => import('../pages/LAND_MANAGER/FieldLog'))
-const LandManagerDashboard = React.lazy(() => import('../pages/LAND_MANAGER/Dashboard'))
-const LandManagerFarmers = React.lazy(() => import('../pages/LAND_MANAGER/Farmers'))
-const LandManagerLands = React.lazy(() => import('../pages/LAND_MANAGER/Lands'))
-const LandManagerLandPlotDetail = React.lazy(() => import('../pages/LAND_MANAGER/Lands/LandPlotDetail'))
-const LandManagerNotifications = React.lazy(() => import('../pages/LAND_MANAGER/Notifications'))
+// FARM_SUPERVISOR pages (formerly LAND_MANAGER)
+const FarmLeaderFieldLog = React.lazy(() => import('src/pages/FARM_SUPERVISOR/FieldLog'))
+const FarmSupervisorDashboard = React.lazy(() => import('../pages/FARM_SUPERVISOR/Dashboard'))
+const FarmSupervisorFarmers = React.lazy(() => import('../pages/FARM_SUPERVISOR/Farmers'))
+const FarmSupervisorLands = React.lazy(() => import('../pages/FARM_SUPERVISOR/Lands'))
+const FarmSupervisorLandPlotDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Lands/LandPlotDetail'))
+const FarmSupervisorNotifications = React.lazy(() => import('../pages/FARM_SUPERVISOR/Notifications'))
 
 // FARMER pages (mapped to USER/ since FARMER folder doesn't exist)
 const FarmerDashboard = React.lazy(() => import('../pages/USER/FarmerManagement'))
@@ -261,13 +261,12 @@ const routes = [
               { path: ROUTER.FS_TASK_DETAIL, element: <Lazy><FarmSupervisorTaskDetail /></Lazy> },
               { path: ROUTER.FS_STAGE_LOG, element: <Lazy><FarmSupervisorStageLog /></Lazy> },
 
-              // Land Manager features moved to Farm Supervisor
-              { path: ROUTER.LM_DASHBOARD, element: <Lazy><LandManagerDashboard /></Lazy> },
-              { path: ROUTER.LM_FARMERS, element: <Lazy><LandManagerFarmers /></Lazy> },
-              { path: ROUTER.LM_LANDS, element: <Lazy><LandManagerLands /></Lazy> },
-              { path: ROUTER.LM_LAND_DETAIL, element: <Lazy><LandManagerLandPlotDetail /></Lazy> },
-              { path: ROUTER.LM_FIELD_LOG, element: <Lazy><LandManagerFieldLog /></Lazy> },
-              { path: ROUTER.LM_NOTIFICATIONS, element: <Lazy><LandManagerNotifications /></Lazy> },
+              // Farm Supervisor - Additional features (formerly Land Manager)
+              { path: ROUTER.LM_DASHBOARD, element: <Lazy><FarmSupervisorDashboard /></Lazy> },
+              { path: ROUTER.LM_FARMERS, element: <Lazy><FarmSupervisorFarmers /></Lazy> },
+              { path: ROUTER.LM_LANDS, element: <Lazy><FarmSupervisorLands /></Lazy> },
+              { path: ROUTER.LM_LAND_DETAIL, element: <Lazy><FarmSupervisorLandPlotDetail /></Lazy> },
+              { path: ROUTER.LM_NOTIFICATIONS, element: <Lazy><FarmSupervisorNotifications /></Lazy> },
               { path: ROUTER.LM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
             ],
           },
@@ -277,6 +276,7 @@ const routes = [
           {
             element: <ProtectedRoute allowedRoles={[ROLES.FARM_LEADER, ROLES.FARM_SUPERVISOR]} />,
             children: [
+              { path: ROUTER.LM_FIELD_LOG, element: <Lazy><FarmLeaderFieldLog /></Lazy> },
               { path: ROUTER.FL_TASKS, element: <Lazy><FarmLeaderTasks /></Lazy> },
               { path: ROUTER.FL_TASK_LOG, element: <Lazy><FarmLeaderDailyLog /></Lazy> },
             ],
