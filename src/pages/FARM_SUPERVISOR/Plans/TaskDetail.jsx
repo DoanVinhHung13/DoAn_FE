@@ -45,21 +45,16 @@ import {
   Typography,
 } from 'antd'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  FakeCultivationService,
-  getMockDailyLogsByTask,
-  getMockTask,
-  MOCK_FARMERS,
-  MOCK_LEADERS,
-  MOCK_SUPERVISOR_PLAN,
-  MOCK_SUPERVISOR_STAGES,
-} from '../Logbooks/mockData'
+import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import CultivationTaskService from 'src/services/CultivationTaskService'
+import UserService from 'src/services/UserService'
+import { FakeCultivationService } from '../Logbooks/mockData'
 
 const { Text, Title, Paragraph } = Typography
 const { TextArea } = Input
@@ -99,10 +94,13 @@ const buildDataSentence = (summary) => {
 const FarmSupervisorTaskDetail = () => {
   const { planId, taskId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { planData: passedPlanData } = location.state || {}
   const [task, setTask] = useState(null)
-  const [plan, setPlan] = useState(MOCK_SUPERVISOR_PLAN)
+  const [plan, setPlan] = useState({})
   const [stage, setStage] = useState(null)
-  const [dailyLogs, setDailyLogs] = useState([])
+  const [leaders, setLeaders] = useState([])
+  const [farmers, setFarmers] = useState([])
   const [loading, setLoading] = useState(true)
   const [assignForm] = Form.useForm()
   const [compileForm] = Form.useForm()
@@ -110,77 +108,109 @@ const FarmSupervisorTaskDetail = () => {
   const [activating, setActivating] = useState(false)
   const [compileModal, setCompileModal] = useState(false)
   const [savingCompile, setSavingCompile] = useState(false)
-
-  const leaderOptions = MOCK_LEADERS.map((l) => ({ value: l.id, label: l.name }))
-  const farmerOptions = MOCK_FARMERS.map((f) => ({ value: f.id, label: f.name }))
+  const farmerOptions = farmers.map((f) => ({ value: f.id, label: f.fullName || f.name }))
 
   useEffect(() => {
-    const loadTask = async () => {
+    const loadTaskAndUsers = async () => {
       setLoading(true)
       try {
-        const foundTask = getMockTask(taskId)
-        if (foundTask) {
-          setTask(foundTask)
-          setDailyLogs(getMockDailyLogsByTask(taskId))
-          const foundStage = MOCK_SUPERVISOR_STAGES.find((s) => s.id === foundTask.stageId)
-          setStage(foundStage || null)
-          // Pre-fill assign form
-          if (foundTask.farmLeaderId) {
-            assignForm.setFieldsValue({
-              farmLeaderId: foundTask.farmLeaderId,
-              farmerIds: foundTask.farmerIds || [],
-            })
+        const [planRes, usersRes] = await Promise.all([
+          !passedPlanData ? CultivationLogbookService.getById(planId).catch(() => null) : Promise.resolve({ data: passedPlanData }),
+          UserService.getUsers({ PageSize: 500 }).catch(() => ({ data: [] }))
+        ])
+
+        const planData = planRes?.data ?? planRes
+        setPlan(planData || {})
+
+        if (planData) {
+          const stageList = planData.cultivationStages || planData.productionStages || planData.stages || []
+          let foundStage = null
+          let foundTask = null
+
+          for (const s of stageList) {
+            const t = (s.tasks || []).find((x) => x.id === taskId)
+            if (t) {
+              foundTask = t
+              foundStage = s
+              break
+            }
           }
-          // Pre-fill compile form if summary exists
-          if (foundTask.leaderSummary) {
-            compileForm.setFieldsValue({
-              supervisorDescription: foundTask.leaderSummary.descriptionSummary || '',
-            })
+
+          if (foundTask) {
+            setTask(foundTask)
+            setStage(foundStage)
+            if (foundTask.assignedLeaderId) {
+              assignForm.setFieldsValue({
+                farmLeaderId: foundTask.assignedLeaderId,
+                farmerIds: foundTask.assignments?.map(a => typeof a === 'object' ? a.userId || a.id : a) || [],
+              })
+            }
+            if (foundTask.leaderSummary) {
+              compileForm.setFieldsValue({
+                supervisorDescription: foundTask.leaderSummary.descriptionSummary || '',
+              })
+            }
+          } else {
+            message.error('Không tìm thấy công việc.')
+            navigate(ROUTER.FS_PLAN_DETAIL.replace(':planId', planId))
           }
-        } else {
-          message.error('Không tìm thấy công việc.')
-          navigate(ROUTER.FS_PLAN_DETAIL.replace(':planId', planId))
         }
+
+        const allUsers = usersRes?.data?.data || usersRes?.data?.items || usersRes?.data || []
+        if (Array.isArray(allUsers)) {
+          setLeaders(allUsers.filter(u => u.roles?.includes('FARM_LEADER') || u.role === 'FARM_LEADER' || u.roles?.some(r => typeof r === 'string' && r.includes('LEADER'))))
+          setFarmers(allUsers.filter(u => u.roles?.includes('FARMER') || u.role === 'FARMER' || u.roles?.some(r => typeof r === 'string' && r.includes('FARMER'))))
+        }
+      } catch (error) {
+        console.error(error)
+        message.error('Lỗi khi tải dữ liệu.')
       } finally {
         setLoading(false)
       }
     }
-    loadTask()
+    loadTaskAndUsers()
   }, [taskId, planId, navigate, assignForm, compileForm])
 
   const handleAssignTeam = async () => {
     try {
       const values = await assignForm.validateFields()
       setSavingAssign(true)
-      const leader = MOCK_LEADERS.find((l) => l.id === values.farmLeaderId)
-      const farmers = MOCK_FARMERS.filter((f) => (values.farmerIds || []).includes(f.id))
-      await FakeCultivationService.assignTeam(taskId, {
-        farmLeaderId: values.farmLeaderId,
-        farmLeaderName: leader?.name || '',
+      const leader = farmers.find((l) => l.id === values.farmLeaderId) || leaders.find((l) => l.id === values.farmLeaderId)
+      const farmersList = farmers.filter((f) => (values.farmerIds || []).includes(f.id))
+
+      const payload = {
+        name: task.name,
+        description: task.description,
+        leaderId: values.farmLeaderId,
         farmerIds: values.farmerIds || [],
-        farmerNames: farmers.map((f) => f.name),
-      })
+        cultivationLogbookId: planId,
+        cultivationStageId: stage?.id
+      }
+
+      await CultivationTaskService.update(taskId, payload)
+
       setTask((prev) => ({
         ...prev,
-        farmLeaderId: values.farmLeaderId,
-        farmLeaderName: leader?.name || '',
-        farmerIds: values.farmerIds || [],
-        farmerNames: farmers.map((f) => f.name),
+        assignedLeaderId: values.farmLeaderId,
+        assignedLeaderName: leader?.fullName || leader?.name || '',
+        assignments: farmersList.map((f) => ({ userId: f.id, fullName: f.fullName || f.name })),
       }))
       message.success('Đã cập nhật phân công team!')
-    } catch { /* validation */ } finally {
+    } catch (err) {
+      if (!err.errorFields) message.error('Phân công thất bại.')
+    } finally {
       setSavingAssign(false)
     }
   }
 
   const handleActivate = async () => {
-    if (!task?.farmLeaderId) {
+    if (!task?.assignedLeaderId && !task?.farmLeaderId) {
       message.warning('Vui lòng gán Farm Leader trước khi kích hoạt công việc.')
       return
     }
     try {
       setActivating(true)
-      await FakeCultivationService.activateTask(taskId)
+      await CultivationTaskService.start(taskId)
       setTask((prev) => ({ ...prev, status: 'ACTIVE' }))
       message.success('Công việc đã được kích hoạt! Farm Leader có thể bắt đầu ghi nhật ký.')
     } catch { message.error('Kích hoạt thất bại.') } finally {
@@ -236,9 +266,6 @@ const FarmSupervisorTaskDetail = () => {
             </div>
             <TitleCustom className="!mb-0">{task.name}</TitleCustom>
           </div>
-          <Progress type="circle" percent={task.progress} size={72}
-            strokeColor={task.status === 'COMPLETED' ? '#16a34a' : '#3b82f6'}
-          />
         </div>
         {task.description && (
           <div className="mt-3 rounded-xl bg-amber-50 border border-amber-100 p-3 text-sm text-amber-900">
@@ -251,30 +278,6 @@ const FarmSupervisorTaskDetail = () => {
         {/* Cột trái: Thông tin cơ bản */}
         <Col xs={24} lg={10}>
           <div className="space-y-5">
-            {/* Thông tin task */}
-            <Card bordered={false} className="shadow-sm rounded-2xl">
-              <div className="flex items-center gap-2 mb-4">
-                <FileTextOutlined className="text-green-600" />
-                <span className="font-semibold">Thông tin công việc</span>
-              </div>
-              <Descriptions column={1} size="small">
-                <Descriptions.Item label="Kế hoạch">
-                  <Tag color="blue">{plan.planName}</Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="Vùng trồng">
-                  <EnvironmentOutlined className="mr-1 text-green-600" />{plan.landPlotName}
-                </Descriptions.Item>
-                <Descriptions.Item label="Cây trồng">
-                  {plan.cropName}
-                </Descriptions.Item>
-                <Descriptions.Item label="Tiến độ">
-                  <Progress percent={task.progress} size="small" showInfo={false}
-                    strokeColor={task.status === 'COMPLETED' ? '#16a34a' : '#3b82f6'} />
-                  <span className="ml-2">{task.progress}%</span>
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-
             {/* Phân công team */}
             <Card bordered={false} className="shadow-sm rounded-2xl">
               <div className="flex items-center gap-2 mb-4">
@@ -295,7 +298,7 @@ const FarmSupervisorTaskDetail = () => {
                     tooltip="Farm Leader chịu trách nhiệm ghi nhật ký và báo cáo."
                   >
                     <Select
-                      options={leaderOptions}
+                      options={farmerOptions}
                       placeholder="Chọn Farm Leader..."
                       showSearch
                       filterOption={(input, option) =>
@@ -325,23 +328,23 @@ const FarmSupervisorTaskDetail = () => {
                   </Button>
                   <Button
                     type="primary" icon={<PlayCircleOutlined />} className="w-full h-10 mt-2 font-semibold bg-blue-600"
-                    onClick={handleActivate} disabled={!task.farmLeaderId}
+                    onClick={handleActivate} disabled={!task.assignedLeaderId && !task.farmLeaderId}
                   >
                     Kích hoạt công việc
                   </Button>
                 </Form>
               ) : (
                 <div className="space-y-3">
-                  {task.farmLeaderName && (
+                  {(task.assignedLeaderName || task.farmLeaderName) && (
                     <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50">
                       <UserOutlined className="text-green-600" />
-                      <span><strong>Farm Leader:</strong> {task.farmLeaderName}</span>
+                      <span><strong>Farm Leader:</strong> {task.assignedLeaderName || task.farmLeaderName}</span>
                     </div>
                   )}
-                  {task.farmerNames?.length > 0 && (
+                  {(task.assignments?.length > 0 || task.farmerNames?.length > 0) && (
                     <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-blue-50">
                       <TeamOutlined className="text-blue-600" />
-                      <span><strong>Farmers:</strong> {task.farmerNames.join(', ')}</span>
+                      <span><strong>Farmers:</strong> {task.assignments ? task.assignments.map(f => f.fullName || f.name).join(', ') : task.farmerNames.join(', ')}</span>
                     </div>
                   )}
                   <Alert
@@ -359,57 +362,6 @@ const FarmSupervisorTaskDetail = () => {
         {/* Cột phải: Nhật ký và biên soạn */}
         <Col xs={24} lg={14}>
           <div className="space-y-5">
-            {/* Nhật ký hàng ngày */}
-            {dailyLogs.length > 0 && (
-              <Card bordered={false} className="shadow-sm rounded-2xl">
-                <div className="flex items-center gap-2 mb-4">
-                  <BookOutlined className="text-green-600" />
-                  <span className="font-semibold">Nhật ký hàng ngày từ Farm Leader</span>
-                  <Tag color="blue" className="ml-auto rounded-full">{dailyLogs.length} bản ghi</Tag>
-                </div>
-                <Timeline mode="left">
-                  {dailyLogs.map((log) => (
-                    <Timeline.Item
-                      key={log.id}
-                      label={formatDate(log.date)}
-                      color={log.progress >= 100 ? 'green' : log.progress > 50 ? 'blue' : 'gray'}
-                    >
-                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm">
-                        <div className="flex items-center justify-between mb-2">
-                          <Tag color="blue" className="rounded-full">Tiến độ: {log.progress}%</Tag>
-                          {log.fertilizers?.length > 0 && <Tag color="green" className="rounded-full">Phân bón</Tag>}
-                          {log.pesticides?.length > 0 && <Tag color="orange" className="rounded-full">TBVTV</Tag>}
-                        </div>
-                        {log.fertilizers?.length > 0 && (
-                          <div className="text-xs text-gray-600 mb-1">
-                            <strong>🌱 Phân bón:</strong> {log.fertilizers.map((f) => `${f.quantity} ${f.quantityUnit} ${f.name}`).join(', ')}
-                          </div>
-                        )}
-                        {log.pesticides?.length > 0 && (
-                          <div className="text-xs text-gray-600 mb-1">
-                            <strong>🔬 Thuốc BVTV:</strong> {log.pesticides.map((p) => `${p.quantity} ${p.quantityUnit} ${p.name}`).join(', ')}
-                          </div>
-                        )}
-                        <div className="text-gray-700">{log.description}</div>
-                        {log.images?.length > 0 && (
-                          <div className="mt-2">
-                            <strong>📷 Ảnh:</strong>
-                            <Image.PreviewGroup>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {log.images.map((img) => (
-                                  <Image key={img.id} src={img.url} width={60} height={60} className="rounded-lg object-cover" />
-                                ))}
-                              </div>
-                            </Image.PreviewGroup>
-                          </div>
-                        )}
-                      </div>
-                    </Timeline.Item>
-                  ))}
-                </Timeline>
-              </Card>
-            )}
-
             {/* Báo cáo từ Leader */}
             {task.leaderSummary ? (
               <Card bordered={false} className="shadow-sm rounded-2xl border border-green-100">

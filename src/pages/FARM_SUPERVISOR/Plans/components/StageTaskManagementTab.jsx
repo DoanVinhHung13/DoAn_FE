@@ -90,7 +90,7 @@ const StageListItem = ({ stage, index, isActive, onClick }) => {
   )
 }
 
-const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
+const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState(null)
   const [editingTaskId, setEditingTaskId] = useState(null)
@@ -263,7 +263,8 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                             navigate(
                               ROUTER.FS_TASK_DETAIL
                                 .replace(':planId', planId)
-                                .replace(':taskId', task.id)
+                                .replace(':taskId', task.id),
+                              { state: { planData: plan } }
                             )
                           }
                           actions={[<EyeOutlined key="view" className="text-gray-400" />]}
@@ -296,16 +297,16 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                                     {task.description}
                                   </Text>
                                 )}
-                                {(task.farmLeaderName || task.farmerIds?.length > 0) && (
+                                {(task.assignedLeaderName || task.assignments?.length > 0) && (
                                   <div className="mt-1 flex flex-wrap gap-1">
-                                    {task.farmLeaderName && (
+                                    {task.assignedLeaderName && (
                                       <Tag icon={<UserOutlined />} color="green" style={{ margin: 0, fontSize: 11 }}>
-                                        {task.farmLeaderName}
+                                        {task.assignedLeaderName}
                                       </Tag>
                                     )}
-                                    {task.farmerIds?.length > 0 && (
+                                    {task.assignments?.length > 0 && (
                                       <Tag icon={<TeamOutlined />} color="blue" style={{ margin: 0, fontSize: 11 }}>
-                                        {task.farmerIds.length} Farmer
+                                        {task.assignments.length} Farmer
                                       </Tag>
                                     )}
                                   </div>

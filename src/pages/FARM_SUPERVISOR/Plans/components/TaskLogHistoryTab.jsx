@@ -60,6 +60,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
             <Alert message="Chưa có giai đoạn nào." type="info" />
           ) : (
             <Tree
+              showLine
               showIcon
               defaultExpandAll
               treeData={treeData}
@@ -79,7 +80,6 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
-                <FileTextOutlined className="text-blue-600 text-xl" />
                 <Title level={5} className="!mb-0">
                   Lịch sử ghi nhận: {selectedTask.name || selectedTask.taskName}
                 </Title>

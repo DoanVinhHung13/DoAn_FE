@@ -60,7 +60,6 @@ const FarmManagerTaskDetail = React.lazy(() => import('../pages/FARM_MANAGER/Tas
 const FarmManagerTaskEdit = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskEdit'))
 const FarmSupervisorPlans = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans'))
 const FarmSupervisorPlanDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans/PlanDetail'))
-const FarmSupervisorPlanDetailMock = React.lazy(() => import('../pages/FARM_SUPERVISOR/PlansMock'))
 const FarmSupervisorTaskDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans/TaskDetail'))
 const FarmLeaderTasks = React.lazy(() => import('../pages/FARM_LEADER/Tasks'))
 const FarmLeaderDailyLog = React.lazy(() => import('../pages/FARM_LEADER/Tasks/DailyLog'))
@@ -264,7 +263,6 @@ const routes = [
               // Farm Supervisor - Plans & Tasks
               { path: ROUTER.FS_PLANS, element: <Lazy><FarmSupervisorPlans /></Lazy> },
               { path: ROUTER.FS_PLAN_DETAIL, element: <Lazy><FarmSupervisorPlanDetail /></Lazy> },
-              { path: ROUTER.FS_PLAN_DETAIL_MOCK, element: <Lazy><FarmSupervisorPlanDetailMock /></Lazy> },
               { path: ROUTER.FS_TASK_DETAIL, element: <Lazy><FarmSupervisorTaskDetail /></Lazy> },
               { path: ROUTER.FS_STAGE_LOG, element: <Lazy><FarmSupervisorStageLog /></Lazy> },
 

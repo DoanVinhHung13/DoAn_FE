@@ -84,7 +84,6 @@ const ROUTER = {
   // ── Farm Supervisor Routes ────────────────────────────────────────────────
   FS_PLANS:              '/farm-supervisor/plans',
   FS_PLAN_DETAIL:        '/farm-supervisor/plans/:planId',
-  FS_PLAN_DETAIL_MOCK:   '/farm-supervisor/plans-mock/:planId',
   FS_STAGE_LOG:          '/farm-supervisor/plans/:planId/stages/:stageId',
   FS_TASK_DETAIL:        '/farm-supervisor/plans/:planId/tasks/:taskId',
 

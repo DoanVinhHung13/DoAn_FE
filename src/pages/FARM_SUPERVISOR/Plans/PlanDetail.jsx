@@ -100,13 +100,7 @@ const FarmSupervisorPlanDetail = () => {
 
       const tasksMap = {}
       for (const stage of stageData) {
-        try {
-          const res = await CultivationStageService.getStageLogs(stage.id)
-          const items = res?.data?.data || res?.data || []
-          tasksMap[stage.id] = Array.isArray(items) ? items : []
-        } catch {
-          tasksMap[stage.id] = []
-        }
+        tasksMap[stage.id] = Array.isArray(stage.tasks) ? stage.tasks : []
       }
 
       setPlan(planData)
@@ -270,18 +264,19 @@ const FarmSupervisorPlanDetail = () => {
           {
             key: '1',
             label: <span className="px-4 font-medium"><EnvironmentOutlined className="mr-2" />Quản lý công việc</span>,
-            children: <StageTaskManagementTab planId={planId} stages={stages} tasks={tasks} loadData={loadData} />
+            children: <StageTaskManagementTab plan={plan} planId={planId} stages={stages} tasks={tasks} loadData={loadData} />
           },
           {
             key: '2',
-            label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Chốt Logbook</span>,
-            children: <LogbookFinalizationTab stages={stages} tasks={tasks} />
+            label: <span className="px-4 font-medium"><FileTextOutlined className="mr-2" />Lịch sử ghi Log</span>,
+            children: <TaskLogHistoryTab stages={stages} tasks={tasks} />
           },
           {
             key: '3',
-            label: <span className="px-4 font-medium"><FileTextOutlined className="mr-2" />Lịch sử ghi Log</span>,
-            children: <TaskLogHistoryTab stages={stages} tasks={tasks} />
-          }
+            label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Chốt Logbook</span>,
+            children: <LogbookFinalizationTab stages={stages} tasks={tasks} />
+          },
+
         ]}
       />
 
