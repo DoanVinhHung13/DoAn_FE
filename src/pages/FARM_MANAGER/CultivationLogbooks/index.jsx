@@ -1,5 +1,5 @@
 /**
- * ProductionPlans — Danh sách Nhật ký Canh tác (Cultivation Logbooks)
+ * CultivationLogbooks — Danh sách Nhật ký Canh tác (Cultivation Logbooks)
  * Route: /farm-manager/cultivation-logbooks  (ROUTER.FM_CULTIVATION_LOGBOOKS)
  * API: GET /api/cultivation-logbooks
  *
@@ -34,7 +34,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
-import ProductionPlanService from 'src/services/CultivationLogbookService'
+import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { formatDate } from 'src/utils/dateFormatters'
 import { invalidCharsRegex } from 'src/utils/helpers'
 
@@ -79,9 +79,9 @@ const getSupervisorName = (plan) => {
   )
 }
 
-const normalizeProductionPlan = (plan) => ({
+const normalizeCultivationLogbook = (plan) => ({
   ...plan,
-  id: plan.id || plan.productionPlanId,
+  id: plan.id || plan.CultivationLogbookId,
   planName: plan.planName || plan.name,
   cropName:
     plan.cropName ||
@@ -98,7 +98,7 @@ const normalizeProductionPlan = (plan) => ({
 })
 
 // ── Main Component ────────────────────────────────────────────────────────────
-const ProductionPlanList = () => {
+const CultivationLogbookList = () => {
   const navigate = useNavigate()
 
   // ── State: filters ──────────────────────────────────────────────────────────
@@ -122,9 +122,9 @@ const ProductionPlanList = () => {
         PageSize: pageSize,
         SearchKeyword: search || undefined,
       }
-      const res = await ProductionPlanService.getAll(params)
+      const res = await CultivationLogbookService.getAll(params)
       if (res?.success === false) return
-      setListData((res?.data?.items || []).map(normalizeProductionPlan))
+      setListData((res?.data?.items || []).map(normalizeCultivationLogbook))
       setTotalRecords(res?.data?.totalItems || 0)
     } finally {
       setLoading(false)
@@ -387,4 +387,5 @@ const ProductionPlanList = () => {
   )
 }
 
-export default ProductionPlanList
+export default CultivationLogbookList
+

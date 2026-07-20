@@ -6,6 +6,7 @@ import {
   apiUpdateCultivationStage,
   apiDeleteCultivationStage,
   apiGetStagesByLogbook,
+  apiGetCultivationStageLogs,
 } from './urls'
 
 const getAll = (params) => {
@@ -18,6 +19,10 @@ const getById = (id) => {
 
 const getByLogbookId = (logbookId) => {
   return http.get(apiGetStagesByLogbook(logbookId))
+}
+
+const getStageLogs = (stageId) => {
+  return http.get(apiGetCultivationStageLogs(stageId))
 }
 
 const create = (body, config) => {
@@ -36,6 +41,7 @@ const CultivationStageService = {
   getAll,
   getById,
   getByLogbookId,
+  getStageLogs,
   create,
   update,
   deleteById,

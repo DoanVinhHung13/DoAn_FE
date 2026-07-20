@@ -10,3 +10,6 @@ export const apiDeleteCultivationStage = (id) => `/cultivation-stages/${id}`
 // Get stages by logbook ID
 // Swagger: GET /api/cultivation-stages/logbook/{logbookId}
 export const apiGetStagesByLogbook = (logbookId) => `/cultivation-stages/logbook/${logbookId}`
+
+// Get stage logs
+export const apiGetCultivationStageLogs = (stageId) => `/cultivation-stages/${stageId}/logs`

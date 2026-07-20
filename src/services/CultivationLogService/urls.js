@@ -14,6 +14,10 @@ export const apiSaveInspectionDraft = (id) => `/cultivation-logs/${id}/save-insp
 export const apiGetLogbookLogs = (id) => `/cultivation-logbooks/${id}/logs`
 export const apiGetLandPlotLogs = (id) => `/land-plots/${id}/logs`
 
+// Get daily logs by stage or task
+export const apiGetDailyLogsByStage = (stageId) => `/cultivation-daily-logs/stage/${stageId}`
+export const apiGetDailyLogsByTask = (taskId) => `/cultivation-daily-logs/task/${taskId}`
+
 // Quality inspections
 export const apiGetQualityInspections = '/cultivation-logs/quality-inspections'
 export const apiGetQualityInspectionById = (id) => `/cultivation-logs/quality-inspections/${id}`

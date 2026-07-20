@@ -13,6 +13,8 @@ import {
   apiGetQualityInspections,
   apiGetQualityInspectionById,
   apiUploadLogImages,
+  apiGetDailyLogsByStage,
+  apiGetDailyLogsByTask,
 } from './urls'
 
 const getAll = (params) => {
@@ -55,6 +57,14 @@ const getLandPlotLogs = (landPlotId) => {
   return http.get(apiGetLandPlotLogs(landPlotId))
 }
 
+const getDailyLogsByStage = (stageId) => {
+  return http.get(apiGetDailyLogsByStage(stageId))
+}
+
+const getDailyLogsByTask = (taskId) => {
+  return http.get(apiGetDailyLogsByTask(taskId))
+}
+
 const getQualityInspections = (params) => {
   return http.get(apiGetQualityInspections, { params })
 }
@@ -85,6 +95,8 @@ const CultivationLogService = {
   getQualityInspections,
   getQualityInspectionById,
   uploadImages,
+  getDailyLogsByStage,
+  getDailyLogsByTask,
 }
 
 export default CultivationLogService

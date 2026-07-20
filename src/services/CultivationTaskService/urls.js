@@ -1,9 +1,11 @@
 // Cultivation Tasks API endpoints
 // Corresponds to Swagger API: POST /api/cultivation-tasks (Create Work Task)
 // Corresponds to Swagger API: POST /api/cultivation-tasks/{id}/start (Active Work Task)
+// Corresponds to Swagger API: POST /api/cultivation-tasks/bulk (Bulk Create Work Task)
 
 export const apiGetCultivationTasks = '/cultivation-tasks'
 export const apiCreateCultivationTask = '/cultivation-tasks'
+export const apiCreateCultivationTaskBulk = '/cultivation-tasks/bulk'
 export const apiGetCultivationTaskById = (id) => `/cultivation-tasks/${id}`
 export const apiUpdateCultivationTask = (id) => `/cultivation-tasks/${id}`
 export const apiDeleteCultivationTask = (id) => `/cultivation-tasks/${id}`

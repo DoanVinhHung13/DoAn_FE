@@ -1,6 +1,7 @@
 import http from '../01_axios'
 import {
   apiCreateCultivationTask,
+  apiCreateCultivationTaskBulk,
   apiDeleteCultivationTask,
   apiGetCultivationTaskById,
   apiGetCultivationTasks,
@@ -19,6 +20,9 @@ const getById = (id) =>
 const create = (body) =>
   http.post(apiCreateCultivationTask, body, silentConfig)
 
+const createBulk = (body) =>
+  http.post(apiCreateCultivationTaskBulk, body)
+
 const update = (id, body) =>
   http.put(apiUpdateCultivationTask(id), body, silentConfig)
 
@@ -33,6 +37,7 @@ const CultivationTaskService = {
   getAll,
   getById,
   create,
+  createBulk,
   update,
   remove,
   start,

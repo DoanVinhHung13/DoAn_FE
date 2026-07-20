@@ -1,5 +1,5 @@
 /**
- * ProductionPlanCreate — Tạo Nhật ký Canh tác
+ * CultivationLogbookCreate — Tạo Nhật ký Canh tác
  * Route: /farm-manager/cultivation-logbooks/create  (ROUTER.FM_CULTIVATION_LOGBOOK_CREATE)
  * API: POST /api/cultivation-logbooks (CultivationLogbooks)
  *
@@ -35,7 +35,7 @@ import dayjs from 'dayjs'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import ProductionPlanService from 'src/services/CultivationLogbookService'
+import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import PlanTemplateService from 'src/services/PlanTemplateService'
 import CropService from 'src/services/CropService'
 import CropManagementService from 'src/services/CropManagementService'
@@ -62,7 +62,7 @@ const getCreatedPlanId = (response) =>
   response?.data?.data?.cultivationLogbookId ||
   response?.data?.id ||
   response?.data?.cultivationLogbookId ||
-  response?.data?.productionPlanId ||
+  response?.data?.CultivationLogbookId ||
   response?.id ||
   null
 
@@ -87,7 +87,7 @@ const createEmptyStage = (order) => ({
   endDate: null,
 })
 
-const ProductionPlanCreate = () => {
+const CultivationLogbookCreate = () => {
   const navigate = useNavigate()
   const { id } = useParams()
   const [searchParams] = useSearchParams()
@@ -251,9 +251,9 @@ const ProductionPlanCreate = () => {
     if (!isEdit) return
 
     let isMounted = true
-    const loadProductionPlan = async () => {
+    const loadCultivationLogbook = async () => {
       try {
-        const response = await ProductionPlanService.getById(id)
+        const response = await CultivationLogbookService.getById(id)
         const plan = response?.data ?? response
         if (!isMounted || !plan) return
 
@@ -311,7 +311,7 @@ const ProductionPlanCreate = () => {
       }
     }
 
-    loadProductionPlan()
+    loadCultivationLogbook()
     return () => { isMounted = false }
   }, [id, isEdit, form])
 
@@ -444,34 +444,30 @@ const ProductionPlanCreate = () => {
         landPlotId: values.landPlotId,
         startDate: formatApiDate(values.expectedStartDate),
         expectedEndDate: formatApiDate(values.expectedEndDate),
+        status: isEdit ? undefined : 'PLANNED',
+        scope: 'OVERALL',
         assignedFarmSupervisorId: values.assignedFarmSupervisorId,
         description: values.description,
         cultivationStages: stages.map((stage, index) => ({
           stageName: stage.title,
-          description: stage.description,
-          order: index + 1,
-          startDate: formatApiDate(stage.startDate),
-          endDate: formatApiDate(stage.endDate),
+          note: stage.description,
+          stageOrder: index + 1,
         })),
       }
 
       let response
       if (isEdit) {
-        response = await ProductionPlanService.update(id, payload)
+        response = await CultivationLogbookService.update(id, payload)
       } else {
-        response = await ProductionPlanService.create(payload)
+        response = await CultivationLogbookService.create(payload)
       }
 
       const createdPlanId = getCreatedPlanId(response)
       if (createdPlanId) {
-        message.success(isEdit ? 'Cập nhật nhật ký canh tác thành công!' : 'Tạo nhật ký canh tác thành công!')
         navigate(ROUTER.FM_PRODUCTION_PLAN_DETAIL.replace(':id', createdPlanId))
       } else {
-        message.error('Không thể lấy ID nhật ký canh tác.')
       }
     } catch (error) {
-      console.error(error)
-      message.error(error.message || 'Lưu nhật ký canh tác thất bại.')
     } finally {
       setSubmitting(false)
     }
@@ -807,4 +803,4 @@ const ProductionPlanCreate = () => {
   )
 }
 
-export default ProductionPlanCreate
+export default CultivationLogbookCreate
