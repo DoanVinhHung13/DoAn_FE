@@ -1,78 +1,44 @@
-/**
- * Farm Supervisor: Chi tiết Kế hoạch - Quản lý Giai đoạn & Công việc
- * Route: /farm-supervisor/plans/:planId  (ROUTER.FS_PLAN_DETAIL)
- */
 import {
   ArrowLeftOutlined,
   BookOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   EnvironmentOutlined,
-  EyeOutlined,
   FileTextOutlined,
-  PlusOutlined,
   SendOutlined,
-  TeamOutlined,
   UserOutlined,
-  InfoCircleOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
-  Avatar,
-  Badge,
   Button,
   Card,
   Col,
   Descriptions,
   Divider,
-  Empty,
-  Form,
-  Input,
-  List,
-  message,
   Modal,
   Progress,
   Row,
-  Skeleton,
   Tabs,
-  Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import CultivationStageService from 'src/services/CultivationStageService'
 import { formatDate } from 'src/utils/dateFormatters'
+
+import { mockPlanData, mockStages, mockTasks } from './mockData'
 
 import StageTaskManagementTab from './components/StageTaskManagementTab'
 import LogbookFinalizationTab from './components/LogbookFinalizationTab'
 import TaskLogHistoryTab from './components/TaskLogHistoryTab'
 
-const { Text, Paragraph } = Typography
+const { Text } = Typography
 
-// ── Config ────────────────────────────────────────────────────────────────────
-const stageStatusConfig = {
-  PENDING: { color: 'default', label: 'Chưa bắt đầu', avatarBg: '#9ca3af', step: 'wait' },
-  IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện', avatarBg: '#3b82f6', step: 'process' },
-  COMPLETED: { color: 'success', label: 'Hoàn thành', avatarBg: '#16a34a', step: 'finish' },
-}
-
-const taskStatusConfig = {
-  PENDING: { color: 'default', label: 'Chờ kích hoạt', icon: <ClockCircleOutlined /> },
-  ACTIVE: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
-  COMPLETED: { color: 'success', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
-}
-
-const getStageCfg = (s) => stageStatusConfig[s] || stageStatusConfig.PENDING
-const getTaskCfg = (s) => taskStatusConfig[s] || taskStatusConfig.PENDING
-
-// ── Main ──────────────────────────────────────────────────────────────────────
-const FarmSupervisorPlanDetail = () => {
+const FarmSupervisorPlanDetailMock = () => {
   const { planId } = useParams()
   const navigate = useNavigate()
 
@@ -84,41 +50,14 @@ const FarmSupervisorPlanDetail = () => {
   const [submitting, setSubmitting] = useState(false)
 
   // ── Load ──────────────────────────────────────────────────────────────────
-  const loadData = async () => {
+  const loadData = () => {
     setLoading(true)
-    try {
-      const planRes = await CultivationLogbookService.getById(planId)
-      const planData = planRes?.data ?? planRes
-      if (!planData) {
-        message.error('Không tìm thấy kế hoạch.')
-        navigate(ROUTER.FS_PLANS)
-        return
-      }
-
-      const raw = planData.cultivationStages || planData.productionStages || planData.stages || []
-      const stageData = Array.isArray(raw) ? raw : []
-
-      const tasksMap = {}
-      for (const stage of stageData) {
-        try {
-          const res = await CultivationStageService.getStageLogs(stage.id)
-          const items = res?.data?.data || res?.data || []
-          tasksMap[stage.id] = Array.isArray(items) ? items : []
-        } catch {
-          tasksMap[stage.id] = []
-        }
-      }
-
-      setPlan(planData)
-      setStages(stageData)
-      setTasks(tasksMap)
-    } catch (error) {
-      console.error(error)
-      message.error('Không thể tải dữ liệu kế hoạch.')
-      navigate(ROUTER.FS_PLANS)
-    } finally {
+    setTimeout(() => {
+      setPlan(mockPlanData)
+      setStages(mockStages)
+      setTasks(mockTasks)
       setLoading(false)
-    }
+    }, 500)
   }
 
   useEffect(() => { loadData() }, [planId])
@@ -133,52 +72,30 @@ const FarmSupervisorPlanDetail = () => {
 
   const overallProgress = useMemo(() => {
     if (!allTasks.length) return 0
-    return Math.round(
-      allTasks.reduce((s, t) => s + (t.progress || 0), 0) / allTasks.length
-    )
+    const completedCount = allTasks.filter((t) => t.status === 'COMPLETED').length
+    return Math.round((completedCount / allTasks.length) * 100)
   }, [allTasks])
 
-  const handleSubmitLogbook = async () => {
-    try {
-      setSubmitting(true)
-      await CultivationLogbookService.submitReview(planId)
-      message.success('Đã gửi nhật ký lên Farm Manager!')
+  const handleSubmitLogbook = () => {
+    setSubmitting(true)
+    setTimeout(() => {
+      message.success('Đã gửi nhật ký lên Farm Manager (MOCK)!')
       setSubmitModal(false)
-      navigate(ROUTER.FS_PLANS)
-    } catch (error) {
-      console.error(error)
-      message.error(error.message || 'Gửi nhật ký thất bại.')
-    } finally {
       setSubmitting(false)
-    }
+    }, 1000)
   }
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton active paragraph={{ rows: 2 }} />
-        <Card bordered={false} className="shadow-sm rounded-2xl">
-          <Skeleton active paragraph={{ rows: 10 }} />
-        </Card>
-      </div>
-    )
+    return <div className="py-20 text-center">Đang tải dữ liệu mô phỏng...</div>
   }
 
-  if (!plan) {
-    return (
-      <div className="py-16 text-center">
-        <Empty description="Không tìm thấy kế hoạch." />
-        <Button onClick={() => navigate(ROUTER.FS_PLANS)} className="mt-4">Quay lại</Button>
-      </div>
-    )
-  }
+  if (!plan) return null
 
   const completedCount = allTasks.filter((t) => t.status === 'COMPLETED').length
 
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
@@ -187,7 +104,7 @@ const FarmSupervisorPlanDetail = () => {
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <FileTextOutlined className="text-green-600" />
-            Chi tiết Kế hoạch
+            Chi tiết Kế hoạch (MOCK)
           </TitleCustom>
         </div>
         <Tooltip title={!allCompleted ? 'Hoàn thành tất cả công việc trước khi gửi.' : ''}>
@@ -218,17 +135,7 @@ const FarmSupervisorPlanDetail = () => {
                 <Text strong>{plan.cropName || '—'}</Text>
               </Descriptions.Item>
               <Descriptions.Item label={<span className="text-gray-500"><EnvironmentOutlined className="mr-1" />Vùng trồng</span>}>
-                {plan.landPlotId ? (
-                  <Button
-                    type="link"
-                    onClick={() => navigate(`/farm-supervisor/lands/${plan.landPlotId}`)}
-                    className="p-0 h-auto font-medium text-green-600 hover:text-green-700 hover:underline"
-                  >
-                    {plan.landPlotName || 'Xem vùng trồng'}
-                  </Button>
-                ) : (
-                  <Text strong>—</Text>
-                )}
+                <Text strong className="text-green-600">{plan.landPlotName}</Text>
               </Descriptions.Item>
               <Descriptions.Item label={<span className="text-gray-500"><UserOutlined className="mr-1" />Giám sát</span>}>
                 <Text strong>{plan.supervisorName || '—'}</Text>
@@ -240,12 +147,9 @@ const FarmSupervisorPlanDetail = () => {
               </Descriptions.Item>
             </Descriptions>
           </Col>
-
           <Col flex="none">
             <Divider type="vertical" style={{ height: 100 }} className="hidden lg:block" />
           </Col>
-
-          {/* Hình tròn tiến độ */}
           <Col flex="none" className="flex flex-col items-center">
             <Text className="mb-2 text-sm font-semibold text-gray-500 block">Tiến độ tổng thể</Text>
             <Progress
@@ -274,7 +178,7 @@ const FarmSupervisorPlanDetail = () => {
           },
           {
             key: '2',
-            label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Chốt Logbook</span>,
+            label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Duyệt Bản Tóm Tắt</span>,
             children: <LogbookFinalizationTab stages={stages} tasks={tasks} />
           },
           {
@@ -285,18 +189,10 @@ const FarmSupervisorPlanDetail = () => {
         ]}
       />
 
-
-
-      {/* ── Modal: Xác nhận gửi nhật ký ─────────────────────────────────────── */}
       <Modal
         open={submitModal}
         onCancel={() => setSubmitModal(false)}
-        title={
-          <div className="flex items-center gap-2 text-green-700">
-            <SendOutlined />
-            Gửi nhật ký lên Farm Manager
-          </div>
-        }
+        title={<div className="flex items-center gap-2 text-green-700"><SendOutlined />Gửi nhật ký lên Farm Manager</div>}
         onOk={handleSubmitLogbook}
         okText="Xác nhận gửi"
         cancelText="Hủy"
@@ -304,7 +200,7 @@ const FarmSupervisorPlanDetail = () => {
         okButtonProps={{ className: 'bg-green-600' }}
       >
         <Alert
-          message="Bạn có chắc muốn gửi toàn bộ nhật ký canh tác lên Farm Manager để xét duyệt không?"
+          message="Bạn có chắc muốn gửi toàn bộ nhật ký canh tác (MOCK) lên Farm Manager để xét duyệt không?"
           type="warning"
           showIcon
           className="rounded-xl"
@@ -314,4 +210,4 @@ const FarmSupervisorPlanDetail = () => {
   )
 }
 
-export default FarmSupervisorPlanDetail
+export default FarmSupervisorPlanDetailMock

@@ -46,9 +46,9 @@ const FarmManagerCrops = React.lazy(() => import('../pages/FARM_MANAGER/Crops'))
 const FarmManagerCropCreate = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropCreate'))
 const FarmManagerCropDetail = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropDetail'))
 const FarmManagerCropEdit = React.lazy(() => import('../pages/FARM_MANAGER/Crops/CropEdit'))
-const FarmManagerProductionPlans = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans'))
-const FarmManagerProductionPlanCreate = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans/ProductionPlanCreate'))
-const FarmManagerProductionPlanDetail = React.lazy(() => import('../pages/FARM_MANAGER/ProductionPlans/ProductionPlanDetail'))
+const FarmManagerCultivationLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/CultivationLogbooks'))
+const FarmManagerCultivationLogbookCreate = React.lazy(() => import('../pages/FARM_MANAGER/CultivationLogbooks/CultivationLogbookCreate'))
+const FarmManagerCultivationLogbookDetail = React.lazy(() => import('../pages/FARM_MANAGER/CultivationLogbooks/CultivationLogbookDetail'))
 const FarmManagerQualityInspections = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections'))
 const FarmManagerQualityInspectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections/QualityInspectionDetail'))
 const FarmManagerPlanTemplates = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates'))
@@ -60,6 +60,7 @@ const FarmManagerTaskDetail = React.lazy(() => import('../pages/FARM_MANAGER/Tas
 const FarmManagerTaskEdit = React.lazy(() => import('../pages/FARM_MANAGER/Tasks/TaskEdit'))
 const FarmSupervisorPlans = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans'))
 const FarmSupervisorPlanDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans/PlanDetail'))
+const FarmSupervisorPlanDetailMock = React.lazy(() => import('../pages/FARM_SUPERVISOR/PlansMock'))
 const FarmSupervisorTaskDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans/TaskDetail'))
 const FarmLeaderTasks = React.lazy(() => import('../pages/FARM_LEADER/Tasks'))
 const FarmLeaderDailyLog = React.lazy(() => import('../pages/FARM_LEADER/Tasks/DailyLog'))
@@ -201,15 +202,15 @@ const routes = [
               { path: ROUTER.FM_CROP_EDIT, element: <Lazy><FarmManagerCropEdit /></Lazy> },
 
               // Cultivation Logbook Management (Nhật ký canh tác)
-              { path: ROUTER.FM_CULTIVATION_LOGBOOKS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
-              { path: ROUTER.FM_CULTIVATION_LOGBOOK_CREATE, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
-              { path: ROUTER.FM_CULTIVATION_LOGBOOK_EDIT, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
-              { path: ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL, element: <Lazy><FarmManagerProductionPlanDetail /></Lazy> },
+              { path: ROUTER.FM_CULTIVATION_LOGBOOKS, element: <Lazy><FarmManagerCultivationLogbooks /></Lazy> },
+              { path: ROUTER.FM_CULTIVATION_LOGBOOK_CREATE, element: <Lazy><FarmManagerCultivationLogbookCreate /></Lazy> },
+              { path: ROUTER.FM_CULTIVATION_LOGBOOK_EDIT, element: <Lazy><FarmManagerCultivationLogbookCreate /></Lazy> },
+              { path: ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL, element: <Lazy><FarmManagerCultivationLogbookDetail /></Lazy> },
               // Legacy routes - kept for backward compatibility
-              { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerProductionPlans /></Lazy> },
-              { path: ROUTER.FM_PRODUCTION_PLAN_CREATE, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
-              { path: ROUTER.FM_PRODUCTION_PLAN_EDIT, element: <Lazy><FarmManagerProductionPlanCreate /></Lazy> },
-              { path: ROUTER.FM_PRODUCTION_PLAN_DETAIL, element: <Lazy><FarmManagerProductionPlanDetail /></Lazy> },
+              { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerCultivationLogbooks /></Lazy> },
+              { path: ROUTER.FM_PRODUCTION_PLAN_CREATE, element: <Lazy><FarmManagerCultivationLogbookCreate /></Lazy> },
+              { path: ROUTER.FM_PRODUCTION_PLAN_EDIT, element: <Lazy><FarmManagerCultivationLogbookCreate /></Lazy> },
+              { path: ROUTER.FM_PRODUCTION_PLAN_DETAIL, element: <Lazy><FarmManagerCultivationLogbookDetail /></Lazy> },
 
               // Quality inspection for Farm Supervisor log entries
               { path: ROUTER.FM_QUALITY_INSPECTIONS, element: <Lazy><FarmManagerQualityInspections /></Lazy> },
@@ -263,6 +264,7 @@ const routes = [
               // Farm Supervisor - Plans & Tasks
               { path: ROUTER.FS_PLANS, element: <Lazy><FarmSupervisorPlans /></Lazy> },
               { path: ROUTER.FS_PLAN_DETAIL, element: <Lazy><FarmSupervisorPlanDetail /></Lazy> },
+              { path: ROUTER.FS_PLAN_DETAIL_MOCK, element: <Lazy><FarmSupervisorPlanDetailMock /></Lazy> },
               { path: ROUTER.FS_TASK_DETAIL, element: <Lazy><FarmSupervisorTaskDetail /></Lazy> },
               { path: ROUTER.FS_STAGE_LOG, element: <Lazy><FarmSupervisorStageLog /></Lazy> },
 
@@ -311,3 +313,4 @@ const routes = [
 
 const AppRouter = () => useRoutes(routes)
 export default AppRouter
+
