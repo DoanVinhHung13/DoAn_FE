@@ -128,11 +128,6 @@ export const farmSupervisorItem = () => [
     icon: <BellOutlined className="text-lg" />,
     label: 'Thông báo',
   },
-  {
-    key: ROUTER.LM_FIELD_LOG,
-    icon: <FormOutlined className="text-lg" />,
-    label: 'Kế hoạch & Ghi chép',
-  },
 ]
 
 // ─── FARM LEADER MENU ─────────────────────────────────────────────────────────

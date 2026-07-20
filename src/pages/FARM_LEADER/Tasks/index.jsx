@@ -163,13 +163,13 @@ const FarmLeaderTasks = () => {
                       <div className="grid gap-2 text-sm">
                         <div>
                           <Text type="secondary">Kế hoạch</Text>
-                          <div className="mt-1 font-semibold">{MOCK_SUPERVISOR_PLAN.planName}</div>
+                          <div className="mt-1 font-semibold">{task.planName || 'Chưa cập nhật'}</div>
                         </div>
                         <div>
                           <Text type="secondary">Vùng trồng</Text>
                           <div className="mt-1 font-semibold">
                             <EnvironmentOutlined className="mr-1 text-green-600" />
-                            {MOCK_SUPERVISOR_PLAN.landPlotName}
+                            {task.landPlotName || 'Chưa cập nhật'}
                           </div>
                         </div>
                         {task.startDate && (

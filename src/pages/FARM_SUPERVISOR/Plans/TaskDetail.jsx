@@ -55,8 +55,6 @@ import CultivationLogService from 'src/services/CultivationLogService'
 import UserService from 'src/services/UserService'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import CultivationTaskService from 'src/services/CultivationTaskService'
-import UserService from 'src/services/UserService'
 import { FakeCultivationService } from '../Logbooks/mockData'
 
 const { Text, Title, Paragraph } = Typography
