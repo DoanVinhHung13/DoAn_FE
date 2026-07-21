@@ -161,16 +161,14 @@ const PlanTemplateDetail = () => {
           <InfoItem
             label="Danh mục"
             value={catalogName}
-            helper="Nhóm cây trồng áp dụng"
             icon={<ProfileOutlined />}
           />
           <InfoItem
             label="Cây trồng"
             value={cropName || 'Cả danh mục'}
-            helper={cropName ? 'Cây trồng cụ thể' : 'Không giới hạn giống'}
             icon={<FileTextOutlined />}
           />
-          <InfoItem
+          {/* <InfoItem
             label="Thời lượng"
             value={
               item.estimatedDurationDays
@@ -179,11 +177,10 @@ const PlanTemplateDetail = () => {
             }
             helper="Tổng thời gian dự kiến"
             icon={<CalendarOutlined />}
-          />
+          /> */}
           <InfoItem
             label="Số bước"
             value={`${steps.length} bước`}
-            helper="Công việc trong quy trình"
             icon={<ProfileOutlined />}
           />
         </div>
@@ -203,9 +200,9 @@ const PlanTemplateDetail = () => {
               Sắp xếp theo thứ tự thực hiện
             </Text>
           </div>
-          <Tag color="green" className="m-0 rounded-full px-3 py-1">
+          {/* <Tag color="green" className="m-0 rounded-full px-3 py-1">
             {steps.length} bước
-          </Tag>
+          </Tag> */}
         </div>
 
         {steps.length ? (
@@ -226,7 +223,7 @@ const PlanTemplateDetail = () => {
                       <h3 className="m-0 text-sm font-bold text-gray-800">
                         {step.stepName || `Bước ${index + 1}`}
                       </h3>
-                      <div className="flex flex-wrap gap-2">
+                      {/* <div className="flex flex-wrap gap-2">
                         {step.estimatedDay !== null &&
                           step.estimatedDay !== undefined && (
                             <Tag
@@ -242,14 +239,14 @@ const PlanTemplateDetail = () => {
                             {step.requiredMaterialType}
                           </Tag>
                         )}
-                      </div>
+                      </div> */}
                     </div>
 
                     <p className="m-0 whitespace-pre-line text-sm leading-5 text-gray-600">
                       {step.description || 'Chưa có mô tả công việc.'}
                     </p>
 
-                    {step.note && (
+                    {/* {step.note && (
                       <div className="mt-3 flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm">
                         <span className="shrink-0 font-semibold text-amber-700">
                           Ghi chú:
@@ -258,7 +255,7 @@ const PlanTemplateDetail = () => {
                           {step.note}
                         </p>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
               ))}
