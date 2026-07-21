@@ -173,15 +173,7 @@ const FertilizerDetail = () => {
           {/* ════════════════════════════════════════════════════════════════
             Header: mã + trạng thái
         ═══════════════════════════════════════════════════════════════════ */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="mb-0.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-                Mã phân bón
-              </p>
-              <span className="text-lg font-bold text-gray-800 font-mono">
-                {item.code || '—'}
-              </span>
-            </div>
+          <div className="flex items-center justify-end">
             <Badge
               status={isActive ? 'success' : 'error'}
               text={
@@ -221,7 +213,7 @@ const FertilizerDetail = () => {
               {/* Tên phân bón – span 2 */}
               <Descriptions.Item
                 label={
-                  <span className="flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1">
                     <TagOutlined /> Tên phân bón
                   </span>
                 }
@@ -240,7 +232,7 @@ const FertilizerDetail = () => {
               {/* Nhà Sản Xuất */}
               <Descriptions.Item
                 label={
-                  <span className="flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1">
                     <ShopOutlined /> Nhà Sản Xuất
                   </span>
                 }
@@ -256,7 +248,7 @@ const FertilizerDetail = () => {
               {/* Tồn Kho tối thiểu */}
               <Descriptions.Item
                 label={
-                  <span className="flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1">
                     <BarcodeOutlined /> Tồn kho tối thiểu
                   </span>
                 }
@@ -266,6 +258,13 @@ const FertilizerDetail = () => {
                     ? `${Number(item.minimumStock).toLocaleString('vi-VN')} ${item.unit || ''}`
                     : '—'}
                 </span>
+              </Descriptions.Item>
+
+              {/* Đơn vị sử dụng */}
+              <Descriptions.Item label="Đơn vị sử dụng">
+                {item.usageUnit
+                  ? <Tag color="blue" className="font-medium rounded-full">{item.usageUnit}</Tag>
+                  : <span className="text-gray-400">—</span>}
               </Descriptions.Item>
 
               {/* Đơn vị tính */}
@@ -281,7 +280,7 @@ const FertilizerDetail = () => {
               {item.createdAt && (
                 <Descriptions.Item
                   label={
-                    <span className="flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1">
                       <CalendarOutlined /> Ngày tạo
                     </span>
                   }

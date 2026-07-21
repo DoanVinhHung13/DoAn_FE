@@ -262,7 +262,7 @@ const CultivationLogbookCreate = () => {
         let planStages = plan.cultivationStages || plan.productionStages || plan.stages || []
         const originalSupervisorId = plan.assignedFarmSupervisorId || supervisor.id || supervisor.userId || null
         const selectedCropId = plan.cropId || crop.id
-        let selectedCropCatalogId = plan.cropCatalogId || crop.cropCatalogId || crop.categoryId || null
+        const selectedCropCatalogId = plan.cropCatalogId || crop.cropCatalogId || crop.categoryId || null
 
         // Normalize stages
         if (!planStages.length && plan.processTemplateId) {
@@ -643,11 +643,7 @@ const CultivationLogbookCreate = () => {
 
         {/* Stages */}
         <Card bordered={false} className="shadow-sm rounded-2xl">
-          <SectionTitle extra={!isEdit && (
-            <Button type="dashed" icon={<PlusOutlined />} onClick={addStage} className="text-green-700 border-green-300">
-              Thêm giai đoạn
-            </Button>
-          )}>
+          <SectionTitle>
             Giai đoạn canh tác
           </SectionTitle>
 
@@ -687,6 +683,20 @@ const CultivationLogbookCreate = () => {
               </Row>
             </div>
           ))}
+
+          {/* Nút Thêm giai đoạn — đặt dưới danh sách */}
+          {!isEdit && (
+            <div className="mt-3">
+              <Button
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={addStage}
+                className="w-full text-green-700 border-green-300"
+              >
+                Thêm giai đoạn
+              </Button>
+            </div>
+          )}
         </Card>
 
         <div className="flex flex-wrap gap-3 justify-end">

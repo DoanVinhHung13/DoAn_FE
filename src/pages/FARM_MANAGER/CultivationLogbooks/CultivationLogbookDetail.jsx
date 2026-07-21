@@ -7,7 +7,6 @@ import {
   CheckCircleOutlined,
   HistoryOutlined,
   FileTextOutlined,
-  ExperimentOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -23,10 +22,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import CultivationTaskService from 'src/services/CultivationTaskService'
+import CultivationStageService from 'src/services/CultivationStageService'
+
 
 // Import các Tab components
-import ProcessTab from './components/ProcessTab'
+import TaskLogHistoryTab from 'src/pages/FARM_SUPERVISOR/Plans/components/TaskLogHistoryTab'
 import OfficialLogbookTab from './components/OfficialLogbookTab'
 import { formatDate } from 'src/utils/dateFormatters'
 
@@ -37,6 +37,7 @@ const CultivationLogbookDetail = () => {
 
   const [initialLoading, setInitialLoading] = useState(true)
   const [item, setItem] = useState(null)
+  const [stages, setStages] = useState([])
   const [activeTab, setActiveTab] = useState('official')
 
   useEffect(() => {
@@ -45,6 +46,8 @@ const CultivationLogbookDetail = () => {
     const fetchDetail = async () => {
       try {
         setInitialLoading(true)
+
+        // 1.1 Lấy thông tin logbook (không lấy cultivationStages từ đây)
         const response = await CultivationLogbookService.getById(id)
         if (response?.success === false || !response?.data) {
           message.error('Không tìm thấy nhật ký canh tác')
@@ -53,28 +56,24 @@ const CultivationLogbookDetail = () => {
         }
 
         const plan = response.data
-        let planTasks = plan.tasks || plan.cultivationTasks || []
-        try {
-          const taskResponse = await CultivationTaskService.getAll({
-            PageIndex: 1,
-            PageSize: 1000,
-          })
-          const taskPayload = taskResponse?.data?.data ?? taskResponse?.data
-          const allTasks = Array.isArray(taskPayload)
-            ? taskPayload
-            : taskPayload?.items || []
-          const tasksByLogbook = allTasks.filter(
-            (task) =>
-              (task.cultivationLogbookId ||
-                task.CultivationLogbookId ||
-                task.logbookId) === id
-          )
-          if (tasksByLogbook.length) planTasks = tasksByLogbook
-        } catch (error) {
-          console.error('Không thể lấy công việc canh tác:', error)
-        }
+        const planTasks = plan.tasks || plan.cultivationTasks || []
+
         if (!isMounted) return
+        // Lưu thông tin logbook nhưng bỏ cultivationStages
         setItem({ ...plan, tasks: planTasks })
+
+        // 1.2 Lấy stages riêng bằng API cultivation-stages/logbook/{logbookId}
+        try {
+          const stagesResponse = await CultivationStageService.getByLogbookId(id)
+          if (isMounted && stagesResponse?.data) {
+            const stagesData = Array.isArray(stagesResponse.data)
+              ? stagesResponse.data
+              : stagesResponse.data?.data || stagesResponse.data?.items || []
+            setStages(stagesData)
+          }
+        } catch (stageErr) {
+          console.error('Lỗi khi lấy giai đoạn canh tác:', stageErr)
+        }
 
       } catch {
         message.error('Lấy thông tin nhật ký canh tác thất bại')
@@ -106,6 +105,11 @@ const CultivationLogbookDetail = () => {
 
   if (!item) return null
 
+  // Build tasksMap từ stages (mỗi stage có array tasks)
+  const tasksMap = Object.fromEntries(
+    stages.map((stage) => [stage.id, Array.isArray(stage.tasks) ? stage.tasks : []])
+  )
+
   const tabItems = [
     {
       key: 'official',
@@ -115,17 +119,17 @@ const CultivationLogbookDetail = () => {
           Nhật ký chính thức
         </span>
       ),
-      children: <OfficialLogbookTab item={item} />,
+      children: <OfficialLogbookTab item={item} stages={stages} />,
     },
     {
       key: 'process',
       label: (
         <span className="flex items-center gap-2">
-          <ExperimentOutlined />
-          Tiến trình thực tế
+          <HistoryOutlined />
+          Lịch sử ghi Log
         </span>
       ),
-      children: <ProcessTab item={item} />,
+      children: <TaskLogHistoryTab stages={stages} tasks={tasksMap} />,
     },
   ]
 

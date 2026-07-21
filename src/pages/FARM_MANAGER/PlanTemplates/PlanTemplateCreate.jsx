@@ -36,11 +36,11 @@ const normalizeItems = (response) => {
   return Array.isArray(data)
     ? data
     : data?.items ||
-        data?.results ||
-        data?.crops ||
-        data?.cropCatalogs ||
-        data?.processSteps ||
-        []
+    data?.results ||
+    data?.crops ||
+    data?.cropCatalogs ||
+    data?.processSteps ||
+    []
 }
 
 const getEntity = (response) => response?.data ?? response ?? null
@@ -255,7 +255,7 @@ const PlanTemplateCreate = () => {
         (original.description || null) !== payload.description ||
         (original.estimatedDay ?? null) !== payload.estimatedDay ||
         (original.requiredMaterialType || null) !==
-          payload.requiredMaterialType ||
+        payload.requiredMaterialType ||
         (original.note || null) !== payload.note
 
       if (!changed) continue
@@ -290,11 +290,11 @@ const PlanTemplateCreate = () => {
       setSubmitting(true)
       const response = isEdit
         ? await PlanTemplateService.update(id, templatePayload, {
-            skipNotice: true,
-          })
+          skipNotice: true,
+        })
         : await PlanTemplateService.create(templatePayload, {
-            skipNotice: true,
-          })
+          skipNotice: true,
+        })
       if (response?.success === false) return
 
       const processTemplateId = isEdit ? id : getCreatedId(response)
@@ -401,7 +401,7 @@ const PlanTemplateCreate = () => {
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} md={12}>
+              {/* <Col xs={24} md={12}>
                 <Form.Item
                   name="estimatedDurationDays"
                   label="Tổng thời lượng dự kiến (ngày)"
@@ -420,7 +420,7 @@ const PlanTemplateCreate = () => {
                     placeholder="Ví dụ: 90"
                   />
                 </Form.Item>
-              </Col>
+              </Col> */}
               <Col span={24}>
                 <Form.Item name="description" label="Mô tả">
                   <Input.TextArea
@@ -464,7 +464,7 @@ const PlanTemplateCreate = () => {
                   </div>
 
                   <Row gutter={[12, 12]}>
-                    <Col xs={24} md={16}>
+                    <Col xs={24} md={24}>
                       <Text type="secondary" className="block mb-1 text-xs">
                         Mô tả công việc
                       </Text>
@@ -477,7 +477,7 @@ const PlanTemplateCreate = () => {
                         placeholder="Mô tả cách thực hiện bước này..."
                       />
                     </Col>
-                    <Col xs={24} md={8}>
+                    {/* <Col xs={24} md={8}>
                       <Text type="secondary" className="block mb-1 text-xs">
                         Ngày thực hiện dự kiến
                       </Text>
@@ -518,7 +518,7 @@ const PlanTemplateCreate = () => {
                         }
                         placeholder="Lưu ý kỹ thuật hoặc điều kiện thực hiện..."
                       />
-                    </Col>
+                    </Col> */}
                   </Row>
                 </div>
               ))}

@@ -143,7 +143,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   React.useEffect(() => {
     if (isEdit) {
       form.setFieldsValue({
-        code: editingItem.code || '',
+        usageUnit: editingItem.usageUnit || undefined,
         name: editingItem.name || '',
         manufacturer: editingItem.manufacturer || '',
         supplier: editingItem.supplier || '',
@@ -257,22 +257,13 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         return;
       }
 
-      if (!dosages || dosages.length === 0) {
-        message.error('Phải có ít nhất 1 Liều lượng.');
-        return;
-      }
 
-      const missingDosageFields = dosages.some(d => d.amount == null || d.amount === '' || !d.unit || !d.areaUnit || !d.target);
-      if (missingDosageFields) {
-        message.error('Các Liều lượng phải nhập đầy đủ 4 trường: Lượng, Đơn vị Tính, Đơn vị diện tích và Đối tượng.');
-        return;
-      }
 
       setLoading(true)
 
       const body = {
         name: values.name?.trim(),
-        code: values.code?.trim(),
+        usageUnit: values.usageUnit,
         supplier: values.supplier?.trim() || '',
         materialId: isEdit ? (editingItem.materialId || null) : null,
         unit: values.unit,
@@ -323,23 +314,17 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       }
 
       if (res?.success === false) {
-        const errMsg = (res.message || (res.errors && res.errors[0]) || '').toLowerCase()
-        if (errMsg.includes('code') || errMsg.includes('mã')) {
-          form.setFields([{ name: 'code', errors: ['Mã phân bón đã tồn tại trong hệ thống.'] }])
-        }
+        message.error(res.message || (res.errors && res.errors[0]) || 'Có lỗi xảy ra');
         return
       }
 
       navigate(ROUTER.FM_VIEW_FERTILIZERS)
-    } catch (err) {
       const errMsg = (
         err?.response?.data?.message ||
         err?.message ||
         ''
-      ).toLowerCase()
-      if (errMsg.includes('code') || errMsg.includes('mã')) {
-        form.setFields([{ name: 'code', errors: ['Mã phân bón đã tồn tại trong hệ thống.'] }])
-      }
+      )
+      message.error(errMsg || 'Có lỗi xảy ra');
     } finally {
       setLoading(false)
     }
@@ -386,32 +371,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       <SectionTitle>Thông Tin Cơ Bản</SectionTitle>
 
       <Row gutter={16}>
-        {/* Mã phân bón */}
-        <Col xs={24} md={12}>
-          <Form.Item
-            name="code"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Mã phân bón
-              </span>
-            }
-            rules={[
-              { required: true, message: 'Vui lòng nhập mã phân bón.' },
-              { max: 30, message: 'Mã phân bón tối đa 30 ký tự.' },
-              {
-                pattern: /^[A-Za-z0-9_\-]+$/,
-                message: 'Mã chỉ chứa chữ cái, số, dấu gạch dưới hoặc gạch ngang.',
-              },
-            ]}
-          >
-            <Input
-              prefix={<BarcodeOutlined className="text-gray-300" />}
-              placeholder="mã phân bón"
-              className="h-10 rounded-lg"
-              disabled={isEdit}
-            />
-          </Form.Item>
-        </Col>
+        {/* Removed Mã phân bón */}
 
         {/* Tên phân bón */}
         <Col xs={24} md={12}>
@@ -464,7 +424,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         </Col>
 
         {/* Tồn Kho tối thiểu */}
-        <Col xs={24} sm={8}>
+        <Col xs={24} sm={6}>
           <Form.Item
             name="minimumStock"
             label={
@@ -488,7 +448,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         </Col>
 
         {/* Đơn Vị tính */}
-        <Col xs={24} sm={8}>
+        <Col xs={24} sm={6}>
           <Form.Item
             name="unit"
             label={
@@ -527,6 +487,29 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             />
           </Form.Item>
         </Col>
+
+        {/* Đơn Vị sử dụng */}
+        <Col xs={24} sm={8}>
+          <Form.Item
+            name="usageUnit"
+            label={
+              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                Đơn vị sử dụng
+              </span>
+            }
+            rules={[{ required: true, message: 'Vui lòng chọn đơn vị sử dụng.' }]}
+          >
+            <Select
+              placeholder="Chọn đơn vị sử dụng"
+              className="h-10"
+              options={UNIT_OPTIONS}
+              showSearch
+              optionFilterProp="label"
+            />
+          </Form.Item>
+        </Col>
+
+
 
 
 

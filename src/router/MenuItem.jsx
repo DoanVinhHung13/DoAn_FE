@@ -52,6 +52,11 @@ export const farmManagerItem = () => [
     label: 'Cây trồng',
   },
   {
+    key: ROUTER.FM_PLAN_TEMPLATES,
+    icon: <ProfileOutlined className="text-lg" />,
+    label: 'Thư viện mẫu',
+  },
+  {
     key: ROUTER.FM_PRODUCTION_PLANS,
     icon: <ContainerOutlined className="text-lg" />,
     label: 'Nhật ký canh tác',
@@ -66,16 +71,12 @@ export const farmManagerItem = () => [
     icon: <SafetyCertificateOutlined className="text-lg" />,
     label: 'Kiểm tra chất lượng',
   },
-  {
-    key: ROUTER.FM_PLAN_TEMPLATES,
-    icon: <ProfileOutlined className="text-lg" />,
-    label: 'Thư viện mẫu',
-  },
-  {
-    key: ROUTER.FM_TASKS,
-    icon: <CheckCircleOutlined className="text-lg" />,
-    label: 'Quản lý nhiệm vụ',
-  },
+
+  // {
+  //   key: ROUTER.FM_TASKS,
+  //   icon: <CheckCircleOutlined className="text-lg" />,
+  //   label: 'Quản lý nhiệm vụ',
+  // },
   {
     key: ROUTER.FM_BATCHES,
     icon: <InboxOutlined className="text-lg" />,
