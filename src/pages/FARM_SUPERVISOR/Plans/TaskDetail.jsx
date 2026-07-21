@@ -55,8 +55,6 @@ import CultivationLogService from 'src/services/CultivationLogService'
 import UserService from 'src/services/UserService'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import CultivationTaskService from 'src/services/CultivationTaskService'
-import UserService from 'src/services/UserService'
 import { ROLES } from 'src/constants/roles'
 import { FakeCultivationService } from '../Logbooks/mockData'
 
