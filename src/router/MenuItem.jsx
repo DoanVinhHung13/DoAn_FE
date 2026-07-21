@@ -72,11 +72,11 @@ export const farmManagerItem = () => [
     label: 'Kiểm tra chất lượng',
   },
 
-  // {
-  //   key: ROUTER.FM_TASKS,
-  //   icon: <CheckCircleOutlined className="text-lg" />,
-  //   label: 'Quản lý nhiệm vụ',
-  // },
+  {
+    key: ROUTER.FM_TASKS,
+    icon: <CheckCircleOutlined className="text-lg" />,
+    label: 'Danh mục công việc',
+  },
   {
     key: ROUTER.FM_BATCHES,
     icon: <InboxOutlined className="text-lg" />,
