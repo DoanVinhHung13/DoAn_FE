@@ -174,13 +174,13 @@ const UserDetail = () => {
                 <div className="text-base font-medium text-gray-800">{formatDate(user.createdAt)}</div>
               </div>
 
-              <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+              {/* <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <ClockCircleOutlined className="text-gray-400" />
                   <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Đăng nhập lần cuối</Text>
                 </div>
                 <div className="text-base font-medium text-gray-800">{formatDateTime(user.lastLoginAt)}</div>
-              </div>
+              </div> */}
             </div>
           </Card>
         </Col>

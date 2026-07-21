@@ -54,6 +54,7 @@ import { formatDate } from 'src/utils/dateFormatters'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import CultivationTaskService from 'src/services/CultivationTaskService'
 import UserService from 'src/services/UserService'
+import { ROLES } from 'src/constants/roles'
 import { FakeCultivationService } from '../Logbooks/mockData'
 
 const { Text, Title, Paragraph } = Typography
@@ -108,15 +109,17 @@ const FarmSupervisorTaskDetail = () => {
   const [activating, setActivating] = useState(false)
   const [compileModal, setCompileModal] = useState(false)
   const [savingCompile, setSavingCompile] = useState(false)
+  const leaderOptions = leaders.map((l) => ({ value: l.id, label: l.fullName || l.name }))
   const farmerOptions = farmers.map((f) => ({ value: f.id, label: f.fullName || f.name }))
 
   useEffect(() => {
     const loadTaskAndUsers = async () => {
       setLoading(true)
       try {
-        const [planRes, usersRes] = await Promise.all([
+        const [planRes, leadersRes, farmersRes] = await Promise.all([
           !passedPlanData ? CultivationLogbookService.getById(planId).catch(() => null) : Promise.resolve({ data: passedPlanData }),
-          UserService.getUsers({ PageSize: 500 }).catch(() => ({ data: [] }))
+          UserService.getUsers({ PageIndex: 1, PageSize: 1000, Role: ROLES.FARM_LEADER, IsActive: true }).catch(() => ({ data: { items: [] } })),
+          UserService.getUsers({ PageIndex: 1, PageSize: 1000, Role: ROLES.FARMER, IsActive: true }).catch(() => ({ data: { items: [] } })),
         ])
 
         const planData = planRes?.data ?? planRes
@@ -156,11 +159,14 @@ const FarmSupervisorTaskDetail = () => {
           }
         }
 
-        const allUsers = usersRes?.data?.data || usersRes?.data?.items || usersRes?.data || []
-        if (Array.isArray(allUsers)) {
-          setLeaders(allUsers.filter(u => u.roles?.includes('FARM_LEADER') || u.role === 'FARM_LEADER' || u.roles?.some(r => typeof r === 'string' && r.includes('LEADER'))))
-          setFarmers(allUsers.filter(u => u.roles?.includes('FARMER') || u.role === 'FARMER' || u.roles?.some(r => typeof r === 'string' && r.includes('FARMER'))))
-        }
+        // Lấy danh sách Farm Leaders
+        const leadersList = leadersRes?.data?.items || leadersRes?.data?.data || leadersRes?.data || []
+        setLeaders(Array.isArray(leadersList) ? leadersList.filter(u => u.isActive !== false) : [])
+
+        // Lấy danh sách Farmers
+        const farmersList = farmersRes?.data?.items || farmersRes?.data?.data || farmersRes?.data || []
+        setFarmers(Array.isArray(farmersList) ? farmersList.filter(u => u.isActive !== false) : [])
+
       } catch (error) {
         console.error(error)
         message.error('Lỗi khi tải dữ liệu.')
@@ -298,7 +304,7 @@ const FarmSupervisorTaskDetail = () => {
                     tooltip="Farm Leader chịu trách nhiệm ghi nhật ký và báo cáo."
                   >
                     <Select
-                      options={farmerOptions}
+                      options={leaderOptions}
                       placeholder="Chọn Farm Leader..."
                       showSearch
                       filterOption={(input, option) =>

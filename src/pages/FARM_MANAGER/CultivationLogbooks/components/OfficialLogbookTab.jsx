@@ -47,16 +47,22 @@ const StageListItem = ({ stage, index, isActive, onClick }) => (
         </Text>
       }
       description={
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          {stage.startDate ? formatDate(stage.startDate) : '...'}
-        </Text>
+        <div className="flex flex-col gap-0.5">
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            Kế hoạch: {stage.startDate ? formatDate(stage.startDate) : 'Chưa xác định'}{' — '}
+            {stage.endDate ? formatDate(stage.endDate) : 'Chưa xác định'}
+          </Text>
+          <Text style={{ fontSize: 11, color: stage.actualStartDate ? '#16a34a' : '#9ca3af' }}>
+            Thực tế: {stage.actualStartDate ? formatDate(stage.actualStartDate) : 'Chưa bắt đầu'}{' — '}
+            {stage.actualEndDate ? formatDate(stage.actualEndDate) : 'Đang thực hiện'}
+          </Text>
+        </div>
       }
     />
   </List.Item>
 )
 
-const OfficialLogbookTab = ({ item }) => {
-  const stages = item.cultivationStages || item.productionStages || item.stages || []
+const OfficialLogbookTab = ({ item, stages = [] }) => {
   const [officialLogs, setOfficialLogs] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedStageId, setSelectedStageId] = useState(null)
@@ -141,11 +147,20 @@ const OfficialLogbookTab = ({ item }) => {
                     <h4 className="mb-0.5 text-sm font-semibold text-gray-800">
                       {selectedStage.stageName || selectedStage.name || `Giai đoạn ${selectedIndex + 1}`}
                     </h4>
-                    <p className="mb-0 text-xs text-gray-500">
-                      <CalendarOutlined className="mr-1" />
-                      {selectedStage.startDate ? formatDate(selectedStage.startDate) : '...'} -{' '}
-                      {selectedStage.endDate ? formatDate(selectedStage.endDate) : '...'}
-                    </p>
+                    <div className="flex flex-col gap-0.5">
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        <CalendarOutlined className="mr-1" />
+                        <span className="font-medium">Kế hoạch:</span>{' '}
+                        {selectedStage.startDate ? formatDate(selectedStage.startDate) : 'Chưa xác định'}{' — '}
+                        {selectedStage.endDate ? formatDate(selectedStage.endDate) : 'Chưa xác định'}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: selectedStage.actualStartDate ? '#16a34a' : '#9ca3af' }}>
+                        <CalendarOutlined className="mr-1" />
+                        <span className="font-medium">Thực tế:</span>{' '}
+                        {selectedStage.actualStartDate ? formatDate(selectedStage.actualStartDate) : 'Chưa bắt đầu'}{' — '}
+                        {selectedStage.actualEndDate ? formatDate(selectedStage.actualEndDate) : 'Đang thực hiện'}
+                      </Text>
+                    </div>
                   </div>
 
                   {stageLogs.length > 0 ? (

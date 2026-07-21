@@ -187,17 +187,6 @@ const ViewFertilizers = () => {
       ),
     },
     {
-      title: 'Mã phân bón',
-      dataIndex: 'code',
-      key: 'code',
-      width: 140,
-      render: (v) => (
-        <span className="px-2 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-lg font-mono">
-          {v || '—'}
-        </span>
-      ),
-    },
-    {
       title: 'Tên phân bón',
       dataIndex: 'name',
       key: 'name',
@@ -471,10 +460,7 @@ const ViewFertilizers = () => {
           </p>
           {statusModal.item && (
             <p className="mt-2 text-sm font-semibold text-gray-800">
-              <span className="font-mono text-emerald-700">
-                {statusModal.item.code}
-              </span>{' '}
-              — {statusModal.item.name}
+              {statusModal.item.name}
             </p>
           )}
         </div>
