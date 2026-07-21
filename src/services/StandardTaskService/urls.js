@@ -8,9 +8,9 @@
 // DELETE /api/standard-tasks/{id}         → remove (soft-delete)
 // PUT    /api/standard-tasks/{id}/status  → toggleStatus { isActive }
 
-export const apiGetTasks = '/standard-tasks'
-export const apiCreateTask = '/standard-tasks'
-export const apiGetTaskById = (id) => `/standard-tasks/${id}`
-export const apiUpdateTask = (id) => `/standard-tasks/${id}`
-export const apiDeleteTask = (id) => `/standard-tasks/${id}`
-export const apiToggleTaskStatus = (id) => `/standard-tasks/${id}/status`
+export const apiGetStandardTasks = '/standard-tasks'
+export const apiCreateStandardTask = '/standard-tasks'
+export const apiGetStandardTaskById = (id) => `/standard-tasks/${id}`
+export const apiUpdateStandardTask = (id) => `/standard-tasks/${id}`
+export const apiDeleteStandardTask = (id) => `/standard-tasks/${id}`
+export const apiToggleStandardTaskStatus = (id) => `/standard-tasks/${id}/status`

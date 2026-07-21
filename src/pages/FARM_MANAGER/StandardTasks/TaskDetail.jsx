@@ -1,24 +1,23 @@
-import { ArrowLeftOutlined, CheckSquareOutlined, EditOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, CheckSquareOutlined } from '@ant-design/icons'
 import { Button, Card, Form, message, Skeleton } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import TaskService from 'src/services/StandardTaskService'
+import StandardTaskService from 'src/services/StandardTaskService'
 import TaskFormFields from './TaskFormFields'
 
-const TaskEdit = () => {
+const TaskDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
     const fetchDetail = async () => {
       try {
         setInitialLoading(true)
-        const res = await TaskService.getById(id)
+        const res = await StandardTaskService.getById(id)
         if (res?.success === false) {
           message.error('Không tìm thấy công việc')
           navigate(ROUTER.FM_TASKS)
@@ -27,15 +26,8 @@ const TaskEdit = () => {
 
         const data = res?.data || {}
 
-        const applyTarget = data.applyTarget || 'ALL';
-        const cropIds = data.cropIds || [];
-        const cropCatalogId = data.cropCatalogId;
-
         form.setFieldsValue({
           title: data.title || '',
-          applyTarget: applyTarget,
-          cropCatalogId: cropCatalogId,
-          cropIds: cropIds,
           description: data.description || '',
         })
       } catch (err) {
@@ -48,45 +40,6 @@ const TaskEdit = () => {
     if (id) fetchDetail()
   }, [id, form, navigate])
 
-  const handleSubmit = async (values) => {
-    try {
-      setLoading(true)
-
-      const body = {
-        title: values.title?.trim(),
-        description: values.description?.trim() || '',
-        isActive: true,
-        applyTarget: values.applyTarget,
-      }
-
-      if (values.applyTarget === 'CATEGORY') {
-        if (values.cropCatalogId) {
-          body.cropCatalogId = values.cropCatalogId;
-        }
-      } else if (values.applyTarget === 'SPECIFIC') {
-        if (values.cropCatalogId) {
-          body.cropCatalogId = values.cropCatalogId;
-        }
-
-        body.cropIds = Array.isArray(values.cropIds) ? values.cropIds : [values.cropIds].filter(Boolean);
-      }
-
-      const res = await TaskService.update(id, body)
-
-      if (res?.success === false) {
-        message.error(res.message || 'Có lỗi xảy ra khi cập nhật công việc.')
-        return
-      }
-
-      message.success('Cập nhật thông tin công việc thành công.')
-      navigate(ROUTER.FM_TASKS)
-    } catch (err) {
-      message.error('Vui lòng nhập đầy đủ các trường thông tin bắt buộc.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       {/* Header */}
@@ -97,7 +50,7 @@ const TaskEdit = () => {
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <CheckSquareOutlined className="text-blue-600" />
-            Chỉnh sửa công việc
+            Chi tiết công việc
           </TitleCustom>
         </div>
       </div>
@@ -114,27 +67,17 @@ const TaskEdit = () => {
           <Form
             form={form}
             layout="vertical"
-            onFinish={handleSubmit}
           >
-            <TaskFormFields isEdit={true} />
+            <TaskFormFields readOnly={true} />
 
             {/* Footer actions */}
             <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
               <Button
                 onClick={() => navigate(ROUTER.FM_TASKS)}
-                className="h-10 px-6 rounded-xl"
-                disabled={loading}
+                icon={<ArrowLeftOutlined />}
+                className="h-10 px-6 font-semibold rounded-xl"
               >
-                Hủy
-              </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={loading}
-                icon={<EditOutlined />}
-                className="h-10 px-6 font-bold bg-blue-600 border-0 shadow-lg rounded-xl shadow-blue-100"
-              >
-                Lưu thay đổi
+                Quay lại
               </Button>
             </div>
           </Form>
@@ -144,4 +87,4 @@ const TaskEdit = () => {
   )
 }
 
-export default TaskEdit
+export default TaskDetail

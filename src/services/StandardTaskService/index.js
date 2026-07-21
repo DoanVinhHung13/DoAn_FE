@@ -16,49 +16,49 @@
  */
 import http from '../01_axios'
 import {
-  apiCreateTask,
-  apiDeleteTask,
-  apiGetTaskById,
-  apiGetTasks,
-  apiToggleTaskStatus,
-  apiUpdateTask,
+  apiCreateStandardTask,
+  apiDeleteStandardTask,
+  apiGetStandardTaskById,
+  apiGetStandardTasks,
+  apiToggleStandardTaskStatus,
+  apiUpdateStandardTask,
 } from './urls'
 
 /**
  * GET /api/standard-tasks
  * params: { PageIndex, PageSize, SearchKeyword, Status? }
  */
-const getAll = (params) => http.get(apiGetTasks, { params })
+const getAll = (params) => http.get(apiGetStandardTasks, { params })
 
 /**
  * GET /api/standard-tasks/{id}
  */
-const getById = (id) => http.get(apiGetTaskById(id))
+const getById = (id) => http.get(apiGetStandardTaskById(id))
 
 /**
  * POST /api/standard-tasks
  * body: { title, applyTarget, description?, isActive?, cropCatalogId?, cropIds? }
  */
-const create = (body) => http.post(apiCreateTask, body)
+const create = (body) => http.post(apiCreateStandardTask, body)
 
 /**
  * PUT /api/standard-tasks/{id}
  * body: { title, applyTarget, description?, isActive?, cropCatalogId?, cropIds? }
  */
-const update = (id, body) => http.put(apiUpdateTask(id), body)
+const update = (id, body) => http.put(apiUpdateStandardTask(id), body)
 
 /**
  * DELETE /api/standard-tasks/{id}
  */
-const remove = (id) => http.delete(apiDeleteTask(id))
+const remove = (id) => http.delete(apiDeleteStandardTask(id))
 
 /**
  * PUT /api/standard-tasks/{id}/status
  * body: { isActive: boolean }
  */
-const toggleStatus = (id, body) => http.put(apiToggleTaskStatus(id), body)
+const toggleStatus = (id, body) => http.put(apiToggleStandardTaskStatus(id), body)
 
-const TaskService = {
+const StandardTaskService = {
   getAll,
   getById,
   create,
@@ -67,4 +67,4 @@ const TaskService = {
   toggleStatus,
 }
 
-export default TaskService
+export default StandardTaskService

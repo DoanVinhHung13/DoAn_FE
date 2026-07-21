@@ -1,23 +1,24 @@
-import { ArrowLeftOutlined, CheckSquareOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, CheckSquareOutlined, EditOutlined } from '@ant-design/icons'
 import { Button, Card, Form, message, Skeleton } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import TaskService from 'src/services/StandardTaskService'
+import StandardTaskService from 'src/services/StandardTaskService'
 import TaskFormFields from './TaskFormFields'
 
-const TaskDetail = () => {
+const TaskEdit = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
 
   useEffect(() => {
     const fetchDetail = async () => {
       try {
         setInitialLoading(true)
-        const res = await TaskService.getById(id)
+        const res = await StandardTaskService.getById(id)
         if (res?.success === false) {
           message.error('Không tìm thấy công việc')
           navigate(ROUTER.FM_TASKS)
@@ -26,15 +27,8 @@ const TaskDetail = () => {
 
         const data = res?.data || {}
 
-        const applyTarget = data.applyTarget || 'ALL';
-        const cropCatalogId = data.cropCatalogId;
-        const cropIds = data.cropId ? [data.cropId] : (data.cropIds || []);
-
         form.setFieldsValue({
           title: data.title || '',
-          applyTarget: applyTarget,
-          cropCatalogId: cropCatalogId,
-          cropIds: cropIds,
           description: data.description || '',
         })
       } catch (err) {
@@ -47,6 +41,31 @@ const TaskDetail = () => {
     if (id) fetchDetail()
   }, [id, form, navigate])
 
+  const handleSubmit = async (values) => {
+    try {
+      setLoading(true)
+
+      const body = {
+        title: values.title?.trim(),
+        description: values.description?.trim() || '',
+        isActive: true,
+      }
+
+      const res = await StandardTaskService.update(id, body)
+
+      if (res?.success === false) {
+        message.error(res.message || 'Có lỗi xảy ra khi cập nhật công việc.')
+        return
+      }
+
+      navigate(ROUTER.FM_TASKS)
+    } catch (err) {
+      message.error('Vui lòng nhập đầy đủ các trường thông tin bắt buộc.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       {/* Header */}
@@ -57,7 +76,7 @@ const TaskDetail = () => {
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <CheckSquareOutlined className="text-blue-600" />
-            Chi tiết công việc
+            Chỉnh sửa công việc
           </TitleCustom>
         </div>
       </div>
@@ -74,17 +93,27 @@ const TaskDetail = () => {
           <Form
             form={form}
             layout="vertical"
+            onFinish={handleSubmit}
           >
-            <TaskFormFields readOnly={true} />
+            <TaskFormFields isEdit={true} />
 
             {/* Footer actions */}
             <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
               <Button
                 onClick={() => navigate(ROUTER.FM_TASKS)}
-                icon={<ArrowLeftOutlined />}
-                className="h-10 px-6 font-semibold rounded-xl"
+                className="h-10 px-6 rounded-xl"
+                disabled={loading}
               >
-                Quay lại
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+                icon={<EditOutlined />}
+                className="h-10 px-6 font-bold bg-blue-600 border-0 shadow-lg rounded-xl shadow-blue-100"
+              >
+                Lưu thay đổi
               </Button>
             </div>
           </Form>
@@ -94,4 +123,4 @@ const TaskDetail = () => {
   )
 }
 
-export default TaskDetail
+export default TaskEdit

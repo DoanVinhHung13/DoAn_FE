@@ -75,7 +75,7 @@ export const farmManagerItem = () => [
   {
     key: ROUTER.FM_TASKS,
     icon: <CheckCircleOutlined className="text-lg" />,
-    label: 'Quản lý nhiệm vụ',
+    label: 'Danh mục công việc',
   },
   {
     key: ROUTER.FM_BATCHES,

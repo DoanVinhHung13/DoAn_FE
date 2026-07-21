@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import TaskService from 'src/services/StandardTaskService'
+import StandardTaskService from 'src/services/StandardTaskService'
 import TaskFormFields from './TaskFormFields'
 
 const TaskCreate = () => {
@@ -19,29 +19,15 @@ const TaskCreate = () => {
         title: values.title?.trim(),
         description: values.description?.trim() || '',
         isActive: true,
-        applyTarget: values.applyTarget,
       }
 
-      if (values.applyTarget === 'CATEGORY') {
-        if (values.cropCatalogId) {
-          body.cropCatalogId = values.cropCatalogId;
-        }
-      } else if (values.applyTarget === 'SPECIFIC') {
-        if (values.cropCatalogId) {
-          body.cropCatalogId = values.cropCatalogId;
-        }
-
-        body.cropIds = Array.isArray(values.cropIds) ? values.cropIds : [values.cropIds].filter(Boolean);
-      }
-
-      const res = await TaskService.create(body)
+      const res = await StandardTaskService.create(body)
 
       if (res?.success === false) {
         message.error(res.message || 'Có lỗi xảy ra khi lưu công việc.')
         return
       }
 
-      message.success('Thêm mới công việc thành công.')
       navigate(ROUTER.FM_TASKS)
     } catch (err) {
       message.error('Vui lòng nhập đầy đủ các trường thông tin bắt buộc.')
