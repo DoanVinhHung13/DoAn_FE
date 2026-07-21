@@ -12,7 +12,6 @@ import {
   PlusOutlined,
   SafetyCertificateOutlined,
   SaveOutlined,
-  SendOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -56,6 +55,12 @@ const itemsOf = (response) => {
   return Array.isArray(data) ? data : data?.items || []
 }
 
+const stagesOf = (logbook) =>
+  logbook?.cultivationStages ||
+  logbook?.productionStages ||
+  logbook?.stages ||
+  []
+
 const activityOptions = [
   { value: 'LAND_PREPARATION', label: 'Chuẩn bị đất' },
   { value: 'PLANTING', label: 'Gieo trồng' },
@@ -73,12 +78,6 @@ const materialCategories = [
   { value: 'CROP_PROTECTION', label: 'Thuốc BVTV' },
   { value: 'FARM_MATERIAL', label: 'Vật tư nông trại' },
   { value: 'MACHINERY', label: 'Máy móc' },
-]
-
-const qualityObjectOptions = [
-  { value: 'SOIL', label: 'Đất / giá thể' },
-  { value: 'IRRIGATION_WATER', label: 'Nước tưới' },
-  { value: 'PRODUCT', label: 'Sản phẩm' },
 ]
 
 const materialFieldConfigs = {
@@ -147,12 +146,6 @@ const getCreatedId = (response) =>
   response?.id ||
   null
 
-const getLogRequestKey = (log, index) =>
-  log.id ||
-  log.cultivationLogId ||
-  log.productionLogId ||
-  `stage-log-${index}`
-
 const StageLog = () => {
   const navigate = useNavigate()
   const { planId, stageId } = useParams()
@@ -172,17 +165,6 @@ const StageLog = () => {
   const [materials, setMaterials] = useState([])
   const [saving, setSaving] = useState(false)
   const [completing, setCompleting] = useState(false)
-  const [qualityModalOpen, setQualityModalOpen] = useState(false)
-  const [selectedQualityLog, setSelectedQualityLog] = useState(null)
-  const [qualityObject, setQualityObject] = useState()
-  const [sampleDate, setSampleDate] = useState(dayjs())
-  const [sampleCode, setSampleCode] = useState('')
-  const [sampleLocation, setSampleLocation] = useState('')
-  const [laboratory, setLaboratory] = useState('')
-  const [resultSummary, setResultSummary] = useState('')
-  const [qualityFiles, setQualityFiles] = useState([])
-  const [qualityRequestStatus, setQualityRequestStatus] = useState({})
-
   const load = useCallback(async () => {
     if (planId.startsWith('mock-')) {
       const mockStage = getMockStage(stageId) || null
@@ -201,15 +183,27 @@ const StageLog = () => {
     }
     try {
       setLoading(true)
-      const [planResponse, stageResponse, logResponse] = await Promise.all([
+      const [planResponse, logResponse] = await Promise.all([
         ProductionPlanService.getById(planId),
-        ProductionStageService.getAll({ PageIndex: 1, PageSize: 1000 }),
         ProductionLogService.getByPlan(planId),
       ])
       const planData = planResponse?.data ?? planResponse
-      const stageData = itemsOf(stageResponse).find(
+      let stageData = stagesOf(planData).find(
         (item) => String(item.id) === String(stageId)
       )
+
+      // Tương thích dữ liệu cũ nếu API chi tiết chưa trả mảng giai đoạn.
+      if (!stageData) {
+        const stageResponse = await ProductionStageService.getAll({
+          PageIndex: 1,
+          PageSize: 1000,
+          CultivationLogbookId: planId,
+        })
+        stageData = itemsOf(stageResponse).find(
+          (item) => String(item.id) === String(stageId)
+        )
+      }
+
       setPlan(planData)
       setStage(stageData || null)
       if (stageData?.startDate) {
@@ -465,42 +459,6 @@ const StageLog = () => {
     } finally {
       setSaving(false)
     }
-  }
-
-  const openQualityRequest = (log, index) => {
-    setSelectedQualityLog({
-      ...log,
-      requestKey:
-        log.id ||
-        log.cultivationLogId ||
-        log.productionLogId ||
-        `stage-log-${index}`,
-    })
-    setQualityObject(undefined)
-    setSampleDate(log.activityDate ? dayjs(log.activityDate) : dayjs())
-    setSampleCode('')
-    setSampleLocation(plan?.landPlotName || '')
-    setLaboratory('')
-    setResultSummary('')
-    setQualityFiles([])
-    setQualityModalOpen(true)
-  }
-
-  const submitQualityRequest = () => {
-    if (!qualityObject || !sampleDate || !sampleLocation.trim()) {
-      message.warning(
-        'Vui lòng chọn đối tượng kiểm tra, ngày lấy mẫu và vị trí lấy mẫu.'
-      )
-      return
-    }
-    setQualityRequestStatus((current) => ({
-      ...current,
-      [selectedQualityLog.requestKey]: 'PENDING',
-    }))
-    setQualityModalOpen(false)
-    message.success(
-      'Đã gửi yêu cầu kiểm tra chất lượng đến Farm Manager.'
-    )
   }
 
   const completeStage = () => {
@@ -957,7 +915,7 @@ const StageLog = () => {
           >
             {stageLogs.length ? (
               <Timeline
-                items={stageLogs.map((log, logIndex) => ({
+                items={stageLogs.map((log) => ({
                   color: 'green',
                   children: (
                     <div className="pb-3">
@@ -972,27 +930,38 @@ const StageLog = () => {
                               log.creatorName ||
                               'Farm Supervisor'}
                           </Text>
-                          {qualityRequestStatus[
-                            getLogRequestKey(log, logIndex)
-                          ] === 'PENDING' ? (
-                            <Tag
-                              color="gold"
-                              icon={<SafetyCertificateOutlined />}
-                            >
-                              Chờ Farm Manager kiểm tra
-                            </Tag>
-                          ) : (
-                            <Button
-                              size="small"
-                              icon={<SafetyCertificateOutlined />}
-                              className="border-green-200 text-green-700"
-                              onClick={() =>
-                                openQualityRequest(log, logIndex)
-                              }
-                            >
-                              Gửi kiểm tra chất lượng
-                            </Button>
-                          )}
+                          <Tag
+                            color={
+                              String(
+                                log.status ||
+                                  log.inspectionStatus ||
+                                  'PENDING'
+                              ).toUpperCase() === 'APPROVED'
+                                ? 'green'
+                                : String(
+                                      log.status ||
+                                        log.inspectionStatus ||
+                                        'PENDING'
+                                    ).toUpperCase() === 'REJECTED'
+                                  ? 'red'
+                                  : 'gold'
+                            }
+                            icon={<SafetyCertificateOutlined />}
+                          >
+                            {String(
+                              log.status ||
+                                log.inspectionStatus ||
+                                'PENDING'
+                            ).toUpperCase() === 'APPROVED'
+                              ? 'Đạt yêu cầu'
+                              : String(
+                                    log.status ||
+                                      log.inspectionStatus ||
+                                      'PENDING'
+                                  ).toUpperCase() === 'REJECTED'
+                                ? 'Cần xử lý'
+                                : 'Chờ Farm Manager kiểm tra'}
+                          </Tag>
                         </div>
                       </div>
                       <p className="p-3 mt-2 mb-0 text-sm text-gray-700 whitespace-pre-wrap border rounded-xl bg-gray-50">
@@ -1054,152 +1023,6 @@ const StageLog = () => {
         </Col>
       </Row>
 
-      <Modal
-        open={qualityModalOpen}
-        width={820}
-        title={
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-lg text-green-700">
-              <SafetyCertificateOutlined />
-            </span>
-            <div>
-              <div className="font-bold text-gray-900">
-                Gửi yêu cầu kiểm tra chất lượng
-              </div>
-              <div className="text-xs font-normal text-gray-500">
-                Phiếu được gắn với bản ghi nhật ký đã chọn
-              </div>
-            </div>
-          </div>
-        }
-        onCancel={() => setQualityModalOpen(false)}
-        footer={[
-          <Button key="cancel" onClick={() => setQualityModalOpen(false)}>
-            Hủy
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            icon={<SendOutlined />}
-            className="bg-green-600"
-            onClick={submitQualityRequest}
-          >
-            Gửi Farm Manager
-          </Button>,
-        ]}
-      >
-        <div className="space-y-5 pt-3">
-          <div className="rounded-xl border border-green-100 bg-green-50/60 p-4">
-            <div className="mb-1 text-xs font-semibold uppercase text-green-700">
-              Bản ghi được kiểm tra
-            </div>
-            <div className="font-semibold text-gray-900">
-              {selectedQualityLog?.description || 'Bản ghi hiện trường'}
-            </div>
-            <div className="mt-1 text-xs text-gray-500">
-              Ngày ghi chép:{' '}
-              {selectedQualityLog?.activityDate
-                ? formatDate(selectedQualityLog.activityDate)
-                : '—'}
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Text className="mb-1.5 block text-sm font-medium">
-                <span className="mr-1 text-red-500">*</span>
-                Đối tượng kiểm tra
-              </Text>
-              <Select
-                value={qualityObject}
-                className="w-full"
-                placeholder="Chọn đất, nước tưới hoặc sản phẩm"
-                options={qualityObjectOptions}
-                onChange={setQualityObject}
-              />
-            </div>
-            <div>
-              <Text className="mb-1.5 block text-sm font-medium">
-                <span className="mr-1 text-red-500">*</span>
-                Ngày lấy mẫu
-              </Text>
-              <DatePicker
-                value={sampleDate}
-                format="DD/MM/YYYY"
-                className="w-full"
-                onChange={setSampleDate}
-              />
-            </div>
-            <div>
-              <Text className="mb-1.5 block text-sm font-medium">
-                Mã mẫu
-              </Text>
-              <Input
-                value={sampleCode}
-                placeholder="VD: DAT-A1-1907"
-                onChange={(event) => setSampleCode(event.target.value)}
-              />
-            </div>
-            <div>
-              <Text className="mb-1.5 block text-sm font-medium">
-                <span className="mr-1 text-red-500">*</span>
-                Vị trí lấy mẫu
-              </Text>
-              <Input
-                value={sampleLocation}
-                placeholder="Nhập vị trí lấy mẫu cụ thể"
-                onChange={(event) => setSampleLocation(event.target.value)}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Text className="mb-1.5 block text-sm font-medium">
-                Đơn vị xét nghiệm
-              </Text>
-              <Input
-                value={laboratory}
-                placeholder="Tên phòng thử nghiệm hoặc đơn vị xét nghiệm"
-                onChange={(event) => setLaboratory(event.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Text className="mb-1.5 block text-sm font-medium">
-              Kết quả hoặc ghi chú ban đầu
-            </Text>
-            <Input.TextArea
-              value={resultSummary}
-              rows={3}
-              maxLength={1000}
-              showCount
-              placeholder="Nhập kết quả đo nhanh, tình trạng mẫu hoặc thông tin cần Farm Manager lưu ý..."
-              onChange={(event) => setResultSummary(event.target.value)}
-            />
-          </div>
-
-          <div>
-            <Text className="mb-1.5 block text-sm font-medium">
-              Phiếu xét nghiệm và ảnh lấy mẫu
-            </Text>
-            <Dragger
-              multiple
-              maxCount={5}
-              accept=".pdf,.png,.jpg,.jpeg"
-              fileList={qualityFiles}
-              beforeUpload={() => false}
-              onChange={({ fileList }) => setQualityFiles(fileList)}
-            >
-              <CloudUploadOutlined className="text-2xl text-green-600" />
-              <div className="mt-2 font-medium">
-                Kéo thả hoặc bấm để tải tệp
-              </div>
-              <div className="mt-1 text-xs text-gray-400">
-                PDF, PNG, JPG · tối đa 5 tệp
-              </div>
-            </Dragger>
-          </div>
-        </div>
-      </Modal>
     </div>
   )
 }
