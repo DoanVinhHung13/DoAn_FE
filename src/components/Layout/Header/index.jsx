@@ -11,7 +11,6 @@ import {
   Drawer,
   Dropdown,
   Space,
-  Typography,
 } from "antd";
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -22,14 +21,14 @@ import { getAvatarUrl } from "src/utils/helpers";
 import { useAppDispatch } from "src/redux/hooks";
 import { setUserInfo } from "src/redux/slices/appGlobalSlice";
 import ROUTER from "src/router/ROUTER";
-
-const { Title } = Typography;
+import { getDashboardPathByRole } from "src/router/roleRedirects";
 
 const PublicNavbar = () => {
   const navigate = useNavigate();
   // Dùng Redux làm nguồn duy nhất — không cần isLoginContext từ Context
   const { userInfo: user } = useSelector((state) => state.appGlobal);
   const isLoginContext = Boolean(user?._id);
+  const dashboardPath = getDashboardPathByRole(user?.role);
   const dispatch = useAppDispatch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -44,7 +43,7 @@ const PublicNavbar = () => {
       key: "dashboard",
       label: "Bảng điều khiển",
       icon: <DashboardOutlined />,
-      onClick: () => navigate(ROUTER.FM_DASHBOARD),
+      onClick: () => navigate(dashboardPath),
     },
     {
       key: "profile",
@@ -149,7 +148,7 @@ const PublicNavbar = () => {
                   type="text"
                   icon={<DashboardOutlined />}
                   className="items-center hidden px-3 font-bold text-green-600 transition-all rounded-lg hover:bg-green-50 sm:flex"
-                  onClick={() => navigate(ROUTER.FM_DASHBOARD)}
+                  onClick={() => navigate(dashboardPath)}
                 >
                   Bảng điều khiển
                 </Button>

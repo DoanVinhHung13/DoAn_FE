@@ -1,6 +1,6 @@
-export const apiProductionLogs = '/production-logs'
-export const apiProductionLogById = (id) => `/production-logs/${id}`
+export const apiProductionLogs = '/cultivation-logs'
+export const apiProductionLogById = (id) => `/cultivation-logs/${id}`
 export const apiProductionPlanLogs = (planId) =>
-  `/production-plans/${planId}/logs`
+  `/cultivation-logbooks/${planId}/logs`
 export const apiProductionLogImages = (id) =>
-  `/production-logs/${id}/images`
+  `/cultivation-logs/${id}/images`

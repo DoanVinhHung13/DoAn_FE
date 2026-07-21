@@ -36,6 +36,12 @@ const itemsOf = (response) => {
   return Array.isArray(data) ? data : data?.items || []
 }
 
+const stagesOf = (logbook) =>
+  logbook?.cultivationStages ||
+  logbook?.productionStages ||
+  logbook?.stages ||
+  []
+
 const stageStatus = (status) => {
   const value = String(status || '').toUpperCase()
   if (['COMPLETED', 'DONE'].includes(value)) {
@@ -69,28 +75,34 @@ const LogbookDetail = () => {
 
     try {
       setLoading(true)
-      const [planResponse, stageResponse] = await Promise.all([
-        ProductionPlanService.getById(planId),
-        ProductionStageService.getAll({
+      const planResponse = await ProductionPlanService.getById(planId)
+      const planData = planResponse?.data ?? planResponse
+      let stageItems = stagesOf(planData)
+
+      // Tương thích dữ liệu cũ nếu API chi tiết chưa trả mảng giai đoạn.
+      if (!stageItems.length) {
+        const stageResponse = await ProductionStageService.getAll({
           PageIndex: 1,
           PageSize: 1000,
           CultivationLogbookId: planId,
-        }),
-      ])
-      setPlan(planResponse?.data ?? planResponse)
+        })
+        stageItems = itemsOf(stageResponse).filter(
+          (stage) =>
+            String(
+              stage.cultivationLogbookId ||
+                stage.productionPlanId ||
+                ''
+            ) === String(planId)
+        )
+      }
+
+      setPlan(planData)
       setStages(
-        itemsOf(stageResponse)
-          .filter(
-            (stage) =>
-              String(
-                stage.cultivationLogbookId || stage.productionPlanId || ''
-              ) === String(planId)
-          )
-          .sort(
-            (first, second) =>
-              new Date(first.startDate || 0) -
-              new Date(second.startDate || 0)
-          )
+        [...stageItems].sort(
+          (first, second) =>
+            new Date(first.startDate || 0) -
+            new Date(second.startDate || 0)
+        )
       )
     } catch (error) {
       message.error(error.message || 'Không thể tải chi tiết nhật ký.')

@@ -78,6 +78,7 @@ const FarmManagerCropProtectionDetail = React.lazy(() => import('../pages/FARM_M
 const FarmManagerCropProtectionEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionEdit'))
 const FarmManagerReferenceFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/Reference/FertilizerList'))
 const FarmManagerReferencePesticides = React.lazy(() => import('../pages/FARM_MANAGER/Reference/PesticideList'))
+const FarmManagerQRManagement = React.lazy(() => import('../pages/FARM_MANAGER/QRManagement'))
 
 // FARM_SUPERVISOR pages (formerly LAND_MANAGER)
 const FarmLeaderFieldLog = React.lazy(() => import('src/pages/FARM_SUPERVISOR/FieldLog'))
@@ -249,6 +250,9 @@ const routes = [
               // Reference Management
               { path: ROUTER.FM_REF_FERTILIZER, element: <Lazy><FarmManagerReferenceFertilizers /></Lazy> },
               { path: ROUTER.FM_REF_PESTICIDE, element: <Lazy><FarmManagerReferencePesticides /></Lazy> },
+
+              // QR Management
+              { path: ROUTER.FM_QR_MANAGEMENT, element: <Lazy><FarmManagerQRManagement /></Lazy> },
 
               // Logbook Review (duyệt nhật ký canh tác)
               { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },
