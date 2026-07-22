@@ -30,11 +30,32 @@ import { invalidCharsRegex } from 'src/utils/helpers';
 
 const { Text, Paragraph } = Typography;
 
+// Ánh xạ giá trị API (tiếng Anh) → nhãn tiếng Việt + màu sắc
+// Logic tiến độ thu hoạch:
+//   CREATED(10%) → PENDING(20%) → IN_PROGRESS(60%) → IN_STORAGE(100%) → COMPLETED(100%)
+//   IN_STORAGE = hàng đã vào kho = thu hoạch XOĐG → 100% và được phép tạo QR
+const STATUS_MAP = {
+  // English API values
+  CREATED:      { label: 'Vừa tạo',                color: 'purple', bgColor: 'bg-purple-100', textColor: 'text-purple-700', borderColor: 'border-purple-300', progressPct: 10,  progressStatus: 'normal'    },
+  PENDING:      { label: 'Chờ xử lý',            color: 'gold',   bgColor: 'bg-yellow-100', textColor: 'text-yellow-700', borderColor: 'border-yellow-300', progressPct: 20,  progressStatus: 'normal'    },
+  IN_PROGRESS:  { label: 'Đang thu hoạch',        color: 'blue',   bgColor: 'bg-blue-100',   textColor: 'text-blue-700',   borderColor: 'border-blue-300',   progressPct: 60,  progressStatus: 'active'    },
+  IN_STORAGE:   { label: 'Hoàn thành - Lưu kho',  color: 'green',  bgColor: 'bg-green-100',  textColor: 'text-green-700',  borderColor: 'border-green-300',  progressPct: 100, progressStatus: 'success'   },
+  COMPLETED:    { label: 'Đã phân phối',          color: 'teal',   bgColor: 'bg-teal-100',   textColor: 'text-teal-700',   borderColor: 'border-teal-300',   progressPct: 100, progressStatus: 'success'   },
+  CANCELLED:    { label: 'Đã huỷ',               color: 'red',    bgColor: 'bg-red-100',    textColor: 'text-red-700',    borderColor: 'border-red-300',    progressPct: 0,   progressStatus: 'exception' },
+  // Vietnamese legacy values
+  'Chờ thu hoạch': { label: 'Chờ thu hoạch', color: 'orange', bgColor: 'bg-orange-100', textColor: 'text-orange-700', borderColor: 'border-orange-300', progressPct: 30,  progressStatus: 'normal'  },
+  'Đang thu hoạch': { label: 'Đang thu hoạch', color: 'blue',   bgColor: 'bg-blue-100',   textColor: 'text-blue-700',   borderColor: 'border-blue-300',   progressPct: 70,  progressStatus: 'active'  },
+  'Đã hoàn thành':  { label: 'Đã hoàn thành',  color: 'green',  bgColor: 'bg-green-100',  textColor: 'text-green-700',  borderColor: 'border-green-300',  progressPct: 100, progressStatus: 'success' },
+};
+
 const STATUS_OPTIONS = [
-  { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'Chờ thu hoạch', label: 'Chờ thu hoạch' },
-  { value: 'Đang thu hoạch', label: 'Đang thu hoạch' },
-  { value: 'Đã hoàn thành', label: 'Đã hoàn thành' },
+  { value: 'all',         label: 'Tất cả trạng thái' },
+  { value: 'CREATED',     label: 'Vừa tạo' },
+  { value: 'PENDING',     label: 'Chờ xử lý' },
+  { value: 'IN_PROGRESS', label: 'Đang thu hoạch' },
+  { value: 'IN_STORAGE',  label: 'Hoàn thành - Lưu kho' },
+  { value: 'COMPLETED',   label: 'Đã phân phối' },
+  { value: 'CANCELLED',   label: 'Đã huỷ' },
 ];
 
 const Batches = () => {
@@ -57,13 +78,16 @@ const Batches = () => {
           PageIndex: page,
           PageSize: pageSize,
           SearchKeyword: search || undefined,
-          batchCode: search || undefined,
-          status: statusFilter === 'all' ? undefined : statusFilter,
+          BatchCode: search || undefined,
+          Status: statusFilter === 'all' ? undefined : statusFilter,
         });
 
-        const payload = response?.data?.data || response?.data || {};
-        const items = Array.isArray(payload) ? payload : payload.items || payload.results || [];
-        const total = payload.totalItems || payload.total || items.length;
+        // BE trả về: { success, message, data: { items, totalItems, pageIndex, pageSize, totalPages } }
+        // Axios interceptor (parseBody) trả về nguyên object đó, nên:
+        // response = { success, message, data: { items, totalItems, ... }, errors }
+        const innerData = response?.data || {};
+        const items = Array.isArray(innerData) ? innerData : innerData.items || [];
+        const total = innerData.totalItems ?? innerData.total ?? items.length;
 
         return { items, total };
       } catch (error) {
@@ -99,7 +123,12 @@ const Batches = () => {
     setPage(1);
   };
 
+  const handleGoToQR = (batch) => {
+    navigate(`${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`);
+  };
+
   const handleCreateQR = (batch) => {
+    // Nếu đã có QR thì đi thẳng đến trang QR management để xem
     navigate(`${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`);
   };
 
@@ -110,40 +139,39 @@ const Batches = () => {
     return <Sprout className="w-8 h-8 text-green-600" />;
   };
 
-  const getStatusConfig = (status) => {
-    const configs = {
-      'Chờ thu hoạch': { color: 'orange', bgColor: 'bg-orange-100', textColor: 'text-orange-700' },
-      'Đang thu hoạch': { color: 'blue', bgColor: 'bg-blue-100', textColor: 'text-blue-700' },
-      'Đã hoàn thành': { color: 'green', bgColor: 'bg-green-100', textColor: 'text-green-700' },
-    };
-    return configs[status] || { color: 'default', bgColor: 'bg-gray-100', textColor: 'text-gray-700' };
-  };
+  const getStatusConfig = (status) =>
+    STATUS_MAP[status] || { label: status || 'Không rõ', color: 'default', bgColor: 'bg-gray-100', textColor: 'text-gray-600', borderColor: 'border-gray-300' };
 
   const getProgressStatus = (expectedDate, status) => {
-    if (status === 'Đã hoàn thành') {
+    const cfg = STATUS_MAP[status];
+    if (cfg) {
       return {
-        percent: 100,
-        status: 'success',
-        text: 'Đã hoàn thành',
-        color: 'green',
+        percent: cfg.progressPct,
+        status: cfg.progressStatus,
+        text: cfg.label,
+        color: cfg.color,
       };
     }
-
-    if (status === 'Đang thu hoạch') {
-      return {
-        percent: 70,
-        status: 'active',
-        text: 'Đang tiến hành thu hoạch',
-        color: 'blue',
-      };
-    }
-
     return {
-      percent: 30,
+      percent: 10,
       status: 'normal',
-      text: status || 'Chờ thu hoạch',
-      color: 'orange',
+      text: status || 'Không rõ',
+      color: 'gray',
     };
+  };
+
+  // Màu gradient cho Progress bar theo trạng thái
+  const getProgressStrokeColor = (color) => {
+    const map = {
+      green:  { '0%': '#10b981', '100%': '#059669' },
+      blue:   { '0%': '#3b82f6', '100%': '#2563eb' },
+      cyan:   { '0%': '#06b6d4', '100%': '#0891b2' },
+      orange: { '0%': '#f97316', '100%': '#ea580c' },
+      purple: { '0%': '#a855f7', '100%': '#9333ea' },
+      gold:   { '0%': '#eab308', '100%': '#ca8a04' },
+      red:    { '0%': '#ef4444', '100%': '#dc2626' },
+    };
+    return map[color] || { '0%': '#9ca3af', '100%': '#6b7280' };
   };
 
   const columns = [
@@ -174,15 +202,28 @@ const Batches = () => {
     },
     {
       title: 'Sản phẩm',
-      key: 'cropName',
+      key: 'product',
       width: 220,
       render: (_, record) => (
         <div className="flex items-center gap-2">
           <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-amber-50 rounded-lg border border-amber-200">
             {getCropIcon(record.cropName)}
           </div>
-          <Text className="text-sm font-medium">{record.cropName || 'N/A'}</Text>
+          <div>
+            <Text className="block text-sm font-medium text-gray-800">{record.productName || record.cropName || 'N/A'}</Text>
+            <Text className="text-xs text-gray-400">{record.cropName || ''}</Text>
+          </div>
         </div>
+      ),
+    },
+    {
+      title: 'Số lượng',
+      key: 'quantity',
+      width: 120,
+      render: (_, record) => (
+        <Text className="text-sm font-semibold">
+          {record.quantity != null ? `${record.quantity} ${record.unit || ''}`.trim() : '-'}
+        </Text>
       ),
     },
     {
@@ -200,24 +241,24 @@ const Batches = () => {
       width: 250,
       render: (_, record) => {
         const progressInfo = getProgressStatus(record.expectedHarvestDate, record.status);
+        const strokeColor = getProgressStrokeColor(progressInfo.color);
+        const pctTextColor = {
+          green: 'text-green-600', blue: 'text-blue-600', cyan: 'text-cyan-600',
+          orange: 'text-orange-500', purple: 'text-purple-600', gold: 'text-yellow-600',
+          red: 'text-red-500',
+        }[progressInfo.color] || 'text-gray-500';
         return (
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Progress
                 percent={progressInfo.percent}
                 status={progressInfo.status}
-                strokeColor={{
-                  '0%': progressInfo.color === 'green' ? '#10b981' : progressInfo.color === 'red' ? '#ef4444' : '#3b82f6',
-                  '100%': progressInfo.color === 'green' ? '#059669' : progressInfo.color === 'red' ? '#dc2626' : '#2563eb',
-                }}
+                strokeColor={strokeColor}
                 strokeWidth={8}
                 showInfo={false}
                 className="flex-1"
               />
-              <span className={`text-xs font-bold whitespace-nowrap ${
-                progressInfo.color === 'green' ? 'text-green-600' :
-                progressInfo.color === 'red' ? 'text-red-600' : 'text-blue-600'
-              }`}>
+              <span className={`text-xs font-bold whitespace-nowrap ${pctTextColor}`}>
                 {progressInfo.percent}%
               </span>
             </div>
@@ -234,8 +275,10 @@ const Batches = () => {
       render: (status) => {
         const config = getStatusConfig(status);
         return (
-          <Tag className={`${config.bgColor} ${config.textColor} border-0 px-3 py-1 rounded-full text-xs font-medium`}>
-            {status || 'N/A'}
+          <Tag
+            className={`${config.bgColor} ${config.textColor} border px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${config.borderColor}`}
+          >
+            {config.label || status || 'N/A'}
           </Tag>
         );
       },
@@ -247,17 +290,52 @@ const Batches = () => {
       align: 'center',
       fixed: 'right',
       render: (_, record) => {
-        const isCompleted = record.status === 'Đã hoàn thành';
+        // Chỉ cho phép thao tác QR khi lô hàng ĐÃ HOÀN THÀNH thu hoạch (IN_STORAGE hoặc COMPLETED)
+        const COMPLETED_STATUSES = ['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'];
+        const isHarvestCompleted = COMPLETED_STATUSES.includes(record.status);
+
+        if (!isHarvestCompleted) {
+          return (
+            <Tooltip title="Lô chưa hoàn thành thu hoạch — không thể tạo QR">
+              <Button icon={<QrcodeOutlined />} size="middle" disabled />
+            </Tooltip>
+          );
+        }
+
+        const canCreateQR = record.isQrEligible === true && !record.hasActiveQrCode;
+        const hasQR = record.hasActiveQrCode === true;
+
+        if (canCreateQR) {
+          return (
+            <Tooltip title="Tạo mã QR truy xuất mới">
+              <Button
+                type="primary"
+                icon={<QrcodeOutlined />}
+                size="middle"
+                onClick={(e) => { e.stopPropagation(); handleCreateQR(record); }}
+                className="bg-green-600 hover:bg-green-700"
+              />
+            </Tooltip>
+          );
+        }
+
+        if (hasQR) {
+          return (
+            <Tooltip title={`Xem QR đang hoạt động: ${record.activeTraceCode || ''}`}>
+              <Button
+                type="primary"
+                icon={<QrcodeOutlined />}
+                size="middle"
+                onClick={(e) => { e.stopPropagation(); handleGoToQR(record); }}
+                className="bg-blue-500 hover:bg-blue-600"
+              />
+            </Tooltip>
+          );
+        }
+
         return (
-          <Tooltip title={!isCompleted ? 'Chỉ tạo QR cho lô đã hoàn thành' : 'Tạo mã QR'}>
-            <Button
-              type="primary"
-              icon={<QrcodeOutlined />}
-              size="middle"
-              onClick={(e) => { e.stopPropagation(); handleCreateQR(record); }}
-              disabled={!isCompleted}
-              className={isCompleted ? 'bg-green-600 hover:bg-green-700' : ''}
-            />
+          <Tooltip title="Chưa đủ điều kiện tạo QR">
+            <Button icon={<QrcodeOutlined />} size="middle" disabled />
           </Tooltip>
         );
       },

@@ -1,5 +1,5 @@
 // API endpoints for Batch (Harvest Batch) management
-const BASE_URL = '/api/harvest-batches';
+const BASE_URL = '/harvest-batches';
 
 export const apiGetBatches = `${BASE_URL}`;
 export const apiGetBatchById = (id) => `${BASE_URL}/${id}`;

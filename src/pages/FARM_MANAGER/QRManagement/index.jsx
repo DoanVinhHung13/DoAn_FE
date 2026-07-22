@@ -53,6 +53,17 @@ import { mockBatches, getMockBatchById } from 'src/mocks/batchMockData';
 
 const { Text, Paragraph, Title } = Typography;
 
+const STATUS_MAP = {
+  CREATED: 'Vừa tạo',
+  PENDING: 'Chờ xử lý',
+  IN_PROGRESS: 'Đang thu hoạch',
+  IN_STORAGE: 'Hoàn thành - Lưu kho',
+  COMPLETED: 'Đã phân phối',
+  CANCELLED: 'Đã huỷ',
+};
+
+const getStatusLabel = (status) => STATUS_MAP[status] || status || 'Chưa thu hoạch';
+
 const QRManagement = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -129,12 +140,43 @@ const QRManagement = () => {
     }
   }, [batchDetail, form]);
 
-  // Reset/update preview when harvest batch selection changes
+  // 2b. Fetch QR code hiện có của batch (nếu có activeQrCode)
+  const { data: existingQRData } = useQuery({
+    queryKey: ['existing-qr', selectedBatchId],
+    queryFn: async () => {
+      try {
+        const response = await QRService.getQRCodes({ BatchId: selectedBatchId, PageSize: 1 });
+        const list = response?.data?.items || response?.data?.data?.items || [];
+        return list[0] || null;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!selectedBatchId && !!batchDetail?.hasActiveQrCode,
+  });
+
+  // Reset qrData & previewData ngay khi chọn lô thu hoạch khác
   useEffect(() => {
-    if (selectedBatchId) {
-      setQrData(null);
-    }
+    setQrData(null);
+    setPreviewData(null);
   }, [selectedBatchId]);
+
+  // Cập nhật qrData khi batchDetail hoặc existingQRData của lô hiện tại có sẵn (CHỈ KHI ĐÃ HOÀN THÀNH THU HOẠCH)
+  useEffect(() => {
+    if (batchDetail && String(batchDetail.id) === String(selectedBatchId)) {
+      const isHarvestDone = ['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail.status);
+      if (isHarvestDone && batchDetail.hasActiveQrCode) {
+        setQrData({
+          ...existingQRData,
+          traceCode: batchDetail.activeTraceCode || existingQRData?.traceCode || existingQRData?.code || `QR-${batchDetail.batchCode}`,
+          harvestBatchId: selectedBatchId,
+          isExisting: true,
+        });
+      } else {
+        setQrData(null);
+      }
+    }
+  }, [batchDetail, existingQRData, selectedBatchId]);
 
   // Fetch QR stats
   const { data: stats } = useQuery({
@@ -623,30 +665,90 @@ const QRManagement = () => {
               </Form>
 
               <div className="mt-6 space-y-3">
-                {/* Create QR Button */}
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  icon={<QrcodeOutlined />}
-                  onClick={handleCreateQR}
-                  loading={createQRMutation.isPending}
-                  className="h-11 rounded-xl bg-green-600 hover:bg-green-700 font-semibold shadow-md shadow-green-100"
-                >
-                  Tạo mã QR chính thức
-                </Button>
+                {/* Đã kiểm tra trạng thái thu hoạch */}
+                {(() => {
+                  const isHarvestDone = ['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail?.status);
 
-                {/* Preview trace page button - opens inline modal */}
-                <Button
-                  type="dashed"
-                  size="large"
-                  block
-                  icon={<EyeOutlined />}
-                  onClick={() => setPreviewModalOpen(true)}
-                  className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
-                >
-                  Xem trước trang truy xuất
-                </Button>
+                  if (!isHarvestDone) {
+                    return (
+                      <div className="space-y-3">
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+                          <SafetyOutlined className="text-amber-600 text-lg flex-shrink-0" />
+                          <Text className="text-amber-800 text-xs font-medium">
+                            Lô thu hoạch này chưa hoàn thành (Trạng thái: <strong>{getStatusLabel(batchDetail?.status)}</strong>). Cần hoàn thành thu hoạch (hàng vào kho) trước khi tạo mã QR.
+                          </Text>
+                        </div>
+                        <Button
+                          size="large"
+                          block
+                          disabled
+                          icon={<QrcodeOutlined />}
+                          className="h-11 rounded-xl font-semibold"
+                        >
+                          Tạo mã QR (Chưa hoàn thành thu hoạch)
+                        </Button>
+                        <Button
+                          size="large"
+                          block
+                          disabled
+                          icon={<EyeOutlined />}
+                          className="h-11 rounded-xl font-medium"
+                        >
+                          Xem trước trang truy xuất
+                        </Button>
+                      </div>
+                    );
+                  }
+
+                  if (batchDetail?.hasActiveQrCode) {
+                    return (
+                      <>
+                        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+                          <CheckCircleOutlined className="text-blue-500 flex-shrink-0" />
+                          <Text className="text-blue-700 text-sm">
+                            Lô đã có mã QR đang hoạt động. Để tạo mã mới, cần vô hiệu hoá mã cũ trước.
+                          </Text>
+                        </div>
+                        <Button
+                          type="dashed"
+                          size="large"
+                          block
+                          icon={<EyeOutlined />}
+                          onClick={() => setPreviewModalOpen(true)}
+                          className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
+                        >
+                          Xem trước trang truy xuất
+                        </Button>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <Button
+                        type="primary"
+                        size="large"
+                        block
+                        icon={<QrcodeOutlined />}
+                        onClick={handleCreateQR}
+                        loading={createQRMutation.isPending}
+                        className="h-11 rounded-xl bg-green-600 hover:bg-green-700 font-semibold shadow-md shadow-green-100"
+                      >
+                        Tạo mã QR chính thức
+                      </Button>
+                      <Button
+                        type="dashed"
+                        size="large"
+                        block
+                        icon={<EyeOutlined />}
+                        onClick={() => setPreviewModalOpen(true)}
+                        className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
+                      >
+                        Xem trước trang truy xuất
+                      </Button>
+                    </>
+                  );
+                })()}
               </div>
             </Card>
           </Col>
@@ -657,11 +759,15 @@ const QRManagement = () => {
               title={
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold text-gray-800">
-                    {qrData ? 'MÃ QR CHÍNH THỨC' : 'KẾT QUẢ MÃ QR'}
+                    {qrData ? (qrData.isExisting ? 'MÃ QR HIỆN TẠI' : 'MÃ QR CHÍNH THỨC') : 'KẾT QUẢ MÃ QR'}
                   </span>
                   {qrData ? (
-                    <Tag icon={<CheckCircleOutlined />} color="success" className="px-3 py-1 text-xs font-bold rounded-full">
-                      ĐÃ TẠO THÀNH CÔNG
+                    <Tag
+                      icon={<CheckCircleOutlined />}
+                      color={qrData.isExisting ? 'blue' : 'success'}
+                      className="px-3 py-1 text-xs font-bold rounded-full"
+                    >
+                      {qrData.isExisting ? 'ĐANG HOẠT ĐỘNG' : 'ĐÃ TẠO THÀNH CÔNG'}
                     </Tag>
                   ) : (
                     <Tag color="default" className="px-3 py-1 text-xs font-bold rounded-full">
@@ -673,7 +779,22 @@ const QRManagement = () => {
               className="rounded-2xl shadow-sm border-0 h-full flex flex-col justify-between"
             >
               {qrData ? (
-                <div className="space-y-6">
+                <div className="space-y-4">
+                  {/* Banner thông báo khi hiển thị QR sẵn có */}
+                  {qrData.isExisting && (
+                    <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3">
+                      <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-white text-xs font-bold">i</span>
+                      </div>
+                      <div>
+                        <Text strong className="text-blue-700 text-sm block">Lô này đã có mã QR đang hoạt động</Text>
+                        <Text className="text-blue-600 text-xs">
+                          Mã truy xuất: <strong>{qrData.traceCode}</strong>. Để tạo mã mới, hãy vô hiệu hoá mã hiện tại trước.
+                        </Text>
+                      </div>
+                    </div>
+                  )}
+                  <div className="space-y-6">
                   {/* Standard High-contrast Black/White QR Code */}
                   <div className="flex justify-center p-6 bg-white border-2 border-dashed border-gray-200 rounded-2xl">
                     <div ref={qrContainerRef} className="p-4 bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col items-center">
@@ -761,15 +882,22 @@ const QRManagement = () => {
                       </Col>
                     </Row>
                   </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-                  <div className="w-20 h-20 bg-green-50 rounded-2xl flex items-center justify-center mb-4 text-green-600 shadow-sm border border-green-100">
+                  <div className={`w-20 h-20 ${!['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail?.status) ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-green-50 text-green-600 border-green-100'} rounded-2xl flex items-center justify-center mb-4 shadow-sm border`}>
                     <QrcodeOutlined className="text-4xl" />
                   </div>
-                  <Text strong className="text-gray-800 text-lg mb-1">Chưa tạo mã QR chính thức</Text>
+                  <Text strong className="text-gray-800 text-lg mb-1">
+                    {!['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail?.status)
+                      ? 'Lô chưa hoàn thành thu hoạch'
+                      : 'Chưa tạo mã QR chính thức'}
+                  </Text>
                   <Paragraph className="text-xs text-gray-500 max-w-xs mb-0">
-                    Vui lòng tùy chỉnh chọn các mục thông tin bên trái và bấm nút <strong className="text-green-600">"Tạo mã QR chính thức"</strong> để sinh mã cho lô sản xuất này.
+                    {!['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail?.status)
+                      ? `Lô hàng này hiện ở trạng thái "${getStatusLabel(batchDetail?.status)}". Cần hoàn thành thu hoạch (đã vào kho) trước khi tạo mã QR.`
+                      : 'Vui lòng tùy chỉnh chọn các mục thông tin bên trái và bấm nút "Tạo mã QR chính thức" để sinh mã cho lô sản xuất này.'}
                   </Paragraph>
                 </div>
               )}
