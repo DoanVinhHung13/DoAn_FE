@@ -1,74 +1,102 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
   Input,
   Select,
-  DatePicker,
-  Row,
-  Col,
   Tag,
   Progress,
-  Space,
   Typography,
-  message,
-  Modal,
-  Table,
   Tooltip,
 } from 'antd';
 import {
   QrcodeOutlined,
-  PlusCircleOutlined,
-  FilterOutlined,
-  EyeOutlined,
-  InboxOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import { Coffee, Wheat, Sprout } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 
+import TitleCustom from 'src/components/TitleCustom';
+import CustomTable from 'src/components/Table/CustomTable';
 import BatchService from 'src/services/BatchService';
 import ROUTER from 'src/router/ROUTER';
 import { mockBatches, filterMockBatches } from 'src/mocks/batchMockData';
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions';
+import { invalidCharsRegex } from 'src/utils/helpers';
 
-const { Text, Title, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tất cả trạng thái' },
+  { value: 'Chờ thu hoạch', label: 'Chờ thu hoạch' },
+  { value: 'Đang thu hoạch', label: 'Đang thu hoạch' },
+  { value: 'Đã hoàn thành', label: 'Đã hoàn thành' },
+];
 
 const Batches = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({
-    batchCode: '',
-    status: '',
-    expectedDate: null,
-  });
 
-  // Fetch batches with fallback to mock data
-  const { data: batchesData, isLoading } = useQuery({
-    queryKey: ['batches', filters],
+  // ── Filters & Pagination state ──────────────────────────────────────────────
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  // ── Fetch batches ────────────────────────────────────────────────────────────
+  const { data: batchesData, isLoading, refetch } = useQuery({
+    queryKey: ['batches', page, pageSize, search, statusFilter],
     queryFn: async () => {
       try {
         const response = await BatchService.getBatches({
-          batchCode: filters.batchCode,
-          status: filters.status,
-          expectedDate: filters.expectedDate ? dayjs(filters.expectedDate).format('YYYY-MM-DD') : null,
+          PageIndex: page,
+          PageSize: pageSize,
+          SearchKeyword: search || undefined,
+          batchCode: search || undefined,
+          status: statusFilter === 'all' ? undefined : statusFilter,
         });
-        return response?.data?.data || response?.data || { items: [], total: 0 };
+
+        const payload = response?.data?.data || response?.data || {};
+        const items = Array.isArray(payload) ? payload : payload.items || payload.results || [];
+        const total = payload.totalItems || payload.total || items.length;
+
+        return { items, total };
       } catch (error) {
         // Fallback to mock data if API fails
-        console.log('Using mock data for batches');
-        const filteredBatches = filterMockBatches(filters);
-        return { items: filteredBatches, total: filteredBatches.length };
+        let filtered = filterMockBatches({
+          batchCode: search,
+          status: statusFilter === 'all' ? '' : statusFilter,
+        });
+        const total = filtered.length;
+        const startIndex = (page - 1) * pageSize;
+        const paginatedItems = filtered.slice(startIndex, startIndex + pageSize);
+        return { items: paginatedItems, total };
       }
     },
     retry: false,
-    initialData: { items: mockBatches, total: mockBatches.length }, // Use mock data initially
   });
 
-  const batches = batchesData?.items || mockBatches;
+  const batches = batchesData?.items || [];
+  const totalRecords = batchesData?.total || 0;
 
-  const handleApplyFilters = () => {
-    queryClient.invalidateQueries({ queryKey: ['batches'] });
+  // ── Handlers ─────────────────────────────────────────────────────────────────
+  const handleSearch = useCallback(() => {
+    if (invalidCharsRegex.test(searchInput)) {
+      return;
+    }
+    setSearch(searchInput.trim());
+    setPage(1);
+  }, [searchInput]);
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearch('');
+    setPage(1);
   };
 
   const handleCreateQR = (batch) => {
@@ -92,7 +120,6 @@ const Batches = () => {
   };
 
   const getProgressStatus = (expectedDate, status) => {
-    // Nếu đã hoàn thành → 100%
     if (status === 'Đã hoàn thành') {
       return {
         percent: 100,
@@ -102,7 +129,6 @@ const Batches = () => {
       };
     }
 
-    // Nếu đang thu hoạch → 50-90%
     if (status === 'Đang thu hoạch') {
       return {
         percent: 70,
@@ -112,295 +138,228 @@ const Batches = () => {
       };
     }
 
-    // Nếu chờ thu hoạch → tính theo ngày
-    if (!expectedDate) {
-      return { percent: 0, status: 'normal', text: 'Chưa xác định', color: 'gray' };
-    }
-    
-    const today = dayjs();
-    const expected = dayjs(expectedDate);
-    const diff = expected.diff(today, 'day');
-
-    if (diff < 0) {
-      // Quá hạn nhưng chưa thu hoạch
-      return {
-        percent: 100,
-        status: 'exception',
-        text: `Quá hạn ${Math.abs(diff)} ngày`,
-        color: 'red',
-      };
-    } else if (diff === 0) {
-      return {
-        percent: 95,
-        status: 'active',
-        text: 'Hôm nay',
-        color: 'orange',
-      };
-    } else if (diff <= 7) {
-      return {
-        percent: 80,
-        status: 'active',
-        text: `Còn ${diff} ngày`,
-        color: 'orange',
-      };
-    } else {
-      // Tính % dựa trên thời gian (giả sử chu kỳ 100 ngày)
-      const progress = Math.min(50, Math.max(10, 100 - diff));
-      return {
-        percent: progress,
-        status: 'normal',
-        text: `Dự kiến: ${expected.format('DD/MM/YYYY')}`,
-        color: 'blue',
-      };
-    }
+    return {
+      percent: 30,
+      status: 'normal',
+      text: status || 'Chờ thu hoạch',
+      color: 'orange',
+    };
   };
 
-  return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
+  const columns = [
+    {
+      title: 'STT',
+      key: 'stt',
+      width: 60,
+      align: 'center',
+      render: (_, __, index) => (
+        <Text className="text-sm font-medium text-gray-500">
+          {(page - 1) * pageSize + index + 1}
+        </Text>
+      ),
+    },
+    {
+      title: 'Mã lô',
+      dataIndex: 'batchCode',
+      key: 'batchCode',
+      width: 180,
+      render: (text, record) => (
         <div>
-          <Title level={2} className="!mb-2">Quản lý Lô thu hoạch</Title>
-          <Paragraph className="text-gray-600 !mb-0">
+          <Text strong className="block text-sm text-green-700">{text}</Text>
+          <Text className="text-xs text-gray-500">
+            Bắt đầu: {record.startDate ? dayjs(record.startDate).format('DD/MM/YYYY') : '-'}
+          </Text>
+        </div>
+      ),
+    },
+    {
+      title: 'Sản phẩm',
+      key: 'cropName',
+      width: 220,
+      render: (_, record) => (
+        <div className="flex items-center gap-2">
+          <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-amber-50 rounded-lg border border-amber-200">
+            {getCropIcon(record.cropName)}
+          </div>
+          <Text className="text-sm font-medium">{record.cropName || 'N/A'}</Text>
+        </div>
+      ),
+    },
+    {
+      title: 'Diện tích',
+      dataIndex: 'area',
+      key: 'area',
+      width: 120,
+      render: (area) => (
+        <Text className="text-sm font-semibold">{area ? `${area} ha` : '-'}</Text>
+      ),
+    },
+    {
+      title: 'Tiến độ thu hoạch',
+      key: 'progress',
+      width: 250,
+      render: (_, record) => {
+        const progressInfo = getProgressStatus(record.expectedHarvestDate, record.status);
+        return (
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Progress
+                percent={progressInfo.percent}
+                status={progressInfo.status}
+                strokeColor={{
+                  '0%': progressInfo.color === 'green' ? '#10b981' : progressInfo.color === 'red' ? '#ef4444' : '#3b82f6',
+                  '100%': progressInfo.color === 'green' ? '#059669' : progressInfo.color === 'red' ? '#dc2626' : '#2563eb',
+                }}
+                strokeWidth={8}
+                showInfo={false}
+                className="flex-1"
+              />
+              <span className={`text-xs font-bold whitespace-nowrap ${
+                progressInfo.color === 'green' ? 'text-green-600' :
+                progressInfo.color === 'red' ? 'text-red-600' : 'text-blue-600'
+              }`}>
+                {progressInfo.percent}%
+              </span>
+            </div>
+            <Text className="text-xs text-gray-500">{progressInfo.text}</Text>
+          </div>
+        );
+      },
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      width: 140,
+      render: (status) => {
+        const config = getStatusConfig(status);
+        return (
+          <Tag className={`${config.bgColor} ${config.textColor} border-0 px-3 py-1 rounded-full text-xs font-medium`}>
+            {status || 'N/A'}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      width: 90,
+      align: 'center',
+      fixed: 'right',
+      render: (_, record) => {
+        const isCompleted = record.status === 'Đã hoàn thành';
+        return (
+          <Tooltip title={!isCompleted ? 'Chỉ tạo QR cho lô đã hoàn thành' : 'Tạo mã QR'}>
+            <Button
+              type="primary"
+              icon={<QrcodeOutlined />}
+              size="middle"
+              onClick={(e) => { e.stopPropagation(); handleCreateQR(record); }}
+              disabled={!isCompleted}
+              className={isCompleted ? 'bg-green-600 hover:bg-green-700' : ''}
+            />
+          </Tooltip>
+        );
+      },
+    },
+  ];
+
+  return (
+    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+      {/* ── Header ── */}
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <TitleCustom className="!mb-0">Quản lý Lô thu hoạch</TitleCustom>
+          <Paragraph className="text-gray-600 !mb-0 mt-1">
             Theo dõi và điều phối các lô hàng nông sản chuẩn bị xuất kho. Đảm bảo quy trình thu hoạch đúng tiến độ và đạt tiêu chuẩn chất lượng.
           </Paragraph>
         </div>
         <Button
           type="primary"
-          icon={<PlusCircleOutlined />}
-          size="large"
-          onClick={() => navigate(`${ROUTER.FM_BATCH_CREATE}`)}
-          className="bg-green-600 hover:bg-green-700 h-12 px-6 rounded-lg font-semibold"
+          icon={<PlusOutlined />}
+          onClick={() => navigate(ROUTER.FM_BATCH_CREATE)}
+          className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
           Tạo lô thu hoạch mới
         </Button>
       </div>
 
-      {/* Filters */}
-      <Card className="rounded-xl shadow-sm">
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={8}>
-            <div>
-              <Text className="block mb-2 text-gray-700 font-medium">Mã lô</Text>
-              <Input
-                placeholder="LOT-XXX...."
-                size="large"
-                value={filters.batchCode}
-                onChange={(e) => setFilters({ ...filters, batchCode: e.target.value })}
-                className="rounded-lg"
-              />
-            </div>
-          </Col>
-          <Col xs={24} sm={8}>
-            <div>
-              <Text className="block mb-2 text-gray-700 font-medium">Trạng thái</Text>
-              <Select
-                placeholder="Tất cả trạng thái"
-                size="large"
-                value={filters.status || undefined}
-                onChange={(value) => setFilters({ ...filters, status: value })}
-                className="w-full rounded-lg"
-                options={[
-                  { value: '', label: 'Tất cả trạng thái' },
-                  { value: 'Chờ thu hoạch', label: 'Chờ thu hoạch' },
-                  { value: 'Đang thu hoạch', label: 'Đang thu hoạch' },
-                  { value: 'Đã hoàn thành', label: 'Đã hoàn thành' },
-                ]}
-              />
-            </div>
-          </Col>
-          <Col xs={24} sm={8}>
-            <div>
-              <Text className="block mb-2 text-gray-700 font-medium">Ngày dự kiến</Text>
-              <DatePicker
-                placeholder="mm/dd/yyyy"
-                size="large"
-                format="DD/MM/YYYY"
-                value={filters.expectedDate}
-                onChange={(date) => setFilters({ ...filters, expectedDate: date })}
-                className="w-full rounded-lg"
-              />
-            </div>
-          </Col>
-        </Row>
-        <div className="mt-4 flex justify-end">
-          <Button
-            icon={<FilterOutlined />}
-            size="large"
-            onClick={handleApplyFilters}
-            className="rounded-lg bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 font-medium px-8"
-          >
-            Áp dụng bộ lọc
-          </Button>
+      {/* ── Table Card with Toolbar ── */}
+      <Card
+        bordered={false}
+        className="shadow-sm rounded-2xl"
+        bodyStyle={{ padding: 0 }}
+      >
+        {/* Toolbar */}
+        <div className="flex flex-col gap-3 p-5 border-b border-gray-100 sm:flex-row sm:flex-wrap">
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onPressEnter={handleSearch}
+            placeholder="Tìm theo mã lô..."
+            prefix={<SearchOutlined className="text-gray-300" />}
+            className="w-64 h-10 rounded-xl"
+            allowClear
+            onClear={handleClearSearch}
+          />
+          <Select
+            value={statusFilter}
+            onChange={(val) => {
+              setStatusFilter(val);
+              setPage(1);
+            }}
+            className="h-10 rounded-xl min-w-[180px]"
+            options={STATUS_OPTIONS}
+          />
+          <div className="flex gap-2 ml-auto">
+            <Button
+              onClick={handleSearch}
+              icon={<SearchOutlined />}
+              className="h-10 px-4 font-semibold rounded-xl bg-gray-50"
+            >
+              Tìm kiếm
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => refetch()}
+              loading={isLoading}
+              className="h-10 px-3 rounded-xl bg-gray-50"
+            />
+          </div>
         </div>
-      </Card>
 
-      {/* Batch List */}
-      <Card className="rounded-xl shadow-sm overflow-hidden" loading={isLoading}>
-        <Table
+        {/* Table */}
+        <CustomTable
           dataSource={batches}
+          columns={columns}
           rowKey="id"
-          pagination={false}
-          className="batch-table"
-          rowClassName={() => "hover:bg-green-50"}
-          columns={[
-            {
-              title: 'Mã lô',
-              dataIndex: 'batchCode',
-              key: 'batchCode',
-              width: 180,
-              render: (text, record) => (
-                <div>
-                  <Text strong className="block text-sm">{text}</Text>
-                  <Text className="text-xs text-gray-500">
-                    Bắt đầu: {record.startDate ? dayjs(record.startDate).format('DD/MM/YYYY') : '-'}
-                  </Text>
-                </div>
-              ),
+          loading={isLoading}
+          onRow={(record) => ({
+            onClick: (e) => {
+              if (e.target.closest('button')) return;
+              navigate(ROUTER.FM_BATCH_DETAIL.replace(':id', record.id));
             },
-            {
-              title: 'Sản phẩm',
-              key: 'cropName',
-              width: 200,
-              render: (_, record) => (
-                <div className="flex items-center gap-2">
-                  <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-amber-50 rounded-lg border border-amber-200">
-                    {getCropIcon(record.cropName)}
-                  </div>
-                  <Text className="text-sm font-medium">{record.cropName || 'N/A'}</Text>
-                </div>
-              ),
-            },
-            {
-              title: 'Diện tích',
-              dataIndex: 'area',
-              key: 'area',
-              width: 100,
-              render: (area) => (
-                <Text className="text-sm font-semibold">{area ? `${area} ha` : '-'}</Text>
-              ),
-            },
-            {
-              title: 'Tiến độ thu hoạch',
-              key: 'progress',
-              width: 250,
-              render: (_, record) => {
-                const progressInfo = getProgressStatus(record.expectedHarvestDate, record.status);
-                return (
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Progress
-                        percent={progressInfo.percent}
-                        status={progressInfo.status}
-                        strokeColor={{
-                          '0%': progressInfo.color === 'green' ? '#10b981' : progressInfo.color === 'red' ? '#ef4444' : '#3b82f6',
-                          '100%': progressInfo.color === 'green' ? '#059669' : progressInfo.color === 'red' ? '#dc2626' : '#2563eb',
-                        }}
-                        strokeWidth={8}
-                        showInfo={false}
-                        className="flex-1"
-                      />
-                      <span className={`text-xs font-bold whitespace-nowrap ${
-                        progressInfo.color === 'green' ? 'text-green-600' :
-                        progressInfo.color === 'red' ? 'text-red-600' : 'text-blue-600'
-                      }`}>
-                        {progressInfo.percent}%
-                      </span>
-                    </div>
-                    <Text className="text-xs text-gray-500">{progressInfo.text}</Text>
-                  </div>
-                );
-              },
-            },
-            {
-              title: 'Sản lượng dự kiến',
-              dataIndex: 'expectedYield',
-              key: 'expectedYield',
-              width: 150,
-              render: (yield_val) => (
-                <Text strong className="text-sm text-blue-600">
-                  {yield_val ? `${yield_val} Tấn` : '-'}
-                </Text>
-              ),
-            },
-            {
-              title: 'Trạng thái',
-              dataIndex: 'status',
-              key: 'status',
-              width: 140,
-              render: (status) => {
-                const config = getStatusConfig(status);
-                return (
-                  <Tag className={`${config.bgColor} ${config.textColor} border-0 px-3 py-1 rounded-full text-xs font-medium`}>
-                    {status || 'N/A'}
-                  </Tag>
-                );
-              },
-            },
-            {
-              title: 'Thao tác',
-              key: 'actions',
-              width: 200,
-              fixed: 'right',
-              render: (_, record) => {
-                const isCompleted = record.status === 'Đã hoàn thành';
-                return (
-                  <Space size="small">
-                    <Tooltip title={!isCompleted ? 'Chỉ tạo QR cho lô đã hoàn thành' : 'Tạo mã QR'}>
-                      <Button
-                        type="primary"
-                        icon={<QrcodeOutlined />}
-                        size="middle"
-                        onClick={() => handleCreateQR(record)}
-                        disabled={!isCompleted}
-                        className={isCompleted ? 'bg-green-600 hover:bg-green-700' : ''}
-                      />
-                    </Tooltip>
-                    <Button
-                      type="link"
-                      icon={<EyeOutlined />}
-                      size="small"
-                      onClick={() => navigate(`${ROUTER.FM_BATCH_DETAIL.replace(':id', record.id)}`)}
-                      className="text-blue-600"
-                    >
-                      Xem chi tiết
-                    </Button>
-                  </Space>
-                );
-              },
-            },
-          ]}
-          locale={{
-            emptyText: (
-              <div className="py-12">
-                <InboxOutlined className="text-5xl text-gray-300 mb-3" />
-                <Text className="text-gray-400">Không có lô thu hoạch nào</Text>
-              </div>
+          })}
+          textEmpty="Không có lô thu hoạch nào"
+          pagination={{
+            current: page,
+            pageSize,
+            total: totalRecords,
+            showSizeChanger: true,
+            pageSizeOptions: PAGE_SIZE,
+            showTotal: (total, range) => (
+              <span className="text-xs text-gray-500">
+                {range[0]}–{range[1]} / <strong>{total}</strong>
+              </span>
             ),
+            onChange: (p, ps) => {
+              setPage(p);
+              setPageSize(ps);
+            },
           }}
+          rowClassName="hover:bg-green-50/50 transition-colors cursor-pointer"
         />
       </Card>
-
-      <style jsx>{`
-        :global(.batch-table .ant-table) {
-          font-size: 13px;
-        }
-        :global(.batch-table .ant-table-thead > tr > th) {
-          background: #f0fdf4 !important;
-          color: #166534;
-          font-weight: 600;
-          font-size: 13px;
-          padding: 12px 16px;
-          border-bottom: 2px solid #bbf7d0;
-        }
-        :global(.batch-table .ant-table-tbody > tr > td) {
-          padding: 12px 16px;
-          border-bottom: 1px solid #f0f0f0;
-        }
-        :global(.batch-table .ant-table-tbody > tr:hover > td) {
-          background: #f0fdf4 !important;
-        }
-      `}</style>
     </div>
   );
 };

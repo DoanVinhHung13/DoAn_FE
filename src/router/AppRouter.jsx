@@ -67,6 +67,7 @@ const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbo
 const FarmManagerLogbookReview = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks/LogbookReview'))
 
 const FarmManagerBatches = React.lazy(() => import('../pages/FARM_MANAGER/Batches'))
+const FarmManagerBatchDetail = React.lazy(() => import('../pages/FARM_MANAGER/Batches/BatchDetail'))
 const FarmManagerNotifications = React.lazy(() => import('../pages/FARM_MANAGER/Notifications'))
 const FarmManagerViewFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers'))
 const FarmManagerFertilizerCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers/FertilizerCreate'))
@@ -230,6 +231,7 @@ const routes = [
 
               // Batches
               { path: ROUTER.FM_BATCHES, element: <Lazy><FarmManagerBatches /></Lazy> },
+              { path: ROUTER.FM_BATCH_DETAIL, element: <Lazy><FarmManagerBatchDetail /></Lazy> },
 
               // Notification Management
               { path: ROUTER.FM_NOTIFICATIONS, element: <Lazy><FarmManagerNotifications /></Lazy> },

@@ -2,6 +2,7 @@ import http from '../01_axios';
 import {
   apiGetQRCodes,
   apiGetQRCodeById,
+  apiPreviewQRCode,
   apiCreateQRCode,
   apiUpdateQRCode,
   apiDeleteQRCode,
@@ -11,6 +12,7 @@ import {
 
 export const getQRCodes = (params) => http.get(apiGetQRCodes, { params });
 export const getQRCodeById = (id) => http.get(apiGetQRCodeById(id));
+export const previewQRCode = (data) => http.post(apiPreviewQRCode, data);
 export const createQRCode = (data) => http.post(apiCreateQRCode, data);
 export const updateQRCode = (id, data) => http.put(apiUpdateQRCode(id), data);
 export const deleteQRCode = (id) => http.delete(apiDeleteQRCode(id));
@@ -20,6 +22,7 @@ export const getQRStats = () => http.get(apiGetQRStats);
 const QRService = {
   getQRCodes,
   getQRCodeById,
+  previewQRCode,
   createQRCode,
   updateQRCode,
   deleteQRCode,
@@ -28,3 +31,4 @@ const QRService = {
 };
 
 export default QRService;
+
