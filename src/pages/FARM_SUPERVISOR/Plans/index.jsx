@@ -35,27 +35,13 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import {
+  LOGBOOK_STATUS_FILTER_OPTIONS,
+  getLogbookStatus,
+} from 'src/utils/cultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
-
-const statusConfig = {
-  DRAFT: { color: 'default', label: 'Nháp' },
-  PLANNED: { color: 'blue', label: 'Đã lên kế hoạch' },
-  IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện' },
-  COMPLETED: { color: 'success', label: 'Hoàn thành' },
-  CANCELLED: { color: 'error', label: 'Đã hủy' },
-}
-
-const reviewStatusConfig = {
-  DRAFT: { color: 'default', label: 'Chưa gửi' },
-  PENDING_REVIEW: { color: 'gold', label: 'Chờ duyệt' },
-  APPROVED: { color: 'success', label: 'Đã duyệt' },
-  REJECTED: { color: 'error', label: 'Từ chối' },
-}
-
-const getStatus = (config, value) =>
-  config[value] || { color: 'default', label: value || '—' }
 
 const FarmSupervisorPlans = () => {
   const navigate = useNavigate()
@@ -108,7 +94,7 @@ const FarmSupervisorPlans = () => {
     return plans.filter((plan) => {
       const matchesKeyword =
         !keyword ||
-        [plan.planName, plan.cropName, plan.landPlotName]
+        [plan.logbookName, plan.cropName, plan.supervisorName]
           .filter(Boolean)
           .some((v) => String(v).toLowerCase().includes(keyword))
       const matchesStatus =
@@ -134,7 +120,7 @@ const FarmSupervisorPlans = () => {
       render: (_, __, i) => <span className="text-gray-400">{(page - 1) * pageSize + i + 1}</span>,
     },
     {
-      title: 'Tên kế hoạch', dataIndex: 'planName', key: 'planName',
+      title: 'Tên kế hoạch', dataIndex: 'logbookName', key: 'logbookName',
       render: (value) => <span className="font-medium text-gray-900">{value || '—'}</span>,
     },
     {
@@ -152,7 +138,7 @@ const FarmSupervisorPlans = () => {
     {
       title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 145,
       render: (value) => {
-        const s = getStatus(statusConfig, value)
+        const s = getLogbookStatus(value)
         return <Tag color={s.color}>{s.label}</Tag>
       },
     },
@@ -192,14 +178,7 @@ const FarmSupervisorPlans = () => {
               value={statusFilter}
               onChange={(v) => { setStatusFilter(v); setPage(1) }}
               className="h-10 min-w-44 rounded-xl"
-              options={[
-                { value: 'all', label: 'Tất cả trạng thái' },
-                { value: 'DRAFT', label: 'Nháp' },
-                { value: 'PLANNED', label: 'Đã lên kế hoạch' },
-                { value: 'IN_PROGRESS', label: 'Đang thực hiện' },
-                { value: 'COMPLETED', label: 'Hoàn thành' },
-                { value: 'CANCELLED', label: 'Đã hủy' },
-              ]}
+              options={LOGBOOK_STATUS_FILTER_OPTIONS}
             />
             <div className="flex gap-2 lg:ml-auto">
               <Button onClick={handleSearch} icon={<SearchOutlined />} className="h-10 px-4 rounded-xl bg-gray-50">
@@ -252,8 +231,7 @@ const FarmSupervisorPlans = () => {
           <div className="p-5">
             <div className="grid gap-4 xl:grid-cols-2">
               {pagedCards.map((plan) => {
-                const status = getStatus(statusConfig, plan.status)
-                const review = getStatus(reviewStatusConfig, plan.reviewStatus)
+                const status = getLogbookStatus(plan.status)
                 return (
                   <Card
                     key={plan.id}
@@ -265,10 +243,9 @@ const FarmSupervisorPlans = () => {
                     <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-white">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <Tag color={status.color} className="rounded-full m-0">{status.label}</Tag>
-                        <Tag color={review.color} className="rounded-full m-0">{review.label}</Tag>
                       </div>
                       <h3 className="m-0 text-base font-bold text-gray-900">
-                        {plan.planName || 'Kế hoạch chưa đặt tên'}
+                        {plan.logbookName}
                       </h3>
                       <p className="mt-0.5 mb-0 text-sm text-gray-500">{plan.cropName || 'Chưa có cây trồng'}</p>
                     </div>

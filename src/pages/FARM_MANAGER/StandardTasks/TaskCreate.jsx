@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import StandardTaskService from 'src/services/StandardTaskService'
+import TaskCatalogService from 'src/services/TaskCatalogService'
 import TaskFormFields from './TaskFormFields'
 
 const TaskCreate = () => {
@@ -16,12 +16,11 @@ const TaskCreate = () => {
     try {
       setLoading(true)
       const body = {
-        title: values.title?.trim(),
-        description: values.description?.trim() || '',
-        isActive: true,
+        name: values.name?.trim(),
+        description: values.description?.trim() || null,
       }
 
-      const res = await StandardTaskService.create(body)
+      const res = await TaskCatalogService.create(body)
 
       if (res?.success === false) {
         message.error(res.message || 'Có lỗi xảy ra khi lưu công việc.')

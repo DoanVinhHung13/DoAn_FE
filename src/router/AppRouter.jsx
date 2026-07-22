@@ -60,7 +60,6 @@ const FarmManagerTaskDetail = React.lazy(() => import('../pages/FARM_MANAGER/Sta
 const FarmManagerTaskEdit = React.lazy(() => import('../pages/FARM_MANAGER/StandardTasks/TaskEdit'))
 const FarmSupervisorPlans = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans'))
 const FarmSupervisorPlanDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans/PlanDetail'))
-const FarmSupervisorTaskDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Plans/TaskDetail'))
 const FarmLeaderTasks = React.lazy(() => import('../pages/FARM_LEADER/Tasks'))
 const FarmLeaderDailyLog = React.lazy(() => import('../pages/FARM_LEADER/Tasks/DailyLog'))
 const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
@@ -80,7 +79,6 @@ const FarmManagerReferenceFertilizers = React.lazy(() => import('../pages/FARM_M
 const FarmManagerReferencePesticides = React.lazy(() => import('../pages/FARM_MANAGER/Reference/PesticideList'))
 
 // FARM_SUPERVISOR pages (formerly LAND_MANAGER)
-const FarmLeaderFieldLog = React.lazy(() => import('src/pages/FARM_SUPERVISOR/FieldLog'))
 const FarmSupervisorDashboard = React.lazy(() => import('../pages/FARM_SUPERVISOR/Dashboard'))
 const FarmSupervisorFarmers = React.lazy(() => import('../pages/FARM_SUPERVISOR/Farmers'))
 const FarmSupervisorLands = React.lazy(() => import('../pages/FARM_SUPERVISOR/Lands'))
@@ -263,7 +261,6 @@ const routes = [
               // Farm Supervisor - Plans & Tasks
               { path: ROUTER.FS_PLANS, element: <Lazy><FarmSupervisorPlans /></Lazy> },
               { path: ROUTER.FS_PLAN_DETAIL, element: <Lazy><FarmSupervisorPlanDetail /></Lazy> },
-              { path: ROUTER.FS_TASK_DETAIL, element: <Lazy><FarmSupervisorTaskDetail /></Lazy> },
               { path: ROUTER.FS_STAGE_LOG, element: <Lazy><FarmSupervisorStageLog /></Lazy> },
 
               // Farm Supervisor - Additional features (formerly Land Manager)
@@ -277,11 +274,10 @@ const routes = [
           },
 
           // ── Farm Leader Routes ────────────────────────────────────────────
-          // Guard tạm: cả FARM_SUPERVISOR + FARM_LEADER đều vào được (demo)
           {
             element: <ProtectedRoute allowedRoles={[ROLES.FARM_LEADER, ROLES.FARM_SUPERVISOR]} />,
             children: [
-              { path: ROUTER.LM_FIELD_LOG, element: <Lazy><FarmLeaderFieldLog /></Lazy> },
+              { path: ROUTER.LM_FIELD_LOG, element: <Navigate to={ROUTER.FL_TASKS} replace /> },
               { path: ROUTER.FL_TASKS, element: <Lazy><FarmLeaderTasks /></Lazy> },
               { path: ROUTER.FL_TASK_LOG, element: <Lazy><FarmLeaderDailyLog /></Lazy> },
             ],

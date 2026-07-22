@@ -39,7 +39,7 @@ import { useSelector } from 'react-redux'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import ROUTER from 'src/router/ROUTER'
-import CropProtectionService from 'src/services/CropProtectionService'
+import PesticideService from 'src/services/PesticideService'
 import FertilizerService from 'src/services/FertilizerService'
 import MaterialService from 'src/services/MaterialService'
 import ProductionLogService from 'src/services/ProductionLogService'
@@ -256,7 +256,7 @@ const StageLog = () => {
 
       const responses = await Promise.allSettled([
         FertilizerService.getFertilizers({ PageIndex: 1, PageSize: 1000 }),
-        CropProtectionService.getCropProtections({
+        PesticideService.getAll({
           PageIndex: 1,
           PageSize: 1000,
         }),

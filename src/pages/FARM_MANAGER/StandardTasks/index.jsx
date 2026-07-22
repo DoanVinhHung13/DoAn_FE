@@ -17,7 +17,7 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 
-import StandardTaskService from 'src/services/StandardTaskService'
+import TaskCatalogService from 'src/services/TaskCatalogService'
 import { invalidCharsRegex } from 'src/utils/helpers'
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ const TasksManagement = () => {
         PageSize: pageSize,
         SearchKeyword: search || undefined,
       }
-      const res = await StandardTaskService.getAll(params)
+      const res = await TaskCatalogService.getAll(params)
       if (res?.success === false) return
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
@@ -78,7 +78,7 @@ const TasksManagement = () => {
 
   const handleDelete = async (record) => {
     try {
-      const res = await StandardTaskService.remove(record.id)
+      const res = await TaskCatalogService.remove(record.id)
       if (res?.success === false) {
         return
       }
@@ -102,13 +102,12 @@ const TasksManagement = () => {
     },
     {
       title: 'Tên công việc',
-      dataIndex: 'title',
-      key: 'title',
+      dataIndex: 'name',
+      key: 'name',
       render: (v) => (
         <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
       ),
     },
-
     {
       title: 'Mô tả',
       dataIndex: 'description',

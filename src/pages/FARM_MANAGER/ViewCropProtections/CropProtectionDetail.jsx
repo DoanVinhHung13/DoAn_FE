@@ -11,7 +11,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import CropProtectionService from 'src/services/CropProtectionService'
+import PesticideService from 'src/services/PesticideService'
 
 const { Text } = Typography
 
@@ -89,7 +89,7 @@ const CropProtectionDetail = () => {
     const fetchDetail = async () => {
       try {
         setInitialLoading(true)
-        const res = await CropProtectionService.getCropProtectionById(id)
+        const res = await PesticideService.getById(id)
         if (res?.success === false) {
           message.error('Không tìm thấy thuốc BVTV')
           navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)

@@ -98,20 +98,17 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                         title={
                           <div className="flex items-center justify-between">
                             <Text strong className="text-gray-800">
-                              {log.logDate ? formatDate(log.logDate) : 'Không rõ ngày'}
+                              {log.date ? formatDate(log.date) : 'Không rõ ngày'}
                             </Text>
-                            <Tag color="blue">{log.farmerName || 'Người nông dân'}</Tag>
+                            {log.progress != null && (
+                              <Tag color="blue">Tiến độ {log.progress}%</Tag>
+                            )}
                           </div>
                         }
                         description={
                           <div className="mt-2 text-gray-600">
-                            {log.taskName && (
-                              <p className="mb-1 text-xs">
-                                <strong>Công việc con:</strong> {log.taskName}
-                              </p>
-                            )}
                             <Paragraph ellipsis={{ rows: 3, expandable: true, symbol: 'Xem thêm' }}>
-                              {log.notes || 'Không có ghi chú'}
+                              {log.description || 'Không có ghi chú'}
                             </Paragraph>
                           </div>
                         }

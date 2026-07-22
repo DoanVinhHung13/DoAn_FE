@@ -8,6 +8,7 @@ import {
   UserOutlined,
   InfoCircleOutlined,
   FileTextOutlined,
+  EditOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
@@ -23,32 +24,46 @@ import {
   List,
   message,
   Row,
+  Select,
   Tag,
   Typography,
+  Progress,
 } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationTaskService from 'src/services/CultivationTaskService'
+import TaskCatalogService from 'src/services/TaskCatalogService'
 import { formatDate } from 'src/utils/dateFormatters'
+import { canCompileTask, getTaskStatus } from 'src/utils/cultivationStatus'
+import AssignTaskModal from './AssignTaskModal'
+import CompileLogModal from './CompileLogModal'
 
 const { Text } = Typography
 
-// ── Config ────────────────────────────────────────────────────────────────────
+const unwrap = (res) => res?.data?.data ?? res?.data ?? res
+
+// Stage status từ API: PENDING | ACTIVE | COMPLETED (+ alias IN_PROGRESS)
 const stageStatusConfig = {
   PENDING: { color: 'default', label: 'Chưa bắt đầu', avatarBg: '#9ca3af', step: 'wait' },
+  ACTIVE: { color: 'processing', label: 'Đang hoạt động', avatarBg: '#3b82f6', step: 'process' },
   IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện', avatarBg: '#3b82f6', step: 'process' },
   COMPLETED: { color: 'success', label: 'Hoàn thành', avatarBg: '#16a34a', step: 'finish' },
 }
 
-const taskStatusConfig = {
-  PENDING: { color: 'default', label: 'Chờ kích hoạt', icon: <ClockCircleOutlined /> },
-  ACTIVE: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
-  COMPLETED: { color: 'success', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
-}
-
 const getStageCfg = (s) => stageStatusConfig[s] || stageStatusConfig.PENDING
-const getTaskCfg = (s) => taskStatusConfig[s] || taskStatusConfig.PENDING
+const getTaskCfg = (s) => {
+  const mapped = getTaskStatus(s)
+  return {
+    ...mapped,
+    icon:
+      s === 'COMPLETED' || s === 'WAITING_APPROVAL'
+        ? <CheckCircleOutlined />
+        : s === 'IN_PROGRESS' || s === 'ACTIVE'
+          ? <CheckCircleOutlined />
+          : <ClockCircleOutlined />,
+  }
+}
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
 const StageListItem = ({ stage, index, isActive, onClick }) => {
@@ -76,7 +91,7 @@ const StageListItem = ({ stage, index, isActive, onClick }) => {
           </Avatar>
         }
         title={
-          <Text strong style={{ color: isActive ? '#15803d' : '#1f2937', whiteSpace: 'normal', fontSize: 13 }}>
+          <Text className={`font-semibold ${isActive ? 'text-green-700' : 'text-gray-800'} whitespace-normal text-sm`}>
             {stage.stageName || stage.name || `Giai đoạn ${index + 1}`}
           </Text>
         }
@@ -96,11 +111,47 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [taskForm] = Form.useForm()
   const [savingTask, setSavingTask] = useState(false)
+  const [assignModalOpen, setAssignModalOpen] = useState(false)
+  const [assignTaskData, setAssignTaskData] = useState(null)
+  const [compileLogModalOpen, setCompileLogModalOpen] = useState(false)
+  const [compileLogTask, setCompileLogTask] = useState(null)
+  const [taskCatalogOptions, setTaskCatalogOptions] = useState([])
+
+  useEffect(() => {
+    const loadCatalogs = async () => {
+      try {
+        const res = await TaskCatalogService.getAll({ PageIndex: 1, PageSize: 200 })
+        const data = unwrap(res)
+        const items = Array.isArray(data) ? data : data?.items || []
+        setTaskCatalogOptions(
+          items.map((item) => ({
+            value: item.id,
+            label: item.name,
+            description: item.description,
+          }))
+        )
+      } catch (err) {
+        console.error(err)
+        setTaskCatalogOptions([])
+      }
+    }
+    loadCatalogs()
+  }, [])
+
+  const handleActivateTask = async (taskId) => {
+    try {
+      await CultivationTaskService.start(taskId)
+      loadData()
+    } catch (err) {
+      message.error('Kích hoạt thất bại.')
+    }
+  }
 
   // Mặc định chọn giai đoạn đầu tiên khi load
   useEffect(() => {
     if (stages.length > 0 && !selectedId) {
-      const firstActive = stages.find((s) => s.status === 'IN_PROGRESS') || stages[0]
+      const firstActive =
+        stages.find((s) => s.status === 'ACTIVE' || s.status === 'IN_PROGRESS') || stages[0]
       setSelectedId(firstActive?.id ?? null)
     }
   }, [stages, selectedId])
@@ -116,7 +167,9 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       return
     }
     setEditingTaskId('new')
-    taskForm.setFieldsValue({ tasks: [{ name: '', description: '' }] })
+    taskForm.setFieldsValue({
+      tasks: [{ taskCatalogId: null, name: '', description: '', leaderId: null, farmerIds: null }],
+    })
   }
 
   const handleAddTask = async () => {
@@ -130,16 +183,23 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       }
 
       setSavingTask(true)
-      
+
       const validTasks = taskList
-        .filter((task) => task.name?.trim())
-        .map((task) => ({
-          name: task.name.trim(),
-          description: task.description?.trim() || '',
-        }))
+        .filter((task) => task.taskCatalogId || task.name?.trim())
+        .map((task) => {
+          const catalog = taskCatalogOptions.find((o) => o.value === task.taskCatalogId)
+          return {
+            taskCatalogId: task.taskCatalogId || null,
+            name: (task.name || catalog?.label || '').trim(),
+            description: (task.description || catalog?.description || '').trim() || null,
+            leaderId: null,
+            farmerIds: null,
+          }
+        })
+        .filter((task) => task.name)
 
       if (!validTasks.length) {
-        message.warning('Vui lòng nhập tên công việc')
+        message.warning('Chọn công việc từ danh mục hoặc nhập tên mới')
         setSavingTask(false)
         return
       }
@@ -152,7 +212,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
       setEditingTaskId(null)
       taskForm.resetFields()
-      loadData() // Refresh parent data
+      loadData()
     } catch (error) {
       console.error(error)
       if (!error.errorFields) {
@@ -208,15 +268,26 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
               <div>
                 {/* Header giai đoạn */}
                 <div className="mb-3 flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <Text strong style={{ fontSize: 15 }} className="block text-gray-800">
+                  <div className="min-w-0 flex-1">
+                    <Text className="block text-lg font-bold text-gray-800">
                       {selectedStage.stageName || selectedStage.name || `Giai đoạn ${selectedIdx + 1}`}
                     </Text>
+                    {/* Ngày dự kiến của giai đoạn */}
                     {(selectedStage.startDate || selectedStage.endDate) && (
-                      <Text type="secondary" style={{ fontSize: 12 }}>
+                      <Text type="secondary" className="text-sm block mt-0.5">
                         <CalendarOutlined className="mr-1" />
-                        {selectedStage.startDate ? formatDate(selectedStage.startDate) : '—'} –{' '}
-                        {selectedStage.endDate ? formatDate(selectedStage.endDate) : 'Chưa kết thúc'}
+                        <span className="font-medium">Dự kiến:</span>{' '}
+                        {selectedStage.startDate ? formatDate(selectedStage.startDate) : '—'}{' '}–{' '}
+                        {selectedStage.endDate ? formatDate(selectedStage.endDate) : 'Chưa xác định'}
+                      </Text>
+                    )}
+                    {/* Ngày thực tế của giai đoạn */}
+                    {(selectedStage.actualStartDate || selectedStage.actualEndDate) && (
+                      <Text type="secondary" className="text-sm block mt-0.5">
+                        <CheckCircleOutlined className="mr-1 text-green-600" />
+                        <span className="font-medium text-green-700">Thực tế:</span>{' '}
+                        {selectedStage.actualStartDate ? formatDate(selectedStage.actualStartDate) : '—'}{' '}–{' '}
+                        {selectedStage.actualEndDate ? formatDate(selectedStage.actualEndDate) : 'Chưa kết thúc'}
                       </Text>
                     )}
                   </div>
@@ -255,65 +326,179 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     renderItem={(task) => {
                       const cfg = getTaskCfg(task.status)
                       return (
-                        <List.Item
-                          key={task.id}
-                          className="mb-2 cursor-pointer rounded-xl border border-gray-100 bg-white px-3 py-2.5 transition hover:border-green-300 hover:bg-green-50/30 hover:shadow-sm"
-                          style={{ border: '1px solid #f0f0f0' }}
-                          onClick={() =>
-                            navigate(
-                              ROUTER.FS_TASK_DETAIL
-                                .replace(':planId', planId)
-                                .replace(':taskId', task.id),
-                              { state: { planData: plan } }
-                            )
-                          }
-                          actions={[<EyeOutlined key="view" className="text-gray-400" />]}
-                        >
-                          <List.Item.Meta
-                            avatar={
-                              <div
-                                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-xs
-                                  ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                                    task.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' :
-                                      'bg-gray-100 text-gray-500'}`}
-                              >
-                                {cfg.icon}
-                              </div>
-                            }
-                            title={
-                              <div className="flex items-center gap-2">
-                                <Text strong ellipsis style={{ fontSize: 13, maxWidth: 160 }}>
-                                  {task.name || task.taskName}
-                                </Text>
-                                <Tag color={cfg.color} style={{ margin: 0, fontSize: 11 }}>
+                        <List.Item key={task.id} className="mb-4">
+                          <Card
+                            hoverable
+                            className="w-full rounded-2xl shadow-sm hover:shadow-md transition-shadow border-l-4"
+                            style={{
+                              borderLeftColor: cfg.color === 'processing' ? '#3b82f6' : cfg.color === 'success' ? '#16a34a' : '#d1d5db',
+                              borderTop: '1px solid #f3f4f6',
+                              borderRight: '1px solid #f3f4f6',
+                              borderBottom: '1px solid #f3f4f6'
+                            }}
+                            bodyStyle={{ padding: '16px' }}
+                          >
+                            <div className="flex flex-col gap-3">
+                              {/* Header */}
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg
+                                      ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                                        task.status === 'WAITING_APPROVAL' ? 'bg-amber-100 text-amber-700' :
+                                        task.status === 'IN_PROGRESS' || task.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' :
+                                          'bg-gray-100 text-gray-500'}`}
+                                  >
+                                    {cfg.icon}
+                                  </div>
+                                  <div>
+                                    <Text className="text-sm font-semibold text-gray-800 line-clamp-2">
+                                      {task.name || task.taskName}
+                                    </Text>
+                                    {task.description && (
+                                      <Text type="secondary" className="text-xs line-clamp-1 mt-0.5">
+                                        {task.description}
+                                      </Text>
+                                    )}
+                                    {/* Ngày bắt đầu và hạn chót của task */}
+                                    <div className="flex flex-wrap gap-x-3 mt-1">
+                                      {task.startDate && (
+                                        <Text type="secondary" className="text-xs">
+                                          <CalendarOutlined className="mr-1" />
+                                          Bắt đầu: {formatDate(task.startDate)}
+                                        </Text>
+                                      )}
+                                      {task.dueDate && (
+                                        <Text type="secondary" className="text-xs">
+                                          <ClockCircleOutlined className="mr-1" />
+                                          Hạn: {formatDate(task.dueDate)}
+                                        </Text>
+                                      )}
+                                      {task.completedDate && (
+                                        <Text className="text-xs text-green-600">
+                                          <CheckCircleOutlined className="mr-1" />
+                                          Xong: {formatDate(task.completedDate)}
+                                        </Text>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                <Tag color={cfg.color} className="flex-shrink-0 mt-1">
                                   {cfg.label}
                                 </Tag>
                               </div>
-                            }
-                            description={
-                              <div>
-                                {task.description && (
-                                  <Text type="secondary" ellipsis style={{ fontSize: 12 }}>
-                                    {task.description}
-                                  </Text>
+
+                              {/* Assignments */}
+                              {(task.assignedLeaderName || task.assignments?.length > 0) && (
+                                <div className="rounded-xl bg-gray-50 p-3 mt-1 flex flex-col gap-2 border border-gray-100">
+                                  {task.assignedLeaderName && (
+                                    <div className="flex items-center gap-2">
+                                      <UserOutlined className="text-green-600" />
+                                      <Text className="text-xs">
+                                        <span className="font-semibold">Farm Leader:</span> {task.assignedLeaderName}
+                                      </Text>
+                                    </div>
+                                  )}
+                                  {task.assignments?.filter(f => !f.isLeader).length > 0 && (
+                                    <div className="flex items-start gap-2">
+                                      <TeamOutlined className="text-blue-600 mt-1" />
+                                      <div className="flex-1">
+                                        <Text className="text-xs font-semibold mb-1 block">
+                                          Farmers ({task.assignments.filter(f => !f.isLeader).length}):
+                                        </Text>
+                                        <div className="flex flex-wrap gap-1">
+                                          {task.assignments.filter(f => !f.isLeader).map(f => (
+                                            <Tag key={f.userId || f.id} color="blue" bordered={false} className="rounded-md m-0">
+                                              {f.fullName || f.name}
+                                            </Tag>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+
+                              {/* Actions */}
+                              <div className="flex items-center gap-2 mt-2 pt-3 border-t border-gray-100">
+                                {task.status === 'PENDING' && (
+                                  <>
+                                    <Button
+                                      type="primary"
+                                      size="small"
+                                      className="bg-blue-600 rounded-lg"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setAssignTaskData(task)
+                                        setAssignModalOpen(true)
+                                      }}
+                                    >
+                                      {task.assignedLeaderId ? 'Cập nhật phân công' : 'Phân công'}
+                                    </Button>
+                                    <Button
+                                      type="primary"
+                                      size="small"
+                                      className="bg-green-600 rounded-lg"
+                                      disabled={!task.assignedLeaderId && !task.farmLeaderId}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleActivateTask(task.id)
+                                      }}
+                                    >
+                                      Kích hoạt
+                                    </Button>
+                                  </>
                                 )}
-                                {(task.assignedLeaderName || task.assignments?.length > 0) && (
-                                  <div className="mt-1 flex flex-wrap gap-1">
-                                    {task.assignedLeaderName && (
-                                      <Tag icon={<UserOutlined />} color="green" style={{ margin: 0, fontSize: 11 }}>
-                                        {task.assignedLeaderName}
-                                      </Tag>
-                                    )}
-                                    {task.assignments?.length > 0 && (
-                                      <Tag icon={<TeamOutlined />} color="blue" style={{ margin: 0, fontSize: 11 }}>
-                                        {task.assignments.length} Farmer
-                                      </Tag>
-                                    )}
-                                  </div>
+                                {/* IN_PROGRESS / ACTIVE: đang thực hiện */}
+                                {(task.status === 'IN_PROGRESS' || task.status === 'ACTIVE') && (
+                                  <Button
+                                    type="default"
+                                    size="small"
+                                    className="rounded-lg text-blue-600 border-blue-200 hover:border-blue-400"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setAssignTaskData(task)
+                                      setAssignModalOpen(true)
+                                    }}
+                                  >
+                                    Cập nhật phân công
+                                  </Button>
+                                )}
+                                {/* WAITING_APPROVAL: Leader đã gửi summary — biên soạn */}
+                                {canCompileTask(task.status) && (
+                                  <Button
+                                    type="primary"
+                                    size="small"
+                                    className="bg-green-600 rounded-lg ml-auto"
+                                    icon={<EditOutlined />}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setCompileLogTask(task)
+                                      setCompileLogModalOpen(true)
+                                    }}
+                                  >
+                                    Xem báo cáo & Biên soạn
+                                  </Button>
+                                )}
+                                {task.status === 'COMPLETED' && (
+                                  <Button
+                                    type="default"
+                                    size="small"
+                                    className="rounded-lg ml-auto text-green-700 border-green-300 hover:border-green-500"
+                                    icon={<FileTextOutlined />}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setCompileLogTask(task)
+                                      setCompileLogModalOpen(true)
+                                    }}
+                                  >
+                                    Xem báo cáo
+                                  </Button>
                                 )}
                               </div>
-                            }
-                          />
+                            </div>
+                          </Card>
                         </List.Item>
                       )
                     }}
@@ -346,7 +531,13 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     className="mt-3 rounded-xl border border-gray-200 bg-gray-50"
                     title={<Text strong style={{ fontSize: 13 }}>Công việc mới</Text>}
                   >
-                    <Form form={taskForm} layout="vertical" initialValues={{ tasks: [{ name: '', description: '' }] }}>
+                    <Form
+                      form={taskForm}
+                      layout="vertical"
+                      initialValues={{
+                        tasks: [{ taskCatalogId: null, name: '', description: '' }],
+                      }}
+                    >
                       <Form.List name="tasks">
                         {(fields, { add, remove }) => (
                           <>
@@ -358,6 +549,31 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     <Button type="text" danger onClick={() => remove(name)}>Xóa</Button>
                                   )}
                                 </div>
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, 'taskCatalogId']}
+                                  label="Chọn từ danh mục"
+                                  className="!mb-3"
+                                >
+                                  <Select
+                                    allowClear
+                                    showSearch
+                                    optionFilterProp="label"
+                                    placeholder="Chọn công việc có sẵn (hoặc để trống để tạo mới)"
+                                    options={taskCatalogOptions}
+                                    onChange={(value) => {
+                                      const catalog = taskCatalogOptions.find((o) => o.value === value)
+                                      const list = taskForm.getFieldValue('tasks') || []
+                                      list[name] = {
+                                        ...list[name],
+                                        taskCatalogId: value || null,
+                                        name: catalog?.label || list[name]?.name || '',
+                                        description: catalog?.description || list[name]?.description || '',
+                                      }
+                                      taskForm.setFieldsValue({ tasks: [...list] })
+                                    }}
+                                  />
+                                </Form.Item>
                                 <Form.Item
                                   {...restField}
                                   name={[name, 'name']}
@@ -375,7 +591,13 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                 </Form.Item>
                               </Card>
                             ))}
-                            <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />} className="mb-3 text-green-600 border-green-300 hover:border-green-500">
+                            <Button
+                              type="dashed"
+                              onClick={() => add({ taskCatalogId: null, name: '', description: '' })}
+                              block
+                              icon={<PlusOutlined />}
+                              className="mb-3 text-green-600 border-green-300 hover:border-green-500"
+                            >
                               Thêm công việc khác
                             </Button>
                           </>
@@ -429,27 +651,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                   <CheckCircleOutlined className="text-green-600" />
-                                  <Text strong style={{ fontSize: 13 }}>{task.name || task.taskName}</Text>
+                                  <Text strong style={{ fontSize: 13 }}>{task.name || task.taskCatalogName}</Text>
                                 </div>
                                 <Tag color="success">Hoàn thành</Tag>
                               </div>
-                              {task.officialLog ? (
-                                <div className="space-y-1.5">
-                                  <div className="rounded-lg bg-gray-50 p-2 font-mono text-xs">
-                                    {task.officialLog.dataSentence}
-                                  </div>
-                                  <div className="rounded-lg bg-blue-50 p-2 italic text-xs text-blue-700">
-                                    {task.officialLog.supervisorDescription}
-                                  </div>
-                                </div>
-                              ) : (
-                                <Alert
-                                  message="Chưa biên soạn nhật ký chính thức"
-                                  type="info"
-                                  showIcon
-                                  className="rounded-lg"
-                                />
-                              )}
+                              <Alert
+                                message="Nhật ký chính thức xem qua Biên soạn / leader-summary API"
+                                type="info"
+                                showIcon
+                                className="rounded-lg"
+                              />
                             </Card>
                           </List.Item>
                         )}
@@ -461,6 +672,28 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           </Col>
         </Row>
       </Card>
+
+      <AssignTaskModal
+        open={assignModalOpen}
+        onCancel={() => setAssignModalOpen(false)}
+        onSuccess={() => {
+          setAssignModalOpen(false)
+          loadData() // Refresh parent data
+        }}
+        task={assignTaskData}
+        planId={planId}
+        stageId={selectedId}
+      />
+
+      <CompileLogModal
+        open={compileLogModalOpen}
+        onCancel={() => setCompileLogModalOpen(false)}
+        onSuccess={() => {
+          setCompileLogModalOpen(false)
+          loadData()
+        }}
+        task={compileLogTask}
+      />
     </div>
   )
 }

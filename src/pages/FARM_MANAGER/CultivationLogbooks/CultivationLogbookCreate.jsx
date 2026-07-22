@@ -214,26 +214,19 @@ const CultivationLogbookCreate = () => {
     return () => { isMounted = false }
   }, [selectedCatalogId])
 
-  // Fetch land plots with active status only (vùng trồng hoạt động)
+  // Fetch land plots available for logbook
   React.useEffect(() => {
     let isMounted = true
     const fetchLands = async () => {
       setIsLandsLoading(true)
       try {
-        const response = await LandPlotService.getLandPlots({
+        const response = await LandPlotService.getAvailableForLogbook({
           PageIndex: 1,
           PageSize: 1000,
-          Status: true,
         })
         if (!isMounted) return
         const lands = normalizeResponse(response)
-        // Filter only active land plots
-        const activeLands = lands.filter((land) => {
-          if (typeof land.isActive === 'boolean') return land.isActive
-          const status = String(land.status || '').toLowerCase()
-          return !['inactive', 'disabled', 'deleted'].includes(status)
-        })
-        setLandsData(activeLands)
+        setLandsData(lands)
       } catch (error) {
         console.error(error)
         if (isMounted) setLandsData([])
@@ -254,7 +247,7 @@ const CultivationLogbookCreate = () => {
     const loadCultivationLogbook = async () => {
       try {
         const response = await CultivationLogbookService.getById(id)
-        const plan = response?.data ?? response
+        const plan = response?.data?.data ?? response?.data ?? response
         if (!isMounted || !plan) return
 
         const crop = plan.crop || {}
@@ -275,31 +268,31 @@ const CultivationLogbookCreate = () => {
 
         // Set form values
         form.setFieldsValue({
-          planName: plan.planName || plan.name || '',
+          logbookName: plan.logbookName || '',
           category: selectedCropCatalogId,
           cropId: selectedCropId,
-          landPlotId: plan.landPlotId || plan.landId || '',
+          landPlotId: plan.landPlotId || '',
           area: plan.area || '',
           expectedStartDate: plan.startDate ? dayjs(plan.startDate) : null,
           expectedEndDate: plan.expectedEndDate ? dayjs(plan.expectedEndDate) : null,
           assignedFarmSupervisorId: originalSupervisorId,
-          description: plan.description || plan.note || '',
+          description: plan.description || '',
         })
 
         // Set immutable fields
         setImmutablePlanFields({
-          planName: plan.planName || plan.name || '',
+          logbookName: plan.logbookName || '',
           category: selectedCropCatalogId,
           cropId: selectedCropId,
-          landPlotId: plan.landPlotId || plan.landId || '',
+          landPlotId: plan.landPlotId || '',
         })
 
         // Set stages
         const normalizedStages = planStages.map((stage, index) => ({
           _key: `stage-${stage.id || Date.now()}-${index}`,
           order: index + 1,
-          title: stage.stageName || stage.title || '',
-          description: stage.description || stage.note || '',
+          title: stage.stageName || '',
+          description: stage.description || '',
           startDate: stage.startDate ? dayjs(stage.startDate) : null,
           endDate: stage.endDate ? dayjs(stage.endDate) : null,
         }))
@@ -439,7 +432,7 @@ const CultivationLogbookCreate = () => {
     try {
       setSubmitting(true)
       const payload = {
-        planName: values.planName,
+        logbookName: values.logbookName,
         cropId: values.cropId,
         landPlotId: values.landPlotId,
         startDate: formatApiDate(values.expectedStartDate),
@@ -450,7 +443,7 @@ const CultivationLogbookCreate = () => {
         description: values.description,
         cultivationStages: stages.map((stage, index) => ({
           stageName: stage.title,
-          note: stage.description,
+          description: stage.description,
           stageOrder: index + 1,
         })),
       }
@@ -483,7 +476,7 @@ const CultivationLogbookCreate = () => {
     try {
       setSavingTemplate(true)
       const payload = {
-        templateName: `Mẫu từ kế hoạch: ${values.planName}`,
+        templateName: `Mẫu từ kế hoạch: ${values.logbookName}`,
         description: values.description || 'Mẫu kế hoạch được tạo từ kế hoạch sản xuất',
         processSteps: stages.map((stage) => ({
           stepName: stage.title,
@@ -547,7 +540,7 @@ const CultivationLogbookCreate = () => {
           <Row gutter={24}>
             <Col xs={24} md={12} lg={8}>
               <Form.Item
-                name="planName" label="Tên nhật ký"
+                name="logbookName" label="Tên nhật ký"
                 rules={[{ required: true, message: 'Vui lòng nhập tên nhật ký' }]}
               >
                 <Input placeholder="VD: Vụ Đông Xuân 2026 - Lúa ST25" />
@@ -604,10 +597,10 @@ const CultivationLogbookCreate = () => {
               >
                 <Select
                   options={landsData?.map((land) => ({
-                    value: land.id || land._id || land.landPlotId,
-                    label: land.landPlotName || land.name
+                    value: land.id,
+                    label: land.name,
                   }))}
-                  placeholder="Chọn vùng trồng hoạt động..."
+                  placeholder="Chọn vùng trồng available..."
                   showSearch
                   filterOption={(input, option) =>
                     String(option?.label || '').toLowerCase().includes(input.toLowerCase())

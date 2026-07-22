@@ -28,7 +28,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
-import CropProtectionService from 'src/services/CropProtectionService'
+import PesticideService from 'src/services/PesticideService'
 import { invalidCharsRegex } from 'src/utils/helpers'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
@@ -73,7 +73,7 @@ const ViewCropProtections = () => {
         SearchKeyword: search || undefined,
         Status: statusFilter === 'all' ? undefined : statusFilter,
       }
-      const res = await CropProtectionService.getCropProtections(params)
+      const res = await PesticideService.getAll(params)
       if (res?.success === false) return
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || res?.data?.items?.length || 0)
@@ -125,7 +125,7 @@ const ViewCropProtections = () => {
     const { item } = statusModal
     try {
       setStatusLoading(true)
-      const res = await CropProtectionService.toggleCropProtectionStatus(item.id, {
+      const res = await PesticideService.toggleStatus(item.id, {
         isActive: !item.isActive,
       })
       if (res?.success === false) return

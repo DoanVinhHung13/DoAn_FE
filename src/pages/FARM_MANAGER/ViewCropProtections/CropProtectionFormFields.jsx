@@ -19,7 +19,7 @@ import {
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
-import CropProtectionService from 'src/services/CropProtectionService'
+import PesticideService from 'src/services/PesticideService'
 import CropManagementService from 'src/services/CropManagementService'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
@@ -159,9 +159,9 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
 
       let res
       if (isEdit) {
-        res = await CropProtectionService.updateCropProtection(editingItem.id, body)
+        res = await PesticideService.update(editingItem.id, body)
       } else {
-        res = await CropProtectionService.createCropProtection(body)
+        res = await PesticideService.create(body)
       }
 
       if (res?.success === false) {

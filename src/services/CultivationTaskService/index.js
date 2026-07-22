@@ -7,6 +7,8 @@ import {
   apiGetCultivationTasks,
   apiUpdateCultivationTask,
   apiStartCultivationTask,
+  apiGetLeaderSummary,
+  apiSubmitTaskSummary,
 } from './urls'
 
 const silentConfig = { skipNotice: true }
@@ -18,20 +20,26 @@ const getById = (id) =>
   http.get(apiGetCultivationTaskById(id), silentConfig)
 
 const create = (body) =>
-  http.post(apiCreateCultivationTask, body, silentConfig)
+  http.post(apiCreateCultivationTask, body)
 
 const createBulk = (body) =>
   http.post(apiCreateCultivationTaskBulk, body)
 
 const update = (id, body) =>
-  http.put(apiUpdateCultivationTask(id), body, silentConfig)
+  http.put(apiUpdateCultivationTask(id), body)
 
 const remove = (id) =>
-  http.delete(apiDeleteCultivationTask(id), silentConfig)
+  http.delete(apiDeleteCultivationTask(id))
 
-// Start/Activate a task
 const start = (id) =>
-  http.post(apiStartCultivationTask(id), {}, silentConfig)
+  http.post(apiStartCultivationTask(id))
+
+const getLeaderSummary = (id) =>
+  http.get(apiGetLeaderSummary(id), silentConfig)
+
+/** Body: { descriptionSummary, completedAt } */
+const submitSummary = (id, body) =>
+  http.post(apiSubmitTaskSummary(id), body)
 
 const CultivationTaskService = {
   getAll,
@@ -41,6 +49,8 @@ const CultivationTaskService = {
   update,
   remove,
   start,
+  getLeaderSummary,
+  submitSummary,
 }
 
 export default CultivationTaskService

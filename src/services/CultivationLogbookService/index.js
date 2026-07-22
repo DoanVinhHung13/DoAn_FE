@@ -15,6 +15,7 @@ import {
   apiStartLogbook,
   apiCompleteLogbook,
   apiCancelLogbook,
+  apiGetClosingReviews,
 } from './urls'
 
 const getAll = (params) => {
@@ -66,6 +67,9 @@ const complete = (id) =>
 const cancel = (id) =>
   http.post(apiCancelLogbook(id))
 
+const getClosingReviews = (params) =>
+  http.get(apiGetClosingReviews, { params, skipNotice: true })
+
 const CultivationLogbookService = {
   getAll,
   getById,
@@ -82,6 +86,7 @@ const CultivationLogbookService = {
   start,
   complete,
   cancel,
+  getClosingReviews,
 }
 
 export default CultivationLogbookService

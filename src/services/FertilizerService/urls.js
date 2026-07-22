@@ -13,3 +13,6 @@ export const apiGetFertilizerById = (id) => `/fertilizers/${id}`
 export const apiUpdateFertilizer = (id) => `/fertilizers/${id}`
 export const apiDeleteFertilizer = (id) => `/fertilizers/${id}`
 export const apiToggleFertilizerStatus = (id) => `/fertilizers/${id}`
+
+// Swagger: GET /api/fertilizers/selection — Daily Log Select
+export const apiGetFertilizerSelection = '/fertilizers/selection'

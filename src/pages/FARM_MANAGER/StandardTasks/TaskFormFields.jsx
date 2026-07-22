@@ -7,7 +7,7 @@ const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
     <Row gutter={16}>
       <Col xs={24} md={24}>
         <Form.Item
-          name="title"
+          name="name"
           label={
             <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
               Tên công việc {!readOnly}
