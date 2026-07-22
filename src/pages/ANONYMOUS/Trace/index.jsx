@@ -65,50 +65,53 @@ const Trace = () => {
   // 2. Resolve matching batch dynamically
   const resolvedBatch = useMemo(() => {
     const rawCode = (qrCode || '').trim();
-    const cleanCode = rawCode.replace(/^TR-/, '').trim().toLowerCase();
+    const normalizedRaw = rawCode.toLowerCase();
+    const cleanCode = rawCode.replace(/^(TR-|QR-|EAPLS-)/i, '').trim().toLowerCase();
 
     const allBatches = [...apiBatches, ...mockBatches];
 
-    // Priority 1: Exact match by batchCode or id
+    // Priority 1: Exact match by activeTraceCode, batchCode, or id
     let matched = allBatches.find(
       (b) =>
+        (b.activeTraceCode && String(b.activeTraceCode).toLowerCase() === normalizedRaw) ||
+        (b.activeTraceCode && String(b.activeTraceCode).replace(/^(TR-|QR-|EAPLS-)/i, '').toLowerCase() === cleanCode) ||
+        String(b.id).toLowerCase() === normalizedRaw ||
         String(b.id).toLowerCase() === cleanCode ||
-        String(b.batchCode || '').toLowerCase() === cleanCode ||
-        rawCode.toLowerCase() === String(b.batchCode || '').toLowerCase()
+        String(b.batchCode || '').toLowerCase() === normalizedRaw ||
+        String(b.batchCode || '').toLowerCase() === cleanCode
     );
 
-    // Priority 2: Partial match (includes batchCode)
+    // Priority 2: Partial match (batchCode or activeTraceCode contains code core)
     if (!matched) {
-      matched = allBatches.find(
-        (b) =>
-          b.batchCode && (cleanCode.includes(b.batchCode.toLowerCase()) || b.batchCode.toLowerCase().includes(cleanCode))
-      );
+      matched = allBatches.find((b) => {
+        const bCode = String(b.batchCode || '').toLowerCase();
+        const aCode = String(b.activeTraceCode || '').toLowerCase();
+        return (
+          (bCode && (cleanCode.includes(bCode) || bCode.includes(cleanCode))) ||
+          (aCode && (cleanCode.includes(aCode) || aCode.includes(cleanCode)))
+        );
+      });
     }
 
     // Priority 3: Smart fallback based on code keywords
     if (!matched) {
       if (cleanCode.includes('a05') || cleanCode.includes('cafe') || cleanCode.includes('robusta')) {
-        matched = mockBatches.find((b) => b.batchCode === 'LOT-A05-2024') || {
-          batchCode: 'LOT-A05-2024',
-          cropName: 'Cà phê Robusta',
-          landPlotName: 'Vườn C1',
-          startDate: '2024-01-15',
-          harvestDate: '2024-04-01',
-          area: 5.0,
-        };
+        matched = allBatches.find((b) => String(b.batchCode).includes('A05')) || mockBatches.find((b) => b.batchCode === 'LOT-A05-2024');
       } else if (cleanCode.includes('b12') || cleanCode.includes('ngo')) {
-        matched = mockBatches.find((b) => b.batchCode === 'LOT-B12-2024');
+        matched = allBatches.find((b) => String(b.batchCode).includes('B12')) || mockBatches.find((b) => b.batchCode === 'LOT-B12-2024');
       } else if (cleanCode.includes('c22') || cleanCode.includes('cai')) {
-        matched = mockBatches.find((b) => b.batchCode === 'LOT-C22-2024');
-      } else if (cleanCode.includes('d33') || cleanCode.includes('nang-hoa')) {
-        matched = mockBatches.find((b) => b.batchCode === 'LOT-D33-2024');
+        matched = allBatches.find((b) => String(b.batchCode).includes('C22')) || mockBatches.find((b) => b.batchCode === 'LOT-C22-2024');
+      } else if (cleanCode.includes('d33') || cleanCode.includes('nang-hoa') || cleanCode.includes('d33-2024')) {
+        matched = allBatches.find((b) => String(b.batchCode).includes('D33')) || mockBatches.find((b) => b.batchCode === 'LOT-D33-2024');
       } else if (cleanCode.includes('x01') || cleanCode.includes('st25')) {
-        matched = mockBatches.find((b) => b.batchCode === 'LOT-X01-2024');
+        matched = allBatches.find((b) => String(b.batchCode).includes('X01')) || mockBatches.find((b) => b.batchCode === 'LOT-X01-2024');
+      } else if (cleanCode.includes('01') || cleanCode.includes('batch-01')) {
+        matched = allBatches.find((b) => String(b.batchCode).includes('BATCH-01')) || mockBatches.find((b) => b.batchCode === 'BATCH-01');
       }
     }
 
     // Priority 4: Default fallback
-    return matched || mockBatches[0];
+    return matched || allBatches[0] || mockBatches[0];
   }, [qrCode, apiBatches]);
 
   // Construct dynamic trace data

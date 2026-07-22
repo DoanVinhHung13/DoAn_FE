@@ -150,6 +150,9 @@ instance.interceptors.request.use(
       }
     }
     config.baseURL = BASE_URL
+    if (config.url && config.url.startsWith('/api/') && BASE_URL && (BASE_URL.endsWith('/api') || BASE_URL.endsWith('/api/'))) {
+      config.url = config.url.replace(/^\/api\//, '/')
+    }
     // config.onUploadProgress = (progressEvent: any) => {
     // let percentCompleted = Math.floor(
     //   (progressEvent.loaded * 100) / progressEvent.total,

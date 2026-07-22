@@ -1,5 +1,5 @@
 // QR Service URLs
-const BASE_URL = '/api/qr-codes';
+const BASE_URL = '/qr-codes';
 
 export const apiGetQRCodes = BASE_URL;
 export const apiGetQRCodeById = (id) => `${BASE_URL}/${id}`;
