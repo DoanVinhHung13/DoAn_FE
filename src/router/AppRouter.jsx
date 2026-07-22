@@ -28,7 +28,7 @@ const AccountInfo = React.lazy(() => import('../pages/USER/AccountInfo'))
 const ChangePassword = React.lazy(() => import('../pages/USER/ChangePassword'))
 const Notifications = React.lazy(() => import('../pages/USER/Notifications'))
 const NotificationDetail = React.lazy(() => import('../pages/USER/NotificationDetail'))
-const JournalTrace = React.lazy(() => import('../pages/FARM_MANAGER/JournalTrace'))
+const Trace = React.lazy(() => import('../pages/ANONYMOUS/Trace'))
 
 // FARM_MANAGER pages
 const FarmManagerDashboard = React.lazy(() => import('../pages/FARM_MANAGER/Dashboard'))
@@ -148,7 +148,7 @@ const routes = [
   // ── Trace QR (standalone — không cần layout, không cần login) ────────────
   {
     path: ROUTER.TRACE,
-    element: <Lazy><JournalTrace /></Lazy>,
+    element: <Lazy><Trace /></Lazy>,
   },
 
   // ── Authenticated app layout ──────────────────────────────────────────────

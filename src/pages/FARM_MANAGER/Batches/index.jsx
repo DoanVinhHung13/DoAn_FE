@@ -14,12 +14,15 @@ import {
   Typography,
   message,
   Modal,
+  Table,
+  Tooltip,
 } from 'antd';
 import {
   QrcodeOutlined,
   PlusCircleOutlined,
   FilterOutlined,
   EyeOutlined,
+  InboxOutlined,
 } from '@ant-design/icons';
 import { Coffee, Wheat, Sprout } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -88,31 +91,64 @@ const Batches = () => {
     return configs[status] || { color: 'default', bgColor: 'bg-gray-100', textColor: 'text-gray-700' };
   };
 
-  const getProgressStatus = (expectedDate) => {
-    if (!expectedDate) return { percent: 0, status: 'normal', text: '', color: '' };
+  const getProgressStatus = (expectedDate, status) => {
+    // Nếu đã hoàn thành → 100%
+    if (status === 'Đã hoàn thành') {
+      return {
+        percent: 100,
+        status: 'success',
+        text: 'Đã hoàn thành',
+        color: 'green',
+      };
+    }
+
+    // Nếu đang thu hoạch → 50-90%
+    if (status === 'Đang thu hoạch') {
+      return {
+        percent: 70,
+        status: 'active',
+        text: 'Đang tiến hành thu hoạch',
+        color: 'blue',
+      };
+    }
+
+    // Nếu chờ thu hoạch → tính theo ngày
+    if (!expectedDate) {
+      return { percent: 0, status: 'normal', text: 'Chưa xác định', color: 'gray' };
+    }
     
     const today = dayjs();
     const expected = dayjs(expectedDate);
     const diff = expected.diff(today, 'day');
 
     if (diff < 0) {
-      return { 
-        percent: 100, 
-        status: 'exception', 
-        text: `Đã xong: ${Math.abs(diff).toString().padStart(2, '0')}/${Math.abs(diff).toString().padStart(2, '0')}`,
+      // Quá hạn nhưng chưa thu hoạch
+      return {
+        percent: 100,
+        status: 'exception',
+        text: `Quá hạn ${Math.abs(diff)} ngày`,
         color: 'red',
       };
     } else if (diff === 0) {
-      return { 
-        percent: 50, 
-        status: 'active', 
+      return {
+        percent: 95,
+        status: 'active',
         text: 'Hôm nay',
-        color: 'green',
+        color: 'orange',
+      };
+    } else if (diff <= 7) {
+      return {
+        percent: 80,
+        status: 'active',
+        text: `Còn ${diff} ngày`,
+        color: 'orange',
       };
     } else {
-      return { 
-        percent: 30, 
-        status: 'normal', 
+      // Tính % dựa trên thời gian (giả sử chu kỳ 100 ngày)
+      const progress = Math.min(50, Math.max(10, 100 - diff));
+      return {
+        percent: progress,
+        status: 'normal',
         text: `Dự kiến: ${expected.format('DD/MM/YYYY')}`,
         color: 'blue',
       };
@@ -200,113 +236,171 @@ const Batches = () => {
       </Card>
 
       {/* Batch List */}
-      <Card className="rounded-xl shadow-sm" loading={isLoading}>
-        <div className="space-y-4">
-          {/* Table Header */}
-          <Row className="bg-blue-50 py-3 px-4 rounded-lg">
-            <Col span={3}>
-              <Text strong className="text-gray-700">Mã lô</Text>
-            </Col>
-            <Col span={4}>
-              <Text strong className="text-gray-700">Sản phẩm</Text>
-            </Col>
-            <Col span={3}>
-              <Text strong className="text-gray-700">Diện tích</Text>
-            </Col>
-            <Col span={4}>
-              <Text strong className="text-gray-700">Tiến độ thu hoạch</Text>
-            </Col>
-            <Col span={3}>
-              <Text strong className="text-gray-700">Sản lượng dự kiến</Text>
-            </Col>
-            <Col span={3}>
-              <Text strong className="text-gray-700">Trạng thái</Text>
-            </Col>
-            <Col span={4}>
-              <Text strong className="text-gray-700">Thao tác</Text>
-            </Col>
-          </Row>
-
-          {/* Batch Items */}
-          {batches.length > 0 ? (
-            batches.map((batch) => {
-              const statusConfig = getStatusConfig(batch.status);
-              const progressInfo = getProgressStatus(batch.expectedHarvestDate);
-              
-              return (
-                <Row key={batch.id} className="border-b border-gray-100 py-4 px-4 hover:bg-gray-50 items-center">
-                  <Col span={3}>
-                    <div>
-                      <Text strong className="text-base">{batch.batchCode}</Text>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Bắt đầu: {batch.startDate ? dayjs(batch.startDate).format('DD/MM/YYYY') : '-'}
-                      </div>
-                    </div>
-                  </Col>
-                  <Col span={4}>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-lg">
-                        {getCropIcon(batch.cropName)}
-                      </div>
-                      <Text className="font-medium">{batch.cropName || 'N/A'}</Text>
-                    </div>
-                  </Col>
-                  <Col span={3}>
-                    <Text>{batch.area ? `${batch.area} ha` : '-'}</Text>
-                  </Col>
-                  <Col span={4}>
-                    <div>
-                      <Progress 
-                        percent={progressInfo.percent} 
+      <Card className="rounded-xl shadow-sm overflow-hidden" loading={isLoading}>
+        <Table
+          dataSource={batches}
+          rowKey="id"
+          pagination={false}
+          className="batch-table"
+          rowClassName={() => "hover:bg-green-50"}
+          columns={[
+            {
+              title: 'Mã lô',
+              dataIndex: 'batchCode',
+              key: 'batchCode',
+              width: 180,
+              render: (text, record) => (
+                <div>
+                  <Text strong className="block text-sm">{text}</Text>
+                  <Text className="text-xs text-gray-500">
+                    Bắt đầu: {record.startDate ? dayjs(record.startDate).format('DD/MM/YYYY') : '-'}
+                  </Text>
+                </div>
+              ),
+            },
+            {
+              title: 'Sản phẩm',
+              key: 'cropName',
+              width: 200,
+              render: (_, record) => (
+                <div className="flex items-center gap-2">
+                  <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-amber-50 rounded-lg border border-amber-200">
+                    {getCropIcon(record.cropName)}
+                  </div>
+                  <Text className="text-sm font-medium">{record.cropName || 'N/A'}</Text>
+                </div>
+              ),
+            },
+            {
+              title: 'Diện tích',
+              dataIndex: 'area',
+              key: 'area',
+              width: 100,
+              render: (area) => (
+                <Text className="text-sm font-semibold">{area ? `${area} ha` : '-'}</Text>
+              ),
+            },
+            {
+              title: 'Tiến độ thu hoạch',
+              key: 'progress',
+              width: 250,
+              render: (_, record) => {
+                const progressInfo = getProgressStatus(record.expectedHarvestDate, record.status);
+                return (
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Progress
+                        percent={progressInfo.percent}
                         status={progressInfo.status}
-                        strokeColor={progressInfo.color === 'green' ? '#10b981' : progressInfo.color === 'red' ? '#ef4444' : '#3b82f6'}
-                        size="small"
+                        strokeColor={{
+                          '0%': progressInfo.color === 'green' ? '#10b981' : progressInfo.color === 'red' ? '#ef4444' : '#3b82f6',
+                          '100%': progressInfo.color === 'green' ? '#059669' : progressInfo.color === 'red' ? '#dc2626' : '#2563eb',
+                        }}
+                        strokeWidth={8}
+                        showInfo={false}
+                        className="flex-1"
                       />
-                      <Text className="text-xs text-gray-600 mt-1 block">{progressInfo.text}</Text>
+                      <span className={`text-xs font-bold whitespace-nowrap ${
+                        progressInfo.color === 'green' ? 'text-green-600' :
+                        progressInfo.color === 'red' ? 'text-red-600' : 'text-blue-600'
+                      }`}>
+                        {progressInfo.percent}%
+                      </span>
                     </div>
-                  </Col>
-                  <Col span={3}>
-                    <Text strong className="text-base">{batch.expectedYield ? `${batch.expectedYield} Tấn` : '-'}</Text>
-                  </Col>
-                  <Col span={3}>
-                    <Tag className={`${statusConfig.bgColor} ${statusConfig.textColor} border-0 px-3 py-1 rounded-full`}>
-                      {batch.status || 'N/A'}
-                    </Tag>
-                  </Col>
-                  <Col span={4}>
-                    <Space size="small">
+                    <Text className="text-xs text-gray-500">{progressInfo.text}</Text>
+                  </div>
+                );
+              },
+            },
+            {
+              title: 'Sản lượng dự kiến',
+              dataIndex: 'expectedYield',
+              key: 'expectedYield',
+              width: 150,
+              render: (yield_val) => (
+                <Text strong className="text-sm text-blue-600">
+                  {yield_val ? `${yield_val} Tấn` : '-'}
+                </Text>
+              ),
+            },
+            {
+              title: 'Trạng thái',
+              dataIndex: 'status',
+              key: 'status',
+              width: 140,
+              render: (status) => {
+                const config = getStatusConfig(status);
+                return (
+                  <Tag className={`${config.bgColor} ${config.textColor} border-0 px-3 py-1 rounded-full text-xs font-medium`}>
+                    {status || 'N/A'}
+                  </Tag>
+                );
+              },
+            },
+            {
+              title: 'Thao tác',
+              key: 'actions',
+              width: 200,
+              fixed: 'right',
+              render: (_, record) => {
+                const isCompleted = record.status === 'Đã hoàn thành';
+                return (
+                  <Space size="small">
+                    <Tooltip title={!isCompleted ? 'Chỉ tạo QR cho lô đã hoàn thành' : 'Tạo mã QR'}>
                       <Button
                         type="primary"
                         icon={<QrcodeOutlined />}
-                        onClick={() => handleCreateQR(batch)}
-                        disabled={batch.status !== 'Đã hoàn thành'}
-                        className={`rounded-lg ${
-                          batch.status === 'Đã hoàn thành' 
-                            ? 'bg-green-600 hover:bg-green-700' 
-                            : 'bg-gray-300 cursor-not-allowed'
-                        }`}
-                        title={batch.status !== 'Đã hoàn thành' ? 'Chỉ tạo QR cho lô đã hoàn thành' : 'Tạo mã QR'}
+                        size="middle"
+                        onClick={() => handleCreateQR(record)}
+                        disabled={!isCompleted}
+                        className={isCompleted ? 'bg-green-600 hover:bg-green-700' : ''}
                       />
-                      <Button
-                        type="link"
-                        icon={<EyeOutlined />}
-                        onClick={() => navigate(`${ROUTER.FM_BATCH_DETAIL.replace(':id', batch.id)}`)}
-                        className="text-blue-600"
-                      >
-                        Xem chi tiết
-                      </Button>
-                    </Space>
-                  </Col>
-                </Row>
-              );
-            })
-          ) : (
-            <div className="text-center py-12">
-              <Text className="text-gray-400">Không có lô thu hoạch nào</Text>
-            </div>
-          )}
-        </div>
+                    </Tooltip>
+                    <Button
+                      type="link"
+                      icon={<EyeOutlined />}
+                      size="small"
+                      onClick={() => navigate(`${ROUTER.FM_BATCH_DETAIL.replace(':id', record.id)}`)}
+                      className="text-blue-600"
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </Space>
+                );
+              },
+            },
+          ]}
+          locale={{
+            emptyText: (
+              <div className="py-12">
+                <InboxOutlined className="text-5xl text-gray-300 mb-3" />
+                <Text className="text-gray-400">Không có lô thu hoạch nào</Text>
+              </div>
+            ),
+          }}
+        />
       </Card>
+
+      <style jsx>{`
+        :global(.batch-table .ant-table) {
+          font-size: 13px;
+        }
+        :global(.batch-table .ant-table-thead > tr > th) {
+          background: #f0fdf4 !important;
+          color: #166534;
+          font-weight: 600;
+          font-size: 13px;
+          padding: 12px 16px;
+          border-bottom: 2px solid #bbf7d0;
+        }
+        :global(.batch-table .ant-table-tbody > tr > td) {
+          padding: 12px 16px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        :global(.batch-table .ant-table-tbody > tr:hover > td) {
+          background: #f0fdf4 !important;
+        }
+      `}</style>
     </div>
   );
 };
