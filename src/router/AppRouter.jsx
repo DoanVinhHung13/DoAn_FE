@@ -77,6 +77,16 @@ const FarmManagerViewCropProtections = React.lazy(() => import('../pages/FARM_MA
 const FarmManagerCropProtectionCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionCreate'))
 const FarmManagerCropProtectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionDetail'))
 const FarmManagerCropProtectionEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionEdit'))
+
+const FarmManagerViewEquipmentMachinery = React.lazy(() => import('../pages/FARM_MANAGER/ViewEquipmentMachinery'))
+const FarmManagerEquipmentCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewEquipmentMachinery/EquipmentCreate'))
+const FarmManagerEquipmentDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewEquipmentMachinery/EquipmentDetail'))
+const FarmManagerEquipmentEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewEquipmentMachinery/EquipmentEdit'))
+
+const FarmManagerViewFarmSupplies = React.lazy(() => import('../pages/FARM_MANAGER/ViewFarmSupplies'))
+const FarmManagerFarmSupplyCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewFarmSupplies/FarmSupplyCreate'))
+const FarmManagerFarmSupplyDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewFarmSupplies/FarmSupplyDetail'))
+const FarmManagerFarmSupplyEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewFarmSupplies/FarmSupplyEdit'))
 const FarmManagerReferenceFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/Reference/FertilizerList'))
 const FarmManagerReferencePesticides = React.lazy(() => import('../pages/FARM_MANAGER/Reference/PesticideList'))
 const FarmManagerQRManagement = React.lazy(() => import('../pages/FARM_MANAGER/QRManagement'))
@@ -248,6 +258,18 @@ const routes = [
               { path: ROUTER.FM_VIEW_CROP_PROTECTION_CREATE, element: <Lazy><FarmManagerCropProtectionCreate /></Lazy> },
               { path: ROUTER.FM_VIEW_CROP_PROTECTION_DETAIL, element: <Lazy><FarmManagerCropProtectionDetail /></Lazy> },
               { path: ROUTER.FM_VIEW_CROP_PROTECTION_EDIT, element: <Lazy><FarmManagerCropProtectionEdit /></Lazy> },
+              
+              // Equipment & Machinery Management
+              { path: ROUTER.FM_VIEW_EQUIPMENT_MACHINERY, element: <Lazy><FarmManagerViewEquipmentMachinery /></Lazy> },
+              { path: ROUTER.FM_VIEW_EQUIPMENT_CREATE, element: <Lazy><FarmManagerEquipmentCreate /></Lazy> },
+              { path: ROUTER.FM_VIEW_EQUIPMENT_DETAIL, element: <Lazy><FarmManagerEquipmentDetail /></Lazy> },
+              { path: ROUTER.FM_VIEW_EQUIPMENT_EDIT, element: <Lazy><FarmManagerEquipmentEdit /></Lazy> },
+
+              // Farm Supplies Management
+              { path: ROUTER.FM_VIEW_FARM_SUPPLIES, element: <Lazy><FarmManagerViewFarmSupplies /></Lazy> },
+              { path: ROUTER.FM_VIEW_FARM_SUPPLY_CREATE, element: <Lazy><FarmManagerFarmSupplyCreate /></Lazy> },
+              { path: ROUTER.FM_VIEW_FARM_SUPPLY_DETAIL, element: <Lazy><FarmManagerFarmSupplyDetail /></Lazy> },
+              { path: ROUTER.FM_VIEW_FARM_SUPPLY_EDIT, element: <Lazy><FarmManagerFarmSupplyEdit /></Lazy> },
               
               // Reference Management
               { path: ROUTER.FM_REF_FERTILIZER, element: <Lazy><FarmManagerReferenceFertilizers /></Lazy> },
