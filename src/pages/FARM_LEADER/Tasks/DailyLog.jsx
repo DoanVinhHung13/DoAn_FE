@@ -162,30 +162,18 @@ const DailyLog = () => {
   }, [taskId, navigate, form])
 
   const mapFertilizers = (rows = []) =>
-    rows.map((row) => {
-      const opt = fertilizerOptions.find((o) => o.value === row.fertilizerId)
-      return {
-        fertilizerId: row.fertilizerId,
-        materialId: row.materialId || opt?.materialId,
-        quantity: row.quantity,
-        quantityUnit: row.quantityUnit,
-        area: row.area,
-        areaUnit: row.areaUnit,
-      }
-    })
+    rows.map((row) => ({
+      id: row.fertilizerId,
+      quantity: row.quantity,
+      area: row.area,
+    }))
 
   const mapPesticides = (rows = []) =>
-    rows.map((row) => {
-      const opt = pesticideOptions.find((o) => o.value === row.pesticideId)
-      return {
-        pesticideId: row.pesticideId,
-        materialId: row.materialId || opt?.materialId,
-        quantity: row.quantity,
-        quantityUnit: row.quantityUnit,
-        area: row.area,
-        areaUnit: row.areaUnit,
-      }
-    })
+    rows.map((row) => ({
+      id: row.pesticideId,
+      quantity: row.quantity,
+      area: row.area,
+    }))
 
   const handleSave = async () => {
     try {
@@ -623,11 +611,14 @@ const DailyLog = () => {
 
                           {log.fertilizers?.length > 0 && (
                             <div className="mt-2 bg-green-50/50 rounded-lg p-2 border border-green-100">
-                              {log.fertilizers.map((f, i) => (
-                                <div key={i} className="text-xs text-gray-600">
-                                  • {f.name}: <span className="font-semibold">{f.quantity} {f.quantityUnit}</span>
-                                </div>
-                              ))}
+                              {log.fertilizers.map((f, i) => {
+                                const opt = fertilizerOptions.find(o => o.value === f.id)
+                                return (
+                                  <div key={i} className="text-xs text-gray-600">
+                                    • {opt?.name || 'Phân bón'}: <span className="font-semibold">{f.quantity}</span>
+                                  </div>
+                                )
+                              })}
                             </div>
                           )}
 

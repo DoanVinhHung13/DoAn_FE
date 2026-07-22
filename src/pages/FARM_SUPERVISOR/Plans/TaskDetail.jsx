@@ -53,9 +53,9 @@ import ROUTER from 'src/router/ROUTER'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import CultivationTaskService from 'src/services/CultivationTaskService'
+import CultivationLogService from 'src/services/CultivationLogService'
 import UserService from 'src/services/UserService'
 import { ROLES } from 'src/constants/roles'
-import { FakeCultivationService } from '../Logbooks/mockData'
 
 const { Text, Title, Paragraph } = Typography
 const { TextArea } = Input
@@ -70,24 +70,14 @@ const taskStatusConfig = {
 const buildDataSentence = (summary) => {
   if (!summary) return 'Chưa có số liệu'
   const parts = []
-    ; (summary.totalFertilizers || []).forEach((f) => {
-      const daily = (f.dailyBreakdown || [])
-        .map((d) => `${formatDate(d.date)}: ${d.quantity} ${f.quantityUnit}/${d.area} ${f.areaUnit}`)
-        .join('; ')
-      parts.push(
-        `Đã bón ${f.totalQuantity} ${f.quantityUnit} ${f.name} cho ${f.totalArea} ${f.areaUnit}` +
-        (daily ? ` (${daily})` : '')
-      )
-    })
-    ; (summary.totalPesticides || []).forEach((p) => {
-      const daily = (p.dailyBreakdown || [])
-        .map((d) => `${formatDate(d.date)}: ${d.quantity} ${p.quantityUnit}/${d.area} ${p.areaUnit}`)
-        .join('; ')
-      parts.push(
-        `Đã phun ${p.totalQuantity} ${p.quantityUnit} ${p.name} cho ${p.totalArea} ${p.areaUnit}` +
-        (daily ? ` (${daily})` : '')
-      )
-    })
+  // API returns: fertilizers (not totalFertilizers)
+  ; (summary.fertilizers || []).forEach((f) => {
+    parts.push(`Đã bón ${f.name || 'Phân bón'}`)
+  })
+  // API returns: pesticides (not totalPesticides)
+  ; (summary.pesticides || []).forEach((p) => {
+    parts.push(`Đã phun ${p.name || 'Thuốc BVTV'}`)
+  })
   return parts.length ? parts.join('. ') : 'Không có số liệu phân bón/thuốc BVTV'
 }
 
@@ -150,7 +140,7 @@ const FarmSupervisorTaskDetail = () => {
             }
             if (foundTask.leaderSummary) {
               compileForm.setFieldsValue({
-                supervisorDescription: foundTask.leaderSummary.descriptionSummary || '',
+                supervisorDescription: foundTask.leaderSummary.description || '',
               })
             }
           } else {
@@ -235,8 +225,24 @@ const FarmSupervisorTaskDetail = () => {
         images: task.leaderSummary?.images || [],
         compiledAt: dayjs().format('YYYY-MM-DD'),
       }
-      await FakeCultivationService.compileOfficialLog(taskId, officialLog)
-      setTask((prev) => ({ ...prev, officialLog }))
+      // TODO: Replace with actual API - call patchDescription + approve
+      // Using cultivationLogId from task if available, otherwise create new log
+      const cultivationLogId = task.cultivationLogId || task.officialLogId
+      if (cultivationLogId) {
+        await CultivationLogService.patchDescription(cultivationLogId, {
+          description: values.supervisorDescription,
+        })
+        await CultivationLogService.approve(cultivationLogId, { comment: 'Đạt yêu cầu' })
+      } else {
+        // Fallback: Create new log if no existing log
+        await CultivationLogService.create({
+          cultivationTaskId: taskId,
+          description: values.supervisorDescription,
+          images: task.leaderSummary?.images || [],
+        })
+      }
+      // Update task status to completed after compilation
+      setTask((prev) => ({ ...prev, status: 'COMPLETED' }))
       message.success('Đã lưu nhật ký chính thức!')
       setCompileModal(false)
     } catch { /* validation */ } finally {
@@ -432,7 +438,7 @@ const FarmSupervisorTaskDetail = () => {
                   {/* Mô tả từ Leader */}
                   <Collapse.Panel header="✍️ Mô tả tổng kết từ Leader" key="description">
                     <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm italic text-blue-900">
-                      "{task.leaderSummary.descriptionSummary}"
+                      "{task.leaderSummary.description}"
                     </div>
                   </Collapse.Panel>
                 </Collapse>
@@ -442,7 +448,7 @@ const FarmSupervisorTaskDetail = () => {
                   <Button
                     type="primary" icon={<EditOutlined />} size="large"
                     onClick={() => {
-                      compileForm.setFieldsValue({ supervisorDescription: task.leaderSummary.descriptionSummary || '' })
+                      compileForm.setFieldsValue({ supervisorDescription: task.leaderSummary.description || '' })
                       setCompileModal(true)
                     }}
                     className="w-full h-10 mt-4 font-semibold bg-green-600 rounded-xl"

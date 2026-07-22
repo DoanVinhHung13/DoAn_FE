@@ -49,8 +49,9 @@ const FarmManagerCropEdit = React.lazy(() => import('../pages/FARM_MANAGER/Crops
 const FarmManagerCultivationLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/CultivationLogbooks'))
 const FarmManagerCultivationLogbookCreate = React.lazy(() => import('../pages/FARM_MANAGER/CultivationLogbooks/CultivationLogbookCreate'))
 const FarmManagerCultivationLogbookDetail = React.lazy(() => import('../pages/FARM_MANAGER/CultivationLogbooks/CultivationLogbookDetail'))
-const FarmManagerQualityInspections = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections'))
-const FarmManagerQualityInspectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections/QualityInspectionDetail'))
+// QualityInspections - legacy, removed
+// const FarmManagerQualityInspections = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections'))
+// const FarmManagerQualityInspectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections/QualityInspectionDetail'))
 const FarmManagerPlanTemplates = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates'))
 const FarmManagerPlanTemplateDetail = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates/PlanTemplateDetail'))
 const FarmManagerPlanTemplateCreate = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates/PlanTemplateCreate'))
@@ -91,9 +92,10 @@ const FarmerTasks = React.lazy(() => import('../pages/FARM_MANAGER/StandardTasks
 const FarmerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
 const FarmerPlans = React.lazy(() => import('../pages/USER/ProductionProcess'))
 const FarmerSupplies = React.lazy(() => import('../pages/FARM_MANAGER/Supplies'))
-const FarmSupervisorLogbooks = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks'))
-const FarmSupervisorLogbookDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks/LogbookDetail'))
-const FarmSupervisorStageLog = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks/StageLog'))
+// Legacy - removed
+// const FarmSupervisorLogbooks = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks'))
+// const FarmSupervisorLogbookDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks/LogbookDetail'))
+// const FarmSupervisorStageLog = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks/StageLog'))
 
 // ── Spinner fallback dùng chung ───────────────────────────────────────────────
 function Lazy({ children }) {
@@ -209,9 +211,9 @@ const routes = [
               { path: ROUTER.FM_PRODUCTION_PLAN_EDIT, element: <Lazy><FarmManagerCultivationLogbookCreate /></Lazy> },
               { path: ROUTER.FM_PRODUCTION_PLAN_DETAIL, element: <Lazy><FarmManagerCultivationLogbookDetail /></Lazy> },
 
-              // Quality inspection for Farm Supervisor log entries
-              { path: ROUTER.FM_QUALITY_INSPECTIONS, element: <Lazy><FarmManagerQualityInspections /></Lazy> },
-              { path: ROUTER.FM_QUALITY_INSPECTION_DETAIL, element: <Lazy><FarmManagerQualityInspectionDetail /></Lazy> },
+              // Quality inspection - removed (legacy)
+              // { path: ROUTER.FM_QUALITY_INSPECTIONS, element: <Lazy><FarmManagerQualityInspections /></Lazy> },
+              // { path: ROUTER.FM_QUALITY_INSPECTION_DETAIL, element: <Lazy><FarmManagerQualityInspectionDetail /></Lazy> },
 
               // Plan Template Management
               { path: ROUTER.FM_PLAN_TEMPLATES, element: <Lazy><FarmManagerPlanTemplates /></Lazy> },
@@ -261,7 +263,7 @@ const routes = [
               // Farm Supervisor - Plans & Tasks
               { path: ROUTER.FS_PLANS, element: <Lazy><FarmSupervisorPlans /></Lazy> },
               { path: ROUTER.FS_PLAN_DETAIL, element: <Lazy><FarmSupervisorPlanDetail /></Lazy> },
-              { path: ROUTER.FS_STAGE_LOG, element: <Lazy><FarmSupervisorStageLog /></Lazy> },
+              // FS_STAGE_LOG removed - using PlanDetail with tabs instead
 
               // Farm Supervisor - Additional features (formerly Land Manager)
               { path: ROUTER.LM_DASHBOARD, element: <Lazy><FarmSupervisorDashboard /></Lazy> },
