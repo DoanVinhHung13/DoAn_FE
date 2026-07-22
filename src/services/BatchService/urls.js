@@ -3,6 +3,7 @@ const BASE_URL = '/harvest-batches';
 
 export const apiGetBatches = `${BASE_URL}`;
 export const apiGetBatchById = (id) => `${BASE_URL}/${id}`;
+export const apiGetBatchTraceability = (id) => `${BASE_URL}/${id}/traceability`;
 export const apiCreateBatch = `${BASE_URL}`;
 export const apiUpdateBatch = (id) => `${BASE_URL}/${id}`;
 export const apiDeleteBatch = (id) => `${BASE_URL}/${id}`;
