@@ -202,13 +202,18 @@ instance.interceptors.response.use(
       return Promise.reject(apiError)
     }
 
+    const isPublicUrl = requestUrl.includes('/traceability') || requestUrl.includes('/trace') || isPublicAuthUrl(requestUrl)
+
     if (
       error.response?.status === 401 &&
       originalRequest &&
       !originalRequest._retry &&
       !requestUrl.includes("/auth/refresh-token") &&
-      !isPublicAuthUrl(requestUrl)
+      !isPublicUrl
     ) {
+      if (originalRequest.skipAuthRedirect) {
+        return Promise.reject(error)
+      }
       originalRequest._retry = true
       const refreshed = await refreshAccessToken()
       if (refreshed) {

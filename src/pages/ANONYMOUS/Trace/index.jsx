@@ -49,17 +49,19 @@ const Trace = () => {
     };
   }, [searchParams]);
 
-  // 1. Fetch real batches from API (if available)
+  // 1. Fetch real batches from API (silently fail if guest/unauthenticated)
   const { data: apiBatches = [], isLoading } = useQuery({
     queryKey: ['trace-api-batches'],
     queryFn: async () => {
       try {
-        const response = await BatchService.getBatches();
-        return response?.data?.data?.items || response?.data?.data || response?.data?.items || response?.data || [];
+        const response = await BatchService.getBatches(undefined, { skipNotice: true, skipAuthRedirect: true });
+        const list = response?.data?.items || response?.data?.data?.items || response?.data?.data || response?.data || [];
+        return Array.isArray(list) ? list : [];
       } catch (error) {
         return [];
       }
     },
+    retry: false,
   });
 
   // 2. Resolve matching batch dynamically
@@ -196,108 +198,139 @@ const Trace = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
-      {/* Header */}
-      <div className="bg-green-600 text-white py-12 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-              <Wheat className="w-10 h-10 text-green-600" />
+    <div className="min-h-screen bg-slate-50/80 pb-12">
+      {/* ── Mobile & Desktop Header Banner ── */}
+      <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-700 text-white shadow-md">
+        <div className="max-w-2xl mx-auto px-4 py-6 sm:py-10">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center flex-shrink-0 shadow-inner">
+              <Wheat className="w-10 h-10 sm:w-12 sm:h-12 text-amber-300" />
             </div>
-            <div>
-              <Title level={1} className="!text-white !mb-2">Truy xuất nguồn gốc</Title>
-              <Text className="text-green-100 text-lg">
-                Mã QR: <strong>{traceData.qrCode}</strong>
+            <div className="flex-1 min-w-0">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-xs font-medium text-emerald-100 mb-2">
+                <CheckCircleOutlined className="text-emerald-300" /> Hệ thống truy xuất nguồn gốc nông sản
+              </div>
+              <Title level={2} className="!text-white !mb-1 text-xl sm:text-2xl font-bold tracking-tight">
+                {traceData.cropName}
+              </Title>
+              <Text className="text-emerald-100 text-xs sm:text-sm font-mono block">
+                Mã QR: <strong className="text-white bg-black/20 px-2 py-0.5 rounded">{traceData.qrCode}</strong>
               </Text>
             </div>
           </div>
 
-          <Alert
-            message="Thông tin minh bạch 100%"
-            description="Sản phẩm được theo dõi toàn bộ quá trình sản xuất từ gieo trồng đến thu hoạch"
-            type="success"
-            showIcon
-            icon={<CheckCircleOutlined />}
-            className="bg-green-700 border-green-600 text-white"
-          />
+          <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/15 text-xs sm:text-sm text-emerald-50 flex items-center gap-3">
+            <CheckCircleOutlined className="text-lg text-amber-300 flex-shrink-0" />
+            <span>Sản phẩm được theo dõi và xác thực 100% dữ liệu điện tử từ quy trình gieo trồng đến thu hoạch.</span>
+          </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      {/* ── Main Container ── */}
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6 space-y-5">
 
-        {/* Thông tin cơ bản */}
-        <Card className="shadow-lg rounded-xl">
-          <Title level={3} className="flex items-center gap-2 !mb-4">
-            <Sprout className="w-6 h-6 text-green-600" />
-            Thông tin sản phẩm
-          </Title>
-          <Descriptions bordered column={2}>
-            <Descriptions.Item label="Mã lô" span={1}>
-              <Tag color="blue" className="text-base font-semibold">{traceData.batchCode}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Sản phẩm" span={1}>
-              <Text strong className="text-lg">{traceData.cropName}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Trang trại" span={2}>
-              <Space>
-                <EnvironmentOutlined className="text-green-600" />
-                {traceData.farmName}
+        {/* ── 1. Thông tin cơ bản ── */}
+        <Card className="rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+              <Sprout className="w-5 h-5" />
+            </div>
+            <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
+              Thông tin sản phẩm & Vùng trồng
+            </Title>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 flex flex-col justify-between">
+              <Text className="text-slate-500 text-xs font-semibold block mb-1">Mã lô sản xuất</Text>
+              <div>
+                <Tag color="blue" className="text-xs sm:text-sm font-semibold px-2.5 py-0.5 rounded-md m-0">
+                  {traceData.batchCode}
+                </Tag>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 flex flex-col justify-between">
+              <Text className="text-slate-500 text-xs font-semibold block mb-1">Tên sản phẩm</Text>
+              <Text strong className="text-sm sm:text-base text-emerald-800">{traceData.cropName}</Text>
+            </div>
+
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 sm:col-span-2">
+              <Text className="text-slate-500 text-xs font-semibold block mb-1">Vùng trồng & Trang trại</Text>
+              <Space className="text-xs sm:text-sm">
+                <EnvironmentOutlined className="text-emerald-600 text-sm" />
+                <Text strong className="text-slate-800">{traceData.farmName}</Text>
               </Space>
-            </Descriptions.Item>
-            <Descriptions.Item label="Ngày thu hoạch" span={1}>
-              <Space>
+            </div>
+
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 flex flex-col justify-between">
+              <Text className="text-slate-500 text-xs font-semibold block mb-1">Ngày thu hoạch</Text>
+              <Space className="text-xs sm:text-sm">
                 <CalendarOutlined className="text-blue-600" />
-                {dayjs(traceData.harvestDate).format('DD/MM/YYYY')}
+                <Text strong className="text-blue-700">{dayjs(traceData.harvestDate).format('DD/MM/YYYY')}</Text>
               </Space>
-            </Descriptions.Item>
-            <Descriptions.Item label="Diện tích" span={1}>
-              {traceData.area}
-            </Descriptions.Item>
-            <Descriptions.Item label="Sản lượng" span={1}>
-              <Text strong className="text-green-600">{traceData.yield}</Text>
-            </Descriptions.Item>
-            <Descriptions.Item label="Chứng nhận" span={1}>
-              <Space>
+            </div>
+
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 flex flex-col justify-between">
+              <Text className="text-slate-500 text-xs font-semibold block mb-1">Diện tích & Sản lượng</Text>
+              <Text className="text-xs sm:text-sm font-semibold text-slate-800">
+                {traceData.area} • <span className="text-emerald-600">{traceData.yield}</span>
+              </Text>
+            </div>
+
+            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 sm:col-span-2">
+              <Text className="text-slate-500 text-xs font-semibold block mb-1.5">Tiêu chuẩn & Chứng nhận</Text>
+              <div className="flex flex-wrap gap-1.5">
                 {traceData.certifications.map((cert) => (
-                  <Tag key={cert} color="green" icon={<SafetyCertificateOutlined />}>
+                  <Tag key={cert} color="green" icon={<SafetyCertificateOutlined />} className="text-xs rounded-md m-0">
                     {cert}
                   </Tag>
                 ))}
-              </Space>
-            </Descriptions.Item>
-          </Descriptions>
+              </div>
+            </div>
+          </div>
         </Card>
 
-        {/* Nhật ký hàng ngày */}
+        {/* ── 2. Nhật ký canh tác hàng ngày ── */}
         {traceData.displayOptions.showDailyLog && (
-          <Card className="shadow-lg rounded-xl">
-            <Title level={3} className="!mb-4">
-              📝 Nhật ký canh tác hàng ngày
-            </Title>
+          <Card className="rounded-2xl shadow-sm border border-slate-200/80">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                📝
+              </div>
+              <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
+                Nhật ký canh tác điện tử
+              </Title>
+            </div>
+
             <Timeline
               mode="left"
+              className="mt-2 px-1 sm:px-2"
               items={traceData.dailyLogs.map((log, index) => ({
                 key: index,
                 color: 'green',
-                dot: <CheckCircleOutlined className="text-lg" />,
+                dot: <CheckCircleOutlined className="text-base text-emerald-600 bg-white rounded-full" />,
                 children: (
-                  <div className="pb-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Tag color="blue">{dayjs(log.date).format('DD/MM/YYYY')}</Tag>
-                      <Text strong className="text-base">{log.stage}</Text>
+                  <div className="pb-3 text-xs sm:text-sm">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <Tag color="blue" className="rounded-md font-semibold text-xs m-0">
+                        {dayjs(log.date).format('DD/MM/YYYY')}
+                      </Tag>
+                      <Text strong className="text-slate-800 text-xs sm:text-sm">{log.stage}</Text>
                     </div>
-                    <Paragraph className="!mb-1">
-                      <Text strong>Hoạt động:</Text> {log.activity}
-                    </Paragraph>
-                    {log.weather && (
-                      <Paragraph className="!mb-1 text-gray-600">
-                        <Text>Thời tiết:</Text> {log.weather}
+                    <div className="p-2.5 sm:p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1 mt-1">
+                      <Paragraph className="!mb-0 text-slate-700">
+                        <strong className="text-slate-900">Hoạt động:</strong> {log.activity}
                       </Paragraph>
-                    )}
-                    <Paragraph className="!mb-0 text-gray-600">
-                      <Text>Ghi chú:</Text> {log.notes}
-                    </Paragraph>
+                      {log.weather && (
+                        <Paragraph className="!mb-0 text-slate-500 text-xs">
+                          <strong>Thời tiết:</strong> {log.weather}
+                        </Paragraph>
+                      )}
+                      <Paragraph className="!mb-0 text-slate-500 text-xs">
+                        <strong>Ghi chú:</strong> {log.notes}
+                      </Paragraph>
+                    </div>
                   </div>
                 ),
               }))}
@@ -305,91 +338,110 @@ const Trace = () => {
           </Card>
         )}
 
-        {/* Thông tin vật tư */}
+        {/* ── 3. Thông tin vật tư sử dụng ── */}
         {(traceData.displayOptions.showMaterials ?? traceData.displayOptions.showAutomation) && (
-          <Card className="shadow-lg rounded-xl">
-            <Title level={3} className="flex items-center gap-2 !mb-4">
-              <ExperimentOutlined className="text-orange-600" />
-              Thông tin vật tư sử dụng
-            </Title>
-            <div className="space-y-4">
+          <Card className="rounded-2xl shadow-sm border border-slate-200/80">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+              <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-700">
+                <ExperimentOutlined className="text-lg" />
+              </div>
+              <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
+                Vật tư & Chế phẩm nông nghiệp
+              </Title>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
               {traceData.materials.map((material, index) => (
-                <Card key={index} size="small" className="bg-gray-50">
-                  <Row gutter={16}>
-                    <Col span={6}>
-                      <Text type="secondary">Loại vật tư</Text>
-                      <div><Text strong>{material.type}</Text></div>
-                    </Col>
-                    <Col span={6}>
-                      <Text type="secondary">Tên sản phẩm</Text>
-                      <div><Text strong>{material.name}</Text></div>
-                    </Col>
-                    <Col span={6}>
-                      <Text type="secondary">Số lượng</Text>
-                      <div><Text strong className="text-blue-600">{material.quantity}</Text></div>
-                    </Col>
-                    <Col span={6}>
-                      <Text type="secondary">Nhà cung cấp</Text>
-                      <div><Text>{material.supplier}</Text></div>
-                    </Col>
-                  </Row>
-                </Card>
+                <div key={index} className="p-3 sm:p-4 bg-slate-50/90 rounded-xl border border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Tag color="orange" className="rounded-md font-medium text-xs m-0">{material.type}</Tag>
+                      <Text strong className="text-slate-900">{material.name}</Text>
+                    </div>
+                    <Text className="text-slate-500 text-xs block">Nhà cung cấp: {material.supplier}</Text>
+                  </div>
+                  <div className="text-left sm:text-right flex-shrink-0">
+                    <Text className="text-slate-400 text-xs block sm:inline mr-1">Liều lượng:</Text>
+                    <Text strong className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block">{material.quantity}</Text>
+                  </div>
+                </div>
               ))}
             </div>
           </Card>
         )}
 
-        {/* Hình ảnh thực địa */}
+        {/* ── 4. Hình ảnh thực địa ── */}
         {traceData.displayOptions.showPhotos && (
-          <Card className="shadow-lg rounded-xl">
-            <Title level={3} className="!mb-4">
-              📷 Hình ảnh thực tế tại vùng trồng
-            </Title>
-            <Row gutter={[16, 16]}>
-              {traceData.photos.map((photo, index) => (
-                <Col key={index} xs={24} sm={12} md={8}>
-                  <Card
-                    size="small"
-                    cover={<Image src={photo.url} alt={photo.caption} className="rounded-t-lg" />}
-                  >
-                    <Paragraph className="!mb-1 text-center" strong>{photo.caption}</Paragraph>
-                    <Text className="text-gray-500 text-sm block text-center">
-                      {dayjs(photo.date).format('DD/MM/YYYY')}
-                    </Text>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
+          <Card className="rounded-2xl shadow-sm border border-slate-200/80">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+              <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 font-bold">
+                📷
+              </div>
+              <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
+                Hình ảnh thực tế tại trang trại
+              </Title>
+            </div>
+
+            <Image.PreviewGroup>
+              <Row gutter={[12, 12]}>
+                {traceData.photos.map((photo, index) => (
+                  <Col key={index} xs={24} sm={12} md={8}>
+                    <div className="bg-slate-50 rounded-xl border border-slate-200/60 overflow-hidden shadow-xs">
+                      <Image
+                        src={photo.url}
+                        alt={photo.caption}
+                        className="object-cover w-full h-40 sm:h-36"
+                      />
+                      <div className="p-2.5 text-center">
+                        <Paragraph className="!mb-0 text-xs font-semibold text-slate-800 truncate">
+                          {photo.caption}
+                        </Paragraph>
+                        <Text className="text-slate-400 text-[11px] block mt-0.5">
+                          {dayjs(photo.date).format('DD/MM/YYYY')}
+                        </Text>
+                      </div>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+            </Image.PreviewGroup>
           </Card>
         )}
 
-        {/* Giấy chứng nhận */}
+        {/* ── 5. Giấy chứng nhận ── */}
         {(traceData.displayOptions.showCertificates ?? traceData.displayOptions.showCertificate) && (
-          <Card className="shadow-lg rounded-xl">
-            <Title level={3} className="flex items-center gap-2 !mb-4">
-              <SafetyCertificateOutlined className="text-blue-600" />
-              Giấy chứng nhận chất lượng
-            </Title>
-            <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
-              <SafetyCertificateOutlined className="text-3xl text-purple-600" />
+          <Card className="rounded-2xl shadow-sm border border-slate-200/80">
+            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+              <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700">
+                <SafetyCertificateOutlined className="text-lg" />
+              </div>
+              <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
+                Giấy chứng nhận & Tiêu chuẩn
+              </Title>
+            </div>
+
+            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-teal-50/80 rounded-xl border border-teal-200/70 text-xs sm:text-sm">
+              <SafetyCertificateOutlined className="text-2xl sm:text-3xl text-teal-600 flex-shrink-0" />
               <div>
-                <Text strong className="block text-base">Chứng nhận VietGAP No. 2024-AGRI-088</Text>
-                <Text className="text-sm text-gray-500">Hiệu lực đến: 12/2026 • Cấp bởi Cục Trồng Trọt & Nông Sản</Text>
+                <Text strong className="block text-slate-900 font-bold sm:text-base">Chứng nhận VietGAP No. 2024-AGRI-088</Text>
+                <Text className="text-slate-600 text-xs block mt-0.5">Hiệu lực đến: 12/2026 • Cấp bởi Cục Trồng Trọt & Nông Sản</Text>
               </div>
             </div>
           </Card>
         )}
 
-        {/* Footer */}
-        <Card className="bg-green-50 border-green-200 shadow-lg rounded-xl">
-          <div className="text-center">
-            <CheckCircleOutlined className="text-4xl text-green-600 mb-3" />
-            <Title level={4} className="!mb-2">Sản phẩm an toàn, chất lượng đảm bảo</Title>
-            <Paragraph className="text-gray-600">
-              Mọi thông tin đều được ghi nhận và xác thực bởi hệ thống quản lý điện tử
-            </Paragraph>
+        {/* ── 6. Footer Xác thực ── */}
+        <div className="p-6 bg-gradient-to-br from-emerald-800 to-green-900 text-white rounded-2xl shadow-md text-center space-y-2">
+          <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mx-auto text-amber-300">
+            <CheckCircleOutlined className="text-2xl" />
           </div>
-        </Card>
+          <Title level={4} className="!text-white !mb-1 text-base sm:text-lg font-bold">
+            Sản phẩm an toàn — Minh bạch nguồn gốc
+          </Title>
+          <Paragraph className="text-emerald-100 text-xs sm:text-sm max-w-md mx-auto !mb-0">
+            Mọi dữ liệu nhật ký canh tác và vật tư đều được ghi nhận trực tiếp từ trang trại và xác thực bởi hệ thống truy xuất điện tử.
+          </Paragraph>
+        </div>
       </div>
     </div>
   );
