@@ -25,6 +25,7 @@ import {
   apiUpdateFertilizer,
   apiDeleteFertilizer,
   apiToggleFertilizerStatus,
+  apiGetFertilizerSelection,
 } from './urls'
 
 /**
@@ -65,6 +66,10 @@ const deleteFertilizer = (id) => http.delete(apiDeleteFertilizer(id))
  */
 const toggleFertilizerStatus = (id, body) => http.put(apiToggleFertilizerStatus(id), body)
 
+/** GET /fertilizers/selection — dùng cho Daily Log Select */
+const getSelection = (params) =>
+  http.get(apiGetFertilizerSelection, { params, skipNotice: true })
+
 const FertilizerService = {
   getFertilizers,
   getFertilizerById,
@@ -72,6 +77,7 @@ const FertilizerService = {
   updateFertilizer,
   deleteFertilizer,
   toggleFertilizerStatus,
+  getSelection,
 }
 
 export default FertilizerService

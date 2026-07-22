@@ -13,3 +13,8 @@ export const apiGetStagesByLogbook = (logbookId) => `/cultivation-stages/logbook
 
 // Get stage logs
 export const apiGetCultivationStageLogs = (stageId) => `/cultivation-stages/${stageId}/logs`
+
+// Swagger: GET  /api/cultivation-stages/{id}/summary
+//          POST /api/cultivation-stages/{id}/official-logs
+export const apiGetCultivationStageSummary = (id) => `/cultivation-stages/${id}/summary`
+export const apiCreateOfficialLogs = (id) => `/cultivation-stages/${id}/official-logs`

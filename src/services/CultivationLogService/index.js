@@ -15,6 +15,7 @@ import {
   apiUploadLogImages,
   apiGetDailyLogsByStage,
   apiGetDailyLogsByTask,
+  apiPatchLogDescription,
 } from './urls'
 
 const getAll = (params) => {
@@ -81,6 +82,10 @@ const uploadImages = (id, formData) => {
   })
 }
 
+/** Body: { description } — chỉ sửa mô tả, không sửa ảnh/số liệu */
+const patchDescription = (id, body) =>
+  http.patch(apiPatchLogDescription(id), body)
+
 const CultivationLogService = {
   getAll,
   getById,
@@ -97,6 +102,7 @@ const CultivationLogService = {
   uploadImages,
   getDailyLogsByStage,
   getDailyLogsByTask,
+  patchDescription,
 }
 
 export default CultivationLogService

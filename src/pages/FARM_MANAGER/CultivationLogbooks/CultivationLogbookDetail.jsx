@@ -28,6 +28,7 @@ import CultivationStageService from 'src/services/CultivationStageService'
 // Import các Tab components
 import TaskLogHistoryTab from 'src/pages/FARM_SUPERVISOR/Plans/components/TaskLogHistoryTab'
 import OfficialLogbookTab from './components/OfficialLogbookTab'
+import { getLogbookStatus } from 'src/utils/cultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 
 
@@ -168,21 +169,16 @@ const CultivationLogbookDetail = () => {
 
             <div className="flex items-center gap-3 mb-2">
               <h1 className="max-w-4xl m-0 text-xl font-bold leading-tight text-gray-800">
-                {item.planName || item.name || item.logbookName || 'Chưa đặt tên nhật ký'}
+                {item.logbookName}
               </h1>
-              {item.status && (
-                <Tag color={
-                  item.status === 'COMPLETED' ? 'green' :
-                  item.status === 'IN_PROGRESS' ? 'blue' :
-                  item.status === 'DRAFT' ? 'default' :
-                  item.status === 'CANCELED' ? 'red' : 'orange'
-                } className="m-0">
-                  {item.status === 'COMPLETED' ? 'Hoàn thành' :
-                   item.status === 'IN_PROGRESS' ? 'Đang thực hiện' :
-                   item.status === 'DRAFT' ? 'Bản nháp' :
-                   item.status === 'CANCELED' ? 'Đã hủy' : item.status}
-                </Tag>
-              )}
+              {item.status && (() => {
+                const cfg = getLogbookStatus(item.status)
+                return (
+                  <Tag color={cfg.color} className="m-0">
+                    {cfg.label}
+                  </Tag>
+                )
+              })()}
             </div>
 
             {(item.description || item.note) && (
@@ -197,7 +193,7 @@ const CultivationLogbookDetail = () => {
                 <span>
                   <span className="text-gray-500">Danh mục:</span>{' '}
                   <span className="font-medium text-gray-800">
-                    {item.cropCatalogName || item.cropCategoryName || 'Chưa cập nhật'}
+                    {item.cropCatalogName || 'Chưa cập nhật'}
                   </span>
                 </span>
               </div>

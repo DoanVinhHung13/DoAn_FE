@@ -56,14 +56,18 @@ import TaskLogHistoryTab from './components/TaskLogHistoryTab'
 const { Text, Paragraph } = Typography
 
 // ── Config ────────────────────────────────────────────────────────────────────
+// Stage status từ API: PENDING | ACTIVE | COMPLETED
 const stageStatusConfig = {
   PENDING: { color: 'default', label: 'Chưa bắt đầu', avatarBg: '#9ca3af', step: 'wait' },
+  ACTIVE: { color: 'processing', label: 'Đang hoạt động', avatarBg: '#3b82f6', step: 'process' },
   IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện', avatarBg: '#3b82f6', step: 'process' },
   COMPLETED: { color: 'success', label: 'Hoàn thành', avatarBg: '#16a34a', step: 'finish' },
 }
 
+// Task status từ API: PENDING | IN_PROGRESS | COMPLETED
 const taskStatusConfig = {
   PENDING: { color: 'default', label: 'Chờ kích hoạt', icon: <ClockCircleOutlined /> },
+  IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
   ACTIVE: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
   COMPLETED: { color: 'success', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
 }
@@ -135,13 +139,13 @@ const FarmSupervisorPlanDetail = () => {
   const handleSubmitLogbook = async () => {
     try {
       setSubmitting(true)
-      await CultivationLogbookService.submitReview(planId)
-      message.success('Đã gửi nhật ký lên Farm Manager!')
+      await CultivationLogbookService.submitCompletion(planId)
+      message.success('Đã gửi yêu cầu chốt sổ lên Farm Manager!')
       setSubmitModal(false)
       navigate(ROUTER.FS_PLANS)
     } catch (error) {
       console.error(error)
-      message.error(error.message || 'Gửi nhật ký thất bại.')
+      message.error(error.message || 'Gửi chốt sổ thất bại.')
     } finally {
       setSubmitting(false)
     }
@@ -202,7 +206,7 @@ const FarmSupervisorPlanDetail = () => {
         <Row gutter={24} align="middle">
           <Col flex="1">
             <Text className="text-xl font-bold text-gray-800 block mb-3">
-              {plan.planName || plan.name || 'Kế hoạch canh tác'}
+              {plan.logbookName}
             </Text>
             <Descriptions size="small" column={{ xs: 1, sm: 2, md: 3 }} colon>
               <Descriptions.Item label={<span className="text-gray-500"><BookOutlined className="mr-1" />Danh mục</span>}>
@@ -274,7 +278,7 @@ const FarmSupervisorPlanDetail = () => {
           {
             key: '3',
             label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Chốt Logbook</span>,
-            children: <LogbookFinalizationTab stages={stages} tasks={tasks} />
+            children: <LogbookFinalizationTab planId={planId} stages={stages} tasks={tasks} />
           },
 
         ]}

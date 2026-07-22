@@ -1,11 +1,11 @@
 /**
- * Farm Manager: Danh sách Nhật ký Canh tác chờ duyệt
- * Route: /farm-manager/logbooks  (ROUTER.FM_LOGBOOKS)
+ * Farm Manager: Danh sách Nhật ký chờ chốt sổ
+ * Route: /farm-manager/logbooks
+ *
+ * API: GET /cultivation-logbooks/closing-reviews
  */
 import {
   CalendarOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
   EnvironmentOutlined,
   EyeOutlined,
   FileTextOutlined,
@@ -30,15 +30,17 @@ import { useNavigate } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import {
+  CLOSING_STATUS_FILTER_OPTIONS,
+  getLogbookStatus,
+  getReviewStatus,
+  matchesClosingFilter,
+} from 'src/utils/cultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
 
-const statusConfig = {
-  PENDING_REVIEW: { color: 'gold',    label: 'Chờ duyệt' },
-  APPROVED:       { color: 'success', label: 'Đã duyệt' },
-  REJECTED:       { color: 'error',   label: 'Từ chối' },
-}
+const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 
 const FarmManagerLogbooks = () => {
   const navigate = useNavigate()
@@ -54,28 +56,33 @@ const FarmManagerLogbooks = () => {
     const load = async () => {
       try {
         setLoading(true)
-        const res = await FakeCultivationService.getSubmittedLogbooks()
-        const items = res?.data?.data || []
-        if (mounted) setLogbooks(items.length ? items : MOCK_SUBMITTED_LOGBOOKS)
-      } catch {
-        if (mounted) setLogbooks(MOCK_SUBMITTED_LOGBOOKS)
+        const res = await CultivationLogbookService.getClosingReviews({
+          PageIndex: 1,
+          PageSize: 100,
+          SearchKeyword: search || undefined,
+        })
+        const data = unwrap(res)
+        const items = Array.isArray(data) ? data : data?.items || []
+        if (mounted) setLogbooks(items)
+      } catch (err) {
+        console.error(err)
+        if (mounted) {
+          setLogbooks([])
+          message.error('Không tải được danh sách chờ chốt sổ.')
+        }
       } finally {
         if (mounted) setLoading(false)
       }
     }
     load()
-    return () => { mounted = false }
-  }, [reloadKey])
+    return () => {
+      mounted = false
+    }
+  }, [reloadKey, search])
 
   const visible = useMemo(() => {
-    const kw = search.trim().toLowerCase()
-    return logbooks.filter((lb) => {
-      const matchKw = !kw || [lb.planName, lb.supervisorName, lb.landPlotName, lb.cropName]
-        .filter(Boolean).some((v) => v.toLowerCase().includes(kw))
-      const matchStatus = statusFilter === 'all' || lb.status === statusFilter
-      return matchKw && matchStatus
-    })
-  }, [logbooks, search, statusFilter])
+    return logbooks.filter((lb) => matchesClosingFilter(lb, statusFilter))
+  }, [logbooks, statusFilter])
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -84,7 +91,7 @@ const FarmManagerLogbooks = () => {
           <FileTextOutlined className="text-green-600" />
           Duyệt nhật ký canh tác
         </TitleCustom>
-        <Text type="secondary">Xem xét và phê duyệt nhật ký canh tác được gửi từ Farm Supervisor.</Text>
+        <Text type="secondary">Xem xét, phê duyệt chốt sổ và tạo QR truy xuất.</Text>
       </div>
 
       <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: 0 }}>
@@ -93,8 +100,11 @@ const FarmManagerLogbooks = () => {
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              onPressEnter={() => { setSearch(searchInput.trim()) }}
-              onClear={() => { setSearchInput(''); setSearch('') }}
+              onPressEnter={() => setSearch(searchInput.trim())}
+              onClear={() => {
+                setSearchInput('')
+                setSearch('')
+              }}
               placeholder="Tìm kiếm nhật ký..."
               prefix={<SearchOutlined className="text-gray-300" />}
               className="h-10 flex-1 min-w-48 rounded-xl"
@@ -104,56 +114,82 @@ const FarmManagerLogbooks = () => {
               value={statusFilter}
               onChange={(v) => setStatusFilter(v)}
               className="h-10 min-w-40 rounded-xl"
-              options={[
-                { value: 'all', label: 'Tất cả trạng thái' },
-                { value: 'PENDING_REVIEW', label: 'Chờ duyệt' },
-                { value: 'APPROVED', label: 'Đã duyệt' },
-                { value: 'REJECTED', label: 'Từ chối' },
-              ]}
+              options={CLOSING_STATUS_FILTER_OPTIONS}
             />
-            <Button icon={<ReloadOutlined />} onClick={() => setReloadKey((v) => v + 1)} loading={loading} className="h-10 px-3 rounded-xl bg-gray-50" />
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => setReloadKey((v) => v + 1)}
+              loading={loading}
+              className="h-10 px-3 rounded-xl bg-gray-50"
+            />
           </div>
-          <Text type="secondary" className="text-xs">Tìm thấy <strong>{visible.length}</strong> nhật ký</Text>
+          <Text type="secondary" className="text-xs">
+            Tìm thấy <strong>{visible.length}</strong> nhật ký
+          </Text>
         </div>
 
         {loading ? (
-          <div className="p-5"><Skeleton active paragraph={{ rows: 6 }} /></div>
+          <div className="p-5">
+            <Skeleton active paragraph={{ rows: 6 }} />
+          </div>
         ) : visible.length ? (
           <div className="p-5 grid gap-4 xl:grid-cols-2">
             {visible.map((lb) => {
-              const cfg = statusConfig[lb.status] || { color: 'default', label: lb.status }
+              const cfg = getLogbookStatus(lb.status)
+              const reviewCfg = lb.reviewStatus ? getReviewStatus(lb.reviewStatus) : null
+              const reviewId = lb.id
               return (
                 <Card
-                  key={lb.id}
+                  key={reviewId}
                   bordered={false}
                   className="overflow-hidden border border-gray-100 shadow-sm rounded-2xl hover:border-green-300 hover:shadow-md cursor-pointer transition"
                   bodyStyle={{ padding: 0 }}
-                  onClick={() => navigate(ROUTER.FM_LOGBOOK_REVIEW.replace(':id', lb.id || lb.planId))}
+                  onClick={() => navigate(ROUTER.FM_LOGBOOK_REVIEW.replace(':id', reviewId))}
                 >
                   <div className="p-5 border-b bg-gradient-to-r from-green-50 to-white">
                     <div className="flex flex-wrap justify-between gap-2 mb-2">
-                      <Tag color={cfg.color} className="rounded-full">{cfg.label}</Tag>
+                      <div className="flex flex-wrap gap-2">
+                        <Tag color={cfg.color} className="rounded-full">
+                          {cfg.label}
+                        </Tag>
+                        {reviewCfg && (
+                          <Tag color={reviewCfg.color} className="rounded-full">
+                            Duyệt: {reviewCfg.label}
+                          </Tag>
+                        )}
+                      </div>
                       <Text type="secondary" className="text-xs">
                         <CalendarOutlined className="mr-1" />
-                        Gửi: {lb.submittedAt ? formatDate(lb.submittedAt) : '—'}
+                        {lb.submittedAt ? formatDate(lb.submittedAt) : '—'}
                       </Text>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">{lb.planName}</h3>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">{lb.logbookName}</h3>
                     <Text type="secondary">{lb.cropName}</Text>
                   </div>
                   <div className="p-5 grid gap-3 text-sm sm:grid-cols-2">
                     <div>
                       <Text type="secondary">Vùng trồng</Text>
-                      <div className="mt-1 font-semibold"><EnvironmentOutlined className="mr-1 text-green-600" />{lb.landPlotName || '—'}</div>
+                      <div className="mt-1 font-semibold">
+                        <EnvironmentOutlined className="mr-1 text-green-600" />
+                        {lb.landPlotName}
+                      </div>
                     </div>
                     <div>
                       <Text type="secondary">Farm Supervisor</Text>
-                      <div className="mt-1 font-semibold"><UserOutlined className="mr-1 text-green-600" />{lb.supervisorName || '—'}</div>
+                      <div className="mt-1 font-semibold">
+                        <UserOutlined className="mr-1 text-green-600" />
+                        {lb.supervisorName}
+                      </div>
                     </div>
                     <div className="sm:col-span-2">
                       <Button
-                        type="primary" icon={<EyeOutlined />} size="small"
-                        onClick={(e) => { e.stopPropagation(); navigate(ROUTER.FM_LOGBOOK_REVIEW.replace(':id', lb.id || lb.planId)) }}
+                        type="primary"
+                        icon={<EyeOutlined />}
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(ROUTER.FM_LOGBOOK_REVIEW.replace(':id', reviewId))
+                        }}
                         className="w-full h-9 font-semibold bg-green-600 rounded-lg"
                       >
                         Xem & Duyệt nhật ký

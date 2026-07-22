@@ -1,0 +1,247 @@
+/**
+ * Farm Supervisor — Biên soạn nhật ký chính thức
+ *
+ * API:
+ *   GET  /cultivation-tasks/{id}/leader-summary
+ *   GET  /cultivation-tasks/{id}
+ *   PATCH /cultivation-logs/{id}/description
+ *   POST  /cultivation-logs/{id}/approve
+ */
+import React, { useEffect, useState } from 'react'
+import { Modal, Form, Input, Button, Image, Alert, Collapse, message, Spin } from 'antd'
+import { EditOutlined } from '@ant-design/icons'
+import { formatDate } from 'src/utils/dateFormatters'
+import CultivationTaskService from 'src/services/CultivationTaskService'
+import CultivationLogService from 'src/services/CultivationLogService'
+
+const { TextArea } = Input
+
+const unwrap = (res) => res?.data?.data ?? res?.data ?? res
+
+const buildDataSentence = (summary) => {
+  if (!summary) return 'Chưa có số liệu'
+  const parts = []
+  ;(summary.fertilizers || []).forEach((f) => {
+    parts.push(
+      `Đã bón ${f.totalQuantity ?? f.quantity} ${f.quantityUnit ?? f.unit} ${f.name}` +
+        (f.totalArea != null ? ` cho ${f.totalArea} ${f.areaUnit}` : '')
+    )
+  })
+  ;(summary.pesticides || []).forEach((p) => {
+    parts.push(
+      `Đã phun ${p.totalQuantity ?? p.quantity} ${p.quantityUnit ?? p.unit} ${p.name}` +
+        (p.totalArea != null ? ` cho ${p.totalArea} ${p.areaUnit}` : '')
+    )
+  })
+  return parts.length ? parts.join('. ') : 'Không có số liệu phân bón/thuốc BVTV'
+}
+
+const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
+  const [form] = Form.useForm()
+  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [leaderSummary, setLeaderSummary] = useState(null)
+  const [officialLogId, setOfficialLogId] = useState(null)
+  const [isApproved, setIsApproved] = useState(false)
+
+  useEffect(() => {
+    if (!open || !task?.id) {
+      form.resetFields()
+      setLeaderSummary(null)
+      setOfficialLogId(null)
+      setIsApproved(false)
+      return
+    }
+
+    const load = async () => {
+      setLoading(true)
+      try {
+        const [summaryRes, taskRes] = await Promise.all([
+          CultivationTaskService.getLeaderSummary(task.id),
+          CultivationTaskService.getById(task.id),
+        ])
+        const summary = unwrap(summaryRes)
+        const taskDetail = unwrap(taskRes)
+        setLeaderSummary(summary || null)
+
+        // Official log id — exact fields only (no legacy fallbacks beyond known DTO keys)
+        const logId = taskDetail?.cultivationLogId || summary?.cultivationLogId || null
+        setOfficialLogId(logId)
+
+        const approved = taskDetail?.status === 'COMPLETED'
+        setIsApproved(approved)
+
+        form.setFieldsValue({
+          supervisorDescription: summary?.description || '',
+        })
+      } catch (err) {
+        console.error(err)
+        setLeaderSummary(null)
+        form.setFieldsValue({
+          supervisorDescription: '',
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    load()
+  }, [open, task, form])
+
+  const dataSentence = buildDataSentence(leaderSummary)
+
+  const handleCompile = async () => {
+    try {
+      const values = await form.validateFields()
+      if (!officialLogId) {
+        message.error('Không tìm thấy nhật ký chính thức để biên soạn. Kiểm tra Leader đã gửi summary chưa.')
+        return
+      }
+      setSaving(true)
+
+      await CultivationLogService.patchDescription(officialLogId, {
+        description: values.supervisorDescription,
+      })
+
+      await CultivationLogService.approve(officialLogId, {
+        comment: 'Đạt yêu cầu',
+      })
+
+      message.success('Đã lưu và duyệt nhật ký chính thức!')
+      onSuccess?.()
+    } catch (err) {
+      if (!err?.errorFields) {
+        console.error(err)
+        message.error(err.message || 'Lưu nhật ký thất bại.')
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!task) return null
+
+  return (
+    <Modal
+      open={open}
+      onCancel={onCancel}
+      title={
+        <div className="flex items-center gap-2">
+          <EditOutlined className="text-green-600" /> Biên soạn nhật ký chính thức
+        </div>
+      }
+      onOk={handleCompile}
+      okText="Lưu & Duyệt nhật ký"
+      cancelText="Hủy"
+      confirmLoading={saving}
+      okButtonProps={{ className: 'bg-green-600', disabled: isApproved || !officialLogId }}
+      width={720}
+      destroyOnClose
+    >
+      {loading ? (
+        <div className="py-10 text-center">
+          <Spin tip="Đang tải báo cáo..." />
+        </div>
+      ) : (
+        <div className="space-y-4 mt-4">
+          {leaderSummary && (
+            <div className="mb-4">
+              <Collapse
+                bordered={false}
+                defaultActiveKey={['data']}
+                className="bg-transparent border border-green-100 rounded-xl overflow-hidden"
+              >
+                <Collapse.Panel
+                  header={<span className="font-semibold text-green-700">Báo cáo hoàn thành từ Farm Leader</span>}
+                  key="data"
+                >
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-sm font-mono text-gray-700">
+                      {dataSentence}
+                    </div>
+
+                    {leaderSummary.images?.length > 0 && (
+                      <div>
+                        <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                          Ảnh đính kèm ({leaderSummary.images.length} ảnh)
+                        </div>
+                        <Image.PreviewGroup>
+                          <div className="flex flex-wrap gap-2">
+                            {leaderSummary.images.map((img) => (
+                              <Image
+                                key={img.id || img.imageUrl}
+                                src={img.imageUrl}
+                                width={80}
+                                height={80}
+                                className="rounded-lg object-cover"
+                              />
+                            ))}
+                          </div>
+                        </Image.PreviewGroup>
+                      </div>
+                    )}
+
+                    {leaderSummary.description && (
+                      <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm italic text-blue-900">
+                        "{leaderSummary.description}"
+                      </div>
+                    )}                  </div>
+                </Collapse.Panel>
+              </Collapse>
+            </div>
+          )}
+
+          {!officialLogId && (
+            <Alert
+              message="Chưa có cultivation log để biên soạn"
+              description="Cần Leader gửi summary trước. Hệ thống sẽ tạo nhật ký PENDING để Supervisor chỉnh mô tả."
+              type="warning"
+              showIcon
+              className="rounded-xl"
+            />
+          )}
+
+          <Alert
+            message="Số liệu và ảnh không được phép sửa. Chỉ biên tập lại mô tả."
+            type="info"
+            showIcon
+            className="rounded-xl"
+          />
+
+          <Form form={form} layout="vertical">
+            <Form.Item
+              name="supervisorDescription"
+              label="Mô tả (Farm Supervisor biên tập)"
+              rules={[{ required: true, message: 'Nhập mô tả nhật ký' }]}
+              extra="Viết lại theo văn phong chuẩn nhật ký canh tác."
+            >
+              <TextArea
+                rows={5}
+                disabled={isApproved}
+                placeholder="VD: Công tác bón phân được thực hiện theo đúng quy trình kỹ thuật..."
+              />
+            </Form.Item>
+
+            <div>
+              <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                Preview nhật ký cuối
+              </div>
+              <Form.Item noStyle dependencies={['supervisorDescription']}>
+                {({ getFieldValue }) => (
+                  <div className="rounded-xl bg-green-50 border border-green-100 p-4 text-sm text-green-900">
+                    <span className="font-mono">{dataSentence}</span>
+                    {getFieldValue('supervisorDescription') && (
+                      <span> — {getFieldValue('supervisorDescription')}</span>
+                    )}
+                  </div>
+                )}
+              </Form.Item>
+            </div>
+          </Form>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+export default CompileLogModal

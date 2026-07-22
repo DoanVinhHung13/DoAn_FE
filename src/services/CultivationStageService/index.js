@@ -7,6 +7,8 @@ import {
   apiDeleteCultivationStage,
   apiGetStagesByLogbook,
   apiGetCultivationStageLogs,
+  apiGetCultivationStageSummary,
+  apiCreateOfficialLogs,
 } from './urls'
 
 const getAll = (params) => {
@@ -37,11 +39,19 @@ const deleteById = (id) => {
   return http.delete(apiDeleteCultivationStage(id))
 }
 
+const getSummary = (id) =>
+  http.get(apiGetCultivationStageSummary(id), { skipNotice: true })
+
+const createOfficialLogs = (id, body) =>
+  http.post(apiCreateOfficialLogs(id), body)
+
 const CultivationStageService = {
   getAll,
   getById,
   getByLogbookId,
   getStageLogs,
+  getSummary,
+  createOfficialLogs,
   create,
   update,
   deleteById,

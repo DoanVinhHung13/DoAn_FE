@@ -3,19 +3,14 @@
  * Route: /farm-manager/cultivation-logbooks  (ROUTER.FM_CULTIVATION_LOGBOOKS)
  * API: GET /api/cultivation-logbooks
  *
- * Architecture mirrors /farm-manager/view-fertilizers:
- *   - TitleCustom header + action button
- *   - Card toolbar (search + filters + reload)
- *   - CustomTable with pagination
+ * List DTO: id, logbookName, cropName, supervisorName, startDate, status
  */
 import {
   CalendarOutlined,
-  CheckCircleOutlined,
   EditOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
-  StopOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -35,16 +30,13 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import {
+  LOGBOOK_STATUS_FILTER_OPTIONS,
+  getLogbookStatus,
+} from 'src/utils/cultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 import { invalidCharsRegex } from 'src/utils/helpers'
 
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'active', label: 'Hoạt động' },
-  { value: 'inactive', label: 'Ngừng hoạt động' },
-]
-
-// ── Avatar helpers ────────────────────────────────────────────────────────────
 const AVATAR_COLORS = [
   'bg-green-500', 'bg-blue-500', 'bg-orange-500', 'bg-purple-500',
   'bg-pink-500', 'bg-teal-500', 'bg-indigo-500', 'bg-amber-500',
@@ -59,61 +51,19 @@ const getInitials = (name) => {
   return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
-const getSupervisorName = (plan) => {
-  const supervisor =
-    plan.assignedFarmSupervisor ||
-    plan.farmSupervisor ||
-    plan.supervisor
-
-  return (
-    plan.assignedFarmSupervisorName ||
-    plan.assignedFarmSupervisorFullName ||
-    plan.assignedSupervisorName ||
-    plan.farmSupervisorName ||
-    plan.farmSupervisorFullName ||
-    plan.supervisorName ||
-    (typeof supervisor === 'string' ? supervisor : null) ||
-    supervisor?.fullName ||
-    supervisor?.name ||
-    null
-  )
-}
-
-const normalizeCultivationLogbook = (plan) => ({
-  ...plan,
-  id: plan.id || plan.CultivationLogbookId,
-  planName: plan.planName || plan.name,
-  cropName:
-    plan.cropName ||
-    plan.crop?.name ||
-    (typeof plan.crop === 'string' ? plan.crop : null),
-  supervisorName: getSupervisorName(plan),
-  startDate: plan.startDate || plan.expectedStartDate,
-  isActive:
-    typeof plan.isActive === 'boolean'
-      ? plan.isActive
-      : typeof plan.active === 'boolean'
-        ? plan.active
-        : !plan.isDeleted,
-})
-
-// ── Main Component ────────────────────────────────────────────────────────────
 const CultivationLogbookList = () => {
   const navigate = useNavigate()
 
-  // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
-  // ── State: data ─────────────────────────────────────────────────────────────
   const [listData, setListData] = useState([])
   const [totalRecords, setTotalRecords] = useState(0)
   const [loading, setLoading] = useState(false)
 
-  // ── Fetch list ──────────────────────────────────────────────────────────────
   const getList = useCallback(async () => {
     try {
       setLoading(true)
@@ -124,7 +74,7 @@ const CultivationLogbookList = () => {
       }
       const res = await CultivationLogbookService.getAll(params)
       if (res?.success === false) return
-      setListData((res?.data?.items || []).map(normalizeCultivationLogbook))
+      setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
     } finally {
       setLoading(false)
@@ -134,15 +84,12 @@ const CultivationLogbookList = () => {
   const displayedData =
     statusFilter === 'all'
       ? listData
-      : listData.filter((plan) =>
-          statusFilter === 'active' ? plan.isActive : !plan.isActive
-        )
+      : listData.filter((plan) => plan.status === statusFilter)
 
   useEffect(() => {
     getList()
   }, [getList])
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
   const handleSearch = useCallback(() => {
     if (invalidCharsRegex.test(searchInput)) {
       message.error('Ký tự tìm kiếm không hợp lệ')
@@ -158,7 +105,6 @@ const CultivationLogbookList = () => {
     setPage(1)
   }
 
-  // ── Table columns ────────────────────────────────────────────────────────────
   const columns = [
     {
       title: 'STT',
@@ -173,8 +119,8 @@ const CultivationLogbookList = () => {
     },
     {
       title: 'Tên nhật ký',
-      dataIndex: 'planName',
-      key: 'planName',
+      dataIndex: 'logbookName',
+      key: 'logbookName',
       render: (v) => (
         <span className="font-medium text-gray-800">{v || '—'}</span>
       ),
@@ -224,18 +170,14 @@ const CultivationLogbookList = () => {
     {
       title: 'Trạng thái',
       key: 'status',
-      width: 150,
+      width: 160,
       render: (_, record) => {
+        const cfg = getLogbookStatus(record.status)
         return (
           <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${
-              record.isActive
-                ? 'bg-green-50 text-green-700'
-                : 'bg-red-50 text-red-600'
-            }`}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${cfg.badgeClass}`}
           >
-            {record.isActive ? <CheckCircleOutlined /> : <StopOutlined />}
-            <span>{record.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}</span>
+            <span>{cfg.label}</span>
           </div>
         )
       },
@@ -244,7 +186,7 @@ const CultivationLogbookList = () => {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 120,
+      width: 80,
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
@@ -262,34 +204,13 @@ const CultivationLogbookList = () => {
               }}
             />
           </Tooltip>
-          <Tooltip title={record.isActive ? 'Vô hiệu hóa' : 'Kích hoạt'}>
-            <Button
-              type="text"
-              size="small"
-              danger={record.isActive}
-              icon={record.isActive ? <StopOutlined /> : <CheckCircleOutlined />}
-              className={
-                record.isActive
-                  ? '!h-8 !w-8 rounded-lg text-red-500 hover:bg-red-50'
-                  : '!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50'
-              }
-              onClick={(event) => {
-                event.stopPropagation()
-                message.warning(
-                  'API nhật ký canh tác chưa hỗ trợ kích hoạt/vô hiệu hóa.'
-                )
-              }}
-            />
-          </Tooltip>
         </Space>
       ),
     },
   ]
 
-  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      {/* ── Header ── */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
@@ -307,13 +228,11 @@ const CultivationLogbookList = () => {
         </Button>
       </div>
 
-      {/* ── Table card ── */}
       <Card
         bordered={false}
         className="shadow-sm rounded-2xl"
         bodyStyle={{ padding: 0 }}
       >
-        {/* Toolbar */}
         <div className="flex flex-col gap-3 p-5 border-b border-gray-100 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
@@ -332,7 +251,7 @@ const CultivationLogbookList = () => {
               setPage(1)
             }}
             className="h-10 rounded-xl min-w-[160px]"
-            options={STATUS_OPTIONS}
+            options={LOGBOOK_STATUS_FILTER_OPTIONS}
           />
           <div className="flex gap-2 ml-auto">
             <Button
@@ -351,7 +270,6 @@ const CultivationLogbookList = () => {
           </div>
         </div>
 
-        {/* Table */}
         <CustomTable
           dataSource={displayedData}
           columns={columns}
@@ -388,4 +306,3 @@ const CultivationLogbookList = () => {
 }
 
 export default CultivationLogbookList
-

@@ -4,8 +4,10 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import StandardTaskService from 'src/services/StandardTaskService'
+import TaskCatalogService from 'src/services/TaskCatalogService'
 import TaskFormFields from './TaskFormFields'
+
+const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 
 const TaskEdit = () => {
   const { id } = useParams()
@@ -18,18 +20,18 @@ const TaskEdit = () => {
     const fetchDetail = async () => {
       try {
         setInitialLoading(true)
-        const res = await StandardTaskService.getById(id)
+        const res = await TaskCatalogService.getById(id)
         if (res?.success === false) {
           message.error('Không tìm thấy công việc')
           navigate(ROUTER.FM_TASKS)
           return
         }
 
-        const data = res?.data || {}
+        const data = unwrap(res) || {}
 
         form.setFieldsValue({
-          title: data.title || '',
-          description: data.description || '',
+          name: data.name,
+          description: data.description,
         })
       } catch (err) {
         message.error('Lấy thông tin công việc thất bại')
@@ -46,12 +48,11 @@ const TaskEdit = () => {
       setLoading(true)
 
       const body = {
-        title: values.title?.trim(),
-        description: values.description?.trim() || '',
-        isActive: true,
+        name: values.name?.trim(),
+        description: values.description?.trim() || null,
       }
 
-      const res = await StandardTaskService.update(id, body)
+      const res = await TaskCatalogService.update(id, body)
 
       if (res?.success === false) {
         message.error(res.message || 'Có lỗi xảy ra khi cập nhật công việc.')
@@ -68,7 +69,6 @@ const TaskEdit = () => {
 
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_TASKS)}>
@@ -81,29 +81,15 @@ const TaskEdit = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <Card
-        bordered={false}
-        className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: '24px' }}
-      >
+      <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: '24px' }}>
         {initialLoading ? (
           <Skeleton active paragraph={{ rows: 6 }} />
         ) : (
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-          >
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
             <TaskFormFields isEdit={true} />
 
-            {/* Footer actions */}
             <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
-              <Button
-                onClick={() => navigate(ROUTER.FM_TASKS)}
-                className="h-10 px-6 rounded-xl"
-                disabled={loading}
-              >
+              <Button onClick={() => navigate(ROUTER.FM_TASKS)} className="h-10 px-6 rounded-xl" disabled={loading}>
                 Hủy
               </Button>
               <Button

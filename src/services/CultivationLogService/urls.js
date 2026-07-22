@@ -10,6 +10,10 @@ export const apiApproveCultivationLog = (id) => `/cultivation-logs/${id}/approve
 export const apiRejectCultivationLog = (id) => `/cultivation-logs/${id}/reject`
 export const apiSaveInspectionDraft = (id) => `/cultivation-logs/${id}/save-inspection-draft`
 
+// Supervisor biên soạn — chỉ sửa mô tả
+// Swagger: PATCH /api/cultivation-logs/{id}/description
+export const apiPatchLogDescription = (id) => `/cultivation-logs/${id}/description`
+
 // Get logs by logbook or land plot
 export const apiGetLogbookLogs = (id) => `/cultivation-logbooks/${id}/logs`
 export const apiGetLandPlotLogs = (id) => `/land-plots/${id}/logs`

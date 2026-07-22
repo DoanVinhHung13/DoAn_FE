@@ -93,7 +93,7 @@ export const farmManagerItem = () => [
     label: 'Quản lý vật tư',
     children: [
       { key: ROUTER.FM_VIEW_FERTILIZERS, label: 'Phân bón' },
-      { key: ROUTER.FM_VIEW_CROP_PROTECTIONS, label: 'Nông dược' },
+      { key: ROUTER.FM_VIEW_CROP_PROTECTIONS, label: 'Thuốc BVTV' },
       { key: ROUTER.FM_VIEW_EQUIPMENT_MACHINERY, label: 'Máy móc & Thiết bị' },
       { key: ROUTER.FM_VIEW_FARM_SUPPLIES, label: 'Vật tư nông nghiệp' },
     ],
@@ -135,11 +135,6 @@ export const farmSupervisorItem = () => [
 
 // ─── FARM LEADER MENU ─────────────────────────────────────────────────────────
 export const farmLeaderItem = () => [
-  {
-    key: ROUTER.LM_FIELD_LOG,
-    icon: <FormOutlined className="text-lg" />,
-    label: 'Kế hoạch & Ghi chép',
-  },
   {
     key: ROUTER.FL_TASKS,
     icon: <CheckCircleOutlined className="text-lg" />,
