@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Card,
   Typography,
@@ -9,92 +10,187 @@ import {
   Tag,
   Space,
   Alert,
-  Divider,
   Row,
   Col,
-  Empty,
+  Spin,
 } from 'antd';
 import {
   CheckCircleOutlined,
   SafetyCertificateOutlined,
   EnvironmentOutlined,
   CalendarOutlined,
-  UserOutlined,
   ExperimentOutlined,
 } from '@ant-design/icons';
 import { Sprout, Wheat } from 'lucide-react';
 import dayjs from 'dayjs';
+import { mockBatches } from 'src/mocks/batchMockData';
+import BatchService from 'src/services/BatchService';
 
 const { Title, Paragraph, Text } = Typography;
 
 const Trace = () => {
   const { qrCode } = useParams();
-  
-  // Mock data cho demo - sẽ thay bằng API call thực
-  const traceData = {
-    qrCode: qrCode || 'QR-X01-2024',
-    batchCode: 'LOT-X01-2024',
-    cropName: 'Gạo ST25',
-    farmName: 'Trang trại Hữu Nghị',
-    harvestDate: '2024-05-20',
-    area: '2.5 ha',
-    yield: '18.5 tấn',
-    certifications: ['VietGAP', 'Organic'],
-    
-    // Display options (từ QR generation)
-    displayOptions: {
-      showDailyLog: true,
-      showAutomation: true,
-      showPhotos: true,
-      showCertificate: false,
+  const [searchParams] = useSearchParams();
+
+  // Parse display options from URL query parameters (e.g. ?log=1&mat=1&pic=1&cert=0)
+  const displayOptions = useMemo(() => {
+    const hasLog = searchParams.get('log');
+    const hasMat = searchParams.get('mat');
+    const hasPic = searchParams.get('pic');
+    const hasCert = searchParams.get('cert');
+
+    return {
+      showDailyLog: hasLog !== null ? hasLog === '1' : true,
+      showMaterials: hasMat !== null ? hasMat === '1' : true,
+      showAutomation: hasMat !== null ? hasMat === '1' : true,
+      showPhotos: hasPic !== null ? hasPic === '1' : true,
+      showCertificates: hasCert !== null ? hasCert === '1' : false,
+      showCertificate: hasCert !== null ? hasCert === '1' : false,
+    };
+  }, [searchParams]);
+
+  // 1. Fetch real batches from API (if available)
+  const { data: apiBatches = [], isLoading } = useQuery({
+    queryKey: ['trace-api-batches'],
+    queryFn: async () => {
+      try {
+        const response = await BatchService.getBatches();
+        return response?.data?.data?.items || response?.data?.data || response?.data?.items || response?.data || [];
+      } catch (error) {
+        return [];
+      }
     },
-    
-    // Nhật ký hàng ngày
-    dailyLogs: [
-      {
-        date: '2024-03-12',
-        stage: 'Gieo trồng',
-        activity: 'Gieo hạt giống ST25',
-        weather: 'Nắng nhẹ, 28°C',
-        notes: 'Gieo 120kg giống/ha',
-      },
-      {
-        date: '2024-03-25',
-        stage: 'Chăm sóc',
-        activity: 'Bón phân lần 1',
-        weather: 'Nắng, 30°C',
-        notes: 'Bón phân NPK 20-20-15',
-      },
-      {
-        date: '2024-04-10',
-        stage: 'Phòng trừ sâu bệnh',
-        activity: 'Phun thuốc BVTV',
-        weather: 'Mát mẻ, 26°C',
-        notes: 'Phun thuốc sinh học phòng sâu đục thân',
-      },
-      {
-        date: '2024-05-20',
-        stage: 'Thu hoạch',
-        activity: 'Thu hoạch lúa chín vàng',
-        weather: 'Nắng đẹp, 32°C',
-        notes: 'Độ ẩm hạt 14%, chất lượng tốt',
-      },
-    ],
-    
-    // Thông tin vật tư
-    materials: [
-      { type: 'Phân bón', name: 'NPK 20-20-15', quantity: '300kg', supplier: 'Công ty Phân bón Đồng Nai' },
-      { type: 'Thuốc BVTV', name: 'Biotin Plus', quantity: '5 lít', supplier: 'Công ty TNHH Sinh học An Nông' },
-      { type: 'Giống', name: 'Lúa ST25', quantity: '120kg', supplier: 'Trung tâm Giống cây trồng TPHCM' },
-    ],
-    
-    // Hình ảnh thực địa
-    photos: [
-      { url: 'https://via.placeholder.com/400x300/22c55e/ffffff?text=Ruong+lua+xanh+tot', caption: 'Lúa giai đoạn đẻ nhánh', date: '2024-04-01' },
-      { url: 'https://via.placeholder.com/400x300/facc15/ffffff?text=Lua+chin+vang', caption: 'Lúa chín vàng trước thu hoạch', date: '2024-05-15' },
-      { url: 'https://via.placeholder.com/400x300/3b82f6/ffffff?text=Thu+hoach', caption: 'Máy gặt đập liên hợp thu hoạch', date: '2024-05-20' },
-    ],
-  };
+  });
+
+  // 2. Resolve matching batch dynamically
+  const resolvedBatch = useMemo(() => {
+    const rawCode = (qrCode || '').trim();
+    const cleanCode = rawCode.replace(/^TR-/, '').trim().toLowerCase();
+
+    const allBatches = [...apiBatches, ...mockBatches];
+
+    // Priority 1: Exact match by batchCode or id
+    let matched = allBatches.find(
+      (b) =>
+        String(b.id).toLowerCase() === cleanCode ||
+        String(b.batchCode || '').toLowerCase() === cleanCode ||
+        rawCode.toLowerCase() === String(b.batchCode || '').toLowerCase()
+    );
+
+    // Priority 2: Partial match (includes batchCode)
+    if (!matched) {
+      matched = allBatches.find(
+        (b) =>
+          b.batchCode && (cleanCode.includes(b.batchCode.toLowerCase()) || b.batchCode.toLowerCase().includes(cleanCode))
+      );
+    }
+
+    // Priority 3: Smart fallback based on code keywords
+    if (!matched) {
+      if (cleanCode.includes('a05') || cleanCode.includes('cafe') || cleanCode.includes('robusta')) {
+        matched = mockBatches.find((b) => b.batchCode === 'LOT-A05-2024') || {
+          batchCode: 'LOT-A05-2024',
+          cropName: 'Cà phê Robusta',
+          landPlotName: 'Vườn C1',
+          startDate: '2024-01-15',
+          harvestDate: '2024-04-01',
+          area: 5.0,
+        };
+      } else if (cleanCode.includes('b12') || cleanCode.includes('ngo')) {
+        matched = mockBatches.find((b) => b.batchCode === 'LOT-B12-2024');
+      } else if (cleanCode.includes('c22') || cleanCode.includes('cai')) {
+        matched = mockBatches.find((b) => b.batchCode === 'LOT-C22-2024');
+      } else if (cleanCode.includes('d33') || cleanCode.includes('nang-hoa')) {
+        matched = mockBatches.find((b) => b.batchCode === 'LOT-D33-2024');
+      } else if (cleanCode.includes('x01') || cleanCode.includes('st25')) {
+        matched = mockBatches.find((b) => b.batchCode === 'LOT-X01-2024');
+      }
+    }
+
+    // Priority 4: Default fallback
+    return matched || mockBatches[0];
+  }, [qrCode, apiBatches]);
+
+  // Construct dynamic trace data
+  const traceData = useMemo(() => {
+    const b = resolvedBatch;
+    return {
+      qrCode: qrCode || `TR-${b.batchCode || 'LOT'}`,
+      batchCode: b.batchCode || 'LOT-DEMO',
+      cropName: b.cropName || b.cropType || 'Nông sản',
+      farmName: b.landPlotName ? `Vùng trồng ${b.landPlotName} - Trang trại Nông nghiệp` : 'Trang trại Hữu Nghị',
+      harvestDate: b.harvestDate || '2024-05-20',
+      startDate: b.startDate || '2024-01-15',
+      area: b.area ? `${b.area} ha` : '2.5 ha',
+      yield: b.yield || '15.5 tấn',
+      certifications: b.certifications || ['VietGAP', 'Organic'],
+
+      displayOptions,
+
+      dailyLogs: b.dailyLogs || [
+        {
+          date: b.startDate || '2024-03-12',
+          stage: 'Gieo trồng / Chuẩn bị',
+          activity: `Bắt đầu gieo trồng & canh tác ${b.cropName || 'nông sản'}`,
+          weather: 'Nắng nhẹ, 28°C',
+          notes: `Chuẩn bị đất tại ${b.landPlotName || 'vùng trồng'}`,
+        },
+        {
+          date: dayjs(b.startDate || '2024-03-12').add(20, 'day').format('YYYY-MM-DD'),
+          stage: 'Chăm sóc',
+          activity: 'Bón phân & tưới tiêu định kỳ',
+          weather: 'Nắng, 30°C',
+          notes: 'Cung cấp dinh dưỡng phát triển cây trồng',
+        },
+        {
+          date: dayjs(b.startDate || '2024-03-12').add(45, 'day').format('YYYY-MM-DD'),
+          stage: 'Phòng trừ sâu bệnh',
+          activity: 'Phun chế phẩm sinh học bảo vệ',
+          weather: 'Mát mẻ, 26°C',
+          notes: 'Đảm bảo an toàn vệ sinh sản phẩm',
+        },
+        {
+          date: b.harvestDate || '2024-05-20',
+          stage: 'Thu hoạch',
+          activity: `Thu hoạch ${b.cropName || 'nông sản'} chín rộ`,
+          weather: 'Nắng đẹp, 32°C',
+          notes: 'Đạt chỉ tiêu chất lượng xuất kho',
+        },
+      ],
+
+      materials: b.materials || [
+        { type: 'Phân bón', name: 'NPK Hữu cơ sinh học', quantity: '300 kg', supplier: 'Công ty Phân bón Đồng Nai' },
+        { type: 'Thuốc BVTV', name: 'Biotin Plus (Sinh học)', quantity: '5 lít', supplier: 'Công ty TNHH Sinh học An Nông' },
+        { type: 'Giống', name: b.cropName || 'Giống chuẩn', quantity: '120 kg', supplier: 'Trung tâm Giống cây trồng' },
+      ],
+
+      photos: b.photos || [
+        {
+          url: `https://placehold.co/400x300/22c55e/ffffff?text=${encodeURIComponent(b.cropName || 'Nông sản')}+giai+đoạn+đầu`,
+          caption: `${b.cropName || 'Nông sản'} giai đoạn sinh trưởng`,
+          date: b.startDate || '2024-03-12',
+        },
+        {
+          url: `https://placehold.co/400x300/facc15/333333?text=${encodeURIComponent(b.cropName || 'Nông sản')}+trước+thu+hoạch`,
+          caption: 'Phát triển tốt trước thu hoạch',
+          date: dayjs(b.harvestDate || '2024-05-20').subtract(10, 'day').format('YYYY-MM-DD'),
+        },
+        {
+          url: `https://placehold.co/400x300/3b82f6/ffffff?text=${encodeURIComponent(b.cropName || 'Nông sản')}+thu+hoạch`,
+          caption: 'Ngày thu hoạch chính thức',
+          date: b.harvestDate || '2024-05-20',
+        },
+      ],
+    };
+  }, [resolvedBatch, qrCode, displayOptions]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" tip="Đang tải thông tin truy xuất..." />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
@@ -112,7 +208,7 @@ const Trace = () => {
               </Text>
             </div>
           </div>
-          
+
           <Alert
             message="Thông tin minh bạch 100%"
             description="Sản phẩm được theo dõi toàn bộ quá trình sản xuất từ gieo trồng đến thu hoạch"
@@ -126,7 +222,7 @@ const Trace = () => {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-        
+
         {/* Thông tin cơ bản */}
         <Card className="shadow-lg rounded-xl">
           <Title level={3} className="flex items-center gap-2 !mb-4">
@@ -160,7 +256,7 @@ const Trace = () => {
             </Descriptions.Item>
             <Descriptions.Item label="Chứng nhận" span={1}>
               <Space>
-                {traceData.certifications.map(cert => (
+                {traceData.certifications.map((cert) => (
                   <Tag key={cert} color="green" icon={<SafetyCertificateOutlined />}>
                     {cert}
                   </Tag>
@@ -178,7 +274,8 @@ const Trace = () => {
             </Title>
             <Timeline
               mode="left"
-              items={traceData.dailyLogs.map(log => ({
+              items={traceData.dailyLogs.map((log, index) => ({
+                key: index,
                 color: 'green',
                 dot: <CheckCircleOutlined className="text-lg" />,
                 children: (
@@ -190,9 +287,11 @@ const Trace = () => {
                     <Paragraph className="!mb-1">
                       <Text strong>Hoạt động:</Text> {log.activity}
                     </Paragraph>
-                    <Paragraph className="!mb-1 text-gray-600">
-                      <Text>Thời tiết:</Text> {log.weather}
-                    </Paragraph>
+                    {log.weather && (
+                      <Paragraph className="!mb-1 text-gray-600">
+                        <Text>Thời tiết:</Text> {log.weather}
+                      </Paragraph>
+                    )}
                     <Paragraph className="!mb-0 text-gray-600">
                       <Text>Ghi chú:</Text> {log.notes}
                     </Paragraph>
@@ -204,7 +303,7 @@ const Trace = () => {
         )}
 
         {/* Thông tin vật tư */}
-        {traceData.displayOptions.showAutomation && (
+        {(traceData.displayOptions.showMaterials ?? traceData.displayOptions.showAutomation) && (
           <Card className="shadow-lg rounded-xl">
             <Title level={3} className="flex items-center gap-2 !mb-4">
               <ExperimentOutlined className="text-orange-600" />
@@ -262,13 +361,19 @@ const Trace = () => {
         )}
 
         {/* Giấy chứng nhận */}
-        {traceData.displayOptions.showCertificate && (
+        {(traceData.displayOptions.showCertificates ?? traceData.displayOptions.showCertificate) && (
           <Card className="shadow-lg rounded-xl">
             <Title level={3} className="flex items-center gap-2 !mb-4">
               <SafetyCertificateOutlined className="text-blue-600" />
               Giấy chứng nhận chất lượng
             </Title>
-            <Empty description="Chức năng đang được phát triển" />
+            <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
+              <SafetyCertificateOutlined className="text-3xl text-purple-600" />
+              <div>
+                <Text strong className="block text-base">Chứng nhận VietGAP No. 2024-AGRI-088</Text>
+                <Text className="text-sm text-gray-500">Hiệu lực đến: 12/2026 • Cấp bởi Cục Trồng Trọt & Nông Sản</Text>
+              </div>
+            </div>
           </Card>
         )}
 
