@@ -1,19 +1,32 @@
-import { useEffect, useState } from 'react'
-import { Modal, Form, Select, message } from 'antd'
-import { SaveOutlined } from '@ant-design/icons'
-import UserService from 'src/services/UserService'
-import CultivationTaskService from 'src/services/CultivationTaskService'
-import { ROLES } from 'src/constants/roles'
+import { SaveOutlined } from "@ant-design/icons"
+import { Form, Modal, Select, message } from "antd"
+import { useEffect, useState } from "react"
+import { ROLES } from "src/constants/roles"
+import CultivationTaskService from "src/services/CultivationTaskService"
+import UserService from "src/services/UserService"
 
-const AssignTaskModal = ({ open, onCancel, onSuccess, task, planId, stageId }) => {
+const AssignTaskModal = ({
+  open,
+  onCancel,
+  onSuccess,
+  task,
+  planId,
+  stageId,
+}) => {
   const [form] = Form.useForm()
   const [leaders, setLeaders] = useState([])
   const [farmers, setFarmers] = useState([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const leaderOptions = leaders.map((l) => ({ value: l.id, label: l.fullName || l.name }))
-  const farmerOptions = farmers.map((f) => ({ value: f.id, label: f.fullName || f.name }))
+  const leaderOptions = leaders.map(l => ({
+    value: l.id,
+    label: l.fullName || l.name,
+  }))
+  const farmerOptions = farmers.map(f => ({
+    value: f.id,
+    label: f.fullName || f.name,
+  }))
 
   useEffect(() => {
     if (open) {
@@ -21,7 +34,10 @@ const AssignTaskModal = ({ open, onCancel, onSuccess, task, planId, stageId }) =
       if (task) {
         form.setFieldsValue({
           farmLeaderId: task.assignedLeaderId || undefined,
-          farmerIds: task.assignments?.filter(a => !a.isLeader).map(a => typeof a === 'object' ? (a.userId || a.id) : a) || [],
+          farmerIds:
+            task.assignments
+              ?.filter(a => !a.isLeader)
+              .map(a => (typeof a === "object" ? a.userId || a.id : a)) || [],
         })
       }
     } else {
@@ -33,18 +49,44 @@ const AssignTaskModal = ({ open, onCancel, onSuccess, task, planId, stageId }) =
     setLoading(true)
     try {
       const [leadersRes, farmersRes] = await Promise.all([
-        UserService.getUsers({ PageIndex: 1, PageSize: 1000, Role: ROLES.FARM_LEADER, IsActive: true }).catch(() => ({ data: { items: [] } })),
-        UserService.getUsers({ PageIndex: 1, PageSize: 1000, Role: ROLES.FARMER, IsActive: true }).catch(() => ({ data: { items: [] } })),
+        UserService.getUsers({
+          PageIndex: 1,
+          PageSize: 1000,
+          Role: ROLES.FARM_LEADER,
+          IsActive: true,
+        }).catch(() => ({ data: { items: [] } })),
+        UserService.getUsers({
+          PageIndex: 1,
+          PageSize: 1000,
+          Role: ROLES.FARMER,
+          IsActive: true,
+        }).catch(() => ({ data: { items: [] } })),
       ])
 
-      const leadersList = leadersRes?.data?.items || leadersRes?.data?.data || leadersRes?.data || []
-      setLeaders(Array.isArray(leadersList) ? leadersList.filter(u => u.isActive !== false) : [])
+      const leadersList =
+        leadersRes?.data?.items ||
+        leadersRes?.data?.data ||
+        leadersRes?.data ||
+        []
+      setLeaders(
+        Array.isArray(leadersList)
+          ? leadersList.filter(u => u.isActive !== false)
+          : [],
+      )
 
-      const farmersList = farmersRes?.data?.items || farmersRes?.data?.data || farmersRes?.data || []
-      setFarmers(Array.isArray(farmersList) ? farmersList.filter(u => u.isActive !== false) : [])
+      const farmersList =
+        farmersRes?.data?.items ||
+        farmersRes?.data?.data ||
+        farmersRes?.data ||
+        []
+      setFarmers(
+        Array.isArray(farmersList)
+          ? farmersList.filter(u => u.isActive !== false)
+          : [],
+      )
     } catch (err) {
       console.error(err)
-      message.error('Lỗi khi tải danh sách nhân sự.')
+      message.error("Lỗi khi tải danh sách nhân sự.")
     } finally {
       setLoading(false)
     }
@@ -61,15 +103,14 @@ const AssignTaskModal = ({ open, onCancel, onSuccess, task, planId, stageId }) =
         leaderId: values.farmLeaderId,
         farmerIds: values.farmerIds || [],
         cultivationLogbookId: planId,
-        cultivationStageId: stageId
+        cultivationStageId: stageId,
       }
 
       await CultivationTaskService.update(task.id, payload)
-      message.success('Đã cập nhật phân công công việc!')
       onSuccess()
     } catch (err) {
       if (!err?.errorFields) {
-        message.error('Phân công thất bại.')
+        message.error("Phân công thất bại.")
       }
     } finally {
       setSaving(false)
@@ -85,20 +126,24 @@ const AssignTaskModal = ({ open, onCancel, onSuccess, task, planId, stageId }) =
       okText="Lưu phân công"
       cancelText="Hủy"
       confirmLoading={saving}
-      okButtonProps={{ className: 'bg-green-600', icon: <SaveOutlined /> }}
+      okButtonProps={{ className: "bg-green-600", icon: <SaveOutlined /> }}
       destroyOnClose
     >
       <Form form={form} layout="vertical" className="mt-4">
         <Form.Item
           name="farmLeaderId"
           label="Farm Leader phụ trách"
-          rules={[{ required: true, message: 'Vui lòng chọn Farm Leader' }]}
+          rules={[{ required: true, message: "Vui lòng chọn Farm Leader" }]}
         >
           <Select
             options={leaderOptions}
             placeholder="Chọn Farm Leader..."
             showSearch
-            filterOption={(input, option) => String(option?.label || '').toLowerCase().includes(input.toLowerCase())}
+            filterOption={(input, option) =>
+              String(option?.label || "")
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
             loading={loading}
           />
         </Form.Item>
@@ -108,7 +153,11 @@ const AssignTaskModal = ({ open, onCancel, onSuccess, task, planId, stageId }) =
             options={farmerOptions}
             placeholder="Chọn các Farmer..."
             showSearch
-            filterOption={(input, option) => String(option?.label || '').toLowerCase().includes(input.toLowerCase())}
+            filterOption={(input, option) =>
+              String(option?.label || "")
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
             loading={loading}
           />
         </Form.Item>

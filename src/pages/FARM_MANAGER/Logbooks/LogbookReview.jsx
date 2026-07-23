@@ -55,17 +55,15 @@ import HarvestBatchService from 'src/services/HarvestBatchService'
 import QrCodeService from 'src/services/QrCodeService'
 import ProductService from 'src/services/ProductService'
 import { formatDate } from 'src/utils/dateFormatters'
-import {
-  canApproveClosing,
-  getLogbookStatus,
-  getReviewStatus,
-} from 'src/utils/cultivationStatus'
+import { canApproveClosing } from 'src/utils/cultivationStatus'
+import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 
 const { Text, Paragraph } = Typography
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 
 const LogbookReview = () => {
+  const { getLogbookStatus, getReviewStatus } = useCultivationStatus()
   const { id } = useParams()
   const navigate = useNavigate()
   const [logbook, setLogbook] = useState(null)

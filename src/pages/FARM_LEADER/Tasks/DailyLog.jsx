@@ -5,6 +5,7 @@
  * API:
  *   GET  /cultivation-tasks/{id}
  *   GET  /cultivation-daily-logs/task/{taskId}
+ *   GET  /cultivation-daily-logs/task/{taskId}/summary
  *   GET  /fertilizers/selection
  *   GET  /pesticides/selection
  *   POST /v1/media/upload
@@ -14,10 +15,14 @@
  */
 import {
   ArrowLeftOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
   DeleteOutlined,
-  EnvironmentOutlined,
+  ExperimentOutlined,
+  FileTextOutlined,
   FormOutlined,
   InboxOutlined,
+  PictureOutlined,
   PlusOutlined,
   SendOutlined,
 } from '@ant-design/icons'
@@ -27,6 +32,7 @@ import {
   Card,
   Col,
   DatePicker,
+  Divider,
   Empty,
   Form,
   Image,
@@ -37,11 +43,15 @@ import {
   Row,
   Select,
   Spin,
+  Table,
   Tag,
+  Tooltip,
   Typography,
   Upload,
 } from 'antd'
-import { useEffect, useState } from 'react'
+
+import { useEffect, useMemo, useState } from 'react'
+
 import { useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 
@@ -49,37 +59,65 @@ import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationTaskService from 'src/services/CultivationTaskService'
 import CultivationDailyLogService from 'src/services/CultivationDailyLogService'
-import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import FertilizerService from 'src/services/FertilizerService'
 import PesticideService from 'src/services/PesticideService'
 import UploadService from 'src/services/UploadService'
-import { canWriteDailyLog, getTaskStatus } from 'src/utils/cultivationStatus'
+import { canWriteDailyLog } from 'src/utils/cultivationStatus'
+import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
 const { TextArea } = Input
 const { Dragger } = Upload
 
-const FERTILIZER_QUANTITY_UNITS = ['g', 'kg', 'tấn', 'lít', 'ml']
-const PESTICIDE_QUANTITY_UNITS = ['g', 'kg', 'lít', 'ml']
-const AREA_UNITS = ['m²', 'ha', 'sào']
+const FERTILIZER_QUANTITY_UNITS = ['kg', 'g', 'tấn', 'lít', 'ml', 'bao', 'can', 'gói', 'chai', 'bình', 'viên', 'hộp', 'túi', 'lọ']
+const PESTICIDE_QUANTITY_UNITS = ['ml', 'lít', 'g', 'kg', 'chai', 'gói', 'can', 'bình', 'viên', 'hộp', 'túi', 'lọ']
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 
-const toOptions = (list) =>
-  (list || []).map((item) => ({
-    value: item.id,
-    label: item.name,
-    materialId: item.materialId,
-    name: item.name,
-    unit: item.unit || item.usageUnit,
-  }))
+// usageUnit takes priority for both fertilizers and pesticides
+const toFertilizerOptions = (list) =>
+  (list || []).map((item) => {
+    const unit = item.usageUnit || item.unit || item.quantityUnit || item.unitName || item.materialUnit || item.defaultUnit || item.measurementUnit || ''
+    return {
+      value: item.id,
+      label: unit ? `${item.name} (${unit})` : item.name,
+      materialId: item.materialId || item.id,
+      name: item.name,
+      unit: unit,
+      raw: item,
+    }
+  })
+
+// usageUnit takes priority for pesticides
+const toPesticideOptions = (list) =>
+  (list || []).map((item) => {
+    // API returns: unit (kho) and usageUnit (su dung) - use usageUnit
+    const unit = item.usageUnit || item.unit || item.quantityUnit || item.unitName || item.materialUnit || item.defaultUnit || item.measurementUnit || ''
+    return {
+      value: item.id,
+      label: unit ? `${item.name} (${unit})` : item.name,
+      materialId: item.materialId || item.id,
+      name: item.name,
+      unit: unit,
+      usageUnit: item.usageUnit,
+      raw: item,
+    }
+  })
+
+const getUnitSelectOptions = (baseUnits, currentUnit) => {
+  const list = [...baseUnits]
+  if (currentUnit && !list.includes(currentUnit)) {
+    list.unshift(currentUnit)
+  }
+  return list.map((u) => ({ value: u, label: u }))
+}
 
 const DailyLog = () => {
+  const { getTaskStatus } = useCultivationStatus()
   const { taskId } = useParams()
   const navigate = useNavigate()
   const [task, setTask] = useState(null)
-  const [logbook, setLogbook] = useState(null)
   const [dailyLogs, setDailyLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [form] = Form.useForm()
@@ -87,10 +125,59 @@ const DailyLog = () => {
   const [saving, setSaving] = useState(false)
   const [submitModal, setSubmitModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [fileList, setFileList] = useState([])
   const [fertilizerOptions, setFertilizerOptions] = useState([])
   const [pesticideOptions, setPesticideOptions] = useState([])
   const [leaderSummary, setLeaderSummary] = useState(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+
+  // ── Tính tổng hợp tạm từ dailyLogs đã load ──
+  // Được dùng khi API leader-summary chưa trả data
+  const aggregateFromLogs = useMemo(() => {
+    const fertMap = {}  // key: `${fertilizerId}|${unit}`
+    const pestMap = {}  // key: `${pesticideId}|${unit}`
+
+    for (const log of dailyLogs) {
+      // --- fertilizers ---
+      for (const f of (log.fertilizers || [])) {
+        const id = f.fertilizerId || f.id || f.materialId
+        const unit = f.unit || f.quantityUnit || 'kg'
+        const areaUnit = f.areaUnit || 'ha'
+        const key = `${id}|${unit}`
+        const opt = fertilizerOptions.find(o => o.value === id)
+        const name = f.name || opt?.name || f.materialName || id || 'Phân bón'
+        if (!fertMap[key]) {
+          fertMap[key] = { id, name, totalQuantity: 0, unit, totalArea: 0, areaUnit, days: 0 }
+        }
+        fertMap[key].totalQuantity += Number(f.quantity || 0)
+        fertMap[key].totalArea += Number(f.area || 0)
+        fertMap[key].days += 1
+      }
+
+      // --- pesticides ---
+      for (const p of (log.pesticides || [])) {
+        const id = p.pesticideId || p.id || p.materialId
+        const unit = p.unit || p.quantityUnit || 'ml'
+        const areaUnit = p.areaUnit || 'ha'
+        const key = `${id}|${unit}`
+        const opt = pesticideOptions.find(o => o.value === id)
+        const name = p.name || opt?.name || p.materialName || id || 'Thuốc BVTV'
+        if (!pestMap[key]) {
+          pestMap[key] = { id, name, totalQuantity: 0, unit, totalArea: 0, areaUnit, days: 0 }
+        }
+        pestMap[key].totalQuantity += Number(p.quantity || 0)
+        pestMap[key].totalArea += Number(p.area || 0)
+        pestMap[key].days += 1
+      }
+    }
+
+    return {
+      fertilizers: Object.values(fertMap),
+      pesticides: Object.values(pestMap),
+      logCount: dailyLogs.length,
+    }
+  }, [dailyLogs, fertilizerOptions, pesticideOptions])
 
   useEffect(() => {
     const loadTaskData = async () => {
@@ -112,23 +199,6 @@ const DailyLog = () => {
 
         setTask(taskData)
 
-        if (taskData.cultivationLogbookId) {
-          try {
-            const lbRes = await CultivationLogbookService.getById(taskData.cultivationLogbookId)
-            const lb = unwrap(lbRes)
-            setLogbook({
-              logbookName: lb?.logbookName,
-              landPlotName: lb?.landPlotName,
-              cropName: lb?.cropName,
-              status: lb?.status,
-            })
-          } catch {
-            setLogbook(null)
-          }
-        } else {
-          setLogbook(null)
-        }
-
         const logsData = unwrap(logsRes)
         const logsList = Array.isArray(logsData)
           ? logsData
@@ -138,15 +208,14 @@ const DailyLog = () => {
         const fertData = unwrap(fertRes)
         const pestData = unwrap(pestRes)
         setFertilizerOptions(
-          toOptions(Array.isArray(fertData) ? fertData : fertData?.items || [])
+          toFertilizerOptions(Array.isArray(fertData) ? fertData : fertData?.items || [])
         )
         setPesticideOptions(
-          toOptions(Array.isArray(pestData) ? pestData : pestData?.items || [])
+          toPesticideOptions(Array.isArray(pestData) ? pestData : pestData?.items || [])
         )
 
         form.setFieldsValue({
           date: dayjs(),
-          progress: taskData.progress ?? 0,
           fertilizers: [],
           pesticides: [],
         })
@@ -159,20 +228,28 @@ const DailyLog = () => {
       }
     }
     loadTaskData()
-  }, [taskId, navigate, form])
+  }, [taskId, navigate, form, refreshKey])
 
   const mapFertilizers = (rows = []) =>
     rows.map((row) => ({
-      id: row.fertilizerId,
-      quantity: row.quantity,
-      area: row.area,
+      fertilizerId: row.fertilizerId,
+      materialId: row.materialId || row.fertilizerId,
+      quantity: Number(row.quantity || 0),
+      unit: row.quantityUnit || 'kg',
+      quantityUnit: row.quantityUnit || 'kg',
+      area: Number(row.area || 0),
+      areaUnit: row.areaUnit || 'ha',
     }))
 
   const mapPesticides = (rows = []) =>
     rows.map((row) => ({
-      id: row.pesticideId,
-      quantity: row.quantity,
-      area: row.area,
+      pesticideId: row.pesticideId,
+      materialId: row.materialId || row.pesticideId,
+      quantity: Number(row.quantity || 0),
+      unit: row.quantityUnit || 'ml',
+      quantityUnit: row.quantityUnit || 'ml',
+      area: Number(row.area || 0),
+      areaUnit: row.areaUnit || 'ha',
     }))
 
   const handleSave = async () => {
@@ -187,7 +264,6 @@ const DailyLog = () => {
       const payload = {
         taskId,
         date: values.date ? values.date.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD'),
-        progress: values.progress ?? 0,
         description: values.description || '',
         fertilizers: mapFertilizers(values.fertilizers),
         pesticides: mapPesticides(values.pesticides),
@@ -196,12 +272,11 @@ const DailyLog = () => {
 
       await CultivationDailyLogService.create(payload)
 
-      if (values.progress >= 100) {
-        await openSummaryModal()
-      } else {
-        message.success('Đã lưu nhật ký thành công!')
-        navigate(ROUTER.FL_TASKS)
-      }
+      message.success('Đã lưu nhật ký thành công!')
+      // Reload current page to see the new log
+      setRefreshKey(k => k + 1)
+      form.resetFields()
+      setFileList([])
     } catch (error) {
       console.error(error)
       if (error.errorFields) {
@@ -215,14 +290,19 @@ const DailyLog = () => {
   }
 
   const openSummaryModal = async () => {
+    setSubmitModal(true)
+    setSummaryLoading(true)
+    setLeaderSummary(null)
     try {
-      const res = await CultivationTaskService.getLeaderSummary(taskId)
-      setLeaderSummary(unwrap(res))
+      const [taskSumRes] = await Promise.allSettled([
+        CultivationTaskService.getLeaderSummary(taskId),
+      ])
+      if (taskSumRes.status === 'fulfilled') setLeaderSummary(unwrap(taskSumRes.value))
     } catch (e) {
       console.error(e)
-      setLeaderSummary(null)
+    } finally {
+      setSummaryLoading(false)
     }
-    setSubmitModal(true)
   }
 
   const handleSubmitSummary = async () => {
@@ -237,7 +317,8 @@ const DailyLog = () => {
 
       message.success('Đã hoàn thành công việc và gửi báo cáo lên Farm Supervisor!')
       setSubmitModal(false)
-      navigate(ROUTER.FL_TASKS)
+      // Reload current page after submitting summary
+      setRefreshKey(k => k + 1)
     } catch (error) {
       console.error(error)
       if (error.errorFields) {
@@ -272,7 +353,6 @@ const DailyLog = () => {
           url,
         },
       ])
-      message.success(`${file.name} tải lên thành công.`)
     } catch (err) {
       console.error(err)
       onError?.(err)
@@ -326,26 +406,29 @@ const DailyLog = () => {
               {task.taskCatalogName && <Tag color="blue">{task.taskCatalogName}</Tag>}
             </div>
           </div>
+          {!isViewOnly && (
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              onClick={openSummaryModal}
+              className="h-10 px-5 font-semibold rounded-xl bg-emerald-600 border-emerald-600 hover:!bg-emerald-700 hover:!border-emerald-700 shrink-0"
+            >
+              Hoàn thành & Gửi Summary
+            </Button>
+          )}
         </div>
       </div>
 
-      {(logbook?.logbookName || logbook?.landPlotName || logbook?.cropName) && (
+      {(task.cultivationLogbookName || task.cultivationStageName) && (
         <Card bordered={false} className="shadow-sm rounded-2xl border border-green-100 bg-green-50/40">
-          <div className="grid gap-3 sm:grid-cols-3 text-sm">
+          <div className="grid gap-3 sm:grid-cols-2 text-sm">
             <div>
-              <Text type="secondary" className="text-xs">Kế hoạch</Text>
-              <div className="mt-1 font-semibold text-gray-800">{logbook.logbookName || '—'}</div>
+              <Text type="secondary" className="text-xs">Kế hoạch canh tác</Text>
+              <div className="mt-1 font-semibold text-gray-800">{task.cultivationLogbookName || '—'}</div>
             </div>
             <div>
-              <Text type="secondary" className="text-xs">
-                <EnvironmentOutlined className="mr-1" />
-                Vùng trồng
-              </Text>
-              <div className="mt-1 font-semibold text-gray-800">{logbook.landPlotName || '—'}</div>
-            </div>
-            <div>
-              <Text type="secondary" className="text-xs">Cây trồng</Text>
-              <div className="mt-1 font-semibold text-gray-800">{logbook.cropName || '—'}</div>
+              <Text type="secondary" className="text-xs">Giai đoạn</Text>
+              <div className="mt-1 font-semibold text-gray-800">{task.cultivationStageName || '—'}</div>
             </div>
           </div>
         </Card>
@@ -371,12 +454,7 @@ const DailyLog = () => {
               <Row gutter={16}>
                 <Col xs={24} md={12}>
                   <Form.Item name="date" label="Ngày ghi nhận" rules={[{ required: true, message: 'Chọn ngày' }]}>
-                    <DatePicker className="w-full" format="DD/MM/YYYY" disabled={isViewOnly} />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={12}>
-                  <Form.Item name="progress" label="Tiến độ (%)" rules={[{ required: true, message: 'Nhập tiến độ' }]}>
-                    <InputNumber min={0} max={100} className="w-full" disabled={isViewOnly} />
+                    <DatePicker className="w-full" format="DD/MM/YYYY" disabled />
                   </Form.Item>
                 </Col>
                 <Col span={24}>
@@ -413,15 +491,16 @@ const DailyLog = () => {
                                 placeholder="Chọn phân bón"
                                 options={fertilizerOptions}
                                 disabled={isViewOnly}
-                                onChange={(value) => {
-                                  const opt = fertilizerOptions.find((o) => o.value === value)
-                                  const list = form.getFieldValue('fertilizers') || []
-                                  list[field.name] = {
-                                    ...list[field.name],
-                                    fertilizerId: value,
-                                    materialId: opt?.materialId,
+                                onChange={(value, option) => {
+                                  const opt = option || fertilizerOptions.find((o) => o.value === value)
+                                  const unitFromApi = opt?.unit || opt?.raw?.unit || opt?.raw?.usageUnit
+                                  form.setFieldValue(['fertilizers', field.name, 'materialId'], opt?.materialId || value)
+                                  if (unitFromApi) {
+                                    form.setFieldValue(['fertilizers', field.name, 'quantityUnit'], unitFromApi)
                                   }
-                                  form.setFieldsValue({ fertilizers: list })
+                                  if (!form.getFieldValue(['fertilizers', field.name, 'areaUnit'])) {
+                                    form.setFieldValue(['fertilizers', field.name, 'areaUnit'], 'ha')
+                                  }
                                 }}
                               />
                             </Form.Item>
@@ -430,30 +509,51 @@ const DailyLog = () => {
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={5}>
-                            <Form.Item {...field} name={[field.name, 'quantity']} rules={[{ required: true }]}>
+                            <Form.Item {...field} name={[field.name, 'quantity']}>
                               <InputNumber min={0} className="w-full" placeholder="Lượng" disabled={isViewOnly} />
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={3}>
-                            <Form.Item {...field} name={[field.name, 'quantityUnit']} rules={[{ required: true }]} initialValue="g">
-                              <Select options={FERTILIZER_QUANTITY_UNITS.map((u) => ({ value: u, label: u }))} disabled={isViewOnly} />
+                            <Form.Item
+                              noStyle
+                              shouldUpdate={(prev, cur) =>
+                                prev.fertilizers?.[field.name]?.fertilizerId !==
+                                cur.fertilizers?.[field.name]?.fertilizerId
+                              }
+                            >
+                              {({ getFieldValue }) => {
+                                const hasFertilizer = !!getFieldValue(['fertilizers', field.name, 'fertilizerId'])
+                                const currentUnit = getFieldValue(['fertilizers', field.name, 'quantityUnit'])
+                                return (
+                                  <Form.Item {...field} name={[field.name, 'quantityUnit']} initialValue="kg">
+                                    <Select
+                                      options={getUnitSelectOptions(FERTILIZER_QUANTITY_UNITS, currentUnit)}
+                                      disabled={isViewOnly || hasFertilizer}
+                                    />
+                                  </Form.Item>
+                                )
+                              }}
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={5}>
-                            <Form.Item {...field} name={[field.name, 'area']} rules={[{ required: true }]}>
+                            <Form.Item {...field} name={[field.name, 'area']}>
                               <InputNumber min={0} className="w-full" placeholder="Diện tích" disabled={isViewOnly} />
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={3}>
-                            <Form.Item {...field} name={[field.name, 'areaUnit']} rules={[{ required: true }]} initialValue="ha">
-                              <Select options={AREA_UNITS.map((u) => ({ value: u, label: u }))} disabled={isViewOnly} />
+                            <Form.Item {...field} name={[field.name, 'areaUnit']} initialValue="ha">
+                              <Select
+                                options={[{ value: 'ha', label: 'ha' }]}
+                                disabled
+                                className="[&_.ant-select-selector]:bg-slate-50 [&_.ant-select-selector]:!cursor-default"
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
                       </div>
                     ))}
                     {!isViewOnly && (
-                      <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />} className="w-full text-green-700 border-green-300">
+                      <Button type="dashed" onClick={() => add({ areaUnit: 'ha' })} icon={<PlusOutlined />} className="w-full text-green-700 border-green-300">
                         Thêm phân bón
                       </Button>
                     )}
@@ -488,15 +588,17 @@ const DailyLog = () => {
                                 placeholder="Chọn thuốc BVTV"
                                 options={pesticideOptions}
                                 disabled={isViewOnly}
-                                onChange={(value) => {
-                                  const opt = pesticideOptions.find((o) => o.value === value)
-                                  const list = form.getFieldValue('pesticides') || []
-                                  list[field.name] = {
-                                    ...list[field.name],
-                                    pesticideId: value,
-                                    materialId: opt?.materialId,
+                                onChange={(value, option) => {
+                                  const opt = option || pesticideOptions.find((o) => o.value === value)
+                                  // usageUnit takes priority for pesticides
+                                  const unitFromApi = opt?.usageUnit || opt?.raw?.usageUnit || opt?.unit || opt?.raw?.unit
+                                  form.setFieldValue(['pesticides', field.name, 'materialId'], opt?.materialId || value)
+                                  if (unitFromApi) {
+                                    form.setFieldValue(['pesticides', field.name, 'quantityUnit'], unitFromApi)
                                   }
-                                  form.setFieldsValue({ pesticides: list })
+                                  if (!form.getFieldValue(['pesticides', field.name, 'areaUnit'])) {
+                                    form.setFieldValue(['pesticides', field.name, 'areaUnit'], 'ha')
+                                  }
                                 }}
                               />
                             </Form.Item>
@@ -505,30 +607,51 @@ const DailyLog = () => {
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={5}>
-                            <Form.Item {...field} name={[field.name, 'quantity']} rules={[{ required: true }]}>
+                            <Form.Item {...field} name={[field.name, 'quantity']}>
                               <InputNumber min={0} className="w-full" placeholder="Lượng" disabled={isViewOnly} />
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={3}>
-                            <Form.Item {...field} name={[field.name, 'quantityUnit']} rules={[{ required: true }]} initialValue="ml">
-                              <Select options={PESTICIDE_QUANTITY_UNITS.map((u) => ({ value: u, label: u }))} disabled={isViewOnly} />
+                            <Form.Item
+                              noStyle
+                              shouldUpdate={(prev, cur) =>
+                                prev.pesticides?.[field.name]?.pesticideId !==
+                                cur.pesticides?.[field.name]?.pesticideId
+                              }
+                            >
+                              {({ getFieldValue }) => {
+                                const hasPesticide = !!getFieldValue(['pesticides', field.name, 'pesticideId'])
+                                const currentUnit = getFieldValue(['pesticides', field.name, 'quantityUnit'])
+                                return (
+                                  <Form.Item {...field} name={[field.name, 'quantityUnit']} initialValue="ml">
+                                    <Select
+                                      options={getUnitSelectOptions(PESTICIDE_QUANTITY_UNITS, currentUnit)}
+                                      disabled={isViewOnly || hasPesticide}
+                                    />
+                                  </Form.Item>
+                                )
+                              }}
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={5}>
-                            <Form.Item {...field} name={[field.name, 'area']} rules={[{ required: true }]}>
+                            <Form.Item {...field} name={[field.name, 'area']}>
                               <InputNumber min={0} className="w-full" placeholder="Diện tích" disabled={isViewOnly} />
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={3}>
-                            <Form.Item {...field} name={[field.name, 'areaUnit']} rules={[{ required: true }]} initialValue="ha">
-                              <Select options={AREA_UNITS.map((u) => ({ value: u, label: u }))} disabled={isViewOnly} />
+                            <Form.Item {...field} name={[field.name, 'areaUnit']} initialValue="ha">
+                              <Select
+                                options={[{ value: 'ha', label: 'ha' }]}
+                                disabled
+                                className="[&_.ant-select-selector]:bg-slate-50 [&_.ant-select-selector]:!cursor-default"
+                              />
                             </Form.Item>
                           </Col>
                         </Row>
                       </div>
                     ))}
                     {!isViewOnly && (
-                      <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />} className="w-full text-green-700 border-green-300">
+                      <Button type="dashed" onClick={() => add({ areaUnit: 'ha' })} icon={<PlusOutlined />} className="w-full text-green-700 border-green-300">
                         Thêm thuốc BVTV
                       </Button>
                     )}
@@ -548,22 +671,30 @@ const DailyLog = () => {
                 </Dragger>
               )}
               {fileList.length > 0 && (
-                <div className="mt-3 grid grid-cols-4 md:grid-cols-5 gap-2">
-                  {fileList.map((file) => (
-                    <div key={file.uid} className="relative rounded-lg overflow-hidden aspect-square">
-                      <Image src={file.url} className="object-cover" width="100%" height="100%" />
-                      {!isViewOnly && (
-                        <Button
-                          type="text"
-                          icon={<DeleteOutlined />}
-                          onClick={() => setFileList((prev) => prev.filter((item) => item.uid !== file.uid))}
-                          className="absolute top-1 right-1 bg-white/80 rounded-full text-red-500"
-                          size="small"
+                <Image.PreviewGroup>
+                  <div className="mt-3 grid grid-cols-4 md:grid-cols-5 gap-2">
+                    {fileList.map((file) => (
+                      <div key={file.uid} className="relative rounded-lg overflow-hidden aspect-square">
+                        <Image
+                          src={file.url}
+                          className="!object-cover"
+                          width="100%"
+                          height="100%"
+                          style={{ objectFit: 'cover' }}
                         />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        {!isViewOnly && (
+                          <Button
+                            type="text"
+                            icon={<DeleteOutlined />}
+                            onClick={() => setFileList((prev) => prev.filter((item) => item.uid !== file.uid))}
+                            className="absolute top-1 right-1 bg-white/80 rounded-full text-red-500 z-10"
+                            size="small"
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Image.PreviewGroup>
               )}
             </Card>
 
@@ -574,6 +705,14 @@ const DailyLog = () => {
                 </Button>
                 <Button type="primary" onClick={handleSave} loading={saving} className="h-10 px-6 font-semibold bg-green-600 rounded-xl">
                   Lưu nhật ký
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<CheckCircleOutlined />}
+                  onClick={openSummaryModal}
+                  className="h-10 px-5 font-semibold rounded-xl bg-emerald-600 border-emerald-600 hover:!bg-emerald-700 hover:!border-emerald-700"
+                >
+                  Hoàn thành & Gửi Summary
                 </Button>
               </div>
             )}
@@ -605,7 +744,6 @@ const DailyLog = () => {
                             <Tag color="green" className="rounded-full font-medium m-0">
                               {formatDate(log.date)}
                             </Tag>
-                            <Text type="secondary" className="text-xs">Tiến độ: {log.progress}%</Text>
                           </div>
                           <p className="text-sm m-0 mt-2 text-gray-700">{log.description}</p>
 
@@ -623,13 +761,33 @@ const DailyLog = () => {
                           )}
 
                           {log.images?.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {log.images.map((img, i) => (
-                                <div key={i} className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden">
-                                  <img src={img.imageUrl || img.url} alt={`Ảnh ${i + 1}`} className="w-full h-full object-cover" />
-                                </div>
-                              ))}
-                            </div>
+                            <Image.PreviewGroup
+                              items={log.images.map(img => img.imageUrl || img.url).filter(Boolean)}
+                            >
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {log.images.map((img, i) => {
+                                  const src = img.imageUrl || img.url
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="w-14 h-14 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden cursor-pointer hover:border-green-400 hover:shadow-md transition-all duration-200"
+                                    >
+                                      <Image
+                                        src={src}
+                                        alt={`Ảnh ${i + 1}`}
+                                        width={56}
+                                        height={56}
+                                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                                        preview={{
+                                          src,
+                                          mask: <div className="text-[10px] text-white">Xem</div>,
+                                        }}
+                                      />
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </Image.PreviewGroup>
                           )}
                         </div>
                       </div>
@@ -658,32 +816,222 @@ const DailyLog = () => {
         okText="Xác nhận gửi báo cáo"
         cancelText="Hủy"
         confirmLoading={submitting}
-        okButtonProps={{ className: 'bg-green-600' }}
-        width={640}
+        okButtonProps={{ className: 'bg-green-600 border-green-600', disabled: summaryLoading }}
+        width={780}
       >
-        <div className="space-y-4 text-sm">
-          <Alert
-            message="Xác nhận hoàn thành công việc"
-            description="Hệ thống sẽ tự động tổng hợp số liệu từ daily logs và gom ảnh. Bạn chỉ gửi mô tả tổng kết và ngày hoàn thành."
-            type="success"
-            showIcon
-            className="rounded-xl"
-          />
-          {leaderSummary && (
-            <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs text-gray-600">
-              Preview summary đã sẵn sàng từ Backend (leader-summary).
-            </div>
-          )}
-          <Form form={summaryForm} layout="vertical">
-            <Form.Item
-              name="descriptionSummary"
-              label="Mô tả tổng kết công việc"
-              rules={[{ required: true, message: 'Vui lòng viết mô tả tổng kết' }]}
-            >
-              <TextArea rows={4} placeholder="VD: Đã hoàn thành công việc theo kế hoạch..." />
-            </Form.Item>
-          </Form>
-        </div>
+        <Spin spinning={summaryLoading} tip="Đang tải tổng hợp...">
+          <div className="space-y-5 text-sm py-1">
+
+            {/* ── Thống kê thời gian thực tế ── */}
+            {(() => {
+              const isLocal = !leaderSummary
+              // Lấy ngày bắt đầu thực tế
+              const startDateStr = leaderSummary?.actualStartDate || leaderSummary?.startDate || task?.actualStartDate || task?.startDate || (dailyLogs.length > 0 ? dailyLogs[dailyLogs.length - 1]?.date : null)
+              // Lấy ngày kết thúc thực tế
+              const endDateStr = leaderSummary?.actualEndDate || leaderSummary?.completedAt || leaderSummary?.endDate || task?.actualEndDate || task?.endDate || (dailyLogs.length > 0 ? dailyLogs[0]?.date : null) || dayjs().format('YYYY-MM-DD')
+
+              const formattedStartDate = startDateStr ? dayjs(startDateStr).format('DD/MM/YYYY') : '—'
+              const formattedEndDate = endDateStr ? dayjs(endDateStr).format('DD/MM/YYYY') : '—'
+
+              return (
+                <div className="rounded-2xl border border-green-100 bg-gradient-to-br from-green-50 to-emerald-50/40 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 font-semibold text-green-800">
+                      <FileTextOutlined />
+                      Thời gian thực hiện thực tế
+                    </div>
+                    <Tag color={isLocal ? 'orange' : 'green'} className="rounded-full text-xs">
+                      {isLocal ? 'Tạm tính từ nhật ký' : '✓ Dữ liệu từ Server'}
+                    </Tag>
+                  </div>
+                  <div className="flex items-center gap-3 bg-white/80 rounded-xl p-3 border border-green-200/60 shadow-sm">
+                    <CalendarOutlined className="text-2xl text-green-600 shrink-0" />
+                    <div>
+                      <div className="text-xs text-gray-500 font-medium">Thời gian thực tế (Ngày bắt đầu ➔ Ngày kết thúc)</div>
+                      <div className="text-base font-bold text-gray-800 tracking-wide mt-0.5">
+                        <span className="text-green-700">{formattedStartDate}</span>
+                        <span className="mx-2 text-gray-400">➔</span>
+                        <span className="text-emerald-700">{formattedEndDate}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* ── Bảng phân bón ── */}
+            {(() => {
+              // Ưu tiên BE data; fallback về aggregation từ local dailyLogs
+              const rows = leaderSummary?.fertilizers?.length > 0
+                ? leaderSummary.fertilizers.map((f, i) => ({
+                    key: i,
+                    name: f.name || f.fertilizerName || f.materialName || `Phân ${i + 1}`,
+                    totalQuantity: f.totalQuantity ?? f.quantity ?? 0,
+                    unit: f.unit ?? '',
+                    totalArea: f.totalArea ?? f.area ?? 0,
+                    areaUnit: f.areaUnit ?? 'ha',
+                    days: f.days ?? '—',
+                  }))
+                : aggregateFromLogs.fertilizers.map((f, i) => ({
+                    key: i,
+                    name: f.name,
+                    totalQuantity: f.totalQuantity,
+                    unit: f.unit,
+                    totalArea: f.totalArea,
+                    areaUnit: f.areaUnit,
+                    days: f.days,
+                  }))
+
+              const cols = [
+                { title: 'Loại phân bón', dataIndex: 'name', key: 'name',
+                  render: v => <span className="font-medium text-gray-800">{v}</span> },
+                { title: 'Tổng lượng', key: 'qty', align: 'right',
+                  render: (_, r) => <span className="font-semibold text-blue-700">{r.totalQuantity} <span className="font-normal text-gray-500">{r.unit}</span></span> },
+                { title: 'Diện tích', key: 'area', align: 'right',
+                  render: (_, r) => r.totalArea > 0
+                    ? <span>{r.totalArea} <span className="text-gray-500">{r.areaUnit}</span></span>
+                    : <span className="text-gray-300">—</span> },
+                { title: 'Số lần', dataIndex: 'days', key: 'days', align: 'center',
+                  render: v => <Tag className="rounded-full m-0" color="blue">{v}</Tag> },
+              ]
+
+              return (
+                <div>
+                  <div className="flex items-center gap-2 font-semibold text-blue-800 mb-2">
+                    <ExperimentOutlined className="text-blue-500" />
+                    Phân bón đã sử dụng
+                    {rows.length === 0 && <span className="font-normal text-gray-400 text-xs">(chưa có dữ liệu)</span>}
+                  </div>
+                  <Table
+                    columns={cols}
+                    dataSource={rows}
+                    size="small"
+                    pagination={false}
+                    scroll={rows.length > 3 ? { y: 180 } : undefined}
+                    locale={{ emptyText: <div className="py-2 text-xs text-gray-400 text-center">Chưa ghi nhận phân bón nào</div> }}
+                    className="rounded-xl overflow-hidden border border-blue-100"
+                    rowClassName="hover:bg-blue-50/50"
+                  />
+                </div>
+              )
+            })()}
+
+            {/* ── Bảng thuốc BVTV ── */}
+            {(() => {
+              const rows = leaderSummary?.pesticides?.length > 0
+                ? leaderSummary.pesticides.map((p, i) => ({
+                    key: i,
+                    name: p.name || p.pesticideName || p.materialName || `Thuốc ${i + 1}`,
+                    totalQuantity: p.totalQuantity ?? p.quantity ?? 0,
+                    unit: p.unit ?? '',
+                    totalArea: p.totalArea ?? p.area ?? 0,
+                    areaUnit: p.areaUnit ?? 'ha',
+                    days: p.days ?? '—',
+                  }))
+                : aggregateFromLogs.pesticides.map((p, i) => ({
+                    key: i,
+                    name: p.name,
+                    totalQuantity: p.totalQuantity,
+                    unit: p.unit,
+                    totalArea: p.totalArea,
+                    areaUnit: p.areaUnit,
+                    days: p.days,
+                  }))
+
+              const cols = [
+                { title: 'Loại thuốc BVTV', dataIndex: 'name', key: 'name',
+                  render: v => <span className="font-medium text-gray-800">{v}</span> },
+                { title: 'Tổng lượng', key: 'qty', align: 'right',
+                  render: (_, r) => <span className="font-semibold text-purple-700">{r.totalQuantity} <span className="font-normal text-gray-500">{r.unit}</span></span> },
+                { title: 'Diện tích', key: 'area', align: 'right',
+                  render: (_, r) => r.totalArea > 0
+                    ? <span>{r.totalArea} <span className="text-gray-500">{r.areaUnit}</span></span>
+                    : <span className="text-gray-300">—</span> },
+                { title: 'Số lần', dataIndex: 'days', key: 'days', align: 'center',
+                  render: v => <Tag className="rounded-full m-0" color="purple">{v}</Tag> },
+              ]
+
+              return (
+                <div>
+                  <div className="flex items-center gap-2 font-semibold text-purple-800 mb-2">
+                    <ExperimentOutlined className="text-purple-500" />
+                    Thuốc bảo vệ thực vật đã sử dụng
+                    {rows.length === 0 && <span className="font-normal text-gray-400 text-xs">(chưa có dữ liệu)</span>}
+                  </div>
+                  <Table
+                    columns={cols}
+                    dataSource={rows}
+                    size="small"
+                    pagination={false}
+                    scroll={rows.length > 3 ? { y: 160 } : undefined}
+                    locale={{ emptyText: <div className="py-2 text-xs text-gray-400 text-center">Chưa ghi nhận thuốc BVTV nào</div> }}
+                    className="rounded-xl overflow-hidden border border-purple-100"
+                    rowClassName="hover:bg-purple-50/50"
+                  />
+                </div>
+              )
+            })()}
+
+            {/* ── Ảnh minh chứng tổng hợp ── */}
+            {(() => {
+              const rawImages = leaderSummary?.images?.length > 0
+                ? leaderSummary.images
+                : dailyLogs.flatMap(log => log.images || [])
+
+              const summaryImages = rawImages
+                .map(img => (typeof img === 'string' ? img : (img?.imageUrl || img?.url || img?.fileUrl)))
+                .filter(Boolean)
+
+              return (
+                <div>
+                  <div className="flex items-center gap-2 font-semibold text-orange-700 mb-2">
+                    <PictureOutlined />
+                    Ảnh minh chứng tổng hợp ({summaryImages.length} ảnh)
+                  </div>
+                  {summaryImages.length > 0 ? (
+                    <Image.PreviewGroup>
+                      <div className="flex flex-wrap gap-2">
+                        {summaryImages.map((src, i) => (
+                          <Tooltip key={i} title={`Ảnh ${i + 1}`}>
+                            <div className="w-16 h-16 rounded-xl overflow-hidden border border-orange-200 cursor-pointer hover:border-orange-400 hover:shadow-md transition-all">
+                              <Image
+                                src={src}
+                                alt={`Ảnh ${i + 1}`}
+                                width="100%"
+                                height="100%"
+                                style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                              />
+                            </div>
+                          </Tooltip>
+                        ))}
+                      </div>
+                    </Image.PreviewGroup>
+                  ) : (
+                    <div className="py-2.5 px-3 bg-gray-50/80 rounded-xl border border-dashed border-gray-200 text-xs text-gray-400 text-center">
+                      Chưa có ảnh minh chứng nào từ nhật ký hàng ngày
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
+
+            <Divider className="!my-2" />
+
+            {/* ── Form mô tả tổng kết ── */}
+            <Form form={summaryForm} layout="vertical">
+              <Form.Item
+                name="descriptionSummary"
+                label={<span className="font-semibold">Mô tả tổng kết công việc <span className="text-red-500">*</span></span>}
+                rules={[{ required: true, message: 'Vui lòng viết mô tả tổng kết' }]}
+              >
+                <TextArea
+                  rows={3}
+                  placeholder="VD: Đã hoàn thành công việc phun thuốc theo kế hoạch, cây trồng phát triển tốt..."
+                />
+              </Form.Item>
+            </Form>
+          </div>
+        </Spin>
       </Modal>
     </div>
   )

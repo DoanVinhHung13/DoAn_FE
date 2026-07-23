@@ -7,7 +7,6 @@ import {
   BookOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   EnvironmentOutlined,
   EyeOutlined,
   FileTextOutlined,
@@ -55,26 +54,6 @@ import TaskLogHistoryTab from './components/TaskLogHistoryTab'
 
 const { Text, Paragraph } = Typography
 
-// ── Config ────────────────────────────────────────────────────────────────────
-// Stage status từ API: PENDING | ACTIVE | COMPLETED
-const stageStatusConfig = {
-  PENDING: { color: 'default', label: 'Chưa bắt đầu', avatarBg: '#9ca3af', step: 'wait' },
-  ACTIVE: { color: 'processing', label: 'Đang hoạt động', avatarBg: '#3b82f6', step: 'process' },
-  IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện', avatarBg: '#3b82f6', step: 'process' },
-  COMPLETED: { color: 'success', label: 'Hoàn thành', avatarBg: '#16a34a', step: 'finish' },
-}
-
-// Task status từ API: PENDING | IN_PROGRESS | COMPLETED
-const taskStatusConfig = {
-  PENDING: { color: 'default', label: 'Chờ kích hoạt', icon: <ClockCircleOutlined /> },
-  IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
-  ACTIVE: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
-  COMPLETED: { color: 'success', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
-}
-
-const getStageCfg = (s) => stageStatusConfig[s] || stageStatusConfig.PENDING
-const getTaskCfg = (s) => taskStatusConfig[s] || taskStatusConfig.PENDING
-
 // ── Main ──────────────────────────────────────────────────────────────────────
 const FarmSupervisorPlanDetail = () => {
   const { planId } = useParams()
@@ -92,6 +71,12 @@ const FarmSupervisorPlanDetail = () => {
     setLoading(true)
     try {
       const planRes = await CultivationLogbookService.getById(planId)
+      if (planRes?.success === false) {
+        message.error(planRes?.message || 'Không tìm thấy kế hoạch.')
+        navigate(ROUTER.FS_PLANS)
+        return
+      }
+      // Interceptor trả body: { success, data: plan }
       const planData = planRes?.data ?? planRes
       if (!planData) {
         message.error('Không tìm thấy kế hoạch.')
@@ -278,7 +263,7 @@ const FarmSupervisorPlanDetail = () => {
           {
             key: '3',
             label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Chốt Logbook</span>,
-            children: <LogbookFinalizationTab planId={planId} stages={stages} tasks={tasks} />
+            children: <LogbookFinalizationTab planId={planId} stages={stages} tasks={tasks} loadData={loadData} />
           },
 
         ]}

@@ -28,13 +28,14 @@ import CultivationStageService from 'src/services/CultivationStageService'
 // Import các Tab components
 import TaskLogHistoryTab from 'src/pages/FARM_SUPERVISOR/Plans/components/TaskLogHistoryTab'
 import OfficialLogbookTab from './components/OfficialLogbookTab'
-import { getLogbookStatus } from 'src/utils/cultivationStatus'
+import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 
 
 const CultivationLogbookDetail = () => {
   const navigate = useNavigate()
   const { id } = useParams()
+  const { getLogbookStatus } = useCultivationStatus()
 
   const [initialLoading, setInitialLoading] = useState(true)
   const [item, setItem] = useState(null)

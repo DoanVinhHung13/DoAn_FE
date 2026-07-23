@@ -2,17 +2,28 @@
 
 /**
  * Định nghĩa các hằng số (constants) để lấy SystemKey.
- * Việc này giúp tránh gõ sai (typo) chuỗi (magic string) và hỗ trợ gợi ý code.
+ * Code khớp `codeValue` parent từ GET /api/SystemKey.
  */
 export const SYSTEM_KEY = {
-  STATUS: "STATUS",
-  ROLE: "ROLE",
-  GENDER: "GENDER",
-  CROP_TYPE: "CROP_TYPE",           // Loại cây trồng (Cây rau, Cây củ, Cây ăn trái...)
-  CROP_STATUS: "CROP_STATUS",       // Trạng thái cây trồng
-  CROP_PROCESS: "CROP_PROCESS",     // Quy trình canh tác (VietGAP, Organic, GlobalGAP...)
-  FERTILIZER_UNIT: "FERTILIZER_UNIT",
-  COMPONENT_UNIT: "COMPONENT_UNIT",
-  AREA_UNIT: "AREA_UNIT",
-  FERTILIZER_TYPE: "FERTILIZER_TYPE",
+  STATUS: 'STATUS',
+  ROLE: 'ROLE',
+  GENDER: 'GENDER',
+  CROP_TYPE: 'CROP_TYPE',
+  CROP_STATUS: 'CROP_STATUS',
+  CROP_PROCESS: 'CROP_PROCESS',
+  FERTILIZER_UNIT: 'FERTILIZER_UNIT',
+  PESTICIDE_UNIT: 'PESTICIDE_UNIT',
+  COMPONENT_UNIT: 'COMPONENT_UNIT',
+  AREA_UNIT: 'AREA_UNIT',
+  FERTILIZER_TYPE: 'FERTILIZER_TYPE',
+
+  // Cultivation / main flow statuses (SystemKey groups)
+  LOGBOOK_STATUS: 'LOGBOOK_STATUS',
+  REVIEW_STATUS: 'REVIEW_STATUS',
+  CULTIVATION_STAGE_STATUS: 'CULTIVATION_STAGE_STATUS',
+  WORK_TASK_STATUS: 'WORK_TASK_STATUS',
+  APPROVAL_STATUS: 'APPROVAL_STATUS',
+  HARVEST_BATCH_STATUS: 'HARVEST_BATCH_STATUS',
+  LAND_PLOT_STATUS: 'LAND_PLOT_STATUS',
+  EQUIPMENT_STATUS: 'EQUIPMENT_STATUS',
 }

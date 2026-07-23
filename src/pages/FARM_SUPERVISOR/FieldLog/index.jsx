@@ -38,21 +38,15 @@ import ROUTER from 'src/router/ROUTER'
 import CultivationStageService from 'src/services/CultivationStageService'
 import CultivationTaskService from 'src/services/CultivationTaskService'
 import { formatDate } from 'src/utils/dateFormatters'
+import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
+import { canWriteDailyLog } from 'src/utils/cultivationStatus'
 
 const { Text } = Typography
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const taskStatusConfig = {
-  PENDING: { color: 'default', label: 'Chờ kích hoạt', icon: <ClockCircleOutlined /> },
-  ACTIVE: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
-  IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện', icon: <CheckCircleOutlined /> },
-  COMPLETED: { color: 'success', label: 'Hoàn thành', icon: <CheckCircleOutlined /> },
-}
-
 // ── Component: Task Card nhỏ trong giai đoạn ─────────────────────────────────
-const TaskRow = ({ task }) => {
+const TaskRow = ({ task, getTaskStatus }) => {
   const navigate = useNavigate()
-  const cfg = taskStatusConfig[task.status] || taskStatusConfig.PENDING
+  const cfg = getTaskStatus(task.status)
 
   const handleClick = () => {
     if (task.status === 'PENDING') {
@@ -62,17 +56,19 @@ const TaskRow = ({ task }) => {
     navigate(ROUTER.FL_TASK_LOG.replace(':taskId', task.id))
   }
 
+  const inProgress = canWriteDailyLog(task.status)
+
   return (
     <div
       className="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-100 bg-white p-3 transition hover:border-green-300 hover:bg-green-50/30 hover:shadow-sm"
       onClick={handleClick}
     >
       <div className={`min-h-8 min-w-8 rounded-full flex items-center justify-center text-xs font-bold ${
-        task.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 
-        (task.status === 'ACTIVE' || task.status === 'IN_PROGRESS') ? 'bg-blue-100 text-blue-700' : 
+        task.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+        inProgress ? 'bg-blue-100 text-blue-700' :
         'bg-gray-100 text-gray-500'
       }`}>
-        {cfg.icon}
+        {task.status === 'PENDING' ? <ClockCircleOutlined /> : <CheckCircleOutlined />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-sm text-gray-900 truncate">{task.name}</div>
@@ -82,7 +78,7 @@ const TaskRow = ({ task }) => {
         <Tag color={cfg.color} className="rounded-full m-0">{cfg.label}</Tag>
       </div>
 
-      {(task.status === 'ACTIVE' || task.status === 'IN_PROGRESS') ? (
+      {inProgress ? (
         <Button type="primary" size="small" className="bg-green-600 rounded-lg shrink-0 ml-2">
           Ghi nhật ký
         </Button>

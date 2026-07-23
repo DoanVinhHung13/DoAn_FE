@@ -30,10 +30,7 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import {
-  LOGBOOK_STATUS_FILTER_OPTIONS,
-  getLogbookStatus,
-} from 'src/utils/cultivationStatus'
+import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 import { invalidCharsRegex } from 'src/utils/helpers'
 
@@ -53,6 +50,7 @@ const getInitials = (name) => {
 
 const CultivationLogbookList = () => {
   const navigate = useNavigate()
+  const { getLogbookStatus, logbookFilterOptions } = useCultivationStatus()
 
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -251,7 +249,7 @@ const CultivationLogbookList = () => {
               setPage(1)
             }}
             className="h-10 rounded-xl min-w-[160px]"
-            options={LOGBOOK_STATUS_FILTER_OPTIONS}
+            options={logbookFilterOptions}
           />
           <div className="flex gap-2 ml-auto">
             <Button

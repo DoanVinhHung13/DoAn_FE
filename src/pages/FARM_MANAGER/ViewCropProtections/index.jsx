@@ -151,17 +151,6 @@ const ViewCropProtections = () => {
       ),
     },
     {
-      title: 'Mã Thuốc',
-      dataIndex: 'code',
-      key: 'code',
-      width: 120,
-      render: (v) => (
-        <span className="px-2 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-lg font-mono">
-          {v || '—'}
-        </span>
-      ),
-    },
-    {
       title: 'Tên Thuốc BVTV',
       dataIndex: 'name',
       key: 'name',
@@ -178,6 +167,16 @@ const ViewCropProtections = () => {
           {v || '—'}
         </span>
       ),
+    },
+    {
+      title: 'Tồn kho',
+      key: 'minInventory',
+      width: 120,
+      render: (_, record) => {
+        const qty = record.minInventory ?? 0
+        const unit = record.unit || ''
+        return <span className="text-sm">{qty ? `${qty} ${unit}` : '—'}</span>
+      },
     },
     {
       title: 'Trạng thái',

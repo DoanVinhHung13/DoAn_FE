@@ -30,12 +30,8 @@ import { useNavigate } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import {
-  CLOSING_STATUS_FILTER_OPTIONS,
-  getLogbookStatus,
-  getReviewStatus,
-  matchesClosingFilter,
-} from 'src/utils/cultivationStatus'
+import { matchesClosingFilter } from 'src/utils/cultivationStatus'
+import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
@@ -44,6 +40,7 @@ const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 
 const FarmManagerLogbooks = () => {
   const navigate = useNavigate()
+  const { getLogbookStatus, getReviewStatus, closingFilterOptions } = useCultivationStatus()
   const [loading, setLoading] = useState(true)
   const [logbooks, setLogbooks] = useState([])
   const [searchInput, setSearchInput] = useState('')
@@ -114,7 +111,7 @@ const FarmManagerLogbooks = () => {
               value={statusFilter}
               onChange={(v) => setStatusFilter(v)}
               className="h-10 min-w-40 rounded-xl"
-              options={CLOSING_STATUS_FILTER_OPTIONS}
+              options={closingFilterOptions}
             />
             <Button
               icon={<ReloadOutlined />}

@@ -8,33 +8,15 @@
  *   POST  /cultivation-logs/{id}/approve
  */
 import React, { useEffect, useState } from 'react'
-import { Modal, Form, Input, Button, Image, Alert, Collapse, message, Spin } from 'antd'
+import { Modal, Form, Input, Image, Alert, Collapse, message, Spin } from 'antd'
 import { EditOutlined } from '@ant-design/icons'
-import { formatDate } from 'src/utils/dateFormatters'
-import CultivationTaskService from 'src/services/CultivationTaskService'
-import CultivationLogService from 'src/services/CultivationLogService'
+import {
+  buildDataSentence,
+  loadLeaderCompileData,
+  saveCompiledDescription,
+} from './compileLogHelpers'
 
 const { TextArea } = Input
-
-const unwrap = (res) => res?.data?.data ?? res?.data ?? res
-
-const buildDataSentence = (summary) => {
-  if (!summary) return 'Chưa có số liệu'
-  const parts = []
-  ;(summary.fertilizers || []).forEach((f) => {
-    parts.push(
-      `Đã bón ${f.totalQuantity ?? f.quantity} ${f.quantityUnit ?? f.unit} ${f.name}` +
-        (f.totalArea != null ? ` cho ${f.totalArea} ${f.areaUnit}` : '')
-    )
-  })
-  ;(summary.pesticides || []).forEach((p) => {
-    parts.push(
-      `Đã phun ${p.totalQuantity ?? p.quantity} ${p.quantityUnit ?? p.unit} ${p.name}` +
-        (p.totalArea != null ? ` cho ${p.totalArea} ${p.areaUnit}` : '')
-    )
-  })
-  return parts.length ? parts.join('. ') : 'Không có số liệu phân bón/thuốc BVTV'
-}
 
 const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
   const [form] = Form.useForm()
@@ -56,21 +38,11 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
     const load = async () => {
       setLoading(true)
       try {
-        const [summaryRes, taskRes] = await Promise.all([
-          CultivationTaskService.getLeaderSummary(task.id),
-          CultivationTaskService.getById(task.id),
-        ])
-        const summary = unwrap(summaryRes)
-        const taskDetail = unwrap(taskRes)
-        setLeaderSummary(summary || null)
-
-        // Official log id — exact fields only (no legacy fallbacks beyond known DTO keys)
-        const logId = taskDetail?.cultivationLogId || summary?.cultivationLogId || null
+        const { summary, officialLogId: logId, isApproved: approved } =
+          await loadLeaderCompileData(task.id)
+        setLeaderSummary(summary)
         setOfficialLogId(logId)
-
-        const approved = taskDetail?.status === 'COMPLETED'
         setIsApproved(approved)
-
         form.setFieldsValue({
           supervisorDescription: summary?.description || '',
         })
@@ -99,13 +71,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
       }
       setSaving(true)
 
-      await CultivationLogService.patchDescription(officialLogId, {
-        description: values.supervisorDescription,
-      })
-
-      await CultivationLogService.approve(officialLogId, {
-        comment: 'Đạt yêu cầu',
-      })
+      await saveCompiledDescription(officialLogId, values.supervisorDescription)
 
       message.success('Đã lưu và duyệt nhật ký chính thức!')
       onSuccess?.()
@@ -185,7 +151,8 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
                       <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm italic text-blue-900">
                         "{leaderSummary.description}"
                       </div>
-                    )}                  </div>
+                    )}
+                  </div>
                 </Collapse.Panel>
               </Collapse>
             </div>

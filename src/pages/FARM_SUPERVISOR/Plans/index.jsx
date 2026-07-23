@@ -35,16 +35,14 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import {
-  LOGBOOK_STATUS_FILTER_OPTIONS,
-  getLogbookStatus,
-} from 'src/utils/cultivationStatus'
+import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
 
 const FarmSupervisorPlans = () => {
   const navigate = useNavigate()
+  const { getLogbookStatus, logbookFilterOptions } = useCultivationStatus()
   const [loading, setLoading] = useState(true)
   const [plans, setPlans] = useState([])
   const [searchInput, setSearchInput] = useState('')
@@ -66,19 +64,25 @@ const FarmSupervisorPlans = () => {
     const load = async () => {
       try {
         setLoading(true)
-        const response = await CultivationLogbookService.getAll({
+        const res = await CultivationLogbookService.getAll({
           PageIndex: 1,
           PageSize: 1000,
         })
         if (!mounted) return
-        const payload = response?.data ?? response
-        const data = payload?.data ?? payload
-        const items = Array.isArray(data) ? data : data?.items || []
-        setPlans(items)
+        if (res?.success === false) {
+          setPlans([])
+          return
+        }
+        // Axios interceptor trả body EAPLS: { success, data: { items } | items[] }
+        const data = res?.data
+        const items = Array.isArray(data)
+          ? data
+          : data?.items || data?.Items || []
+        setPlans(Array.isArray(items) ? items : [])
       } catch (error) {
         if (mounted) {
           console.error(error)
-          message.error('Không thể tải danh sách kế hoạch.')
+          message.error(error?.message || 'Không thể tải danh sách kế hoạch.')
           setPlans([])
         }
       } finally {
@@ -178,7 +182,7 @@ const FarmSupervisorPlans = () => {
               value={statusFilter}
               onChange={(v) => { setStatusFilter(v); setPage(1) }}
               className="h-10 min-w-44 rounded-xl"
-              options={LOGBOOK_STATUS_FILTER_OPTIONS}
+              options={logbookFilterOptions}
             />
             <div className="flex gap-2 lg:ml-auto">
               <Button onClick={handleSearch} icon={<SearchOutlined />} className="h-10 px-4 rounded-xl bg-gray-50">

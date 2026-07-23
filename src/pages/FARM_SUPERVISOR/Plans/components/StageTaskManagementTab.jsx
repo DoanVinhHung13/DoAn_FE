@@ -35,7 +35,8 @@ import ROUTER from 'src/router/ROUTER'
 import CultivationTaskService from 'src/services/CultivationTaskService'
 import TaskCatalogService from 'src/services/TaskCatalogService'
 import { formatDate } from 'src/utils/dateFormatters'
-import { canCompileTask, getTaskStatus } from 'src/utils/cultivationStatus'
+import { canCompileTask } from 'src/utils/cultivationStatus'
+import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import AssignTaskModal from './AssignTaskModal'
 import CompileLogModal from './CompileLogModal'
 
@@ -43,31 +44,14 @@ const { Text } = Typography
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 
-// Stage status từ API: PENDING | ACTIVE | COMPLETED (+ alias IN_PROGRESS)
-const stageStatusConfig = {
-  PENDING: { color: 'default', label: 'Chưa bắt đầu', avatarBg: '#9ca3af', step: 'wait' },
-  ACTIVE: { color: 'processing', label: 'Đang hoạt động', avatarBg: '#3b82f6', step: 'process' },
-  IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện', avatarBg: '#3b82f6', step: 'process' },
-  COMPLETED: { color: 'success', label: 'Hoàn thành', avatarBg: '#16a34a', step: 'finish' },
-}
-
-const getStageCfg = (s) => stageStatusConfig[s] || stageStatusConfig.PENDING
-const getTaskCfg = (s) => {
-  const mapped = getTaskStatus(s)
-  return {
-    ...mapped,
-    icon:
-      s === 'COMPLETED' || s === 'WAITING_APPROVAL'
-        ? <CheckCircleOutlined />
-        : s === 'IN_PROGRESS' || s === 'ACTIVE'
-          ? <CheckCircleOutlined />
-          : <ClockCircleOutlined />,
-  }
-}
+const taskStatusIcon = (s) =>
+  s === 'COMPLETED' || s === 'WAITING_APPROVAL' || s === 'IN_PROGRESS' || s === 'ASSIGNED' || s === 'ACTIVE'
+    ? <CheckCircleOutlined />
+    : <ClockCircleOutlined />
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
-const StageListItem = ({ stage, index, isActive, onClick }) => {
-  const cfg = getStageCfg(stage.status)
+const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
+  const cfg = getStageStatus(stage.status)
   return (
     <List.Item
       onClick={onClick}
@@ -107,6 +91,8 @@ const StageListItem = ({ stage, index, isActive, onClick }) => {
 
 const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const navigate = useNavigate()
+  const { getStageStatus, getTaskStatus } = useCultivationStatus()
+  const getTaskCfg = (s) => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
   const [selectedId, setSelectedId] = useState(null)
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [taskForm] = Form.useForm()
@@ -246,6 +232,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     stage={stage}
                     index={idx}
                     isActive={stage.id === selectedId}
+                    getStageStatus={getStageStatus}
                     onClick={() => {
                       setSelectedId(stage.id)
                       setEditingTaskId(null)
@@ -291,8 +278,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                       </Text>
                     )}
                   </div>
-                  <Tag color={getStageCfg(selectedStage.status).color} className="flex-shrink-0">
-                    {getStageCfg(selectedStage.status).label}
+                  <Tag color={getStageStatus(selectedStage.status).color} className="flex-shrink-0">
+                    {getStageStatus(selectedStage.status).label}
                   </Tag>
                 </div>
 

@@ -56,16 +56,10 @@ import UserService from 'src/services/UserService'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { ROLES } from 'src/constants/roles'
+import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 
 const { Text, Title, Paragraph } = Typography
 const { TextArea } = Input
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const taskStatusConfig = {
-  PENDING: { label: 'Chờ kích hoạt', color: 'default' },
-  ACTIVE: { label: 'Đang thực hiện', color: 'processing' },
-  COMPLETED: { label: 'Hoàn thành', color: 'success' },
-}
 
 const buildDataSentence = (summary) => {
   if (!summary) return 'Chưa có số liệu'
@@ -83,6 +77,7 @@ const buildDataSentence = (summary) => {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const FarmSupervisorTaskDetail = () => {
+  const { getTaskStatus } = useCultivationStatus()
   const { planId, taskId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -207,7 +202,7 @@ const FarmSupervisorTaskDetail = () => {
     try {
       setActivating(true)
       await CultivationTaskService.start(taskId)
-      setTask((prev) => ({ ...prev, status: 'ACTIVE' }))
+      setTask((prev) => ({ ...prev, status: 'IN_PROGRESS' }))
       message.success('Công việc đã được kích hoạt! Farm Leader có thể bắt đầu ghi nhật ký.')
     } catch { message.error('Kích hoạt thất bại.') } finally {
       setActivating(false)
@@ -256,7 +251,7 @@ const FarmSupervisorTaskDetail = () => {
 
   if (!task) return null
 
-  const cfg = taskStatusConfig[task.status] || taskStatusConfig.PENDING
+  const cfg = getTaskStatus(task.status)
   const dataSentence = buildDataSentence(task.leaderSummary)
 
   return (
@@ -296,8 +291,9 @@ const FarmSupervisorTaskDetail = () => {
                 <TeamOutlined className="text-green-600" />
                 <span className="font-semibold">Phân công nhóm thực hiện</span>
                 {task.status !== 'PENDING' && (
-                  <Tag color={task.status === 'COMPLETED' ? 'success' : 'processing'} className="ml-auto rounded-full">
-                    {task.status === 'COMPLETED' ? 'Đã hoàn thành' : 'Đang thực hiện'}
+                  // Dùng cfg từ getTaskStatus (đã tính ở trên) — label lấy từ SystemKey
+                  <Tag color={cfg.color} className="ml-auto rounded-full">
+                    {cfg.label}
                   </Tag>
                 )}
               </div>
@@ -481,7 +477,7 @@ const FarmSupervisorTaskDetail = () => {
                   </div>
                 )}
               </Card>
-            ) : task.status === 'ACTIVE' ? (
+            ) : task.status === 'IN_PROGRESS' || task.status === 'ACTIVE' || task.status === 'ASSIGNED' ? (
               <Card bordered={false} className="shadow-sm rounded-2xl border border-blue-100">
                 <div className="text-center py-6 text-blue-600">
                   <CheckCircleOutlined className="text-3xl mb-3" />
