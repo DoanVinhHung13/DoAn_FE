@@ -60,6 +60,7 @@ const FarmSupervisorPlanDetail = () => {
   const { planId } = useParams()
   const navigate = useNavigate()
 
+  const [activeTabKey, setActiveTabKey] = useState('1')
   const [plan, setPlan] = useState(null)
   const [stages, setStages] = useState([])
   const [tasks, setTasks] = useState({})
@@ -261,25 +262,32 @@ const FarmSupervisorPlanDetail = () => {
 
       {/* ── Tabs ─────────────────────────────────────────────────────────────── */}
       <Tabs
+        activeKey={activeTabKey}
+        onChange={setActiveTabKey}
         type="card"
         className="plan-tabs mt-4"
         items={[
           {
             key: '1',
             label: <span className="px-4 font-medium"><EnvironmentOutlined className="mr-2" />Quản lý công việc</span>,
-            children: <StageTaskManagementTab plan={plan} planId={planId} stages={stages} tasks={tasks} loadData={loadData} />
+            children: activeTabKey === '1' && (
+              <StageTaskManagementTab plan={plan} planId={planId} stages={stages} tasks={tasks} loadData={loadData} />
+            ),
           },
           {
             key: '2',
             label: <span className="px-4 font-medium"><FileTextOutlined className="mr-2" />Lịch sử ghi Log</span>,
-            children: <TaskLogHistoryTab stages={stages} tasks={tasks} />
+            children: activeTabKey === '2' && (
+              <TaskLogHistoryTab stages={stages} tasks={tasks} />
+            ),
           },
           {
             key: '3',
             label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Chốt Logbook</span>,
-            children: <LogbookFinalizationTab planId={planId} stages={stages} tasks={tasks} loadData={loadData} />
+            children: activeTabKey === '3' && (
+              <LogbookFinalizationTab planId={planId} stages={stages} tasks={tasks} loadData={loadData} />
+            ),
           },
-
         ]}
       />
 

@@ -121,7 +121,7 @@ const CultivationLogbookDetail = () => {
           Nhật ký chính thức
         </span>
       ),
-      children: <OfficialLogbookTab item={item} stages={stages} />,
+      children: activeTab === 'official' && <OfficialLogbookTab item={item} stages={stages} />,
     },
     {
       key: 'process',
@@ -131,7 +131,7 @@ const CultivationLogbookDetail = () => {
           Lịch sử ghi Log
         </span>
       ),
-      children: <TaskLogHistoryTab stages={stages} tasks={tasksMap} />,
+      children: activeTab === 'process' && <TaskLogHistoryTab stages={stages} tasks={tasksMap} />,
     },
   ]
 

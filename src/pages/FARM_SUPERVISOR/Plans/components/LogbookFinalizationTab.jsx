@@ -428,10 +428,7 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
 
   return (
     <Card bordered={false} className="shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <Text type="secondary" className="text-sm">
-          Xem Summary Leader gửi, viết lại mô tả rồi lưu. Đã duyệt sẽ không hiện lại.
-        </Text>
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
         <Button
           type="primary"
           icon={<SendOutlined />}

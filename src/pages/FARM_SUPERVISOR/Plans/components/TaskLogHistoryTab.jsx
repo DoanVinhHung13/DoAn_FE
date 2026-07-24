@@ -1,10 +1,16 @@
-import { FileTextOutlined } from '@ant-design/icons'
-import { Alert, Card, Col, Empty, List, Row, Spin, Tag, Tree, Typography } from 'antd'
+import {
+  CalendarOutlined,
+  ExperimentOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
+import { Alert, Card, Col, Empty, Image, Row, Spin, Tag, Tree, Typography } from 'antd'
 import { useState } from 'react'
 import CultivationLogService from 'src/services/CultivationLogService'
 import { formatDate } from 'src/utils/dateFormatters'
 
-const { Text, Title, Paragraph } = Typography
+const { Text, Title } = Typography
 
 const TaskLogHistoryTab = ({ stages, tasks }) => {
   const [selectedTask, setSelectedTask] = useState(null)
@@ -79,10 +85,13 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center justify-between mb-4">
                 <Title level={5} className="!mb-0">
                   Lịch sử ghi nhận: {selectedTask.name || selectedTask.taskName}
                 </Title>
+                <Tag color="green" className="rounded-full px-3 font-semibold">
+                  {logs.length} bản ghi
+                </Tag>
               </div>
 
               {loading ? (
@@ -90,32 +99,152 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                   <Spin size="large" />
                 </div>
               ) : logs.length > 0 ? (
-                <List
-                  dataSource={logs}
-                  renderItem={(log) => (
-                    <List.Item className="mb-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                      <List.Item.Meta
-                        title={
-                          <div className="flex items-center justify-between">
-                            <Text strong className="text-gray-800">
-                              {log.date ? formatDate(log.date) : 'Không rõ ngày'}
-                            </Text>
-                            {log.progress != null && (
-                              <Tag color="blue">Tiến độ {log.progress}%</Tag>
-                            )}
-                          </div>
-                        }
-                        description={
-                          <div className="mt-2 text-gray-600">
-                            <Paragraph ellipsis={{ rows: 3, expandable: true, symbol: 'Xem thêm' }}>
-                              {log.description || 'Không có ghi chú'}
-                            </Paragraph>
-                          </div>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
+                <div className="space-y-4">
+                  {logs.map((log, index) => (
+                    <div
+                      key={log.id || index}
+                      className="rounded-2xl border border-gray-200 bg-white p-5 shadow-xs hover:shadow-md transition-all duration-200"
+                    >
+                      {/* Header log */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3 mb-3">
+                        <div className="flex items-center gap-2">
+                          <CalendarOutlined className="text-green-600 text-base" />
+                          <span className="font-bold text-gray-800 text-base">
+                            {log.date ? formatDate(log.date) : 'Chưa rõ ngày'}
+                          </span>
+                          {log.progress != null && (
+                            <Tag color="blue" className="rounded-full font-semibold m-0">
+                              Tiến độ {log.progress}%
+                            </Tag>
+                          )}
+                        </div>
+                        {log.createdByName && log.createdByName !== 'Không xác định' && (
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <UserOutlined className="text-gray-400" />
+                            Người ghi: <span className="font-semibold text-gray-700">{log.createdByName}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Mô tả / Nội dung ghi chép */}
+                      {log.description ? (
+                        <div className="text-sm text-gray-700 leading-relaxed mb-3 font-medium bg-gray-50/70 rounded-xl p-3 border border-gray-100">
+                          {log.description}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-400 italic mb-3">Không có ghi chú</div>
+                      )}
+
+                      {/* Vật tư: Phân bón & Thuốc BVTV */}
+                      {(log.fertilizers?.length > 0 || log.pesticides?.length > 0) && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                          {/* Phân bón */}
+                          {log.fertilizers?.length > 0 && (
+                            <div className="bg-blue-50/60 rounded-xl p-3 border border-blue-100">
+                              <div className="text-xs font-bold text-blue-800 mb-2 flex items-center gap-1.5">
+                                <ExperimentOutlined className="text-blue-600 text-sm" />
+                                Phân bón sử dụng:
+                              </div>
+                              <div className="space-y-1.5">
+                                {log.fertilizers.map((f, i) => {
+                                  const name = f.name || f.materialName || 'Phân bón'
+                                  const qty = f.quantity
+                                  const unit = f.quantityUnit || f.unit || 'kg'
+                                  const area = f.area
+                                  const areaUnit = f.areaUnit || 'ha'
+
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="text-xs text-gray-700 flex flex-wrap items-center justify-between bg-white/80 px-2.5 py-1.5 rounded-lg border border-blue-100/60 shadow-2xs"
+                                    >
+                                      <span className="font-semibold text-gray-800">{name}</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-bold text-blue-700">{qty} {unit}</span>
+                                        {area > 0 && (
+                                          <span className="text-[11px] text-gray-500">({area} {areaUnit})</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Thuốc BVTV */}
+                          {log.pesticides?.length > 0 && (
+                            <div className="bg-purple-50/60 rounded-xl p-3 border border-purple-100">
+                              <div className="text-xs font-bold text-purple-800 mb-2 flex items-center gap-1.5">
+                                <ExperimentOutlined className="text-purple-600 text-sm" />
+                                Thuốc BVTV sử dụng:
+                              </div>
+                              <div className="space-y-1.5">
+                                {log.pesticides.map((p, i) => {
+                                  const name = p.name || p.materialName || 'Thuốc BVTV'
+                                  const qty = p.quantity
+                                  const unit = p.quantityUnit || p.unit || 'ml'
+                                  const area = p.area
+                                  const areaUnit = p.areaUnit || 'ha'
+
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="text-xs text-gray-700 flex flex-wrap items-center justify-between bg-white/80 px-2.5 py-1.5 rounded-lg border border-purple-100/60 shadow-2xs"
+                                    >
+                                      <span className="font-semibold text-gray-800">{name}</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-bold text-purple-700">{qty} {unit}</span>
+                                        {area > 0 && (
+                                          <span className="text-[11px] text-gray-500">({area} {areaUnit})</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Ảnh minh chứng */}
+                      {log.images?.length > 0 && (
+                        <div>
+                          <div className="text-xs font-semibold text-gray-500 mb-2">Ảnh minh chứng:</div>
+                          <Image.PreviewGroup
+                            items={log.images.map((img) => img.url || img.imageUrl).filter(Boolean)}
+                          >
+                            <div className="flex flex-wrap gap-2">
+                              {log.images.map((img, i) => {
+                                const src = img.url || img.imageUrl
+                                return (
+                                  <div
+                                    key={i}
+                                    className="h-16 w-16 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden cursor-pointer hover:border-green-400 hover:shadow-md transition-all duration-200 [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
+                                  >
+                                    <Image
+                                      src={src}
+                                      alt={`Ảnh ${i + 1}`}
+                                      preview={{
+                                        src,
+                                        mask: (
+                                          <div className="flex items-center justify-center text-[10px] text-white">
+                                            <EyeOutlined />
+                                          </div>
+                                        ),
+                                      }}
+                                    />
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </Image.PreviewGroup>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <Empty description="Chưa có nhật ký nào được ghi nhận cho công việc này." />
               )}
