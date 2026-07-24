@@ -8,6 +8,8 @@ import {
   BookOutlined,
   CheckCircleOutlined,
   EditOutlined,
+  ExperimentOutlined,
+  EyeOutlined,
   LockOutlined,
   SaveOutlined,
   SendOutlined,
@@ -23,6 +25,7 @@ import {
   Image,
   Input,
   List,
+  Modal,
   Row,
   Spin,
   Table,
@@ -34,6 +37,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationStageService from 'src/services/CultivationStageService'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import CultivationLogService from 'src/services/CultivationLogService'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { canCompileTask } from 'src/utils/cultivationStatus'
 import {
@@ -174,7 +178,7 @@ const pestColumns = [
 ]
 
 /** Expand: thông tin Summary (ảnh, phân, thuốc, mô tả) + textarea Supervisor */
-const SummaryCompilePanel = ({ task, onSaved }) => {
+const SummaryCompilePanel = ({ task, planId, stageLogs = [], onSaved }) => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [leaderSummary, setLeaderSummary] = useState(null)
@@ -186,10 +190,16 @@ const SummaryCompilePanel = ({ task, onSaved }) => {
     const load = async () => {
       setLoading(true)
       try {
-        const { summary, leaderSubmittedDescription, submittedLogId: logId } = await loadLeaderCompileData(task.id, task.stageId)
+        const { summary, leaderSubmittedDescription, submittedLogId: logId } = await loadLeaderCompileData(task.id)
         if (cancelled) return
         setLeaderSummary(summary)
-        setOfficialLogId(logId)
+        
+        const matchingLog = stageLogs.find(
+          (l) => l.cultivationTaskId === task?.id || l.taskId === task?.id || l.workTaskId === task?.id
+        )
+        const resolvedLogId = matchingLog?.id || logId || summary?.cultivationLogId || summary?.id
+
+        setOfficialLogId(resolvedLogId)
         setDescription(leaderSubmittedDescription || summary?.description || '')
       } catch (err) {
         console.error(err)
@@ -207,7 +217,7 @@ const SummaryCompilePanel = ({ task, onSaved }) => {
     return () => {
       cancelled = true
     }
-  }, [task.id])
+  }, [task.id, stageLogs])
 
   const fertRows = mapMaterialRows(leaderSummary?.fertilizers, 'Phân')
   const pestRows = mapMaterialRows(leaderSummary?.pesticides, 'Thuốc')
@@ -218,18 +228,18 @@ const SummaryCompilePanel = ({ task, onSaved }) => {
       message.error('Vui lòng nhập mô tả mới.')
       return
     }
-    if (!officialLogId) {
-      message.error('Chưa có log từ Summary của Leader để lưu.')
-      return
-    }
     try {
       setSaving(true)
-      await saveCompiledDescription(officialLogId, description.trim())
+      const matchingLog = stageLogs.find(
+        (l) => l.cultivationTaskId === task?.id || l.taskId === task?.id || l.workTaskId === task?.id
+      )
+      const targetId = matchingLog?.id || officialLogId || task?.id
+      await saveCompiledDescription(targetId, description.trim(), planId)
       message.success('Đã lưu mô tả vào Logbook!')
       onSaved?.()
     } catch (err) {
       console.error(err)
-      message.error(err.message || 'Lưu thất bại.')
+      message.error(err?.response?.data?.message || err?.message || 'Lưu thất bại.')
     } finally {
       setSaving(false)
     }
@@ -245,16 +255,6 @@ const SummaryCompilePanel = ({ task, onSaved }) => {
 
   return (
     <div className="space-y-4">
-      {!officialLogId && (
-        <Alert
-          message="Chưa có log để lưu"
-          description="Leader cần gửi Summary trước."
-          type="warning"
-          showIcon
-          className="rounded-xl"
-        />
-      )}
-
       <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 space-y-4">
         <div className="flex items-center justify-between">
           <Text strong className="text-gray-700">
@@ -268,19 +268,35 @@ const SummaryCompilePanel = ({ task, onSaved }) => {
         {images.length > 0 && (
           <div>
             <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Ảnh ({images.length})
+              Ảnh minh chứng ({images.length})
             </div>
-            <Image.PreviewGroup>
+            <Image.PreviewGroup
+              items={images.map(img => typeof img === 'string' ? img : (img.url || img.imageUrl || img.fileUrl || img.path || img.src)).filter(Boolean)}
+            >
               <div className="flex flex-wrap gap-2">
-                {images.map((img) => (
-                  <Image
-                    key={img.id || img.imageUrl || img.url}
-                    src={img.imageUrl || img.url}
-                    width={88}
-                    height={88}
-                    className="rounded-lg object-cover"
-                  />
-                ))}
+                {images.map((img, idx) => {
+                  const src = typeof img === 'string' ? img : (img.url || img.imageUrl || img.fileUrl || img.path || img.src)
+                  if (!src) return null
+                  return (
+                    <div
+                      key={img.id || idx}
+                      className="h-20 w-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden cursor-pointer hover:border-green-400 hover:shadow-md transition-all duration-200 [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
+                    >
+                      <Image
+                        src={src}
+                        alt={`Ảnh ${idx + 1}`}
+                        preview={{
+                          src,
+                          mask: (
+                            <div className="flex items-center justify-center text-white text-[10px] font-semibold">
+                              <EyeOutlined /> Xem
+                            </div>
+                          ),
+                        }}
+                      />
+                    </div>
+                  )
+                })}
               </div>
             </Image.PreviewGroup>
           </div>
@@ -333,14 +349,12 @@ const SummaryCompilePanel = ({ task, onSaved }) => {
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Nhập mô tả chuẩn để lưu vào Logbook..."
           className="rounded-lg"
-          disabled={!officialLogId}
         />
         <div className="mt-4 flex justify-end">
           <Button
             type="primary"
             icon={<SaveOutlined />}
             loading={saving}
-            disabled={!officialLogId}
             onClick={handleSave}
             className="h-9 rounded-lg bg-green-600 px-6 font-semibold"
           >
@@ -359,6 +373,47 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
   const [loadingLogs, setLoadingLogs] = useState(false)
   const [stageLogs, setStageLogs] = useState([])
   const [activeKeys, setActiveKeys] = useState([])
+  const [editModal, setEditModal] = useState({ open: false, log: null, description: '' })
+  const [savingEdit, setSavingEdit] = useState(false)
+
+  const handleOpenEditLog = (log) => {
+    setEditModal({
+      open: true,
+      log,
+      description: log.supervisorDescription || log.description || '',
+    })
+  }
+
+  const handleSaveEditLog = async () => {
+    if (!editModal.log) return
+    try {
+      setSavingEdit(true)
+      const logId = editModal.log.id
+      const newDesc = editModal.description?.trim() || ''
+
+      if (CultivationLogService.patchDescription) {
+        await CultivationLogService.patchDescription(logId, { description: newDesc })
+      } else if (CultivationLogService.update) {
+        await CultivationLogService.update(logId, { description: newDesc })
+      }
+
+      message.success('Đã cập nhật mô tả Logbook thành công!')
+      setEditModal({ open: false, log: null, description: '' })
+
+      if (selectedId) {
+        const logsRes = await CultivationStageService.getStageLogs(selectedId, {
+          cultivationLogbookId: planId,
+        })
+        const logsData = unwrap(logsRes)
+        setStageLogs(Array.isArray(logsData) ? logsData : logsData?.items || [])
+      }
+    } catch (err) {
+      console.error(err)
+      message.error(err?.response?.data?.message || err?.message || 'Cập nhật mô tả thất bại.')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
 
   useEffect(() => {
     if (stages.length > 0 && !selectedId) {
@@ -382,7 +437,9 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
     const load = async () => {
       setLoadingLogs(true)
       try {
-        const logsRes = await CultivationStageService.getStageLogs(selectedId)
+        const logsRes = await CultivationStageService.getStageLogs(selectedId, {
+          cultivationLogbookId: planId,
+        })
         const logsData = unwrap(logsRes)
         setStageLogs(Array.isArray(logsData) ? logsData : logsData?.items || [])
       } catch (err) {
@@ -393,7 +450,7 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
       }
     }
     load()
-  }, [selectedId])
+  }, [selectedId, planId])
 
   const handleSubmitCompletion = async () => {
     if (!planId) {
@@ -417,7 +474,9 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
     await loadData?.()
     if (selectedId) {
       try {
-        const logsRes = await CultivationStageService.getStageLogs(selectedId)
+        const logsRes = await CultivationStageService.getStageLogs(selectedId, {
+          cultivationLogbookId: planId,
+        })
         const logsData = unwrap(logsRes)
         setStageLogs(Array.isArray(logsData) ? logsData : logsData?.items || [])
       } catch (err) {
@@ -515,7 +574,7 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
                           <Tag color="gold">Chờ biên soạn</Tag>
                         </div>
                       ),
-                      children: <SummaryCompilePanel task={task} onSaved={handleSaved} />,
+                      children: <SummaryCompilePanel task={task} planId={planId} stageLogs={stageLogs} onSaved={handleSaved} />,
                     }))}
                   />
                 )}
@@ -524,63 +583,176 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
               <Card
                 size="small"
                 bordered
-                className="rounded-xl shadow-sm border-green-100 bg-green-50/10"
+                className="rounded-xl shadow-sm border-green-100 bg-white"
                 title={
-                  <span className="font-semibold text-green-800 flex items-center gap-2">
-                    <BookOutlined /> Logbook giai đoạn
-                    <Tag color="green" className="ml-1">{stageLogs.length}</Tag>
+                  <span className="font-semibold text-green-800 flex items-center justify-between w-full">
+                    <span className="flex items-center gap-2">
+                      <BookOutlined /> Logbook giai đoạn
+                      <Tag color="green" className="ml-1 font-semibold">{stageLogs.length} mục</Tag>
+                    </span>
                   </span>
                 }
               >
                 {loadingLogs ? (
                   <div className="py-8 text-center">
-                    <Spin tip="Đang tải Logbook..." />
+                    <Spin tip="Đang tải Logbook giai đoạn..." />
                   </div>
                 ) : stageLogs.length === 0 ? (
-                  <Empty description="Chưa có mục trong Logbook" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                  <Empty description="Chưa có mục nào trong Logbook giai đoạn" image={Empty.PRESENTED_IMAGE_SIMPLE} />
                 ) : (
-                  <List
-                    dataSource={stageLogs}
-                    renderItem={(log, index) => (
-                      <List.Item className="mb-3 rounded-xl border border-gray-100 bg-white px-4 py-3">
-                        <List.Item.Meta
-                          avatar={
-                            <Avatar size={28} style={{ backgroundColor: '#16a34a', fontSize: 12, fontWeight: 700 }}>
-                              {index + 1}
-                            </Avatar>
-                          }
-                          title={
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <Text strong>
-                                {log.taskName || log.workTaskName || log.name || `Mục ${index + 1}`}
-                              </Text>
-                              <div className="flex items-center gap-2">
-                                {(log.date || log.createdAt) && (
-                                  <Text type="secondary" className="text-xs">
-                                    {formatDate(log.date || log.createdAt)}
-                                  </Text>
-                                )}
-                                <Tag color={getReviewStatus(log.status).color}>
-                                  {getReviewStatus(log.status).label}
-                                </Tag>
-                              </div>
+                  <div className="space-y-3">
+                    {stageLogs.map((log, index) => {
+                      const taskName = log.taskName || log.workTaskName || log.name || `Mục ${index + 1}`
+                      const description = log.supervisorDescription || log.description || 'Chưa có mô tả'
+                      const fertilizers = log.fertilizers || log.totalFertilizers || log.summary?.fertilizers || []
+                      const pesticides = log.pesticides || log.totalPesticides || log.summary?.pesticides || []
+                      const images = log.images || log.summary?.images || []
+                      const reviewCfg = getReviewStatus(log.status)
+
+                      return (
+                        <div
+                          key={log.id || index}
+                          className="rounded-xl border border-green-100 bg-green-50/20 p-4 shadow-2xs hover:shadow-xs transition-all"
+                        >
+                          {/* Header: Tên công việc + Status + Nút Sửa */}
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-green-100/80 pb-2.5 mb-3">
+                            <div className="flex items-center gap-2">
+                              <Avatar size={24} style={{ backgroundColor: '#16a34a', fontSize: 11, fontWeight: 700 }}>
+                                {index + 1}
+                              </Avatar>
+                              <span className="font-bold text-gray-800 text-sm">{taskName}</span>
+                              <Tag color={reviewCfg.color} className="rounded-full text-[11px]">
+                                {reviewCfg.label}
+                              </Tag>
                             </div>
-                          }
-                          description={
-                            <Paragraph ellipsis={{ rows: 3, expandable: true, symbol: 'Xem thêm' }} className="!mb-0 mt-2 text-gray-600">
-                              {log.supervisorDescription || log.description || '—'}
-                            </Paragraph>
-                          }
-                        />
-                      </List.Item>
-                    )}
-                  />
+
+                            <div className="flex items-center gap-2">
+                              {(log.date || log.createdAt) && (
+                                <span className="text-xs text-gray-400">
+                                  {formatDate(log.date || log.createdAt)}
+                                </span>
+                              )}
+                              <Button
+                                type="primary"
+                                ghost
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={() => handleOpenEditLog(log)}
+                                className="rounded-lg text-xs border-green-600 text-green-700 hover:bg-green-50"
+                              >
+                                Sửa mô tả
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Mô tả final */}
+                          <div className="bg-white rounded-lg p-3 border border-green-100 mb-3">
+                            <div className="text-[11px] font-bold text-green-800 uppercase mb-1">Mô tả Logbook:</div>
+                            <p className="text-sm text-gray-800 m-0 leading-relaxed whitespace-pre-wrap">{description}</p>
+                          </div>
+
+                          {/* Vật tư: Phân bón & Thuốc BVTV */}
+                          {(fertilizers.length > 0 || pesticides.length > 0) && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-3">
+                              {fertilizers.length > 0 && (
+                                <div className="bg-blue-50/50 rounded-lg p-2.5 border border-blue-100 text-xs">
+                                  <div className="font-bold text-blue-800 mb-1 flex items-center gap-1">
+                                    <ExperimentOutlined className="text-blue-600" /> Phân bón:
+                                  </div>
+                                  <div className="space-y-1">
+                                    {fertilizers.map((f, i) => (
+                                      <div key={i} className="flex justify-between items-center bg-white/70 px-2 py-1 rounded">
+                                        <span className="font-medium text-gray-800">{f.name || f.fertilizerName || f.materialName}</span>
+                                        <span className="font-bold text-blue-700">{f.quantity || f.totalQuantity} {f.unit || f.quantityUnit || 'kg'}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {pesticides.length > 0 && (
+                                <div className="bg-purple-50/50 rounded-lg p-2.5 border border-purple-100 text-xs">
+                                  <div className="font-bold text-purple-800 mb-1 flex items-center gap-1">
+                                    <ExperimentOutlined className="text-purple-600" /> Thuốc BVTV:
+                                  </div>
+                                  <div className="space-y-1">
+                                    {pesticides.map((p, i) => (
+                                      <div key={i} className="flex justify-between items-center bg-white/70 px-2 py-1 rounded">
+                                        <span className="font-medium text-gray-800">{p.name || p.pesticideName || p.materialName}</span>
+                                        <span className="font-bold text-purple-700">{p.quantity || p.totalQuantity} {p.unit || p.quantityUnit || 'ml'}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Ảnh minh chứng */}
+                          {images.length > 0 && (
+                            <div>
+                              <div className="text-xs font-semibold text-gray-500 mb-1.5">Ảnh minh chứng:</div>
+                              <Image.PreviewGroup items={images.map(img => img.url || img.imageUrl).filter(Boolean)}>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {images.map((img, i) => {
+                                    const src = img.url || img.imageUrl
+                                    return (
+                                      <div
+                                        key={i}
+                                        className="h-14 w-14 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden cursor-pointer hover:border-green-400 hover:shadow-md transition-all [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
+                                      >
+                                        <Image src={src} preview={{ src }} />
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </Image.PreviewGroup>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 )}
               </Card>
             </div>
           )}
         </Col>
       </Row>
+
+      {/* Modal Sửa mô tả Logbook giai đoạn */}
+      <Modal
+        open={editModal.open}
+        title={
+          <div className="flex items-center gap-2 text-green-700 font-bold">
+            <EditOutlined /> Sửa mô tả Logbook giai đoạn
+          </div>
+        }
+        onCancel={() => setEditModal({ open: false, log: null, description: '' })}
+        onOk={handleSaveEditLog}
+        confirmLoading={savingEdit}
+        okText="Lưu thay đổi"
+        cancelText="Hủy"
+        okButtonProps={{ className: 'bg-green-600 border-green-600' }}
+      >
+        <div className="py-2 space-y-3">
+          <div className="text-sm text-gray-600">
+            Công việc: <span className="font-semibold text-gray-800">{editModal.log?.taskName || editModal.log?.name}</span>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 block mb-1">
+              Nội dung mô tả chính thức (Supervisor chỉnh sửa):
+            </label>
+
+            <Input.TextArea
+              rows={4}
+              value={editModal.description}
+              onChange={(e) => setEditModal((prev) => ({ ...prev, description: e.target.value }))}
+              placeholder="Nhập mô tả chính thức..."
+            />
+          </div>
+        </div>
+      </Modal>
     </Card>
   )
 }

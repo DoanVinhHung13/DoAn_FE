@@ -26,8 +26,8 @@ const getByLogbookId = (logbookId) => {
   return http.get(apiGetStagesByLogbook(logbookId))
 }
 
-const getStageLogs = (stageId) => {
-  return http.get(apiGetCultivationStageLogs(stageId))
+const getStageLogs = (stageId, params) => {
+  return http.get(apiGetCultivationStageLogs(stageId), { params })
 }
 
 const create = (body, config) => {

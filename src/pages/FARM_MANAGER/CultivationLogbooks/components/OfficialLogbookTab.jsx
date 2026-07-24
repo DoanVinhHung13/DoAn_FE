@@ -81,7 +81,9 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
 
       try {
         setLoading(true)
-        const response = await CultivationStageService.getStageLogs(selectedStageId)
+        const response = await CultivationStageService.getStageLogs(selectedStageId, {
+          cultivationLogbookId: item?.id,
+        })
 
         if (response?.data) {
           const logs = Array.isArray(response.data) ? response.data : response.data.data || response.data.items || []

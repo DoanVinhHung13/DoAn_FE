@@ -28,45 +28,38 @@ import CultivationStageService from 'src/services/CultivationStageService'
 
 /** 
  * Load leader-summary (API của Leader: /cultivation-tasks/{id}/leader-summary)
- * và stage summary (API của Supervisor: /api/cultivation-stages/{id}/summary)
- * để resolve leaderSubmittedDescription & submittedLogId.
  */
-export const loadLeaderCompileData = async (taskId, stageId) => {
-  const promises = [
-    CultivationTaskService.getLeaderSummary(taskId),
-    CultivationTaskService.getById(taskId),
-  ]
-  if (stageId) {
-    promises.push(CultivationStageService.getSummary(stageId).catch(() => null))
-  }
-
-  const [summaryRes, taskRes, stageSummaryRes] = await Promise.all(promises)
+export const loadLeaderCompileData = async (taskId) => {
+  const summaryRes = await CultivationTaskService.getLeaderSummary(taskId)
   const summary = unwrap(summaryRes) || null
-  const taskDetail = unwrap(taskRes) || null
-  const stageSummary = unwrap(stageSummaryRes) || null
 
-  let leaderSubmittedDescription = summary?.description || ''
-  let submittedLogId = summary?.submittedLogId || summary?.cultivationLogId || taskDetail?.cultivationLogId || null
+  const leaderSubmittedDescription = summary?.description || summary?.leaderSubmittedDescription || ''
+  
+  // Resolve Cultivation Log ID từ Summary object
+  const submittedLogId =
+    summary?.cultivationLogId ||
+    summary?.officialLogId ||
+    summary?.submittedLogId ||
+    summary?.logId ||
+    summary?.id ||
+    null
 
-  if (stageSummary?.taskSummaries?.length) {
-    const taskSummaryItem = stageSummary.taskSummaries.find(
-      (ts) => ts.taskId === taskId || ts.id === taskId
-    )
-    if (taskSummaryItem) {
-      if (taskSummaryItem.leaderSubmittedDescription) {
-        leaderSubmittedDescription = taskSummaryItem.leaderSubmittedDescription
-      }
-      if ('submittedLogId' in taskSummaryItem) {
-        submittedLogId = taskSummaryItem.submittedLogId
-      }
-    }
-  }
+  const isApproved = summary?.status === 'COMPLETED' || summary?.status === 'APPROVED'
 
-  const isApproved = taskDetail?.status === 'COMPLETED'
-  return { summary, taskDetail, leaderSubmittedDescription, submittedLogId, isApproved }
+  return { summary, leaderSubmittedDescription, submittedLogId, isApproved }
 }
 
-/** Gọi API approve với payload modifiedDescription do Supervisor biên tập. */
-export const saveCompiledDescription = async (officialLogId, description) => {
-  return await CultivationLogService.approve(officialLogId, { modifiedDescription: description })
+/** 
+ * Gọi API POST /api/cultivation-logs/{id}/approve 
+ * truyền modifiedDescription & cultivationLogbookId
+ */
+export const saveCompiledDescription = async (officialLogId, description, planId) => {
+  const targetId = officialLogId
+  const payload = {
+    modifiedDescription: description,
+  }
+  if (planId) {
+    payload.cultivationLogbookId = planId
+  }
+  return await CultivationLogService.approve(targetId, payload)
 }

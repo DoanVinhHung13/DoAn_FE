@@ -39,7 +39,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
       setLoading(true)
       try {
         const { summary, leaderSubmittedDescription, submittedLogId: logId, isApproved: approved } =
-          await loadLeaderCompileData(task.id, task.stageId)
+          await loadLeaderCompileData(task.id)
         setLeaderSummary(summary)
         setOfficialLogId(logId)
         setIsApproved(approved)
@@ -65,10 +65,6 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
   const handleCompile = async () => {
     try {
       const values = await form.validateFields()
-      if (!officialLogId) {
-        message.error('Không tìm thấy nhật ký chính thức để biên soạn. Kiểm tra Leader đã gửi summary chưa.')
-        return
-      }
       setSaving(true)
 
       await saveCompiledDescription(officialLogId, values.supervisorDescription)
