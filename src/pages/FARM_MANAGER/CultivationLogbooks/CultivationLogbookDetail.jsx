@@ -7,6 +7,7 @@ import {
   CheckCircleOutlined,
   HistoryOutlined,
   FileTextOutlined,
+  QrcodeOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -23,6 +24,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import CultivationStageService from 'src/services/CultivationStageService'
+import GenerateQrModal from 'src/components/QrCode/GenerateQrModal'
 
 
 // Import các Tab components
@@ -41,6 +43,27 @@ const CultivationLogbookDetail = () => {
   const [item, setItem] = useState(null)
   const [stages, setStages] = useState([])
   const [activeTab, setActiveTab] = useState('official')
+  const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [approving, setApproving] = useState(false)
+
+  const handleApproveReview = async () => {
+    if (!stages.length) {
+      message.error('Chưa có giai đoạn canh tác nào để duyệt.')
+      return
+    }
+    const lastStage = stages[stages.length - 1]
+    try {
+      setApproving(true)
+      await CultivationStageService.approveReview(lastStage.id, { comment: 'Đạt yêu cầu' })
+      message.success('Manager đã duyệt hoàn thành quy trình canh tác thành công!')
+      setItem((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev))
+    } catch (err) {
+      console.error(err)
+      message.error(err?.response?.data?.message || err?.message || 'Duyệt thất bại.')
+    } finally {
+      setApproving(false)
+    }
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -151,16 +174,36 @@ const CultivationLogbookDetail = () => {
             Chi tiết Nhật ký canh tác
           </TitleCustom>
         </div>
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          className="h-10 px-5 font-semibold bg-green-600 border-0 shadow-md rounded-xl shadow-green-100"
-          onClick={() =>
-            navigate(ROUTER.FM_PRODUCTION_PLAN_EDIT.replace(':id', item.id))
-          }
-        >
-          Sửa nhật ký
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="primary"
+            icon={<CheckCircleOutlined />}
+            loading={approving}
+            onClick={handleApproveReview}
+            className="h-10 px-4 font-semibold bg-emerald-600 border-0 shadow-md rounded-xl shadow-emerald-100"
+          >
+            Duyệt kết thúc quy trình
+          </Button>
+
+          <Button
+            icon={<QrcodeOutlined />}
+            onClick={() => setQrModalOpen(true)}
+            className="h-10 px-4 font-semibold border-emerald-600 text-emerald-700 rounded-xl hover:bg-emerald-50"
+          >
+            Tạo Mã QR Traceability
+          </Button>
+
+          <Button
+            type="default"
+            icon={<EditOutlined />}
+            className="h-10 px-4 font-semibold rounded-xl"
+            onClick={() =>
+              navigate(ROUTER.FM_PRODUCTION_PLAN_EDIT.replace(':id', item.id))
+            }
+          >
+            Sửa nhật ký
+          </Button>
+        </div>
       </div>
 
       {/* Hero Card */}
@@ -275,6 +318,14 @@ const CultivationLogbookDetail = () => {
           className="farm-manager-tabs"
         />
       </Card>
+
+      {/* QR Generation Modal */}
+      <GenerateQrModal
+        open={qrModalOpen}
+        onCancel={() => setQrModalOpen(false)}
+        batchId={item.productBatchId || item.harvestBatchId || item.id}
+        batchName={item.logbookName || item.batchName}
+      />
     </div>
   )
 }

@@ -10,7 +10,8 @@
  *   GET  /pesticides/selection
  *   POST /v1/media/upload
  *   POST /cultivation-daily-logs
- *   GET  /cultivation-tasks/{id}/leader-summary
+ *   GET  /cultivation-tasks/{id}/leader-summary     — Của Leader: dùng để xem trước/lấy summary của công việc cụ thể trước khi gửi
+ *   GET  /api/cultivation-stages/{id}/summary       — Của Supervisor: dùng để xem summary của cả giai đoạn (không dùng trực tiếp ở màn hình Leader)
  *   POST /cultivation-tasks/{id}/summary
  */
 import {
@@ -297,7 +298,14 @@ const DailyLog = () => {
       const [taskSumRes] = await Promise.allSettled([
         CultivationTaskService.getLeaderSummary(taskId),
       ])
-      if (taskSumRes.status === 'fulfilled') setLeaderSummary(unwrap(taskSumRes.value))
+      if (taskSumRes.status === 'fulfilled') {
+        const summary = unwrap(taskSumRes.value)
+        setLeaderSummary(summary)
+        // Set description đã gửi vào form để hiển thị
+        if (summary?.description) {
+          summaryForm.setFieldsValue({ descriptionSummary: summary.description })
+        }
+      }
     } catch (e) {
       console.error(e)
     } finally {
@@ -315,9 +323,7 @@ const DailyLog = () => {
         completedAt: dayjs().format('YYYY-MM-DD'),
       })
 
-      message.success('Đã hoàn thành công việc và gửi báo cáo lên Farm Supervisor!')
       setSubmitModal(false)
-      // Reload current page after submitting summary
       setRefreshKey(k => k + 1)
     } catch (error) {
       console.error(error)
@@ -406,7 +412,16 @@ const DailyLog = () => {
               {task.taskCatalogName && <Tag color="blue">{task.taskCatalogName}</Tag>}
             </div>
           </div>
-          {!isViewOnly && (
+          {task.status === 'WAITING_APPROVAL' ? (
+            <Button
+              type="default"
+              icon={<FileTextOutlined />}
+              onClick={openSummaryModal}
+              className="h-10 px-5 font-semibold rounded-xl border-emerald-500 text-emerald-600 hover:!bg-emerald-50 shrink-0"
+            >
+              Xem lại Summary đã gửi
+            </Button>
+          ) : !isViewOnly && (
             <Button
               type="primary"
               icon={<CheckCircleOutlined />}
@@ -716,6 +731,19 @@ const DailyLog = () => {
                 </Button>
               </div>
             )}
+            {/* Hiển thị nút xem summary đã gửi khi đang chờ duyệt */}
+            {task.status === 'WAITING_APPROVAL' && (
+              <div className="flex flex-wrap gap-3 justify-end pt-2 pb-6">
+                <Button
+                  type="default"
+                  icon={<FileTextOutlined />}
+                  onClick={openSummaryModal}
+                  className="h-10 px-5 font-semibold rounded-xl border-emerald-500 text-emerald-600 hover:!bg-emerald-50"
+                >
+                  Xem lại Summary đã gửi
+                </Button>
+              </div>
+            )}
           </Form>
         </Col>
 
@@ -808,15 +836,15 @@ const DailyLog = () => {
         }}
         title={
           <div className="flex items-center gap-2 text-green-700">
-            <SendOutlined />
-            Tạo Summary & Gửi báo cáo hoàn thành
+            {task.status === 'WAITING_APPROVAL' ? <FileTextOutlined /> : <SendOutlined />}
+            {task.status === 'WAITING_APPROVAL' ? 'Summary đã gửi' : 'Tạo Summary & Gửi báo cáo hoàn thành'}
           </div>
         }
-        onOk={handleSubmitSummary}
-        okText="Xác nhận gửi báo cáo"
+        onOk={task.status === 'WAITING_APPROVAL' ? () => setSubmitModal(false) : handleSubmitSummary}
+        okText={task.status === 'WAITING_APPROVAL' ? 'Đóng' : 'Xác nhận gửi báo cáo'}
         cancelText="Hủy"
         confirmLoading={submitting}
-        okButtonProps={{ className: 'bg-green-600 border-green-600', disabled: summaryLoading }}
+        okButtonProps={{ className: task.status === 'WAITING_APPROVAL' ? '' : 'bg-green-600 border-green-600', disabled: summaryLoading }}
         width={780}
       >
         <Spin spinning={summaryLoading} tip="Đang tải tổng hợp...">
@@ -864,35 +892,40 @@ const DailyLog = () => {
               // Ưu tiên BE data; fallback về aggregation từ local dailyLogs
               const rows = leaderSummary?.fertilizers?.length > 0
                 ? leaderSummary.fertilizers.map((f, i) => ({
-                    key: i,
-                    name: f.name || f.fertilizerName || f.materialName || `Phân ${i + 1}`,
-                    totalQuantity: f.totalQuantity ?? f.quantity ?? 0,
-                    unit: f.unit ?? '',
-                    totalArea: f.totalArea ?? f.area ?? 0,
-                    areaUnit: f.areaUnit ?? 'ha',
-                    days: f.days ?? '—',
-                  }))
+                  key: i,
+                  name: f.name || f.fertilizerName || f.materialName || `Phân ${i + 1}`,
+                  totalQuantity: f.totalQuantity ?? f.quantity ?? 0,
+                  unit: f.unit ?? '',
+                  totalArea: f.totalArea ?? f.area ?? 0,
+                  areaUnit: f.areaUnit ?? 'ha',
+                  days: f.days ?? '—',
+                }))
                 : aggregateFromLogs.fertilizers.map((f, i) => ({
-                    key: i,
-                    name: f.name,
-                    totalQuantity: f.totalQuantity,
-                    unit: f.unit,
-                    totalArea: f.totalArea,
-                    areaUnit: f.areaUnit,
-                    days: f.days,
-                  }))
+                  key: i,
+                  name: f.name,
+                  totalQuantity: f.totalQuantity,
+                  unit: f.unit,
+                  totalArea: f.totalArea,
+                  areaUnit: f.areaUnit,
+                  days: f.days,
+                }))
 
               const cols = [
-                { title: 'Loại phân bón', dataIndex: 'name', key: 'name',
-                  render: v => <span className="font-medium text-gray-800">{v}</span> },
-                { title: 'Tổng lượng', key: 'qty', align: 'right',
-                  render: (_, r) => <span className="font-semibold text-blue-700">{r.totalQuantity} <span className="font-normal text-gray-500">{r.unit}</span></span> },
-                { title: 'Diện tích', key: 'area', align: 'right',
+                {
+                  title: 'Loại phân bón', dataIndex: 'name', key: 'name',
+                  render: v => <span className="font-medium text-gray-800">{v}</span>
+                },
+                {
+                  title: 'Tổng lượng', key: 'qty', align: 'right',
+                  render: (_, r) => <span className="font-semibold text-blue-700">{r.totalQuantity} <span className="font-normal text-gray-500">{r.unit}</span></span>
+                },
+                {
+                  title: 'Diện tích', key: 'area', align: 'right',
                   render: (_, r) => r.totalArea > 0
                     ? <span>{r.totalArea} <span className="text-gray-500">{r.areaUnit}</span></span>
-                    : <span className="text-gray-300">—</span> },
-                { title: 'Số lần', dataIndex: 'days', key: 'days', align: 'center',
-                  render: v => <Tag className="rounded-full m-0" color="blue">{v}</Tag> },
+                    : <span className="text-gray-300">—</span>
+                },
+
               ]
 
               return (
@@ -920,35 +953,40 @@ const DailyLog = () => {
             {(() => {
               const rows = leaderSummary?.pesticides?.length > 0
                 ? leaderSummary.pesticides.map((p, i) => ({
-                    key: i,
-                    name: p.name || p.pesticideName || p.materialName || `Thuốc ${i + 1}`,
-                    totalQuantity: p.totalQuantity ?? p.quantity ?? 0,
-                    unit: p.unit ?? '',
-                    totalArea: p.totalArea ?? p.area ?? 0,
-                    areaUnit: p.areaUnit ?? 'ha',
-                    days: p.days ?? '—',
-                  }))
+                  key: i,
+                  name: p.name || p.pesticideName || p.materialName || `Thuốc ${i + 1}`,
+                  totalQuantity: p.totalQuantity ?? p.quantity ?? 0,
+                  unit: p.unit ?? '',
+                  totalArea: p.totalArea ?? p.area ?? 0,
+                  areaUnit: p.areaUnit ?? 'ha',
+                  days: p.days ?? '—',
+                }))
                 : aggregateFromLogs.pesticides.map((p, i) => ({
-                    key: i,
-                    name: p.name,
-                    totalQuantity: p.totalQuantity,
-                    unit: p.unit,
-                    totalArea: p.totalArea,
-                    areaUnit: p.areaUnit,
-                    days: p.days,
-                  }))
+                  key: i,
+                  name: p.name,
+                  totalQuantity: p.totalQuantity,
+                  unit: p.unit,
+                  totalArea: p.totalArea,
+                  areaUnit: p.areaUnit,
+                  days: p.days,
+                }))
 
               const cols = [
-                { title: 'Loại thuốc BVTV', dataIndex: 'name', key: 'name',
-                  render: v => <span className="font-medium text-gray-800">{v}</span> },
-                { title: 'Tổng lượng', key: 'qty', align: 'right',
-                  render: (_, r) => <span className="font-semibold text-purple-700">{r.totalQuantity} <span className="font-normal text-gray-500">{r.unit}</span></span> },
-                { title: 'Diện tích', key: 'area', align: 'right',
+                {
+                  title: 'Loại thuốc BVTV', dataIndex: 'name', key: 'name',
+                  render: v => <span className="font-medium text-gray-800">{v}</span>
+                },
+                {
+                  title: 'Tổng lượng', key: 'qty', align: 'right',
+                  render: (_, r) => <span className="font-semibold text-purple-700">{r.totalQuantity} <span className="font-normal text-gray-500">{r.unit}</span></span>
+                },
+                {
+                  title: 'Diện tích', key: 'area', align: 'right',
                   render: (_, r) => r.totalArea > 0
                     ? <span>{r.totalArea} <span className="text-gray-500">{r.areaUnit}</span></span>
-                    : <span className="text-gray-300">—</span> },
-                { title: 'Số lần', dataIndex: 'days', key: 'days', align: 'center',
-                  render: v => <Tag className="rounded-full m-0" color="purple">{v}</Tag> },
+                    : <span className="text-gray-300">—</span>
+                },
+
               ]
 
               return (
@@ -1021,12 +1059,15 @@ const DailyLog = () => {
             <Form form={summaryForm} layout="vertical">
               <Form.Item
                 name="descriptionSummary"
-                label={<span className="font-semibold">Mô tả tổng kết công việc <span className="text-red-500">*</span></span>}
-                rules={[{ required: true, message: 'Vui lòng viết mô tả tổng kết' }]}
+                label={<span className="font-semibold">
+                  Mô tả tổng kết công việc {task.status !== 'WAITING_APPROVAL' && <span className="text-red-500">*</span>}
+                </span>}
+                rules={task.status !== 'WAITING_APPROVAL' ? [{ required: true, message: 'Vui lòng viết mô tả tổng kết' }] : []}
               >
                 <TextArea
                   rows={3}
                   placeholder="VD: Đã hoàn thành công việc phun thuốc theo kế hoạch, cây trồng phát triển tốt..."
+                  disabled={task.status === 'WAITING_APPROVAL'}
                 />
               </Form.Item>
             </Form>

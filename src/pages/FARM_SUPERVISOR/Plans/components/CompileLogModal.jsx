@@ -2,10 +2,10 @@
  * Farm Supervisor — Biên soạn nhật ký chính thức
  *
  * API:
- *   GET  /cultivation-tasks/{id}/leader-summary
+ *   GET  /api/cultivation-stages/{id}/summary       — Của Supervisor: dùng để xem bản summary của cả giai đoạn do các Leader gửi
+ *   GET  /cultivation-tasks/{id}/leader-summary     — Của Leader: dùng để xem trước/lấy summary của công việc cụ thể trước khi gửi
  *   GET  /cultivation-tasks/{id}
- *   PATCH /cultivation-logs/{id}/description
- *   POST  /cultivation-logs/{id}/approve
+ *   POST /api/cultivation-logs/{id}/approve         — Phê duyệt nhật ký chính thức với modifiedDescription
  */
 import React, { useEffect, useState } from 'react'
 import { Modal, Form, Input, Image, Alert, Collapse, message, Spin } from 'antd'
@@ -38,13 +38,13 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
     const load = async () => {
       setLoading(true)
       try {
-        const { summary, officialLogId: logId, isApproved: approved } =
-          await loadLeaderCompileData(task.id)
+        const { summary, leaderSubmittedDescription, submittedLogId: logId, isApproved: approved } =
+          await loadLeaderCompileData(task.id, task.stageId)
         setLeaderSummary(summary)
         setOfficialLogId(logId)
         setIsApproved(approved)
         form.setFieldsValue({
-          supervisorDescription: summary?.description || '',
+          supervisorDescription: leaderSubmittedDescription || summary?.description || '',
         })
       } catch (err) {
         console.error(err)

@@ -2,6 +2,7 @@ import {
   BugOutlined,
   CheckCircleOutlined,
   EditOutlined,
+  InboxOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -25,6 +26,7 @@ import ROUTER from 'src/router/ROUTER'
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
+import InventoryImportModal from 'src/components/Inventory/InventoryImportModal'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
@@ -61,6 +63,7 @@ const ViewCropProtections = () => {
 
   // ── State: modals ───────────────────────────────────────────────────────────
   const [statusModal, setStatusModal] = useState({ open: false, item: null })
+  const [importModal, setImportModal] = useState({ open: false, item: null })
   const [inUseAlert, setInUseAlert] = useState(false)
 
   // ── Fetch list ──────────────────────────────────────────────────────────────
@@ -169,13 +172,28 @@ const ViewCropProtections = () => {
       ),
     },
     {
-      title: 'Tồn kho',
+      title: 'Tồn kho thực tế',
+      dataIndex: 'inventoryQuantity',
+      key: 'inventoryQuantity',
+      width: 140,
+      align: 'right',
+      render: (v, record) => (
+        <span className="text-sm font-semibold text-blue-600">
+          {v != null
+            ? `${Number(v).toLocaleString('vi-VN')} ${record.inventoryUnit || record.unit || ''}`
+            : '0'}
+        </span>
+      ),
+    },
+    {
+      title: 'Tồn kho tối thiểu',
       key: 'minInventory',
-      width: 120,
+      width: 140,
+      align: 'right',
       render: (_, record) => {
-        const qty = record.minInventory ?? 0
+        const qty = record.minInventory ?? record.minimumStock ?? 0
         const unit = record.unit || ''
-        return <span className="text-sm">{qty ? `${qty} ${unit}` : '—'}</span>
+        return <span className="text-sm font-semibold text-gray-700">{qty ? `${qty} ${unit}` : '—'}</span>
       },
     },
     {
@@ -211,13 +229,24 @@ const ViewCropProtections = () => {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 100,
+      width: 140,
       align: 'center',
       render: (_, record) => {
         const locked = record.isInActiveUse
         const active = record.isActive !== false
         return (
           <div className="flex items-center justify-center gap-2">
+            <Tooltip title="Nhập vật tư vào kho">
+              <Button
+                type="text"
+                icon={<InboxOutlined className="text-lg text-blue-600" />}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-blue-50"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setImportModal({ open: true, item: record })
+                }}
+              />
+            </Tooltip>
             <Tooltip
               title={
                 locked
@@ -424,6 +453,15 @@ const ViewCropProtections = () => {
           </Button>
         </div>
       </CustomModal>
+
+      {/* Inventory Import Modal */}
+      <InventoryImportModal
+        open={importModal.open}
+        item={importModal.item}
+        onCancel={() => setImportModal({ open: false, item: null })}
+        onSuccess={() => getList()}
+        materialType="CROP_PROTECTION"
+      />
     </div>
   )
 }

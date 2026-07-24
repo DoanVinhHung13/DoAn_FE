@@ -101,6 +101,8 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         manufacturer: editingItem.manufacturer || "",
         supplier: editingItem.supplier || "",
         minimumStock: editingItem.minInventory ?? editingItem.minimumStock ?? 0,
+        inventoryQuantity: editingItem.inventoryQuantity ?? 0,
+        inventoryUnit: editingItem.inventoryUnit || editingItem.unit || undefined,
         unit: editingItem.unit || undefined, // Đơn vị tính (kho)
         usageUnit: editingItem.usageUnit || undefined, // Đơn vị sử dụng
         description: editingItem.description || "",
@@ -150,6 +152,8 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         manufacturer: values.manufacturer?.trim() || "",
         supplier: values.supplier?.trim() || "",
         minInventory: values.minimumStock || 0,
+        inventoryQuantity: values.inventoryQuantity ?? 0,
+        inventoryUnit: values.inventoryUnit || values.unit || "",
         unit: values.unit || "", // Đơn vị tính (kho)
         usageUnit: values.usageUnit || "", // Đơn vị sử dụng
         description: values.description?.trim() || "",

@@ -220,14 +220,12 @@ const FarmSupervisorTaskDetail = () => {
         images: task.leaderSummary?.images || [],
         compiledAt: dayjs().format('YYYY-MM-DD'),
       }
-      // TODO: Replace with actual API - call patchDescription + approve
-      // Using cultivationLogId from task if available, otherwise create new log
+      // Call approve with modifiedDescription directly
       const cultivationLogId = task.cultivationLogId || task.officialLogId
       if (cultivationLogId) {
-        await CultivationLogService.patchDescription(cultivationLogId, {
-          description: values.supervisorDescription,
+        await CultivationLogService.approve(cultivationLogId, {
+          modifiedDescription: values.supervisorDescription,
         })
-        await CultivationLogService.approve(cultivationLogId, { comment: 'Đạt yêu cầu' })
       } else {
         // Fallback: Create new log if no existing log
         await CultivationLogService.create({

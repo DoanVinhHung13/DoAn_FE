@@ -186,11 +186,11 @@ const SummaryCompilePanel = ({ task, onSaved }) => {
     const load = async () => {
       setLoading(true)
       try {
-        const { summary, officialLogId: logId } = await loadLeaderCompileData(task.id)
+        const { summary, leaderSubmittedDescription, submittedLogId: logId } = await loadLeaderCompileData(task.id, task.stageId)
         if (cancelled) return
         setLeaderSummary(summary)
         setOfficialLogId(logId)
-        setDescription(summary?.description || '')
+        setDescription(leaderSubmittedDescription || summary?.description || '')
       } catch (err) {
         console.error(err)
         if (!cancelled) {

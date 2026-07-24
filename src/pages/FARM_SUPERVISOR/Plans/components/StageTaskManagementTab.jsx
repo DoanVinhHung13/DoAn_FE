@@ -8,7 +8,6 @@ import {
   UserOutlined,
   InfoCircleOutlined,
   FileTextOutlined,
-  EditOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
@@ -35,10 +34,8 @@ import ROUTER from 'src/router/ROUTER'
 import CultivationTaskService from 'src/services/CultivationTaskService'
 import TaskCatalogService from 'src/services/TaskCatalogService'
 import { formatDate } from 'src/utils/dateFormatters'
-import { canCompileTask } from 'src/utils/cultivationStatus'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import AssignTaskModal from './AssignTaskModal'
-import CompileLogModal from './CompileLogModal'
 
 const { Text } = Typography
 
@@ -99,8 +96,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const [savingTask, setSavingTask] = useState(false)
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [assignTaskData, setAssignTaskData] = useState(null)
-  const [compileLogModalOpen, setCompileLogModalOpen] = useState(false)
-  const [compileLogTask, setCompileLogTask] = useState(null)
   const [taskCatalogOptions, setTaskCatalogOptions] = useState([])
 
   useEffect(() => {
@@ -452,37 +447,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     Cập nhật phân công
                                   </Button>
                                 )}
-                                {/* WAITING_APPROVAL: Leader đã gửi summary — biên soạn */}
-                                {canCompileTask(task.status) && (
-                                  <Button
-                                    type="primary"
-                                    size="small"
-                                    className="bg-green-600 rounded-lg ml-auto"
-                                    icon={<EditOutlined />}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setCompileLogTask(task)
-                                      setCompileLogModalOpen(true)
-                                    }}
-                                  >
-                                    Xem báo cáo & Biên soạn
-                                  </Button>
-                                )}
-                                {task.status === 'COMPLETED' && (
-                                  <Button
-                                    type="default"
-                                    size="small"
-                                    className="rounded-lg ml-auto text-green-700 border-green-300 hover:border-green-500"
-                                    icon={<FileTextOutlined />}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setCompileLogTask(task)
-                                      setCompileLogModalOpen(true)
-                                    }}
-                                  >
-                                    Xem báo cáo
-                                  </Button>
-                                )}
                               </div>
                             </div>
                           </Card>
@@ -670,16 +634,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         task={assignTaskData}
         planId={planId}
         stageId={selectedId}
-      />
-
-      <CompileLogModal
-        open={compileLogModalOpen}
-        onCancel={() => setCompileLogModalOpen(false)}
-        onSuccess={() => {
-          setCompileLogModalOpen(false)
-          loadData()
-        }}
-        task={compileLogTask}
       />
     </div>
   )

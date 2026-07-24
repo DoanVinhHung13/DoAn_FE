@@ -216,6 +216,21 @@ const CropProtectionDetail = () => {
               {item.supplier || item.supplierId || <span className="text-gray-400">—</span>}
             </Descriptions.Item>
 
+            {/* Tồn kho thực tế */}
+            <Descriptions.Item
+              label={
+                <span className="flex items-center gap-1">
+                  <BarcodeOutlined /> Tồn kho thực tế
+                </span>
+              }
+            >
+              <span className="font-semibold text-blue-600">
+                {item.inventoryQuantity != null
+                  ? `${Number(item.inventoryQuantity).toLocaleString('vi-VN')} ${item.inventoryUnit || item.unit || ''}`
+                  : '—'}
+              </span>
+            </Descriptions.Item>
+
             <Descriptions.Item
               label={
                 <span className="flex items-center gap-1">

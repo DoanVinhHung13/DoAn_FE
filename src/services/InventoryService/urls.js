@@ -1,7 +1,7 @@
 // Inventory API endpoints
 export const apiGetInventory = '/inventory'
 export const apiCreateInventory = '/inventory'
-export const apiAddInventory = '/inventory/add'
+export const apiAddInventory = '/inventory/import'
 export const apiConsumeInventory = '/inventory/consume'
 export const apiDistributeInventory = '/inventory/distribute'
 export const apiCreateTransaction = '/inventory/transaction'
