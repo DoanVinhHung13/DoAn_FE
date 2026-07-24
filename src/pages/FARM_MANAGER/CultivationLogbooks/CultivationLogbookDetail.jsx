@@ -1,13 +1,11 @@
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
-  EditOutlined,
   EnvironmentOutlined,
   TeamOutlined,
   CheckCircleOutlined,
   HistoryOutlined,
   FileTextOutlined,
-  QrcodeOutlined,
 } from '@ant-design/icons'
 import {
   Button,
@@ -24,7 +22,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import CultivationStageService from 'src/services/CultivationStageService'
-import GenerateQrModal from 'src/components/QrCode/GenerateQrModal'
+import { getLandPlotsFromLogbook } from 'src/utils/helpers'
 
 
 // Import các Tab components
@@ -43,27 +41,6 @@ const CultivationLogbookDetail = () => {
   const [item, setItem] = useState(null)
   const [stages, setStages] = useState([])
   const [activeTab, setActiveTab] = useState('official')
-  const [qrModalOpen, setQrModalOpen] = useState(false)
-  const [approving, setApproving] = useState(false)
-
-  const handleApproveReview = async () => {
-    if (!stages.length) {
-      message.error('Chưa có giai đoạn canh tác nào để duyệt.')
-      return
-    }
-    const lastStage = stages[stages.length - 1]
-    try {
-      setApproving(true)
-      await CultivationStageService.approveReview(lastStage.id, { comment: 'Đạt yêu cầu' })
-      message.success('Manager đã duyệt hoàn thành quy trình canh tác thành công!')
-      setItem((prev) => (prev ? { ...prev, status: 'COMPLETED' } : prev))
-    } catch (err) {
-      console.error(err)
-      message.error(err?.response?.data?.message || err?.message || 'Duyệt thất bại.')
-    } finally {
-      setApproving(false)
-    }
-  }
 
   useEffect(() => {
     let isMounted = true
@@ -174,36 +151,6 @@ const CultivationLogbookDetail = () => {
             Chi tiết Nhật ký canh tác
           </TitleCustom>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="primary"
-            icon={<CheckCircleOutlined />}
-            loading={approving}
-            onClick={handleApproveReview}
-            className="h-10 px-4 font-semibold bg-emerald-600 border-0 shadow-md rounded-xl shadow-emerald-100"
-          >
-            Duyệt kết thúc quy trình
-          </Button>
-
-          <Button
-            icon={<QrcodeOutlined />}
-            onClick={() => setQrModalOpen(true)}
-            className="h-10 px-4 font-semibold border-emerald-600 text-emerald-700 rounded-xl hover:bg-emerald-50"
-          >
-            Tạo Mã QR Traceability
-          </Button>
-
-          <Button
-            type="default"
-            icon={<EditOutlined />}
-            className="h-10 px-4 font-semibold rounded-xl"
-            onClick={() =>
-              navigate(ROUTER.FM_PRODUCTION_PLAN_EDIT.replace(':id', item.id))
-            }
-          >
-            Sửa nhật ký
-          </Button>
-        </div>
       </div>
 
       {/* Hero Card */}
@@ -252,22 +199,35 @@ const CultivationLogbookDetail = () => {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <EnvironmentOutlined className="text-gray-400" />
+              <div className="flex items-[baseline] gap-2">
+                <EnvironmentOutlined className="text-gray-400 mt-1" />
                 <span>
                   <span className="text-gray-500">Vùng trồng:</span>{' '}
-                  {item.landPlotId ? (
-                    <button
-                      onClick={() => navigate(`/farm-manager/land-plots/${item.landPlotId}`)}
-                      className="font-medium text-green-600 hover:text-green-700 hover:underline"
-                    >
-                      {item.landPlotName || item.fieldName || 'Xem vùng trồng'}
-                    </button>
-                  ) : (
-                    <span className="font-medium text-gray-800">
-                      {item.landPlotName || 'Chưa cập nhật'}
-                    </span>
-                  )}
+                  {(() => {
+                    const landPlots = getLandPlotsFromLogbook(item)
+                    if (!landPlots.length) {
+                      return <span className="font-medium text-gray-800">Chưa cập nhật</span>
+                    }
+                    return (
+                      <span className="inline-flex flex-wrap items-center gap-1.5">
+                        {landPlots.map((plot, idx) => (
+                          <span key={plot.id || idx} className="inline-flex items-center">
+                            {plot.id ? (
+                              <button
+                                onClick={() => navigate(`/farm-manager/lands/${plot.id}`)}
+                                className="font-medium text-green-600 hover:text-green-700 hover:underline"
+                              >
+                                {plot.name}
+                              </button>
+                            ) : (
+                              <span className="font-medium text-gray-800">{plot.name}</span>
+                            )}
+                            {idx < landPlots.length - 1 && <span className="text-gray-400 ml-1">,</span>}
+                          </span>
+                        ))}
+                      </span>
+                    )
+                  })()}
                 </span>
               </div>
 
@@ -318,14 +278,6 @@ const CultivationLogbookDetail = () => {
           className="farm-manager-tabs"
         />
       </Card>
-
-      {/* QR Generation Modal */}
-      <GenerateQrModal
-        open={qrModalOpen}
-        onCancel={() => setQrModalOpen(false)}
-        batchId={item.productBatchId || item.harvestBatchId || item.id}
-        batchName={item.logbookName || item.batchName}
-      />
     </div>
   )
 }

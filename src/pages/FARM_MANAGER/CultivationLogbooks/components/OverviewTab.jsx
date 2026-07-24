@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons'
 import { Card, Empty } from 'antd'
 import { formatDate } from 'src/utils/dateFormatters'
+import { getLandPlotNamesDisplay } from 'src/utils/helpers'
 
 const SectionTitle = ({ children }) => (
   <div className="flex items-center gap-3 mb-5">
@@ -25,6 +26,7 @@ const getStageNote = (stage) => stage.note || stage.description
 
 const OverviewTab = ({ item }) => {
   const stages = item.cultivationStages || item.productionStages || item.stages || []
+  const landPlotNames = getLandPlotNamesDisplay(item, null)
 
   return (
     <div className="space-y-6">
@@ -40,7 +42,7 @@ const OverviewTab = ({ item }) => {
             },
             {
               label: 'Vùng trồng',
-              value: item.landPlotName,
+              value: landPlotNames,
               icon: <EnvironmentOutlined />,
             },
             {

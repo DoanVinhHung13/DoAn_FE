@@ -198,8 +198,8 @@ const CultivationLogbookCreate = () => {
         const allCrops = normalizeResponse(response)
         // Filter by selected catalog
         const filteredCrops = allCrops.filter((crop) => {
-          const cropCatalogId = crop.cropCatalogId || crop.categoryId
-          return cropCatalogId === selectedCatalogId
+          const cropCatalogId = crop.cropCatalogId || crop.categoryId || crop.cropCatalog?.id
+          return String(cropCatalogId || '').toLowerCase() === String(selectedCatalogId || '').toLowerCase()
         })
         setCropsData(filteredCrops)
       } catch (error) {
@@ -266,12 +266,26 @@ const CultivationLogbookCreate = () => {
           } catch { /* ignore */ }
         }
 
+        // Extract land plot IDs (supports array or single object/ID)
+        let selectedLandPlotIds = []
+        if (Array.isArray(plan.landPlotIds)) {
+          selectedLandPlotIds = plan.landPlotIds
+        } else if (Array.isArray(plan.landPlotId)) {
+          selectedLandPlotIds = plan.landPlotId
+        } else if (Array.isArray(plan.landPlots)) {
+          selectedLandPlotIds = plan.landPlots.map((lp) => lp.id || lp._id || lp.landPlotId).filter(Boolean)
+        } else if (plan.landPlotId) {
+          selectedLandPlotIds = [plan.landPlotId]
+        } else if (plan.landPlot?.id) {
+          selectedLandPlotIds = [plan.landPlot.id]
+        }
+
         // Set form values
         form.setFieldsValue({
           logbookName: plan.logbookName || '',
           category: selectedCropCatalogId,
           cropId: selectedCropId,
-          landPlotId: plan.landPlotId || '',
+          landPlotIds: selectedLandPlotIds,
           area: plan.area || '',
           expectedStartDate: plan.startDate ? dayjs(plan.startDate) : null,
           expectedEndDate: plan.expectedEndDate ? dayjs(plan.expectedEndDate) : null,
@@ -284,7 +298,7 @@ const CultivationLogbookCreate = () => {
           logbookName: plan.logbookName || '',
           category: selectedCropCatalogId,
           cropId: selectedCropId,
-          landPlotId: plan.landPlotId || '',
+          landPlotIds: selectedLandPlotIds,
         })
 
         // Set stages
@@ -308,6 +322,79 @@ const CultivationLogbookCreate = () => {
     return () => { isMounted = false }
   }, [id, isEdit, form])
 
+  // ── Helper resolution for template crop & category ─────────────────
+  const resolveTemplateCropData = async (templateData, template) => {
+    let targetCatalogId =
+      templateData?.cropCatalogId ||
+      templateData?.cropCatalog?.id ||
+      templateData?.cropCatalog?._id ||
+      templateData?.crop?.cropCatalogId ||
+      templateData?.crop?.categoryId ||
+      templateData?.categoryId ||
+      template?.cropCatalogId ||
+      template?.cropCatalog?.id ||
+      template?.cropCatalog?._id ||
+      template?.crop?.cropCatalogId ||
+      template?.crop?.categoryId ||
+      template?.categoryId
+
+    let targetCropId =
+      templateData?.cropId ||
+      templateData?.crop?.id ||
+      templateData?.crop?._id ||
+      template?.cropId ||
+      template?.crop?.id ||
+      template?.crop?._id
+
+    // If cropId is present but targetCatalogId is missing, look up crop to find its catalogId
+    if (targetCropId && !targetCatalogId) {
+      try {
+        const res = await CropManagementService.getCrops({
+          PageIndex: 1,
+          PageSize: 1000,
+          Status: true,
+        })
+        const allCrops = normalizeResponse(res)
+        const foundCrop = allCrops.find(
+          (c) => String(c.id || c._id || c.cropId).toLowerCase() === String(targetCropId).toLowerCase()
+        )
+        if (foundCrop) {
+          targetCatalogId = foundCrop.cropCatalogId || foundCrop.categoryId || foundCrop.cropCatalog?.id
+        }
+      } catch (err) {
+        console.error('Error resolving crop catalog from cropId:', err)
+      }
+    }
+
+    return { targetCatalogId, targetCropId }
+  }
+
+  const applyTemplateFields = async (templateData, template) => {
+    const { targetCatalogId, targetCropId } = await resolveTemplateCropData(templateData, template)
+
+    const fieldsToUpdate = {}
+    if (targetCatalogId) {
+      fieldsToUpdate.category = targetCatalogId
+    }
+    if (targetCropId) {
+      fieldsToUpdate.cropId = targetCropId
+    }
+
+    const templateName = templateData?.templateName || templateData?.name || template?.templateName || template?.name
+    if (templateName && !form.getFieldValue('logbookName')) {
+      fieldsToUpdate.logbookName = templateName
+    }
+
+    const templateDesc = templateData?.description || template?.description
+    if (templateDesc && !form.getFieldValue('description')) {
+      fieldsToUpdate.description = templateDesc
+    }
+
+    if (Object.keys(fieldsToUpdate).length > 0) {
+      form.setFieldsValue(fieldsToUpdate)
+    }
+  }
+
   // ── Load template data ───────────────────────────────────────────
   useEffect(() => {
     if (!templateIdFromQuery) return
@@ -330,10 +417,13 @@ const CultivationLogbookCreate = () => {
         }))
 
         setStages(normalizedStages.length ? normalizedStages : [createEmptyStage(1)])
-        message.info('Đã tải mẫu kế hoạch thành công.')
+        await applyTemplateFields(template, template)
+        if (isMounted) {
+          message.info('Đã tải mẫu kế hoạch thành công.')
+        }
       } catch (error) {
         console.error(error)
-        message.error('Không thể tải mẫu kế hoạch.')
+        if (isMounted) message.error('Không thể tải mẫu kế hoạch.')
       }
     }
 
@@ -382,6 +472,7 @@ const CultivationLogbookCreate = () => {
       }))
 
       setStages(normalizedStages.length ? normalizedStages : [createEmptyStage(1)])
+      await applyTemplateFields(templateData, template)
       setTemplateModal(false)
       message.success(`Đã áp dụng mẫu "${template.templateName || template.name}" thành công.`)
     } catch (error) {
@@ -431,10 +522,15 @@ const CultivationLogbookCreate = () => {
 
     try {
       setSubmitting(true)
+      const landPlotIds = Array.isArray(values.landPlotIds)
+        ? values.landPlotIds
+        : (values.landPlotIds ? [values.landPlotIds] : (values.landPlotId ? (Array.isArray(values.landPlotId) ? values.landPlotId : [values.landPlotId]) : []))
+
       const payload = {
         logbookName: values.logbookName,
         cropId: values.cropId,
-        landPlotId: values.landPlotId,
+        landPlotIds: landPlotIds,
+        landPlotId: landPlotIds.length === 1 ? landPlotIds[0] : landPlotIds, // Array format as requested, fallback single ID if 1 element
         startDate: formatApiDate(values.expectedStartDate),
         expectedEndDate: formatApiDate(values.expectedEndDate),
         status: isEdit ? undefined : 'PLANNED',
@@ -477,6 +573,8 @@ const CultivationLogbookCreate = () => {
       setSavingTemplate(true)
       const payload = {
         templateName: `Mẫu từ kế hoạch: ${values.logbookName}`,
+        cropCatalogId: values.category,
+        cropId: values.cropId,
         description: values.description || 'Mẫu kế hoạch được tạo từ kế hoạch sản xuất',
         processSteps: stages.map((stage) => ({
           stepName: stage.title,
@@ -592,21 +690,22 @@ const CultivationLogbookCreate = () => {
             </Col>
             <Col xs={24} md={12} lg={8}>
               <Form.Item
-                name="landPlotId" label="Vùng trồng"
-                rules={[{ required: true, message: 'Vui lòng chọn vùng trồng' }]}
+                name="landPlotIds" label="Vùng trồng"
+                rules={[{ required: true, message: 'Vui lòng chọn ít nhất một vùng trồng' }]}
               >
                 <Select
+                  mode="multiple"
                   options={landsData?.map((land) => ({
                     value: land.id,
                     label: land.name,
                   }))}
-                  placeholder="Chọn vùng trồng available..."
+                  placeholder="Chọn các vùng trồng available..."
                   showSearch
                   filterOption={(input, option) =>
                     String(option?.label || '').toLowerCase().includes(input.toLowerCase())
                   }
                   loading={isLandsLoading}
-                  disabled={!!immutablePlanFields?.landPlotId}
+                  disabled={!!immutablePlanFields?.landPlotIds?.length}
                 />
               </Form.Item>
             </Col>

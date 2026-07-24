@@ -17,9 +17,11 @@
 import {
   ArrowLeftOutlined,
   CalendarOutlined,
+  CameraOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
   ExperimentOutlined,
+  EyeOutlined,
   FileTextOutlined,
   FormOutlined,
   InboxOutlined,
@@ -466,12 +468,66 @@ const DailyLog = () => {
                 <FormOutlined className="text-green-600" />
                 Nội dung thực hiện
               </div>
-              <Row gutter={16}>
+              <Row gutter={16} align="top">
                 <Col xs={24} md={12}>
                   <Form.Item name="date" label="Ngày ghi nhận" rules={[{ required: true, message: 'Chọn ngày' }]}>
                     <DatePicker className="w-full" format="DD/MM/YYYY" disabled />
                   </Form.Item>
                 </Col>
+
+                <Col xs={24} md={12}>
+                  <Form.Item label="Ảnh minh chứng">
+                    <Image.PreviewGroup>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {fileList.map((file, idx) => (
+                          <div
+                            key={file.uid || idx}
+                            className="group relative h-14 w-14 shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-xs hover:shadow-md transition-all [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
+                          >
+                            <Image
+                              src={file.url}
+                              alt={file.name || 'Ảnh minh chứng'}
+                              preview={{
+                                mask: (
+                                  <div className="flex items-center justify-center text-white text-[10px]">
+                                    <EyeOutlined />
+                                  </div>
+                                ),
+                              }}
+                            />
+                            {!isViewOnly && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setFileList((prev) => prev.filter((item) => item.uid !== file.uid))
+                                }}
+                                className="absolute top-1 right-1 h-4 w-4 rounded-full bg-black/70 hover:bg-red-600 text-white flex items-center justify-center transition-colors z-20 shadow-xs opacity-90 group-hover:opacity-100"
+                                title="Xóa ảnh"
+                              >
+                                <DeleteOutlined className="text-[8px]" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+
+                        {!isViewOnly && (
+                          <Upload {...uploadProps} accept="image/*" showUploadList={false}>
+                            <div className="h-14 w-14 shrink-0 flex flex-col items-center justify-center rounded-xl border border-dashed border-green-400 bg-green-50/50 hover:bg-green-100/70 hover:border-green-600 cursor-pointer transition-all text-green-700 group">
+                              <CameraOutlined className="text-base text-green-600 group-hover:scale-110 transition-transform mb-0.5" />
+                              <span className="text-[10px] font-semibold text-green-700">Thêm ảnh</span>
+                            </div>
+                          </Upload>
+                        )}
+
+                        {isViewOnly && fileList.length === 0 && (
+                          <span className="text-xs text-gray-400 italic">Chưa có ảnh</span>
+                        )}
+                      </div>
+                    </Image.PreviewGroup>
+                  </Form.Item>
+                </Col>
+
                 <Col span={24}>
                   <Form.Item name="description" label="Chi tiết công việc" rules={[{ required: true, message: 'Nhập mô tả' }]}>
                     <TextArea rows={3} placeholder="Mô tả tình hình cây trồng, vấn đề phát sinh..." disabled={isViewOnly} />
@@ -675,44 +731,6 @@ const DailyLog = () => {
               </Form.List>
             </Card>
 
-            <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: '20px' }}>
-              <div className="text-base font-bold text-gray-800 mb-4">Ảnh minh chứng</div>
-              {!isViewOnly && (
-                <Dragger {...uploadProps} className="rounded-xl">
-                  <div className="p-4">
-                    <InboxOutlined className="text-3xl text-green-500 mb-2" />
-                    <p className="text-sm text-gray-500">Kéo thả ảnh hoặc click để chọn</p>
-                  </div>
-                </Dragger>
-              )}
-              {fileList.length > 0 && (
-                <Image.PreviewGroup>
-                  <div className="mt-3 grid grid-cols-4 md:grid-cols-5 gap-2">
-                    {fileList.map((file) => (
-                      <div key={file.uid} className="relative rounded-lg overflow-hidden aspect-square">
-                        <Image
-                          src={file.url}
-                          className="!object-cover"
-                          width="100%"
-                          height="100%"
-                          style={{ objectFit: 'cover' }}
-                        />
-                        {!isViewOnly && (
-                          <Button
-                            type="text"
-                            icon={<DeleteOutlined />}
-                            onClick={() => setFileList((prev) => prev.filter((item) => item.uid !== file.uid))}
-                            className="absolute top-1 right-1 bg-white/80 rounded-full text-red-500 z-10"
-                            size="small"
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </Image.PreviewGroup>
-              )}
-            </Card>
-
             {!isViewOnly && (
               <div className="flex flex-wrap gap-3 justify-end pt-2 pb-6">
                 <Button onClick={() => navigate(ROUTER.FL_TASKS)} className="h-10 px-6 font-semibold rounded-xl">
@@ -720,27 +738,6 @@ const DailyLog = () => {
                 </Button>
                 <Button type="primary" onClick={handleSave} loading={saving} className="h-10 px-6 font-semibold bg-green-600 rounded-xl">
                   Lưu nhật ký
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<CheckCircleOutlined />}
-                  onClick={openSummaryModal}
-                  className="h-10 px-5 font-semibold rounded-xl bg-emerald-600 border-emerald-600 hover:!bg-emerald-700 hover:!border-emerald-700"
-                >
-                  Hoàn thành & Gửi Summary
-                </Button>
-              </div>
-            )}
-            {/* Hiển thị nút xem summary đã gửi khi đang chờ duyệt */}
-            {task.status === 'WAITING_APPROVAL' && (
-              <div className="flex flex-wrap gap-3 justify-end pt-2 pb-6">
-                <Button
-                  type="default"
-                  icon={<FileTextOutlined />}
-                  onClick={openSummaryModal}
-                  className="h-10 px-5 font-semibold rounded-xl border-emerald-500 text-emerald-600 hover:!bg-emerald-50"
-                >
-                  Xem lại Summary đã gửi
                 </Button>
               </div>
             )}

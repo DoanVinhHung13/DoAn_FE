@@ -43,10 +43,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
+import { formatDate } from 'src/utils/dateFormatters'
+import { getLandPlotsFromLogbook } from 'src/utils/helpers'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import CultivationStageService from 'src/services/CultivationStageService'
-import { formatDate } from 'src/utils/dateFormatters'
 
 import StageTaskManagementTab from './components/StageTaskManagementTab'
 import LogbookFinalizationTab from './components/LogbookFinalizationTab'
@@ -201,17 +202,30 @@ const FarmSupervisorPlanDetail = () => {
                 <Text strong>{plan.cropName || '—'}</Text>
               </Descriptions.Item>
               <Descriptions.Item label={<span className="text-gray-500"><EnvironmentOutlined className="mr-1" />Vùng trồng</span>}>
-                {plan.landPlotId ? (
-                  <Button
-                    type="link"
-                    onClick={() => navigate(`/farm-supervisor/lands/${plan.landPlotId}`)}
-                    className="p-0 h-auto font-medium text-green-600 hover:text-green-700 hover:underline"
-                  >
-                    {plan.landPlotName || 'Xem vùng trồng'}
-                  </Button>
-                ) : (
-                  <Text strong>—</Text>
-                )}
+                {(() => {
+                  const landPlots = getLandPlotsFromLogbook(plan)
+                  if (!landPlots.length) return <Text strong>—</Text>
+                  return (
+                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                      {landPlots.map((plot, idx) => (
+                        <span key={plot.id || idx} className="inline-flex items-center">
+                          {plot.id ? (
+                            <Button
+                              type="link"
+                              onClick={() => navigate(`/farm-supervisor/lands/${plot.id}`)}
+                              className="p-0 h-auto font-medium text-green-600 hover:text-green-700 hover:underline"
+                            >
+                              {plot.name}
+                            </Button>
+                          ) : (
+                            <Text strong>{plot.name}</Text>
+                          )}
+                          {idx < landPlots.length - 1 && <span className="text-gray-400 ml-1">,</span>}
+                        </span>
+                      ))}
+                    </span>
+                  )
+                })()}
               </Descriptions.Item>
               <Descriptions.Item label={<span className="text-gray-500"><UserOutlined className="mr-1" />Giám sát</span>}>
                 <Text strong>{plan.supervisorName || '—'}</Text>

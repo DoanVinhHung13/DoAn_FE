@@ -42,6 +42,7 @@ import { useNavigate } from "react-router-dom"
 
 import TitleCustom from "src/components/TitleCustom"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
+import { getLandPlotNamesDisplay } from "src/utils/helpers"
 import ROUTER from "src/router/ROUTER"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
@@ -786,15 +787,9 @@ const FarmLeaderTasks = () => {
                           </span>
                           <span
                             className="block font-bold text-white truncate"
-                            title={
-                              selectedLogbook.landPlotName || "BE: landPlotName"
-                            }
+                            title={getLandPlotNamesDisplay(selectedLogbook, "Chưa cập nhật")}
                           >
-                            {selectedLogbook.landPlotName || (
-                              <i className="font-normal text-slate-400">
-                                Chưa có (BE: landPlotName)
-                              </i>
-                            )}
+                            {getLandPlotNamesDisplay(selectedLogbook, "Chưa cập nhật")}
                           </span>
                         </div>
                       </div>

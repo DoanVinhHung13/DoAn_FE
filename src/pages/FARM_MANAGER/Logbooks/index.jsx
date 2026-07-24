@@ -33,6 +33,7 @@ import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { matchesClosingFilter } from 'src/utils/cultivationStatus'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
+import { getLandPlotNamesDisplay } from 'src/utils/helpers'
 
 const { Text } = Typography
 
@@ -168,7 +169,7 @@ const FarmManagerLogbooks = () => {
                       <Text type="secondary">Vùng trồng</Text>
                       <div className="mt-1 font-semibold">
                         <EnvironmentOutlined className="mr-1 text-green-600" />
-                        {lb.landPlotName}
+                        {getLandPlotNamesDisplay(lb)}
                       </div>
                     </div>
                     <div>

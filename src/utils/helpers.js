@@ -144,3 +144,54 @@ export const LOGIN_IDENTIFIER_RULES = [
     },
   },
 ];
+
+/**
+ * Trích xuất danh sách mảnh đất / vùng trồng từ object nhật ký / kế hoạch
+ * Hỗ trợ các thuộc tính: landPlotIds (mảng string), landPlots (mảng object), landPlotId, landPlotName, landPlotNames
+ * @param {object} item - Object nhật ký / kế hoạch
+ * @returns {Array<{ id: string|null, name: string }>} - Mảng các object { id, name }
+ */
+export const getLandPlotsFromLogbook = (item) => {
+  if (!item) return []
+
+  if (Array.isArray(item.landPlots) && item.landPlots.length > 0) {
+    return item.landPlots.map((plot) => ({
+      id: plot?.id || plot?._id || plot?.landPlotId || null,
+      name: plot?.name || plot?.landPlotName || plot?.title || 'Vùng trồng',
+    }))
+  }
+
+  const ids = Array.isArray(item.landPlotIds)
+    ? item.landPlotIds
+    : (Array.isArray(item.landPlotId) ? item.landPlotId : (item.landPlotId ? [item.landPlotId] : []))
+
+  let names = []
+  if (Array.isArray(item.landPlotNames)) {
+    names = item.landPlotNames
+  } else if (typeof item.landPlotName === 'string' && item.landPlotName.trim()) {
+    names = item.landPlotName.split(',').map((s) => s.trim()).filter(Boolean)
+  }
+
+  if (ids.length > 0) {
+    return ids.map((id, idx) => ({
+      id,
+      name: names[idx] || (names.length === 1 && idx === 0 ? names[0] : (item.landPlotName || `Vùng trồng ${idx + 1}`)),
+    }))
+  }
+
+  if (names.length > 0) {
+    return names.map((name) => ({ id: null, name }))
+  }
+
+  return []
+}
+
+/**
+ * Trả về chuỗi hiển thị tên các mảnh đất (ví dụ "Lô A, Lô B")
+ */
+export const getLandPlotNamesDisplay = (item, fallback = 'Chưa cập nhật') => {
+  const plots = getLandPlotsFromLogbook(item)
+  if (!plots.length) return fallback
+  return plots.map((p) => p.name).join(', ')
+}
+

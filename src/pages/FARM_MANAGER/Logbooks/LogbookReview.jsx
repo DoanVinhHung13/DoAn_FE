@@ -57,6 +57,7 @@ import ProductService from 'src/services/ProductService'
 import { formatDate } from 'src/utils/dateFormatters'
 import { canApproveClosing } from 'src/utils/cultivationStatus'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
+import { getLandPlotNamesDisplay } from 'src/utils/helpers'
 
 const { Text, Paragraph } = Typography
 
@@ -279,7 +280,7 @@ const LogbookReview = () => {
       <Card bordered={false} className="shadow-sm rounded-2xl">
         <Descriptions column={{ xs: 1, sm: 2, lg: 3 }} size="small">
           <Descriptions.Item label={<><EnvironmentOutlined className="mr-1" />Vùng trồng</>}>
-            {logbook.landPlotName}
+            {getLandPlotNamesDisplay(logbook)}
           </Descriptions.Item>
           <Descriptions.Item label={<><BookOutlined className="mr-1" />Cây trồng</>}>
             {logbook.cropName}

@@ -162,14 +162,17 @@ const ViewCropProtections = () => {
       ),
     },
     {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
-      render: (v) => (
-        <span className="text-sm text-gray-600 line-clamp-2">
-          {v || '—'}
-        </span>
-      ),
+      title: 'Nhà sản xuất',
+      dataIndex: 'manufacturer',
+      key: 'manufacturer',
+      render: (v, record) => {
+        const val = v || record.manufacturerName || record.supplier
+        return (
+          <span className="text-sm text-gray-700">
+            {val || '—'}
+          </span>
+        )
+      },
     },
     {
       title: 'Tồn kho thực tế',
