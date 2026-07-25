@@ -178,7 +178,7 @@ const pestColumns = [
 ]
 
 /** Expand: thông tin Summary (ảnh, phân, thuốc, mô tả) + textarea Supervisor */
-const SummaryCompilePanel = ({ task, planId, stageLogs = [], onSaved }) => {
+const SummaryCompilePanel = ({ task, stageId, planId, stageLogs = [], onSaved }) => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [leaderSummary, setLeaderSummary] = useState(null)
@@ -230,11 +230,8 @@ const SummaryCompilePanel = ({ task, planId, stageLogs = [], onSaved }) => {
     }
     try {
       setSaving(true)
-      const matchingLog = stageLogs.find(
-        (l) => l.cultivationTaskId === task?.id || l.taskId === task?.id || l.workTaskId === task?.id
-      )
-      const targetId = matchingLog?.id || officialLogId || task?.id
-      await saveCompiledDescription(targetId, description.trim(), planId)
+      const targetTaskId = task?.id || officialLogId
+      await saveCompiledDescription(targetTaskId, description.trim())
       message.success('Đã lưu mô tả vào Logbook!')
       onSaved?.()
     } catch (err) {
@@ -578,7 +575,7 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
                           <Tag color="gold">Chờ biên soạn</Tag>
                         </div>
                       ),
-                      children: <SummaryCompilePanel task={task} planId={planId} stageLogs={stageLogs} onSaved={handleSaved} />,
+                      children: <SummaryCompilePanel task={task} stageId={selectedId} planId={planId} stageLogs={stageLogs} onSaved={handleSaved} />,
                     }))}
                   />
                 )}

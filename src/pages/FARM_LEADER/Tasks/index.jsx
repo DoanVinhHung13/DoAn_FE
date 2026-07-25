@@ -36,7 +36,7 @@ import {
   Typography,
   message,
 } from "antd"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
@@ -64,10 +64,9 @@ const WAITING_STATUSES = new Set(["WAITING_APPROVAL"])
 const HISTORY_STATUSES = new Set(["COMPLETED", "CANCELLED"])
 
 const tabOfStatus = status => {
-  if (WAITING_STATUSES.has(status)) return "waiting"
-  if (HISTORY_STATUSES.has(status)) return "history"
-  if (ACTIVE_STATUSES.has(status)) return "active"
-  return "active"
+  if (status === "WAITING_APPROVAL") return "WAITING_APPROVAL"
+  if (status === "COMPLETED" || status === "CANCELLED") return "COMPLETED"
+  return "IN_PROGRESS"
 }
 
 /**
@@ -259,15 +258,18 @@ const FarmLeaderTasks = () => {
   const [selectedStageId, setSelectedStageId] = useState("all")
   const [expandedKeys, setExpandedKeys] = useState([])
 
-  // Load task list for Farm Leader
-  const loadTasksData = async () => {
+  // Load task list for Farm Leader using /cultivation-tasks/my-tasks with Statuses filter API
+  const loadTasksData = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await CultivationTaskService.getAll({
-        farmLeaderId: currentUserId,
+      const params = {
         PageIndex: 1,
         PageSize: 1000,
-      })
+      }
+      if (statusFilter !== "all") {
+        params.Statuses = statusFilter
+      }
+      const response = await CultivationTaskService.getMyTasks(params)
       const data = unwrap(response)
       const tasksList = Array.isArray(data) ? data : data?.items || []
       setTasks(tasksList)
@@ -278,15 +280,11 @@ const FarmLeaderTasks = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter])
 
   useEffect(() => {
-    if (currentUserId) {
-      loadTasksData()
-    } else {
-      setLoading(false)
-    }
-  }, [currentUserId])
+    loadTasksData()
+  }, [loadTasksData])
 
   // Group tasks by Logbook -> Stages, capturing metadata for plan details
   const logbooksMap = useMemo(() => {
@@ -354,7 +352,7 @@ const FarmLeaderTasks = () => {
     if (logbooksList.length > 0 && !selectedLogbookId) {
       const firstId = logbooksList[0].id
       setSelectedLogbookId(firstId)
-      setExpandedKeys([`plan-${firstId}`])
+      setExpandedKeys([`plan::${firstId}`])
     }
   }, [logbooksList, selectedLogbookId])
 
@@ -389,7 +387,7 @@ const FarmLeaderTasks = () => {
         const isSelectedPlan = selectedLogbookId === lb.id
 
         return {
-          key: `plan-${lb.id}`,
+          key: `plan::${lb.id}`,
           title: (
             <div className="flex items-center justify-between w-full gap-2 py-1 pr-1">
               <span
@@ -417,7 +415,7 @@ const FarmLeaderTasks = () => {
           children: filteredStages.map(st => {
             const isSelectedStage = selectedStageId === st.id
             return {
-              key: `stage-${lb.id}-${st.id}`,
+              key: `stage::${lb.id}::${st.id}`,
               title: (
                 <div className="flex items-center justify-between gap-2 py-0.5 pr-1 w-full">
                   <span
@@ -517,14 +515,14 @@ const FarmLeaderTasks = () => {
   const handleTreeSelect = selectedKeys => {
     if (!selectedKeys || selectedKeys.length === 0) return
     const key = selectedKeys[0]
-    if (key.startsWith("plan-")) {
-      const lbId = key.replace("plan-", "")
+    if (key.startsWith("plan::")) {
+      const lbId = key.replace("plan::", "")
       setSelectedLogbookId(lbId)
       setSelectedStageId("all")
-    } else if (key.startsWith("stage-")) {
-      const parts = key.split("-")
+    } else if (key.startsWith("stage::")) {
+      const parts = key.split("::")
       const lbId = parts[1]
-      const stId = parts.slice(2).join("-")
+      const stId = parts[2]
       setSelectedLogbookId(lbId)
       setSelectedStageId(stId)
     }
@@ -655,8 +653,8 @@ const FarmLeaderTasks = () => {
                       onExpand={keys => setExpandedKeys(keys)}
                       selectedKeys={
                         selectedStageId !== "all"
-                          ? [`stage-${selectedLogbookId}-${selectedStageId}`]
-                          : [`plan-${selectedLogbookId}`]
+                          ? [`stage::${selectedLogbookId}::${selectedStageId}`]
+                          : [`plan::${selectedLogbookId}`]
                       }
                       onSelect={handleTreeSelect}
                       treeData={treeData}
@@ -708,9 +706,9 @@ const FarmLeaderTasks = () => {
                       <div className="p-1 rounded-xl flex items-center gap-1.5 bg-black/20 border border-white/10 self-start sm:self-center">
                         {[
                           { key: "all", label: "Tất cả" },
-                          { key: "active", label: "Đang làm" },
-                          { key: "waiting", label: "Chờ duyệt" },
-                          { key: "history", label: "Hoàn thành" },
+                          { key: "IN_PROGRESS", label: "Đang làm" },
+                          { key: "WAITING_APPROVAL", label: "Chờ duyệt" },
+                          { key: "COMPLETED", label: "Hoàn thành" },
                         ].map(item => {
                           const isActive = statusFilter === item.key
                           return (

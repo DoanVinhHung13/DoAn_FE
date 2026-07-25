@@ -4,6 +4,7 @@
 // Corresponds to Swagger API: POST /api/cultivation-tasks/bulk (Bulk Create Work Task)
 
 export const apiGetCultivationTasks = '/cultivation-tasks'
+export const apiGetMyCultivationTasks = '/cultivation-tasks/my-tasks'
 export const apiCreateCultivationTask = '/cultivation-tasks'
 export const apiCreateCultivationTaskBulk = '/cultivation-tasks/bulk'
 export const apiGetCultivationTaskById = (id) => `/cultivation-tasks/${id}`

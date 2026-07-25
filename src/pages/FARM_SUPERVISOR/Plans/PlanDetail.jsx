@@ -113,9 +113,19 @@ const FarmSupervisorPlanDetail = () => {
   // ── Derived ───────────────────────────────────────────────────────────────
   const allTasks = useMemo(() => Object.values(tasks).flat(), [tasks])
 
-  const allCompleted = useMemo(
+  const allStagesCompleted = useMemo(
+    () => stages.length > 0 && stages.every((s) => s.status === 'COMPLETED'),
+    [stages]
+  )
+
+  const allTasksCompleted = useMemo(
     () => allTasks.length > 0 && allTasks.every((t) => t.status === 'COMPLETED'),
     [allTasks]
+  )
+
+  const canSubmit = useMemo(
+    () => allStagesCompleted || allTasksCompleted,
+    [allStagesCompleted, allTasksCompleted]
   )
 
   const overallProgress = useMemo(() => {
@@ -177,11 +187,11 @@ const FarmSupervisorPlanDetail = () => {
             Chi tiết Kế hoạch
           </TitleCustom>
         </div>
-        <Tooltip title={!allCompleted ? 'Hoàn thành tất cả công việc trước khi gửi.' : ''}>
+        <Tooltip title={!canSubmit ? 'Hoàn thành tất cả các giai đoạn hoặc công việc trước khi gửi.' : ''}>
           <Button
             type="primary"
             icon={<SendOutlined />}
-            disabled={!allCompleted}
+            disabled={!canSubmit}
             onClick={() => setSubmitModal(true)}
             className="h-10 px-5 font-semibold bg-green-600 border-0 rounded-xl shadow-md shadow-green-100"
           >

@@ -67,7 +67,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
       const values = await form.validateFields()
       setSaving(true)
 
-      await saveCompiledDescription(officialLogId, values.supervisorDescription)
+      await saveCompiledDescription(task?.id || officialLogId, values.supervisorDescription)
 
       message.success('Đã lưu và duyệt nhật ký chính thức!')
       onSuccess?.()

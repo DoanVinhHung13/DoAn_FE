@@ -50,16 +50,13 @@ export const loadLeaderCompileData = async (taskId) => {
 }
 
 /** 
- * Gọi API POST /api/cultivation-logs/{id}/approve 
- * truyền modifiedDescription & cultivationLogbookId
+ * Gọi API POST /api/cultivation-stages/{taskId}/official-logs
+ * Body: { supervisorDescription: description }
  */
-export const saveCompiledDescription = async (officialLogId, description, planId) => {
-  const targetId = officialLogId
+export const saveCompiledDescription = async (taskId, description) => {
+  const targetTaskId = typeof taskId === 'object' ? (taskId.taskId || taskId.id || taskId.cultivationTaskId) : taskId
   const payload = {
-    modifiedDescription: description,
+    supervisorDescription: description,
   }
-  if (planId) {
-    payload.cultivationLogbookId = planId
-  }
-  return await CultivationLogService.approve(targetId, payload)
+  return await CultivationStageService.createOfficialLogs(targetTaskId, payload)
 }
