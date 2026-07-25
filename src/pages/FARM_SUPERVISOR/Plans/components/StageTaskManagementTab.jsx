@@ -2,13 +2,13 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  EyeOutlined,
+  EditOutlined,
+  FileTextOutlined,
+  InfoCircleOutlined,
   PlusOutlined,
   TeamOutlined,
   UserOutlined,
-  InfoCircleOutlined,
-  FileTextOutlined,
-} from '@ant-design/icons'
+} from "@ant-design/icons"
 import {
   Alert,
   Avatar,
@@ -22,29 +22,36 @@ import {
   Input,
   List,
   message,
+  Modal,
   Row,
   Select,
   Tag,
   Typography,
-  Progress,
-} from 'antd'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import ROUTER from 'src/router/ROUTER'
-import CultivationTaskService from 'src/services/CultivationTaskService'
-import TaskCatalogService from 'src/services/TaskCatalogService'
-import { formatDate } from 'src/utils/dateFormatters'
-import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
-import AssignTaskModal from './AssignTaskModal'
+} from "antd"
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { ROLES } from "src/constants/roles"
+import { useCultivationStatus } from "src/hooks/useCultivationStatus"
+import CultivationTaskService from "src/services/CultivationTaskService"
+import TaskCatalogService from "src/services/TaskCatalogService"
+import UserService from "src/services/UserService"
+import { formatDate } from "src/utils/dateFormatters"
+import AssignTaskModal from "./AssignTaskModal"
 
 const { Text } = Typography
 
-const unwrap = (res) => res?.data?.data ?? res?.data ?? res
+const unwrap = res => res?.data?.data ?? res?.data ?? res
 
-const taskStatusIcon = (s) =>
-  s === 'COMPLETED' || s === 'WAITING_APPROVAL' || s === 'IN_PROGRESS' || s === 'ASSIGNED' || s === 'ACTIVE'
-    ? <CheckCircleOutlined />
-    : <ClockCircleOutlined />
+const taskStatusIcon = s =>
+  s === "COMPLETED" ||
+  s === "WAITING_APPROVAL" ||
+  s === "IN_PROGRESS" ||
+  s === "ASSIGNED" ||
+  s === "ACTIVE" ? (
+    <CheckCircleOutlined />
+  ) : (
+    <ClockCircleOutlined />
+  )
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
 const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
@@ -52,10 +59,10 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
   return (
     <List.Item
       onClick={onClick}
-      className="mb-2 cursor-pointer rounded-xl px-3 py-2 transition-colors"
+      className="px-3 py-2 mb-2 transition-colors cursor-pointer rounded-xl"
       style={{
-        border: isActive ? '1px solid #22c55e' : '1px solid #e5e7eb',
-        background: isActive ? '#f0fdf4' : '#fff',
+        border: isActive ? "1px solid #22c55e" : "1px solid #e5e7eb",
+        background: isActive ? "#f0fdf4" : "#fff",
       }}
     >
       <List.Item.Meta
@@ -63,8 +70,8 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
           <Avatar
             size={32}
             style={{
-              backgroundColor: isActive ? '#16a34a' : '#f3f4f6',
-              color: isActive ? '#fff' : '#6b7280',
+              backgroundColor: isActive ? "#16a34a" : "#f3f4f6",
+              color: isActive ? "#fff" : "#6b7280",
               fontWeight: 700,
             }}
           >
@@ -72,13 +79,17 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
           </Avatar>
         }
         title={
-          <Text className={`font-semibold ${isActive ? 'text-green-700' : 'text-gray-800'} whitespace-normal text-sm`}>
+          <Text
+            className={`font-semibold ${isActive ? "text-green-700" : "text-gray-800"} whitespace-normal text-sm`}
+          >
             {stage.stageName || stage.name || `Giai đoạn ${index + 1}`}
           </Text>
         }
         description={
-          <div className="mt-1 flex flex-col ">
-            <Tag color={cfg.color} style={{ margin: 0, fontSize: 10 }}>{cfg.label}</Tag>
+          <div className="flex flex-col mt-1 ">
+            <Tag color={cfg.color} style={{ margin: 0, fontSize: 10 }}>
+              {cfg.label}
+            </Tag>
           </div>
         }
       />
@@ -89,7 +100,7 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
 const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const navigate = useNavigate()
   const { getStageStatus, getTaskStatus } = useCultivationStatus()
-  const getTaskCfg = (s) => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
+  const getTaskCfg = s => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
   const [selectedId, setSelectedId] = useState(null)
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [taskForm] = Form.useForm()
@@ -97,19 +108,31 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [assignTaskData, setAssignTaskData] = useState(null)
   const [taskCatalogOptions, setTaskCatalogOptions] = useState([])
+  const [leaders, setLeaders] = useState([])
+  const [farmers, setFarmers] = useState([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  const [editTaskModal, setEditTaskModal] = useState({
+    open: false,
+    task: null,
+  })
+  const [editTaskForm] = Form.useForm()
+  const [savingEdit, setSavingEdit] = useState(false)
 
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
-        const res = await TaskCatalogService.getAll({ PageIndex: 1, PageSize: 200 })
+        const res = await TaskCatalogService.getAll({
+          PageIndex: 1,
+          PageSize: 200,
+        })
         const data = unwrap(res)
         const items = Array.isArray(data) ? data : data?.items || []
         setTaskCatalogOptions(
-          items.map((item) => ({
+          items.map(item => ({
             value: item.id,
             label: item.name,
             description: item.description,
-          }))
+          })),
         )
       } catch (err) {
         console.error(err)
@@ -119,12 +142,62 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     loadCatalogs()
   }, [])
 
-  const handleActivateTask = async (taskId) => {
+  useEffect(() => {
+    let isMounted = true
+    const fetchUsers = async () => {
+      setLoadingUsers(true)
+      try {
+        const [leadersRes, farmersRes] = await Promise.all([
+          UserService.getUsers({
+            PageIndex: 1,
+            PageSize: 1000,
+            Role: ROLES.FARM_LEADER,
+            IsActive: true,
+          }).catch(() => ({ data: { items: [] } })),
+          UserService.getUsers({
+            PageIndex: 1,
+            PageSize: 1000,
+            Role: ROLES.FARMER,
+            IsActive: true,
+          }).catch(() => ({ data: { items: [] } })),
+        ])
+        if (!isMounted) return
+        const normalize = res => {
+          const list = res?.data?.items ?? res?.data?.data ?? res?.data ?? []
+          return Array.isArray(list)
+            ? list.filter(u => u.isActive !== false)
+            : []
+        }
+        setLeaders(
+          normalize(leadersRes).map(u => ({
+            value: u.id,
+            label: u.fullName || u.name,
+          })),
+        )
+        setFarmers(
+          normalize(farmersRes).map(u => ({
+            value: u.id,
+            label: u.fullName || u.name,
+          })),
+        )
+      } catch (err) {
+        console.error(err)
+      } finally {
+        if (isMounted) setLoadingUsers(false)
+      }
+    }
+    fetchUsers()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const handleActivateTask = async taskId => {
     try {
       await CultivationTaskService.start(taskId)
       loadData()
     } catch (err) {
-      message.error('Kích hoạt thất bại.')
+      message.error("Kích hoạt thất bại.")
     }
   }
 
@@ -132,24 +205,33 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   useEffect(() => {
     if (stages.length > 0 && !selectedId) {
       const firstActive =
-        stages.find((s) => s.status === 'ACTIVE' || s.status === 'IN_PROGRESS') || stages[0]
+        stages.find(s => s.status === "ACTIVE" || s.status === "IN_PROGRESS") ||
+        stages[0]
       setSelectedId(firstActive?.id ?? null)
     }
   }, [stages, selectedId])
 
-  const selectedStage = stages.find((s) => s.id === selectedId) ?? null
-  const selectedTasks = selectedId ? (tasks[selectedId] || []) : []
-  const selectedIdx = stages.findIndex((s) => s.id === selectedId)
+  const selectedStage = stages.find(s => s.id === selectedId) ?? null
+  const selectedTasks = selectedId ? tasks[selectedId] || [] : []
+  const selectedIdx = stages.findIndex(s => s.id === selectedId)
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const openAddTask = () => {
-    if (selectedStage?.status === 'COMPLETED') {
-      message.warning('Giai đoạn đã hoàn thành. Không thể thêm công việc mới.')
+    if (selectedStage?.status === "COMPLETED") {
+      message.warning("Giai đoạn đã hoàn thành. Không thể thêm công việc mới.")
       return
     }
-    setEditingTaskId('new')
+    setEditingTaskId("new")
     taskForm.setFieldsValue({
-      tasks: [{ taskCatalogId: null, name: '', description: '', leaderId: null, farmerIds: null }],
+      tasks: [
+        {
+          taskCatalogId: null,
+          name: "",
+          description: "",
+          leaderId: null,
+          farmerIds: [],
+        },
+      ],
     })
   }
 
@@ -159,28 +241,33 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       const taskList = values.tasks || []
 
       if (!taskList.length) {
-        message.warning('Vui lòng thêm ít nhất một công việc')
+        message.warning("Vui lòng thêm ít nhất một công việc")
         return
       }
 
       setSavingTask(true)
 
       const validTasks = taskList
-        .filter((task) => task.taskCatalogId || task.name?.trim())
-        .map((task) => {
-          const catalog = taskCatalogOptions.find((o) => o.value === task.taskCatalogId)
+        .filter(task => task.taskCatalogId || task.name?.trim())
+        .map(task => {
+          const catalog = taskCatalogOptions.find(
+            o => o.value === task.taskCatalogId,
+          )
           return {
             taskCatalogId: task.taskCatalogId || null,
-            name: (task.name || catalog?.label || '').trim(),
-            description: (task.description || catalog?.description || '').trim() || null,
-            leaderId: null,
-            farmerIds: null,
+            name: (task.name || catalog?.label || "").trim(),
+            description:
+              (task.description || catalog?.description || "").trim() || null,
+            leaderId: task.leaderId || null,
+            farmerIds: Array.isArray(task.farmerIds)
+              ? task.farmerIds.filter(Boolean)
+              : [],
           }
         })
-        .filter((task) => task.name)
+        .filter(task => task.name)
 
       if (!validTasks.length) {
-        message.warning('Chọn công việc từ danh mục hoặc nhập tên mới')
+        message.warning("Chọn công việc từ danh mục hoặc nhập tên mới")
         setSavingTask(false)
         return
       }
@@ -197,7 +284,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     } catch (error) {
       console.error(error)
       if (!error.errorFields) {
-        message.error('Không thể tạo công việc.')
+        message.error("Không thể tạo công việc.")
       }
     } finally {
       setSavingTask(false)
@@ -206,16 +293,28 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
   return (
     <div className="space-y-6">
-      <Card bordered={false} className="shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <Card
+        bordered={false}
+        className="duration-500 shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-4"
+      >
         <Row gutter={[24, 24]} className="min-h-[520px]">
           {/* Cột trái: Danh sách giai đoạn dạng timeline */}
-          <Col xs={24} lg={8} xl={6} className="border-b lg:border-b-0 lg:border-r border-gray-100 lg:pr-6 pb-6 lg:pb-0">
+          <Col
+            xs={24}
+            lg={8}
+            xl={6}
+            className="pb-6 border-b border-gray-100 lg:border-b-0 lg:border-r lg:pr-6 lg:pb-0"
+          >
             <p className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">
               Giai đoạn canh tác
             </p>
 
             {stages.length === 0 ? (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có giai đoạn" className="mt-8" />
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Chưa có giai đoạn"
+                className="mt-8"
+              />
             ) : (
               <List
                 itemLayout="horizontal"
@@ -249,31 +348,49 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             ) : (
               <div>
                 {/* Header giai đoạn */}
-                <div className="mb-3 flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex-1 min-w-0">
                     <Text className="block text-lg font-bold text-gray-800">
-                      {selectedStage.stageName || selectedStage.name || `Giai đoạn ${selectedIdx + 1}`}
+                      {selectedStage.stageName ||
+                        selectedStage.name ||
+                        `Giai đoạn ${selectedIdx + 1}`}
                     </Text>
                     {/* Ngày dự kiến của giai đoạn */}
                     {(selectedStage.startDate || selectedStage.endDate) && (
                       <Text type="secondary" className="text-sm block mt-0.5">
                         <CalendarOutlined className="mr-1" />
-                        <span className="font-medium">Dự kiến:</span>{' '}
-                        {selectedStage.startDate ? formatDate(selectedStage.startDate) : '—'}{' '}–{' '}
-                        {selectedStage.endDate ? formatDate(selectedStage.endDate) : 'Chưa xác định'}
+                        <span className="font-medium">Dự kiến:</span>{" "}
+                        {selectedStage.startDate
+                          ? formatDate(selectedStage.startDate)
+                          : "—"}{" "}
+                        –{" "}
+                        {selectedStage.endDate
+                          ? formatDate(selectedStage.endDate)
+                          : "Chưa xác định"}
                       </Text>
                     )}
                     {/* Ngày thực tế của giai đoạn */}
-                    {(selectedStage.actualStartDate || selectedStage.actualEndDate) && (
+                    {(selectedStage.actualStartDate ||
+                      selectedStage.actualEndDate) && (
                       <Text type="secondary" className="text-sm block mt-0.5">
                         <CheckCircleOutlined className="mr-1 text-green-600" />
-                        <span className="font-medium text-green-700">Thực tế:</span>{' '}
-                        {selectedStage.actualStartDate ? formatDate(selectedStage.actualStartDate) : '—'}{' '}–{' '}
-                        {selectedStage.actualEndDate ? formatDate(selectedStage.actualEndDate) : 'Chưa kết thúc'}
+                        <span className="font-medium text-green-700">
+                          Thực tế:
+                        </span>{" "}
+                        {selectedStage.actualStartDate
+                          ? formatDate(selectedStage.actualStartDate)
+                          : "—"}{" "}
+                        –{" "}
+                        {selectedStage.actualEndDate
+                          ? formatDate(selectedStage.actualEndDate)
+                          : "Chưa kết thúc"}
                       </Text>
                     )}
                   </div>
-                  <Tag color={getStageStatus(selectedStage.status).color} className="flex-shrink-0">
+                  <Tag
+                    color={getStageStatus(selectedStage.status).color}
+                    className="flex-shrink-0"
+                  >
                     {getStageStatus(selectedStage.status).label}
                   </Tag>
                 </div>
@@ -293,11 +410,15 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                 <Divider className="my-3" />
 
                 {/* Tiêu đề danh sách công việc */}
-                <div className="mb-2 flex items-center justify-between">
-                  <Text className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <div className="flex items-center justify-between mb-2">
+                  <Text className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
                     Công việc
                   </Text>
-                  <Badge count={selectedTasks.length} color="#16a34a" showZero />
+                  <Badge
+                    count={selectedTasks.length}
+                    color="#16a34a"
+                    showZero
+                  />
                 </div>
 
                 {/* Danh sách công việc */}
@@ -305,20 +426,25 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                   <List
                     dataSource={selectedTasks}
                     split={false}
-                    renderItem={(task) => {
+                    renderItem={task => {
                       const cfg = getTaskCfg(task.status)
                       return (
                         <List.Item key={task.id} className="mb-4">
                           <Card
                             hoverable
-                            className="w-full rounded-2xl shadow-sm hover:shadow-md transition-shadow border-l-4"
+                            className="w-full transition-shadow border-l-4 shadow-sm rounded-2xl hover:shadow-md"
                             style={{
-                              borderLeftColor: cfg.color === 'processing' ? '#3b82f6' : cfg.color === 'success' ? '#16a34a' : '#d1d5db',
-                              borderTop: '1px solid #f3f4f6',
-                              borderRight: '1px solid #f3f4f6',
-                              borderBottom: '1px solid #f3f4f6'
+                              borderLeftColor:
+                                cfg.color === "processing"
+                                  ? "#3b82f6"
+                                  : cfg.color === "success"
+                                    ? "#16a34a"
+                                    : "#d1d5db",
+                              borderTop: "1px solid #f3f4f6",
+                              borderRight: "1px solid #f3f4f6",
+                              borderBottom: "1px solid #f3f4f6",
                             }}
-                            bodyStyle={{ padding: '16px' }}
+                            bodyStyle={{ padding: "16px" }}
                           >
                             <div className="flex flex-col gap-3">
                               {/* Header */}
@@ -326,10 +452,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                 <div className="flex items-center gap-3">
                                   <div
                                     className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg
-                                      ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                                        task.status === 'WAITING_APPROVAL' ? 'bg-amber-100 text-amber-700' :
-                                        task.status === 'IN_PROGRESS' || task.status === 'ACTIVE' ? 'bg-blue-100 text-blue-700' :
-                                          'bg-gray-100 text-gray-500'}`}
+                                      ${
+                                        task.status === "COMPLETED"
+                                          ? "bg-green-100 text-green-700"
+                                          : task.status === "WAITING_APPROVAL"
+                                            ? "bg-amber-100 text-amber-700"
+                                            : task.status === "IN_PROGRESS" ||
+                                                task.status === "ACTIVE"
+                                              ? "bg-blue-100 text-blue-700"
+                                              : "bg-gray-100 text-gray-500"
+                                      }`}
                                   >
                                     {cfg.icon}
                                   </div>
@@ -338,20 +470,29 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                       {task.name || task.taskName}
                                     </Text>
                                     {task.description && (
-                                      <Text type="secondary" className="text-xs line-clamp-1 mt-0.5">
+                                      <Text
+                                        type="secondary"
+                                        className="text-xs line-clamp-1 mt-0.5"
+                                      >
                                         {task.description}
                                       </Text>
                                     )}
                                     {/* Ngày bắt đầu và hạn chót của task */}
-                                    <div className="flex flex-wrap gap-x-3 mt-1">
+                                    <div className="flex flex-wrap mt-1 gap-x-3">
                                       {task.startDate && (
-                                        <Text type="secondary" className="text-xs">
+                                        <Text
+                                          type="secondary"
+                                          className="text-xs"
+                                        >
                                           <CalendarOutlined className="mr-1" />
                                           Bắt đầu: {formatDate(task.startDate)}
                                         </Text>
                                       )}
                                       {task.dueDate && (
-                                        <Text type="secondary" className="text-xs">
+                                        <Text
+                                          type="secondary"
+                                          className="text-xs"
+                                        >
                                           <ClockCircleOutlined className="mr-1" />
                                           Hạn: {formatDate(task.dueDate)}
                                         </Text>
@@ -365,35 +506,56 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     </div>
                                   </div>
                                 </div>
-                                <Tag color={cfg.color} className="flex-shrink-0 mt-1">
+                                <Tag
+                                  color={cfg.color}
+                                  className="flex-shrink-0 mt-1"
+                                >
                                   {cfg.label}
                                 </Tag>
                               </div>
 
                               {/* Assignments */}
-                              {(task.assignedLeaderName || task.assignments?.length > 0) && (
-                                <div className="rounded-xl bg-gray-50 p-3 mt-1 flex flex-col gap-2 border border-gray-100">
+                              {(task.assignedLeaderName ||
+                                task.assignments?.length > 0) && (
+                                <div className="flex flex-col gap-2 p-3 mt-1 border border-gray-100 rounded-xl bg-gray-50">
                                   {task.assignedLeaderName && (
                                     <div className="flex items-center gap-2">
                                       <UserOutlined className="text-green-600" />
                                       <Text className="text-xs">
-                                        <span className="font-semibold">Farm Leader:</span> {task.assignedLeaderName}
+                                        <span className="font-semibold">
+                                          Farm Leader:
+                                        </span>{" "}
+                                        {task.assignedLeaderName}
                                       </Text>
                                     </div>
                                   )}
-                                  {task.assignments?.filter(f => !f.isLeader).length > 0 && (
+                                  {task.assignments?.filter(f => !f.isLeader)
+                                    .length > 0 && (
                                     <div className="flex items-start gap-2">
-                                      <TeamOutlined className="text-blue-600 mt-1" />
+                                      <TeamOutlined className="mt-1 text-blue-600" />
                                       <div className="flex-1">
-                                        <Text className="text-xs font-semibold mb-1 block">
-                                          Farmers ({task.assignments.filter(f => !f.isLeader).length}):
+                                        <Text className="block mb-1 text-xs font-semibold">
+                                          Farmers (
+                                          {
+                                            task.assignments.filter(
+                                              f => !f.isLeader,
+                                            ).length
+                                          }
+                                          ):
                                         </Text>
                                         <div className="flex flex-wrap gap-1">
-                                          {task.assignments.filter(f => !f.isLeader).map(f => (
-                                            <Tag key={f.userId || f.id} color="blue" bordered={false} className="rounded-md m-0">
-                                              {f.fullName || f.name}
-                                            </Tag>
-                                          ))}
+                                          {task.assignments
+                                            .filter(f => !f.isLeader)
+                                            .map(f => (
+                                              <Tag
+                                                key={f.userId || f.id}
+                                                color="blue"
+                                                bordered={false}
+                                                className="m-0 rounded-md"
+                                              >
+                                                {f.fullName || f.name}
+                                              </Tag>
+                                            ))}
                                         </div>
                                       </div>
                                     </div>
@@ -401,29 +563,41 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                 </div>
                               )}
 
-
                               {/* Actions */}
-                              <div className="flex items-center gap-2 mt-2 pt-3 border-t border-gray-100">
-                                {task.status === 'PENDING' && (
+                              <div className="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
+                                {task.status === "PENDING" && (
                                   <>
                                     <Button
                                       type="primary"
                                       size="small"
-                                      className="bg-blue-600 rounded-lg"
-                                      onClick={(e) => {
+                                      icon={<EditOutlined />}
+                                      onClick={e => {
                                         e.stopPropagation()
-                                        setAssignTaskData(task)
-                                        setAssignModalOpen(true)
+                                        editTaskForm.setFieldsValue({
+                                          name: task.name || task.taskName,
+                                          description: task.description || "",
+                                          leaderId:
+                                            task.assignedLeaderId || null,
+                                          farmerIds:
+                                            task.assignments
+                                              ?.filter(f => !f.isLeader)
+                                              .map(f => f.userId || f.id) || [],
+                                        })
+                                        setEditTaskModal({ open: true, task })
                                       }}
+                                      className="bg-orange-500 border-0 rounded-lg"
                                     >
-                                      {task.assignedLeaderId ? 'Cập nhật phân công' : 'Phân công'}
+                                      Sửa
                                     </Button>
                                     <Button
                                       type="primary"
                                       size="small"
                                       className="bg-green-600 rounded-lg"
-                                      disabled={!task.assignedLeaderId && !task.farmLeaderId}
-                                      onClick={(e) => {
+                                      disabled={
+                                        !task.assignedLeaderId &&
+                                        !task.farmLeaderId
+                                      }
+                                      onClick={e => {
                                         e.stopPropagation()
                                         handleActivateTask(task.id)
                                       }}
@@ -433,12 +607,13 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                   </>
                                 )}
                                 {/* IN_PROGRESS / ACTIVE: đang thực hiện */}
-                                {(task.status === 'IN_PROGRESS' || task.status === 'ACTIVE') && (
+                                {(task.status === "IN_PROGRESS" ||
+                                  task.status === "ACTIVE") && (
                                   <Button
                                     type="default"
                                     size="small"
-                                    className="rounded-lg text-blue-600 border-blue-200 hover:border-blue-400"
-                                    onClick={(e) => {
+                                    className="text-blue-600 border-blue-200 rounded-lg hover:border-blue-400"
+                                    onClick={e => {
                                       e.stopPropagation()
                                       setAssignTaskData(task)
                                       setAssignModalOpen(true)
@@ -463,46 +638,62 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                 )}
 
                 {/* Nút thêm công việc */}
-                {selectedStage.status !== 'COMPLETED' && (
+                {selectedStage.status !== "COMPLETED" && (
                   <Button
                     type="dashed"
                     icon={<PlusOutlined />}
                     onClick={openAddTask}
                     block
-                    className="mt-3 rounded-xl border-green-300 text-green-700 hover:border-green-500"
+                    className="mt-3 text-green-700 border-green-300 rounded-xl hover:border-green-500"
                   >
                     Thêm công việc vào giai đoạn này
                   </Button>
                 )}
 
                 {/* Form thêm công việc trực tiếp */}
-                {editingTaskId === 'new' && (
+                {editingTaskId === "new" && (
                   <Card
                     size="small"
-                    className="mt-3 rounded-xl border border-gray-200 bg-gray-50"
-                    title={<Text strong style={{ fontSize: 13 }}>Công việc mới</Text>}
+                    className="mt-3 border border-gray-200 rounded-xl bg-gray-50"
+                    title={
+                      <Text strong style={{ fontSize: 13 }}>
+                        Công việc mới
+                      </Text>
+                    }
                   >
                     <Form
                       form={taskForm}
                       layout="vertical"
                       initialValues={{
-                        tasks: [{ taskCatalogId: null, name: '', description: '' }],
+                        tasks: [
+                          { taskCatalogId: null, name: "", description: "" },
+                        ],
                       }}
                     >
                       <Form.List name="tasks">
                         {(fields, { add, remove }) => (
                           <>
                             {fields.map(({ key, name, ...restField }) => (
-                              <Card key={key} size="small" className="mb-3 border border-gray-200 shadow-sm">
-                                <div className="flex justify-between items-center mb-2">
+                              <Card
+                                key={key}
+                                size="small"
+                                className="mb-3 border border-gray-200 shadow-sm"
+                              >
+                                <div className="flex items-center justify-between mb-2">
                                   <Text strong>Công việc {name + 1}</Text>
                                   {fields.length > 1 && (
-                                    <Button type="text" danger onClick={() => remove(name)}>Xóa</Button>
+                                    <Button
+                                      type="text"
+                                      danger
+                                      onClick={() => remove(name)}
+                                    >
+                                      Xóa
+                                    </Button>
                                   )}
                                 </div>
                                 <Form.Item
                                   {...restField}
-                                  name={[name, 'taskCatalogId']}
+                                  name={[name, "taskCatalogId"]}
                                   label="Chọn từ danh mục"
                                   className="!mb-3"
                                 >
@@ -512,39 +703,111 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     optionFilterProp="label"
                                     placeholder="Chọn công việc có sẵn (hoặc để trống để tạo mới)"
                                     options={taskCatalogOptions}
-                                    onChange={(value) => {
-                                      const catalog = taskCatalogOptions.find((o) => o.value === value)
-                                      const list = taskForm.getFieldValue('tasks') || []
+                                    onChange={value => {
+                                      const catalog = taskCatalogOptions.find(
+                                        o => o.value === value,
+                                      )
+                                      const list =
+                                        taskForm.getFieldValue("tasks") || []
                                       list[name] = {
                                         ...list[name],
                                         taskCatalogId: value || null,
-                                        name: catalog?.label || list[name]?.name || '',
-                                        description: catalog?.description || list[name]?.description || '',
+                                        name:
+                                          catalog?.label ||
+                                          list[name]?.name ||
+                                          "",
+                                        description:
+                                          catalog?.description ||
+                                          list[name]?.description ||
+                                          "",
                                       }
-                                      taskForm.setFieldsValue({ tasks: [...list] })
+                                      taskForm.setFieldsValue({
+                                        tasks: [...list],
+                                      })
                                     }}
                                   />
                                 </Form.Item>
                                 <Form.Item
                                   {...restField}
-                                  name={[name, 'name']}
-                                  rules={[{ required: true, message: 'Nhập tên công việc' }]}
+                                  name={[name, "name"]}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: "Nhập tên công việc",
+                                    },
+                                  ]}
                                   className="!mb-3"
                                 >
                                   <Input placeholder="Tên công việc (VD: Bón phân đón đòng...)" />
                                 </Form.Item>
                                 <Form.Item
                                   {...restField}
-                                  name={[name, 'description']}
+                                  name={[name, "description"]}
                                   className="!mb-3"
                                 >
-                                  <Input.TextArea rows={2} placeholder="Mô tả chi tiết, liều lượng..." />
+                                  <Input.TextArea
+                                    rows={2}
+                                    placeholder="Mô tả chi tiết, liều lượng..."
+                                  />
                                 </Form.Item>
+                                <Row gutter={12}>
+                                  <Col xs={24} md={12}>
+                                    <Form.Item
+                                      {...restField}
+                                      name={[name, "leaderId"]}
+                                      label="Farm Leader phụ trách"
+                                      className="!mb-3"
+                                    >
+                                      <Select
+                                        allowClear
+                                        showSearch
+                                        options={leaders}
+                                        placeholder="Chọn Farm Leader..."
+                                        loading={loadingUsers}
+                                        filterOption={(input, option) =>
+                                          String(option?.label || "")
+                                            .toLowerCase()
+                                            .includes(input.toLowerCase())
+                                        }
+                                      />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={24} md={12}>
+                                    <Form.Item
+                                      {...restField}
+                                      name={[name, "farmerIds"]}
+                                      label="Danh sách Farmer"
+                                      className="!mb-3"
+                                    >
+                                      <Select
+                                        mode="multiple"
+                                        allowClear
+                                        showSearch
+                                        options={farmers}
+                                        placeholder="Chọn Farmers..."
+                                        loading={loadingUsers}
+                                        filterOption={(input, option) =>
+                                          String(option?.label || "")
+                                            .toLowerCase()
+                                            .includes(input.toLowerCase())
+                                        }
+                                      />
+                                    </Form.Item>
+                                  </Col>
+                                </Row>
                               </Card>
                             ))}
                             <Button
                               type="dashed"
-                              onClick={() => add({ taskCatalogId: null, name: '', description: '' })}
+                              onClick={() =>
+                                add({
+                                  taskCatalogId: null,
+                                  name: "",
+                                  description: "",
+                                  leaderId: null,
+                                  farmerIds: [],
+                                })
+                              }
                               block
                               icon={<PlusOutlined />}
                               className="mb-3 text-green-600 border-green-300 hover:border-green-500"
@@ -569,7 +832,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                               loading={savingTask}
                               className="bg-green-600 rounded-lg"
                             >
-                              Lưu {taskForm.getFieldValue('tasks')?.length || 1} công việc
+                              Lưu {taskForm.getFieldValue("tasks")?.length || 1}{" "}
+                              công việc
                             </Button>
                           </div>
                         </Col>
@@ -579,12 +843,12 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                 )}
 
                 {/* Nhật ký chính thức khi hoàn thành 100% */}
-                {selectedStage.status === 'COMPLETED' &&
+                {selectedStage.status === "COMPLETED" &&
                   selectedTasks.length > 0 &&
-                  selectedTasks.every((t) => t.status === 'COMPLETED') && (
+                  selectedTasks.every(t => t.status === "COMPLETED") && (
                     <>
                       <Divider className="my-3">
-                        <Text className="text-xs text-green-700 font-semibold">
+                        <Text className="text-xs font-semibold text-green-700">
                           <FileTextOutlined className="mr-1" />
                           Nhật ký chính thức
                         </Text>
@@ -592,17 +856,19 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                       <List
                         dataSource={selectedTasks}
                         split={false}
-                        renderItem={(task) => (
-                          <List.Item key={task.id} style={{ padding: '4px 0' }}>
+                        renderItem={task => (
+                          <List.Item key={task.id} style={{ padding: "4px 0" }}>
                             <Card
                               size="small"
-                              className="w-full rounded-xl border-green-100"
+                              className="w-full border-green-100 rounded-xl"
                               bordered
                             >
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                   <CheckCircleOutlined className="text-green-600" />
-                                  <Text strong style={{ fontSize: 13 }}>{task.name || task.taskCatalogName}</Text>
+                                  <Text strong style={{ fontSize: 13 }}>
+                                    {task.name || task.taskCatalogName}
+                                  </Text>
                                 </div>
                                 <Tag color="success">Hoàn thành</Tag>
                               </div>
@@ -623,6 +889,101 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           </Col>
         </Row>
       </Card>
+
+      {/* Modal Sửa công việc (PENDING) */}
+      <Modal
+        open={editTaskModal.open}
+        title={
+          <div className="flex items-center gap-2 font-semibold text-orange-700">
+            <EditOutlined />
+            Sửa công việc
+          </div>
+        }
+        onCancel={() => setEditTaskModal({ open: false, task: null })}
+        onOk={async () => {
+          try {
+            const values = await editTaskForm.validateFields()
+            setSavingEdit(true)
+            await CultivationTaskService.update(editTaskModal.task.id, {
+              name: values.name,
+              description: values.description,
+              leaderId: values.leaderId || null,
+              farmerIds: Array.isArray(values.farmerIds)
+                ? values.farmerIds
+                : [],
+            })
+            setEditTaskModal({ open: false, task: null })
+            editTaskForm.resetFields()
+            loadData()
+          } catch (err) {
+            if (!err?.errorFields) {
+              message.error(
+                err?.response?.data?.message ||
+                  err?.message ||
+                  "Cập nhật thất bại.",
+              )
+            }
+          } finally {
+            setSavingEdit(false)
+          }
+        }}
+        okText="Lưu thay đổi"
+        cancelText="Hủy"
+        confirmLoading={savingEdit}
+        okButtonProps={{ className: "bg-orange-500 border-orange-500" }}
+        destroyOnClose
+      >
+        <Form form={editTaskForm} layout="vertical" className="mt-4">
+          <Form.Item
+            name="name"
+            label="Tên công việc"
+            rules={[{ required: true, message: "Nhập tên công việc" }]}
+          >
+            <Input placeholder="VD: Bón phân đón đòng..." />
+          </Form.Item>
+          <Form.Item name="description" label="Mô tả chi tiết">
+            <Input.TextArea
+              rows={3}
+              placeholder="Mô tả công việc, liều lượng..."
+            />
+          </Form.Item>
+          <Row gutter={12}>
+            <Col xs={24} md={12}>
+              <Form.Item name="leaderId" label="Farm Leader phụ trách">
+                <Select
+                  allowClear
+                  showSearch
+                  options={leaders}
+                  placeholder="Chọn Farm Leader..."
+                  loading={loadingUsers}
+                  filterOption={(input, option) =>
+                    String(option?.label || "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="farmerIds" label="Danh sách Farmer">
+                <Select
+                  mode="multiple"
+                  allowClear
+                  showSearch
+                  options={farmers}
+                  placeholder="Chọn Farmers..."
+                  loading={loadingUsers}
+                  filterOption={(input, option) =>
+                    String(option?.label || "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
 
       <AssignTaskModal
         open={assignModalOpen}

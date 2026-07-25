@@ -102,6 +102,7 @@ const CultivationLogbookCreate = () => {
   const [submitting, setSubmitting] = useState(false)
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [immutablePlanFields, setImmutablePlanFields] = useState(null)
+  const [planStatus, setPlanStatus] = useState(null)
 
   // ── Dropdown options ──
   const [supervisorOptions, setSupervisorOptions] = useState([])
@@ -293,13 +294,19 @@ const CultivationLogbookCreate = () => {
           description: plan.description || '',
         })
 
-        // Set immutable fields
-        setImmutablePlanFields({
-          logbookName: plan.logbookName || '',
-          category: selectedCropCatalogId,
-          cropId: selectedCropId,
-          landPlotIds: selectedLandPlotIds,
-        })
+        // Set immutable fields — only lock when IN_PROGRESS or COMPLETED
+        const currentStatus = plan.status || 'PLANNED'
+        if (currentStatus !== 'PLANNED') {
+          setImmutablePlanFields({
+            logbookName: plan.logbookName || '',
+            category: selectedCropCatalogId,
+            cropId: selectedCropId,
+            landPlotIds: selectedLandPlotIds,
+          })
+        }
+
+        // Set plan status for field-level permission
+        setPlanStatus(currentStatus)
 
         // Set stages
         const normalizedStages = planStages.map((stage, index) => ({
@@ -533,7 +540,7 @@ const CultivationLogbookCreate = () => {
         landPlotId: landPlotIds.length === 1 ? landPlotIds[0] : landPlotIds, // Array format as requested, fallback single ID if 1 element
         startDate: formatApiDate(values.expectedStartDate),
         expectedEndDate: formatApiDate(values.expectedEndDate),
-        status: isEdit ? undefined : 'PLANNED',
+        status: isEdit ? (planStatus || 'PLANNED') : 'PLANNED',
         scope: 'OVERALL',
         assignedFarmSupervisorId: values.assignedFarmSupervisorId,
         description: values.description,
@@ -722,6 +729,7 @@ const CultivationLogbookCreate = () => {
                     String(option?.label || '').toLowerCase().includes(input.toLowerCase())
                   }
                   loading={isSupervisorsLoading}
+                  disabled={planStatus !== 'PLANNED'}
                 />
               </Form.Item>
             </Col>
@@ -743,13 +751,17 @@ const CultivationLogbookCreate = () => {
             <div key={stage._key} className="mb-6 p-4 rounded-xl border border-gray-100 bg-gray-50">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-gray-700">Giai đoạn {stage.order}</span>
-                {!isEdit && stages.length > 1 && (
-                  <Button
-                    type="text" danger size="small" icon={<MinusCircleOutlined />}
-                    onClick={() => removeStage(index)}
-                  >
-                    Xóa giai đoạn
-                  </Button>
+                {planStatus === 'PLANNED' && (
+                  <>
+                    {stages.length > 1 && (
+                      <Button
+                        type="text" danger size="small" icon={<MinusCircleOutlined />}
+                        onClick={() => removeStage(index)}
+                      >
+                        Xóa giai đoạn
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
               <Row gutter={12}>
@@ -759,6 +771,7 @@ const CultivationLogbookCreate = () => {
                       value={stage.title}
                       onChange={(e) => updateStage(index, 'title', e.target.value)}
                       placeholder="VD: Chuẩn bị đất & Xuống giống"
+                      disabled={planStatus !== 'PLANNED'}
                     />
                   </Form.Item>
                 </Col>
@@ -769,6 +782,7 @@ const CultivationLogbookCreate = () => {
                       onChange={(e) => updateStage(index, 'description', e.target.value)}
                       rows={2}
                       placeholder="Mô tả chi tiết công việc cần thực hiện trong giai đoạn này..."
+                      disabled={planStatus !== 'PLANNED'}
                     />
                   </Form.Item>
                 </Col>
@@ -777,7 +791,7 @@ const CultivationLogbookCreate = () => {
           ))}
 
           {/* Nút Thêm giai đoạn — đặt dưới danh sách */}
-          {!isEdit && (
+          {planStatus === 'PLANNED' && (
             <div className="mt-3">
               <Button
                 type="dashed"

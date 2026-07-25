@@ -452,18 +452,21 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
     load()
   }, [selectedId, planId])
 
-  const handleSubmitCompletion = async () => {
-    if (!planId) {
-      message.error('Thiếu planId để gửi chốt sổ.')
+  const handleCompleteStage = async () => {
+    if (!selectedId) {
+      message.error('Vui lòng chọn giai đoạn cần hoàn tất.')
       return
     }
     try {
       setSubmitting(true)
-      await CultivationLogbookService.submitCompletion(planId)
-      message.success('Đã gửi yêu cầu chốt sổ lên Farm Manager!')
+      await CultivationStageService.submitReview(selectedId, {})
+      message.success('Đã hoàn tất giai đoạn và gửi lên Farm Manager!')
+      await loadData?.()
     } catch (error) {
       console.error(error)
-      message.error(error.message || 'Gửi chốt sổ thất bại.')
+      message.error(
+        error?.response?.data?.message || error?.message || 'Hoàn tất giai đoạn thất bại.'
+      )
     } finally {
       setSubmitting(false)
     }
@@ -492,10 +495,11 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
           type="primary"
           icon={<SendOutlined />}
           loading={submitting}
-          onClick={handleSubmitCompletion}
+          onClick={handleCompleteStage}
+          disabled={!selectedId}
           className="bg-green-600 rounded-lg h-9 font-semibold"
         >
-          Gửi chốt sổ lên Manager
+          Hoàn tất giai đoạn
         </Button>
       </div>
 

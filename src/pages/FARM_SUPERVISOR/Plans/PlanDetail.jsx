@@ -69,8 +69,10 @@ const FarmSupervisorPlanDetail = () => {
   const [submitting, setSubmitting] = useState(false)
 
   // ── Load ──────────────────────────────────────────────────────────────────
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = async (isInitial = false) => {
+    if (isInitial || !plan) {
+      setLoading(true)
+    }
     try {
       const planRes = await CultivationLogbookService.getById(planId)
       if (planRes?.success === false) {
@@ -106,7 +108,7 @@ const FarmSupervisorPlanDetail = () => {
     }
   }
 
-  useEffect(() => { loadData() }, [planId])
+  useEffect(() => { loadData(true) }, [planId])
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const allTasks = useMemo(() => Object.values(tasks).flat(), [tasks])

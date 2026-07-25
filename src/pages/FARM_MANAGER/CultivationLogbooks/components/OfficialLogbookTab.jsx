@@ -100,14 +100,6 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
     fetchOfficialLogs()
   }, [selectedStageId])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Spin size="large" tip="Đang tải nhật ký chính thức..." />
-      </div>
-    )
-  }
-
   const selectedIndex = stages.findIndex((s, idx) => (s.id ?? idx) === selectedStageId)
   const selectedStage = selectedIndex >= 0 ? stages[selectedIndex] : null
 
@@ -143,6 +135,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
 
             {/* Cột phải: Chi tiết giai đoạn */}
             <div className="flex-1 min-w-0 pl-0 lg:pl-6 lg:border-l lg:border-gray-100">
+              <Spin spinning={loading} tip="Đang tải dữ liệu giai đoạn...">
               {selectedStage ? (
                 <>
                   <div className="mb-3">
@@ -300,6 +293,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
               ) : (
                 <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chọn một giai đoạn để xem chi tiết" />
               )}
+              </Spin>
             </div>
           </div>
         ) : (
