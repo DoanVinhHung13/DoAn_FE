@@ -230,8 +230,8 @@ const SummaryCompilePanel = ({ task, stageId, planId, stageLogs = [], onSaved })
     }
     try {
       setSaving(true)
-      const targetTaskId = task?.id || officialLogId
-      await saveCompiledDescription(targetTaskId, description.trim())
+      const targetStageId = stageId || task?.cultivationStageId || task?.stageId
+      await saveCompiledDescription(targetStageId, description.trim())
       message.success('Đã lưu mô tả vào Logbook!')
       onSaved?.()
     } catch (err) {

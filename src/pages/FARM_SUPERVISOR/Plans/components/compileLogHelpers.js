@@ -50,13 +50,13 @@ export const loadLeaderCompileData = async (taskId) => {
 }
 
 /** 
- * Gọi API POST /api/cultivation-stages/{taskId}/official-logs
+ * Gọi API POST /api/cultivation-stages/{stageId}/official-logs
  * Body: { supervisorDescription: description }
  */
-export const saveCompiledDescription = async (taskId, description) => {
-  const targetTaskId = typeof taskId === 'object' ? (taskId.taskId || taskId.id || taskId.cultivationTaskId) : taskId
+export const saveCompiledDescription = async (stageId, description) => {
+  const targetStageId = typeof stageId === 'object' ? (stageId.stageId || stageId.id || stageId.cultivationStageId) : stageId
   const payload = {
     supervisorDescription: description,
   }
-  return await CultivationStageService.createOfficialLogs(targetTaskId, payload)
+  return await CultivationStageService.createOfficialLogs(targetStageId, payload)
 }
