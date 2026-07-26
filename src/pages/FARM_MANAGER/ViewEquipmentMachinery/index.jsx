@@ -11,7 +11,6 @@ import {
   Form,
   Row,
   Col,
-  Statistic,
   Badge,
   Tooltip,
   Divider,
@@ -171,16 +170,6 @@ const ViewEquipmentMachinery = () => {
 
   const [form] = Form.useForm();
 
-  // Thống kê nhanh
-  const stats = useMemo(() => {
-    return {
-      total: data.length,
-      active: data.filter((item) => item.status === 'ACTIVE' || item.status === 'IN_USE').length,
-      maintenance: data.filter((item) => item.status === 'MAINTENANCE').length,
-      broken: data.filter((item) => item.status === 'BROKEN').length,
-    };
-  }, [data]);
-
   // Lọc dữ liệu
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -243,13 +232,6 @@ const ViewEquipmentMachinery = () => {
       ),
     },
     {
-      title: 'Mã thiết bị',
-      dataIndex: 'code',
-      key: 'code',
-      width: 140,
-      render: (text) => <Text strong className="font-mono text-xs text-blue-700">{text}</Text>,
-    },
-    {
       title: 'Tên máy móc / Thiết bị',
       dataIndex: 'name',
       key: 'name',
@@ -258,7 +240,7 @@ const ViewEquipmentMachinery = () => {
           <Text strong className="block text-slate-800 hover:text-green-600 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleOpenDetail(record); }}>
             {text}
           </Text>
-          <Text className="text-xs text-slate-400 font-medium">{record.brand} • {record.power}</Text>
+          <Text className="text-xs text-slate-400 font-medium">{record.power}</Text>
         </div>
       ),
     },
@@ -282,24 +264,6 @@ const ViewEquipmentMachinery = () => {
           </Tag>
         );
       },
-    },
-    {
-      title: 'Bảo dưỡng tiếp theo',
-      dataIndex: 'nextMaintenance',
-      key: 'nextMaintenance',
-      width: 150,
-      render: (date) => (
-        <span className="text-xs text-slate-600 font-mono">
-          {date ? dayjs(date).format('DD/MM/YYYY') : 'N/A'}
-        </span>
-      ),
-    },
-    {
-      title: 'Đội quản lý',
-      dataIndex: 'assignedTo',
-      key: 'assignedTo',
-      width: 170,
-      render: (text) => <Text className="text-xs text-slate-600">{text || '—'}</Text>,
     },
     {
       title: 'Thao tác',
@@ -356,50 +320,6 @@ const ViewEquipmentMachinery = () => {
         </Button>
       </div>
 
-      {/* Thống kê nhanh */}
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={6}>
-          <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-            <Statistic
-              title={<Text className="text-xs text-slate-500 font-semibold">Tổng số máy móc / thiết bị</Text>}
-              value={stats.total}
-              prefix={<ToolOutlined className="text-slate-600 mr-2" />}
-              valueStyle={{ color: '#0f172a', fontWeight: 'bold' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-            <Statistic
-              title={<Text className="text-xs text-slate-500 font-semibold">Đang hoạt động tốt</Text>}
-              value={stats.active}
-              prefix={<CheckCircleOutlined className="text-emerald-600 mr-2" />}
-              valueStyle={{ color: '#16a34a', fontWeight: 'bold' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-            <Statistic
-              title={<Text className="text-xs text-slate-500 font-semibold">Đang bảo dưỡng</Text>}
-              value={stats.maintenance}
-              prefix={<SettingOutlined className="text-amber-500 mr-2" />}
-              valueStyle={{ color: '#d97706', fontWeight: 'bold' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-            <Statistic
-              title={<Text className="text-xs text-slate-500 font-semibold">Hỏng hóc / Ngừng dùng</Text>}
-              value={stats.broken}
-              prefix={<WarningOutlined className="text-red-500 mr-2" />}
-              valueStyle={{ color: '#dc2626', fontWeight: 'bold' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
       {/* Table Card & Toolbar */}
       <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: 0 }}>
         {/* Toolbar */}
@@ -410,7 +330,7 @@ const ViewEquipmentMachinery = () => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Tìm theo mã, tên máy móc..."
+            placeholder="Tìm theo tên máy móc..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="w-64 h-10 rounded-[18px]"
             allowClear

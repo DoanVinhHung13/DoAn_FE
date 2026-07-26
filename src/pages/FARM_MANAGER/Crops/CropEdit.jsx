@@ -396,83 +396,7 @@ const CropEdit = () => {
                     />
                   </Form.Item>
 
-                  <Form.Item
-                    name="minHarvestDays"
-                    label="Thời gian sinh trưởng tối thiểu"
-                  >
-                    <InputNumber
-                      className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
-                      placeholder="Nhập thời gian"
-                      min={0}
-                      addonAfter={
-                        <Form.Item name="minDurationUnit" noStyle initialValue="days">
-                          <Select className="w-24 h-11 bg-gray-50" bordered={false}>
-                            <Select.Option value="days">ngày</Select.Option>
-                            <Select.Option value="months">tháng</Select.Option>
-                            <Select.Option value="years">năm</Select.Option>
-                          </Select>
-                        </Form.Item>
-                      }
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    name="maxHarvestDays"
-                    label="Thời gian sinh trưởng tối đa"
-                    dependencies={[
-                      'minHarvestDays',
-                      'minDurationUnit',
-                      'maxDurationUnit',
-                    ]}
-                    rules={[
-                      ({ getFieldValue }) => ({
-                        validator(_, value) {
-                          const min = getFieldValue('minHarvestDays');
-
-                          if (min == null || value == null) {
-                            return Promise.resolve();
-                          }
-
-                          const unitToDays = {
-                            days: 1,
-                            months: 30,
-                            years: 365,
-                          };
-
-                          const minDays =
-                            min *
-                            unitToDays[getFieldValue('minDurationUnit') || 'days'];
-
-                          const maxDays =
-                            value *
-                            unitToDays[getFieldValue('maxDurationUnit') || 'days'];
-
-                          if (maxDays < minDays) {
-                            return Promise.reject(
-                              new Error('Thời gian tối đa phải lớn hơn hoặc bằng thời gian tối thiểu.')
-                            );
-                          }
-
-                          return Promise.resolve();
-                        },
-                      }),
-                    ]}
-                  >
-                    <InputNumber
-                      className="w-full h-11 [&_.ant-input-number-group-addon]:p-0 [&_.ant-input-number-group-addon]:border-none"
-                      placeholder="Nhập thời gian"
-                      min={0}
-                      addonAfter={
-                        <Form.Item name="maxDurationUnit" noStyle initialValue="days">
-                          <Select className="w-24 h-11 bg-gray-50" bordered={false}>
-                            <Select.Option value="days">ngày</Select.Option>
-                            <Select.Option value="months">tháng</Select.Option>
-                            <Select.Option value="years">năm</Select.Option>
-                          </Select>
-                        </Form.Item>
-                      }
-                    />
-                  </Form.Item>
+                 
                 </div>
               </Card>
 
@@ -490,10 +414,7 @@ const CropEdit = () => {
                 </Form.Item>
               </Card>
 
-              {/* Growth Stages Section */}
-              <Form.Item name="growthStages">
-                <GrowthStages />
-              </Form.Item>
+             
             </div>
           </Col>
 

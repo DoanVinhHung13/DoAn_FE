@@ -9,7 +9,6 @@ import {
   ExclamationCircleOutlined,
   WarningOutlined,
   ShopOutlined,
-  EnvironmentOutlined,
 } from '@ant-design/icons';
 import TitleCustom from 'src/components/TitleCustom';
 import ROUTER from 'src/router/ROUTER';
@@ -133,7 +132,6 @@ const FarmSupplyDetail = () => {
           </Button>
           <div>
             <TitleCustom className="!mb-0">Chi tiết Vật tư Nông nghiệp</TitleCustom>
-            <Text className="text-slate-500 text-xs font-mono">Mã: {item.code}</Text>
           </div>
         </div>
 
@@ -187,26 +185,12 @@ const FarmSupplyDetail = () => {
                 <Text strong className="text-amber-600">{item.minQuantity} {item.unit}</Text>
               </div>
 
-              <div className="flex justify-between py-1.5 text-sm">
-                <Text className="text-slate-500">Vị trí lưu kho:</Text>
-                <Space>
-                  <EnvironmentOutlined className="text-emerald-600" />
-                  <Text strong className="text-slate-800">{item.location}</Text>
-                </Space>
-              </div>
             </div>
           </Col>
 
           <Col xs={24} md={12}>
             <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-3">
-              <Text strong className="text-base text-slate-800 block mb-2">Thông tin nhà cung cấp & Đơn giá</Text>
-
-              <div className="flex justify-between py-1.5 border-b border-slate-200/50 text-sm">
-                <Text className="text-slate-500">Đơn giá ước tính:</Text>
-                <Text strong className="text-blue-700">
-                  {item.unitPrice ? `${item.unitPrice.toLocaleString('vi-VN')} VNĐ / ${item.unit}` : 'N/A'}
-                </Text>
-              </div>
+              <Text strong className="text-base text-slate-800 block mb-2">Thông tin nhà cung cấp</Text>
 
               <div className="flex justify-between py-1.5 border-b border-slate-200/50 text-sm">
                 <Text className="text-slate-500">Nhà cung cấp:</Text>

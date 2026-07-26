@@ -34,12 +34,7 @@ const FarmSupplyCreate = () => {
       <Card className="rounded-2xl border-slate-200/80 shadow-xs w-full">
         <Form form={form} layout="vertical" onFinish={handleFinish} className="space-y-4">
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="code" label="Mã vật tư">
-                <Input placeholder="VD: MAT-MULCH-01" className="rounded-xl font-mono" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item name="name" label="Tên vật tư nông nghiệp" rules={[{ required: true, message: 'Nhập tên vật tư' }]}>
                 <Input placeholder="VD: Bạt phủ đất 1.2m x 400m" className="rounded-xl" />
               </Form.Item>
@@ -68,19 +63,6 @@ const FarmSupplyCreate = () => {
             <Col span={12}>
               <Form.Item name="minQuantity" label="Ngưỡng tồn kho tối thiểu (cảnh báo)" initialValue={5}>
                 <InputNumber min={0} className="w-full rounded-xl" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="unitPrice" label="Đơn giá (VNĐ)">
-                <InputNumber min={0} step={1000} className="w-full rounded-xl" formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="location" label="Vị trí lưu kho">
-                <Input placeholder="VD: Kho A - Kệ 02" className="rounded-xl" />
               </Form.Item>
             </Col>
           </Row>

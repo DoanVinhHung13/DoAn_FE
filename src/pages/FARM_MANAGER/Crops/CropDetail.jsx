@@ -308,12 +308,8 @@ const CropDetail = () => {
                 <Descriptions.Item label="Danh mục">
                   {displayValue(getCropCatalogName(cropDetail.cropCatalogId))}
                 </Descriptions.Item>
-                <Descriptions.Item label="Thời gian sinh trưởng tối thiểu">
-                  {formatDuration(cropDetail.minHarvestDays)}
-                </Descriptions.Item>
-                <Descriptions.Item label="Thời gian sinh trưởng tối đa">
-                  {formatDuration(cropDetail.maxHarvestDays)}
-                </Descriptions.Item>
+                
+              
               </Descriptions>
             </Card>
 
@@ -334,14 +330,7 @@ const CropDetail = () => {
             </Card>
 
             {/* Growth Stages */}
-            <div className="relative">
-              {isGrowthStagesLoading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50 rounded-lg">
-                  <Spin />
-                </div>
-              )}
-              <GrowthStages value={growthStagesData || []} readonly={true} />
-            </div>
+           
           </Space>
         </Col>
       </Row>

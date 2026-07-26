@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Form, Input, Select, DatePicker, Row, Col, message } from 'antd';
+import { Card, Button, Form, Input, Select, Row, Col, message } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import TitleCustom from 'src/components/TitleCustom';
 import ROUTER from 'src/router/ROUTER';
 
@@ -29,15 +28,10 @@ const EquipmentEdit = () => {
   useEffect(() => {
     // Populate form mock
     form.setFieldsValue({
-      code: id.startsWith('MACH') || id.startsWith('EQ') ? id : 'MACH-KUBOTA-L5018',
       name: 'Máy cày Kubota L5018',
       category: 'TRACTOR',
-      brand: 'Kubota Nhật Bản',
       power: '50 HP',
       status: 'ACTIVE',
-      assignedTo: 'Đội 1 - Vùng lúa ST25',
-      lastMaintenance: dayjs('2024-06-15'),
-      nextMaintenance: dayjs('2024-12-15'),
       notes: 'Đã kiểm tra định kỳ 500 giờ hoạt động, hoạt động tốt.',
     });
   }, [id, form]);
@@ -59,12 +53,7 @@ const EquipmentEdit = () => {
       <Card className="rounded-2xl border-slate-200/80 shadow-xs w-full">
         <Form form={form} layout="vertical" onFinish={handleFinish} className="space-y-4">
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="code" label="Mã thiết bị / Máy móc">
-                <Input placeholder="VD: MACH-KUBOTA-01" className="rounded-xl font-mono" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item name="name" label="Tên thiết bị / Máy móc" rules={[{ required: true, message: 'Nhập tên thiết bị' }]}>
                 <Input placeholder="VD: Máy cày Kubota L5018" className="rounded-xl" />
               </Form.Item>
@@ -85,34 +74,12 @@ const EquipmentEdit = () => {
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="brand" label="Thương hiệu / Xuất xứ">
-                <Input placeholder="VD: Kubota Nhật Bản" className="rounded-xl" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item name="power" label="Công suất / Thông số">
                 <Input placeholder="VD: 50 HP hoặc 10 m3/h" className="rounded-xl" />
               </Form.Item>
             </Col>
           </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="lastMaintenance" label="Ngày bảo dưỡng gần nhất">
-                <DatePicker className="w-full rounded-xl" format="DD/MM/YYYY" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="nextMaintenance" label="Hạn bảo dưỡng tiếp theo">
-                <DatePicker className="w-full rounded-xl" format="DD/MM/YYYY" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item name="assignedTo" label="Đội / Khu vực quản lý">
-            <Input placeholder="VD: Đội 1 - Vùng lúa ST25" className="rounded-xl" />
-          </Form.Item>
 
           <Form.Item name="notes" label="Ghi chú kỹ thuật & vận hành">
             <Input.TextArea rows={3} placeholder="Ghi chú về tình trạng thiết bị, phụ tùng thay thế..." className="rounded-xl" />
