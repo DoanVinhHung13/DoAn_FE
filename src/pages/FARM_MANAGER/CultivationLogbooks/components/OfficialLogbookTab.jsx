@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationStageService from 'src/services/CultivationStageService'
 
-const { Text } = Typography
+const { Text, Paragraph } = Typography
 
 const SectionTitle = ({ children }) => (
   <div className="flex items-center gap-3 mb-5">
@@ -142,143 +142,140 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                     <h4 className="mb-0.5 text-sm font-semibold text-gray-800">
                       {selectedStage.stageName || selectedStage.name || `Giai đoạn ${selectedIndex + 1}`}
                     </h4>
-                    <div className="flex flex-col gap-0.5">
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        <CalendarOutlined className="mr-1" />
-                        <span className="font-medium">Kế hoạch:</span>{' '}
-                        {selectedStage.startDate ? formatDate(selectedStage.startDate) : 'Chưa xác định'}{' — '}
-                        {selectedStage.endDate ? formatDate(selectedStage.endDate) : 'Chưa xác định'}
-                      </Text>
-                      <Text style={{ fontSize: 12, color: selectedStage.actualStartDate ? '#16a34a' : '#9ca3af' }}>
-                        <CalendarOutlined className="mr-1" />
-                        <span className="font-medium">Thực tế:</span>{' '}
-                        {selectedStage.actualStartDate ? formatDate(selectedStage.actualStartDate) : 'Chưa bắt đầu'}{' — '}
-                        {selectedStage.actualEndDate ? formatDate(selectedStage.actualEndDate) : 'Đang thực hiện'}
-                      </Text>
-                    </div>
+                    {stageLogs.length > 0 && (
+                      <div className="flex flex-col gap-0.5">
+                        {(() => {
+                          const firstLog = stageLogs[0]
+                          const lastLog = stageLogs[stageLogs.length - 1]
+                          const wsd = firstLog.workStartDate || firstLog.startDate
+                          const wed = lastLog.workEndDate || lastLog.endDate || wsd
+                          return (
+                            <Text style={{ fontSize: 12, color: '#16a34a' }}>
+                              <CalendarOutlined className="mr-1" />
+                              <span className="font-medium">Thực tế:</span>{' '}
+                              {wsd ? formatDate(wsd) : 'Chưa xác định'}{' — '}
+                              {wed ? formatDate(wed) : '—'}
+                            </Text>
+                          )
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   {stageLogs.length > 0 ? (
                     stageLogs.map((task, logIndex) => {
                       const summary = task.summary || task.officialLog || {}
                       const taskName = task.taskName || task.name || task.title || `Công việc ${logIndex + 1}`
-                      const description = summary.description || task.summaryDescription || task.finalDescription || 'Chưa có mô tả'
+                      const description = summary.description || task.summaryDescription || task.finalDescription || ''
+                      const materialsText = summary.materialsText || task.materialsText || ''
+                      const workStartDate = task.workStartDate || summary.workStartDate || task.startDate
+                      const workEndDate = task.workEndDate || summary.workEndDate || task.endDate
                       const editedBy = summary.editedBy || task.editedByName || summary.supervisorName || 'Supervisor'
                       const editedAt = summary.editedAt || task.editedAt || task.updatedAt
 
-                      // Số liệu tổng hợp
+                      const rawImages = summary.images || task.images || []
+                      const images = rawImages.map(img => {
+                        if (typeof img === 'string') return img
+                        return img.url || img.imageUrl || img.path || img.src || img.fileUrl || null
+                      }).filter(Boolean)
+
                       const totalFertilizers = summary.totalFertilizers || summary.fertilizers || task.totalFertilizers || []
                       const totalPesticides = summary.totalPesticides || summary.pesticides || task.totalPesticides || []
-                      const images = summary.images || task.images || []
 
                       return (
-                        <div key={task.id || logIndex} className="p-4 mb-3 border border-blue-100 rounded-lg bg-blue-50/30">
-                          {/* Header */}
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <p className="mb-0.5 text-sm font-semibold text-gray-800">{taskName}</p>
-                              <p className="text-xs text-gray-500 mb-0">
-                                <EditOutlined className="mr-1" />
-                                Biên tập bởi: {editedBy}
-                                {editedAt && ` - ${formatDate(editedAt)}`}
-                              </p>
-                            </div>
-                            <Tag color="blue" icon={<CheckCircleOutlined />} className="text-xs">
-                              Đã biên tập
-                            </Tag>
+                        <div key={task.id || logIndex} className="flex gap-3">
+                          {/* ── Timeline line + dot ── */}
+                          <div className="flex flex-col items-center shrink-0 w-6">
+                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm mt-2 z-10" />
+                            <div className="w-0.5 flex-1 bg-emerald-300 mt-1" />
                           </div>
 
-                          {/* Mô tả chính thức */}
-                          <div className="p-3 mb-3 bg-white border border-blue-200 rounded-lg">
-                            <p className="mb-1 text-xs font-semibold text-blue-600 uppercase">
-                              Mô tả chính thức:
-                            </p>
-                            <p className="mb-0 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
-                              {description}
-                            </p>
-                          </div>
+                          {/* ── Nội dung log ── */}
+                          <div className="flex-1 py-2 pb-4">
+                            {/* 1. Ngày bắt đầu - kết thúc */}
+                            {(workStartDate || workEndDate) && (
+                              <div className="mb-2 text-sm font-semibold text-gray-800">
+                                {workStartDate && formatDate(workStartDate)}
+                                {workEndDate && ` - ${formatDate(workEndDate)}`}
+                              </div>
+                            )}
 
-                          {/* Số liệu tổng hợp */}
-                          {(totalFertilizers.length > 0 || totalPesticides.length > 0) && (
-                            <div className="p-3 mb-3 bg-gray-50 border border-gray-200 rounded-lg">
-                              <p className="mb-2 text-xs font-semibold text-gray-600 uppercase">
-                                Số liệu tổng hợp (tự động):
-                              </p>
+                            {/* 2. Mô tả */}
+                            {description && (
+                              <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                                {description}
+                              </Paragraph>
+                            )}
 
-                              {totalFertilizers.length > 0 && (
-                                <div className="mb-2">
-                                  <p className="mb-1 text-xs text-gray-500">Phân bón:</p>
-                                  <div className="space-y-1">
-                                    {totalFertilizers.map((fert, idx) => (
-                                      <div key={idx} className="flex items-center gap-2 text-xs text-gray-700">
-                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0" />
-                                        <span className="font-medium">{fert.name || fert.fertilizerName || fert.materialName}</span>
-                                        <span className="text-gray-400">-</span>
-                                        <span className="font-medium text-green-700">
-                                          {fert.quantity || fert.totalQuantity} {fert.unit || 'kg'}
-                                        </span>
-                                        {fert.area && (
-                                          <>
-                                            <span className="text-gray-400">/</span>
-                                            <span>{fert.area} {fert.areaUnit || 'm²'}</span>
-                                          </>
-                                        )}
+                            {/* 3. Materials text */}
+                            {materialsText && (
+                              <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                                {materialsText}
+                              </Paragraph>
+                            )}
+
+                            {/* 4. Số liệu tổng hợp */}
+                            {(totalFertilizers.length > 0 || totalPesticides.length > 0) && (
+                              <div className="p-3 my-2 bg-gray-50 border border-gray-200 rounded-lg">
+                                {totalFertilizers.length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="mb-1 text-xs text-gray-500 font-medium">Phân bón:</p>
+                                    <div className="space-y-1">
+                                      {totalFertilizers.map((fert, idx) => (
+                                        <div key={idx} className="flex items-center gap-2 text-xs text-gray-700">
+                                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0" />
+                                          <span className="font-medium">{fert.name || fert.fertilizerName || fert.materialName}</span>
+                                          <span className="text-gray-400">-</span>
+                                          <span className="font-medium text-green-700">
+                                            {fert.quantity || fert.totalQuantity} {fert.unit || 'kg'}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {totalPesticides.length > 0 && (
+                                  <div>
+                                    <p className="mb-1 text-xs text-gray-500 font-medium">Thuốc BVTV:</p>
+                                    <div className="space-y-1">
+                                      {totalPesticides.map((pest, idx) => (
+                                        <div key={idx} className="flex items-center gap-2 text-xs text-gray-700">
+                                          <span className="w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0" />
+                                          <span className="font-medium">{pest.name || pest.pesticideName || pest.materialName}</span>
+                                          <span className="text-gray-400">-</span>
+                                          <span className="font-medium text-orange-700">
+                                            {pest.quantity || pest.totalQuantity} {pest.unit || 'lít'}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* 5. Ảnh minh chứng */}
+                            {images.length > 0 && (
+                              <div className="mt-2">
+                                <p className="mb-1.5 text-xs font-semibold text-gray-500">
+                                  <FileImageOutlined className="mr-1" />
+                                  Ảnh minh chứng ({images.length})
+                                </p>
+                                <Image.PreviewGroup items={images}>
+                                  <div className="flex flex-wrap gap-2">
+                                    {images.map((src, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="h-16 w-16 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
+                                      >
+                                        <Image src={src} preview={{ src }} />
                                       </div>
                                     ))}
                                   </div>
-                                </div>
-                              )}
-
-                              {totalPesticides.length > 0 && (
-                                <div>
-                                  <p className="mb-1 text-xs text-gray-500">Thuốc BVTV:</p>
-                                  <div className="space-y-1">
-                                    {totalPesticides.map((pest, idx) => (
-                                      <div key={idx} className="flex items-center gap-2 text-xs text-gray-700">
-                                        <span className="w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0" />
-                                        <span className="font-medium">{pest.name || pest.pesticideName || pest.materialName}</span>
-                                        <span className="text-gray-400">-</span>
-                                        <span className="font-medium text-orange-700">
-                                          {pest.quantity || pest.totalQuantity} {pest.unit || 'lít'}
-                                        </span>
-                                        {pest.area && (
-                                          <>
-                                            <span className="text-gray-400">/</span>
-                                            <span>{pest.area} {pest.areaUnit || 'm²'}</span>
-                                          </>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Ảnh minh chứng */}
-                          {images && images.length > 0 && (
-                            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                              <p className="mb-1.5 text-xs font-semibold text-gray-600 uppercase">
-                                <FileImageOutlined className="mr-1" />
-                                Ảnh minh chứng ({images.length}):
-                              </p>
-                              <Image.PreviewGroup>
-                                <div className="flex flex-wrap gap-2">
-                                  {images.map((img, idx) => (
-                                    <Image
-                                      key={idx}
-                                      src={img.url || img.imageUrl || img.filePath || img}
-                                      alt={img.description || `Ảnh ${idx + 1}`}
-                                      width={64}
-                                      height={64}
-                                      className="object-cover rounded-md"
-                                      fallback="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-                                    />
-                                  ))}
-                                </div>
-                              </Image.PreviewGroup>
-                            </div>
-                          )}
+                                </Image.PreviewGroup>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )
                     })
