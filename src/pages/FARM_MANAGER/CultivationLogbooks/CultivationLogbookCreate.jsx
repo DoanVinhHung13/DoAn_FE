@@ -104,6 +104,20 @@ const CultivationLogbookCreate = () => {
   const [immutablePlanFields, setImmutablePlanFields] = useState(null)
   const [planStatus, setPlanStatus] = useState(null)
 
+  // ── Permission flags ──
+  const effectiveStatus = isEdit ? (planStatus || 'PLANNED') : 'PLANNED'
+  const isPlanned = effectiveStatus === 'PLANNED'
+  const isInProgress = effectiveStatus === 'IN_PROGRESS' || effectiveStatus === 'ACTIVE'
+  const isCompletedOrCancelled = effectiveStatus === 'COMPLETED' || effectiveStatus === 'CANCELLED' || effectiveStatus === 'CANCELED'
+
+  const canEditCategory = isPlanned
+  const canEditCrop = isPlanned && Boolean(selectedCatalogId)
+  const canEditLandPlots = isPlanned
+  const canEditSupervisor = isPlanned || isInProgress
+  const canEditStages = isPlanned
+  const canEditGeneralInfo = isPlanned || isInProgress
+  const canSubmitForm = !isCompletedOrCancelled
+
   // ── Dropdown options ──
   const [supervisorOptions, setSupervisorOptions] = useState([])
   const [isSupervisorsLoading, setIsSupervisorsLoading] = useState(false)
@@ -498,15 +512,9 @@ const CultivationLogbookCreate = () => {
       message.warning('Phải có ít nhất một giai đoạn.')
       return
     }
-    Modal.confirm({
-      title: 'Xóa giai đoạn',
-      content: 'Bạn có chắc chắn muốn xóa giai đoạn này?',
-      onOk: () => {
-        const newStages = [...stages]
-        newStages.splice(index, 1)
-        setStages(newStages.map((stage, idx) => ({ ...stage, order: idx + 1 })))
-      },
-    })
+    const newStages = [...stages]
+    newStages.splice(index, 1)
+    setStages(newStages.map((stage, idx) => ({ ...stage, order: idx + 1 })))
   }
 
   const updateStage = (index, field, value) => {
@@ -631,6 +639,7 @@ const CultivationLogbookCreate = () => {
             type="primary" icon={<PlusOutlined />}
             onClick={() => form.submit()}
             loading={submitting}
+            disabled={!canSubmitForm}
             className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
           >
             {isEdit ? 'Cập nhật nhật ký' : 'Lưu nhật ký'}
@@ -648,7 +657,7 @@ const CultivationLogbookCreate = () => {
                 name="logbookName" label="Tên nhật ký"
                 rules={[{ required: true, message: 'Vui lòng nhập tên nhật ký' }]}
               >
-                <Input placeholder="VD: Vụ Đông Xuân 2026 - Lúa ST25" />
+                <Input placeholder="VD: Vụ Đông Xuân 2026 - Lúa ST25" disabled={!canEditGeneralInfo} />
               </Form.Item>
             </Col>
             <Col xs={24} md={12} lg={8}>
@@ -667,7 +676,7 @@ const CultivationLogbookCreate = () => {
                     String(option?.label || '').toLowerCase().includes(input.toLowerCase())
                   }
                   loading={isCatalogsLoading}
-                  disabled={!!immutablePlanFields?.category}
+                  disabled={!canEditCategory}
                   onChange={() => {
                     form.setFieldsValue({ cropId: undefined })
                     setCropsData([])
@@ -691,7 +700,7 @@ const CultivationLogbookCreate = () => {
                     String(option?.label || '').toLowerCase().includes(input.toLowerCase())
                   }
                   loading={isCropsLoading}
-                  disabled={!selectedCatalogId || !!immutablePlanFields?.cropId}
+                  disabled={!canEditCrop}
                 />
               </Form.Item>
             </Col>
@@ -712,7 +721,7 @@ const CultivationLogbookCreate = () => {
                     String(option?.label || '').toLowerCase().includes(input.toLowerCase())
                   }
                   loading={isLandsLoading}
-                  disabled={!!immutablePlanFields?.landPlotIds?.length}
+                  disabled={!canEditLandPlots}
                 />
               </Form.Item>
             </Col>
@@ -729,13 +738,13 @@ const CultivationLogbookCreate = () => {
                     String(option?.label || '').toLowerCase().includes(input.toLowerCase())
                   }
                   loading={isSupervisorsLoading}
-                  disabled={planStatus !== 'PLANNED'}
+                  disabled={!canEditSupervisor}
                 />
               </Form.Item>
             </Col>
             <Col xs={24}>
               <Form.Item name="description" label="Mô tả nhật ký">
-                <Input.TextArea rows={3} placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..." />
+                <Input.TextArea rows={3} placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..." disabled={!canEditGeneralInfo} />
               </Form.Item>
             </Col>
           </Row>
@@ -751,7 +760,7 @@ const CultivationLogbookCreate = () => {
             <div key={stage._key} className="mb-6 p-4 rounded-xl border border-gray-100 bg-gray-50">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-gray-700">Giai đoạn {stage.order}</span>
-                {planStatus === 'PLANNED' && (
+                {canEditStages && (
                   <>
                     {stages.length > 1 && (
                       <Button
@@ -771,7 +780,7 @@ const CultivationLogbookCreate = () => {
                       value={stage.title}
                       onChange={(e) => updateStage(index, 'title', e.target.value)}
                       placeholder="VD: Chuẩn bị đất & Xuống giống"
-                      disabled={planStatus !== 'PLANNED'}
+                      disabled={!canEditStages}
                     />
                   </Form.Item>
                 </Col>
@@ -782,7 +791,7 @@ const CultivationLogbookCreate = () => {
                       onChange={(e) => updateStage(index, 'description', e.target.value)}
                       rows={2}
                       placeholder="Mô tả chi tiết công việc cần thực hiện trong giai đoạn này..."
-                      disabled={planStatus !== 'PLANNED'}
+                      disabled={!canEditStages}
                     />
                   </Form.Item>
                 </Col>
@@ -791,7 +800,7 @@ const CultivationLogbookCreate = () => {
           ))}
 
           {/* Nút Thêm giai đoạn — đặt dưới danh sách */}
-          {planStatus === 'PLANNED' && (
+          {canEditStages && (
             <div className="mt-3">
               <Button
                 type="dashed"
@@ -819,6 +828,7 @@ const CultivationLogbookCreate = () => {
             type="primary" icon={<PlusOutlined />}
             onClick={() => form.submit()}
             loading={submitting}
+            disabled={!canSubmitForm}
             className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
           >
             {isEdit ? 'Cập nhật nhật ký' : 'Lưu nhật ký'}

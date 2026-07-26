@@ -178,7 +178,7 @@ const pestColumns = [
 ]
 
 /** Expand: thông tin Summary (ảnh, phân, thuốc, mô tả) + textarea Supervisor */
-const SummaryCompilePanel = ({ task, planId, stageLogs = [], onSaved }) => {
+const SummaryCompilePanel = ({ task, stageId, planId, stageLogs = [], onSaved }) => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [leaderSummary, setLeaderSummary] = useState(null)
@@ -190,23 +190,46 @@ const SummaryCompilePanel = ({ task, planId, stageLogs = [], onSaved }) => {
     const load = async () => {
       setLoading(true)
       try {
-        const { summary, leaderSubmittedDescription, submittedLogId: logId } = await loadLeaderCompileData(task.id)
-        if (cancelled) return
-        setLeaderSummary(summary)
-        
-        const matchingLog = stageLogs.find(
-          (l) => l.cultivationTaskId === task?.id || l.taskId === task?.id || l.workTaskId === task?.id
+        const taskId = task?.taskId || task?.id || task?.cultivationTaskId || task?.workTaskId
+        const hasFullData = task && (
+          Array.isArray(task.fertilizers) ||
+          Array.isArray(task.pesticides) ||
+          Array.isArray(task.images) ||
+          task.description
         )
-        const resolvedLogId = matchingLog?.id || logId || summary?.cultivationLogId || summary?.id
+
+        let summaryObj = null
+        let leaderDesc = ''
+        let logId = null
+
+        if (hasFullData) {
+          summaryObj = task.summary || task
+          leaderDesc = summaryObj.descriptionSummary || summaryObj.description || summaryObj.leaderSubmittedDescription || ''
+          logId = summaryObj.cultivationLogId || summaryObj.officialLogId || summaryObj.submittedLogId || summaryObj.id
+        } else if (taskId) {
+          const fetched = await loadLeaderCompileData(taskId)
+          if (cancelled) return
+          summaryObj = fetched.summary
+          leaderDesc = fetched.leaderSubmittedDescription || fetched.summary?.descriptionSummary || fetched.summary?.description || ''
+          logId = fetched.submittedLogId
+        }
+
+        if (cancelled) return
+        setLeaderSummary(summaryObj)
+
+        const matchingLog = stageLogs.find(
+          (l) => l.cultivationTaskId === taskId || l.taskId === taskId || l.workTaskId === taskId
+        )
+        const resolvedLogId = matchingLog?.id || logId || summaryObj?.cultivationLogId || summaryObj?.id
 
         setOfficialLogId(resolvedLogId)
-        setDescription(leaderSubmittedDescription || summary?.description || '')
+        setDescription(leaderDesc || summaryObj?.description || '')
       } catch (err) {
         console.error(err)
         if (!cancelled) {
-          setLeaderSummary(null)
-          setOfficialLogId(null)
-          setDescription('')
+          setLeaderSummary(task)
+          setOfficialLogId(task?.id || null)
+          setDescription(task?.description || '')
           message.error('Không tải được Summary từ Leader.')
         }
       } finally {
@@ -217,7 +240,7 @@ const SummaryCompilePanel = ({ task, planId, stageLogs = [], onSaved }) => {
     return () => {
       cancelled = true
     }
-  }, [task.id, stageLogs])
+  }, [task, stageLogs])
 
   const fertRows = mapMaterialRows(leaderSummary?.fertilizers, 'Phân')
   const pestRows = mapMaterialRows(leaderSummary?.pesticides, 'Thuốc')
@@ -230,11 +253,8 @@ const SummaryCompilePanel = ({ task, planId, stageLogs = [], onSaved }) => {
     }
     try {
       setSaving(true)
-      const matchingLog = stageLogs.find(
-        (l) => l.cultivationTaskId === task?.id || l.taskId === task?.id || l.workTaskId === task?.id
-      )
-      const targetId = matchingLog?.id || officialLogId || task?.id
-      await saveCompiledDescription(targetId, description.trim(), planId)
+      const targetStageId = stageId || task?.cultivationStageId || task?.stageId
+      await saveCompiledDescription(targetStageId, description.trim())
       message.success('Đã lưu mô tả vào Logbook!')
       onSaved?.()
     } catch (err) {
@@ -331,7 +351,7 @@ const SummaryCompilePanel = ({ task, planId, stageLogs = [], onSaved }) => {
             Mô tả gốc (Leader)
           </div>
           <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900 whitespace-pre-wrap">
-            {leaderSummary?.description || '—'}
+            {leaderSummary?.descriptionSummary || leaderSummary?.description || '—'}
           </div>
         </div>
       </div>
@@ -370,8 +390,9 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
   const { getStageStatus, getReviewStatus } = useCultivationStatus()
   const [selectedId, setSelectedId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-  const [loadingLogs, setLoadingLogs] = useState(false)
+  const [loadingStageSummary, setLoadingStageSummary] = useState(false)
   const [stageLogs, setStageLogs] = useState([])
+  const [stageSummary, setStageSummary] = useState(null)
   const [activeKeys, setActiveKeys] = useState([])
   const [editModal, setEditModal] = useState({ open: false, log: null, description: '' })
   const [savingEdit, setSavingEdit] = useState(false)
@@ -401,11 +422,11 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
       setEditModal({ open: false, log: null, description: '' })
 
       if (selectedId) {
-        const logsRes = await CultivationStageService.getStageLogs(selectedId, {
-          cultivationLogbookId: planId,
-        })
-        const logsData = unwrap(logsRes)
-        setStageLogs(Array.isArray(logsData) ? logsData : logsData?.items || [])
+        const summaryRes = await CultivationStageService.getSummary(selectedId)
+        const summaryData = unwrap(summaryRes)
+        setStageSummary(summaryData)
+        const logs = summaryData?.approvedLogs || summaryData?.officialLogs || summaryData?.logs || []
+        setStageLogs(Array.isArray(logs) ? logs : [])
       }
     } catch (err) {
       console.error(err)
@@ -424,9 +445,15 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
   const selectedStage = stages.find((s) => s.id === selectedId)
 
   const pendingSummaries = useMemo(() => {
+    if (stageSummary) {
+      const summaries = stageSummary.taskSummaries || stageSummary.summaries || stageSummary.items
+      if (Array.isArray(summaries)) {
+        return summaries
+      }
+    }
     if (!selectedId) return []
     return (tasks[selectedId] || []).filter((t) => canCompileTask(t.status))
-  }, [tasks, selectedId])
+  }, [stageSummary, tasks, selectedId])
 
   useEffect(() => {
     setActiveKeys([])
@@ -434,23 +461,24 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
 
   useEffect(() => {
     if (!selectedId) return
-    const load = async () => {
-      setLoadingLogs(true)
+    const loadStageData = async () => {
+      setLoadingStageSummary(true)
       try {
-        const logsRes = await CultivationStageService.getStageLogs(selectedId, {
-          cultivationLogbookId: planId,
-        })
-        const logsData = unwrap(logsRes)
-        setStageLogs(Array.isArray(logsData) ? logsData : logsData?.items || [])
+        const summaryRes = await CultivationStageService.getSummary(selectedId)
+        const summaryData = unwrap(summaryRes)
+        setStageSummary(summaryData)
+        const logs = summaryData?.approvedLogs || summaryData?.officialLogs || summaryData?.logs || []
+        setStageLogs(Array.isArray(logs) ? logs : [])
       } catch (err) {
         console.error(err)
+        setStageSummary(null)
         setStageLogs([])
       } finally {
-        setLoadingLogs(false)
+        setLoadingStageSummary(false)
       }
     }
-    load()
-  }, [selectedId, planId])
+    loadStageData()
+  }, [selectedId])
 
   const handleCompleteStage = async () => {
     if (!selectedId) {
@@ -477,11 +505,11 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
     await loadData?.()
     if (selectedId) {
       try {
-        const logsRes = await CultivationStageService.getStageLogs(selectedId, {
-          cultivationLogbookId: planId,
-        })
-        const logsData = unwrap(logsRes)
-        setStageLogs(Array.isArray(logsData) ? logsData : logsData?.items || [])
+        const summaryRes = await CultivationStageService.getSummary(selectedId)
+        const summaryData = unwrap(summaryRes)
+        setStageSummary(summaryData)
+        const logs = summaryData?.approvedLogs || summaryData?.officialLogs || summaryData?.logs || []
+        setStageLogs(Array.isArray(logs) ? logs : [])
       } catch (err) {
         console.error(err)
       }
@@ -549,7 +577,11 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
                 className="rounded-xl shadow-sm border-amber-200"
                 title={<span className="font-semibold text-amber-900">Summary chờ biên soạn</span>}
               >
-                {pendingSummaries.length === 0 ? (
+                {loadingStageSummary ? (
+                  <div className="py-8 text-center">
+                    <Spin tip="Đang tải Summary chờ biên soạn..." />
+                  </div>
+                ) : pendingSummaries.length === 0 ? (
                   <Empty
                     description="Không có Summary chờ duyệt"
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -564,22 +596,34 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
                       setActiveKeys(next)
                     }}
                     className="bg-transparent border-0"
-                    items={pendingSummaries.map((task, index) => ({
-                      key: task.id,
-                      label: (
-                        <div className="flex w-full flex-wrap items-center gap-2 pr-2">
-                          <Avatar
-                            size={24}
-                            style={{ backgroundColor: '#fef3c7', color: '#92400e', fontSize: 12, fontWeight: 700 }}
-                          >
-                            {index + 1}
-                          </Avatar>
-                          <Text strong>{task.name || task.taskName || 'Summary'}</Text>
-                          <Tag color="gold">Chờ biên soạn</Tag>
-                        </div>
-                      ),
-                      children: <SummaryCompilePanel task={task} planId={planId} stageLogs={stageLogs} onSaved={handleSaved} />,
-                    }))}
+                    items={pendingSummaries.map((taskItem, index) => {
+                      const itemKey = taskItem.id || taskItem.taskId || taskItem.cultivationTaskId || String(index)
+                      const taskName = taskItem.taskName || taskItem.name || taskItem.workTaskName || 'Summary'
+                      return {
+                        key: itemKey,
+                        label: (
+                          <div className="flex w-full flex-wrap items-center gap-2 pr-2">
+                            <Avatar
+                              size={24}
+                              style={{ backgroundColor: '#fef3c7', color: '#92400e', fontSize: 12, fontWeight: 700 }}
+                            >
+                              {index + 1}
+                            </Avatar>
+                            <Text strong>{taskName}</Text>
+                            <Tag color="gold">Chờ biên soạn</Tag>
+                          </div>
+                        ),
+                        children: (
+                          <SummaryCompilePanel
+                            task={taskItem}
+                            stageId={selectedId}
+                            planId={planId}
+                            stageLogs={stageLogs}
+                            onSaved={handleSaved}
+                          />
+                        ),
+                      }
+                    })}
                   />
                 )}
               </Card>
@@ -597,7 +641,7 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
                   </span>
                 }
               >
-                {loadingLogs ? (
+                {loadingStageSummary ? (
                   <div className="py-8 text-center">
                     <Spin tip="Đang tải Logbook giai đoạn..." />
                   </div>

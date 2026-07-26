@@ -5,6 +5,7 @@ import {
   apiDeleteCultivationTask,
   apiGetCultivationTaskById,
   apiGetCultivationTasks,
+  apiGetMyCultivationTasks,
   apiUpdateCultivationTask,
   apiStartCultivationTask,
   apiGetLeaderSummary,
@@ -15,6 +16,9 @@ const silentConfig = { skipNotice: true }
 
 const getAll = (params) =>
   http.get(apiGetCultivationTasks, { params, skipNotice: true })
+
+const getMyTasks = (params) =>
+  http.get(apiGetMyCultivationTasks, { params, skipNotice: true })
 
 const getById = (id) =>
   http.get(apiGetCultivationTaskById(id), silentConfig)
@@ -43,6 +47,7 @@ const submitSummary = (id, body) =>
 
 const CultivationTaskService = {
   getAll,
+  getMyTasks,
   getById,
   create,
   createBulk,

@@ -33,7 +33,7 @@ export const loadLeaderCompileData = async (taskId) => {
   const summaryRes = await CultivationTaskService.getLeaderSummary(taskId)
   const summary = unwrap(summaryRes) || null
 
-  const leaderSubmittedDescription = summary?.description || summary?.leaderSubmittedDescription || ''
+  const leaderSubmittedDescription = summary?.descriptionSummary || summary?.description || summary?.leaderSubmittedDescription || ''
   
   // Resolve Cultivation Log ID từ Summary object
   const submittedLogId =
@@ -50,16 +50,13 @@ export const loadLeaderCompileData = async (taskId) => {
 }
 
 /** 
- * Gọi API POST /api/cultivation-logs/{id}/approve 
- * truyền modifiedDescription & cultivationLogbookId
+ * Gọi API POST /api/cultivation-stages/{stageId}/official-logs
+ * Body: { supervisorDescription: description }
  */
-export const saveCompiledDescription = async (officialLogId, description, planId) => {
-  const targetId = officialLogId
+export const saveCompiledDescription = async (stageId, description) => {
+  const targetStageId = typeof stageId === 'object' ? (stageId.stageId || stageId.id || stageId.cultivationStageId) : stageId
   const payload = {
-    modifiedDescription: description,
+    supervisorDescription: description,
   }
-  if (planId) {
-    payload.cultivationLogbookId = planId
-  }
-  return await CultivationLogService.approve(targetId, payload)
+  return await CultivationStageService.createOfficialLogs(targetStageId, payload)
 }

@@ -44,7 +44,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
         setOfficialLogId(logId)
         setIsApproved(approved)
         form.setFieldsValue({
-          supervisorDescription: leaderSubmittedDescription || summary?.description || '',
+          supervisorDescription: leaderSubmittedDescription || summary?.descriptionSummary || summary?.description || '',
         })
       } catch (err) {
         console.error(err)
@@ -67,7 +67,8 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
       const values = await form.validateFields()
       setSaving(true)
 
-      await saveCompiledDescription(officialLogId, values.supervisorDescription)
+      const targetStageId = task?.cultivationStageId || task?.stageId
+      await saveCompiledDescription(targetStageId, values.supervisorDescription)
 
       message.success('Đã lưu và duyệt nhật ký chính thức!')
       onSuccess?.()
@@ -143,9 +144,9 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
                       </div>
                     )}
 
-                    {leaderSummary.description && (
+                    {(leaderSummary.descriptionSummary || leaderSummary.description) && (
                       <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm italic text-blue-900">
-                        "{leaderSummary.description}"
+                        "{leaderSummary.descriptionSummary || leaderSummary.description}"
                       </div>
                     )}
                   </div>

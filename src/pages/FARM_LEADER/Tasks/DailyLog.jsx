@@ -905,9 +905,9 @@ const DailyLog = () => {
             {(() => {
               const isLocal = !leaderSummary
               // Lấy ngày bắt đầu thực tế
-              const startDateStr = leaderSummary?.actualStartDate || leaderSummary?.startDate || task?.actualStartDate || task?.startDate || (dailyLogs.length > 0 ? dailyLogs[dailyLogs.length - 1]?.date : null)
+              const startDateStr = leaderSummary?.firstLogDate || leaderSummary?.actualStartDate || leaderSummary?.startDate || task?.actualStartDate || task?.startDate || (dailyLogs.length > 0 ? dailyLogs[dailyLogs.length - 1]?.date : null)
               // Lấy ngày kết thúc thực tế
-              const endDateStr = leaderSummary?.actualEndDate || leaderSummary?.completedAt || leaderSummary?.endDate || task?.actualEndDate || task?.endDate || (dailyLogs.length > 0 ? dailyLogs[0]?.date : null) || dayjs().format('YYYY-MM-DD')
+              const endDateStr = leaderSummary?.lastLogDate || leaderSummary?.actualEndDate || leaderSummary?.completedAt || leaderSummary?.endDate || task?.actualEndDate || task?.endDate || (dailyLogs.length > 0 ? dailyLogs[0]?.date : null) || dayjs().format('YYYY-MM-DD')
 
               const formattedStartDate = startDateStr ? dayjs(startDateStr).format('DD/MM/YYYY') : '—'
               const formattedEndDate = endDateStr ? dayjs(endDateStr).format('DD/MM/YYYY') : '—'
