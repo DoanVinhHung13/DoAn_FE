@@ -382,7 +382,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                     </Col>
                     <Col xs={24} sm={24} md={12}>
                       <Form.Item
-                        label={<>Nồng độ pha loãng </>}
+                        label={<>Lượng nước pha loãng (Tỉ lệ thuốc : nước) </>}
                         className="mb-3"
                       >
                         <div className="flex items-center gap-3">
