@@ -36,7 +36,6 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationStageService from 'src/services/CultivationStageService'
-import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import CultivationLogService from 'src/services/CultivationLogService'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { canCompileTask } from 'src/utils/cultivationStatus'
@@ -46,7 +45,7 @@ import {
   unwrap,
 } from './compileLogHelpers'
 
-const { Text, Title, Paragraph } = Typography
+const { Text, Title } = Typography
 const { TextArea } = Input
 
 const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
@@ -178,11 +177,10 @@ const pestColumns = [
 ]
 
 /** Expand: thông tin Summary (ảnh, phân, thuốc, mô tả) + textarea Supervisor */
-const SummaryCompilePanel = ({ task, stageId, planId, stageLogs = [], onSaved }) => {
+const SummaryCompilePanel = ({ task, stageId, onSaved }) => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [leaderSummary, setLeaderSummary] = useState(null)
-  const [officialLogId, setOfficialLogId] = useState(null)
   const [description, setDescription] = useState('')
 
   useEffect(() => {
@@ -200,35 +198,25 @@ const SummaryCompilePanel = ({ task, stageId, planId, stageLogs = [], onSaved })
 
         let summaryObj = null
         let leaderDesc = ''
-        let logId = null
 
         if (hasFullData) {
           summaryObj = task.summary || task
           leaderDesc = summaryObj.descriptionSummary || summaryObj.description || summaryObj.leaderSubmittedDescription || ''
-          logId = summaryObj.cultivationLogId || summaryObj.officialLogId || summaryObj.submittedLogId || summaryObj.id
         } else if (taskId) {
           const fetched = await loadLeaderCompileData(taskId)
           if (cancelled) return
           summaryObj = fetched.summary
           leaderDesc = fetched.leaderSubmittedDescription || fetched.summary?.descriptionSummary || fetched.summary?.description || ''
-          logId = fetched.submittedLogId
         }
 
         if (cancelled) return
         setLeaderSummary(summaryObj)
 
-        const matchingLog = stageLogs.find(
-          (l) => l.cultivationTaskId === taskId || l.taskId === taskId || l.workTaskId === taskId
-        )
-        const resolvedLogId = matchingLog?.id || logId || summaryObj?.cultivationLogId || summaryObj?.id
-
-        setOfficialLogId(resolvedLogId)
         setDescription(leaderDesc || summaryObj?.description || '')
       } catch (err) {
         console.error(err)
         if (!cancelled) {
           setLeaderSummary(task)
-          setOfficialLogId(task?.id || null)
           setDescription(task?.description || '')
           message.error('Không tải được Summary từ Leader.')
         }
@@ -240,7 +228,7 @@ const SummaryCompilePanel = ({ task, stageId, planId, stageLogs = [], onSaved })
     return () => {
       cancelled = true
     }
-  }, [task, stageLogs])
+  }, [task])
 
   const fertRows = mapMaterialRows(leaderSummary?.fertilizers, 'Phân')
   const pestRows = mapMaterialRows(leaderSummary?.pesticides, 'Thuốc')
@@ -254,7 +242,13 @@ const SummaryCompilePanel = ({ task, stageId, planId, stageLogs = [], onSaved })
     try {
       setSaving(true)
       const targetStageId = stageId || task?.cultivationStageId || task?.stageId
-      await saveCompiledDescription(targetStageId, description.trim())
+      const taskId = task?.taskId || task?.cultivationTaskId || task?.workTaskId || task?.id
+      if (!taskId) {
+        message.error('Không xác định được CultivationTaskId của Summary.')
+        return
+      }
+
+      await saveCompiledDescription(targetStageId, taskId, description.trim())
       message.success('Đã lưu mô tả vào Logbook!')
       onSaved?.()
     } catch (err) {
@@ -386,7 +380,7 @@ const SummaryCompilePanel = ({ task, stageId, planId, stageLogs = [], onSaved })
   )
 }
 
-const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
+const LogbookFinalizationTab = ({ stages, tasks = {}, loadData }) => {
   const { getStageStatus, getReviewStatus } = useCultivationStatus()
   const [selectedId, setSelectedId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -617,8 +611,6 @@ const LogbookFinalizationTab = ({ planId, stages, tasks = {}, loadData }) => {
                           <SummaryCompilePanel
                             task={taskItem}
                             stageId={selectedId}
-                            planId={planId}
-                            stageLogs={stageLogs}
                             onSaved={handleSaved}
                           />
                         ),
