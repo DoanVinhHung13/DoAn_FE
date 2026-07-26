@@ -89,8 +89,9 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
 
 const mapMaterialRows = (items = [], nameFallback) =>
   (Array.isArray(items) ? items : []).map((item, i) => ({
-    key: item.id || String(i),
+    key: item.id || item.taskId || String(i),
     name: item.name || item.fertilizerName || item.pesticideName || item.materialName || `${nameFallback} ${i + 1}`,
+    type: item.type || item.materialType || '',
     totalQuantity: item.totalQuantity ?? item.quantity ?? 0,
     unit: item.unit ?? item.quantityUnit ?? '',
     totalArea: item.totalArea ?? item.area ?? 0,
@@ -100,10 +101,15 @@ const mapMaterialRows = (items = [], nameFallback) =>
 
 const fertColumns = [
   {
-    title: 'Loại phân bón',
+    title: 'Phân bón',
     dataIndex: 'name',
     key: 'name',
-    render: (v) => <span className="font-medium text-gray-800">{v}</span>,
+    render: (v, r) => (
+      <div className="flex items-center gap-2">
+        <span className="font-medium text-gray-800">{v}</span>
+        {r.type && <Tag color="blue" className="rounded-full text-[11px] m-0">{r.type}</Tag>}
+      </div>
+    ),
   },
   {
     title: 'Tổng lượng',
@@ -128,21 +134,19 @@ const fertColumns = [
         <span className="text-gray-300">—</span>
       ),
   },
-  {
-    title: 'Số lần',
-    dataIndex: 'days',
-    key: 'days',
-    align: 'center',
-    render: (v) => <Tag className="rounded-full m-0" color="blue">{v}</Tag>,
-  },
 ]
 
 const pestColumns = [
   {
-    title: 'Loại thuốc BVTV',
+    title: 'Thuốc BVTV',
     dataIndex: 'name',
     key: 'name',
-    render: (v) => <span className="font-medium text-gray-800">{v}</span>,
+    render: (v, r) => (
+      <div className="flex items-center gap-2">
+        <span className="font-medium text-gray-800">{v}</span>
+        {r.type && <Tag color="purple" className="rounded-full text-[11px] m-0">{r.type}</Tag>}
+      </div>
+    ),
   },
   {
     title: 'Tổng lượng',
@@ -167,12 +171,29 @@ const pestColumns = [
         <span className="text-gray-300">—</span>
       ),
   },
+]
+
+const otherColumns = [
   {
-    title: 'Số lần',
-    dataIndex: 'days',
-    key: 'days',
-    align: 'center',
-    render: (v) => <Tag className="rounded-full m-0" color="purple">{v}</Tag>,
+    title: 'Vật tư',
+    dataIndex: 'name',
+    key: 'name',
+    render: (v, r) => (
+      <div className="flex items-center gap-2">
+        <span className="font-medium text-gray-800">{v}</span>
+        {r.type && <Tag color="cyan" className="rounded-full text-[11px] m-0">{r.type}</Tag>}
+      </div>
+    ),
+  },
+  {
+    title: 'Số lượng',
+    key: 'qty',
+    align: 'right',
+    render: (_, r) => (
+      <span className="font-semibold text-emerald-700">
+        {r.totalQuantity} <span className="font-normal text-gray-500">{r.unit}</span>
+      </span>
+    ),
   },
 ]
 
@@ -192,8 +213,12 @@ const SummaryCompilePanel = ({ task, stageId, onSaved }) => {
         const hasFullData = task && (
           Array.isArray(task.fertilizers) ||
           Array.isArray(task.pesticides) ||
+          Array.isArray(task.materials) ||
           Array.isArray(task.images) ||
-          task.description
+          task.description ||
+          task.descriptionSummary ||
+          task.leaderSubmittedDescription ||
+          task.draftDescription
         )
 
         let summaryObj = null
@@ -201,7 +226,7 @@ const SummaryCompilePanel = ({ task, stageId, onSaved }) => {
 
         if (hasFullData) {
           summaryObj = task.summary || task
-          leaderDesc = summaryObj.descriptionSummary || summaryObj.description || summaryObj.leaderSubmittedDescription || ''
+          leaderDesc = summaryObj.leaderSubmittedDescription || summaryObj.descriptionSummary || summaryObj.description || summaryObj.draftDescription || ''
         } else if (taskId) {
           const fetched = await loadLeaderCompileData(taskId)
           if (cancelled) return
@@ -230,8 +255,34 @@ const SummaryCompilePanel = ({ task, stageId, onSaved }) => {
     }
   }, [task])
 
-  const fertRows = mapMaterialRows(leaderSummary?.fertilizers, 'Phân')
-  const pestRows = mapMaterialRows(leaderSummary?.pesticides, 'Thuốc')
+  const allMaterials = useMemo(() => {
+    if (Array.isArray(leaderSummary?.materials) && leaderSummary.materials.length > 0) {
+      return mapMaterialRows(leaderSummary.materials, 'Vật tư')
+    }
+    return null
+  }, [leaderSummary])
+
+  const fertRows = useMemo(() => {
+    if (allMaterials) {
+      return allMaterials.filter(m => m.type.toLowerCase().includes('phân'))
+    }
+    return mapMaterialRows(leaderSummary?.fertilizers, 'Phân')
+  }, [allMaterials, leaderSummary])
+
+  const pestRows = useMemo(() => {
+    if (allMaterials) {
+      return allMaterials.filter(m => m.type.toLowerCase().includes('thuốc'))
+    }
+    return mapMaterialRows(leaderSummary?.pesticides, 'Thuốc')
+  }, [allMaterials, leaderSummary])
+
+  const otherRows = useMemo(() => {
+    if (allMaterials) {
+      return allMaterials.filter(m => !m.type.toLowerCase().includes('phân') && !m.type.toLowerCase().includes('thuốc'))
+    }
+    return []
+  }, [allMaterials])
+
   const images = leaderSummary?.images || []
 
   const handleSave = async () => {
@@ -287,27 +338,34 @@ const SummaryCompilePanel = ({ task, stageId, onSaved }) => {
             <Image.PreviewGroup
               items={images.map(img => typeof img === 'string' ? img : (img.url || img.imageUrl || img.fileUrl || img.path || img.src)).filter(Boolean)}
             >
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {images.map((img, idx) => {
                   const src = typeof img === 'string' ? img : (img.url || img.imageUrl || img.fileUrl || img.path || img.src)
+                  const label = typeof img === 'object' ? img.label : null
                   if (!src) return null
                   return (
-                    <div
-                      key={img.id || idx}
-                      className="h-20 w-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden cursor-pointer hover:border-green-400 hover:shadow-md transition-all duration-200 [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
-                    >
-                      <Image
-                        src={src}
-                        alt={`Ảnh ${idx + 1}`}
-                        preview={{
-                          src,
-                          mask: (
-                            <div className="flex items-center justify-center text-white text-[10px] font-semibold">
-                              <EyeOutlined /> Xem
-                            </div>
-                          ),
-                        }}
-                      />
+                    <div key={img.id || idx} className="flex flex-col items-center">
+                      <div
+                        className="h-20 w-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden cursor-pointer hover:border-green-400 hover:shadow-md transition-all duration-200 [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
+                      >
+                        <Image
+                          src={src}
+                          alt={label || `Ảnh ${idx + 1}`}
+                          preview={{
+                            src,
+                            mask: (
+                              <div className="flex items-center justify-center text-white text-[10px] font-semibold">
+                                <EyeOutlined /> Xem
+                              </div>
+                            ),
+                          }}
+                        />
+                      </div>
+                      {label && (
+                        <span className="mt-1 text-[11px] text-gray-500 max-w-[84px] truncate text-center font-medium">
+                          {label}
+                        </span>
+                      )}
                     </div>
                   )
                 })}
@@ -316,36 +374,69 @@ const SummaryCompilePanel = ({ task, stageId, onSaved }) => {
           </div>
         )}
 
-        <div>
-          <div className="mb-2 font-semibold text-blue-800">Phân bón</div>
-          <Table
-            columns={fertColumns}
-            dataSource={fertRows}
-            size="small"
-            pagination={false}
-            locale={{ emptyText: 'Chưa ghi nhận phân bón' }}
-            className="rounded-xl overflow-hidden border border-blue-100"
-          />
-        </div>
-
-        <div>
-          <div className="mb-2 font-semibold text-purple-800">Thuốc BVTV</div>
-          <Table
-            columns={pestColumns}
-            dataSource={pestRows}
-            size="small"
-            pagination={false}
-            locale={{ emptyText: 'Chưa ghi nhận thuốc BVTV' }}
-            className="rounded-xl overflow-hidden border border-purple-100"
-          />
-        </div>
-
-        <div>
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Mô tả gốc (Leader)
+        {fertRows.length > 0 && (
+          <div>
+            <div className="mb-2 font-semibold text-blue-800">Phân bón ({fertRows.length})</div>
+            <Table
+              columns={fertColumns}
+              dataSource={fertRows}
+              size="small"
+              pagination={false}
+              locale={{ emptyText: 'Chưa ghi nhận phân bón' }}
+              className="rounded-xl overflow-hidden border border-blue-100"
+            />
           </div>
-          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-900 whitespace-pre-wrap">
-            {leaderSummary?.descriptionSummary || leaderSummary?.description || '—'}
+        )}
+
+        {pestRows.length > 0 && (
+          <div>
+            <div className="mb-2 font-semibold text-purple-800">Thuốc BVTV ({pestRows.length})</div>
+            <Table
+              columns={pestColumns}
+              dataSource={pestRows}
+              size="small"
+              pagination={false}
+              locale={{ emptyText: 'Chưa ghi nhận thuốc BVTV' }}
+              className="rounded-xl overflow-hidden border border-purple-100"
+            />
+          </div>
+        )}
+
+        {otherRows.length > 0 && (
+          <div>
+            <div className="mb-2 font-semibold text-emerald-800">Vật tư khác ({otherRows.length})</div>
+            <Table
+              columns={otherColumns}
+              dataSource={otherRows}
+              size="small"
+              pagination={false}
+              locale={{ emptyText: 'Chưa ghi nhận vật tư khác' }}
+              className="rounded-xl overflow-hidden border border-emerald-100"
+            />
+          </div>
+        )}
+
+        {fertRows.length === 0 && pestRows.length === 0 && otherRows.length === 0 && (
+          <div className="text-xs text-gray-400 italic">Không có thông tin vật tư</div>
+        )}
+
+        {/* {leaderSummary?.draftDescription && (
+          <div>
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Mô tả tổng hợp báo cáo hàng ngày (Hệ thống)
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-2.5 text-xs text-gray-600 italic">
+              {leaderSummary.draftDescription}
+            </div>
+          </div>
+        )} */}
+
+        <div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Mô tả từ Farm Leader
+          </div>
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm font-medium text-blue-900 whitespace-pre-wrap">
+            {leaderSummary?.leaderSubmittedDescription || leaderSummary?.descriptionSummary || leaderSummary?.description || '—'}
           </div>
         </div>
       </div>
@@ -558,11 +649,18 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData }) => {
             </div>
           ) : (
             <div className="space-y-5">
-              <div className="flex flex-wrap items-center gap-2">
-                <CheckCircleOutlined className="text-green-600 text-xl" />
-                <Title level={5} className="!mb-0">
-                  {selectedStage.stageName}
-                </Title>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircleOutlined className="text-green-600 text-xl" />
+                  <Title level={5} className="!mb-0">
+                    {selectedStage.stageName}
+                  </Title>
+                </div>
+                {stageSummary?.reviewStatus && (
+                  <Tag color={getReviewStatus(stageSummary.reviewStatus).color} className="rounded-full px-3 py-0.5 text-xs font-semibold">
+                    Trạng thái: {getReviewStatus(stageSummary.reviewStatus).label}
+                  </Tag>
+                )}
               </div>
 
               <Card
@@ -591,7 +689,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData }) => {
                     }}
                     className="bg-transparent border-0"
                     items={pendingSummaries.map((taskItem, index) => {
-                      const itemKey = taskItem.id || taskItem.taskId || taskItem.cultivationTaskId || String(index)
+                      const itemKey = taskItem.taskId || taskItem.id || taskItem.cultivationTaskId || String(index)
                       const taskName = taskItem.taskName || taskItem.name || taskItem.workTaskName || 'Summary'
                       return {
                         key: itemKey,
@@ -643,11 +741,16 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData }) => {
                   <div className="space-y-3">
                     {stageLogs.map((log, index) => {
                       const taskName = log.taskName || log.workTaskName || log.name || `Mục ${index + 1}`
-                      const description = log.supervisorDescription || log.description || 'Chưa có mô tả'
-                      const fertilizers = log.fertilizers || log.totalFertilizers || log.summary?.fertilizers || []
-                      const pesticides = log.pesticides || log.totalPesticides || log.summary?.pesticides || []
+                      const description = log.supervisorDescription || log.description || log.descriptionSummary || 'Chưa có mô tả'
+                      const materials = log.materials || log.summary?.materials || []
+                      const fertilizers = log.fertilizers || log.totalFertilizers || log.summary?.fertilizers || materials.filter(m => (m.type || '').toLowerCase().includes('phân'))
+                      const pesticides = log.pesticides || log.totalPesticides || log.summary?.pesticides || materials.filter(m => (m.type || '').toLowerCase().includes('thuốc'))
+                      const otherMaterials = materials.filter(m => {
+                        const t = (m.type || '').toLowerCase()
+                        return !t.includes('phân') && !t.includes('thuốc')
+                      })
                       const images = log.images || log.summary?.images || []
-                      const reviewCfg = getReviewStatus(log.status)
+                      const reviewCfg = getReviewStatus(log.status || log.reviewStatus || 'APPROVED')
 
                       return (
                         <div
@@ -685,11 +788,41 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData }) => {
                             </div>
                           </div>
 
+                          {/* Thông tin ngày tháng */}
+                          {(log.workStartDate || log.workEndDate) && (
+                            <div className="flex flex-wrap gap-3 mb-3 p-2.5 bg-white rounded-lg border border-green-100 text-xs">
+                              {log.workStartDate && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-gray-400 font-medium">Bắt đầu:</span>
+                                  <span className="font-semibold text-gray-700">{formatDate(log.workStartDate)}</span>
+                                </div>
+                              )}
+                              {log.workEndDate && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-gray-400 font-medium">Kết thúc:</span>
+                                  <span className="font-semibold text-gray-700">{formatDate(log.workEndDate)}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                           {/* Mô tả final */}
                           <div className="bg-white rounded-lg p-3 border border-green-100 mb-3">
                             <div className="text-[11px] font-bold text-green-800 uppercase mb-1">Mô tả Logbook:</div>
                             <p className="text-sm text-gray-800 m-0 leading-relaxed whitespace-pre-wrap">{description}</p>
                           </div>
+
+                          {/* Vật tư dạng text (materialsText) */}
+                          {log.materialsText && (
+                            <div className="bg-blue-50/50 rounded-lg p-3 border border-blue-100 mb-3">
+                              <div className="text-[11px] font-bold text-blue-800 uppercase mb-1.5 flex items-center gap-1">
+                                <ExperimentOutlined className="text-blue-600" /> Vật tư sử dụng:
+                              </div>
+                              <p className="text-sm text-gray-700 m-0 whitespace-pre-wrap leading-relaxed">
+                                {log.materialsText}
+                              </p>
+                            </div>
+                          )}
 
                           {/* Vật tư: Phân bón & Thuốc BVTV */}
                           {(fertilizers.length > 0 || pesticides.length > 0) && (
@@ -732,10 +865,11 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData }) => {
                           {images.length > 0 && (
                             <div>
                               <div className="text-xs font-semibold text-gray-500 mb-1.5">Ảnh minh chứng:</div>
-                              <Image.PreviewGroup items={images.map(img => img.url || img.imageUrl).filter(Boolean)}>
+                              <Image.PreviewGroup items={images.map(img => (typeof img === 'string' ? img : (img.url || img.imageUrl || img.path || img.src || img.fileUrl))).filter(Boolean)}>
                                 <div className="flex flex-wrap gap-1.5">
                                   {images.map((img, i) => {
-                                    const src = img.url || img.imageUrl
+                                    const src = typeof img === 'string' ? img : (img.url || img.imageUrl || img.path || img.src || img.fileUrl)
+                                    if (!src) return null
                                     return (
                                       <div
                                         key={i}

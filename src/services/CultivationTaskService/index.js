@@ -10,6 +10,8 @@ import {
   apiStartCultivationTask,
   apiGetLeaderSummary,
   apiSubmitTaskSummary,
+  apiGetMyLogbookSummaries,
+  apiGetLogbookById,
 } from './urls'
 
 const silentConfig = { skipNotice: true }
@@ -45,6 +47,14 @@ const getLeaderSummary = (id) =>
 const submitSummary = (id, body) =>
   http.post(apiSubmitTaskSummary(id), body)
 
+// Farm Leader: left tree panel - logbook list with task counts
+const getMyLogbookSummaries = (params) =>
+  http.get(apiGetMyLogbookSummaries, { params, skipNotice: true })
+
+// Farm Leader: right panel - logbook detail + tasks (optional stageId, statuses)
+const getLogbookById = (logbookId, params) =>
+  http.get(apiGetLogbookById(logbookId), { params, skipNotice: true })
+
 const CultivationTaskService = {
   getAll,
   getMyTasks,
@@ -56,6 +66,8 @@ const CultivationTaskService = {
   start,
   getLeaderSummary,
   submitSummary,
+  getMyLogbookSummaries,
+  getLogbookById,
 }
 
 export default CultivationTaskService
