@@ -92,13 +92,6 @@ const FertilizerList = () => {
       ),
     },
     {
-      title: 'Mã',
-      dataIndex: 'code',
-      key: 'code',
-      width: 120,
-      render: (text) => <Text className="font-mono text-blue-600 text-sm">{text || '—'}</Text>,
-    },
-    {
       title: 'Tên phân bón',
       dataIndex: 'name',
       key: 'name',
