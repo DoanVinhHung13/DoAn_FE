@@ -30,7 +30,7 @@ const usageColumns = [
     render: (v) => <Text>{v || '—'}</Text>,
   },
   {
-    title: 'Nồng độ pha loãng',
+    title: 'Lượng nước pha loãng',
     dataIndex: 'concentration',
     key: 'concentration',
     align: 'center',
