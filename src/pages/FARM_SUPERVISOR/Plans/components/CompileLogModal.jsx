@@ -68,7 +68,13 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
       setSaving(true)
 
       const targetStageId = task?.cultivationStageId || task?.stageId
-      await saveCompiledDescription(targetStageId, values.supervisorDescription)
+      const taskId = task?.taskId || task?.cultivationTaskId || task?.workTaskId || task?.id
+      if (!taskId) {
+        message.error('Không xác định được CultivationTaskId của Summary.')
+        return
+      }
+
+      await saveCompiledDescription(targetStageId, taskId, values.supervisorDescription)
 
       message.success('Đã lưu và duyệt nhật ký chính thức!')
       onSuccess?.()

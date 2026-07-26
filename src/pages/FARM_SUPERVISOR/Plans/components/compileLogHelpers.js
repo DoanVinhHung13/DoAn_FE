@@ -2,7 +2,6 @@
  * Shared helpers for Supervisor biên soạn nhật ký từ leader-summary.
  */
 import CultivationTaskService from 'src/services/CultivationTaskService'
-import CultivationLogService from 'src/services/CultivationLogService'
 
 export const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 
@@ -51,11 +50,12 @@ export const loadLeaderCompileData = async (taskId) => {
 
 /** 
  * Gọi API POST /api/cultivation-stages/{stageId}/official-logs
- * Body: { supervisorDescription: description }
+ * Body: { cultivationTaskId, supervisorDescription: description }
  */
-export const saveCompiledDescription = async (stageId, description) => {
+export const saveCompiledDescription = async (stageId, taskId, description) => {
   const targetStageId = typeof stageId === 'object' ? (stageId.stageId || stageId.id || stageId.cultivationStageId) : stageId
   const payload = {
+    cultivationTaskId: taskId,
     supervisorDescription: description,
   }
   return await CultivationStageService.createOfficialLogs(targetStageId, payload)
