@@ -10,9 +10,6 @@ import {
   Modal,
   Form,
   InputNumber,
-  Row,
-  Col,
-  Statistic,
   Tooltip,
   Typography,
   Popconfirm,
@@ -30,10 +27,7 @@ import {
   WarningOutlined,
   ExclamationCircleOutlined,
   ShoppingCartOutlined,
-  AppstoreOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
-
 import TitleCustom from 'src/components/TitleCustom';
 import CustomTable from 'src/components/Table/CustomTable';
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants';
@@ -166,16 +160,6 @@ const ViewFarmSupplies = () => {
 
   const [form] = Form.useForm();
 
-  // Thống kê nhanh
-  const stats = useMemo(() => {
-    return {
-      totalItems: data.length,
-      totalQuantity: data.reduce((acc, item) => acc + item.stockQuantity, 0),
-      lowStock: data.filter((item) => item.status === 'LOW_STOCK').length,
-      outOfStock: data.filter((item) => item.status === 'OUT_OF_STOCK').length,
-    };
-  }, [data]);
-
   // Lọc dữ liệu
   const filteredData = useMemo(() => {
     return data.filter((item) => {
@@ -238,13 +222,6 @@ const ViewFarmSupplies = () => {
       ),
     },
     {
-      title: 'Mã vật tư',
-      dataIndex: 'code',
-      key: 'code',
-      width: 140,
-      render: (text) => <Text strong className="font-mono text-xs text-blue-700">{text}</Text>,
-    },
-    {
       title: 'Tên vật tư nông nghiệp',
       dataIndex: 'name',
       key: 'name',
@@ -253,7 +230,7 @@ const ViewFarmSupplies = () => {
           <Text strong className="block text-slate-800 hover:text-green-600 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleOpenDetail(record); }}>
             {text}
           </Text>
-          <Text className="text-xs text-slate-400 font-medium">Đơn vị: {record.unit} • Vị trí: {record.location}</Text>
+          <Text className="text-xs text-slate-400 font-medium">Đơn vị: {record.unit}</Text>
         </div>
       ),
     },
@@ -354,50 +331,6 @@ const ViewFarmSupplies = () => {
         </Button>
       </div>
 
-      {/* Thống kê nhanh */}
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={6}>
-          <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-            <Statistic
-              title={<Text className="text-xs text-slate-500 font-semibold">Danh mục vật tư</Text>}
-              value={stats.totalItems}
-              prefix={<AppstoreOutlined className="text-slate-600 mr-2" />}
-              valueStyle={{ color: '#0f172a', fontWeight: 'bold' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-            <Statistic
-              title={<Text className="text-xs text-slate-500 font-semibold">Tổng tồn kho (đơn vị)</Text>}
-              value={stats.totalQuantity}
-              prefix={<InboxOutlined className="text-emerald-600 mr-2" />}
-              valueStyle={{ color: '#16a34a', fontWeight: 'bold' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-            <Statistic
-              title={<Text className="text-xs text-slate-500 font-semibold">Cảnh báo sắp hết</Text>}
-              value={stats.lowStock}
-              prefix={<ExclamationCircleOutlined className="text-amber-500 mr-2" />}
-              valueStyle={{ color: '#d97706', fontWeight: 'bold' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card className="rounded-2xl border-slate-200/80 shadow-xs">
-            <Statistic
-              title={<Text className="text-xs text-slate-500 font-semibold">Đã hết hàng</Text>}
-              value={stats.outOfStock}
-              prefix={<WarningOutlined className="text-red-500 mr-2" />}
-              valueStyle={{ color: '#dc2626', fontWeight: 'bold' }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
       {/* Table Card & Toolbar */}
       <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: 0 }}>
         {/* Toolbar */}
@@ -408,7 +341,7 @@ const ViewFarmSupplies = () => {
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder="Tìm theo mã, tên vật tư..."
+            placeholder="Tìm theo tên vật tư..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="w-64 h-10 rounded-[18px]"
             allowClear

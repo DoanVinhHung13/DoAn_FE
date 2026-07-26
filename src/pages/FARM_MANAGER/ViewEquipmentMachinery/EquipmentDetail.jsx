@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Button, Tag, Typography, Row, Col, Divider, Space, Alert, Breadcrumb } from 'antd';
+import { Card, Button, Tag, Typography, Row, Col, Divider, Alert, Breadcrumb } from 'antd';
 import {
   ArrowLeftOutlined,
   EditOutlined,
@@ -9,8 +9,6 @@ import {
   SyncOutlined,
   SettingOutlined,
   WarningOutlined,
-  CalendarOutlined,
-  UserOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -137,7 +135,6 @@ const EquipmentDetail = () => {
           </Button>
           <div>
             <TitleCustom className="!mb-0">Chi tiết Máy móc & Thiết bị</TitleCustom>
-            <Text className="text-slate-500 text-xs font-mono">Mã: {item.code}</Text>
           </div>
         </div>
 
@@ -161,7 +158,6 @@ const EquipmentDetail = () => {
                 {item.name}
               </Title>
             </div>
-            <Text className="text-xs text-slate-500 block">Thương hiệu: <strong className="text-slate-700">{item.brand}</strong></Text>
           </div>
 
           <Tag color={tagInfo.color} icon={tagInfo.icon} className="px-3 py-1 rounded-full text-sm font-semibold self-start sm:self-auto">
@@ -189,35 +185,12 @@ const EquipmentDetail = () => {
                 <Text className="font-mono text-slate-700">{dayjs(item.purchaseDate).format('DD/MM/YYYY')}</Text>
               </div>
 
-              <div className="flex justify-between py-1.5 text-sm">
-                <Text className="text-slate-500">Phân công quản lý:</Text>
-                <Space>
-                  <UserOutlined className="text-emerald-600" />
-                  <Text strong className="text-slate-800">{item.assignedTo}</Text>
-                </Space>
-              </div>
             </div>
           </Col>
 
           <Col xs={24} md={12}>
             <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 space-y-3">
               <Text strong className="text-base text-slate-800 block mb-2">Tình trạng bảo dưỡng</Text>
-
-              <div className="flex justify-between py-1.5 border-b border-slate-200/50 text-sm">
-                <Text className="text-slate-500">Bảo dưỡng gần nhất:</Text>
-                <Space className="font-mono text-slate-700">
-                  <CalendarOutlined className="text-slate-400" />
-                  {item.lastMaintenance ? dayjs(item.lastMaintenance).format('DD/MM/YYYY') : 'Chưa cập nhật'}
-                </Space>
-              </div>
-
-              <div className="flex justify-between py-1.5 border-b border-slate-200/50 text-sm">
-                <Text className="text-slate-500">Lịch bảo dưỡng tiếp theo:</Text>
-                <Space className="font-mono text-blue-600 font-bold">
-                  <CalendarOutlined />
-                  {item.nextMaintenance ? dayjs(item.nextMaintenance).format('DD/MM/YYYY') : 'Chưa xếp lịch'}
-                </Space>
-              </div>
 
               <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100 mt-2">
                 <Text className="text-xs text-emerald-800 font-semibold block mb-1">Khuyến nghị vận hành:</Text>

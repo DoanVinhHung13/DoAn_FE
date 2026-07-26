@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, Form, Input, Select, DatePicker, Row, Col, message } from 'antd';
+import { Card, Button, Form, Input, Select, Row, Col, message } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, ToolOutlined } from '@ant-design/icons';
 import TitleCustom from 'src/components/TitleCustom';
 import ROUTER from 'src/router/ROUTER';
@@ -41,12 +41,7 @@ const EquipmentCreate = () => {
       <Card className="rounded-2xl border-slate-200/80 shadow-xs w-full">
         <Form form={form} layout="vertical" onFinish={handleFinish} className="space-y-4">
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="code" label="Mã thiết bị / Máy móc">
-                <Input placeholder="VD: MACH-KUBOTA-01" className="rounded-xl font-mono" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item name="name" label="Tên thiết bị / Máy móc" rules={[{ required: true, message: 'Nhập tên thiết bị' }]}>
                 <Input placeholder="VD: Máy cày Kubota L5018" className="rounded-xl" />
               </Form.Item>
@@ -67,34 +62,12 @@ const EquipmentCreate = () => {
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="brand" label="Thương hiệu / Xuất xứ">
-                <Input placeholder="VD: Kubota Nhật Bản" className="rounded-xl" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
+            <Col span={24}>
               <Form.Item name="power" label="Công suất / Thông số">
                 <Input placeholder="VD: 50 HP hoặc 10 m3/h" className="rounded-xl" />
               </Form.Item>
             </Col>
           </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="lastMaintenance" label="Ngày bảo dưỡng gần nhất">
-                <DatePicker className="w-full rounded-xl" format="DD/MM/YYYY" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="nextMaintenance" label="Hạn bảo dưỡng tiếp theo">
-                <DatePicker className="w-full rounded-xl" format="DD/MM/YYYY" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item name="assignedTo" label="Đội / Khu vực quản lý">
-            <Input placeholder="VD: Đội 1 - Vùng lúa ST25" className="rounded-xl" />
-          </Form.Item>
 
           <Form.Item name="notes" label="Ghi chú kỹ thuật & vận hành">
             <Input.TextArea rows={3} placeholder="Ghi chú về tình trạng thiết bị, phụ tùng thay thế..." className="rounded-xl" />
