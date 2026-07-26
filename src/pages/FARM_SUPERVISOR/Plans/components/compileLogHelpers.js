@@ -33,7 +33,7 @@ export const loadLeaderCompileData = async (taskId) => {
   const summaryRes = await CultivationTaskService.getLeaderSummary(taskId)
   const summary = unwrap(summaryRes) || null
 
-  const leaderSubmittedDescription = summary?.description || summary?.leaderSubmittedDescription || ''
+  const leaderSubmittedDescription = summary?.descriptionSummary || summary?.description || summary?.leaderSubmittedDescription || ''
   
   // Resolve Cultivation Log ID từ Summary object
   const submittedLogId =
