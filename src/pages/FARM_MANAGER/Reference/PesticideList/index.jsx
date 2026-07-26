@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react'
-import { Card, Input, Table, Typography, Tag, Breadcrumb, Select, Space, Badge } from 'antd'
-import { SearchOutlined, SafetyCertificateOutlined, FilterOutlined } from '@ant-design/icons'
-import ALL_PESTICIDES from './pesticide_data.json'
+import React, { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Alert, Badge, Breadcrumb, Card, Input, Select, Table, Tag, Typography } from 'antd'
+import { FilterOutlined, SafetyCertificateOutlined, SearchOutlined } from '@ant-design/icons'
+import CatalogService from 'src/services/CatalogService'
 
 const { Title, Text } = Typography
 
@@ -17,12 +18,54 @@ const CATEGORY_COLOR = {
   'THUỐC SỬ DỤNG CHO MỤC ĐÍCH KHÁC': 'geekblue',
 }
 
-const CATEGORIES = [...new Set(ALL_PESTICIDES.map(p => p.category))].filter(Boolean)
+const getCatalogItems = (response) => {
+  let payload = response
 
-const categoryOptions = [
-  { value: 'all', label: 'Tất cả nhóm thuốc' },
-  ...CATEGORIES.map(c => ({ value: c, label: c })),
-]
+  if (payload?.data !== undefined) payload = payload.data
+  if (payload?.data !== undefined) payload = payload.data
+
+  if (Array.isArray(payload)) return payload
+
+  return payload?.items || payload?.results || payload?.records || payload?.catalogs || []
+}
+
+const textValue = (...values) => values.find(value => typeof value === 'string' && value.trim()) || ''
+
+const getDescriptionPart = (description, label) => {
+  if (!description) return ''
+
+  const match = description.match(new RegExp(`${label}:\\s*([^.]*)`, 'i'))
+  return match?.[1]?.trim() || ''
+}
+
+const normalizePesticide = (item, index) => ({
+  id: item.id || item._id || item.code || `pesticide-${index}`,
+  code: textValue(item.code),
+  tradeName: textValue(item.tradeName, item.name, item.pesticideName, item.productName),
+  activeIngredient: textValue(
+    item.activeIngredient,
+    item.activeIngredients,
+    item.ingredient,
+    item.ingredients,
+    getDescriptionPart(item.description, 'Thành phần'),
+  ),
+  category: textValue(item.category, item.type, item.pesticideType, item.group, getDescriptionPart(item.description, 'Loại')),
+  target: textValue(
+    item.target,
+    item.targetOrganism,
+    item.preventionTarget,
+    item.usage,
+    getDescriptionPart(item.description, 'Đối tượng'),
+  ),
+  applicant: textValue(
+    item.applicant,
+    item.registrant,
+    item.company,
+    item.organization,
+    item.manufacturer,
+  ),
+  description: textValue(item.description),
+})
 
 const PesticideList = () => {
   const [searchText, setSearchText] = useState('')
@@ -30,19 +73,30 @@ const PesticideList = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
 
-  const filteredData = useMemo(() => {
-    setCurrentPage(1)
-    return ALL_PESTICIDES.filter(item => {
-      const matchCategory = selectedCategory === 'all' || item.category === selectedCategory
-      const q = searchText.toLowerCase()
-      const matchSearch = !q ||
-        item.tradeName?.toLowerCase().includes(q) ||
-        item.activeIngredient?.toLowerCase().includes(q) ||
-        item.applicant?.toLowerCase().includes(q) ||
-        item.target?.toLowerCase().includes(q)
-      return matchCategory && matchSearch
-    })
-  }, [searchText, selectedCategory])
+  const { data: pesticideResponse, isLoading, isError } = useQuery({
+    queryKey: ['license-catalog-pesticides', searchText.trim()],
+    queryFn: () => CatalogService.getCatalogPesticides({ search: searchText.trim() || undefined }),
+    staleTime: 60_000,
+  })
+
+  const pesticideData = useMemo(
+    () => getCatalogItems(pesticideResponse).map(normalizePesticide),
+    [pesticideResponse],
+  )
+
+  const categoryOptions = useMemo(() => {
+    const categories = [...new Set(pesticideData.map(item => item.category).filter(Boolean))]
+
+    return [
+      { value: 'all', label: 'Tất cả nhóm thuốc' },
+      ...categories.map(category => ({ value: category, label: category })),
+    ]
+  }, [pesticideData])
+
+  const filteredData = useMemo(
+    () => pesticideData.filter(item => selectedCategory === 'all' || item.category === selectedCategory),
+    [pesticideData, selectedCategory],
+  )
 
   const columns = [
     {
@@ -55,18 +109,25 @@ const PesticideList = () => {
       ),
     },
     {
+      title: 'Mã',
+      dataIndex: 'code',
+      key: 'code',
+      width: 120,
+      render: (text) => <Text className="font-mono text-blue-600 text-sm">{text || '—'}</Text>,
+    },
+    {
       title: 'Tên thương phẩm',
       dataIndex: 'tradeName',
       key: 'tradeName',
       width: 200,
-      render: (text) => <Text className="font-bold text-gray-800">{text}</Text>,
+      render: (text) => <Text className="font-bold text-gray-800">{text || '—'}</Text>,
     },
     {
       title: 'Hoạt chất',
       dataIndex: 'activeIngredient',
       key: 'activeIngredient',
       width: 200,
-      render: (text) => <Text className="text-gray-600 text-sm">{text}</Text>,
+      render: (text) => <Text className="text-gray-600 text-sm">{text || '—'}</Text>,
     },
     {
       title: 'Nhóm thuốc',
@@ -78,7 +139,7 @@ const PesticideList = () => {
           color={CATEGORY_COLOR[text] || 'default'}
           className="font-medium rounded border-0 whitespace-normal"
         >
-          {text}
+          {text || '—'}
         </Tag>
       ),
     },
@@ -86,20 +147,19 @@ const PesticideList = () => {
       title: 'Đối tượng phòng trừ',
       dataIndex: 'target',
       key: 'target',
-      render: (text) => <Text className="text-gray-700 text-sm">{text}</Text>,
+      render: (text) => <Text className="text-gray-700 text-sm">{text || '—'}</Text>,
     },
     {
       title: 'Tổ chức đề nghị đăng ký',
       dataIndex: 'applicant',
       key: 'applicant',
       width: 220,
-      render: (text) => <Text className="text-gray-600 text-sm">{text}</Text>,
+      render: (text) => <Text className="text-gray-600 text-sm">{text || '—'}</Text>,
     },
   ]
 
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      {/* Header */}
       <div className="space-y-3">
         <Breadcrumb
           items={[
@@ -116,7 +176,7 @@ const PesticideList = () => {
             <div>
               <Title level={4} className="!mb-1 font-bold">Danh mục Thuốc bảo vệ thực vật</Title>
               <Text className="text-gray-500">
-                Danh sách thuốc BVTV được cấp phép sử dụng tại Việt Nam (Theo Thông tư Bộ NN&MT 2025)
+                Danh sách thuốc BVTV đang hoạt động từ hệ thống EAPLS.
               </Text>
             </div>
           </div>
@@ -128,20 +188,27 @@ const PesticideList = () => {
         </div>
       </div>
 
-      {/* Filter bar */}
       <Card className="shadow-sm border-gray-100 rounded-2xl" bodyStyle={{ padding: '16px 20px' }}>
         <div className="flex flex-col sm:flex-row gap-3">
           <Input
-            placeholder="Tìm theo tên thương phẩm, hoạt chất, đối tượng, tổ chức đăng ký..."
+            value={searchText}
+            placeholder="Tìm theo tên hoặc mã thuốc BVTV..."
             size="large"
             prefix={<SearchOutlined className="text-gray-400" />}
             allowClear
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={(e) => {
+              setSearchText(e.target.value)
+              setSelectedCategory('all')
+              setCurrentPage(1)
+            }}
             className="rounded-xl h-11 border-gray-200"
           />
           <Select
             value={selectedCategory}
-            onChange={setSelectedCategory}
+            onChange={(value) => {
+              setSelectedCategory(value)
+              setCurrentPage(1)
+            }}
             options={categoryOptions}
             size="large"
             className="rounded-xl min-w-[220px] h-11"
@@ -150,11 +217,20 @@ const PesticideList = () => {
         </div>
       </Card>
 
-      {/* Table */}
+      {isError && (
+        <Alert
+          type="error"
+          showIcon
+          message="Không thể tải danh mục thuốc BVTV"
+          description="Vui lòng kiểm tra đăng nhập hoặc thử lại sau."
+        />
+      )}
+
       <Card className="shadow-lg border-gray-100 rounded-3xl overflow-hidden" bodyStyle={{ padding: 0 }}>
         <Table
           columns={columns}
           dataSource={filteredData}
+          loading={isLoading}
           rowKey="id"
           scroll={{ x: 1000 }}
           pagination={{
@@ -179,7 +255,6 @@ const PesticideList = () => {
         />
       </Card>
 
-      {/* Footer note */}
       <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl flex items-start gap-4">
         <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-600 shrink-0 mt-0.5">
           <SafetyCertificateOutlined className="text-lg" />
@@ -187,8 +262,7 @@ const PesticideList = () => {
         <div>
           <Text className="block font-bold text-gray-800 mb-1">Nguồn dữ liệu:</Text>
           <Text className="text-gray-600 text-[13px]">
-            Dữ liệu được trích xuất từ Phụ lục I — Danh mục thuốc bảo vệ thực vật được phép sử dụng tại Việt Nam,
-            ban hành kèm theo Thông tư số /2025/TT-BNNMT của Bộ trưởng Bộ Nông nghiệp và Môi trường.
+            Dữ liệu lấy trực tiếp từ API danh mục thuốc bảo vệ thực vật đang hoạt động của EAPLS.
           </Text>
         </div>
       </div>
