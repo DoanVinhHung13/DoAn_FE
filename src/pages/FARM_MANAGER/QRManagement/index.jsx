@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Button,
@@ -11,8 +11,6 @@ import {
   Checkbox,
   Typography,
   message,
-  Statistic,
-  Spin,
   Tag,
   DatePicker,
   Modal,
@@ -21,7 +19,6 @@ import {
   Descriptions,
   Space,
   Empty,
-  Divider,
 } from 'antd';
 import {
   QrcodeOutlined,
@@ -29,9 +26,7 @@ import {
   PrinterOutlined,
   CopyOutlined,
   PlusOutlined,
-  BarChartOutlined,
   SafetyOutlined,
-  ShareAltOutlined,
   EyeOutlined,
   ArrowLeftOutlined,
   CheckCircleOutlined,
@@ -40,7 +35,6 @@ import {
   CalendarOutlined,
   ExperimentOutlined,
 } from '@ant-design/icons';
-import { Coffee, Wheat, Sprout } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 import dayjs from 'dayjs';
@@ -51,18 +45,7 @@ import BatchService from 'src/services/BatchService';
 import ROUTER from 'src/router/ROUTER';
 import { mockBatches, getMockBatchById } from 'src/mocks/batchMockData';
 
-const { Text, Paragraph, Title } = Typography;
-
-const STATUS_MAP = {
-  CREATED: 'Vừa tạo',
-  PENDING: 'Chờ xử lý',
-  IN_PROGRESS: 'Đang thu hoạch',
-  IN_STORAGE: 'Hoàn thành - Lưu kho',
-  COMPLETED: 'Đã phân phối',
-  CANCELLED: 'Đã huỷ',
-};
-
-const getStatusLabel = (status) => STATUS_MAP[status] || status || 'Chưa thu hoạch';
+const { Text, Paragraph } = Typography;
 
 const QRManagement = () => {
   const navigate = useNavigate();
@@ -77,6 +60,8 @@ const QRManagement = () => {
 
   // Get batch info from URL params if present
   const batchIdFromUrl = searchParams.get('batchId');
+  const previewRequestedFromList = searchParams.get('preview') === '1';
+  const autoPreviewBatchIdRef = useRef(null);
 
   // Watch form fields for live updates
   const selectedBatchId = Form.useWatch('harvestBatchId', form);
@@ -93,7 +78,7 @@ const QRManagement = () => {
         const response = await BatchService.getBatches();
         const list = response?.data?.data?.items || response?.data?.data || response?.data?.items || response?.data || [];
         return list.length > 0 ? list : mockBatches;
-      } catch (error) {
+      } catch {
         return mockBatches;
       }
     },
@@ -111,17 +96,17 @@ const QRManagement = () => {
         harvestBatchId: String(harvestBatches[0].id),
       });
     }
-  }, [batchIdFromUrl, harvestBatches, form]);
+  }, [batchIdFromUrl, harvestBatches, form, selectedBatchId]);
 
   // 2. Fetch specific harvest batch detail by ID
-  const { data: batchDetail, isLoading: isLoadingBatchDetail } = useQuery({
+  const { data: batchDetail } = useQuery({
     queryKey: ['harvest-batch-detail', selectedBatchId],
     queryFn: async () => {
       if (!selectedBatchId) return null;
       try {
         const response = await BatchService.getBatchById(selectedBatchId);
         return response?.data?.data || response?.data;
-      } catch (error) {
+      } catch {
         return getMockBatchById(selectedBatchId) || harvestBatches.find((b) => String(b.id) === String(selectedBatchId)) || null;
       }
     },
@@ -156,16 +141,16 @@ const QRManagement = () => {
   });
 
   // Reset qrData & previewData ngay khi chọn lô thu hoạch khác
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setQrData(null);
     setPreviewData(null);
   }, [selectedBatchId]);
 
-  // Cập nhật qrData khi batchDetail hoặc existingQRData của lô hiện tại có sẵn (CHỈ KHI ĐÃ HOÀN THÀNH THU HOẠCH)
+  // Hiển thị QR hiện tại chỉ khi batch đã có QR đang hoạt động.
   useEffect(() => {
     if (batchDetail && String(batchDetail.id) === String(selectedBatchId)) {
-      const isHarvestDone = ['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail.status);
-      if (isHarvestDone && batchDetail.hasActiveQrCode) {
+      if (batchDetail.hasActiveQrCode) {
         setQrData({
           ...existingQRData,
           traceCode: batchDetail.activeTraceCode || existingQRData?.traceCode || existingQRData?.code || `QR-${batchDetail.batchCode}`,
@@ -177,29 +162,7 @@ const QRManagement = () => {
       }
     }
   }, [batchDetail, existingQRData, selectedBatchId]);
-
-  // Fetch QR stats
-  const { data: stats } = useQuery({
-    queryKey: ['qr-stats'],
-    queryFn: async () => {
-      try {
-        const response = await QRService.getQRStats();
-        return response?.data?.data || response?.data || {};
-      } catch (error) {
-        return {
-          totalScans: 1240,
-          reliability: 'Đã được kiểm chứng',
-          optimization: 'Tối ưu cho thiết bị di động',
-        };
-      }
-    },
-    retry: false,
-    initialData: {
-      totalScans: 1240,
-      reliability: 'Đã được kiểm chứng',
-      optimization: 'Tối ưu cho thiết bị di động',
-    },
-  });
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Active batch info for rendering
   const activeBatch = batchDetail || harvestBatches.find((b) => String(b.id) === String(selectedBatchId)) || {
@@ -211,10 +174,19 @@ const QRManagement = () => {
     area: 2.5,
   };
 
-  // Preview batch data: use real data if available, otherwise fallback demo for modal preview
+  const previewDisplayOptions = previewData?.displayOptions || {
+    showDailyLog: !!showDailyLog,
+    showMaterials: !!showMaterials,
+    showPhotos: !!showPhotos,
+    showCertificates: !!showCertificates,
+  };
+
+  // Preview data is supplied by the API. The batch is only a fallback for the
+  // surrounding layout fields that are not part of the traceability payload.
   const previewBatchData = {
     ...activeBatch,
-    dailyLogs: activeBatch?.dailyLogs || activeBatch?.logs || [
+    ...(previewData?.traceability || {}),
+    dailyLogs: previewData?.traceability?.dailyLogs || activeBatch?.dailyLogs || activeBatch?.logs || [
       {
         date: activeBatch?.startDate || '2024-03-12',
         stage: 'Gieo trồng',
@@ -240,7 +212,7 @@ const QRManagement = () => {
         notes: `Chất lượng đạt yêu cầu, năng suất tốt trên diện tích ${activeBatch?.area || 'N/A'} ha`,
       },
     ],
-    materials: activeBatch?.materials || activeBatch?.inputs || [
+    materials: previewData?.traceability?.materials || activeBatch?.materials || activeBatch?.inputs || [
       {
         type: 'Phân bón',
         name: 'NPK 20-20-15',
@@ -260,7 +232,7 @@ const QRManagement = () => {
         supplier: 'Trung tâm Giống cây trồng',
       },
     ],
-    photos: activeBatch?.photos || activeBatch?.images || [
+    photos: previewData?.traceability?.photos || activeBatch?.photos || activeBatch?.images || [
       {
         url: `https://placehold.co/400x300/22c55e/ffffff?text=${encodeURIComponent(activeBatch?.cropName || 'Nông sản')}+giai+đoạn+đầu`,
         caption: `${activeBatch?.cropName || 'Nông sản'} giai đoạn sinh trưởng`,
@@ -277,16 +249,16 @@ const QRManagement = () => {
         date: activeBatch?.harvestDate || '2024-05-20',
       },
     ],
-    certifications: activeBatch?.certifications || activeBatch?.certificates || ['VietGAP'],
+    certifications: previewData?.traceability?.certifications || previewData?.traceability?.certificates || activeBatch?.certifications || activeBatch?.certificates || ['VietGAP'],
   };
 
-  const getPublicTraceUrl = (code) => {
+  const getPublicTraceUrl = (code, displayOptions = previewDisplayOptions) => {
     if (!code) return '';
     const params = new URLSearchParams();
-    params.set('log', showDailyLog ? '1' : '0');
-    params.set('mat', showMaterials ? '1' : '0');
-    params.set('pic', showPhotos ? '1' : '0');
-    params.set('cert', showCertificates ? '1' : '0');
+    params.set('log', displayOptions.showDailyLog ? '1' : '0');
+    params.set('mat', displayOptions.showMaterials ? '1' : '0');
+    params.set('pic', displayOptions.showPhotos ? '1' : '0');
+    params.set('cert', displayOptions.showCertificates ? '1' : '0');
     return `${window.location.origin}/trace/${code}?${params.toString()}`;
   };
 
@@ -295,6 +267,9 @@ const QRManagement = () => {
     || previewData?.traceCode
     || (activeBatch?.batchCode ? `TR-${activeBatch.batchCode}` : 'TR-PREVIEW');
   const traceUrl = getPublicTraceUrl(currentTraceCode);
+  const previewTraceCode = previewData?.traceCode || '';
+  const previewTraceUrl = previewData?.qrCodeUrl
+    || getPublicTraceUrl(previewTraceCode, previewDisplayOptions);
 
   // 3. Preview QR mutation: POST /api/qr-codes/preview
   const previewQRMutation = useMutation({
@@ -302,33 +277,23 @@ const QRManagement = () => {
     onSuccess: (response) => {
       const data = response?.data?.data || response?.data;
       const result = {
-        traceCode: data?.traceCode || `TR-${activeBatch.batchCode || 'LOT'}`,
-        displayOptions: data?.displayOptions || {
-          showDailyLog: !!showDailyLog,
-          showMaterials: !!showMaterials,
-          showPhotos: !!showPhotos,
-          showCertificates: !!showCertificates,
-        },
+        ...data,
+        traceCode: data?.traceCode,
+        qrImageDataUrl: data?.qrImageDataUrl,
+        qrCodeUrl: data?.qrCodeUrl,
+        traceability: data?.traceability,
+        displayOptions: data?.displayOptions || previewDisplayOptions,
         harvestBatchId: selectedBatchId,
         isPreview: true,
       };
       setPreviewData(result);
+      setPreviewModalOpen(true);
       message.success('Xem preview mã QR thành công!');
     },
-    onError: () => {
-      const mockResult = {
-        traceCode: `TR-${activeBatch.batchCode || 'LOT'}`,
-        displayOptions: {
-          showDailyLog: !!showDailyLog,
-          showMaterials: !!showMaterials,
-          showPhotos: !!showPhotos,
-          showCertificates: !!showCertificates,
-        },
-        harvestBatchId: selectedBatchId,
-        isPreview: true,
-      };
-      setPreviewData(mockResult);
-      message.info('Đã tải bản xem trước (Preview) mã QR');
+    onError: (error) => {
+      setPreviewData(null);
+      setPreviewModalOpen(false);
+      message.error(error?.response?.data?.message || 'Không thể xem trước mã QR.');
     },
   });
 
@@ -346,21 +311,16 @@ const QRManagement = () => {
       setQrData(result);
       message.success('Tạo mã QR chính thức thành công!');
       queryClient.invalidateQueries({ queryKey: ['qr-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['harvest-batch-detail', selectedBatchId] });
+      queryClient.invalidateQueries({ queryKey: ['batches'] });
     },
-    onError: (error, variables) => {
-      const mockResult = {
-        qrCode: variables?.traceCode || currentTraceCode,
-        traceCode: variables?.traceCode || currentTraceCode,
-        harvestBatchId: selectedBatchId,
-        createdAt: new Date().toISOString(),
-      };
-      setQrData(mockResult);
-      message.success('Tạo mã QR thành công!');
+    onError: (error) => {
+      message.error(error?.response?.data?.message || 'Tạo mã QR thất bại.');
     },
   });
 
   // Action: Preview trang truy xuất
-  const handlePreview = async () => {
+  const handlePreview = useCallback(async () => {
     try {
       const values = await form.validateFields(['harvestBatchId']);
       const displayOptions = {
@@ -374,33 +334,48 @@ const QRManagement = () => {
         harvestBatchId: values.harvestBatchId,
         displayOptions,
       });
-    } catch (error) {
+    } catch {
       message.warning('Vui lòng chọn lô thu hoạch trước khi xem preview!');
     }
-  };
+  }, [form, previewQRMutation]);
 
   // Action: Tạo mã QR
   const handleCreateQR = async () => {
     try {
       const values = await form.validateFields(['harvestBatchId']);
-      const displayOptions = {
-        showDailyLog: !!form.getFieldValue('showDailyLog'),
-        showMaterials: !!form.getFieldValue('showMaterials'),
-        showPhotos: !!form.getFieldValue('showPhotos'),
-        showCertificates: !!form.getFieldValue('showCertificates'),
-      };
+      if (!previewData?.traceCode || previewData.harvestBatchId !== values.harvestBatchId) {
+        message.warning('Vui lòng xem trước QR trước khi tạo mã chính thức.');
+        return;
+      }
 
       const payload = {
         harvestBatchId: values.harvestBatchId,
-        traceCode: currentTraceCode,
-        displayOptions,
+        traceCode: previewData.traceCode,
+        displayOptions: previewData.displayOptions,
       };
 
       createQRMutation.mutate(payload);
-    } catch (error) {
+    } catch {
       message.warning('Vui lòng chọn lô thu hoạch!');
     }
   };
+
+  useEffect(() => {
+    if (
+      previewRequestedFromList &&
+      selectedBatchId &&
+      batchDetail &&
+      autoPreviewBatchIdRef.current !== selectedBatchId
+    ) {
+      autoPreviewBatchIdRef.current = selectedBatchId;
+      handlePreview();
+    }
+  }, [
+    batchDetail,
+    handlePreview,
+    previewRequestedFromList,
+    selectedBatchId,
+  ]);
 
   // Download QR SVG/Image
   const handleDownload = () => {
@@ -665,17 +640,17 @@ const QRManagement = () => {
               </Form>
 
               <div className="mt-6 space-y-3">
-                {/* Đã kiểm tra trạng thái thu hoạch */}
+                {/* QR is controlled by eligibility and active QR state, not harvest progress. */}
                 {(() => {
-                  const isHarvestDone = ['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail?.status);
+                  const isQrEligible = batchDetail?.isQrEligible === true;
 
-                  if (!isHarvestDone) {
+                  if (!isQrEligible) {
                     return (
                       <div className="space-y-3">
                         <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
                           <SafetyOutlined className="text-amber-600 text-lg flex-shrink-0" />
                           <Text className="text-amber-800 text-xs font-medium">
-                            Lô thu hoạch này chưa hoàn thành (Trạng thái: <strong>{getStatusLabel(batchDetail?.status)}</strong>). Cần hoàn thành thu hoạch (hàng vào kho) trước khi tạo mã QR.
+                            Lô thu hoạch này chưa đủ điều kiện tạo QR.
                           </Text>
                         </div>
                         <Button
@@ -685,7 +660,7 @@ const QRManagement = () => {
                           icon={<QrcodeOutlined />}
                           className="h-11 rounded-xl font-semibold"
                         >
-                          Tạo mã QR (Chưa hoàn thành thu hoạch)
+                          Tạo mã QR
                         </Button>
                         <Button
                           size="large"
@@ -694,7 +669,7 @@ const QRManagement = () => {
                           icon={<EyeOutlined />}
                           className="h-11 rounded-xl font-medium"
                         >
-                          Xem trước trang truy xuất
+                          Xem trước QR
                         </Button>
                       </div>
                     );
@@ -714,10 +689,11 @@ const QRManagement = () => {
                           size="large"
                           block
                           icon={<EyeOutlined />}
-                          onClick={() => setPreviewModalOpen(true)}
+                          onClick={handlePreview}
+                          loading={previewQRMutation.isPending}
                           className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
                         >
-                          Xem trước trang truy xuất
+                          Xem trước QR
                         </Button>
                       </>
                     );
@@ -741,10 +717,11 @@ const QRManagement = () => {
                         size="large"
                         block
                         icon={<EyeOutlined />}
-                        onClick={() => setPreviewModalOpen(true)}
+                        onClick={handlePreview}
+                        loading={previewQRMutation.isPending}
                         className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
                       >
-                        Xem trước trang truy xuất
+                        Xem trước QR
                       </Button>
                     </>
                   );
@@ -886,18 +863,16 @@ const QRManagement = () => {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-                  <div className={`w-20 h-20 ${!['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail?.status) ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-green-50 text-green-600 border-green-100'} rounded-2xl flex items-center justify-center mb-4 shadow-sm border`}>
+                  <div className={`w-20 h-20 ${batchDetail?.isQrEligible !== true ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-green-50 text-green-600 border-green-100'} rounded-2xl flex items-center justify-center mb-4 shadow-sm border`}>
                     <QrcodeOutlined className="text-4xl" />
                   </div>
                   <Text strong className="text-gray-800 text-lg mb-1">
-                    {!['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail?.status)
-                      ? 'Lô chưa hoàn thành thu hoạch'
-                      : 'Chưa tạo mã QR chính thức'}
+                    {batchDetail?.isQrEligible !== true ? 'Lô chưa đủ điều kiện tạo QR' : 'Chưa tạo mã QR chính thức'}
                   </Text>
                   <Paragraph className="text-xs text-gray-500 max-w-xs mb-0">
-                    {!['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batchDetail?.status)
-                      ? `Lô hàng này hiện ở trạng thái "${getStatusLabel(batchDetail?.status)}". Cần hoàn thành thu hoạch (đã vào kho) trước khi tạo mã QR.`
-                      : 'Vui lòng tùy chỉnh chọn các mục thông tin bên trái và bấm nút "Tạo mã QR chính thức" để sinh mã cho lô sản xuất này.'}
+                    {batchDetail?.isQrEligible !== true
+                      ? 'Lô hàng này chưa được hệ thống cho phép tạo QR.'
+                      : 'Vui lòng xem trước QR trước, sau đó bấm nút "Tạo mã QR chính thức" để lưu đúng mã truy xuất đã xem.'}
                   </Paragraph>
                 </div>
               )}
@@ -923,20 +898,33 @@ const QRManagement = () => {
         {/* Preview banner */}
         <div className="bg-amber-50 border-b border-amber-200 px-5 py-2 flex items-center gap-2">
           <EyeOutlined className="text-amber-500" />
-          <span className="text-xs text-amber-700 font-medium">Đây là bản xem trước. Dữ liệu thực sẽ được tải từ server khi người tiêu dùng quét mã QR.</span>
+          <span className="text-xs text-amber-700 font-medium">
+            Đây là bản xem trước, chưa lưu database.
+            {previewData?.traceability?.verificationStatus && (
+              <> Trạng thái: <strong>{previewData.traceability.verificationStatus}</strong>.</>
+            )}
+          </span>
         </div>
 
         {/* QR Code + Link Preview */}
         <div className="flex items-center gap-6 px-6 py-5 bg-white border-b border-gray-100">
           <div className="flex-shrink-0 p-3 bg-white rounded-xl shadow border border-gray-100 flex flex-col items-center">
-            <QRCodeSVG
-              value={getPublicTraceUrl(`TR-${previewBatchData?.batchCode || 'PREVIEW'}`)}
-              size={120}
-              level="H"
-              marginSize={1}
-              fgColor="#000000"
-              bgColor="#ffffff"
-            />
+            {previewData?.qrImageDataUrl ? (
+              <img
+                src={previewData.qrImageDataUrl}
+                alt={`QR xem trước ${previewBatchData?.batchCode || ''}`}
+                className="w-[120px] h-[120px] object-contain"
+              />
+            ) : (
+              <QRCodeSVG
+                value={previewTraceUrl}
+                size={120}
+                level="H"
+                marginSize={1}
+                fgColor="#000000"
+                bgColor="#ffffff"
+              />
+            )}
             <Text strong className="mt-2 block text-xs text-green-700 text-center">
               {previewBatchData?.batchCode}
             </Text>
@@ -944,18 +932,18 @@ const QRManagement = () => {
           <div className="flex-1 min-w-0">
             <Text className="text-xs text-gray-500 block mb-1">Mã truy xuất</Text>
             <Text strong className="text-sm text-green-800 font-mono block mb-3">
-              TR-{previewBatchData?.batchCode || 'PREVIEW'}
+              {previewTraceCode || '—'}
             </Text>
             <Text className="text-xs text-gray-500 block mb-1">Link truy xuất:</Text>
             <div className="flex items-center gap-2">
               <Text className="text-xs text-blue-600 font-mono truncate flex-1 bg-blue-50 px-2 py-1 rounded">
-                {getPublicTraceUrl(`TR-${previewBatchData?.batchCode || 'PREVIEW'}`)}
+                {previewTraceUrl || '—'}
               </Text>
               <Button
                 size="small"
                 icon={<CopyOutlined />}
                 onClick={() => {
-                  navigator.clipboard.writeText(getPublicTraceUrl(`TR-${previewBatchData?.batchCode || 'PREVIEW'}`));
+                  navigator.clipboard.writeText(previewTraceUrl);
                   message.success('Đã sao chép link truy xuất!');
                 }}
                 className="flex-shrink-0"
@@ -1025,7 +1013,7 @@ const QRManagement = () => {
             </Card>
 
             {/* Nhật ký hàng ngày */}
-            {showDailyLog ? (
+            {previewDisplayOptions.showDailyLog ? (
               <Card className="shadow-sm rounded-xl">
                 <Typography.Title level={5} className="!mb-3">📝 Nhật ký canh tác hàng ngày</Typography.Title>
                 {previewBatchData.dailyLogs?.length > 0 ? (
@@ -1061,7 +1049,7 @@ const QRManagement = () => {
             )}
 
             {/* Thông tin vật tư */}
-            {showMaterials ? (
+            {previewDisplayOptions.showMaterials ? (
               <Card className="shadow-sm rounded-xl">
                 <Typography.Title level={5} className="flex items-center gap-2 !mb-3">
                   <ExperimentOutlined className="text-orange-500" /> Thông tin vật tư sử dụng
@@ -1093,7 +1081,7 @@ const QRManagement = () => {
             )}
 
             {/* Hình ảnh thực địa */}
-            {showPhotos ? (
+            {previewDisplayOptions.showPhotos ? (
               <Card className="shadow-sm rounded-xl">
                 <Typography.Title level={5} className="!mb-3">📷 Hình ảnh thực tế tại vùng trồng</Typography.Title>
                 {previewBatchData.photos?.length > 0 ? (
@@ -1120,7 +1108,7 @@ const QRManagement = () => {
             )}
 
             {/* Chứng nhận chất lượng */}
-            {showCertificates ? (
+            {previewDisplayOptions.showCertificates ? (
               <Card className="shadow-sm rounded-xl">
                 <Typography.Title level={5} className="flex items-center gap-2 !mb-3">
                   <SafetyCertificateOutlined className="text-blue-600" /> Giấy chứng nhận chất lượng

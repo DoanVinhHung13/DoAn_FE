@@ -7,7 +7,6 @@ import {
   Descriptions,
   Row,
   Tag,
-  Progress,
   Typography,
   Spin,
   Divider,
@@ -26,35 +25,38 @@ import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 
 import TitleCustom from 'src/components/TitleCustom';
+import { SYSTEM_KEY } from 'src/constants/systemKey';
+import { useSystemKey } from 'src/hooks/useSystemKey';
 import BatchService from 'src/services/BatchService';
 import ROUTER from 'src/router/ROUTER';
 import { getMockBatchById } from 'src/mocks/batchMockData';
 
 const { Text, Paragraph } = Typography;
 
-// Ánh xạ giá trị API → nhãn tiếng Việt + màu sắc (chia sẻ với Batches list)
-// IN_STORAGE = hàng đã vào kho = thu hoạch XONG → 100% và được phép tạo QR
-const STATUS_MAP = {
-  CREATED:      { label: 'Vừa tạo',               color: 'purple', bgColor: 'bg-purple-100', textColor: 'text-purple-700', borderColor: 'border-purple-300', dot: 'bg-purple-500',  progressPct: 10,  progressStatus: 'normal',    desc: 'Lô vừa được tạo, chưa xử lý' },
-  PENDING:      { label: 'Chờ xử lý',             color: 'gold',   bgColor: 'bg-yellow-100', textColor: 'text-yellow-700', borderColor: 'border-yellow-300', dot: 'bg-yellow-400', progressPct: 20,  progressStatus: 'normal',    desc: 'Lô đang chờ xác nhận' },
-  IN_PROGRESS:  { label: 'Đang thu hoạch',         color: 'blue',   bgColor: 'bg-blue-100',   textColor: 'text-blue-700',   borderColor: 'border-blue-300',   dot: 'bg-blue-500',   progressPct: 60,  progressStatus: 'active',    desc: 'Đang trong quá trình thu hoạch ngoài đồng' },
-  IN_STORAGE:   { label: 'Hoàn thành - Lưu kho',  color: 'green',  bgColor: 'bg-green-100',  textColor: 'text-green-700',  borderColor: 'border-green-300',  dot: 'bg-green-500',  progressPct: 100, progressStatus: 'success',   desc: 'Thu hoạch hoàn thành — hàng đã vào kho, sẵn sàng tạo mã QR' },
-  COMPLETED:    { label: 'Đã phân phối',           color: 'teal',   bgColor: 'bg-teal-100',   textColor: 'text-teal-700',   borderColor: 'border-teal-300',   dot: 'bg-teal-500',   progressPct: 100, progressStatus: 'success',   desc: 'Lô đã được phân phối ra thị trường' },
-  CANCELLED:    { label: 'Đã huỷ',                color: 'red',    bgColor: 'bg-red-100',    textColor: 'text-red-700',    borderColor: 'border-red-300',    dot: 'bg-red-500',    progressPct: 0,   progressStatus: 'exception', desc: 'Lô đã bị huỷ bỏ' },
-  // Legacy Việt
-  'Chờ thu hoạch':  { label: 'Chờ thu hoạch',  color: 'orange', bgColor: 'bg-orange-100', textColor: 'text-orange-700', borderColor: 'border-orange-300', dot: 'bg-orange-400', progressPct: 30,  progressStatus: 'normal',  desc: 'Lô chờ đến thời điểm thu hoạch' },
-  'Đang thu hoạch': { label: 'Đang thu hoạch', color: 'blue',   bgColor: 'bg-blue-100',   textColor: 'text-blue-700',   borderColor: 'border-blue-300',   dot: 'bg-blue-500',   progressPct: 70,  progressStatus: 'active',  desc: 'Đang trong quá trình thu hoạch' },
-  'Đã hoàn thành':  { label: 'Đã hoàn thành',  color: 'green',  bgColor: 'bg-green-100',  textColor: 'text-green-700',  borderColor: 'border-green-300',  dot: 'bg-green-500',  progressPct: 100, progressStatus: 'success', desc: 'Thu hoạch hoàn thành — sẵn sàng tạo mã QR truy xuất' },
+const QR_STATUS = {
+  NOT_CREATED: {
+    label: 'Chưa tạo QR',
+    bgColor: 'bg-orange-100',
+    textColor: 'text-orange-700',
+    borderColor: 'border-orange-300',
+    dot: 'bg-orange-500',
+    desc: 'Lô chưa có mã QR đang hoạt động',
+  },
+  CREATED: {
+    label: 'Đã tạo QR',
+    bgColor: 'bg-green-100',
+    textColor: 'text-green-700',
+    borderColor: 'border-green-300',
+    dot: 'bg-green-500',
+    desc: 'Lô đã có mã QR đang hoạt động',
+  },
 };
 
-const PROGRESS_STROKE = {
-  green:  { '0%': '#10b981', '100%': '#059669' },
-  blue:   { '0%': '#3b82f6', '100%': '#2563eb' },
-  cyan:   { '0%': '#06b6d4', '100%': '#0891b2' },
-  orange: { '0%': '#f97316', '100%': '#ea580c' },
-  purple: { '0%': '#a855f7', '100%': '#9333ea' },
-  gold:   { '0%': '#eab308', '100%': '#ca8a04' },
-  red:    { '0%': '#ef4444', '100%': '#dc2626' },
+const getQrStatus = (batch) => {
+  if (batch?.qrStatus === 'CREATED' || batch?.qrStatus === 'NOT_CREATED') {
+    return batch.qrStatus;
+  }
+  return batch?.hasActiveQrCode === true ? 'CREATED' : 'NOT_CREATED';
 };
 
 const getCropIcon = (cropName) => {
@@ -67,6 +69,7 @@ const getCropIcon = (cropName) => {
 const BatchDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { getDescription } = useSystemKey();
 
   // Fetch batch detail: GET /api/harvest-batches/{id}
   const { data: batch, isLoading } = useQuery({
@@ -75,7 +78,7 @@ const BatchDetail = () => {
       try {
         const response = await BatchService.getBatchById(id);
         return response?.data?.data || response?.data;
-      } catch (error) {
+      } catch {
         return getMockBatchById(id) || null;
       }
     },
@@ -101,19 +104,14 @@ const BatchDetail = () => {
     );
   }
 
-  const statusConfig = STATUS_MAP[batch.status] || {
-    label: batch.status || 'Chưa xác định',
-    color: 'default', bgColor: 'bg-gray-100', textColor: 'text-gray-700',
-    borderColor: 'border-gray-200', dot: 'bg-gray-400',
-    progressPct: 10, progressStatus: 'normal',
-    desc: 'Trạng thái không xác định',
+  const qrStatus = getQrStatus(batch);
+  const fallbackStatusConfig = QR_STATUS[qrStatus] || QR_STATUS.NOT_CREATED;
+  const statusConfig = {
+    ...fallbackStatusConfig,
+    label: getDescription(SYSTEM_KEY.QR_STATUS, qrStatus) || fallbackStatusConfig.label,
   };
-  const progressInfo = { percent: statusConfig.progressPct, status: statusConfig.progressStatus };
-  const strokeColor = PROGRESS_STROKE[statusConfig.color] || { '0%': '#9ca3af', '100%': '#6b7280' };
-  const isHarvestCompleted = ['IN_STORAGE', 'COMPLETED', 'Đã hoàn thành'].includes(batch.status);
-  const canCreateQR = isHarvestCompleted && batch.isQrEligible === true && !batch.hasActiveQrCode;
-  const hasQR = isHarvestCompleted && batch.hasActiveQrCode === true;
-  const isCompleted = isHarvestCompleted;
+  const canCreateQR = batch.isQrEligible === true && batch.hasActiveQrCode === false;
+  const hasQR = batch.hasActiveQrCode === true;
 
   return (
     <div className="p-6 space-y-6">
@@ -137,12 +135,12 @@ const BatchDetail = () => {
               size="large"
               onClick={() =>
                 navigate(
-                  `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                    `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}&preview=1`
                 )
               }
               className="bg-green-600 hover:bg-green-700 h-10 px-5 rounded-lg font-semibold"
             >
-              Tạo mã QR mới
+              Xem trước QR
             </Button>
           )}
           {hasQR && !canCreateQR && (
@@ -172,7 +170,7 @@ const BatchDetail = () => {
                 {getCropIcon(batch.cropName)}
               </div>
             </Col>
-            <Col xs={24} sm={13}>
+              <Col xs={24} sm={20}>
               <div className="space-y-1">
                 <div className="flex items-center gap-3 flex-wrap">
                   <Text className="text-2xl font-bold text-gray-900">{batch.batchCode}</Text>
@@ -188,24 +186,6 @@ const BatchDetail = () => {
                 {batch.description && (
                   <Paragraph className="!mb-0 text-gray-500 text-sm mt-1">{batch.description}</Paragraph>
                 )}
-              </div>
-            </Col>
-            <Col xs={24} sm={7}>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Text className="text-gray-600">Tiến độ thu hoạch</Text>
-                  <Text strong className={statusConfig.textColor}>{progressInfo.percent}%</Text>
-                </div>
-                <Progress
-                  percent={progressInfo.percent}
-                  status={progressInfo.status}
-                  strokeColor={strokeColor}
-                  strokeWidth={10}
-                  showInfo={false}
-                />
-                <Text className={`text-xs block text-right font-medium ${statusConfig.textColor}`}>
-                  {statusConfig.label}
-                </Text>
               </div>
             </Col>
           </Row>
@@ -312,12 +292,12 @@ const BatchDetail = () => {
                     icon={<QrcodeOutlined />}
                     onClick={() =>
                       navigate(
-                        `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                        `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}&preview=1`
                       )
                     }
                     className="h-12 rounded-lg bg-green-600 hover:bg-green-700 font-semibold"
                   >
-                    Tạo mã QR truy xuất mới
+                    Xem trước QR
                   </Button>
                 )}
 
