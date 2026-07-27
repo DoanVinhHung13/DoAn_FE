@@ -550,7 +550,7 @@ const CultivationLogbookCreate = () => {
 
       const createdPlanId = getCreatedPlanId(response)
       if (createdPlanId) {
-        navigate(ROUTER.FM_PRODUCTION_PLAN_DETAIL.replace(':id', createdPlanId))
+        navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', createdPlanId))
       } else {
       }
     } catch (error) {
@@ -800,7 +800,7 @@ const CultivationLogbookCreate = () => {
           {isEdit && (
             <Button
               type="default"
-              onClick={() => navigate(ROUTER.FM_PRODUCTION_PLAN_DETAIL.replace(':id', id))}
+              onClick={() => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', id))}
               className="h-10 px-6 font-semibold rounded-xl"
             >
               Hủy

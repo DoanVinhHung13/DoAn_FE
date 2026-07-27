@@ -197,7 +197,7 @@ const CultivationLogbookList = () => {
               onClick={(event) => {
                 event.stopPropagation()
                 navigate(
-                  ROUTER.FM_PRODUCTION_PLAN_EDIT.replace(':id', record.id)
+                  ROUTER.FM_CULTIVATION_LOGBOOK_EDIT.replace(':id', record.id)
                 )
               }}
             />
@@ -275,7 +275,7 @@ const CultivationLogbookList = () => {
           loading={loading}
           scroll={{ x: 1000 }}
           onRow={(record) => ({
-            onClick: () => navigate(ROUTER.FM_PRODUCTION_PLAN_DETAIL.replace(':id', record.id)),
+            onClick: () => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
           locale={{ emptyText: 'Chưa có nhật ký canh tác nào.' }}
