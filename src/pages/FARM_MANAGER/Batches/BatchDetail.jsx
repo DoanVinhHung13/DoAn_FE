@@ -137,7 +137,9 @@ const BatchDetail = () => {
                   )
                 }
                 className="bg-green-600 hover:bg-green-700 h-10 px-3 rounded-lg font-semibold"
-              />
+              >
+                Tạo mã QR
+              </Button>
             </Tooltip>
           )}
           {hasQR && !canCreateQR && (
@@ -153,7 +155,9 @@ const BatchDetail = () => {
                   )
                 }
                 className="bg-blue-500 hover:bg-blue-600 h-10 px-3 rounded-lg font-semibold"
-              />
+              >
+                Xem mã QR
+              </Button>
             </Tooltip>
           )}
         </Space>
@@ -296,7 +300,9 @@ const BatchDetail = () => {
                         )
                       }
                       className="h-12 rounded-lg bg-green-600 hover:bg-green-700 font-semibold"
-                    />
+                    >
+                      Tạo mã QR
+                    </Button>
                   </Tooltip>
                 )}
 
@@ -314,7 +320,9 @@ const BatchDetail = () => {
                         )
                       }
                       className="h-12 rounded-lg bg-blue-500 hover:bg-blue-600 font-semibold"
-                    />
+                    >
+                      Xem mã QR
+                    </Button>
                   </Tooltip>
                 )}
 
