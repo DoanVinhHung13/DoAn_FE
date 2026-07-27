@@ -213,11 +213,11 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                         <div>
                           <div className="text-xs font-semibold text-gray-500 mb-2">Ảnh minh chứng:</div>
                           <Image.PreviewGroup
-                            items={log.images.map((img) => img.url || img.imageUrl).filter(Boolean)}
+                            items={log.images.map((img) => typeof img === 'string' ? img : (img.url ?? null)).filter(Boolean)}
                           >
                             <div className="flex flex-wrap gap-2">
                               {log.images.map((img, i) => {
-                                const src = img.url || img.imageUrl
+                                const src = typeof img === 'string' ? img : (img.url ?? null)
                                 return (
                                   <div
                                     key={i}

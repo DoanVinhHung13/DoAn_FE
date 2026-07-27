@@ -23,7 +23,6 @@ import {
 } from '@ant-design/icons';
 import { Sprout, Wheat } from 'lucide-react';
 import dayjs from 'dayjs';
-import { mockBatches } from 'src/mocks/batchMockData';
 import BatchService from 'src/services/BatchService';
 
 const { Title, Paragraph, Text } = Typography;
@@ -70,7 +69,7 @@ const Trace = () => {
     const normalizedRaw = rawCode.toLowerCase();
     const cleanCode = rawCode.replace(/^(TR-|QR-|EAPLS-)/i, '').trim().toLowerCase();
 
-    const allBatches = [...apiBatches, ...mockBatches];
+    const allBatches = apiBatches;
 
     // Priority 1: Exact match by activeTraceCode, batchCode, or id
     let matched = allBatches.find(

@@ -8,13 +8,7 @@ import {
 import { Card, Empty } from 'antd'
 import { formatDate } from 'src/utils/dateFormatters'
 import { getLandPlotNamesDisplay } from 'src/utils/helpers'
-
-const SectionTitle = ({ children }) => (
-  <div className="flex items-center gap-3 mb-5">
-    <span className="w-1 h-6 bg-green-500 rounded-full" />
-    <h3 className="m-0 text-base font-bold text-gray-800">{children}</h3>
-  </div>
-)
+import SectionTitle from 'src/components/Common/SectionTitle'
 
 const EmptyValue = ({ children }) =>
   children || <span className="text-gray-400">Chưa cập nhật</span>

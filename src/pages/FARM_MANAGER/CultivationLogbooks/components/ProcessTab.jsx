@@ -8,15 +8,9 @@ import { Card, Empty, Image, Tag, Spin, List, Avatar, Typography, Alert, Divider
 import { useEffect, useState } from 'react'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationLogService from 'src/services/CultivationLogService'
+import SectionTitle from 'src/components/Common/SectionTitle'
 
 const { Text } = Typography
-
-const SectionTitle = ({ children }) => (
-  <div className="flex items-center gap-3 mb-5">
-    <span className="w-1 h-6 bg-green-500 rounded-full" />
-    <h3 className="m-0 text-base font-bold text-gray-800">{children}</h3>
-  </div>
-)
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
 const StageListItem = ({ stage, index, isActive, onClick }) => (

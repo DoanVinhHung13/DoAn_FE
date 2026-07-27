@@ -70,7 +70,7 @@ const SORT_OPTIONS = [
 
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
 
-const getItemId = (item) => item?.id || item?._id || item?.cropId;
+const getItemId = (item) => item?.id;
 const CATEGORY_TAG_COLORS = [
   { bg: '#dcfce7', text: '#15803d' },
   { bg: '#dbeafe', text: '#1d4ed8' },

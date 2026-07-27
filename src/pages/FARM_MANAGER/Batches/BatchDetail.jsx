@@ -30,7 +30,6 @@ import { SYSTEM_KEY } from 'src/constants/systemKey';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import BatchService from 'src/services/BatchService';
 import ROUTER from 'src/router/ROUTER';
-import { getMockBatchById } from 'src/mocks/batchMockData';
 
 const { Text, Paragraph } = Typography;
 
@@ -76,12 +75,8 @@ const BatchDetail = () => {
   const { data: batch, isLoading } = useQuery({
     queryKey: ['harvest-batch-detail-page', id],
     queryFn: async () => {
-      try {
-        const response = await BatchService.getBatchById(id);
-        return response?.data?.data || response?.data;
-      } catch {
-        return getMockBatchById(id) || null;
-      }
+      const response = await BatchService.getBatchById(id);
+      return response?.data?.data || response?.data || response;
     },
     enabled: !!id,
   });

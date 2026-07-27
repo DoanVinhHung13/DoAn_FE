@@ -146,7 +146,7 @@ const LogbookReview = () => {
     label: opt.description ?? opt.Description ?? opt.label ?? opt.name ?? opt.codeValue,
   }))
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const [detailRes, logsRes, auditRes] = await Promise.all([
@@ -161,16 +161,15 @@ const LogbookReview = () => {
       setAuditLogs(Array.isArray(auditData) ? auditData : auditData?.items || [])
     } catch (error) {
       console.error(error)
-      message.error(error.message || "Không thể tải nhật ký.")
       setLogbook(null)
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
     loadData()
-  }, [id])
+  }, [loadData])
 
   const handleApprove = async () => {
     try {
@@ -180,14 +179,12 @@ const LogbookReview = () => {
         quantity: values.quantity,
         unit: values.unit.trim(),
       })
-      message.success("Đã duyệt chốt sổ.")
       setApproveModal(false)
       approveForm.resetFields()
       await loadData()
     } catch (error) {
       if (error?.errorFields) return // form validation
       console.error(error)
-      message.error(error.message || "Duyệt nhật ký thất bại.")
     } finally {
       setApproving(false)
     }
@@ -203,11 +200,9 @@ const LogbookReview = () => {
       await CultivationLogbookService.rejectCompletion(id, {
         reason: rejectReason.trim(),
       })
-      message.success("Đã từ chối yêu cầu chốt sổ.")
       navigate(ROUTER.FM_LOGBOOKS)
     } catch (error) {
       console.error(error)
-      message.error(error.message || "Từ chối nhật ký thất bại.")
     } finally {
       setRejecting(false)
       setRejectModal(false)

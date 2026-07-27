@@ -8,13 +8,7 @@ import {
 import { Card, Empty, Timeline, Tag, Spin } from 'antd'
 import { useEffect, useState } from 'react'
 import { formatDateTime } from 'src/utils/dateFormatters'
-
-const SectionTitle = ({ children }) => (
-  <div className="flex items-center gap-3 mb-5">
-    <span className="w-1 h-6 bg-green-500 rounded-full" />
-    <h3 className="m-0 text-base font-bold text-gray-800">{children}</h3>
-  </div>
-)
+import SectionTitle from 'src/components/Common/SectionTitle'
 
 const ReviewHistoryTab = ({ item }) => {
   const [reviewHistory, setReviewHistory] = useState([])

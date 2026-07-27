@@ -100,9 +100,7 @@ const Notifications = () => {
     mutationFn: markAllNotificationsAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      message.success('Đã đánh dấu tất cả thông báo là đã đọc.');
     },
-    onError: () => message.error('Không thể đánh dấu tất cả là đã đọc.'),
   });
 
   const categoryOptions = useMemo(() => {

@@ -128,9 +128,9 @@ const instance = axios.create({
 // request header
 instance.interceptors.request.use(
   async config => {
-    const BASE_URL =
-      (typeof window !== "undefined" && window.env?.API_ROOT) ||
-      import.meta.env.VITE_API_ROOT
+    const BASE_URL = import.meta.env.DEV
+      ? '/api'
+      : ((typeof window !== "undefined" && window.env?.API_ROOT) || import.meta.env.VITE_API_ROOT || 'https://api.eapls.io.vn/api')
     config.params = { ...config.params }
     if (config.data) {
       config.data =

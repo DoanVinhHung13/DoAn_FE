@@ -186,9 +186,8 @@ const FarmSupervisorTaskDetail = () => {
         assignedLeaderName: leader?.fullName || leader?.name || '',
         assignments: farmersList.map((f) => ({ userId: f.id, fullName: f.fullName || f.name })),
       }))
-      message.success('Đã cập nhật phân công team!')
     } catch (err) {
-      if (!err.errorFields) message.error('Phân công thất bại.')
+      // form or api error
     } finally {
       setSavingAssign(false)
     }
@@ -203,8 +202,7 @@ const FarmSupervisorTaskDetail = () => {
       setActivating(true)
       await CultivationTaskService.start(taskId)
       setTask((prev) => ({ ...prev, status: 'IN_PROGRESS' }))
-      message.success('Công việc đã được kích hoạt! Farm Leader có thể bắt đầu ghi nhật ký.')
-    } catch { message.error('Kích hoạt thất bại.') } finally {
+    } finally {
       setActivating(false)
     }
   }
@@ -236,7 +234,6 @@ const FarmSupervisorTaskDetail = () => {
       }
       // Update task status to completed after compilation
       setTask((prev) => ({ ...prev, status: 'COMPLETED' }))
-      message.success('Đã lưu nhật ký chính thức!')
       setCompileModal(false)
     } catch { /* validation */ } finally {
       setSavingCompile(false)

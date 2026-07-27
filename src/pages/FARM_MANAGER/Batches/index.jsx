@@ -13,12 +13,11 @@ import { useNavigate } from "react-router-dom"
 import CustomTable from "src/components/Table/CustomTable"
 import TitleCustom from "src/components/TitleCustom"
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from "src/constants/pageSizeOptions"
-import { SYSTEM_KEY } from "src/constants/systemKey"
-import { useSystemKey } from "src/hooks/useSystemKey"
-import { filterMockBatches } from "src/mocks/batchMockData"
 import ROUTER from "src/router/ROUTER"
 import BatchService from "src/services/BatchService"
 import { invalidCharsRegex } from "src/utils/helpers"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 
 const { Text } = Typography
 
@@ -96,37 +95,21 @@ const Batches = () => {
   } = useQuery({
     queryKey: ["batches", page, pageSize, search, statusFilter],
     queryFn: async () => {
-      try {
-        const response = await BatchService.getBatches({
-          PageIndex: page,
-          PageSize: pageSize,
-          SearchKeyword: search || undefined,
-          BatchCode: search || undefined,
-        })
+      const response = await BatchService.getBatches({
+        PageIndex: page,
+        PageSize: pageSize,
+        SearchKeyword: search || undefined,
+        BatchCode: search || undefined,
+        Status: statusFilter === "all" ? undefined : statusFilter,
+      })
 
-        const innerData = response?.data || {}
-        const items = Array.isArray(innerData)
-          ? innerData
-          : innerData.items || []
-        const total = innerData.totalItems ?? innerData.total ?? items.length
-        const filteredItems = filterByQrStatus(items, statusFilter)
+      const innerData = response?.data?.data || response?.data || {}
+      const items = Array.isArray(innerData)
+        ? innerData
+        : innerData.items || []
+      const total = innerData.totalItems ?? innerData.totalCount ?? items.length
 
-        return {
-          items: filteredItems,
-          total: statusFilter === "all" ? total : filteredItems.length,
-        }
-      } catch {
-        const filtered = filterByQrStatus(
-          filterMockBatches({ batchCode: search }),
-          statusFilter,
-        )
-        const startIndex = (page - 1) * pageSize
-
-        return {
-          items: filtered.slice(startIndex, startIndex + pageSize),
-          total: filtered.length,
-        }
-      }
+      return { items, total }
     },
     retry: false,
   })

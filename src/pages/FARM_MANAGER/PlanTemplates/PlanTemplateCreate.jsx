@@ -115,14 +115,7 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
   )
 }
 
-const SectionTitle = ({ children }) => (
-  <div
-    className="px-4 py-2 mb-4 text-sm font-semibold text-green-800 rounded-lg"
-    style={{ background: "#f0fdf4", borderLeft: "3px solid #16a34a" }}
-  >
-    {children}
-  </div>
-)
+import SectionTitle from "src/components/Common/SectionTitle"
 
 const PlanTemplateCreate = () => {
   const navigate = useNavigate()

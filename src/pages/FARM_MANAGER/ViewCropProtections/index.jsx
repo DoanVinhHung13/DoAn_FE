@@ -132,7 +132,6 @@ const ViewCropProtections = () => {
         isActive: !item.isActive,
       })
       if (res?.success === false) return
-      message.success('Cập nhật trạng thái thuốc BVTV thành công.')
       setStatusModal({ open: false, item: null })
       getList()
     } finally {

@@ -3,6 +3,7 @@ import { Row, Col, Card, Typography, Button, Tag, Divider } from 'antd'
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { SafetyCertificateFilled } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import ROUTER from 'src/router/ROUTER'
 
 const { Title, Paragraph, Text } = Typography
 
@@ -48,7 +49,7 @@ const TcvnSection = () => {
                     block
                     size="large"
                     className="font-bold text-blue-600 transition-all border-blue-100 h-14 rounded-xl hover:bg-blue-50 shine-effect"
-                    onClick={() => navigate('/reference/tcvn')}
+                    onClick={() => navigate(ROUTER.TCVN)}
                   >
                     Tra cứu toàn bộ 35 tiêu chuẩn <ArrowRightOutlined />
                   </Button>

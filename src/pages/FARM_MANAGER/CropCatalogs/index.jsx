@@ -45,7 +45,7 @@ const STATUS_OPTIONS = [
 
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin danh mục cây trồng.';
 
-const getItemId = (item) => item?.id || item?._id || item?.cropCatalogId;
+const getItemId = (item) => item?.id;
 
 const displayValue = (value) => {
   if (value === null || value === undefined || value === '') return 'Chưa cập nhật';
@@ -53,26 +53,12 @@ const displayValue = (value) => {
 };
 
 const normalizeResponse = (response) => {
-  const payload = response?.data ?? response ?? {};
-  const data = payload?.data ?? payload;
-  const items = Array.isArray(data)
-    ? data
-    : data?.items ||
-      data?.results ||
-      data?.cropCatalogs ||
-      data?.crops ||
-      payload?.items ||
-      payload?.results ||
-      [];
-
+  const data = response?.data?.data ?? response?.data ?? response;
+  const items = Array.isArray(data) ? data : (data?.items || []);
   return { items };
 };
 
-const isCatalogActive = (item) => {
-  if (typeof item?.isActive === 'boolean') return item.isActive;
-  const status = String(item?.status || '').toLowerCase();
-  return !['inactive', 'disabled', 'deleted', 'ngừng hoạt động'].includes(status);
-};
+const isCatalogActive = (item) => item?.isActive !== false;
 
 const getStatusLabel = (item) =>
   isCatalogActive(item) ? 'Hoạt động' : 'Ngừng hoạt động';

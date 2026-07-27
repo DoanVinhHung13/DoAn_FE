@@ -1,7 +1,8 @@
-﻿import React from 'react'
+import React from 'react'
 import { Typography, Button } from 'antd'
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import ROUTER from 'src/router/ROUTER'
 
 const { Title, Paragraph } = Typography
 
@@ -9,7 +10,7 @@ const FooterSection = () => {
   const navigate = useNavigate()
 
   const handleGetStarted = () => {
-    navigate('/login')
+    navigate(ROUTER.LOGIN)
   }
 
   return (

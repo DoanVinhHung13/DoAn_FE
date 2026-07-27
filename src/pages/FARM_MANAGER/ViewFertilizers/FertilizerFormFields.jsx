@@ -62,20 +62,15 @@ const DEFAULT_NPK_OPTION = NPK_OPTION.length
 const DEFAULT_DOSAGE = { amount: '', unit: 'kg', areaUnit: 'ha', target: '' }
 
 // ── Section header helper ─────────────────────────────────────────────────────
-const SectionTitle = ({ children }) => (
-  <div
-    className="mb-4 px-4 py-2 rounded-lg font-semibold text-green-800"
-    style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 14 }}
-  >
-    {children}
-  </div>
-)
+import SectionTitle from 'src/components/Common/SectionTitle'
+import { useCropOptions } from 'src/hooks/useCropOptions'
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const { getCombo } = useSystemKey()
+  const { cropOptions, isCropsLoading } = useCropOptions()
 
   const FERTILIZER_TYPE_OPTIONS = getCombo(SYSTEM_KEY.FERTILIZER_TYPE).map(opt => ({
     value: opt.codeValue || opt.value,
@@ -99,45 +94,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const [loading, setLoading] = React.useState(false)
   const [components, setComponents] = React.useState(NPK_OPTION)
   const [dosages, setDosages] = React.useState([DEFAULT_DOSAGE])
-
-  const [cropsData, setCropsData] = React.useState(null);
-  const [isCropsLoading, setIsCropsLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    let isMounted = true;
-    const fetchCrops = async () => {
-      setIsCropsLoading(true);
-      try {
-        const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000 });
-        const payload = response?.data ?? response ?? {};
-        const data = payload?.data ?? payload;
-        const normalizedData = Array.isArray(data)
-          ? data
-          : data?.items || data?.results || data?.crops || data?.cropCatalogs || [];
-        if (isMounted) setCropsData(normalizedData);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        if (isMounted) setIsCropsLoading(false);
-      }
-    };
-    if (!cropsData) fetchCrops();
-    return () => { isMounted = false; };
-  }, [cropsData]);
-
-  const cropOptions = React.useMemo(() => {
-    if (!cropsData) return [];
-    return cropsData
-      .filter((c) => {
-        if (typeof c.isActive === 'boolean') return c.isActive;
-        const status = String(c.status || '').toLowerCase();
-        return !['inactive', 'disabled', 'deleted'].includes(status);
-      })
-      .map((c) => ({
-        value: c.id,
-        label: c.name,
-      }));
-  }, [cropsData]);
 
   // ── Populate form on open ──────────────────────────────────────────────────
   React.useEffect(() => {
@@ -317,18 +273,9 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         res = await FertilizerService.createFertilizer(body)
       }
 
-      if (res?.success === false) {
-        message.error(res.message || (res.errors && res.errors[0]) || 'Có lỗi xảy ra');
-        return
-      }
+      if (res?.success === false) return
 
       navigate(ROUTER.FM_VIEW_FERTILIZERS)
-      const errMsg = (
-        err?.response?.data?.message ||
-        err?.message ||
-        ''
-      )
-      message.error(errMsg || 'Có lỗi xảy ra');
     } finally {
       setLoading(false)
     }

@@ -42,7 +42,6 @@ import TitleCustom from 'src/components/TitleCustom';
 import QRService from 'src/services/QRService';
 import BatchService from 'src/services/BatchService';
 import ROUTER from 'src/router/ROUTER';
-import { mockBatches, getMockBatchById } from 'src/mocks/batchMockData';
 
 const { Text, Paragraph } = Typography;
 
@@ -71,13 +70,9 @@ const QRManagement = () => {
   const { data: harvestBatches = [] } = useQuery({
     queryKey: ['harvest-batches-select'],
     queryFn: async () => {
-      try {
-        const response = await BatchService.getBatches();
-        const list = response?.data?.data?.items || response?.data?.data || response?.data?.items || response?.data || [];
-        return list.length > 0 ? list : mockBatches;
-      } catch {
-        return mockBatches;
-      }
+      const response = await BatchService.getBatches();
+      const list = response?.data?.data?.items || response?.data?.data || response?.data?.items || response?.data || [];
+      return Array.isArray(list) ? list : [];
     },
   });
 
@@ -100,12 +95,8 @@ const QRManagement = () => {
     queryKey: ['harvest-batch-detail', selectedBatchId],
     queryFn: async () => {
       if (!selectedBatchId) return null;
-      try {
-        const response = await BatchService.getBatchById(selectedBatchId);
-        return response?.data?.data || response?.data;
-      } catch {
-        return getMockBatchById(selectedBatchId) || harvestBatches.find((b) => String(b.id) === String(selectedBatchId)) || null;
-      }
+      const response = await BatchService.getBatchById(selectedBatchId);
+      return response?.data?.data || response?.data || response;
     },
     enabled: !!selectedBatchId,
   });

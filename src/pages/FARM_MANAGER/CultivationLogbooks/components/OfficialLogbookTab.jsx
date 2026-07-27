@@ -176,7 +176,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                       const rawImages = summary.images || task.images || []
                       const images = rawImages.map(img => {
                         if (typeof img === 'string') return img
-                        return img.url || img.imageUrl || img.path || img.src || img.fileUrl || null
+                        return img.url ?? null
                       }).filter(Boolean)
 
                       const totalFertilizers = summary.totalFertilizers || summary.fertilizers || task.totalFertilizers || []

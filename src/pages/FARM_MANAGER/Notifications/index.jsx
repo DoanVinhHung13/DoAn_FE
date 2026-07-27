@@ -178,14 +178,8 @@ const FarmManagerNotifications = () => {
 
   const markAllReadMutation = useMutation({
     mutationFn: markAllNotificationsAsRead,
-    onSuccess: (response) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
-    },
-    onError: (error) => {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) message.error(errorMsg);
     },
   });
 
@@ -201,9 +195,7 @@ const FarmManagerNotifications = () => {
       };
       return createNotification(payload);
     },
-    onSuccess: (response) => {
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
+    onSuccess: () => {
       setIsCreating(false);
       form.resetFields();
       setRecipientType(RECIPIENT_TYPE.ALL);
@@ -211,10 +203,6 @@ const FarmManagerNotifications = () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       queryClient.invalidateQueries({ queryKey: ['sent-notifications'] });
       setActiveTab('sent');
-    },
-    onError: (error) => {
-      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
-      if (errorMsg) message.error(errorMsg);
     },
   });
 

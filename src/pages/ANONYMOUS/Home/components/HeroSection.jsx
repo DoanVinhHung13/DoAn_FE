@@ -1,4 +1,4 @@
-﻿import React from 'react'
+import React from 'react'
 import { Col, Row, Typography, Button, Space, Tag } from 'antd'
 import { ArrowRightOutlined, SearchOutlined, CheckCircleFilled } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
@@ -65,7 +65,7 @@ const HeroSection = () => {
               <Button
                 size="large"
                 className="h-16 px-10 text-lg font-bold transition-all border-2 border-gray-100 shadow-sm rounded-2xl hover:border-green-500 hover:text-green-600 hover-lift"
-                onClick={() => navigate('/reference/tcvn')}
+                onClick={() => navigate(ROUTER.TCVN)}
               >
                 Tra cứu tiêu chuẩn <SearchOutlined />
               </Button>

@@ -66,17 +66,11 @@ const UsersManagement = () => {
   const currentUser = useSelector(state => state.appGlobal.userInfo)
   const isFarmManager = currentUser?.role === ROLES.FARM_MANAGER
 
-  const { getCombo, getDescription } = useSystemKey()
-  const statusOptions = getCombo(SYSTEM_KEY.STATUS)
-  const roleOptions = getCombo(SYSTEM_KEY.ROLE)
-  const statusSystemOptions = getCombo(SYSTEM_KEY.STATUS)
+  const { getOptions, getDescription } = useSystemKey()
 
   const selectStatusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
-    ...statusSystemOptions.map(opt => ({
-      value: opt.codeValue || opt.value,
-      label: opt.label || opt.description,
-    })),
+    ...getOptions(SYSTEM_KEY.STATUS),
   ]
 
   // ── State ──────────────────────────────────────────────────

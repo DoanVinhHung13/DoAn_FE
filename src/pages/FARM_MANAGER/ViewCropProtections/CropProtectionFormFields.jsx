@@ -17,24 +17,14 @@ import ROUTER from "src/router/ROUTER"
 import CropManagementService from "src/services/CropManagementService"
 import PesticideService from "src/services/PesticideService"
 
-// ── Section header helper ─────────────────────────────────────────────────────
-const SectionTitle = ({ children }) => (
-  <div
-    className="px-4 py-2 mb-4 font-semibold text-green-800 rounded-lg"
-    style={{
-      background: "#f0fdf4",
-      borderLeft: "3px solid #16a34a",
-      fontSize: 14,
-    }}
-  >
-    {children}
-  </div>
-)
+import SectionTitle from "src/components/Common/SectionTitle"
+import { useCropOptions } from "src/hooks/useCropOptions"
 
 const CropProtectionFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
+  const { cropOptions, isCropsLoading } = useCropOptions()
 
   const { getCombo } = useSystemKey()
   const UNIT_OPTIONS = getCombo(SYSTEM_KEY.FERTILIZER_UNIT).map(opt => ({
@@ -45,54 +35,6 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
     value: opt.codeValue || opt.value,
     label: opt.label || opt.description,
   }))
-
-  const [cropsData, setCropsData] = React.useState(null)
-  const [isCropsLoading, setIsCropsLoading] = React.useState(false)
-
-  React.useEffect(() => {
-    let isMounted = true
-    const fetchCrops = async () => {
-      setIsCropsLoading(true)
-      try {
-        const response = await CropManagementService.getCrops({
-          PageIndex: 1,
-          PageSize: 1000,
-        })
-        const payload = response?.data ?? response ?? {}
-        const data = payload?.data ?? payload
-        const normalizedData = Array.isArray(data)
-          ? data
-          : data?.items ||
-            data?.results ||
-            data?.crops ||
-            data?.cropCatalogs ||
-            []
-        if (isMounted) setCropsData(normalizedData)
-      } catch (error) {
-        console.error(error)
-      } finally {
-        if (isMounted) setIsCropsLoading(false)
-      }
-    }
-    if (!cropsData) fetchCrops()
-    return () => {
-      isMounted = false
-    }
-  }, [cropsData])
-
-  const cropOptions = React.useMemo(() => {
-    if (!cropsData) return []
-    return cropsData
-      .filter(c => {
-        if (typeof c.isActive === "boolean") return c.isActive
-        const status = String(c.status || "").toLowerCase()
-        return !["inactive", "disabled", "deleted"].includes(status)
-      })
-      .map(c => ({
-        value: c.id,
-        label: c.name,
-      }))
-  }, [cropsData])
 
   React.useEffect(() => {
     if (isEdit) {

@@ -134,12 +134,8 @@ const FarmSupervisorPlanDetail = () => {
     try {
       setSubmitting(true)
       await CultivationLogbookService.submitCompletion(planId)
-      message.success('Đã gửi yêu cầu chốt sổ lên Farm Manager!')
       setSubmitModal(false)
       navigate(ROUTER.FS_PLANS)
-    } catch (error) {
-      console.error(error)
-      message.error(error.message || 'Gửi chốt sổ thất bại.')
     } finally {
       setSubmitting(false)
     }

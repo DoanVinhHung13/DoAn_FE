@@ -55,35 +55,19 @@ export const normalizeApiDetail = (response) => {
  * @returns {{ items: Array, total: number }}
  */
 export const normalizeLandPlotResponse = (response) => {
-  const payload = response?.data ?? response ?? {}
-  const data = payload?.data ?? payload
-
-  const items = Array.isArray(data)
-    ? data
-    : data?.items || data?.results || data?.landPlots || payload?.items || []
-
-  return {
-    items,
-    total:
-      data?.totalCount ||
-      data?.totalItems ||
-      data?.total ||
-      payload?.totalCount ||
-      items.length,
-  }
+  const data = response?.data?.data ?? response?.data ?? response
+  const items = Array.isArray(data) ? data : (data?.items || [])
+  const total = data?.totalItems ?? data?.totalCount ?? items.length
+  return { items, total }
 }
 
 // ── Status Helpers ───────────────────────────────────────────────────────────
 
-/** Lấy ID từ item (hỗ trợ nhiều key: id, _id, landPlotId) */
-export const getItemId = (item) => item?.id || item?._id || item?.landPlotId
+/** Lấy ID từ item */
+export const getItemId = (item) => item?.id
 
 /** Kiểm tra vùng trồng đang hoạt động hay không */
-export const isLandPlotActive = (item) => {
-  if (typeof item?.isActive === 'boolean') return item.isActive
-  const status = String(item?.status || '').toLowerCase()
-  return !['inactive', 'suspended', 'deactivated', 'ngừng hoạt động'].includes(status)
-}
+export const isLandPlotActive = (item) => item?.isActive !== false
 
 /** Trả về label trạng thái */
 export const getStatusLabel = (item) =>

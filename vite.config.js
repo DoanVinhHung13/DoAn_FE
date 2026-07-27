@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-
 import path from 'path'
 
 // https://vitejs.dev/config/
@@ -12,13 +11,13 @@ export default defineConfig({
     },
   },
   server: {
-    host: '0.0.0.0', // Cho phép truy cập từ mạng LAN (để test QR trên điện thoại)
+    host: '0.0.0.0', // Cho phép truy cập từ mạng LAN
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://103.245.236.147/api',
+        target: 'https://api.eapls.io.vn',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: false,
       },
     },
   }

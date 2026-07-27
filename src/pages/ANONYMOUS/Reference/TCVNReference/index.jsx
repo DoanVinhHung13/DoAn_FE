@@ -4,6 +4,7 @@ import { SearchOutlined, BookOutlined, InfoCircleOutlined, ArrowLeftOutlined } f
 import { useQuery } from '@tanstack/react-query';
 import api from 'src/services/01_axios';
 import { useNavigate } from 'react-router-dom';
+import ROUTER from 'src/router/ROUTER';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -21,36 +22,30 @@ const TCVNReference = () => {
 
     const columns = [
         {
-            title: 'STT',
-            dataIndex: 'stt',
-            key: 'stt',
-            width: 70,
-            align: 'center',
-            render: (text) => <Text className="font-bold text-gray-400">{text}</Text>
-        },
-        {
-            title: 'Số hiệu TCVN',
+            title: 'Mã TCVN',
             dataIndex: 'code',
             key: 'code',
-            width: 180,
-            render: (text) => (
-                <Tag color="blue" className="px-3 py-1 rounded-md font-bold border-0 bg-blue-50 text-blue-600">
-                    {text}
-                </Tag>
-            )
+            render: (text) => <Tag color="blue" className="font-bold">{text}</Tag>,
+            width: '150px'
         },
         {
             title: 'Tên tiêu chuẩn',
             dataIndex: 'name',
             key: 'name',
-            render: (text) => <Text className="font-bold text-gray-800 text-[15px]">{text}</Text>
+            render: (text) => <Text className="font-bold">{text}</Text>,
         },
         {
-            title: 'Ghi chú',
-            dataIndex: 'notes',
-            key: 'notes',
-            width: 250,
-            render: (text) => text ? <Text className="text-gray-500 italic text-sm">{text}</Text> : <Text className="text-gray-300">-</Text>
+            title: 'Lĩnh vực',
+            dataIndex: 'category',
+            key: 'category',
+            render: (text) => <Tag color="green">{text}</Tag>,
+            width: '200px'
+        },
+        {
+            title: 'Nội dung tóm tắt',
+            dataIndex: 'summary',
+            key: 'summary',
+            render: (text) => <Text className="text-gray-500 text-sm">{text}</Text>,
         }
     ];
 
@@ -60,7 +55,7 @@ const TCVNReference = () => {
             <div className="space-y-4">
                 <Breadcrumb 
                     items={[
-                        { title: <span onClick={() => navigate('/')} className="cursor-pointer hover:text-green-600 transition-colors">Trang chủ</span> },
+                        { title: <span onClick={() => navigate(ROUTER.HOME)} className="cursor-pointer hover:text-green-600 transition-colors">Trang chủ</span> },
                         { title: 'Tài liệu & Tiêu chuẩn' },
                         { title: 'Tra cứu TCVN' }
                     ]}
@@ -77,7 +72,7 @@ const TCVNReference = () => {
                     </div>
                     <Button 
                         icon={<ArrowLeftOutlined />} 
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate(ROUTER.HOME)}
                         size="large"
                         className="rounded-xl border-gray-200 text-gray-600 font-bold hover:text-green-600 transition-all"
                     >

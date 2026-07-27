@@ -87,22 +87,19 @@ const AccountInfo = () => {
       };
       return await UserService.updateMyProfile(payload);
     },
-    onSuccess: (response) => {
+    onSuccess: (response, values) => {
       const updated = response?.data || {};
       const nextUser = {
         ...user,
-        fullName: form.getFieldValue("fullName").trim().replace(/\s+/g, " "),
-        phoneNumber: form.getFieldValue("phoneNumber")?.trim() || null,
-        dateOfBirth: form.getFieldValue("dateOfBirth")?.toISOString() || null,
-        gender: form.getFieldValue("gender") || null,
-        address: form.getFieldValue("address")?.trim().replace(/\s+/g, " ") || null,
+        fullName: values.fullName?.trim(),
+        phoneNumber: values.phoneNumber?.trim() || null,
+        gender: values.gender || null,
+        dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format("YYYY-MM-DD") : null,
         ...updated,
       };
       dispatch(setUserInfo(nextUser));
       authSession.updateUser(nextUser);
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
       setEditing(false);
     },
     onError: (error) => {
@@ -118,8 +115,6 @@ const AccountInfo = () => {
             errors: ["Số điện thoại này đã được đăng ký. Vui lòng thử số khác."],
           },
         ]);
-      } else if (apiMessage) {
-        message.error(apiMessage);
       }
     },
   });
@@ -143,14 +138,11 @@ const AccountInfo = () => {
       const nextUser = { ...user, avatarUrl: newAvatarUrl };
       dispatch(setUserInfo(nextUser));
       authSession.updateUser(nextUser);
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
       onSuccess(response);
     } catch (error) {
       const errorMsg = error?.response?.data?.message || error?.message;
       if (errorMsg) {
         setUploadError(errorMsg);
-        message.error(errorMsg);
       }
       onError(error);
     }

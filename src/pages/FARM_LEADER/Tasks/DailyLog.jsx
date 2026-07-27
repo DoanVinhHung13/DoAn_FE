@@ -340,7 +340,6 @@ const DailyLog = () => {
 
       await CultivationDailyLogService.create(payload)
 
-      message.success("Đã lưu nhật ký thành công!")
       // Reload current page to see the new log
       setRefreshKey(k => k + 1)
       form.resetFields()
@@ -349,8 +348,6 @@ const DailyLog = () => {
       console.error(error)
       if (error.errorFields) {
         message.warning("Vui lòng kiểm tra lại các trường nhập.")
-      } else {
-        message.error(error.message || "Lưu nhật ký thất bại.")
       }
     } finally {
       setSaving(false)
@@ -1192,12 +1189,12 @@ const DailyLog = () => {
                           {log.images?.length > 0 && (
                             <Image.PreviewGroup
                               items={log.images
-                                .map(img => img.url || img.imageUrl)
+                                .map(img => typeof img === 'string' ? img : (img.url ?? null))
                                 .filter(Boolean)}
                             >
                               <div className="flex flex-wrap gap-1.5 mt-2.5">
                                 {log.images.map((img, i) => {
-                                  const src = img.url || img.imageUrl
+                                  const src = typeof img === 'string' ? img : (img.url ?? null)
                                   return (
                                     <div
                                       key={i}

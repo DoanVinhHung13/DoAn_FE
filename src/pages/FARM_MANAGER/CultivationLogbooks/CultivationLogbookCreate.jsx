@@ -43,12 +43,11 @@ import LandPlotService from 'src/services/LandPlotService'
 import UserService from 'src/services/UserService'
 import { ROLES } from 'src/constants/roles'
 
+import SectionTitle from 'src/components/Common/SectionTitle'
+
 const normalizeResponse = (response) => {
-  const payload = response?.data ?? response ?? {}
-  const data = payload?.data ?? payload
-  return Array.isArray(data)
-    ? data
-    : data?.items || data?.results || data?.crops || data?.cropCatalogs || []
+  const data = response?.data?.data ?? response?.data ?? response
+  return Array.isArray(data) ? data : (data?.items || [])
 }
 
 const { Text, Title } = Typography
@@ -58,24 +57,7 @@ const formatApiDate = (date) =>
   date ? date.format('YYYY-MM-DD[T]00:00:00') : undefined
 
 const getCreatedPlanId = (response) =>
-  response?.data?.data?.id ||
-  response?.data?.data?.cultivationLogbookId ||
-  response?.data?.id ||
-  response?.data?.cultivationLogbookId ||
-  response?.data?.CultivationLogbookId ||
-  response?.id ||
-  null
-
-// ── Section header ────────────────────────────────────────────────────────
-const SectionTitle = ({ children, extra }) => (
-  <div
-    className="mb-4 px-4 py-2 rounded-lg font-semibold text-green-800 flex items-center justify-between"
-    style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 14 }}
-  >
-    <span>{children}</span>
-    {extra}
-  </div>
-)
+  response?.data?.data?.id || response?.data?.id || response?.id || null
 
 // ── Stage helpers ────────────────────────────────────────────────────────
 const createEmptyStage = (order) => ({

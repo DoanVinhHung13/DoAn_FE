@@ -76,12 +76,10 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
 
       await saveCompiledDescription(targetStageId, taskId, values.supervisorDescription)
 
-      message.success('Đã lưu và duyệt nhật ký chính thức!')
       onSuccess?.()
     } catch (err) {
       if (!err?.errorFields) {
         console.error(err)
-        message.error(err.message || 'Lưu nhật ký thất bại.')
       }
     } finally {
       setSaving(false)
@@ -139,7 +137,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
                             {leaderSummary.images.map((img, idx) => (
                               <Image
                                 key={img.id || idx}
-                                src={img.url || img.imageUrl}
+                                src={typeof img === 'string' ? img : (img.url ?? null)}
                                 width={80}
                                 height={80}
                                 className="rounded-lg object-cover"

@@ -40,9 +40,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   const [loading, setLoading] = React.useState(false)
   const navigate = useNavigate()
   const isEdit = !!editingUser
-  const { getCombo } = useSystemKey()
-  const genderOptions = getCombo(SYSTEM_KEY.GENDER)
-  const roleOptions = getCombo(SYSTEM_KEY.ROLE)
+  const { getOptions } = useSystemKey()
+  const genderOptions = getOptions(SYSTEM_KEY.GENDER)
+  const roleOptions = getOptions(SYSTEM_KEY.ROLE)
 
   const [avatarFile, setAvatarFile] = React.useState(null)
   const [previewAvatar, setPreviewAvatar] = React.useState("")

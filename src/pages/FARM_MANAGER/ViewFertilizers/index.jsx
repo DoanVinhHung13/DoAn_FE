@@ -168,7 +168,6 @@ const ViewFertilizers = () => {
         isActive: !item.isActive,
       })
       if (res?.success === false) return
-      message.success('Cập nhật trạng thái phân bón thành công.')
       setStatusModal({ open: false, item: null })
       getList()
     } finally {
