@@ -20,3 +20,11 @@ export const apiStartCultivationTask = (id) => `/cultivation-tasks/${id}/start`
 //          POST /api/cultivation-tasks/{id}/summary
 export const apiGetLeaderSummary = (id) => `/cultivation-tasks/${id}/leader-summary`
 export const apiSubmitTaskSummary = (id) => `/cultivation-tasks/${id}/summary`
+
+// Farm Leader: logbook summaries for left tree panel
+// Swagger: GET /api/cultivation-tasks/my-logbook-summaries
+export const apiGetMyLogbookSummaries = '/cultivation-tasks/my-logbook-summaries'
+
+// Farm Leader: logbook detail with tasks (filter by stageId & statuses)
+// Swagger: GET /api/cultivation-tasks/logbook/{logbookId}
+export const apiGetLogbookById = (logbookId) => `/cultivation-tasks/logbook/${logbookId}`

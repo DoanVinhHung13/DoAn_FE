@@ -1,119 +1,118 @@
 import {
-  HttpTransportType,
   HubConnectionBuilder,
+  HubConnectionState,
   LogLevel,
-} from "@microsoft/signalr"
-// import { MessagePackHubProtocol } from "@microsoft/signalr-protocol-msgpack"; // Đã xóa import không cần thiết
+} from '@microsoft/signalr'
+import STORAGE, { getStorage } from 'src/redux/storage'
+import { refreshAccessToken } from 'src/services/tokenRefresh'
 
-/**
- * Lớp SignalRService quản lý kết nối đến Hub.
- * Được thiết kế theo mô hình Singleton để đảm bảo chỉ có một instance duy nhất.
- */
+const getHubUrl = () => {
+  const apiRoot =
+    (typeof window !== 'undefined' && window.env?.API_ROOT) ||
+    import.meta.env.VITE_API_ROOT ||
+    import.meta.env.VITE_API_URL ||
+    (typeof window !== 'undefined' ? window.location.origin : '')
+
+  return `${apiRoot.replace(/\/+$/, '').replace(/\/api$/, '')}/hubs/realtime`
+}
+
 class SignalRService {
-  constructor() {
-    this.connection = null
-    this.hubUrl = "https://api.eapls.io.vn/api/signalrServer" // URL của Hub
-  }
+  connection = null
+  startPromise = null
+  reconnectListeners = new Set()
+  closeListeners = new Set()
 
-  /**
-   * Khởi tạo và bắt đầu kết nối đến SignalR Hub.
-   * @returns {Promise<HubConnection>} Promise chứa đối tượng connection sau khi kết nối thành công.
-   */
   startConnection = async () => {
-    // Nếu đã có kết nối thì không tạo mới
-    if (this.connection && this.connection.state === "Connected") {
-      console.log("SignalR connection already established.")
+    if (
+      this.connection &&
+      [
+        HubConnectionState.Connected,
+        HubConnectionState.Connecting,
+        HubConnectionState.Reconnecting,
+      ].includes(this.connection.state)
+    ) {
       return this.connection
     }
 
-    try {
-      // Xây dựng kết nối
-      const newConnection = new HubConnectionBuilder()
-        .withUrl(this.hubUrl, {
-          transport: HttpTransportType.LongPolling,
-          // THÊM VÀO: Cung cấp token để xác thực
-          accessTokenFactory: () => {
-            // Lấy token từ nơi bạn lưu trữ nó, ví dụ: localStorage, sessionStorage, Redux store, etc.
-            // Đoạn code này giả định bạn lưu token trong localStorage với key là 'your_auth_token'.
-            // Vui lòng thay thế 'your_auth_token' bằng key thực tế mà bạn sử dụng.
-            const token = sessionStorage.getItem("token-qlhv_hd")
-            return token
-          },
-        })
-        // .withHubProtocol(new MessagePackHubProtocol()) // FIX: Đã xóa dòng này để sử dụng giao thức JSON mặc định
-        .withAutomaticReconnect()
-        .configureLogging(LogLevel.Information)
-        .build()
+    if (this.startPromise) return this.startPromise
 
-      // Bắt đầu kết nối
-      await newConnection.start()
-      console.log("✅ Kết nối thành công đến SignalR Hub")
+    const connection = new HubConnectionBuilder()
+      .withUrl(getHubUrl(), {
+        accessTokenFactory: async () => {
+          await refreshAccessToken()
+          return getStorage(STORAGE.TOKEN)
+        },
+      })
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(import.meta.env.DEV ? LogLevel.Warning : LogLevel.Error)
+      .build()
 
-      this.connection = newConnection
-      return this.connection
-    } catch (err) {
-      console.error("❌ Lỗi khi kết nối đến SignalR Hub: ", err)
-      throw err
-    }
+    connection.onreconnecting(error => {
+      if (import.meta.env.DEV) console.warn('[SignalR] reconnecting', error)
+    })
+
+    connection.onreconnected(connectionId => {
+      if (import.meta.env.DEV) console.info('[SignalR] reconnected', connectionId)
+      this.reconnectListeners.forEach(listener => listener())
+    })
+
+    connection.onclose(error => {
+      if (this.connection === connection) this.connection = null
+      if (import.meta.env.DEV && error) console.warn('[SignalR] closed', error)
+      this.closeListeners.forEach(listener => listener(error))
+    })
+
+    this.connection = connection
+    this.startPromise = connection
+      .start()
+      .then(() => connection)
+      .catch(error => {
+        if (this.connection === connection) this.connection = null
+        throw error
+      })
+      .finally(() => {
+        this.startPromise = null
+      })
+
+    return this.startPromise
   }
 
-  /**
-   * Dừng kết nối đến Hub.
-   */
   stopConnection = async () => {
-    if (this.connection && this.connection.state === "Connected") {
-      try {
-        await this.connection.stop()
-        console.log("🧹 Ngắt kết nối SignalR.")
-        this.connection = null
-      } catch (err) {
-        console.error("❌ Lỗi khi ngắt kết nối SignalR: ", err)
-      }
+    if (!this.connection) return
+
+    const connection = this.connection
+    this.connection = null
+    if (connection.state !== HubConnectionState.Disconnected) {
+      await connection.stop()
     }
   }
 
-  /**
-   * Đăng ký một hàm callback để lắng nghe sự kiện từ Hub.
-   * @param {string} eventName Tên sự kiện.
-   * @param {function} callback Hàm sẽ được gọi khi có sự kiện.
-   */
   on = (eventName, callback) => {
-    if (!this.connection) {
-      console.error(
-        "SignalR connection not started. Cannot register event listener.",
-      )
-      return
-    }
-    this.connection.on(eventName, callback)
+    this.connection?.on(eventName, callback)
   }
 
-  /**
-   * Hủy đăng ký lắng nghe sự kiện từ Hub.
-   * @param {string} eventName Tên sự kiện.
-   * @param {function} callback Hàm đã đăng ký trước đó.
-   */
   off = (eventName, callback) => {
-    if (!this.connection) {
-      return
-    }
-    this.connection.off(eventName, callback)
+    this.connection?.off(eventName, callback)
   }
 
-  /**
-   * Gọi một phương thức trên Hub.
-   * @param {string} methodName Tên phương thức trên Hub.
-   * @param  {...any} args Các tham số cho phương thức.
-   * @returns {Promise<any>}
-   */
+  onReconnected = callback => {
+    this.reconnectListeners.add(callback)
+    return () => this.reconnectListeners.delete(callback)
+  }
+
+  onClosed = callback => {
+    this.closeListeners.add(callback)
+    return () => this.closeListeners.delete(callback)
+  }
+
   invoke = (methodName, ...args) => {
-    if (!this.connection) {
-      console.error("SignalR connection not started. Cannot invoke method.")
-      return Promise.reject("Connection not established.")
-    }
+    if (!this.connection) return Promise.reject(new Error('SignalR is not connected.'))
     return this.connection.invoke(methodName, ...args)
+  }
+
+  get isConnected() {
+    return this.connection?.state === HubConnectionState.Connected
   }
 }
 
-// Tạo và export một instance duy nhất (Singleton)
-const signalRService = new SignalRService()
-export default signalRService
+export default new SignalRService()

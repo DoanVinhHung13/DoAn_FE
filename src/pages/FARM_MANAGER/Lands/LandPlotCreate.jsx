@@ -1,18 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Alert, Button, Card, Col, Form, Row, Space, Spin } from 'antd'
+import { Alert, Button, Card, Col, Form, Row, Space } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
 
 import TitleCustom from 'src/components/TitleCustom'
 import LandPlotMap from 'src/components/LandPlotMap'
 import LandPlotService from 'src/services/LandPlotService'
-import FarmService from 'src/services/FarmService'
 import { findOverlappingPlot } from 'src/utils/geoJsonUtils'
 import {
   MSG_LM_25,
   buildLandPlotPayload,
   isOverlapApiError,
-  normalizeApiDetail,
   normalizeLandPlotResponse,
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
@@ -39,31 +37,13 @@ const LandPlotCreate = () => {
     uploadCertImage,
   } = useLandPlotForm(form)
 
-  // ── State riêng: trang trại & vùng trồng hiện có ──────────────────────────
-  const [farms, setFarms] = useState([])
-  const [farmsLoading, setFarmsLoading] = useState(false)
+  // ── State riêng: vùng trồng hiện có (kiểm tra chồng lấn) ─────────────────
   const [existingPlots, setExistingPlots] = useState([])
 
   // Nếu không có quyền thì về trang danh sách
   useEffect(() => {
     if (!canManage) navigate(routes.list, { replace: true })
   }, [canManage, navigate, routes.list])
-
-  // ── Fetch: danh sách trang trại ────────────────────────────────────────────
-  const fetchFarms = useCallback(async () => {
-    try {
-      setFarmsLoading(true)
-      const response = await FarmService.getFarms({ PageIndex: 1, PageSize: 50 })
-      const data = normalizeApiDetail(response)
-      setFarms(data?.items || data?.results || (Array.isArray(data) ? data : []))
-    } catch {
-      // Alert "chưa có trang trại" sẽ hiển thị nếu farms rỗng
-    } finally {
-      setFarmsLoading(false)
-    }
-  }, [])
-
-  useEffect(() => { fetchFarms() }, [fetchFarms])
 
   // ── Fetch: vùng trồng hiện có (kiểm tra chồng lấn) ────────────────────────
   const fetchExistingPlots = useCallback(async () => {
@@ -78,8 +58,6 @@ const LandPlotCreate = () => {
 
   useEffect(() => { fetchExistingPlots() }, [fetchExistingPlots])
 
-  const defaultFarmId = farms?.[0]?.id || farms?.[0]?._id
-
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     try {
@@ -93,13 +71,12 @@ const LandPlotCreate = () => {
         setMapError(MSG_LM_25)
         return
       }
-      if (!defaultFarmId) return
 
       const imageUrl = await uploadCertImage()
 
       setIsSubmitting(true)
       try {
-        const payload = buildLandPlotPayload({ ...values, imageUrl }, polygonData, defaultFarmId)
+        const payload = buildLandPlotPayload({ ...values, imageUrl }, polygonData)
         const res = await LandPlotService.createLandPlot(payload)
 
         if (res?.success === false) {
@@ -115,15 +92,8 @@ const LandPlotCreate = () => {
     }
   }
 
-  // ── Guard & Loading ────────────────────────────────────────────────────────
+  // ── Guard ────────────────────────────────────────────────────────────────
   if (!canManage) return null
-  if (farmsLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Spin size="large" />
-      </div>
-    )
-  }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -147,15 +117,6 @@ const LandPlotCreate = () => {
         </Button>
       </div>
 
-      {/* Cảnh báo chưa có trang trại */}
-      {!defaultFarmId && (
-        <Alert
-          type="warning"
-          showIcon
-          message="Chưa có trang trại nào. Vui lòng tạo trang trại trước khi thêm vùng trồng."
-        />
-      )}
-
       <Row gutter={[16, 16]}>
 
         {/* Cột trái: form thông tin */}
@@ -164,7 +125,7 @@ const LandPlotCreate = () => {
             <Form
               form={form}
               layout="vertical"
-              initialValues={{ areaUnit: 'ha', ownershipType: 'Owned' }}
+              initialValues={{ ownershipType: 'Owned' }}
             >
               <LandPlotFormFields
                 certPreview={certPreview}
@@ -204,7 +165,6 @@ const LandPlotCreate = () => {
             type="primary"
             icon={<SaveOutlined />}
             loading={isSaving}
-            disabled={!defaultFarmId}
             onClick={handleSubmit}
           >
             Xác nhận

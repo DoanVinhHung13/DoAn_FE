@@ -1,17 +1,12 @@
 /**
- * Farm Manager: Review chốt sổ + Duyệt/Từ chối + Tạo QR (bước 6)
+ * Farm Manager: Review chốt sổ + Duyệt/Từ chối
  * Route: /farm-manager/logbooks/:id/review
  *
  * API:
  *   GET  /cultivation-logbooks/{id}
  *   GET  /cultivation-logbooks/{id}/logs
- *   GET  /audit-logs
  *   POST /cultivation-logbooks/{id}/approve-completion
  *   POST /cultivation-logbooks/{id}/reject-completion
- *   POST /harvest-batches
- *   POST /qr-codes/generate/{harvestBatchId}
- *   GET  /qr-codes/{traceCode}/image
- *   GET  /products (selection)
  */
 import {
   ArrowLeftOutlined,
@@ -20,48 +15,110 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   EnvironmentOutlined,
-  QrcodeOutlined,
   UserOutlined,
-} from '@ant-design/icons'
+} from "@ant-design/icons"
 import {
   Alert,
   Button,
   Card,
   Descriptions,
   Empty,
-  Form,
   Image,
   Input,
-  InputNumber,
-  List,
   Modal,
-  Select,
   Spin,
   Tag,
   Timeline,
   Typography,
   message,
-} from 'antd'
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import dayjs from 'dayjs'
+} from "antd"
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 
-import TitleCustom from 'src/components/TitleCustom'
-import ROUTER from 'src/router/ROUTER'
-import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import CultivationLogService from 'src/services/CultivationLogService'
-import AuditLogService from 'src/services/AuditLogService'
-import HarvestBatchService from 'src/services/HarvestBatchService'
-import QrCodeService from 'src/services/QrCodeService'
-import ProductService from 'src/services/ProductService'
-import { formatDate } from 'src/utils/dateFormatters'
-import { canApproveClosing } from 'src/utils/cultivationStatus'
-import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
-import { getLandPlotNamesDisplay } from 'src/utils/helpers'
+import TitleCustom from "src/components/TitleCustom"
+import { useCultivationStatus } from "src/hooks/useCultivationStatus"
+import ROUTER from "src/router/ROUTER"
+import CultivationLogbookService from "src/services/CultivationLogbookService"
+import CultivationLogService from "src/services/CultivationLogService"
+import AuditLogService from "src/services/AuditLogService"
+import { canApproveClosing } from "src/utils/cultivationStatus"
+import { formatDate } from "src/utils/dateFormatters"
+import { getLandPlotNamesDisplay } from "src/utils/helpers"
 
 const { Text, Paragraph } = Typography
 
-const unwrap = (res) => res?.data?.data ?? res?.data ?? res
+const unwrap = res => res?.data?.data ?? res?.data ?? res
+
+/** Một log entry — hiển thị phẳng: ngày → mô tả → materialsText → ảnh */
+const LogEntry = ({ log }) => {
+  const workStartDate = log.workStartDate || log.startDate
+  const workEndDate = log.workEndDate || log.endDate
+  const description =
+    log.description || log.descriptionSummary || log.supervisorDescription
+  const materialsText = log.materialsText
+
+  const rawImages = log.images || log.attachmentImages || []
+  const images = rawImages
+    .map(img => {
+      if (typeof img === "string") return img
+      return (
+        img.url || img.imageUrl || img.path || img.src || img.fileUrl || null
+      )
+    })
+    .filter(Boolean)
+
+  return (
+    <div className="flex gap-3">
+      {/* ── Đường kẻ dọc + chấm tròn ── */}
+      <div className="flex flex-col items-center shrink-0 w-6">
+        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white shadow-sm mt-2 z-10" />
+        <div className="w-0.5 flex-1 bg-emerald-300 mt-1" />
+      </div>
+
+      {/* ── Nội dung log ── */}
+      <div className="flex-1 py-2 pb-4 transition-colors">
+        {(workStartDate || workEndDate) && (
+          <div className="mb-1 text-sm font-semibold text-gray-800">
+            {workStartDate && `  ${formatDate(workStartDate)}`}
+            {workEndDate && ` -  ${formatDate(workEndDate)}`}
+          </div>
+        )}
+
+        {/* 2. Mô tả */}
+        {description && (
+          <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+            {description}
+          </Paragraph>
+        )}
+
+        {/* 3. Materials text */}
+        {materialsText && (
+          <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+            {materialsText}
+          </Paragraph>
+        )}
+
+        {/* 4. Ảnh minh chứng */}
+        {images.length > 0 && (
+          <div className="mt-2">
+            <Image.PreviewGroup items={images}>
+              <div className="flex flex-wrap gap-2">
+                {images.map((src, i) => (
+                  <div
+                    key={i}
+                    className="h-16 w-16 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden cursor-pointer hover:border-emerald-400 hover:shadow-md transition-all [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
+                  >
+                    <Image src={src} preview={{ src }} />
+                  </div>
+                ))}
+              </div>
+            </Image.PreviewGroup>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 const LogbookReview = () => {
   const { getLogbookStatus, getReviewStatus } = useCultivationStatus()
@@ -72,14 +129,9 @@ const LogbookReview = () => {
   const [auditLogs, setAuditLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [rejectModal, setRejectModal] = useState(false)
-  const [rejectReason, setRejectReason] = useState('')
+  const [rejectReason, setRejectReason] = useState("")
   const [rejecting, setRejecting] = useState(false)
   const [approving, setApproving] = useState(false)
-  const [qrModal, setQrModal] = useState(false)
-  const [qrForm] = Form.useForm()
-  const [creatingQr, setCreatingQr] = useState(false)
-  const [products, setProducts] = useState([])
-  const [qrResult, setQrResult] = useState(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -96,7 +148,7 @@ const LogbookReview = () => {
       setAuditLogs(Array.isArray(auditData) ? auditData : auditData?.items || [])
     } catch (error) {
       console.error(error)
-      message.error(error.message || 'Không thể tải nhật ký.')
+      message.error(error.message || "Không thể tải nhật ký.")
       setLogbook(null)
     } finally {
       setLoading(false)
@@ -111,21 +163,11 @@ const LogbookReview = () => {
     try {
       setApproving(true)
       await CultivationLogbookService.approveCompletion(id)
-      message.success('Đã duyệt chốt sổ. Tiếp tục tạo lô và QR.')
+      message.success("Đã duyệt chốt sổ.")
       await loadData()
-
-      const prodRes = await ProductService.getAll({ PageIndex: 1, PageSize: 100 })
-      const prodData = unwrap(prodRes)
-      setProducts(Array.isArray(prodData) ? prodData : prodData?.items || [])
-      qrForm.setFieldsValue({
-        batchCode: `HB-${dayjs().format('YYYYMMDD-HHmm')}`,
-        unit: 'kg',
-        quantity: 1,
-      })
-      setQrModal(true)
     } catch (error) {
       console.error(error)
-      message.error(error.message || 'Duyệt nhật ký thất bại.')
+      message.error(error.message || "Duyệt nhật ký thất bại.")
     } finally {
       setApproving(false)
     }
@@ -133,58 +175,22 @@ const LogbookReview = () => {
 
   const handleReject = async () => {
     if (!rejectReason.trim()) {
-      message.warning('Vui lòng nhập lý do từ chối.')
+      message.warning("Vui lòng nhập lý do từ chối.")
       return
     }
     try {
       setRejecting(true)
-      await CultivationLogbookService.rejectCompletion(id, { reason: rejectReason.trim() })
-      message.success('Đã từ chối yêu cầu chốt sổ.')
+      await CultivationLogbookService.rejectCompletion(id, {
+        reason: rejectReason.trim(),
+      })
+      message.success("Đã từ chối yêu cầu chốt sổ.")
       navigate(ROUTER.FM_LOGBOOKS)
     } catch (error) {
       console.error(error)
-      message.error(error.message || 'Từ chối nhật ký thất bại.')
+      message.error(error.message || "Từ chối nhật ký thất bại.")
     } finally {
       setRejecting(false)
       setRejectModal(false)
-    }
-  }
-
-  const handleCreateQr = async () => {
-    try {
-      const values = await qrForm.validateFields()
-      setCreatingQr(true)
-
-      const batchRes = await HarvestBatchService.create({
-        productId: values.productId,
-        cultivationLogbookId: id,
-        batchCode: values.batchCode,
-        quantity: values.quantity,
-        unit: values.unit,
-      })
-      const batch = unwrap(batchRes)
-      const harvestBatchId = batch?.id
-      if (!harvestBatchId) {
-        throw new Error('Không nhận được harvestBatchId')
-      }
-
-      const qrRes = await QrCodeService.generate(harvestBatchId)
-      const qr = unwrap(qrRes)
-      const traceCode = qr?.traceCode || qr?.code
-      setQrResult({
-        harvestBatchId,
-        traceCode,
-        imageUrl: traceCode ? `/api/qr-codes/${traceCode}/image` : null,
-        raw: qr,
-      })
-      message.success('Đã tạo lô thu hoạch và mã QR!')
-    } catch (error) {
-      if (!error?.errorFields) {
-        console.error(error)
-        message.error(error.message || 'Tạo QR thất bại.')
-      }
-    } finally {
-      setCreatingQr(false)
     }
   }
 
@@ -208,18 +214,21 @@ const LogbookReview = () => {
   }
 
   const statusCfg = getLogbookStatus(logbook.status)
-  const reviewCfg = logbook.reviewStatus ? getReviewStatus(logbook.reviewStatus) : null
+  const reviewCfg = logbook.reviewStatus
+    ? getReviewStatus(logbook.reviewStatus)
+    : null
   const showApprove = canApproveClosing(logbook)
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+      {/* ── Header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <Button
             type="text"
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate(ROUTER.FM_LOGBOOKS)}
-            className="mb-3 -ml-2 h-9 text-gray-600 hover:text-green-700"
+            className="mb-3 -ml-2 text-gray-600 h-9 hover:text-green-700"
           >
             Quay lại danh sách
           </Button>
@@ -253,42 +262,54 @@ const LogbookReview = () => {
                 loading={approving}
                 className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
               >
-                Duyệt & Tạo QR
+                Duyệt
               </Button>
             </>
-          )}
-          {(logbook.status === 'COMPLETED' ||
-            logbook.reviewStatus === 'APPROVED' ||
-            logbook.status === 'APPROVED') && (
-            <Button
-              type="primary"
-              icon={<QrcodeOutlined />}
-              onClick={async () => {
-                const prodRes = await ProductService.getAll({ PageIndex: 1, PageSize: 100 })
-                const prodData = unwrap(prodRes)
-                setProducts(Array.isArray(prodData) ? prodData : prodData?.items || [])
-                setQrModal(true)
-              }}
-              className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
-            >
-              Tạo / Xem QR
-            </Button>
           )}
         </div>
       </div>
 
+      {/* ── Thông tin Logbook ── */}
       <Card bordered={false} className="shadow-sm rounded-2xl">
         <Descriptions column={{ xs: 1, sm: 2, lg: 3 }} size="small">
-          <Descriptions.Item label={<><EnvironmentOutlined className="mr-1" />Vùng trồng</>}>
+          <Descriptions.Item
+            label={
+              <>
+                <EnvironmentOutlined className="mr-1" />
+                Vùng trồng
+              </>
+            }
+          >
             {getLandPlotNamesDisplay(logbook)}
           </Descriptions.Item>
-          <Descriptions.Item label={<><BookOutlined className="mr-1" />Cây trồng</>}>
+          <Descriptions.Item
+            label={
+              <>
+                <BookOutlined className="mr-1" />
+                Cây trồng
+              </>
+            }
+          >
             {logbook.cropName}
           </Descriptions.Item>
-          <Descriptions.Item label={<><UserOutlined className="mr-1" />Giám sát viên</>}>
+          <Descriptions.Item
+            label={
+              <>
+                <UserOutlined className="mr-1" />
+                Giám sát viên
+              </>
+            }
+          >
             {logbook.supervisorName}
           </Descriptions.Item>
-          <Descriptions.Item label={<><CalendarOutlined className="mr-1" />Trạng thái</>}>
+          <Descriptions.Item
+            label={
+              <>
+                <CalendarOutlined className="mr-1" />
+                Trạng thái
+              </>
+            }
+          >
             {statusCfg.label}
           </Descriptions.Item>
           {reviewCfg && (
@@ -299,55 +320,64 @@ const LogbookReview = () => {
         </Descriptions>
       </Card>
 
-      <Card bordered={false} className="shadow-sm rounded-2xl" title="Nhật ký chính thức">
+      {/* ── Nhật ký chính thức — hiển thị phẳng full ── */}
+      <Card
+        bordered={false}
+        className="shadow-sm rounded-2xl"
+        title={
+          <span className="flex items-center gap-2">
+            <BookOutlined className="text-green-600" />
+            Nhật ký chính thức
+            <Tag color="green" className="ml-1 font-semibold rounded-full">
+              {logs.length} mục
+            </Tag>
+          </span>
+        }
+      >
         {logs.length === 0 ? (
           <Empty description="Chưa có nhật ký" />
         ) : (
-          <List
-            dataSource={logs}
-            renderItem={(log) => (
-              <List.Item className="!px-0">
-                <Card size="small" className="w-full rounded-xl border border-gray-100">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                    <Text strong>{formatDate(log.date || log.createdAt)}</Text>
-                    <Tag color={log.status === 'APPROVED' ? 'success' : 'default'}>{log.status}</Tag>
-                  </div>
-                  <Paragraph className="!mb-2">{log.description}</Paragraph>
-                  {log.images?.length > 0 && (
-                    <Image.PreviewGroup>
-                      <div className="flex flex-wrap gap-2">
-                        {log.images.map((img) => (
-                          <Image
-                            key={img.id || img.imageUrl}
-                            src={img.imageUrl}
-                            width={72}
-                            height={72}
-                            className="rounded-lg object-cover"
-                          />
-                        ))}
-                      </div>
-                    </Image.PreviewGroup>
-                  )}
-                </Card>
-              </List.Item>
-            )}
-          />
+          <div className="space-y-1">
+            {logs.map((log, idx) => (
+              <LogEntry key={log.id || idx} log={log} />
+            ))}
+          </div>
         )}
       </Card>
 
-      <Card bordered={false} className="shadow-sm rounded-2xl" title="Lịch sử chỉnh sửa (Audit)">
+      {/* ── Lịch sử chỉnh sửa (Audit) ── */}
+      <Card
+        bordered={false}
+        className="shadow-sm rounded-2xl"
+        title={
+          <span className="flex items-center gap-2">
+            <CalendarOutlined className="text-orange-500" />
+            Lịch sử chỉnh sửa
+            {auditLogs.length > 0 && (
+              <Tag color="orange" className="ml-1 font-semibold rounded-full">
+                {auditLogs.length}
+              </Tag>
+            )}
+          </span>
+        }
+      >
         {auditLogs.length === 0 ? (
-          <Empty description="Chưa có lịch sử audit" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty description="Chưa có lịch sử chỉnh sửa" image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (
           <Timeline
-            items={auditLogs.map((item) => ({
+            items={auditLogs.map(item => ({
               children: (
                 <div className="text-sm">
-                  <div className="font-semibold">{item.action || item.eventType}</div>
-                  <div className="text-gray-500 text-xs">
-                    {item.createdAt ? formatDate(item.createdAt) : ''} {item.actorName ? `— ${item.actorName}` : ''}
+                  <div className="font-semibold text-gray-800">
+                    {item.action || item.eventType}
                   </div>
-                  <div className="text-gray-600">{item.message || item.description}</div>
+                  <div className="text-gray-500 text-xs">
+                    {item.createdAt ? formatDate(item.createdAt) : ''}{" "}
+                    {item.actorName ? `— ${item.actorName}` : ''}
+                  </div>
+                  {item.message && (
+                    <div className="text-gray-600 mt-0.5">{item.message}</div>
+                  )}
                 </div>
               ),
             }))}
@@ -355,6 +385,7 @@ const LogbookReview = () => {
         )}
       </Card>
 
+      {/* ── Modal Từ chối ── */}
       <Modal
         open={rejectModal}
         onCancel={() => setRejectModal(false)}
@@ -379,75 +410,13 @@ const LogbookReview = () => {
         <Input.TextArea
           rows={4}
           value={rejectReason}
-          onChange={(e) => setRejectReason(e.target.value)}
+          onChange={e => setRejectReason(e.target.value)}
           placeholder="Lý do từ chối..."
         />
-      </Modal>
-
-      <Modal
-        open={qrModal}
-        onCancel={() => {
-          setQrModal(false)
-          setQrResult(null)
-        }}
-        title={
-          <div className="flex items-center gap-2 text-green-700">
-            <QrcodeOutlined /> Tạo lô thu hoạch & QR
-          </div>
-        }
-        footer={null}
-        width={640}
-        destroyOnClose
-      >
-        {qrResult ? (
-          <div className="space-y-3 text-center">
-            <Alert type="success" showIcon message="Đã tạo QR thành công" className="rounded-xl" />
-            <Text>
-              Trace code: <strong>{qrResult.traceCode}</strong>
-            </Text>
-            {qrResult.traceCode && (
-              <div className="flex justify-center">
-                <img
-                  alt="QR"
-                  src={`${import.meta.env.VITE_API_ROOT || ''}/qr-codes/${qrResult.traceCode}/image`}
-                  className="w-48 h-48 border rounded-xl"
-                />
-              </div>
-            )}
-            <Button type="primary" className="bg-green-600" onClick={() => navigate(ROUTER.FM_LOGBOOKS)}>
-              Về danh sách
-            </Button>
-          </div>
-        ) : (
-          <Form form={qrForm} layout="vertical" onFinish={handleCreateQr}>
-            <Form.Item name="productId" label="Sản phẩm" rules={[{ required: true, message: 'Chọn sản phẩm' }]}>
-              <Select
-                showSearch
-                optionFilterProp="label"
-                options={products.map((p) => ({ value: p.id, label: p.name }))}
-                placeholder="Chọn sản phẩm"
-              />
-            </Form.Item>
-            <Form.Item name="batchCode" label="Mã lô" rules={[{ required: true }]}>
-              <Input />
-            </Form.Item>
-            <Form.Item name="quantity" label="Số lượng" rules={[{ required: true }]}>
-              <InputNumber min={0.0001} className="w-full" />
-            </Form.Item>
-            <Form.Item name="unit" label="Đơn vị" rules={[{ required: true }]}>
-              <Input />
-            </Form.Item>
-            <div className="flex justify-end gap-2">
-              <Button onClick={() => setQrModal(false)}>Hủy</Button>
-              <Button type="primary" htmlType="submit" loading={creatingQr} className="bg-green-600">
-                Tạo lô & QR
-              </Button>
-            </div>
-          </Form>
-        )}
       </Modal>
     </div>
   )
 }
 
 export default LogbookReview
+

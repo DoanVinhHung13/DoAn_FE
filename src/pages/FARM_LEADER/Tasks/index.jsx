@@ -2,9 +2,9 @@
  * Farm Leader hub — Công việc của tôi
  * Route: /farm-leader/tasks  (ROUTER.FL_TASKS)
  *
- * Giao diện Split-View cao cấp:
- * - Bên trái: Danh mục Kế hoạch & Giai đoạn dạng Cây (Tree Navigation) có bộ lọc & tìm kiếm.
- * - Bên phải: Banner Kế hoạch được chọn (gồm Cây trồng, Danh mục cây, Vùng trồng, Mô tả) + Thống kê tiến độ + Phân nhóm Giai đoạn & Công việc chi tiết.
+ * Data source:
+ * - Left tree panel: GET /api/cultivation-tasks/my-logbook-summaries
+ * - Right task panel: GET /api/cultivation-tasks/logbook/{logbookId} (+ optional stageId, statuses params)
  */
 import {
   CalendarOutlined,
@@ -42,32 +42,16 @@ import { useNavigate } from "react-router-dom"
 
 import TitleCustom from "src/components/TitleCustom"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
-import { getLandPlotNamesDisplay } from "src/utils/helpers"
 import ROUTER from "src/router/ROUTER"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
+import { getLandPlotNamesDisplay } from "src/utils/helpers"
 
 const { Text, Title, Paragraph } = Typography
 
 const userIdOf = user => user?.id || user?._id || user?.userId
 const unwrap = res => res?.data?.data ?? res?.data ?? res
-
-const ACTIVE_STATUSES = new Set([
-  "PENDING",
-  "ASSIGNED",
-  "IN_PROGRESS",
-  "ACTIVE",
-  "OVERDUE",
-])
-const WAITING_STATUSES = new Set(["WAITING_APPROVAL"])
-const HISTORY_STATUSES = new Set(["COMPLETED", "CANCELLED"])
-
-const tabOfStatus = status => {
-  if (status === "WAITING_APPROVAL") return "WAITING_APPROVAL"
-  if (status === "COMPLETED" || status === "CANCELLED") return "COMPLETED"
-  return "IN_PROGRESS"
-}
 
 /**
  * Modern Task Card Component
@@ -115,29 +99,20 @@ const TaskCard = ({ task, onOpen, getTaskStatus }) => {
     >
       {/* Top Banner Header */}
       <div className="p-4 transition-colors border-b border-slate-100 bg-gradient-to-r from-slate-50/80 via-emerald-50/15 to-white group-hover:from-emerald-50/30">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <h3
+            className="text-base font-bold transition-colors text-slate-800 group-hover:text-emerald-700 line-clamp-1"
+            title={task.name}
+          >
+            {task.name}
+          </h3>
           <Tag
             color={cfg.color}
-            className="rounded-full px-3 py-0.5 text-xs font-semibold m-0 shadow-2xs"
+            className="rounded-full px-3 py-0.5 text-xs font-semibold m-0 shadow-2xs flex-shrink-0"
           >
             {cfg.label}
           </Tag>
-          {task.taskCatalogName && (
-            <Tag
-              color="blue"
-              className="rounded-full px-2.5 py-0.5 text-[11px] font-medium m-0"
-            >
-              {task.taskCatalogName}
-            </Tag>
-          )}
         </div>
-
-        <h3
-          className="mb-1 text-base font-bold transition-colors text-slate-800 group-hover:text-emerald-700 line-clamp-1"
-          title={task.name}
-        >
-          {task.name}
-        </h3>
 
         {task.description ? (
           <Paragraph
@@ -250,263 +225,177 @@ const FarmLeaderTasks = () => {
   const user = useSelector(state => state.appGlobal.userInfo)
   const currentUserId = userIdOf(user)
 
-  const [loading, setLoading] = useState(true)
-  const [tasks, setTasks] = useState([])
-  const [treeSearch, setTreeSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all") // 'all' | 'active' | 'waiting' | 'history'
+  // ── State ─────────────────────────────────────────────────────────────────
+  const [logbookSummaries, setLogbookSummaries] = useState([])
   const [selectedLogbookId, setSelectedLogbookId] = useState(null)
-  const [selectedStageId, setSelectedStageId] = useState("all")
-  const [expandedKeys, setExpandedKeys] = useState([])
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [treeSearch, setTreeSearch] = useState("")
 
-  // Load task list for Farm Leader using /cultivation-tasks/my-tasks with Statuses filter API
-  const loadTasksData = useCallback(async () => {
+  // Right panel: tasks loaded per logbook
+  const [logbookDetail, setLogbookDetail] = useState(null)
+  const [tasks, setTasks] = useState([])
+
+  const [loadingSummaries, setLoadingSummaries] = useState(true)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+
+  // ── Load left tree panel: logbook summaries ────────────────────────────────
+  const loadLogbookSummaries = useCallback(async () => {
     try {
-      setLoading(true)
-      const params = {
-        PageIndex: 1,
-        PageSize: 1000,
-      }
-      if (statusFilter !== "all") {
-        params.Statuses = statusFilter
-      }
-      const response = await CultivationTaskService.getMyTasks(params)
-      const data = unwrap(response)
-      const tasksList = Array.isArray(data) ? data : data?.items || []
-      setTasks(tasksList)
+      setLoadingSummaries(true)
+      const res = await CultivationTaskService.getMyLogbookSummaries()
+      const data = unwrap(res)
+      const list = Array.isArray(data) ? data : data?.items || []
+      setLogbookSummaries(list)
     } catch (error) {
       console.error(error)
-      message.error(error.message || "Không thể tải danh sách công việc.")
+      message.error("Không thể tải danh sách kế hoạch.")
+      setLogbookSummaries([])
+    } finally {
+      setLoadingSummaries(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadLogbookSummaries()
+  }, [loadLogbookSummaries])
+
+  // ── Auto-select first logbook ─────────────────────────────────────────────
+  useEffect(() => {
+    if (logbookSummaries.length > 0 && !selectedLogbookId) {
+      const first = logbookSummaries[0]
+      const id = first.id || first.logbookId || first._id
+      setSelectedLogbookId(id)
+    }
+  }, [logbookSummaries, selectedLogbookId])
+
+  // ── Load right panel: logbook detail + tasks ───────────────────────────────
+  const loadLogbookDetail = useCallback(async () => {
+    if (!selectedLogbookId) return
+    try {
+      setLoadingDetail(true)
+      const params = {}
+      if (statusFilter !== "all") {
+        params.statuses = statusFilter
+      }
+      const res = await CultivationTaskService.getLogbookById(
+        selectedLogbookId,
+        params,
+      )
+      const data = unwrap(res)
+      setLogbookDetail(data)
+      setTasks(Array.isArray(data?.items) ? data.items : [])
+    } catch (error) {
+      console.error(error)
+      message.error("Không thể tải chi tiết kế hoạch.")
+      setLogbookDetail(null)
       setTasks([])
     } finally {
-      setLoading(false)
+      setLoadingDetail(false)
     }
-  }, [statusFilter])
+  }, [selectedLogbookId, statusFilter])
 
   useEffect(() => {
-    loadTasksData()
-  }, [loadTasksData])
+    loadLogbookDetail()
+  }, [loadLogbookDetail])
 
-  // Group tasks by Logbook -> Stages, capturing metadata for plan details
-  const logbooksMap = useMemo(() => {
-    const map = new Map()
-    tasks.forEach(t => {
-      const lbId = t.cultivationLogbookId || "unassigned"
-      const lbName = t.cultivationLogbookName || "Kế hoạch khác"
-
-      if (!map.has(lbId)) {
-        map.set(lbId, {
-          id: lbId,
-          name: lbName,
-          cropName: t.cropName || t.crop || null,
-          cropCategoryName: t.cropCategoryName || t.cropCatalogName || null,
-          landPlotName: t.landPlotName || t.fieldLocation || null,
-          description:
-            t.logbookDescription ||
-            t.planDescription ||
-            t.descriptionLogbook ||
-            null,
-          stagesMap: new Map(),
-          tasks: [],
-        })
-      } else {
-        const lb = map.get(lbId)
-        if (!lb.cropName) lb.cropName = t.cropName || t.crop || null
-        if (!lb.cropCategoryName)
-          lb.cropCategoryName = t.cropCategoryName || t.cropCatalogName || null
-        if (!lb.landPlotName)
-          lb.landPlotName = t.landPlotName || t.fieldLocation || null
-        if (!lb.description)
-          lb.description =
-            t.logbookDescription ||
-            t.planDescription ||
-            t.descriptionLogbook ||
-            null
-      }
-
-      const lb = map.get(lbId)
-      lb.tasks.push(t)
-
-      const stId = t.cultivationStageId || "unassigned-stage"
-      const stName = t.cultivationStageName || "Giai đoạn chung"
-
-      if (!lb.stagesMap.has(stId)) {
-        lb.stagesMap.set(stId, {
-          id: stId,
-          name: stName,
-          tasks: [],
-        })
-      }
-
-      lb.stagesMap.get(stId).tasks.push(t)
-    })
-    return map
-  }, [tasks])
-
-  const logbooksList = useMemo(
-    () => Array.from(logbooksMap.values()),
-    [logbooksMap],
-  )
-
-  // Default: Open the 1st plan automatically
-  useEffect(() => {
-    if (logbooksList.length > 0 && !selectedLogbookId) {
-      const firstId = logbooksList[0].id
-      setSelectedLogbookId(firstId)
-      setExpandedKeys([`plan::${firstId}`])
-    }
-  }, [logbooksList, selectedLogbookId])
-
-  // Antd Tree Data structure
+  // ── Tree data (left panel) ────────────────────────────────────────────────
   const treeData = useMemo(() => {
     const keyword = treeSearch.trim().toLowerCase()
-
-    return logbooksList
-      .map(lb => {
-        const stagesList = Array.from(lb.stagesMap.values())
-        const filteredStages = stagesList.filter(st => {
-          if (!keyword) return true
-          return (
-            lb.name.toLowerCase().includes(keyword) ||
-            st.name.toLowerCase().includes(keyword) ||
-            st.tasks.some(
-              t =>
-                t.name.toLowerCase().includes(keyword) ||
-                t.description?.toLowerCase()?.includes(keyword),
-            )
-          )
-        })
-
-        if (
-          keyword &&
-          !lb.name.toLowerCase().includes(keyword) &&
-          filteredStages.length === 0
-        ) {
-          return null
-        }
-
-        const isSelectedPlan = selectedLogbookId === lb.id
-
+    return logbookSummaries
+      .filter(lb => {
+        if (!keyword) return true
+        const name = (lb.logbookName || lb.name || "").toLowerCase()
+        return name.includes(keyword)
+      })
+      .map(summary => {
+        const id = summary.id || summary.logbookId || summary._id
+        const name = summary.logbookName || summary.name || "Kế hoạch"
+        const isSelected = selectedLogbookId === id
         return {
-          key: `plan::${lb.id}`,
+          key: id,
           title: (
             <div className="flex items-center justify-between w-full gap-2 py-1 pr-1">
-              <span
-                className={`text-xs sm:text-sm font-semibold truncate max-w-[170px] ${isSelectedPlan
-                    ? "text-emerald-700 font-bold"
-                    : "text-slate-800"
+              <div className="flex flex-col min-w-0">
+                <span
+                  className={`text-xs font-semibold truncate ${
+                    isSelected ? "text-emerald-700" : "text-slate-800"
                   }`}
-                title={lb.name}
-              >
-                {lb.name}
-              </span>
-              <Tag
-                color={isSelectedPlan ? "emerald" : "default"}
-                className="m-0 text-[10px] rounded-full px-2 border-0 font-bold"
-              >
-                {lb.tasks.length} task
-              </Tag>
+                  title={name}
+                >
+                  {name}
+                </span>
+                <span className="text-[10px] text-slate-400 truncate">
+                  {summary.cropName || summary.cropCategoryName || ""}
+                </span>
+              </div>
+              <div className="flex flex-col items-end shrink-0">
+                <Tag
+                  color={isSelected ? "emerald" : "default"}
+                  className="m-0 text-[10px] rounded-full px-2 border-0 font-bold"
+                >
+                  {summary.totalTasks ?? 0} task
+                </Tag>
+                <span className="text-[9px] text-emerald-600 font-semibold mt-0.5">
+                  {summary.inProgressTasks ?? 0} đang làm
+                </span>
+              </div>
             </div>
           ),
           icon: (
             <ContainerOutlined
-              className={isSelectedPlan ? "text-emerald-600" : "text-slate-400"}
+              className={isSelected ? "text-emerald-600" : "text-slate-400"}
             />
           ),
-          children: filteredStages.map(st => {
-            const isSelectedStage = selectedStageId === st.id
-            return {
-              key: `stage::${lb.id}::${st.id}`,
-              title: (
-                <div className="flex items-center justify-between gap-2 py-0.5 pr-1 w-full">
-                  <span
-                    className={`text-xs truncate max-w-[150px] ${isSelectedStage
-                        ? "text-emerald-600 font-bold"
-                        : "text-slate-600"
-                      }`}
-                    title={st.name}
-                  >
-                    {st.name}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    ({st.tasks.length})
-                  </span>
-                </div>
-              ),
-              icon: (
-                <NodeIndexOutlined
-                  className={
-                    isSelectedStage ? "text-emerald-600" : "text-slate-400"
-                  }
-                />
-              ),
-            }
-          }),
         }
       })
-      .filter(Boolean)
-  }, [logbooksList, treeSearch, selectedLogbookId, selectedStageId])
+  }, [logbookSummaries, treeSearch, selectedLogbookId])
 
-  // Selected Logbook object
-  const selectedLogbook = useMemo(
-    () =>
-      logbooksList.find(lb => lb.id === selectedLogbookId) ||
-      logbooksList[0] ||
-      null,
-    [logbooksList, selectedLogbookId],
-  )
+  // ── Plan stats from summaries (left panel data) ───────────────────────────
+  const overallStats = useMemo(() => {
+    const totalPlans = logbookSummaries.length
+    let totalTasks = 0
+    let activeTasks = 0
+    let waitingTasks = 0
+    let completedTasks = 0
 
-  // Filtered stages & tasks for the right content area
-  const displayedStages = useMemo(() => {
-    if (!selectedLogbook) return []
-
-    let stages = Array.from(selectedLogbook.stagesMap.values())
-
-    if (selectedStageId !== "all") {
-      stages = stages.filter(st => st.id === selectedStageId)
-    }
-
-    return stages.map(st => {
-      const filteredTasks = st.tasks.filter(t => {
-        if (statusFilter === "all") return true
-        return tabOfStatus(t.status) === statusFilter
-      })
-
-      return {
-        ...st,
-        filteredTasks,
-      }
+    logbookSummaries.forEach(lb => {
+      totalTasks += lb.totalTasks ?? 0
+      activeTasks += lb.inProgressTasks ?? 0
+      waitingTasks += lb.waitingApprovalTasks ?? 0
+      completedTasks += lb.completedTasks ?? 0
     })
-  }, [selectedLogbook, selectedStageId, statusFilter])
 
-  // Selected Plan Statistics
+    return { totalPlans, totalTasks, activeTasks, waitingTasks, completedTasks }
+  }, [logbookSummaries])
+
+  // ── Selected plan stats from logbookDetail (right panel) ──────────────────
   const planStats = useMemo(() => {
-    if (!selectedLogbook)
+    if (!logbookDetail)
       return { total: 0, completed: 0, pct: 0, active: 0, waiting: 0 }
-    const total = selectedLogbook.tasks.length
-    const completed = selectedLogbook.tasks.filter(
-      t => t.status === "COMPLETED",
+    const total = tasks.length
+    const completed = tasks.filter(t => t.status === "COMPLETED").length
+    const active = tasks.filter(t =>
+      ["IN_PROGRESS", "ACTIVE", "OVERDUE"].includes(t.status),
     ).length
-    const active = selectedLogbook.tasks.filter(t =>
-      ACTIVE_STATUSES.has(t.status),
-    ).length
-    const waiting = selectedLogbook.tasks.filter(t =>
-      WAITING_STATUSES.has(t.status),
-    ).length
+    const waiting = tasks.filter(t => t.status === "WAITING_APPROVAL").length
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0
     return { total, completed, pct, active, waiting }
-  }, [selectedLogbook])
+  }, [logbookDetail, tasks])
 
-  // Overall Statistics for Dashboard Header
-  const overallStats = useMemo(() => {
-    const totalPlans = logbooksList.length
-    const totalTasks = tasks.length
-    const activeTasks = tasks.filter(t => ACTIVE_STATUSES.has(t.status)).length
-    const waitingTasks = tasks.filter(t =>
-      WAITING_STATUSES.has(t.status),
-    ).length
-    const completedTasks = tasks.filter(t => t.status === "COMPLETED").length
-    return { totalPlans, totalTasks, activeTasks, waitingTasks, completedTasks }
-  }, [logbooksList, tasks])
+  // ── Group tasks by stage for display ─────────────────────────────────────
+  const displayedStages = useMemo(() => {
+    if (!tasks.length) return []
+    const stageMap = new Map()
+    tasks.forEach(t => {
+      const stId = t.cultivationStageId || t.stageId || "default"
+      const stName = t.cultivationStageName || t.stageName || "Giai đoạn"
+      if (!stageMap.has(stId)) {
+        stageMap.set(stId, { id: stId, name: stName, filteredTasks: [] })
+      }
+      stageMap.get(stId).filteredTasks.push(t)
+    })
+    return Array.from(stageMap.values())
+  }, [tasks])
 
   const openTaskLog = taskId => {
     navigate(ROUTER.FL_TASK_LOG.replace(":taskId", taskId))
@@ -515,18 +404,11 @@ const FarmLeaderTasks = () => {
   const handleTreeSelect = selectedKeys => {
     if (!selectedKeys || selectedKeys.length === 0) return
     const key = selectedKeys[0]
-    if (key.startsWith("plan::")) {
-      const lbId = key.replace("plan::", "")
-      setSelectedLogbookId(lbId)
-      setSelectedStageId("all")
-    } else if (key.startsWith("stage::")) {
-      const parts = key.split("::")
-      const lbId = parts[1]
-      const stId = parts[2]
-      setSelectedLogbookId(lbId)
-      setSelectedStageId(stId)
-    }
+    setSelectedLogbookId(key)
   }
+
+  const loading = loadingSummaries
+  const isDetailLoading = loadingDetail
 
   if (loading) {
     return (
@@ -594,7 +476,10 @@ const FarmLeaderTasks = () => {
           <Tooltip title="Tải lại dữ liệu">
             <Button
               icon={<ReloadOutlined />}
-              onClick={loadTasksData}
+              onClick={() => {
+                loadLogbookSummaries()
+                if (selectedLogbookId) loadLogbookDetail()
+              }}
               className="h-10 px-4 font-medium rounded-xl border-slate-200 hover:border-emerald-500 hover:text-emerald-600"
             >
               Làm mới
@@ -629,7 +514,7 @@ const FarmLeaderTasks = () => {
                     color="emerald"
                     className="m-0 rounded-full font-semibold border-0 px-2.5"
                   >
-                    {logbooksList.length} Kế hoạch
+                    {logbookSummaries.length} Kế hoạch
                   </Tag>
                 </div>
 
@@ -648,13 +533,8 @@ const FarmLeaderTasks = () => {
                   {treeData.length > 0 ? (
                     <Tree
                       blockNode
-                      defaultExpandAll
-                      expandedKeys={expandedKeys}
-                      onExpand={keys => setExpandedKeys(keys)}
                       selectedKeys={
-                        selectedStageId !== "all"
-                          ? [`stage::${selectedLogbookId}::${selectedStageId}`]
-                          : [`plan::${selectedLogbookId}`]
+                        selectedLogbookId ? [selectedLogbookId] : []
                       }
                       onSelect={handleTreeSelect}
                       treeData={treeData}
@@ -673,7 +553,9 @@ const FarmLeaderTasks = () => {
 
           {/* RIGHT CONTENT AREA: SELECTED PLAN HEADER & STAGE TASKS */}
           <Col xs={24} lg={16} xl={17}>
-            {selectedLogbook ? (
+            {isDetailLoading ? (
+              <Skeleton active paragraph={{ rows: 10 }} />
+            ) : logbookDetail ? (
               <div className="space-y-5">
                 {/* ── SELECTED PLAN HERO BANNER ────────────────────────────────── */}
                 <Card
@@ -688,17 +570,14 @@ const FarmLeaderTasks = () => {
                           <Tag className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 rounded-full text-xs font-semibold px-2.5">
                             Kế hoạch đang chọn
                           </Tag>
-                          {selectedStageId !== "all" && (
-                            <Tag className="bg-blue-500/20 text-blue-300 border-blue-400/30 rounded-full text-xs font-semibold px-2.5">
-                              Lọc theo Giai đoạn
-                            </Tag>
-                          )}
                         </div>
                         <h2
                           className="mb-0 text-xl font-bold text-white sm:text-2xl"
-                          title={selectedLogbook.name}
+                          title={
+                            logbookDetail.name || logbookDetail.logbookName
+                          }
                         >
-                          {selectedLogbook.name}
+                          {logbookDetail.name || logbookDetail.logbookName}
                         </h2>
                       </div>
 
@@ -734,7 +613,7 @@ const FarmLeaderTasks = () => {
                       </div>
                     </div>
 
-                    {/* Thông tin chi tiết Kế hoạch (giống Supervisor view) — Thiết kế sẵn các ô chờ BE trả về API */}
+                    {/* Thông tin chi tiết Kế hoạch */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 p-3.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-xs text-slate-100">
                       <div className="flex items-center gap-2">
                         <CheckCircleOutlined className="text-sm text-emerald-400 shrink-0" />
@@ -744,13 +623,16 @@ const FarmLeaderTasks = () => {
                           </span>
                           <span
                             className="block font-bold text-white truncate"
-                            title={selectedLogbook.cropName || "BE: cropName"}
+                            title={
+                              logbookDetail.cropName || logbookDetail.crop?.name
+                            }
                           >
-                            {selectedLogbook.cropName || (
-                              <i className="font-normal text-slate-400">
-                                Chưa có (BE: cropName)
-                              </i>
-                            )}
+                            {logbookDetail.cropName ||
+                              logbookDetail.crop?.name || (
+                                <i className="font-normal text-slate-400">
+                                  Chưa có
+                                </i>
+                              )}
                           </span>
                         </div>
                       </div>
@@ -764,15 +646,16 @@ const FarmLeaderTasks = () => {
                           <span
                             className="block font-bold text-white truncate"
                             title={
-                              selectedLogbook.cropCategoryName ||
-                              "BE: cropCategoryName"
+                              logbookDetail.cropCategoryName ||
+                              logbookDetail.cropCategory?.name
                             }
                           >
-                            {selectedLogbook.cropCategoryName || (
-                              <i className="font-normal text-slate-400">
-                                Chưa có (BE: cropCategoryName)
-                              </i>
-                            )}
+                            {logbookDetail.cropCategoryName ||
+                              logbookDetail.cropCategory?.name || (
+                                <i className="font-normal text-slate-400">
+                                  Chưa có
+                                </i>
+                              )}
                           </span>
                         </div>
                       </div>
@@ -785,9 +668,15 @@ const FarmLeaderTasks = () => {
                           </span>
                           <span
                             className="block font-bold text-white truncate"
-                            title={getLandPlotNamesDisplay(selectedLogbook, "Chưa cập nhật")}
+                            title={getLandPlotNamesDisplay(
+                              logbookDetail,
+                              "Chưa cập nhật",
+                            )}
                           >
-                            {getLandPlotNamesDisplay(selectedLogbook, "Chưa cập nhật")}
+                            {getLandPlotNamesDisplay(
+                              logbookDetail,
+                              "Chưa cập nhật",
+                            )}
                           </span>
                         </div>
                       </div>
@@ -849,30 +738,17 @@ const FarmLeaderTasks = () => {
                       return (
                         <div key={stage.id} className="space-y-3">
                           {/* Stage Section Header */}
-                          <div className="flex items-center justify-between px-4 py-3 bg-white border rounded-xl border-slate-200/80 shadow-2xs">
-                            <div className="flex items-center gap-2">
-                              <NodeIndexOutlined className="font-bold text-emerald-600" />
-                              <span className="text-sm font-bold text-slate-800 md:text-base">
-                                {stage.name}
-                              </span>
-                              <Tag
-                                color="blue"
-                                className="m-0 text-xs font-semibold border-blue-200 rounded-full"
-                              >
-                                {stageTasks.length} công việc
-                              </Tag>
-                            </div>
-
-                            {selectedStageId !== "all" && (
-                              <Button
-                                type="link"
-                                size="small"
-                                onClick={() => setSelectedStageId("all")}
-                                className="text-xs font-medium text-emerald-600"
-                              >
-                                Xem tất cả các giai đoạn
-                              </Button>
-                            )}
+                          <div className="flex items-center gap-2 px-4 py-3 bg-white border rounded-xl border-slate-200/80 shadow-2xs">
+                            <NodeIndexOutlined className="font-bold text-emerald-600" />
+                            <span className="text-sm font-bold text-slate-800 md:text-base">
+                              {stage.name}
+                            </span>
+                            <Tag
+                              color="blue"
+                              className="m-0 text-xs font-semibold border-blue-200 rounded-full"
+                            >
+                              {stageTasks.length} công việc
+                            </Tag>
                           </div>
 
                           {/* Task Cards Grid */}
@@ -890,8 +766,7 @@ const FarmLeaderTasks = () => {
                           ) : (
                             <div className="p-6 text-center border border-dashed bg-slate-50/70 rounded-xl border-slate-200">
                               <Text type="secondary" className="text-xs">
-                                Không có công việc nào thuộc bộ lọc này trong
-                                giai đoạn này.
+                                Không có công việc nào trong giai đoạn này.
                               </Text>
                             </div>
                           )}

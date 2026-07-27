@@ -125,11 +125,9 @@ const LandPlotEdit = () => {
       // Gọi API cập nhật
       setIsSubmitting(true)
       try {
-        const farmId = plot?.farmId || plot?.farm?.id
         const payload = buildLandPlotPayload(
           { ...values, imageUrl },
           polygonData || { boundaryJson: boundary },
-          farmId,
         )
         const res = await LandPlotService.updateLandPlot(id, payload)
 

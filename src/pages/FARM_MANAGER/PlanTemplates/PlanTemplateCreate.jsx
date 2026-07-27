@@ -4,69 +4,121 @@ import {
   MinusCircleOutlined,
   PlusOutlined,
   ProfileOutlined,
-} from '@ant-design/icons'
+} from "@ant-design/icons"
 import {
   Button,
   Card,
   Col,
   Form,
   Input,
-  InputNumber,
   message,
   Row,
   Select,
   Spin,
   Typography,
-} from 'antd'
-import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+} from "antd"
+import { useEffect, useMemo, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 
-import TitleCustom from 'src/components/TitleCustom'
-import ROUTER from 'src/router/ROUTER'
-import CropManagementService from 'src/services/CropManagementService'
-import CropService from 'src/services/CropService'
-import PlanTemplateService from 'src/services/PlanTemplateService'
-import ProcessStepService from 'src/services/ProcessStepService'
+import TitleCustom from "src/components/TitleCustom"
+import ROUTER from "src/router/ROUTER"
+import CropManagementService from "src/services/CropManagementService"
+import CropService from "src/services/CropService"
+import PlanTemplateService from "src/services/PlanTemplateService"
+import ProcessStepService from "src/services/ProcessStepService"
 
 const { Text } = Typography
 
-const normalizeItems = (response) => {
+const normalizeItems = response => {
   const payload = response?.data ?? response ?? {}
   const data = payload?.data ?? payload
   return Array.isArray(data)
     ? data
     : data?.items ||
-    data?.results ||
-    data?.crops ||
-    data?.cropCatalogs ||
-    data?.processSteps ||
-    []
+        data?.results ||
+        data?.crops ||
+        data?.cropCatalogs ||
+        data?.processSteps ||
+        []
 }
 
-const getEntity = (response) => response?.data ?? response ?? null
+const getEntity = response => response?.data ?? response ?? null
 
-const getCreatedId = (response) =>
+const getCreatedId = response =>
   response?.data?.id ||
   response?.data?.processTemplateId ||
   response?.id ||
   response?.processTemplateId ||
   null
 
-const createEmptyStep = (order) => ({
+const createEmptyStep = order => ({
   _key: `step-${Date.now()}-${order}`,
   id: null,
-  stepName: '',
+  stepName: "",
   stepOrder: order,
-  description: '',
+  description: "",
   estimatedDay: null,
-  requiredMaterialType: '',
-  note: '',
+  requiredMaterialType: "",
+  note: "",
 })
+
+const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
+  const [touched, setTouched] = useState(false)
+  const hasError = touched && !step.stepName?.trim()
+  return (
+    <div
+      className={`p-4 border rounded-xl transition-colors ${
+        hasError
+          ? "border-red-300 bg-red-50/30"
+          : "border-gray-100 bg-gray-50 hover:border-green-200"
+      }`}
+    >
+      <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center justify-center w-8 h-8 font-bold text-white bg-green-600 rounded-full shrink-0">
+          {index + 1}
+        </div>
+        <div className="flex-1">
+          <Input
+            value={step.stepName}
+            onChange={e => updateStep(index, "stepName", e.target.value)}
+            onBlur={() => setTouched(true)}
+            placeholder={`Tên bước ${index + 1} (bắt buộc)`}
+            maxLength={200}
+            className={`font-semibold ${hasError ? "border-red-400 focus:border-red-500" : ""}`}
+          />
+          {hasError && (
+            <p className="mt-0.5 mb-0 text-xs text-red-500">
+              Vui lòng nhập tên bước
+            </p>
+          )}
+        </div>
+        {steps.length > 1 && (
+          <Button
+            danger
+            type="text"
+            icon={<MinusCircleOutlined />}
+            onClick={() => removeStep(index)}
+          />
+        )}
+      </div>
+
+      <Text type="secondary" className="block mb-1 text-xs font-medium">
+        Mô tả công việc
+      </Text>
+      <Input.TextArea
+        rows={3}
+        value={step.description}
+        onChange={e => updateStep(index, "description", e.target.value)}
+        placeholder="Mô tả cách thực hiện bước này..."
+      />
+    </div>
+  )
+}
 
 const SectionTitle = ({ children }) => (
   <div
     className="px-4 py-2 mb-4 text-sm font-semibold text-green-800 rounded-lg"
-    style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a' }}
+    style={{ background: "#f0fdf4", borderLeft: "3px solid #16a34a" }}
   >
     {children}
   </div>
@@ -77,7 +129,7 @@ const PlanTemplateCreate = () => {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const [form] = Form.useForm()
-  const selectedCatalogId = Form.useWatch('cropCatalogId', form)
+  const selectedCatalogId = Form.useWatch("cropCatalogId", form)
 
   const [steps, setSteps] = useState([createEmptyStep(1)])
   const [originalSteps, setOriginalSteps] = useState([])
@@ -129,20 +181,17 @@ const PlanTemplateCreate = () => {
         const template = getEntity(templateResponse)
         const templateSteps = normalizeItems(stepsResponse)
           .filter(
-            (step) =>
-              (step.processTemplateId || step.processTemplate?.id) === id
+            step => (step.processTemplateId || step.processTemplate?.id) === id,
           )
           .sort(
-            (first, second) =>
-              (first.stepOrder || 0) - (second.stepOrder || 0)
+            (first, second) => (first.stepOrder || 0) - (second.stepOrder || 0),
           )
 
         form.setFieldsValue({
           name: template?.name,
-          cropCatalogId:
-            template?.cropCatalogId || template?.cropCatalog?.id,
+          cropCatalogId: template?.cropCatalogId || template?.cropCatalog?.id,
           cropId: template?.cropId || template?.crop?.id,
-          description: template?.description || '',
+          description: template?.description || "",
           estimatedDurationDays: template?.estimatedDurationDays,
         })
 
@@ -150,17 +199,17 @@ const PlanTemplateCreate = () => {
           _key: `step-${step.id || index}`,
           id: step.id,
           processTemplateId: step.processTemplateId || id,
-          stepName: step.stepName || '',
+          stepName: step.stepName || "",
           stepOrder: step.stepOrder || index + 1,
-          description: step.description || '',
+          description: step.description || "",
           estimatedDay: step.estimatedDay ?? null,
-          requiredMaterialType: step.requiredMaterialType || '',
-          note: step.note || '',
+          requiredMaterialType: step.requiredMaterialType || "",
+          note: step.note || "",
         }))
         setSteps(mappedSteps.length ? mappedSteps : [createEmptyStep(1)])
         setOriginalSteps(mappedSteps)
       } catch (error) {
-        message.error(error.message || 'Không thể tải thông tin mẫu quy trình.')
+        message.error(error.message || "Không thể tải thông tin mẫu quy trình.")
       } finally {
         if (mounted) setLoadingDetail(false)
       }
@@ -175,59 +224,59 @@ const PlanTemplateCreate = () => {
   const catalogOptions = useMemo(
     () =>
       catalogs
-        .filter((item) => item.isActive !== false)
-        .map((item) => ({
+        .filter(item => item.isActive !== false)
+        .map(item => ({
           value: item.id || item.cropCatalogId,
           label: item.name,
         }))
-        .filter((item) => item.value && item.label),
-    [catalogs]
+        .filter(item => item.value && item.label),
+    [catalogs],
   )
 
   const cropOptions = useMemo(
     () =>
       crops
         .filter(
-          (item) =>
+          item =>
             item.isActive !== false &&
             (!selectedCatalogId ||
               (item.cropCatalogId ||
                 item.categoryId ||
-                item.cropCatalog?.id) === selectedCatalogId)
+                item.cropCatalog?.id) === selectedCatalogId),
         )
-        .map((item) => ({
+        .map(item => ({
           value: item.id || item.cropId,
           label: item.name,
         }))
-        .filter((item) => item.value && item.label),
-    [crops, selectedCatalogId]
+        .filter(item => item.value && item.label),
+    [crops, selectedCatalogId],
   )
 
   const updateStep = (index, field, value) => {
-    setSteps((current) =>
+    setSteps(current =>
       current.map((step, stepIndex) =>
-        stepIndex === index ? { ...step, [field]: value } : step
-      )
+        stepIndex === index ? { ...step, [field]: value } : step,
+      ),
     )
   }
 
   const addStep = () => {
-    setSteps((current) => [...current, createEmptyStep(current.length + 1)])
+    setSteps(current => [...current, createEmptyStep(current.length + 1)])
   }
 
-  const removeStep = (index) => {
-    setSteps((current) =>
+  const removeStep = index => {
+    setSteps(current =>
       current
         .filter((_, stepIndex) => stepIndex !== index)
         .map((step, stepIndex) => ({
           ...step,
           stepOrder: stepIndex + 1,
-        }))
+        })),
     )
   }
 
   const syncSteps = async (processTemplateId, nextSteps) => {
-    const nextIds = new Set(nextSteps.map((step) => step.id).filter(Boolean))
+    const nextIds = new Set(nextSteps.map(step => step.id).filter(Boolean))
 
     for (const original of originalSteps) {
       if (original.id && !nextIds.has(original.id)) {
@@ -246,7 +295,7 @@ const PlanTemplateCreate = () => {
         note: step.note?.trim() || null,
       }
       const original = step.id
-        ? originalSteps.find((item) => item.id === step.id)
+        ? originalSteps.find(item => item.id === step.id)
         : null
       const changed =
         !original ||
@@ -255,7 +304,7 @@ const PlanTemplateCreate = () => {
         (original.description || null) !== payload.description ||
         (original.estimatedDay ?? null) !== payload.estimatedDay ||
         (original.requiredMaterialType || null) !==
-        payload.requiredMaterialType ||
+          payload.requiredMaterialType ||
         (original.note || null) !== payload.note
 
       if (!changed) continue
@@ -267,20 +316,20 @@ const PlanTemplateCreate = () => {
     }
   }
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async values => {
     const normalizedSteps = steps.map((step, index) => ({
       ...step,
       stepOrder: index + 1,
       stepName: step.stepName?.trim(),
     }))
-    if (normalizedSteps.some((step) => !step.stepName)) {
-      message.error('Vui lòng nhập tên cho tất cả các bước quy trình.')
+    if (normalizedSteps.some(step => !step.stepName)) {
+      message.error("Vui lòng nhập tên cho tất cả các bước quy trình.")
       return
     }
 
     const templatePayload = {
       cropCatalogId: values.cropCatalogId,
-      cropId: values.cropId || null,
+      cropId: values.cropId,
       name: values.name.trim(),
       description: values.description?.trim() || null,
       estimatedDurationDays: values.estimatedDurationDays ?? null,
@@ -290,35 +339,35 @@ const PlanTemplateCreate = () => {
       setSubmitting(true)
       const response = isEdit
         ? await PlanTemplateService.update(id, templatePayload, {
-          skipNotice: true,
-        })
+            skipNotice: true,
+          })
         : await PlanTemplateService.create(templatePayload, {
-          skipNotice: true,
-        })
+            skipNotice: true,
+          })
       if (response?.success === false) return
 
       const processTemplateId = isEdit ? id : getCreatedId(response)
       if (!processTemplateId) {
         throw new Error(
-          'API đã tạo mẫu nhưng không trả về ID để lưu các bước quy trình.'
+          "API đã tạo mẫu nhưng không trả về ID để lưu các bước quy trình.",
         )
       }
 
       await syncSteps(processTemplateId, normalizedSteps)
       message.success(
         isEdit
-          ? 'Cập nhật mẫu quy trình thành công.'
-          : 'Tạo mẫu quy trình thành công.'
+          ? "Cập nhật mẫu quy trình thành công."
+          : "Tạo mẫu quy trình thành công.",
       )
       navigate(ROUTER.FM_PLAN_TEMPLATES)
     } catch (error) {
-      console.error('Process template submit failed:', {
+      console.error("Process template submit failed:", {
         id,
         templatePayload,
         responseData: error.responseData,
         error,
       })
-      message.error(error.message || 'Không thể lưu mẫu quy trình.')
+      message.error(error.message || "Không thể lưu mẫu quy trình.")
     } finally {
       setSubmitting(false)
     }
@@ -335,7 +384,7 @@ const PlanTemplateCreate = () => {
         </Button>
         <TitleCustom className="!mb-0 flex items-center gap-2">
           <ProfileOutlined className="text-green-600" />
-          {isEdit ? 'Cập nhật mẫu quy trình' : 'Tạo mẫu quy trình mới'}
+          {isEdit ? "Cập nhật mẫu quy trình" : "Tạo mẫu quy trình mới"}
         </TitleCustom>
       </div>
 
@@ -353,8 +402,8 @@ const PlanTemplateCreate = () => {
                   name="name"
                   label="Tên mẫu quy trình"
                   rules={[
-                    { required: true, message: 'Vui lòng nhập tên mẫu.' },
-                    { max: 200, message: 'Tên mẫu tối đa 200 ký tự.' },
+                    { required: true, message: "Vui lòng nhập tên mẫu." },
+                    { max: 200, message: "Tên mẫu tối đa 200 ký tự." },
                   ]}
                 >
                   <Input
@@ -370,7 +419,7 @@ const PlanTemplateCreate = () => {
                   rules={[
                     {
                       required: true,
-                      message: 'Vui lòng chọn danh mục cây trồng.',
+                      message: "Vui lòng chọn danh mục cây trồng.",
                     },
                   ]}
                 >
@@ -380,12 +429,21 @@ const PlanTemplateCreate = () => {
                     showSearch
                     optionFilterProp="label"
                     placeholder="Chọn danh mục cây trồng"
-                    onChange={() => form.setFieldValue('cropId', undefined)}
+                    onChange={() => form.setFieldValue("cropId", undefined)}
                   />
                 </Form.Item>
               </Col>
               <Col xs={24} md={12}>
-                <Form.Item name="cropId" label="Cây trồng cụ thể">
+                <Form.Item
+                  name="cropId"
+                  label="Cây trồng cụ thể"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng chọn cây trồng cụ thể.",
+                    },
+                  ]}
+                >
                   <Select
                     allowClear
                     options={cropOptions}
@@ -395,8 +453,8 @@ const PlanTemplateCreate = () => {
                     optionFilterProp="label"
                     placeholder={
                       selectedCatalogId
-                        ? 'Không bắt buộc'
-                        : 'Chọn danh mục cây trồng trước'
+                        ? "Chọn cây trồng cụ thể"
+                        : "Chọn danh mục cây trồng trước"
                     }
                   />
                 </Form.Item>
@@ -433,94 +491,17 @@ const PlanTemplateCreate = () => {
               </Col>
             </Row>
 
-            <SectionTitle>Các bước quy trình</SectionTitle>
+            <SectionTitle>Các bước quy trình (bắt buộc)</SectionTitle>
             <div className="space-y-4">
               {steps.map((step, index) => (
-                <div
+                <StepCard
                   key={step._key}
-                  className="p-4 border border-gray-100 rounded-xl bg-gray-50"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex items-center justify-center w-8 h-8 font-bold text-white bg-green-600 rounded-full shrink-0">
-                      {index + 1}
-                    </div>
-                    <Input
-                      value={step.stepName}
-                      onChange={(event) =>
-                        updateStep(index, 'stepName', event.target.value)
-                      }
-                      placeholder={`Tên bước ${index + 1}`}
-                      maxLength={200}
-                      className="font-semibold"
-                    />
-                    {steps.length > 1 && (
-                      <Button
-                        danger
-                        type="text"
-                        icon={<MinusCircleOutlined />}
-                        onClick={() => removeStep(index)}
-                      />
-                    )}
-                  </div>
-
-                  <Row gutter={[12, 12]}>
-                    <Col xs={24} md={24}>
-                      <Text type="secondary" className="block mb-1 text-xs">
-                        Mô tả công việc
-                      </Text>
-                      <Input.TextArea
-                        rows={3}
-                        value={step.description}
-                        onChange={(event) =>
-                          updateStep(index, 'description', event.target.value)
-                        }
-                        placeholder="Mô tả cách thực hiện bước này..."
-                      />
-                    </Col>
-                    {/* <Col xs={24} md={8}>
-                      <Text type="secondary" className="block mb-1 text-xs">
-                        Ngày thực hiện dự kiến
-                      </Text>
-                      <InputNumber
-                        min={0}
-                        precision={0}
-                        className="w-full"
-                        value={step.estimatedDay}
-                        onChange={(value) =>
-                          updateStep(index, 'estimatedDay', value)
-                        }
-                        placeholder="Ví dụ: ngày thứ 7"
-                      />
-                      <Text type="secondary" className="block mt-3 mb-1 text-xs">
-                        Loại vật tư yêu cầu
-                      </Text>
-                      <Input
-                        value={step.requiredMaterialType}
-                        onChange={(event) =>
-                          updateStep(
-                            index,
-                            'requiredMaterialType',
-                            event.target.value
-                          )
-                        }
-                        placeholder="Ví dụ: Phân bón"
-                      />
-                    </Col>
-                    <Col span={24}>
-                      <Text type="secondary" className="block mb-1 text-xs">
-                        Ghi chú
-                      </Text>
-                      <Input.TextArea
-                        rows={2}
-                        value={step.note}
-                        onChange={(event) =>
-                          updateStep(index, 'note', event.target.value)
-                        }
-                        placeholder="Lưu ý kỹ thuật hoặc điều kiện thực hiện..."
-                      />
-                    </Col> */}
-                  </Row>
-                </div>
+                  step={step}
+                  index={index}
+                  steps={steps}
+                  updateStep={updateStep}
+                  removeStep={removeStep}
+                />
               ))}
             </div>
 
@@ -528,7 +509,7 @@ const PlanTemplateCreate = () => {
               type="dashed"
               icon={<PlusOutlined />}
               onClick={addStep}
-              className="w-full mt-4 border-green-400 text-green-700"
+              className="w-full mt-4 text-green-700 border-green-400"
             >
               Thêm bước quy trình
             </Button>
@@ -544,7 +525,7 @@ const PlanTemplateCreate = () => {
                 icon={isEdit ? <EditOutlined /> : <PlusOutlined />}
                 className="font-bold bg-green-600"
               >
-                {isEdit ? 'Lưu thay đổi' : 'Tạo mẫu quy trình'}
+                {isEdit ? "Lưu thay đổi" : "Tạo mẫu quy trình"}
               </Button>
             </div>
           </Form>

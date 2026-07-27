@@ -49,9 +49,6 @@ const FarmManagerCropEdit = React.lazy(() => import('../pages/FARM_MANAGER/Crops
 const FarmManagerCultivationLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/CultivationLogbooks'))
 const FarmManagerCultivationLogbookCreate = React.lazy(() => import('../pages/FARM_MANAGER/CultivationLogbooks/CultivationLogbookCreate'))
 const FarmManagerCultivationLogbookDetail = React.lazy(() => import('../pages/FARM_MANAGER/CultivationLogbooks/CultivationLogbookDetail'))
-// QualityInspections - legacy, removed
-// const FarmManagerQualityInspections = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections'))
-// const FarmManagerQualityInspectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/QualityInspections/QualityInspectionDetail'))
 const FarmManagerPlanTemplates = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates'))
 const FarmManagerPlanTemplateDetail = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates/PlanTemplateDetail'))
 const FarmManagerPlanTemplateCreate = React.lazy(() => import('../pages/FARM_MANAGER/PlanTemplates/PlanTemplateCreate'))

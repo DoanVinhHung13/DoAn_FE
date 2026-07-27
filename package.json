@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run verify:dist",
+    "verify:dist": "node scripts/verify-dist-assets.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -14,6 +15,7 @@
     "@ant-design/icons": "^6.1.1",
     "@geoman-io/leaflet-geoman-free": "^2.19.3",
     "@hookform/resolvers": "^5.2.2",
+    "@microsoft/signalr": "^9.0.6",
     "@reduxjs/toolkit": "^2.12.0",
     "@tanstack/react-query": "^5.99.0",
     "@turf/boolean-contains": "^7.3.5",

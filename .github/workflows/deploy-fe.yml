@@ -46,4 +46,9 @@ jobs:
 
       - name: Publish to Nginx web root
         run: |
-          rsync -a --delete dist/ /var/www/eapls-fe/
+          # Keep old hashed assets so already-open browser tabs can finish loading.
+          # npm run build already verified that the new dist is internally consistent.
+          rsync -a --delay-updates dist/ /var/www/eapls-fe/
+
+      - name: Verify published assets
+        run: node scripts/verify-dist-assets.mjs /var/www/eapls-fe

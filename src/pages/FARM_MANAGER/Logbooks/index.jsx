@@ -89,7 +89,6 @@ const FarmManagerLogbooks = () => {
           <FileTextOutlined className="text-green-600" />
           Duyệt nhật ký canh tác
         </TitleCustom>
-        <Text type="secondary">Xem xét, phê duyệt chốt sổ và tạo QR truy xuất.</Text>
       </div>
 
       <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: 0 }}>

@@ -6,7 +6,13 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores([
+    'dist',
+    '.vite',
+    'node_modules',
+    'public/pdf.worker.min.js',
+    'src/components/TinyEditor/tinymce/**',
+  ]),
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     extends: [

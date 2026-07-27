@@ -136,10 +136,10 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
                         </div>
                         <Image.PreviewGroup>
                           <div className="flex flex-wrap gap-2">
-                            {leaderSummary.images.map((img) => (
+                            {leaderSummary.images.map((img, idx) => (
                               <Image
-                                key={img.id || img.imageUrl}
-                                src={img.imageUrl}
+                                key={img.id || idx}
+                                src={img.url || img.imageUrl}
                                 width={80}
                                 height={80}
                                 className="rounded-lg object-cover"
@@ -150,9 +150,15 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
                       </div>
                     )}
 
-                    {(leaderSummary.descriptionSummary || leaderSummary.description) && (
+                    {leaderSummary.draftDescription && (
+                      <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-xs italic text-gray-600">
+                        Mô tả tự động: {leaderSummary.draftDescription}
+                      </div>
+                    )}
+
+                    {(leaderSummary.leaderSubmittedDescription || leaderSummary.descriptionSummary || leaderSummary.description) && (
                       <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm italic text-blue-900">
-                        "{leaderSummary.descriptionSummary || leaderSummary.description}"
+                        "{leaderSummary.leaderSubmittedDescription || leaderSummary.descriptionSummary || leaderSummary.description}"
                       </div>
                     )}
                   </div>

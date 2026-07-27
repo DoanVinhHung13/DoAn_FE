@@ -8,19 +8,30 @@ export const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 export const buildDataSentence = (summary) => {
   if (!summary) return 'Chưa có số liệu'
   const parts = []
-  ;(summary.fertilizers || []).forEach((f) => {
-    parts.push(
-      `Đã bón ${f.totalQuantity ?? f.quantity} ${f.quantityUnit ?? f.unit} ${f.name}` +
-        (f.totalArea != null ? ` cho ${f.totalArea} ${f.areaUnit}` : '')
-    )
-  })
-  ;(summary.pesticides || []).forEach((p) => {
-    parts.push(
-      `Đã phun ${p.totalQuantity ?? p.quantity} ${p.quantityUnit ?? p.unit} ${p.name}` +
-        (p.totalArea != null ? ` cho ${p.totalArea} ${p.areaUnit}` : '')
-    )
-  })
-  return parts.length ? parts.join('. ') : 'Không có số liệu phân bón/thuốc BVTV'
+
+  if (Array.isArray(summary.materials) && summary.materials.length > 0) {
+    summary.materials.forEach((m) => {
+      const qty = m.quantity ?? m.totalQuantity ?? 0
+      const unit = m.unit ?? m.quantityUnit ?? ''
+      const typeStr = m.type ? ` (${m.type})` : ''
+      const areaStr = (m.totalArea != null && m.totalArea > 0) ? ` cho ${m.totalArea} ${m.areaUnit || 'ha'}` : ''
+      parts.push(`Đã dùng ${qty} ${unit} ${m.name}${typeStr}${areaStr}`.trim())
+    })
+  } else {
+    ;(summary.fertilizers || []).forEach((f) => {
+      parts.push(
+        `Đã bón ${f.totalQuantity ?? f.quantity} ${f.quantityUnit ?? f.unit} ${f.name}` +
+          (f.totalArea != null ? ` cho ${f.totalArea} ${f.areaUnit}` : '')
+      )
+    })
+    ;(summary.pesticides || []).forEach((p) => {
+      parts.push(
+        `Đã phun ${p.totalQuantity ?? p.quantity} ${p.quantityUnit ?? p.unit} ${p.name}` +
+          (p.totalArea != null ? ` cho ${p.totalArea} ${p.areaUnit}` : '')
+      )
+    })
+  }
+  return parts.length ? parts.join('. ') : 'Không có số liệu vật tư'
 }
 
 import CultivationStageService from 'src/services/CultivationStageService'
@@ -32,13 +43,18 @@ export const loadLeaderCompileData = async (taskId) => {
   const summaryRes = await CultivationTaskService.getLeaderSummary(taskId)
   const summary = unwrap(summaryRes) || null
 
-  const leaderSubmittedDescription = summary?.descriptionSummary || summary?.description || summary?.leaderSubmittedDescription || ''
+  const leaderSubmittedDescription =
+    summary?.leaderSubmittedDescription ||
+    summary?.descriptionSummary ||
+    summary?.description ||
+    summary?.draftDescription ||
+    ''
   
   // Resolve Cultivation Log ID từ Summary object
   const submittedLogId =
+    summary?.submittedLogId ||
     summary?.cultivationLogId ||
     summary?.officialLogId ||
-    summary?.submittedLogId ||
     summary?.logId ||
     summary?.id ||
     null
@@ -60,3 +76,4 @@ export const saveCompiledDescription = async (stageId, taskId, description) => {
   }
   return await CultivationStageService.createOfficialLogs(targetStageId, payload)
 }
+
