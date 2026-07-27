@@ -232,8 +232,11 @@ const FarmLeaderTasks = () => {
   const [treeSearch, setTreeSearch] = useState("")
 
   // Right panel: tasks loaded per logbook
+  // logbookDetail = data.plan object from API
   const [logbookDetail, setLogbookDetail] = useState(null)
-  const [tasks, setTasks] = useState([])
+  // stages = data.stages[] array (each stage has .tasks[])
+  const [stages, setStages] = useState([])
+  const [tasks, setTasks] = useState([]) // flat list for stats
 
   const [loadingSummaries, setLoadingSummaries] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(false)
@@ -282,12 +285,19 @@ const FarmLeaderTasks = () => {
         params,
       )
       const data = unwrap(res)
-      setLogbookDetail(data)
-      setTasks(Array.isArray(data?.items) ? data.items : [])
+      // New API shape: { plan: {...}, stages: [{ stageId, stageName, tasks: [...] }] }
+      const plan = data?.plan ?? data
+      const stagesArr = Array.isArray(data?.stages) ? data.stages : []
+      // Flatten all tasks for stats computation
+      const flatTasks = stagesArr.flatMap(s => Array.isArray(s.tasks) ? s.tasks : [])
+      setLogbookDetail(plan)
+      setStages(stagesArr)
+      setTasks(flatTasks)
     } catch (error) {
       console.error(error)
       message.error("Không thể tải chi tiết kế hoạch.")
       setLogbookDetail(null)
+      setStages([])
       setTasks([])
     } finally {
       setLoadingDetail(false)
@@ -372,18 +382,30 @@ const FarmLeaderTasks = () => {
   const planStats = useMemo(() => {
     if (!logbookDetail)
       return { total: 0, completed: 0, pct: 0, active: 0, waiting: 0 }
-    const total = tasks.length
-    const completed = tasks.filter(t => t.status === "COMPLETED").length
-    const active = tasks.filter(t =>
+    // Prefer pre-computed values from plan object (API already computes these)
+    const total = logbookDetail.totalTasks ?? tasks.length
+    const completed = logbookDetail.completedTasks ?? tasks.filter(t => t.status === "COMPLETED").length
+    const active = logbookDetail.inProgressTasks ?? tasks.filter(t =>
       ["IN_PROGRESS", "ACTIVE", "OVERDUE"].includes(t.status),
     ).length
-    const waiting = tasks.filter(t => t.status === "WAITING_APPROVAL").length
-    const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+    const waiting = logbookDetail.pendingApprovalTasks ?? tasks.filter(t => t.status === "WAITING_APPROVAL").length
+    const pct = logbookDetail.overallProgress ?? (total > 0 ? Math.round((completed / total) * 100) : 0)
     return { total, completed, pct, active, waiting }
   }, [logbookDetail, tasks])
 
-  // ── Group tasks by stage for display ─────────────────────────────────────
+  // ── Stages for display — use API stages directly (already grouped) ─────────
   const displayedStages = useMemo(() => {
+    if (stages.length > 0) {
+      // API returns pre-grouped stages with tasks[]
+      return stages
+        .map(s => ({
+          id: s.stageId,
+          name: s.stageName,
+          filteredTasks: Array.isArray(s.tasks) ? s.tasks : [],
+        }))
+        .filter(s => s.filteredTasks.length > 0)
+    }
+    // Fallback: group flat tasks by stage (backward-compat)
     if (!tasks.length) return []
     const stageMap = new Map()
     tasks.forEach(t => {
@@ -395,7 +417,7 @@ const FarmLeaderTasks = () => {
       stageMap.get(stId).filteredTasks.push(t)
     })
     return Array.from(stageMap.values())
-  }, [tasks])
+  }, [stages, tasks])
 
   const openTaskLog = taskId => {
     navigate(ROUTER.FL_TASK_LOG.replace(":taskId", taskId))
@@ -488,7 +510,7 @@ const FarmLeaderTasks = () => {
         </div>
       </div>
 
-      {tasks.length === 0 ? (
+      {logbookSummaries.length === 0 ? (
         <Card className="p-12 text-center border-0 shadow-xs rounded-2xl">
           <Empty description="Bạn chưa được phân công công việc nào." />
         </Card>
@@ -574,10 +596,10 @@ const FarmLeaderTasks = () => {
                         <h2
                           className="mb-0 text-xl font-bold text-white sm:text-2xl"
                           title={
-                            logbookDetail.name || logbookDetail.logbookName
+                            logbookDetail.planName || logbookDetail.name || logbookDetail.logbookName
                           }
                         >
-                          {logbookDetail.name || logbookDetail.logbookName}
+                          {logbookDetail.planName || logbookDetail.name || logbookDetail.logbookName}
                         </h2>
                       </div>
 
@@ -624,10 +646,11 @@ const FarmLeaderTasks = () => {
                           <span
                             className="block font-bold text-white truncate"
                             title={
-                              logbookDetail.cropName || logbookDetail.crop?.name
+                              logbookDetail.cropVariety || logbookDetail.cropName || logbookDetail.crop?.name
                             }
                           >
-                            {logbookDetail.cropName ||
+                            {logbookDetail.cropVariety ||
+                              logbookDetail.cropName ||
                               logbookDetail.crop?.name || (
                                 <i className="font-normal text-slate-400">
                                   Chưa có
@@ -646,12 +669,12 @@ const FarmLeaderTasks = () => {
                           <span
                             className="block font-bold text-white truncate"
                             title={
-                              logbookDetail.cropCategoryName ||
-                              logbookDetail.cropCategory?.name
+                              logbookDetail.cropCategory ||
+                              logbookDetail.cropCategoryName
                             }
                           >
-                            {logbookDetail.cropCategoryName ||
-                              logbookDetail.cropCategory?.name || (
+                            {logbookDetail.cropCategory ||
+                              logbookDetail.cropCategoryName || (
                                 <i className="font-normal text-slate-400">
                                   Chưa có
                                 </i>

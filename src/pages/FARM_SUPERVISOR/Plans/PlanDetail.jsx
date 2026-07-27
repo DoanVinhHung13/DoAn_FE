@@ -123,16 +123,17 @@ const FarmSupervisorPlanDetail = () => {
     [allTasks]
   )
 
+  const isWaitingApproval = plan?.reviewStatus === 'WAITING_APPROVAL'
+
   const canSubmit = useMemo(
-    () => allStagesCompleted || allTasksCompleted,
-    [allStagesCompleted, allTasksCompleted]
+    () => !isWaitingApproval && (allStagesCompleted || allTasksCompleted),
+    [isWaitingApproval, allStagesCompleted, allTasksCompleted]
   )
 
   const overallProgress = useMemo(() => {
     if (!allTasks.length) return 0
-    return Math.round(
-      allTasks.reduce((s, t) => s + (t.progress || 0), 0) / allTasks.length
-    )
+    const completedCount = allTasks.filter((t) => t.status === 'COMPLETED').length
+    return Math.round((completedCount / allTasks.length) * 100)
   }, [allTasks])
 
   const handleSubmitLogbook = async () => {
@@ -187,7 +188,15 @@ const FarmSupervisorPlanDetail = () => {
             Chi tiết Kế hoạch
           </TitleCustom>
         </div>
-        <Tooltip title={!canSubmit ? 'Hoàn thành tất cả các giai đoạn hoặc công việc trước khi gửi.' : ''}>
+        <Tooltip
+          title={
+            isWaitingApproval
+              ? 'Nhật ký đang chờ duyệt, không thể gửi lại.'
+              : !canSubmit
+              ? 'Hoàn thành tất cả các giai đoạn hoặc công việc trước khi gửi.'
+              : ''
+          }
+        >
           <Button
             type="primary"
             icon={<SendOutlined />}
@@ -249,6 +258,21 @@ const FarmSupervisorPlanDetail = () => {
                 </Text>
               </Descriptions.Item>
             </Descriptions>
+
+            {/* Lý do từ chối */}
+            {plan.reviewStatus === 'REJECTED' && plan.rejectionReason && (
+              <Alert
+                className="mt-4 rounded-xl"
+                type="error"
+                showIcon
+                message={
+                  <span className="font-semibold text-red-700">Lý do từ chối duyệt</span>
+                }
+                description={
+                  <span className="text-red-600 whitespace-pre-line">{plan.rejectionReason}</span>
+                }
+              />
+            )}
           </Col>
 
           <Col flex="none">
@@ -297,7 +321,7 @@ const FarmSupervisorPlanDetail = () => {
             key: '3',
             label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Chốt Logbook</span>,
             children: activeTabKey === '3' && (
-              <LogbookFinalizationTab planId={planId} stages={stages} tasks={tasks} loadData={loadData} />
+              <LogbookFinalizationTab planId={planId} stages={stages} tasks={tasks} loadData={loadData} plan={plan} />
             ),
           },
         ]}

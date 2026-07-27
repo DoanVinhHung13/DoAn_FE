@@ -44,10 +44,10 @@ const unwrap = res => res?.data?.data ?? res?.data ?? res
 
 const taskStatusIcon = s =>
   s === "COMPLETED" ||
-  s === "WAITING_APPROVAL" ||
-  s === "IN_PROGRESS" ||
-  s === "ASSIGNED" ||
-  s === "ACTIVE" ? (
+    s === "WAITING_APPROVAL" ||
+    s === "IN_PROGRESS" ||
+    s === "ASSIGNED" ||
+    s === "ACTIVE" ? (
     <CheckCircleOutlined />
   ) : (
     <ClockCircleOutlined />
@@ -372,20 +372,20 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     {/* Ngày thực tế của giai đoạn */}
                     {(selectedStage.actualStartDate ||
                       selectedStage.actualEndDate) && (
-                      <Text type="secondary" className="text-sm block mt-0.5">
-                        <CheckCircleOutlined className="mr-1 text-green-600" />
-                        <span className="font-medium text-green-700">
-                          Thực tế:
-                        </span>{" "}
-                        {selectedStage.actualStartDate
-                          ? formatDate(selectedStage.actualStartDate)
-                          : "—"}{" "}
-                        –{" "}
-                        {selectedStage.actualEndDate
-                          ? formatDate(selectedStage.actualEndDate)
-                          : "Chưa kết thúc"}
-                      </Text>
-                    )}
+                        <Text type="secondary" className="text-sm block mt-0.5">
+                          <CheckCircleOutlined className="mr-1 text-green-600" />
+                          <span className="font-medium text-green-700">
+                            Thực tế:
+                          </span>{" "}
+                          {selectedStage.actualStartDate
+                            ? formatDate(selectedStage.actualStartDate)
+                            : "—"}{" "}
+                          –{" "}
+                          {selectedStage.actualEndDate
+                            ? formatDate(selectedStage.actualEndDate)
+                            : "Chưa kết thúc"}
+                        </Text>
+                      )}
                   </div>
                   <Tag
                     color={getStageStatus(selectedStage.status).color}
@@ -452,15 +452,14 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                 <div className="flex items-center gap-3">
                                   <div
                                     className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg
-                                      ${
-                                        task.status === "COMPLETED"
-                                          ? "bg-green-100 text-green-700"
-                                          : task.status === "WAITING_APPROVAL"
-                                            ? "bg-amber-100 text-amber-700"
-                                            : task.status === "IN_PROGRESS" ||
-                                                task.status === "ACTIVE"
-                                              ? "bg-blue-100 text-blue-700"
-                                              : "bg-gray-100 text-gray-500"
+                                      ${task.status === "COMPLETED"
+                                        ? "bg-green-100 text-green-700"
+                                        : task.status === "WAITING_APPROVAL"
+                                          ? "bg-amber-100 text-amber-700"
+                                          : task.status === "IN_PROGRESS" ||
+                                            task.status === "ACTIVE"
+                                            ? "bg-blue-100 text-blue-700"
+                                            : "bg-gray-100 text-gray-500"
                                       }`}
                                   >
                                     {cfg.icon}
@@ -517,51 +516,51 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                               {/* Assignments */}
                               {(task.assignedLeaderName ||
                                 task.assignments?.length > 0) && (
-                                <div className="flex flex-col gap-2 p-3 mt-1 border border-gray-100 rounded-xl bg-gray-50">
-                                  {task.assignedLeaderName && (
-                                    <div className="flex items-center gap-2">
-                                      <UserOutlined className="text-green-600" />
-                                      <Text className="text-xs">
-                                        <span className="font-semibold">
-                                          Farm Leader:
-                                        </span>{" "}
-                                        {task.assignedLeaderName}
-                                      </Text>
-                                    </div>
-                                  )}
-                                  {task.assignments?.filter(f => !f.isLeader)
-                                    .length > 0 && (
-                                    <div className="flex items-start gap-2">
-                                      <TeamOutlined className="mt-1 text-blue-600" />
-                                      <div className="flex-1">
-                                        <Text className="block mb-1 text-xs font-semibold">
-                                          Farmers (
-                                          {
-                                            task.assignments.filter(
-                                              f => !f.isLeader,
-                                            ).length
-                                          }
-                                          ):
+                                  <div className="flex flex-col gap-2 p-3 mt-1 border border-gray-100 rounded-xl bg-gray-50">
+                                    {task.assignedLeaderName && (
+                                      <div className="flex items-center gap-2">
+                                        <UserOutlined className="text-green-600" />
+                                        <Text className="text-xs">
+                                          <span className="font-semibold">
+                                            Farm Leader:
+                                          </span>{" "}
+                                          {task.assignedLeaderName}
                                         </Text>
-                                        <div className="flex flex-wrap gap-1">
-                                          {task.assignments
-                                            .filter(f => !f.isLeader)
-                                            .map(f => (
-                                              <Tag
-                                                key={f.userId || f.id}
-                                                color="blue"
-                                                bordered={false}
-                                                className="m-0 rounded-md"
-                                              >
-                                                {f.fullName || f.name}
-                                              </Tag>
-                                            ))}
-                                        </div>
                                       </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                                    )}
+                                    {task.assignments?.filter(f => !f.isLeader)
+                                      .length > 0 && (
+                                        <div className="flex items-start gap-2">
+                                          <TeamOutlined className="mt-1 text-blue-600" />
+                                          <div className="flex-1">
+                                            <Text className="block mb-1 text-xs font-semibold">
+                                              Farmers (
+                                              {
+                                                task.assignments.filter(
+                                                  f => !f.isLeader,
+                                                ).length
+                                              }
+                                              ):
+                                            </Text>
+                                            <div className="flex flex-wrap gap-1">
+                                              {task.assignments
+                                                .filter(f => !f.isLeader)
+                                                .map(f => (
+                                                  <Tag
+                                                    key={f.userId || f.id}
+                                                    color="blue"
+                                                    bordered={false}
+                                                    className="m-0 rounded-md"
+                                                  >
+                                                    {f.fullName || f.name}
+                                                  </Tag>
+                                                ))}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                  </div>
+                                )}
 
                               {/* Actions */}
                               <div className="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
@@ -609,19 +608,19 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                 {/* IN_PROGRESS / ACTIVE: đang thực hiện */}
                                 {(task.status === "IN_PROGRESS" ||
                                   task.status === "ACTIVE") && (
-                                  <Button
-                                    type="default"
-                                    size="small"
-                                    className="text-blue-600 border-blue-200 rounded-lg hover:border-blue-400"
-                                    onClick={e => {
-                                      e.stopPropagation()
-                                      setAssignTaskData(task)
-                                      setAssignModalOpen(true)
-                                    }}
-                                  >
-                                    Cập nhật phân công
-                                  </Button>
-                                )}
+                                    <Button
+                                      type="default"
+                                      size="small"
+                                      className="text-blue-600 border-blue-200 rounded-lg hover:border-blue-400"
+                                      onClick={e => {
+                                        e.stopPropagation()
+                                        setAssignTaskData(task)
+                                        setAssignModalOpen(true)
+                                      }}
+                                    >
+                                      Cập nhật phân công
+                                    </Button>
+                                  )}
                               </div>
                             </div>
                           </Card>
@@ -842,48 +841,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                   </Card>
                 )}
 
-                {/* Nhật ký chính thức khi hoàn thành 100% */}
-                {selectedStage.status === "COMPLETED" &&
-                  selectedTasks.length > 0 &&
-                  selectedTasks.every(t => t.status === "COMPLETED") && (
-                    <>
-                      <Divider className="my-3">
-                        <Text className="text-xs font-semibold text-green-700">
-                          <FileTextOutlined className="mr-1" />
-                          Nhật ký chính thức
-                        </Text>
-                      </Divider>
-                      <List
-                        dataSource={selectedTasks}
-                        split={false}
-                        renderItem={task => (
-                          <List.Item key={task.id} style={{ padding: "4px 0" }}>
-                            <Card
-                              size="small"
-                              className="w-full border-green-100 rounded-xl"
-                              bordered
-                            >
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <CheckCircleOutlined className="text-green-600" />
-                                  <Text strong style={{ fontSize: 13 }}>
-                                    {task.name || task.taskCatalogName}
-                                  </Text>
-                                </div>
-                                <Tag color="success">Hoàn thành</Tag>
-                              </div>
-                              <Alert
-                                message="Nhật ký chính thức xem qua Biên soạn / leader-summary API"
-                                type="info"
-                                showIcon
-                                className="rounded-lg"
-                              />
-                            </Card>
-                          </List.Item>
-                        )}
-                      />
-                    </>
-                  )}
               </div>
             )}
           </Col>
@@ -919,8 +876,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             if (!err?.errorFields) {
               message.error(
                 err?.response?.data?.message ||
-                  err?.message ||
-                  "Cập nhật thất bại.",
+                err?.message ||
+                "Cập nhật thất bại.",
               )
             }
           } finally {
