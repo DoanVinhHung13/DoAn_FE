@@ -47,8 +47,8 @@ const LandPlotFormFields = ({
 
     <Row gutter={12}>
       <Col span={14}>
-        <Form.Item 
-          label="Diện tích" 
+        <Form.Item
+          label="Diện tích"
           name="area"
           rules={[{ required: true, message: 'Vui lòng nhập diện tích' }]}
         >
@@ -66,7 +66,10 @@ const LandPlotFormFields = ({
           name="areaUnit"
           rules={[{ required: true, message: 'Chọn đơn vị diện tích' }]}
         >
-          <Select options={AREA_UNIT_OPTIONS} />
+          <Select
+            options={AREA_UNIT_OPTIONS.filter(o => o.value === 'ha')}
+            placeholder="Hecta (ha)"
+          />
         </Form.Item>
       </Col>
     </Row>
