@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run verify:dist",
+    "verify:dist": "node scripts/verify-dist-assets.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
