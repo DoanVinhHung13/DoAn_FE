@@ -23,6 +23,7 @@ import {
   markNotificationAsRead,
 } from 'src/services/NotificationService';
 import ROUTER from 'src/router/ROUTER';
+import { getNotificationTypeLabel } from 'src/constants/notificationTypes';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -185,8 +186,7 @@ const NotificationDetail = () => {
     time: notification.time,
     rawTime: sentTime,
   });
-  const category =
-    notification.categoryLabel || notification.category || notification.type || 'Thông báo';
+  const category = getNotificationTypeLabel(notification);
 
   return (
     <div className="space-y-6">
@@ -272,7 +272,7 @@ const NotificationDetail = () => {
           if (typeof attachs === 'string') {
             try {
               attachs = JSON.parse(attachs);
-            } catch (e) {
+            } catch {
               attachs = [attachs];
             }
           }

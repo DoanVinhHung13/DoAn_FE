@@ -6,9 +6,6 @@ export const apiUpdateCultivationLogbook = (id) => `/cultivation-logbooks/${id}`
 export const apiDeleteCultivationLogbook = (id) => `/cultivation-logbooks/${id}`
 
 // Workflow endpoints
-export const apiSubmitReview = (id) => `/cultivation-logbooks/${id}/submit-review`
-export const apiApproveReview = (id) => `/cultivation-logbooks/${id}/approve-review`
-export const apiRejectReview = (id) => `/cultivation-logbooks/${id}/reject-review`
 export const apiSubmitCompletion = (id) => `/cultivation-logbooks/${id}/submit-completion`
 export const apiApproveCompletion = (id) => `/cultivation-logbooks/${id}/approve-completion`
 export const apiRejectCompletion = (id) => `/cultivation-logbooks/${id}/reject-completion`

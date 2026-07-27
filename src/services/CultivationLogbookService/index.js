@@ -5,9 +5,6 @@ import {
   apiGetCultivationLogbookById,
   apiUpdateCultivationLogbook,
   apiDeleteCultivationLogbook,
-  apiSubmitReview,
-  apiApproveReview,
-  apiRejectReview,
   apiSubmitCompletion,
   apiApproveCompletion,
   apiRejectCompletion,
@@ -35,16 +32,6 @@ const update = (id, body, config) =>
 
 const deleteById = (id) =>
   http.delete(apiDeleteCultivationLogbook(id))
-
-// Workflow actions
-const submitReview = (id) =>
-  http.post(apiSubmitReview(id))
-
-const approveReview = (id) =>
-  http.post(apiApproveReview(id))
-
-const rejectReview = (id, body) =>
-  http.post(apiRejectReview(id), body)
 
 const submitCompletion = (id) =>
   http.post(apiSubmitCompletion(id))
@@ -78,9 +65,6 @@ const CultivationLogbookService = {
   create,
   update,
   deleteById,
-  submitReview,
-  approveReview,
-  rejectReview,
   submitCompletion,
   approveCompletion,
   rejectCompletion,

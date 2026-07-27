@@ -3,14 +3,12 @@ import {
   Badge,
   Button,
   Card,
-  Checkbox,
   Empty,
   Form,
   Input,
   Modal,
   Select,
   Skeleton,
-  Spin,
   Tabs,
   Tag,
   Typography,
@@ -36,6 +34,7 @@ import 'dayjs/locale/vi';
 
 import {
   getNotifications,
+  markNotificationAsRead,
   markAllNotificationsAsRead,
   createNotification,
   getAllUsers,
@@ -44,6 +43,10 @@ import {
 import UploadService from 'src/services/UploadService';
 import TitleCustom from 'src/components/TitleCustom';
 import ROUTER from 'src/router/ROUTER';
+import {
+  getNotificationTypeLabel,
+  NOTIFICATION_TYPE_COLORS,
+} from 'src/constants/notificationTypes';
 
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
@@ -59,15 +62,6 @@ const STATUS_OPTIONS = [
   { value: 'read', label: 'Đã đọc' },
 ];
 
-const TYPE_LABELS = {
-  Journal_Submitted: 'Gửi duyệt',
-  Journal_Verified: 'Đã duyệt',
-  Journal_Revision_Requested: 'Cần chỉnh sửa',
-  Journal_Assigned: 'Phân công',
-  System: 'Hệ thống',
-  Announcement: 'Thông báo chung',
-};
-
 const TYPE_COLORS = {
   Journal_Submitted: 'blue',
   Journal_Verified: 'green',
@@ -76,21 +70,6 @@ const TYPE_COLORS = {
   System: 'cyan',
   Announcement: 'magenta',
 };
-
-const TYPE_OPTIONS = [
-  { value: 'Announcement', label: 'Thông báo chung' },
-  { value: 'System', label: 'Hệ thống' },
-  { value: 'Journal_Assigned', label: 'Phân công' },
-  { value: 'Journal_Submitted', label: 'Gửi duyệt' },
-  { value: 'Journal_Verified', label: 'Đã duyệt' },
-  { value: 'Journal_Revision_Requested', label: 'Cần chỉnh sửa' },
-];
-
-const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Thường' },
-  { value: 'medium', label: 'Quan trọng' },
-  { value: 'high', label: 'Khẩn cấp' },
-];
 
 const ROLE_OPTIONS = [
   { value: 'FARMER', label: 'Nhân viên trồng cây (Farmer)' },
@@ -132,8 +111,7 @@ const normalizeUsers = (response) => {
     : data?.items || data?.results || data?.users || [];
 };
 
-const getCategory = (item) =>
-  item.categoryLabel || TYPE_LABELS[item.type] || item.category || item.type || 'Khác';
+const getCategory = getNotificationTypeLabel;
 
 const FarmManagerNotifications = () => {
   const queryClient = useQueryClient();
@@ -189,6 +167,7 @@ const FarmManagerNotifications = () => {
         title: values.title.trim(),
         content: values.message.trim(),
         type: 'Announcement', // Mặc định là Announcement
+        actionUrl: values.actionUrl?.trim() || null,
         recipientUserIds: recipientType === RECIPIENT_TYPE.SPECIFIC_USERS ? (values.recipientUserIds || []) : [],
         recipientRoles: recipientType === RECIPIENT_TYPE.BY_ROLE ? (values.recipientRoles || []) : [],
         attachments: documents.map(doc => doc.url),
@@ -314,8 +293,18 @@ const FarmManagerNotifications = () => {
     });
   }, [category, data, sentData, keyword, status, activeTab]);
 
-  const handleNotificationClick = (item) => {
+  const handleNotificationClick = async (item) => {
     const id = item._id || item.id;
+    if (!item.isRead && id) {
+      await markNotificationAsRead(id).catch(() => undefined);
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
+
+    if (item.actionUrl?.startsWith('/')) {
+      navigate(item.actionUrl);
+      return;
+    }
+
     navigate(ROUTER.FM_NOTIFICATION_DETAIL.replace(':id', id));
   };
 
@@ -460,7 +449,7 @@ const FarmManagerNotifications = () => {
                       <Text strong={!item.isRead} className="!text-sm">
                         {item.title || 'Thông báo'}
                       </Text>
-                      <Tag color={TYPE_COLORS[item.type] || 'default'} className="!m-0 !text-xs">
+                      <Tag color={NOTIFICATION_TYPE_COLORS[item.type] || TYPE_COLORS[item.type] || 'default'} className="!m-0 !text-xs">
                         {getCategory(item)}
                       </Tag>
                       {!item.isRead && <Tag color="green" className="!m-0 !text-xs">Chưa đọc</Tag>}
@@ -490,7 +479,7 @@ const FarmManagerNotifications = () => {
         onCancel={() => {
           setIsCreating(false);
           form.resetFields();
-          setSendToAll(true);
+          setRecipientType(RECIPIENT_TYPE.ALL);
         }}
         footer={null}
         centered
@@ -544,6 +533,28 @@ const FarmManagerNotifications = () => {
               placeholder="Nhập nội dung thông báo"
               showCount
               maxLength={1000}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="actionUrl"
+            label="Đường dẫn khi bấm (tuỳ chọn)"
+            rules={[
+              {
+                max: 500,
+                message: 'Đường dẫn không được vượt quá 500 ký tự.',
+              },
+              {
+                validator: (_, value) => {
+                  if (!value || value.trim().startsWith('/')) return Promise.resolve();
+                  return Promise.reject(new Error('Đường dẫn phải bắt đầu bằng /.'));
+                },
+              },
+            ]}
+          >
+            <Input
+              className="h-11 rounded-lg"
+              placeholder="Ví dụ: /farm-manager/cultivation-logbooks/123"
             />
           </Form.Item>
 

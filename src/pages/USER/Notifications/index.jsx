@@ -9,7 +9,6 @@ import {
   Skeleton,
   Tag,
   Typography,
-  message,
 } from 'antd';
 import { BellOutlined, CheckOutlined, SearchOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,10 +22,15 @@ import 'dayjs/locale/vi';
 
 import {
   getNotifications,
+  markNotificationAsRead,
   markAllNotificationsAsRead,
 } from 'src/services/NotificationService';
 import TitleCustom from 'src/components/TitleCustom';
 import ROUTER from 'src/router/ROUTER';
+import {
+  getNotificationTypeLabel,
+  NOTIFICATION_TYPE_COLORS,
+} from 'src/constants/notificationTypes';
 
 dayjs.extend(relativeTime);
 dayjs.extend(utc);
@@ -40,15 +44,6 @@ const STATUS_OPTIONS = [
   { value: 'unread', label: 'Chưa đọc' },
   { value: 'read', label: 'Đã đọc' },
 ];
-
-const TYPE_LABELS = {
-  Journal_Submitted: 'Gửi duyệt',
-  Journal_Verified: 'Đã duyệt',
-  Journal_Revision_Requested: 'Cần chỉnh sửa',
-  Journal_Assigned: 'Phân công',
-  System: 'Hệ thống',
-  Announcement: 'Thông báo chung',
-};
 
 const TYPE_COLORS = {
   Journal_Submitted: 'blue',
@@ -78,8 +73,7 @@ const normalizeNotifications = (response) => {
   return { items, unreadCount };
 };
 
-const getCategory = (item) =>
-  item.categoryLabel || TYPE_LABELS[item.type] || item.category || item.type || 'Khác';
+const getCategory = getNotificationTypeLabel;
 
 const Notifications = () => {
   const queryClient = useQueryClient();
@@ -132,8 +126,18 @@ const Notifications = () => {
     });
   }, [category, data?.items, keyword, status]);
 
-  const handleNotificationClick = (item) => {
+  const handleNotificationClick = async (item) => {
     const id = item._id || item.id;
+    if (!item.isRead && id) {
+      await markNotificationAsRead(id).catch(() => undefined);
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    }
+
+    if (item.actionUrl?.startsWith('/')) {
+      navigate(item.actionUrl);
+      return;
+    }
+
     const detailPath =
       userInfo?.role === 'FARM_MANAGER'
         ? ROUTER.FM_NOTIFICATION_DETAIL
@@ -236,7 +240,7 @@ const Notifications = () => {
                       <Text strong={!item.isRead} className="!text-sm">
                         {item.title || 'Thông báo'}
                       </Text>
-                      <Tag color={TYPE_COLORS[item.type] || 'default'} className="!m-0 !text-xs">
+                      <Tag color={NOTIFICATION_TYPE_COLORS[item.type] || TYPE_COLORS[item.type] || 'default'} className="!m-0 !text-xs">
                         {getCategory(item)}
                       </Tag>
                       {!item.isRead && (

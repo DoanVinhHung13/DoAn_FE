@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
 import ROUTER from 'src/router/ROUTER';
+import { getNotificationTypeLabel } from 'src/constants/notificationTypes';
 
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
@@ -60,9 +61,18 @@ const NotificationBell = () => {
     },
   });
 
-  const handleNotificationClick = (item) => {
+  const handleNotificationClick = async (item) => {
     setVisible(false);
     const id = item._id || item.id;
+    if (!item.isRead && id) {
+      await markReadMutation.mutateAsync(id).catch(() => undefined);
+    }
+
+    if (item.actionUrl?.startsWith('/')) {
+      navigate(item.actionUrl);
+      return;
+    }
+
     const detailPath =
       userInfo?.role === 'FARM_MANAGER'
         ? ROUTER.FM_NOTIFICATION_DETAIL
@@ -108,7 +118,7 @@ const NotificationBell = () => {
                 <div className="w-full">
                   <div className="mb-1 flex items-start justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      {item.categoryLabel && <Tag className="!m-0">{item.categoryLabel}</Tag>}
+                      <Tag className="!m-0">{getNotificationTypeLabel(item)}</Tag>
                       <Text strong={!item.isRead} className="text-[13px]">
                         {item.title || 'Thông báo'}
                       </Text>
