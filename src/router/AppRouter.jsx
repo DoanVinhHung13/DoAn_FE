@@ -15,7 +15,6 @@ import { ROLES } from 'src/constants/roles'
 // ANONYMOUS
 const Home = React.lazy(() => import('../pages/ANONYMOUS/Home'))
 const Login = React.lazy(() => import('../pages/ANONYMOUS/Login'))
-// const Register = React.lazy(() => import('../pages/ANONYMOUS/Register'))
 const ForgotPassword = React.lazy(() => import('../pages/ANONYMOUS/ForgotPassword'))
 const NotFound = React.lazy(() => import('../pages/SupportPage/NotFound'))
 const Forbidden = React.lazy(() => import('../pages/ANONYMOUS/Forbidden'))
@@ -23,7 +22,7 @@ const NewsListAll = React.lazy(() => import('../pages/ANONYMOUS/News/NewsListAll
 const NewsDetail = React.lazy(() => import('../pages/ANONYMOUS/News/NewsDetail'))
 const TCVNReference = React.lazy(() => import('../pages/ANONYMOUS/Reference/TCVNReference'))
 
-// Shared pages (accessible by all roles) - kept in USER/ for now
+// Shared pages (accessible by all roles)
 const AccountInfo = React.lazy(() => import('../pages/USER/AccountInfo'))
 const ChangePassword = React.lazy(() => import('../pages/USER/ChangePassword'))
 const Notifications = React.lazy(() => import('../pages/USER/Notifications'))
@@ -63,7 +62,6 @@ const FarmLeaderDailyLog = React.lazy(() => import('../pages/FARM_LEADER/Tasks/D
 const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
 const FarmManagerLogbookReview = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks/LogbookReview'))
 const FarmManagerReports = React.lazy(() => import('../pages/FARM_MANAGER/Reports'))
-
 const FarmManagerBatches = React.lazy(() => import('../pages/FARM_MANAGER/Batches'))
 const FarmManagerBatchDetail = React.lazy(() => import('../pages/FARM_MANAGER/Batches/BatchDetail'))
 const FarmManagerNotifications = React.lazy(() => import('../pages/FARM_MANAGER/Notifications'))
@@ -75,28 +73,13 @@ const FarmManagerViewCropProtections = React.lazy(() => import('../pages/FARM_MA
 const FarmManagerCropProtectionCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionCreate'))
 const FarmManagerCropProtectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionDetail'))
 const FarmManagerCropProtectionEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionEdit'))
-
 const FarmManagerReferenceFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/Reference/FertilizerList'))
 const FarmManagerReferencePesticides = React.lazy(() => import('../pages/FARM_MANAGER/Reference/PesticideList'))
-const FarmManagerQRManagement = React.lazy(() => import('../pages/FARM_MANAGER/QRManagement'))
 
-// FARM_SUPERVISOR pages (formerly LAND_MANAGER)
-const FarmSupervisorDashboard = React.lazy(() => import('../pages/FARM_SUPERVISOR/Dashboard'))
+// FARM_SUPERVISOR pages
 const FarmSupervisorFarmers = React.lazy(() => import('../pages/FARM_SUPERVISOR/Farmers'))
 const FarmSupervisorLands = React.lazy(() => import('../pages/FARM_SUPERVISOR/Lands'))
 const FarmSupervisorLandPlotDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Lands/LandPlotDetail'))
-const FarmSupervisorNotifications = React.lazy(() => import('../pages/FARM_SUPERVISOR/Notifications'))
-
-// FARMER pages (mapped to USER/ since FARMER folder doesn't exist)
-const FarmerDashboard = React.lazy(() => import('../pages/USER/FarmerManagement'))
-const FarmerTasks = React.lazy(() => import('../pages/FARM_MANAGER/StandardTasks'))
-const FarmerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
-const FarmerPlans = React.lazy(() => import('../pages/USER/ProductionProcess'))
-const FarmerSupplies = React.lazy(() => import('../pages/FARM_MANAGER/Supplies'))
-// Legacy - removed
-// const FarmSupervisorLogbooks = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks'))
-// const FarmSupervisorLogbookDetail = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks/LogbookDetail'))
-// const FarmSupervisorStageLog = React.lazy(() => import('../pages/FARM_SUPERVISOR/Logbooks/StageLog'))
 
 // ── Spinner fallback dùng chung ───────────────────────────────────────────────
 function Lazy({ children }) {
@@ -131,21 +114,17 @@ const routes = [
     ],
   },
 
-  // ── Auth pages (guest only — redirect nếu đã login) ───────────────────────
+  // ── Auth pages (guest only) ───────────────────────────────────────────────
   {
     path: ROUTER.LOGIN,
     element: <Lazy><GuestRoute><Login /></GuestRoute></Lazy>,
   },
-  // {
-  //   path: ROUTER.REGISTER,
-  //   element: <Lazy><GuestRoute><Register /></GuestRoute></Lazy>,
-  // },
   {
     path: ROUTER.FORGOT_PASSWORD,
     element: <Lazy><GuestRoute><ForgotPassword /></GuestRoute></Lazy>,
   },
 
-  // ── Trace QR (standalone — không cần layout, không cần login) ────────────
+  // ── Trace QR (standalone) ────────────────────────────────────────────────
   {
     path: ROUTER.TRACE,
     element: <Lazy><Trace /></Lazy>,
@@ -206,11 +185,6 @@ const routes = [
               { path: ROUTER.FM_CULTIVATION_LOGBOOK_CREATE, element: <Lazy><FarmManagerCultivationLogbookCreate /></Lazy> },
               { path: ROUTER.FM_CULTIVATION_LOGBOOK_EDIT, element: <Lazy><FarmManagerCultivationLogbookCreate /></Lazy> },
               { path: ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL, element: <Lazy><FarmManagerCultivationLogbookDetail /></Lazy> },
-              // Legacy routes - kept for backward compatibility
-              { path: ROUTER.FM_PRODUCTION_PLANS, element: <Lazy><FarmManagerCultivationLogbooks /></Lazy> },
-              { path: ROUTER.FM_PRODUCTION_PLAN_CREATE, element: <Lazy><FarmManagerCultivationLogbookCreate /></Lazy> },
-              { path: ROUTER.FM_PRODUCTION_PLAN_EDIT, element: <Lazy><FarmManagerCultivationLogbookCreate /></Lazy> },
-              { path: ROUTER.FM_PRODUCTION_PLAN_DETAIL, element: <Lazy><FarmManagerCultivationLogbookDetail /></Lazy> },
 
               // Plan Template Management
               { path: ROUTER.FM_PLAN_TEMPLATES, element: <Lazy><FarmManagerPlanTemplates /></Lazy> },
@@ -218,13 +192,13 @@ const routes = [
               { path: ROUTER.FM_PLAN_TEMPLATE_EDIT, element: <Lazy><FarmManagerPlanTemplateCreate /></Lazy> },
               { path: ROUTER.FM_PLAN_TEMPLATE_DETAIL, element: <Lazy><FarmManagerPlanTemplateDetail /></Lazy> },
 
-              // Task Management
+              // Task Catalog Management
               { path: ROUTER.FM_TASKS, element: <Lazy><FarmManagerTasks /></Lazy> },
               { path: ROUTER.FM_TASK_CREATE, element: <Lazy><FarmManagerTaskCreate /></Lazy> },
               { path: ROUTER.FM_TASK_DETAIL, element: <Lazy><FarmManagerTaskDetail /></Lazy> },
               { path: ROUTER.FM_TASK_EDIT, element: <Lazy><FarmManagerTaskEdit /></Lazy> },
 
-              // Batches
+              // Harvest Batch Management
               { path: ROUTER.FM_BATCHES, element: <Lazy><FarmManagerBatches /></Lazy> },
               { path: ROUTER.FM_BATCH_DETAIL, element: <Lazy><FarmManagerBatchDetail /></Lazy> },
 
@@ -248,9 +222,6 @@ const routes = [
               { path: ROUTER.FM_REF_FERTILIZER, element: <Lazy><FarmManagerReferenceFertilizers /></Lazy> },
               { path: ROUTER.FM_REF_PESTICIDE, element: <Lazy><FarmManagerReferencePesticides /></Lazy> },
 
-              // QR Management
-              { path: ROUTER.FM_QR_MANAGEMENT, element: <Lazy><FarmManagerQRManagement /></Lazy> },
-
               // Logbook Review (duyệt nhật ký canh tác)
               { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },
               { path: ROUTER.FM_LOGBOOK_REVIEW, element: <Lazy><FarmManagerLogbookReview /></Lazy> },
@@ -264,18 +235,16 @@ const routes = [
           {
             element: <ProtectedRoute allowedRoles={[ROLES.FARM_SUPERVISOR]} />,
             children: [
-              // Farm Supervisor - Plans & Tasks
+              // Plans & Logbooks
               { path: ROUTER.FS_PLANS, element: <Lazy><FarmSupervisorPlans /></Lazy> },
               { path: ROUTER.FS_PLAN_DETAIL, element: <Lazy><FarmSupervisorPlanDetail /></Lazy> },
-              // FS_STAGE_LOG removed - using PlanDetail with tabs instead
 
-              // Farm Supervisor - Additional features (formerly Land Manager)
-              { path: ROUTER.LM_DASHBOARD, element: <Lazy><FarmSupervisorDashboard /></Lazy> },
+              // Farmers
               { path: ROUTER.LM_FARMERS, element: <Lazy><FarmSupervisorFarmers /></Lazy> },
+
+              // Lands
               { path: ROUTER.LM_LANDS, element: <Lazy><FarmSupervisorLands /></Lazy> },
               { path: ROUTER.LM_LAND_DETAIL, element: <Lazy><FarmSupervisorLandPlotDetail /></Lazy> },
-              { path: ROUTER.LM_NOTIFICATIONS, element: <Lazy><FarmSupervisorNotifications /></Lazy> },
-              { path: ROUTER.LM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
             ],
           },
 
@@ -283,21 +252,8 @@ const routes = [
           {
             element: <ProtectedRoute allowedRoles={[ROLES.FARM_LEADER, ROLES.FARM_SUPERVISOR]} />,
             children: [
-              { path: ROUTER.LM_FIELD_LOG, element: <Navigate to={ROUTER.FL_TASKS} replace /> },
               { path: ROUTER.FL_TASKS, element: <Lazy><FarmLeaderTasks /></Lazy> },
               { path: ROUTER.FL_TASK_LOG, element: <Lazy><FarmLeaderDailyLog /></Lazy> },
-            ],
-          },
-
-          // ── Farmer Routes ──────────────────────────────────────────────
-          {
-            element: <ProtectedRoute allowedRoles={[ROLES.FARMER]} />,
-            children: [
-              { path: ROUTER.FARMER_DASHBOARD, element: <Lazy><FarmerDashboard /></Lazy> },
-              { path: ROUTER.FARMER_TASKS, element: <Lazy><FarmerTasks /></Lazy> },
-              { path: ROUTER.FARMER_LOGBOOKS, element: <Lazy><FarmerLogbooks /></Lazy> },
-              { path: ROUTER.FARMER_PLANS, element: <Lazy><FarmerPlans /></Lazy> },
-              { path: ROUTER.FARMER_SUPPLIES, element: <Lazy><FarmerSupplies /></Lazy> },
             ],
           },
         ],
@@ -313,4 +269,3 @@ const routes = [
 
 const AppRouter = () => useRoutes(routes)
 export default AppRouter
-
