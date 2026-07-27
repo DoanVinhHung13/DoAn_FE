@@ -15,7 +15,6 @@ import {
 
 import {
   Avatar,
-  Badge,
   Button,
   Card,
   Input,
@@ -67,6 +66,8 @@ const UsersManagement = () => {
   const isFarmManager = currentUser?.role === ROLES.FARM_MANAGER
 
   const { getOptions, getDescription } = useSystemKey()
+
+  const roleOptions = getOptions(SYSTEM_KEY.ROLE)
 
   const selectStatusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
