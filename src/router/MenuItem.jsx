@@ -18,7 +18,7 @@ import {
   ContainerOutlined,
   ProfileOutlined,
   FormOutlined,
-  SafetyCertificateOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons'
 import { Sprout } from 'lucide-react'
 import ROUTER from './ROUTER'
@@ -67,11 +67,10 @@ export const farmManagerItem = () => [
     label: 'Duyệt nhật ký canh tác',
   },
   {
-    key: ROUTER.FM_QUALITY_INSPECTIONS,
-    icon: <SafetyCertificateOutlined className="text-lg" />,
-    label: 'Kiểm tra chất lượng',
+    key: ROUTER.FM_REPORTS,
+    icon: <BarChartOutlined className="text-lg" />,
+    label: 'Báo cáo thống kê',
   },
-
   {
     key: ROUTER.FM_TASKS,
     icon: <CheckCircleOutlined className="text-lg" />,

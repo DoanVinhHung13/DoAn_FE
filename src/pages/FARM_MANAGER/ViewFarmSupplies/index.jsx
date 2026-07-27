@@ -371,6 +371,7 @@ const ViewFarmSupplies = () => {
           columns={columns}
           dataSource={filteredData}
           rowKey="id"
+          scroll={{ x: 'max-content' }}
           onRow={(record) => ({
             onClick: () => handleOpenDetail(record),
             className: 'cursor-pointer hover:bg-slate-50',

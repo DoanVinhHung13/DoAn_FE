@@ -17,7 +17,7 @@ TableCustom.defaultProps = {
 }
 
 function TableCustom(props) {
-  const { isPrimary, isStickyScrroll, textEmpty, dataSource, ...rest } = props
+  const { isPrimary, isStickyScrroll, textEmpty, dataSource, scroll, ...rest } = props
   return (
     <TableCustomStyled
       $isPrimary={isPrimary}
@@ -33,7 +33,7 @@ function TableCustom(props) {
             />
           ),
         }}
-        scroll={dataSource?.length ? { x: "100%" } : {}}
+        scroll={scroll || (dataSource?.length ? { x: "max-content" } : {})}
         dataSource={dataSource}
         {...rest}
       />
