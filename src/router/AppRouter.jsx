@@ -62,6 +62,7 @@ const FarmLeaderTasks = React.lazy(() => import('../pages/FARM_LEADER/Tasks'))
 const FarmLeaderDailyLog = React.lazy(() => import('../pages/FARM_LEADER/Tasks/DailyLog'))
 const FarmManagerLogbooks = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks'))
 const FarmManagerLogbookReview = React.lazy(() => import('../pages/FARM_MANAGER/Logbooks/LogbookReview'))
+const FarmManagerReports = React.lazy(() => import('../pages/FARM_MANAGER/Reports'))
 
 const FarmManagerBatches = React.lazy(() => import('../pages/FARM_MANAGER/Batches'))
 const FarmManagerBatchDetail = React.lazy(() => import('../pages/FARM_MANAGER/Batches/BatchDetail'))
@@ -274,6 +275,9 @@ const routes = [
               // Logbook Review (duyệt nhật ký canh tác)
               { path: ROUTER.FM_LOGBOOKS, element: <Lazy><FarmManagerLogbooks /></Lazy> },
               { path: ROUTER.FM_LOGBOOK_REVIEW, element: <Lazy><FarmManagerLogbookReview /></Lazy> },
+
+              // Reports
+              { path: ROUTER.FM_REPORTS, element: <Lazy><FarmManagerReports /></Lazy> },
             ],
           },
 

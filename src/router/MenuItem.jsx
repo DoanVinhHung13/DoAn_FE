@@ -18,6 +18,7 @@ import {
   ContainerOutlined,
   ProfileOutlined,
   FormOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons'
 import { Sprout } from 'lucide-react'
 import ROUTER from './ROUTER'
@@ -64,6 +65,11 @@ export const farmManagerItem = () => [
     key: ROUTER.FM_LOGBOOKS,
     icon: <BookOutlined className="text-lg" />,
     label: 'Duyệt nhật ký canh tác',
+  },
+  {
+    key: ROUTER.FM_REPORTS,
+    icon: <BarChartOutlined className="text-lg" />,
+    label: 'Báo cáo thống kê',
   },
   {
     key: ROUTER.FM_TASKS,

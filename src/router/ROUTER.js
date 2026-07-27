@@ -90,6 +90,7 @@ const ROUTER = {
   FM_JOURNAL_ENTRY: '/farm-manager/journals/view/:id',
   FM_LOGBOOKS: '/farm-manager/logbooks',
   FM_LOGBOOK_REVIEW: '/farm-manager/logbooks/:id/review',
+  FM_REPORTS: '/farm-manager/reports',
 
   // ── Farm Supervisor Routes ────────────────────────────────────────────────
   FS_PLANS: '/farm-supervisor/plans',
