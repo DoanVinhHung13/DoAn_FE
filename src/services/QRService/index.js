@@ -12,7 +12,8 @@ import {
 
 export const getQRCodes = params => http.get(apiGetQRCodes, { params })
 export const getQRCodeById = id => http.get(apiGetQRCodeById(id))
-export const previewQRCode = data => http.post(apiPreviewQRCode, data)
+export const previewQRCode = data =>
+  http.post(apiPreviewQRCode, data, { skipNotice: true })
 export const createQRCode = data => http.post(apiCreateQRCode, data)
 export const updateQRCode = (id, data) => http.put(apiUpdateQRCode(id), data)
 export const deleteQRCode = id => http.delete(apiDeleteQRCode(id))

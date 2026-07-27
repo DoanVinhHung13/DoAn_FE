@@ -148,10 +148,9 @@ const Batches = () => {
     setPage(1)
   }
 
-  const goToQrManagement = (batch, shouldPreview = false) => {
-    const previewQuery = shouldPreview ? "&preview=1" : ""
+  const goToQrManagement = batch => {
     navigate(
-      `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}${previewQuery}`,
+      `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
     )
   }
 
@@ -271,47 +270,48 @@ const Batches = () => {
 
         if (canPreviewQr) {
           return (
-            <Tooltip title="Xem trước QR truy xuất">
+            <Tooltip title="Quản lý mã QR">
               <Button
                 type="primary"
                 icon={<QrcodeOutlined />}
                 size="small"
+                aria-label="Quản lý mã QR"
                 onClick={event => {
                   event.stopPropagation()
-                  goToQrManagement(record, true)
+                  goToQrManagement(record)
                 }}
                 className="bg-green-600 hover:bg-green-700"
-              >
-                Xem trước QR
-              </Button>
+              />
             </Tooltip>
           )
         }
 
         if (hasQr) {
           return (
-            <Tooltip title={`Xem QR đang hoạt động: ${record.activeTraceCode || ""}`}>
+            <Tooltip title="Quản lý mã QR">
               <Button
                 type="primary"
                 icon={<QrcodeOutlined />}
                 size="small"
+                aria-label="Quản lý mã QR"
                 onClick={event => {
                   event.stopPropagation()
                   goToQrManagement(record)
                 }}
                 className="bg-blue-500 hover:bg-blue-600"
-              >
-                Xem QR
-              </Button>
+              />
             </Tooltip>
           )
         }
 
         return (
-          <Tooltip title="Lô chưa đủ điều kiện để tạo QR">
-            <Button icon={<QrcodeOutlined />} size="small" disabled>
-              Chưa đủ điều kiện
-            </Button>
+          <Tooltip title="Lô chưa đủ điều kiện tạo QR">
+            <Button
+              icon={<QrcodeOutlined />}
+              size="small"
+              aria-label="Lô chưa đủ điều kiện tạo QR"
+              disabled
+            />
           </Tooltip>
         )
       },

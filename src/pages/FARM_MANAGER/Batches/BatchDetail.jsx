@@ -11,6 +11,7 @@ import {
   Spin,
   Divider,
   Space,
+  Tooltip,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -129,34 +130,36 @@ const BatchDetail = () => {
         </div>
         <Space>
           {canCreateQR && (
-            <Button
-              type="primary"
-              icon={<QrcodeOutlined />}
-              size="large"
-              onClick={() =>
-                navigate(
-                    `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}&preview=1`
-                )
-              }
-              className="bg-green-600 hover:bg-green-700 h-10 px-5 rounded-lg font-semibold"
-            >
-              Xem trước QR
-            </Button>
+            <Tooltip title="Quản lý mã QR">
+              <Button
+                type="primary"
+                icon={<QrcodeOutlined />}
+                size="large"
+                aria-label="Quản lý mã QR"
+                onClick={() =>
+                  navigate(
+                    `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                  )
+                }
+                className="bg-green-600 hover:bg-green-700 h-10 px-3 rounded-lg font-semibold"
+              />
+            </Tooltip>
           )}
           {hasQR && !canCreateQR && (
-            <Button
-              type="primary"
-              icon={<QrcodeOutlined />}
-              size="large"
-              onClick={() =>
-                navigate(
-                  `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
-                )
-              }
-              className="bg-blue-500 hover:bg-blue-600 h-10 px-5 rounded-lg font-semibold"
-            >
-              Xem mã QR hiện tại
-            </Button>
+            <Tooltip title="Quản lý mã QR">
+              <Button
+                type="primary"
+                icon={<QrcodeOutlined />}
+                size="large"
+                aria-label="Quản lý mã QR"
+                onClick={() =>
+                  navigate(
+                    `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                  )
+                }
+                className="bg-blue-500 hover:bg-blue-600 h-10 px-3 rounded-lg font-semibold"
+              />
+            </Tooltip>
           )}
         </Space>
       </div>
@@ -285,37 +288,39 @@ const BatchDetail = () => {
               {/* Actions */}
               <div className="space-y-3">
                 {canCreateQR && (
-                  <Button
-                    type="primary"
-                    size="large"
-                    block
-                    icon={<QrcodeOutlined />}
-                    onClick={() =>
-                      navigate(
-                        `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}&preview=1`
-                      )
-                    }
-                    className="h-12 rounded-lg bg-green-600 hover:bg-green-700 font-semibold"
-                  >
-                    Xem trước QR
-                  </Button>
+                  <Tooltip title="Quản lý mã QR">
+                    <Button
+                      type="primary"
+                      size="large"
+                      block
+                      icon={<QrcodeOutlined />}
+                      aria-label="Quản lý mã QR"
+                      onClick={() =>
+                        navigate(
+                          `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                        )
+                      }
+                      className="h-12 rounded-lg bg-green-600 hover:bg-green-700 font-semibold"
+                    />
+                  </Tooltip>
                 )}
 
                 {hasQR && !canCreateQR && (
-                  <Button
-                    type="primary"
-                    size="large"
-                    block
-                    icon={<QrcodeOutlined />}
-                    onClick={() =>
-                      navigate(
-                        `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
-                      )
-                    }
-                    className="h-12 rounded-lg bg-blue-500 hover:bg-blue-600 font-semibold"
-                  >
-                    Xem mã QR hiện tại ({batch.activeTraceCode})
-                  </Button>
+                  <Tooltip title="Quản lý mã QR">
+                    <Button
+                      type="primary"
+                      size="large"
+                      block
+                      icon={<QrcodeOutlined />}
+                      aria-label="Quản lý mã QR"
+                      onClick={() =>
+                        navigate(
+                          `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                        )
+                      }
+                      className="h-12 rounded-lg bg-blue-500 hover:bg-blue-600 font-semibold"
+                    />
+                  </Tooltip>
                 )}
 
                 {!canCreateQR && !hasQR && (

@@ -7,7 +7,6 @@ import {
   Form,
   Input,
   Row,
-  Select,
   Checkbox,
   Typography,
   message,
@@ -60,8 +59,6 @@ const QRManagement = () => {
 
   // Get batch info from URL params if present
   const batchIdFromUrl = searchParams.get('batchId');
-  const previewRequestedFromList = searchParams.get('preview') === '1';
-  const autoPreviewBatchIdRef = useRef(null);
 
   // Watch form fields for live updates
   const selectedBatchId = Form.useWatch('harvestBatchId', form);
@@ -71,7 +68,7 @@ const QRManagement = () => {
   const showCertificates = Form.useWatch('showCertificates', form);
 
   // 1. Fetch harvest batches list for selection dropdown
-  const { data: harvestBatches = [], isLoading: isLoadingBatches } = useQuery({
+  const { data: harvestBatches = [] } = useQuery({
     queryKey: ['harvest-batches-select'],
     queryFn: async () => {
       try {
@@ -180,6 +177,7 @@ const QRManagement = () => {
     showPhotos: !!showPhotos,
     showCertificates: !!showCertificates,
   };
+  const displayOptionsDisabled = Boolean(qrData);
 
   // Preview data is supplied by the API. The batch is only a fallback for the
   // surrounding layout fields that are not part of the traceability payload.
@@ -288,7 +286,6 @@ const QRManagement = () => {
       };
       setPreviewData(result);
       setPreviewModalOpen(true);
-      message.success('Xem preview mã QR thành công!');
     },
     onError: (error) => {
       setPreviewData(null);
@@ -359,23 +356,6 @@ const QRManagement = () => {
       message.warning('Vui lòng chọn lô thu hoạch!');
     }
   };
-
-  useEffect(() => {
-    if (
-      previewRequestedFromList &&
-      selectedBatchId &&
-      batchDetail &&
-      autoPreviewBatchIdRef.current !== selectedBatchId
-    ) {
-      autoPreviewBatchIdRef.current = selectedBatchId;
-      handlePreview();
-    }
-  }, [
-    batchDetail,
-    handlePreview,
-    previewRequestedFromList,
-    selectedBatchId,
-  ]);
 
   // Download QR SVG/Image
   const handleDownload = () => {
@@ -465,7 +445,7 @@ const QRManagement = () => {
             </Button>
             <TitleCustom className="!mb-0 flex items-center gap-2">
               <QrcodeOutlined className="text-2xl text-green-600" />
-              Tạo Mã QR Truy Xuất
+              Quản lý mã QR
             </TitleCustom>
           </div>
           <Button
@@ -495,7 +475,7 @@ const QRManagement = () => {
                   <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-lg">
                     <QrcodeOutlined className="text-green-600" />
                   </div>
-                  <span className="text-lg font-semibold text-gray-800">Chọn Lô thu hoạch</span>
+                  <span className="text-lg font-semibold text-gray-800">Chi tiết lô thu hoạch</span>
                 </div>
               }
               className="rounded-2xl shadow-sm border-0"
@@ -510,40 +490,25 @@ const QRManagement = () => {
                   showCertificates: false,
                 }}
               >
-                <Row gutter={16}>
-                  {/* Harvest Batch Selection */}
-                  <Col span={12}>
-                    <Form.Item
-                      name="harvestBatchId"
-                      label="Lô thu hoạch"
-                      rules={[{ required: true, message: 'Vui lòng chọn lô thu hoạch' }]}
-                    >
-                      <Select
-                        placeholder="Chọn lô thu hoạch"
-                        className="h-10 rounded-xl"
-                        loading={isLoadingBatches}
-                        options={harvestBatches.map((item) => ({
-                          value: String(item.id),
-                          label: `${item.batchCode} - ${item.cropName || item.cropType || 'Nông sản'}`,
-                        }))}
-                      />
-                    </Form.Item>
-                  </Col>
+                <Form.Item
+                  name="harvestBatchId"
+                  hidden
+                  rules={[{ required: true, message: 'Không xác định được lô thu hoạch' }]}
+                >
+                  <Input />
+                </Form.Item>
 
-                  {/* batchCode: Mã lô sản xuất */}
-                  <Col span={12}>
-                    <Form.Item
-                      name="batchCode"
-                      label="Mã lô sản xuất"
-                    >
-                      <Input
-                        placeholder="Mã lô sản xuất"
-                        className="h-10 rounded-xl font-bold text-green-700 bg-gray-50"
-                        disabled
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
+                {/* batchCode: Mã lô thu hoạch */}
+                <Form.Item
+                  name="batchCode"
+                  label="Mã lô thu hoạch"
+                >
+                  <Input
+                    placeholder="Mã lô thu hoạch"
+                    className="h-10 rounded-xl font-bold text-green-700 bg-gray-50"
+                    disabled
+                  />
+                </Form.Item>
 
                 {/* cropName: Loại cây trồng */}
                 <Row gutter={16}>
@@ -614,25 +579,25 @@ const QRManagement = () => {
               <Form form={form} component={false}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50/80 rounded-xl border border-gray-100">
                   <Form.Item name="showDailyLog" valuePropName="checked" noStyle>
-                    <Checkbox className="text-sm font-medium">
+                    <Checkbox disabled={displayOptionsDisabled} className="text-sm font-medium">
                       <span className="ml-1">📝 Nhật ký hàng ngày</span>
                     </Checkbox>
                   </Form.Item>
 
                   <Form.Item name="showMaterials" valuePropName="checked" noStyle>
-                    <Checkbox className="text-sm font-medium">
+                    <Checkbox disabled={displayOptionsDisabled} className="text-sm font-medium">
                       <span className="ml-1">🧪 Thông tin vật tư sử dụng</span>
                     </Checkbox>
                   </Form.Item>
 
                   <Form.Item name="showPhotos" valuePropName="checked" noStyle>
-                    <Checkbox className="text-sm font-medium">
+                    <Checkbox disabled={displayOptionsDisabled} className="text-sm font-medium">
                       <span className="ml-1">📷 Hình ảnh thực địa</span>
                     </Checkbox>
                   </Form.Item>
 
                   <Form.Item name="showCertificates" valuePropName="checked" noStyle>
-                    <Checkbox className="text-sm font-medium">
+                    <Checkbox disabled={displayOptionsDisabled} className="text-sm font-medium">
                       <span className="ml-1">📜 Chứng nhận chất lượng</span>
                     </Checkbox>
                   </Form.Item>
