@@ -49,8 +49,10 @@ const rejectReview = (id, body) =>
 const submitCompletion = (id) =>
   http.post(apiSubmitCompletion(id))
 
-const approveCompletion = (id) =>
-  http.post(apiApproveCompletion(id))
+const approveCompletion = (id, body) =>
+  http.post(apiApproveCompletion(id), body, {
+    headers: { 'Content-Type': 'application/json' },
+  })
 
 const rejectCompletion = (id, body) =>
   http.post(apiRejectCompletion(id), body)

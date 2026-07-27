@@ -130,12 +130,6 @@ const FarmSupervisorPlanDetail = () => {
     [isWaitingApproval, allStagesCompleted, allTasksCompleted]
   )
 
-  const overallProgress = useMemo(() => {
-    if (!allTasks.length) return 0
-    const completedCount = allTasks.filter((t) => t.status === 'COMPLETED').length
-    return Math.round((completedCount / allTasks.length) * 100)
-  }, [allTasks])
-
   const handleSubmitLogbook = async () => {
     try {
       setSubmitting(true)
@@ -172,8 +166,6 @@ const FarmSupervisorPlanDetail = () => {
     )
   }
 
-  const completedCount = allTasks.filter((t) => t.status === 'COMPLETED').length
-
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -188,112 +180,91 @@ const FarmSupervisorPlanDetail = () => {
             Chi tiết Kế hoạch
           </TitleCustom>
         </div>
-        <Tooltip
-          title={
-            isWaitingApproval
-              ? 'Nhật ký đang chờ duyệt, không thể gửi lại.'
-              : !canSubmit
-              ? 'Hoàn thành tất cả các giai đoạn hoặc công việc trước khi gửi.'
-              : ''
-          }
-        >
-          <Button
-            type="primary"
-            icon={<SendOutlined />}
-            disabled={!canSubmit}
-            onClick={() => setSubmitModal(true)}
-            className="h-10 px-5 font-semibold bg-green-600 border-0 rounded-xl shadow-md shadow-green-100"
+        {plan?.status !== 'COMPLETED' && (
+          <Tooltip
+            title={
+              isWaitingApproval
+                ? 'Nhật ký đang chờ duyệt, không thể gửi lại.'
+                : !canSubmit
+                ? 'Hoàn thành tất cả các giai đoạn hoặc công việc trước khi gửi.'
+                : ''
+            }
           >
-            Gửi nhật ký lên Manager
-          </Button>
-        </Tooltip>
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              disabled={!canSubmit}
+              onClick={() => setSubmitModal(true)}
+              className="h-10 px-5 font-semibold bg-green-600 border-0 rounded-xl shadow-md shadow-green-100"
+            >
+              Gửi nhật ký lên Manager
+            </Button>
+          </Tooltip>
+        )}
       </div>
 
       {/* ── Info Card ───────────────────────────────────────────────────────── */}
       <Card bordered className="border-gray-200 shadow-sm rounded-2xl">
-        <Row gutter={24} align="middle">
-          <Col flex="1">
-            <Text className="text-xl font-bold text-gray-800 block mb-3">
-              {plan.logbookName}
-            </Text>
-            <Descriptions size="small" column={{ xs: 1, sm: 2, md: 3 }} colon>
-              <Descriptions.Item label={<span className="text-gray-500"><BookOutlined className="mr-1" />Danh mục</span>}>
-                <Text strong>{plan.cropCatalogName || plan.cropCategoryName || '—'}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label={<span className="text-gray-500"><BookOutlined className="mr-1" />Cây trồng</span>}>
-                <Text strong>{plan.cropName || '—'}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label={<span className="text-gray-500"><EnvironmentOutlined className="mr-1" />Vùng trồng</span>}>
-                {(() => {
-                  const landPlots = getLandPlotsFromLogbook(plan)
-                  if (!landPlots.length) return <Text strong>—</Text>
-                  return (
-                    <span className="inline-flex flex-wrap items-center gap-1.5">
-                      {landPlots.map((plot, idx) => (
-                        <span key={plot.id || idx} className="inline-flex items-center">
-                          {plot.id ? (
-                            <Button
-                              type="link"
-                              onClick={() => navigate(`/farm-supervisor/lands/${plot.id}`)}
-                              className="p-0 h-auto font-medium text-green-600 hover:text-green-700 hover:underline"
-                            >
-                              {plot.name}
-                            </Button>
-                          ) : (
-                            <Text strong>{plot.name}</Text>
-                          )}
-                          {idx < landPlots.length - 1 && <span className="text-gray-400 ml-1">,</span>}
-                        </span>
-                      ))}
+        <Text className="text-xl font-bold text-gray-800 block mb-3">
+          {plan.logbookName}
+        </Text>
+        <Descriptions size="small" column={{ xs: 1, sm: 2, md: 3, lg: 4 }} colon>
+          <Descriptions.Item label={<span className="text-gray-500"><BookOutlined className="mr-1" />Danh mục</span>}>
+            <Text strong>{plan.cropCatalogName || plan.cropCategoryName || '—'}</Text>
+          </Descriptions.Item>
+          <Descriptions.Item label={<span className="text-gray-500"><BookOutlined className="mr-1" />Cây trồng</span>}>
+            <Text strong>{plan.cropName || '—'}</Text>
+          </Descriptions.Item>
+          <Descriptions.Item label={<span className="text-gray-500"><EnvironmentOutlined className="mr-1" />Vùng trồng</span>}>
+            {(() => {
+              const landPlots = getLandPlotsFromLogbook(plan)
+              if (!landPlots.length) return <Text strong>—</Text>
+              return (
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  {landPlots.map((plot, idx) => (
+                    <span key={plot.id || idx} className="inline-flex items-center">
+                      {plot.id ? (
+                        <Button
+                          type="link"
+                          onClick={() => navigate(`/farm-supervisor/lands/${plot.id}`)}
+                          className="p-0 h-auto font-medium text-green-600 hover:text-green-700 hover:underline"
+                        >
+                          {plot.name}
+                        </Button>
+                      ) : (
+                        <Text strong>{plot.name}</Text>
+                      )}
+                      {idx < landPlots.length - 1 && <span className="text-gray-400 ml-1">,</span>}
                     </span>
-                  )
-                })()}
-              </Descriptions.Item>
-              <Descriptions.Item label={<span className="text-gray-500"><UserOutlined className="mr-1" />Giám sát</span>}>
-                <Text strong>{plan.supervisorName || '—'}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label={<span className="text-gray-500"><CalendarOutlined className="mr-1" />Thời gian</span>} span={2}>
-                <Text strong>
-                  {plan.startDate ? formatDate(plan.startDate) : '—'} – {plan.expectedEndDate ? formatDate(plan.expectedEndDate) : 'Chưa kết thúc'}
-                </Text>
-              </Descriptions.Item>
-            </Descriptions>
-
-            {/* Lý do từ chối */}
-            {plan.reviewStatus === 'REJECTED' && plan.rejectionReason && (
-              <Alert
-                className="mt-4 rounded-xl"
-                type="error"
-                showIcon
-                message={
-                  <span className="font-semibold text-red-700">Lý do từ chối duyệt</span>
-                }
-                description={
-                  <span className="text-red-600 whitespace-pre-line">{plan.rejectionReason}</span>
-                }
-              />
-            )}
-          </Col>
-
-          <Col flex="none">
-            <Divider type="vertical" style={{ height: 100 }} className="hidden lg:block" />
-          </Col>
-
-          {/* Hình tròn tiến độ */}
-          <Col flex="none" className="flex flex-col items-center">
-            <Text className="mb-2 text-sm font-semibold text-gray-500 block">Tiến độ tổng thể</Text>
-            <Progress
-              type="circle"
-              percent={overallProgress}
-              size={96}
-              strokeColor={{ '0%': '#86efac', '100%': '#16a34a' }}
-              format={(p) => <span className="text-lg font-bold text-green-700">{p}%</span>}
-            />
-            <Text type="secondary" className="mt-2 text-xs text-center block">
-              {completedCount}/{allTasks.length} việc xong
+                  ))}
+                </span>
+              )
+            })()}
+          </Descriptions.Item>
+          <Descriptions.Item label={<span className="text-gray-500"><UserOutlined className="mr-1" />Giám sát</span>}>
+            <Text strong>{plan.supervisorName || '—'}</Text>
+          </Descriptions.Item>
+          <Descriptions.Item label={<span className="text-gray-500"><CalendarOutlined className="mr-1" />Thời gian</span>} span={2}>
+            <Text strong>
+              {plan.startDate ? formatDate(plan.startDate) : '—'} – {plan.expectedEndDate ? formatDate(plan.expectedEndDate) : 'Chưa kết thúc'}
             </Text>
-          </Col>
-        </Row>
+          </Descriptions.Item>
+        </Descriptions>
+
+        {/* Lý do từ chối */}
+        {plan.reviewStatus === 'REJECTED' && plan.rejectionReason && (
+          <Alert
+            className="mt-4 rounded-xl"
+            type="error"
+            showIcon
+            message={
+              <span className="font-semibold text-red-700">Lý do từ chối duyệt</span>
+            }
+            description={
+              <span className="text-red-600 whitespace-pre-line">{plan.rejectionReason}</span>
+            }
+          />
+        )}
       </Card>
 
       {/* ── Tabs ─────────────────────────────────────────────────────────────── */}

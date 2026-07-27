@@ -564,7 +564,8 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
 }
 
 const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
-  const isReadOnly = plan?.reviewStatus === 'WAITING_APPROVAL' || plan?.reviewStatus === 'REJECTED'
+  const isPlanCompleted = plan?.status === 'COMPLETED'
+  const isReadOnly = plan?.reviewStatus === 'WAITING_APPROVAL' || plan?.reviewStatus === 'REJECTED' || isPlanCompleted
   const isWaitingApproval = plan?.reviewStatus === 'WAITING_APPROVAL'
   const { getStageStatus, getReviewStatus } = useCultivationStatus()
   const [selectedId, setSelectedId] = useState(null)
@@ -879,7 +880,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                             task={taskItem}
                             stageId={selectedId}
                             onSaved={handleSaved}
-                            readOnly={isWaitingApproval}
+                            readOnly={isWaitingApproval || isPlanCompleted}
                           />
                         ),
                       }
@@ -981,7 +982,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                                   {formatDate(log.date || log.createdAt)}
                                 </span>
                               )}
-                              {!isWaitingApproval && (
+                              {!isWaitingApproval && !isPlanCompleted && (
                                 <Button
                                   type="primary"
                                   size="small"

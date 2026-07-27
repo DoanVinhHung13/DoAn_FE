@@ -1,5 +1,4 @@
 import {
-  PlusOutlined,
   QrcodeOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -476,18 +475,8 @@ const Batches = () => {
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       {/* ── Header ── */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <TitleCustom className="!mb-0">Quản lý Lô thu hoạch</TitleCustom>
-        </div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate(ROUTER.FM_BATCH_CREATE)}
-          className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
-        >
-          Tạo lô thu hoạch mới
-        </Button>
+      <div>
+        <TitleCustom className="!mb-0">Quản lý Lô thu hoạch</TitleCustom>
       </div>
 
       {/* ── Table Card with Toolbar ── */}

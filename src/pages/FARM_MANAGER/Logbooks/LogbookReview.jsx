@@ -23,9 +23,12 @@ import {
   Card,
   Descriptions,
   Empty,
+  Form,
   Image,
   Input,
+  InputNumber,
   Modal,
+  Select,
   Spin,
   Tag,
   Timeline,
@@ -41,6 +44,8 @@ import ROUTER from "src/router/ROUTER"
 import CultivationLogbookService from "src/services/CultivationLogbookService"
 import CultivationLogService from "src/services/CultivationLogService"
 import AuditLogService from "src/services/AuditLogService"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 import { canApproveClosing } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
 import { getLandPlotNamesDisplay } from "src/utils/helpers"
@@ -122,6 +127,7 @@ const LogEntry = ({ log }) => {
 
 const LogbookReview = () => {
   const { getLogbookStatus, getReviewStatus } = useCultivationStatus()
+  const { getCombo } = useSystemKey()
   const { id } = useParams()
   const navigate = useNavigate()
   const [logbook, setLogbook] = useState(null)
@@ -132,6 +138,13 @@ const LogbookReview = () => {
   const [rejectReason, setRejectReason] = useState("")
   const [rejecting, setRejecting] = useState(false)
   const [approving, setApproving] = useState(false)
+  const [approveModal, setApproveModal] = useState(false)
+  const [approveForm] = Form.useForm()
+
+  const unitOptions = (getCombo(SYSTEM_KEY.FERTILIZER_UNIT) || []).map(opt => ({
+    value: opt.codeValue ?? opt.CodeValue ?? opt.value ?? opt.name,
+    label: opt.description ?? opt.Description ?? opt.label ?? opt.name ?? opt.codeValue,
+  }))
 
   const loadData = async () => {
     setLoading(true)
@@ -161,11 +174,18 @@ const LogbookReview = () => {
 
   const handleApprove = async () => {
     try {
+      const values = await approveForm.validateFields()
       setApproving(true)
-      await CultivationLogbookService.approveCompletion(id)
+      await CultivationLogbookService.approveCompletion(id, {
+        quantity: values.quantity,
+        unit: values.unit.trim(),
+      })
       message.success("Đã duyệt chốt sổ.")
+      setApproveModal(false)
+      approveForm.resetFields()
       await loadData()
     } catch (error) {
+      if (error?.errorFields) return // form validation
       console.error(error)
       message.error(error.message || "Duyệt nhật ký thất bại.")
     } finally {
@@ -258,7 +278,7 @@ const LogbookReview = () => {
               <Button
                 type="primary"
                 icon={<CheckCircleOutlined />}
-                onClick={handleApprove}
+                onClick={() => setApproveModal(true)}
                 loading={approving}
                 className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
               >
@@ -413,6 +433,74 @@ const LogbookReview = () => {
           onChange={e => setRejectReason(e.target.value)}
           placeholder="Lý do từ chối..."
         />
+      </Modal>
+
+      {/* ── Modal Duyệt — nhập sản lượng thu hoạch ── */}
+      <Modal
+        open={approveModal}
+        onCancel={() => { setApproveModal(false); approveForm.resetFields() }}
+        title={
+          <div className="flex items-center gap-2 text-green-700">
+            <CheckCircleOutlined /> Xác nhận duyệt chốt sổ
+          </div>
+        }
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => { setApproveModal(false); approveForm.resetFields() }}
+            disabled={approving}
+          >
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={approving}
+            onClick={handleApprove}
+            className="bg-green-600 border-green-600 hover:bg-green-700"
+          >
+            Xác nhận duyệt
+          </Button>,
+        ]}
+      >
+        <Alert
+          className="mb-4 rounded-xl"
+          type="info"
+          showIcon
+          message="Vui lòng nhập thông tin sản lượng thu hoạch để hoàn tất phê duyệt."
+        />
+        <Form form={approveForm} layout="vertical">
+          <Form.Item
+            name="quantity"
+            label="Sản lượng thu hoạch"
+            rules={[
+              { required: true, message: "Vui lòng nhập sản lượng" },
+              { type: "number", min: 0.0001, message: "Sản lượng phải lớn hơn 0" },
+            ]}
+          >
+            <InputNumber
+              className="w-full"
+              min={0.0001}
+              step={0.1}
+              placeholder="Nhập sản lượng..."
+            />
+          </Form.Item>
+          <Form.Item
+            name="unit"
+            label="Đơn vị"
+            rules={[
+              { required: true, message: "Vui lòng chọn đơn vị" },
+            ]}
+          >
+            <Select
+              placeholder="Chọn đơn vị (tấn, kg, tạ...)"
+              options={unitOptions}
+              showSearch
+              optionFilterProp="label"
+              allowClear
+            />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   )

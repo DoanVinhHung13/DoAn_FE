@@ -178,7 +178,7 @@ const CultivationLogbookDetail = () => {
               </p>
             )}
 
-            <div className="grid gap-3 mt-4 text-sm sm:grid-cols-2">
+            <div className="grid gap-3 mt-4 text-sm sm:grid-cols-2 md:grid-cols-3">
               <div className="flex items-center gap-2">
                 <FileTextOutlined className="text-gray-400" />
                 <span>
@@ -251,19 +251,6 @@ const CultivationLogbookDetail = () => {
                 </span>
               </div>
             </div>
-          </div>
-
-          <div className="flex flex-col items-end flex-none min-w-[180px] border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6">
-            <p className="mb-2 text-sm font-semibold text-gray-500">Tiến độ thực tế</p>
-            <div className="w-full h-2 mb-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-green-600 rounded-full transition-all"
-                style={{ width: `${item.progress || item.completionRate || 0}%` }}
-              />
-            </div>
-            <p className="text-lg font-bold text-green-600 m-0">
-              {item.progress || item.completionRate || 0}%
-            </p>
           </div>
         </div>
       </Card>
