@@ -6,6 +6,7 @@ import StoreProvider from 'src/contexts'
 import GlobalThemeConfig from 'src/theme/GlobalThemeConfig'
 import { ThemeStyledComponent } from 'src/theme/ThemeStyledComponent'
 import { ThemeProvider } from 'styled-components'
+import RealtimeSync from 'src/components/RealtimeSync'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,7 @@ const Providers = ({ children }) => (
       <Provider store={store}>
         <StoreProvider>
           <GlobalThemeConfig>
+            <RealtimeSync />
             {children}
           </GlobalThemeConfig>
         </StoreProvider>
