@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Card, Col, Row, Typography, Space, Button, Badge, Skeleton, Tag } from 'antd';
-import { CloudOutlined, ArrowRightOutlined, CompassOutlined } from '@ant-design/icons';
+import { CloudOutlined, CompassOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpenText,
@@ -20,12 +20,11 @@ import moment from 'moment';
 import 'moment/locale/vi';
 import { useSelector } from 'react-redux';
 
-import NewsService from 'src/services/NewsService'
 import ROUTER from 'src/router/ROUTER'
 
 moment.locale('vi');
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -34,14 +33,34 @@ const Dashboard = () => {
 
   // Get Geolocation
   useEffect(() => {
-    if ("geolocation" in navigator) {
+    const fallbackToHanoi = () => setCoords({ lat: 21.0285, lon: 105.8542 })
+    const requestLocation = () => {
       navigator.geolocation.getCurrentPosition(
-        (pos) => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-        () => setCoords({ lat: 21.0285, lon: 105.8542 }) // Fallback Hanoi
-      );
-    } else {
-      setCoords({ lat: 21.0285, lon: 105.8542 });
+        pos => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        fallbackToHanoi,
+      )
     }
+
+    if (!("geolocation" in navigator)) {
+      fallbackToHanoi()
+      return
+    }
+
+    if (!navigator.permissions?.query) {
+      requestLocation()
+      return
+    }
+
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then(permission => {
+        if (permission.state === "denied") {
+          fallbackToHanoi()
+          return
+        }
+        requestLocation()
+      })
+      .catch(requestLocation)
   }, []);
 
   // Fetch Weather with coordinates
@@ -63,7 +82,7 @@ const Dashboard = () => {
       try {
         const { data } = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${coords.lat}&lon=${coords.lon}&accept-language=vi`);
         return data;
-      } catch (err) {
+      } catch {
         return null;
       }
     },
@@ -78,7 +97,6 @@ const Dashboard = () => {
 
   const getWeatherIcon = (code) => {
     const sunCodes = ['113'];
-    const partCloudCodes = ['116', '119', '122'];
     const rainCodes = ['263', '266', '293', '296', '299', '302', '305', '308', '353', '356', '359'];
 
     if (sunCodes.includes(code)) return <Sun className="w-12 h-12 text-yellow-500 relative z-10" />;
@@ -128,7 +146,6 @@ const Dashboard = () => {
   const current = weather?.current_condition?.[0];
   const weatherText = current?.lang_vi?.[0]?.value || current?.weatherDesc?.[0]?.value;
   const area = weather?.nearest_area?.[0];
-  const forecast = weather?.weather || [];
 
   const quickAccessItems = [
     { title: 'Quản lý người dùng', icon: <Users className="w-8 h-8" />, path: ROUTER.FM_USERS, color: '#6366f1' },
@@ -147,14 +164,6 @@ const Dashboard = () => {
   //     return data.data;
   //   }
   // });
-
-  const [visibleNews, setVisibleNews] = useState(2);
-
-  const getFallbackImage = (category) => {
-    if (category === 'Công nghệ') return 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?auto=format&fit=crop&w=800&q=80';
-    if (category === 'Thị trường') return 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80';
-    return 'https://images.unsplash.com/photo-1629851722883-9bd4b7b250de?auto=format&fit=crop&w=800&q=80';
-  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">

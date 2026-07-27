@@ -35,7 +35,7 @@ import {
   Typography,
   message,
 } from "antd"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 
 import TitleCustom from "src/components/TitleCustom"
@@ -50,7 +50,7 @@ import { canApproveClosing } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
 import { getLandPlotNamesDisplay } from "src/utils/helpers"
 
-const { Text, Paragraph } = Typography
+const { Paragraph } = Typography
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
@@ -502,4 +502,3 @@ const LogbookReview = () => {
 }
 
 export default LogbookReview
-
