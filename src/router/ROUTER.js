@@ -51,6 +51,7 @@ const ROUTER = {
   FM_TASK_EDIT: '/farm-manager/task-catalogs/:id/edit',
   FM_BATCHES: '/farm-manager/batches',
   FM_BATCH_DETAIL: '/farm-manager/batches/:id',
+  FM_QR_MANAGEMENT: '/farm-manager/qr-management',
   FM_NOTIFICATIONS: '/farm-manager/notifications',
   FM_NOTIFICATION_DETAIL: '/farm-manager/notifications/:id',
   FM_REF_FERTILIZER: '/farm-manager/reference/fertilizers',
