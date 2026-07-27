@@ -1,5 +1,5 @@
 // src/router/MenuItem.jsx
-// 4 Role: FARM_MANAGER, FARM_SUPERVISOR, FARM_LEADER, FARMER
+// 3 Roles: FARM_MANAGER, FARM_SUPERVISOR, FARM_LEADER
 // Sidebar được lọc theo user?.role
 
 import {
@@ -9,15 +9,12 @@ import {
   InboxOutlined,
   CheckCircleOutlined,
   TeamOutlined,
-  ToolOutlined,
-  ShoppingCartOutlined,
   ShopOutlined,
   EnvironmentOutlined,
   UserOutlined,
   BookOutlined,
   ContainerOutlined,
   ProfileOutlined,
-  FormOutlined,
   BarChartOutlined,
 } from '@ant-design/icons'
 import { Sprout } from 'lucide-react'
@@ -144,37 +141,12 @@ export const farmLeaderItem = () => [
   },
 ]
 
-// ─── FARMER MENU ──────────────────────────────────────────────────────────────
-export const farmerItem = () => [
-  {
-    key: ROUTER.FARMER_DASHBOARD,
-    icon: <AppstoreOutlined className="text-lg" />,
-    label: 'Tổng quan',
-  },
-  {
-    key: ROUTER.FARMER_TASKS,
-    icon: <CheckCircleOutlined className="text-lg" />,
-    label: 'Nhiệm vụ',
-  },
-  {
-    key: ROUTER.FARMER_LOGBOOKS,
-    icon: <FileTextOutlined className="text-lg" />,
-    label: 'Nhật ký canh tác',
-  },
-  {
-    key: ROUTER.FARMER_SUPPLIES,
-    icon: <ShoppingCartOutlined className="text-lg" />,
-    label: 'Yêu cầu vật tư',
-  },
-]
-
 // ─── HELPER: Lấy menu theo role ───────────────────────────────────────────────
 export const getMenuByRole = (role) => {
   switch (role) {
     case ROLES.FARM_MANAGER: return farmManagerItem()
     case ROLES.FARM_SUPERVISOR: return farmSupervisorItem()
     case ROLES.FARM_LEADER: return farmLeaderItem()
-    case ROLES.FARMER: return farmerItem()
     default: return []
   }
 }
@@ -188,7 +160,6 @@ export const publicMenu = () => [
 
 export default {
   farmManagerItem,
-  farmerItem,
   farmSupervisorItem,
   farmLeaderItem,
   getMenuByRole,
