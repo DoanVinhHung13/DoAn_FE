@@ -127,7 +127,6 @@ const CropCreate = () => {
         minHarvestDays: minDays,
         maxHarvestDays: maxDays,
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        growthStages: values.growthStages || [],
         imageUrl: values.imageUrl || null,
       };
       return CropManagementService.createCrop(payload);
@@ -230,8 +229,6 @@ const CropCreate = () => {
                 </Form.Item>
               </Card>
 
-              {/* Growth Stages Card */}
-              
             </div>
           </Col>
 

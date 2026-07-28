@@ -26,7 +26,6 @@ import { Sprout } from 'lucide-react';
 import TitleCustom from 'src/components/TitleCustom';
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
-import GrowthStageService from 'src/services/GrowthStageService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
@@ -59,24 +58,6 @@ const CropEdit = () => {
       const response = await CropManagementService.getCropById(id);
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
-    },
-    enabled: !!id,
-    retry: false,
-  });
-
-  const { data: initialGrowthStages, isLoading: isGrowthStagesLoading } = useQuery({
-    queryKey: ['growth-stages', id],
-    queryFn: async () => {
-      try {
-        const response = await GrowthStageService.getGrowthStages({ cropId: id, PageSize: 100 });
-        const payload = response?.data ?? response ?? {};
-        const data = payload?.data ?? payload;
-        const items = Array.isArray(data) ? data : data?.items || [];
-        const cropStages = items.filter((s) => String(s.cropId) === String(id));
-        return cropStages.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
-      } catch {
-        return [];
-      }
     },
     enabled: !!id,
     retry: false,
@@ -143,10 +124,9 @@ const CropEdit = () => {
         maxDurationUnit: maxData.unit,
         description: cropDetail.description || '',
         imageUrl: cropDetail.imageUrl || '',
-        growthStages: initialGrowthStages || [],
       });
     }
-  }, [cropDetail, initialGrowthStages, form]);
+  }, [cropDetail, form]);
 
   const updateMutation = useMutation({
     mutationFn: (values) => {
@@ -174,36 +154,11 @@ const CropEdit = () => {
         isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
       };
       
-      return CropManagementService.updateCrop(id, payload).then(async (res) => {
-        // Sync GrowthStages
-        const currentStages = values.growthStages || [];
-        const originalStages = initialGrowthStages || [];
-
-        const stagesToCreate = currentStages.filter(s => String(s.id).startsWith('temp-'));
-        const stagesToUpdate = currentStages.filter(s => !String(s.id).startsWith('temp-'));
-        const currentIds = new Set(stagesToUpdate.map(s => s.id));
-        const stagesToDelete = originalStages.filter(s => !currentIds.has(s.id));
-
-        for (const stage of stagesToDelete) {
-          await GrowthStageService.deleteGrowthStage(stage.id);
-        }
-        for (const stage of stagesToUpdate) {
-          const payload = { ...stage, cropId: id };
-          await GrowthStageService.updateGrowthStage(stage.id, payload);
-        }
-        for (const stage of stagesToCreate) {
-          const payload = { ...stage, cropId: id };
-          delete payload.id;
-          await GrowthStageService.createGrowthStage(payload);
-        }
-
-        return res;
-      });
+      return CropManagementService.updateCrop(id, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['growth-stages', id] });
       navigate(ROUTER.FM_CROPS);
     },
     onError: (error) => {
@@ -252,7 +207,7 @@ const CropEdit = () => {
     }
   };
 
-  if (isLoading || isGrowthStagesLoading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Spin size="large" />

@@ -24,7 +24,6 @@ import {
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import GrowthStages from 'src/components/GrowthStages';
 import CropVarietyService from 'src/services/CropVarietyService';
 import UploadService from 'src/services/UploadService';
 
@@ -71,7 +70,6 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
         description: values.description?.trim() || null,
         expectedYield: values.expectedYield || null,
         imageUrl: values.imageUrl?.trim() || null,
-        growthStages: values.growthStages || [],
       };
       return CropVarietyService.createCropVariety(payload);
     },
@@ -100,7 +98,6 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
         description: values.description?.trim() || null,
         expectedYield: values.expectedYield || null,
         imageUrl: values.imageUrl?.trim() || null,
-        growthStages: values.growthStages || [],
       };
       return CropVarietyService.updateCropVariety(id, payload);
     },
@@ -187,7 +184,6 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
       description: record.description || '',
       expectedYield: record.expectedYield || null,
       imageUrl: record.imageUrl || '',
-      growthStages: record.growthStages || [],
     });
   };
 
@@ -437,10 +433,6 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
 
           <Form.Item name="description" label="Mô tả">
             <Input.TextArea rows={3} placeholder="Nhập mô tả" />
-          </Form.Item>
-
-          <Form.Item name="growthStages" label="Giai đoạn sinh trưởng">
-            <GrowthStages />
           </Form.Item>
 
           <div className="flex justify-end gap-3 border-t pt-4">

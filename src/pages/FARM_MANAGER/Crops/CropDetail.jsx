@@ -299,8 +299,6 @@ const CropDetail = () => {
               </Paragraph>
             </Card>
 
-            {/* Growth Stages */}
-           
           </Space>
         </Col>
       </Row>
