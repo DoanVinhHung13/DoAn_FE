@@ -563,7 +563,7 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
 
 const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
   const isPlanCompleted = plan?.status === 'COMPLETED'
-  const isReadOnly = plan?.reviewStatus === 'WAITING_APPROVAL' || plan?.reviewStatus === 'REJECTED' || isPlanCompleted
+  const isReadOnly = plan?.reviewStatus === 'WAITING_APPROVAL' || isPlanCompleted
   const isWaitingApproval = plan?.reviewStatus === 'WAITING_APPROVAL'
   const { getStageStatus, getReviewStatus } = useCultivationStatus()
   const [selectedId, setSelectedId] = useState(null)
@@ -687,11 +687,10 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
     loadStageData()
   }, [selectedId])
 
-  const handleCompleteStage = async () => {
-    if (!selectedId) return
+  const completeStage = async () => {
     try {
       setSubmitting(true)
-      await CultivationStageService.submitReview(selectedId, {})
+      await CultivationStageService.complete(selectedId)
       await loadData?.()
     } catch (error) {
       console.error(error)
@@ -699,6 +698,18 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleCompleteStage = () => {
+    if (!selectedId || !selectedStage) return
+
+    Modal.confirm({
+      title: "Xác nhận hoàn thành giai đoạn",
+      content: `Bạn có chắc muốn hoàn thành giai đoạn "${selectedStage.stageName}"? Sau khi hoàn thành, giai đoạn sẽ được khóa và không thể tiếp tục cập nhật công việc.`,
+      okText: "Xác nhận hoàn thành",
+      cancelText: "Hủy",
+      onOk: completeStage,
+    })
   }
 
   const handleSaved = async () => {
@@ -746,7 +757,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
             icon={<SendOutlined />}
             loading={submitting}
             onClick={handleCompleteStage}
-            disabled={!selectedId}
+            disabled={!selectedId || !["ACTIVE", "IN_PROGRESS"].includes(selectedStage?.status)}
             className="font-semibold bg-green-600 rounded-lg h-9"
           >
             Hoàn tất giai đoạn

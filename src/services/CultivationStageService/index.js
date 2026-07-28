@@ -9,6 +9,7 @@ import {
   apiGetCultivationStageLogs,
   apiGetCultivationStageSummary,
   apiCreateOfficialLogs,
+  apiCompleteCultivationStage,
   apiSubmitStageReview,
   apiApproveStageReview,
   apiRejectStageReview,
@@ -48,6 +49,9 @@ const getSummary = (id) =>
 const createOfficialLogs = (id, body) =>
   http.post(apiCreateOfficialLogs(id), body)
 
+const complete = (id) =>
+  http.post(apiCompleteCultivationStage(id))
+
 const submitReview = (id, body) =>
   http.post(apiSubmitStageReview(id), body)
 
@@ -64,6 +68,7 @@ const CultivationStageService = {
   getStageLogs,
   getSummary,
   createOfficialLogs,
+  complete,
   submitReview,
   approveReview,
   rejectReview,

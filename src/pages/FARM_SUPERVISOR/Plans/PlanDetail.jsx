@@ -93,23 +93,16 @@ const FarmSupervisorPlanDetail = () => {
   useEffect(() => { loadData(true) }, [loadData])
 
   // ── Derived ───────────────────────────────────────────────────────────────
-  const allTasks = useMemo(() => Object.values(tasks).flat(), [tasks])
-
   const allStagesCompleted = useMemo(
     () => stages.length > 0 && stages.every((s) => s.status === 'COMPLETED'),
     [stages]
   )
 
-  const allTasksCompleted = useMemo(
-    () => allTasks.length > 0 && allTasks.every((t) => t.status === 'COMPLETED'),
-    [allTasks]
-  )
-
   const isWaitingApproval = plan?.reviewStatus === 'WAITING_APPROVAL'
 
   const canSubmit = useMemo(
-    () => !isWaitingApproval && (allStagesCompleted || allTasksCompleted),
-    [isWaitingApproval, allStagesCompleted, allTasksCompleted]
+    () => !isWaitingApproval && allStagesCompleted,
+    [isWaitingApproval, allStagesCompleted]
   )
 
   const handleSubmitLogbook = async () => {
@@ -164,7 +157,7 @@ const FarmSupervisorPlanDetail = () => {
               isWaitingApproval
                 ? 'Nhật ký đang chờ duyệt, không thể gửi lại.'
                 : !canSubmit
-                ? 'Hoàn thành tất cả các giai đoạn hoặc công việc trước khi gửi.'
+                ? 'Hoàn thành tất cả các giai đoạn trước khi gửi.'
                 : ''
             }
           >
