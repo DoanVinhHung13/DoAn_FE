@@ -24,9 +24,10 @@ const CreateAccountModal = ({ open, onClose, users = [], loadingUsers = false, o
   const [form] = Form.useForm()
   const [loading, setLoading] = React.useState(false)
   const { getOptions } = useSystemKey()
-  const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(
-    option => (option.codeValue || option.value) !== ROLES.FARM_MANAGER,
-  )
+  const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option => {
+    const role = option.codeValue || option.value
+    return role !== ROLES.FARM_MANAGER && role !== ROLES.FARMER
+  })
 
   const userOptions = users
     .filter(user => user?.id)
@@ -38,7 +39,6 @@ const CreateAccountModal = ({ open, onClose, users = [], loadingUsers = false, o
   React.useEffect(() => {
     if (open) {
       form.resetFields()
-      form.setFieldsValue({ role: "FARMER" })
     }
   }, [open, form])
 

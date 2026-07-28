@@ -71,7 +71,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         setPreviewAvatar(editingUser.avatarUrl || "")
       } else {
         form.resetFields()
-        form.setFieldsValue({ isActive: true, roles: "FARMER" })
+        form.setFieldsValue({ isActive: true })
         setPreviewAvatar("")
       }
       setAvatarFile(null)
@@ -152,7 +152,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             ? values.dateOfBirth.toISOString()
             : null,
           avatarUrl: uploadedUrl || null,
-          roles: values.roles ? [values.roles] : ["FARMER"],
+          roles: [ROLES.FARMER],
         })
       }
 
@@ -261,23 +261,25 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             </Col>
           )}
 
-          <Col xs={24} md={12}>
-            <Form.Item
-              name="roles"
-              label={
-                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  Vai trò
-                </span>
-              }
-              rules={[{ required: true, message: "Chọn một vai trò!" }]}
-            >
-              <Select
-                placeholder="Chọn vai trò"
-                className="h-10 rounded-lg"
-                options={allowedRoleOptions}
-              />
-            </Form.Item>
-          </Col>
+          {isEdit && (
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="roles"
+                label={
+                  <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                    Vai trò
+                  </span>
+                }
+                rules={[{ required: true, message: "Chọn một vai trò!" }]}
+              >
+                <Select
+                  placeholder="Chọn vai trò"
+                  className="h-10 rounded-lg"
+                  options={allowedRoleOptions}
+                />
+              </Form.Item>
+            </Col>
+          )}
 
           <Col xs={24} md={12}>
             <Form.Item

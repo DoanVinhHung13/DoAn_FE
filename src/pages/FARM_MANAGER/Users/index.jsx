@@ -45,6 +45,11 @@ import CreateAccountModal from "./components/CreateAccountModal"
 import ResetPasswordModal from "./components/ResetPasswordModal"
 import UserFormModal from "./components/UserFormModal"
 
+const hasFarmerRole = user => {
+  const roles = Array.isArray(user?.roles) ? user.roles : [user?.role]
+  return roles.some(role => String(role).toUpperCase() === ROLES.FARMER)
+}
+
 const getRoleTag = (role, roleDesc) => {
   let color = "default"
   if (role === "FARM_MANAGER") color = "green"
@@ -126,7 +131,7 @@ const UsersManagement = () => {
         pageSize: 100,
         hasAccount: false,
       })
-      setAccountCandidates(res?.data?.items || [])
+      setAccountCandidates((res?.data?.items || []).filter(user => !hasFarmerRole(user)))
     } finally {
       setAccountCandidatesLoading(false)
     }
