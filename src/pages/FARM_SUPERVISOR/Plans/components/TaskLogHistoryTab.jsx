@@ -76,7 +76,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
           )}
         </Col>
 
-        {/* Cột phải: Lịch sử ghi log */}
+        {/* Cột phải: Lịch sử ghi nhật ký */}
         <Col xs={24} lg={16} xl={18}>
           {!selectedTask ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 py-20">

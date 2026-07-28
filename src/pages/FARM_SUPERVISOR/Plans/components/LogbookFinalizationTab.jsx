@@ -346,7 +346,7 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
       const taskId =
         task?.taskId || task?.cultivationTaskId || task?.workTaskId || task?.id
       if (!taskId) {
-        message.error("Không xác định được CultivationTaskId của Summary.")
+        message.error("Không xác định được công việc của bản tổng hợp.")
         return
       }
 
@@ -363,7 +363,7 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
   if (loading) {
     return (
       <div className="py-8 text-center">
-        <Spin tip="Đang tải Summary..." />
+        <Spin tip="Đang tải bản tổng hợp..." />
       </div>
     )
   }
@@ -373,7 +373,7 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
       <div className="p-4 space-y-4 border border-gray-200 rounded-xl bg-gray-50/60">
         <div className="flex items-center justify-between">
           <Text strong className="text-gray-700">
-            Thông tin Summary (Leader gửi)
+            Thông tin bản tổng hợp (người phụ trách gửi)
           </Text>
           <Tag icon={<LockOutlined />} color="default" className="rounded-full">
             Chỉ đọc
@@ -511,7 +511,7 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
 
         <div>
           <div className="mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-            Mô tả từ Farm Leader
+            Mô tả từ người phụ trách
           </div>
           <div className="p-3 text-sm font-medium text-blue-900 whitespace-pre-wrap border border-blue-100 rounded-lg bg-blue-50">
             {leaderSummary?.leaderSubmittedDescription ||
@@ -538,7 +538,7 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
           rows={5}
           value={description}
           onChange={e => setDescription(e.target.value)}
-          placeholder="Nhập mô tả chuẩn để lưu vào Logbook..."
+          placeholder="Nhập mô tả chuẩn để lưu vào nhật ký..."
           className="rounded-lg"
           disabled={readOnly}
         />
@@ -624,7 +624,11 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
 
   useEffect(() => {
     if (stages.length > 0 && !selectedId) {
-      setSelectedId(stages[0].id)
+      const currentStage =
+        stages.find(s => s.status === "ACTIVE" || s.status === "IN_PROGRESS") ||
+        stages.find(s => !["COMPLETED", "CANCELLED"].includes(s.status)) ||
+        stages[stages.length - 1]
+      setSelectedId(currentStage?.id ?? null)
     }
   }, [stages, selectedId])
 
@@ -719,10 +723,10 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
           className="mb-4 rounded-xl"
           message={
             <span className="font-semibold text-blue-700">
-              Đã gửi nhật ký lên Farm Manager — Đang chờ duyệt
+              Đã gửi nhật ký lên quản lý nông trại — Đang chờ duyệt
             </span>
           }
-          description="Nhật ký canh tác đã được gửi thành công. Vui lòng chờ Farm Manager xem xét và phê duyệt."
+          description="Nhật ký canh tác đã được gửi thành công. Vui lòng chờ quản lý nông trại xem xét và phê duyệt."
         />
       )}
       {!isReadOnly && selectedStage?.status !== 'COMPLETED' && (
@@ -774,7 +778,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
           {!selectedStage ? (
             <div className="flex flex-col items-center justify-center h-full py-20 text-gray-400">
               <BookOutlined className="mb-3 text-4xl opacity-50" />
-              <p>Chọn giai đoạn để xem Summary chờ biên soạn</p>
+              <p>Chọn giai đoạn để xem bản tổng hợp chờ biên soạn</p>
             </div>
           ) : (
             <div className="space-y-5">
@@ -802,17 +806,17 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                 className="shadow-sm rounded-xl border-amber-200"
                 title={
                   <span className="font-semibold text-amber-900">
-                    Summary chờ biên soạn
+                    Bản tổng hợp chờ biên soạn
                   </span>
                 }
               >
                 {loadingStageSummary ? (
                   <div className="py-8 text-center">
-                    <Spin tip="Đang tải Summary chờ biên soạn..." />
+                    <Spin tip="Đang tải bản tổng hợp chờ biên soạn..." />
                   </div>
                 ) : pendingSummaries.length === 0 ? (
                   <Empty
-                    description="Không có Summary chờ duyệt"
+                    description="Không có bản tổng hợp chờ duyệt"
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                   />
                 ) : (
@@ -839,7 +843,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                         taskItem.taskName ||
                         taskItem.name ||
                         taskItem.workTaskName ||
-                        "Summary"
+                        "Bản tổng hợp"
                       return {
                         key: itemKey,
                         label: (
@@ -880,7 +884,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                 title={
                   <span className="flex items-center justify-between w-full font-semibold text-green-800">
                     <span className="flex items-center gap-2">
-                      <BookOutlined /> Logbook giai đoạn
+                      <BookOutlined /> Nhật ký giai đoạn
                       <Tag color="green" className="ml-1 font-semibold">
                         {stageLogs.length} mục
                       </Tag>
@@ -890,11 +894,11 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
               >
                 {loadingStageSummary ? (
                   <div className="py-8 text-center">
-                    <Spin tip="Đang tải Logbook giai đoạn..." />
+                    <Spin tip="Đang tải nhật ký giai đoạn..." />
                   </div>
                 ) : stageLogs.length === 0 ? (
                   <Empty
-                    description="Chưa có mục nào trong Logbook giai đoạn"
+                    description="Chưa có mục nào trong nhật ký giai đoạn"
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                   />
                 ) : (
@@ -1009,7 +1013,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                           {/* Mô tả final */}
                           <div className="p-2 mb-3 bg-white border border-green-100 rounded-lg">
                             <div className="text-[11px] font-bold text-green-800 uppercase mb-1">
-                              Mô tả Logbook:
+                              Mô tả nhật ký:
                             </div>
                             <p className="m-0 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
                               {description}
@@ -1143,12 +1147,12 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
         </Col>
       </Row>
 
-      {/* Modal Sửa mô tả Logbook giai đoạn */}
+      {/* Modal Sửa mô tả nhật ký giai đoạn */}
       <Modal
         open={editModal.open}
         title={
           <div className="flex items-center gap-2 font-bold text-green-700">
-            <EditOutlined /> Sửa mô tả Logbook giai đoạn
+            <EditOutlined /> Sửa mô tả nhật ký giai đoạn
           </div>
         }
         onCancel={() =>

@@ -3,8 +3,8 @@
  * Route: /farm-supervisor/plans/:planId/tasks/:taskId  (ROUTER.FS_TASK_DETAIL)
  *
  * Luồng:
- * - Xem task → Gán Farm Leader + Farmers → Active
- * - Xem Summary từ Leader → Biên soạn nhật ký chính thức
+ * - Xem công việc → Gán người phụ trách và người hỗ trợ → Kích hoạt
+ * - Xem bản tổng hợp từ người phụ trách → Biên soạn nhật ký chính thức
  */
 import {
   ArrowLeftOutlined,
@@ -182,7 +182,7 @@ const FarmSupervisorTaskDetail = () => {
 
   const handleActivate = async () => {
     if (!task?.assignedLeaderId && !task?.farmLeaderId) {
-      message.warning('Vui lòng gán Farm Leader trước khi kích hoạt công việc.')
+      message.warning('Vui lòng gán người phụ trách trước khi kích hoạt công việc.')
       return
     }
     try {
@@ -276,13 +276,13 @@ const FarmSupervisorTaskDetail = () => {
               {task.status === 'PENDING' ? (
                 <Form form={assignForm} layout="vertical">
                   <Form.Item
-                    name="farmLeaderId" label="Farm Leader phụ trách"
-                    rules={[{ required: true, message: 'Chọn Farm Leader' }]}
-                    tooltip="Farm Leader chịu trách nhiệm ghi nhật ký và báo cáo."
+                    name="farmLeaderId" label="Người phụ trách"
+                    rules={[{ required: true, message: 'Chọn người phụ trách' }]}
+                    tooltip="Người phụ trách chịu trách nhiệm ghi nhật ký và báo cáo."
                   >
                     <Select
                       options={leaderOptions}
-                      placeholder="Chọn Farm Leader..."
+                      placeholder="Chọn người phụ trách..."
                       showSearch
                       filterOption={(input, option) =>
                         String(option?.label || '').toLowerCase().includes(input.toLowerCase())
@@ -290,11 +290,11 @@ const FarmSupervisorTaskDetail = () => {
                       className="w-full"
                     />
                   </Form.Item>
-                  <Form.Item name="farmerIds" label="Danh sách Farmer hỗ trợ">
+                  <Form.Item name="farmerIds" label="Người hỗ trợ">
                     <Select
                       mode="multiple"
                       options={farmerOptions}
-                      placeholder="Chọn các Farmer..."
+                      placeholder="Chọn người hỗ trợ..."
                       showSearch
                       filterOption={(input, option) =>
                         String(option?.label || '').toLowerCase().includes(input.toLowerCase())
@@ -321,13 +321,13 @@ const FarmSupervisorTaskDetail = () => {
                   {(task.assignedLeaderName || task.farmLeaderName) && (
                     <div className="flex items-center gap-2 p-2 rounded-lg bg-green-50">
                       <UserOutlined className="text-green-600" />
-                      <span><strong>Farm Leader:</strong> {task.assignedLeaderName || task.farmLeaderName}</span>
+                      <span><strong>Người phụ trách:</strong> {task.assignedLeaderName || task.farmLeaderName}</span>
                     </div>
                   )}
                   {(task.assignments?.length > 0 || task.farmerNames?.length > 0) && (
                     <div className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-blue-50">
                       <TeamOutlined className="text-blue-600" />
-                      <span><strong>Farmers:</strong> {task.assignments ? task.assignments.map(f => f.fullName || f.name).join(', ') : task.farmerNames.join(', ')}</span>
+                      <span><strong>Người hỗ trợ:</strong> {task.assignments ? task.assignments.filter(f => !f.isLeader).map(f => f.fullName || f.name).join(', ') : task.farmerNames.join(', ')}</span>
                     </div>
                   )}
                   <Alert
@@ -350,7 +350,7 @@ const FarmSupervisorTaskDetail = () => {
               <Card bordered={false} className="shadow-sm rounded-2xl border border-green-100">
                 <div className="flex items-center gap-2 mb-4">
                   <FileTextOutlined className="text-green-600" />
-                  <span className="font-semibold">Báo cáo hoàn thành từ Farm Leader</span>
+                  <span className="font-semibold">Báo cáo hoàn thành từ người phụ trách</span>
                   <Tag color="success" className="ml-auto rounded-full">Nhận {formatDate(task.leaderSummary.completedAt)}</Tag>
                 </div>
 
@@ -456,7 +456,7 @@ const FarmSupervisorTaskDetail = () => {
               <Card bordered={false} className="shadow-sm rounded-2xl border border-blue-100">
                 <div className="text-center py-6 text-blue-600">
                   <CheckCircleOutlined className="text-3xl mb-3" />
-                  <div className="font-semibold text-lg">Đang chờ Farm Leader báo cáo</div>
+                  <div className="font-semibold text-lg">Đang chờ người phụ trách báo cáo</div>
                   <Progress percent={task.progress} className="mt-4 mx-auto max-w-xs" strokeColor="#3b82f6" />
                   <div className="text-sm text-gray-500 mt-2">Tiến độ hiện tại: {task.progress}%</div>
                 </div>
@@ -465,7 +465,7 @@ const FarmSupervisorTaskDetail = () => {
               <Card bordered={false} className="shadow-sm rounded-2xl border border-gray-100">
                 <div className="text-center py-8 text-gray-400">
                   <CalendarOutlined className="text-3xl mb-3" />
-                  <div>Kích hoạt công việc để Farm Leader bắt đầu ghi nhật ký.</div>
+                  <div>Kích hoạt công việc để người phụ trách bắt đầu ghi nhật ký.</div>
                 </div>
               </Card>
             ) : null}

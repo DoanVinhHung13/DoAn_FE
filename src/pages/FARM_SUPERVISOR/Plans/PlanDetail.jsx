@@ -18,7 +18,6 @@ import {
   Card,
   Descriptions,
   Empty,
-  message,
   Modal,
   Skeleton,
   Tabs,
@@ -176,7 +175,7 @@ const FarmSupervisorPlanDetail = () => {
               onClick={() => setSubmitModal(true)}
               className="h-10 px-5 font-semibold bg-green-600 border-0 rounded-xl shadow-md shadow-green-100"
             >
-              Gửi nhật ký lên Manager
+              Gửi nhật ký lên quản lý nông trại
             </Button>
           </Tooltip>
         )}
@@ -262,14 +261,14 @@ const FarmSupervisorPlanDetail = () => {
           },
           {
             key: '2',
-            label: <span className="px-4 font-medium"><FileTextOutlined className="mr-2" />Lịch sử ghi Log</span>,
+            label: <span className="px-4 font-medium"><FileTextOutlined className="mr-2" />Lịch sử ghi nhật ký</span>,
             children: activeTabKey === '2' && (
               <TaskLogHistoryTab stages={stages} tasks={tasks} />
             ),
           },
           {
             key: '3',
-            label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Chốt Logbook</span>,
+            label: <span className="px-4 font-medium"><CheckCircleOutlined className="mr-2" />Chốt nhật ký</span>,
             children: activeTabKey === '3' && (
               <LogbookFinalizationTab planId={planId} stages={stages} tasks={tasks} loadData={loadData} plan={plan} />
             ),
@@ -286,7 +285,7 @@ const FarmSupervisorPlanDetail = () => {
         title={
           <div className="flex items-center gap-2 text-green-700">
             <SendOutlined />
-            Gửi nhật ký lên Farm Manager
+            Gửi nhật ký lên quản lý nông trại
           </div>
         }
         onOk={handleSubmitLogbook}
@@ -296,7 +295,7 @@ const FarmSupervisorPlanDetail = () => {
         okButtonProps={{ className: 'bg-green-600' }}
       >
         <Alert
-          message="Bạn có chắc muốn gửi toàn bộ nhật ký canh tác lên Farm Manager để xét duyệt không?"
+          message="Bạn có chắc muốn gửi toàn bộ nhật ký canh tác lên quản lý nông trại để xét duyệt không?"
           type="warning"
           showIcon
           className="rounded-xl"

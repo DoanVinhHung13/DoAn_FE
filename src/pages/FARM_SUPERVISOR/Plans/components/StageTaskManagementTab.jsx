@@ -194,7 +194,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
     try {
       await CultivationTaskService.start(taskId)
       loadData()
-    } catch (err) {
+    } catch {
       // axios interceptor handles error notification
     }
   }
@@ -901,7 +901,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
             setEditTaskModal({ open: false, task: null })
             editTaskForm.resetFields()
             loadData()
-          } catch (err) {
+          } catch {
             // axios interceptor handles error notification
           } finally {
             setSavingEdit(false)

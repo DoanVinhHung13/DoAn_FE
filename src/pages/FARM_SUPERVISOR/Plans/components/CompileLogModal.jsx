@@ -119,7 +119,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
                 className="bg-transparent border border-green-100 rounded-xl overflow-hidden"
               >
                 <Collapse.Panel
-                  header={<span className="font-semibold text-green-700">Báo cáo hoàn thành từ Farm Leader</span>}
+                  header={<span className="font-semibold text-green-700">Báo cáo hoàn thành từ người phụ trách</span>}
                   key="data"
                 >
                   <div className="space-y-3">
@@ -167,8 +167,8 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
 
           {!officialLogId && (
             <Alert
-              message="Chưa có cultivation log để biên soạn"
-              description="Cần Leader gửi summary trước. Hệ thống sẽ tạo nhật ký PENDING để Supervisor chỉnh mô tả."
+              message="Chưa có nhật ký canh tác để biên soạn"
+              description="Cần người phụ trách gửi bản tổng hợp trước. Hệ thống sẽ tạo nhật ký chờ xử lý để Supervisor chỉnh mô tả."
               type="warning"
               showIcon
               className="rounded-xl"

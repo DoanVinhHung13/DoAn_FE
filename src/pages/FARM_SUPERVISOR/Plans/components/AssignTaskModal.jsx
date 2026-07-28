@@ -1,5 +1,5 @@
 import { SaveOutlined } from "@ant-design/icons"
-import { Form, Modal, Select, message } from "antd"
+import { Form, Modal, Select } from "antd"
 import { useEffect, useState } from "react"
 import { ROLES } from "src/constants/roles"
 import CultivationTaskService from "src/services/CultivationTaskService"
@@ -132,12 +132,12 @@ const AssignTaskModal = ({
       <Form form={form} layout="vertical" className="mt-4">
         <Form.Item
           name="farmLeaderId"
-          label="Farm Leader phụ trách"
-          rules={[{ required: true, message: "Vui lòng chọn Farm Leader" }]}
+          label="Người phụ trách"
+          rules={[{ required: true, message: "Vui lòng chọn người phụ trách" }]}
         >
           <Select
             options={leaderOptions}
-            placeholder="Chọn Farm Leader..."
+            placeholder="Chọn người phụ trách..."
             showSearch
             filterOption={(input, option) =>
               String(option?.label || "")
@@ -147,11 +147,11 @@ const AssignTaskModal = ({
             loading={loading}
           />
         </Form.Item>
-        <Form.Item name="farmerIds" label="Danh sách Farmer hỗ trợ">
+        <Form.Item name="farmerIds" label="Người hỗ trợ">
           <Select
             mode="multiple"
             options={farmerOptions}
-            placeholder="Chọn các Farmer..."
+            placeholder="Chọn người hỗ trợ..."
             showSearch
             filterOption={(input, option) =>
               String(option?.label || "")

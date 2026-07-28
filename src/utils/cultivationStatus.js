@@ -40,7 +40,7 @@ export const STAGE_STATUS = {
  * PENDING | ASSIGNED | IN_PROGRESS | WAITING_APPROVAL | COMPLETED | OVERDUE | CANCELLED
  */
 export const TASK_STATUS = {
-  PENDING: { color: 'default', label: 'Chờ thực hiện' },
+  PENDING: { color: 'default', label: 'Chưa kích hoạt' },
   ASSIGNED: { color: 'blue', label: 'Đã phân công' },
   IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện' },
   WAITING_APPROVAL: { color: 'gold', label: 'Chờ phê duyệt' },
