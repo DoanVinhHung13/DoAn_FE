@@ -18,11 +18,9 @@ import {
   Card,
   Empty,
   Input,
-  Select,
   Skeleton,
   Tag,
   Typography,
-  message,
 } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -30,7 +28,7 @@ import { useNavigate } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import { matchesClosingFilter } from 'src/utils/cultivationStatus'
+import { canApproveClosing } from 'src/utils/cultivationStatus'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 import { getLandPlotNamesDisplay } from 'src/utils/helpers'
@@ -41,12 +39,11 @@ const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 
 const FarmManagerLogbooks = () => {
   const navigate = useNavigate()
-  const { getLogbookStatus, getReviewStatus, closingFilterOptions } = useCultivationStatus()
+  const { getLogbookStatus, getReviewStatus } = useCultivationStatus()
   const [loading, setLoading] = useState(true)
   const [logbooks, setLogbooks] = useState([])
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
   const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
@@ -79,8 +76,8 @@ const FarmManagerLogbooks = () => {
   }, [reloadKey, search])
 
   const visible = useMemo(() => {
-    return logbooks.filter((lb) => matchesClosingFilter(lb, statusFilter))
-  }, [logbooks, statusFilter])
+    return logbooks.filter(canApproveClosing)
+  }, [logbooks])
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -107,12 +104,9 @@ const FarmManagerLogbooks = () => {
               className="h-10 flex-1 min-w-48 rounded-xl"
               allowClear
             />
-            <Select
-              value={statusFilter}
-              onChange={(v) => setStatusFilter(v)}
-              className="h-10 min-w-40 rounded-xl"
-              options={closingFilterOptions}
-            />
+            <Tag color="gold" className="m-0 flex h-10 items-center rounded-xl px-3">
+              Chờ duyệt
+            </Tag>
             <Button
               icon={<ReloadOutlined />}
               onClick={() => setReloadKey((v) => v + 1)}
