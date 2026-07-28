@@ -7,7 +7,7 @@ import {
   Form,
   Input,
   Spin,
-  message,
+  Typography,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -62,9 +62,7 @@ const CatalogEdit = () => {
       };
       return CropService.updateCrop(id, payload);
     },
-    onSuccess: (response) => {
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail', id] });
@@ -76,8 +74,7 @@ const CatalogEdit = () => {
         navigate(ROUTER.FM_CROP_CATALOGS);
         return;
       }
-      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
-      if (errorMsg) message.error(errorMsg);
+      // axios interceptor handles error notification
     },
   });
 

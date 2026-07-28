@@ -193,8 +193,8 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
     try {
       await CultivationTaskService.start(taskId)
       loadData()
-    } catch {
-      message.error("Kích hoạt thất bại.")
+    } catch (err) {
+      // axios interceptor handles error notification
     }
   }
 
@@ -280,9 +280,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
       loadData()
     } catch (error) {
       console.error(error)
-      if (!error.errorFields) {
-        message.error("Không thể tạo công việc.")
-      }
+      // axios interceptor handles error notification
     } finally {
       setSavingTask(false)
     }
@@ -870,13 +868,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
             editTaskForm.resetFields()
             loadData()
           } catch (err) {
-            if (!err?.errorFields) {
-              message.error(
-                err?.response?.data?.message ||
-                err?.message ||
-                "Cập nhật thất bại.",
-              )
-            }
+            // axios interceptor handles error notification
           } finally {
             setSavingEdit(false)
           }

@@ -202,7 +202,7 @@ const PlanTemplateCreate = () => {
         setSteps(mappedSteps.length ? mappedSteps : [createEmptyStep(1)])
         setOriginalSteps(mappedSteps)
       } catch (error) {
-        message.error(error.message || "Không thể tải thông tin mẫu quy trình.")
+        // axios interceptor handles error notification
       } finally {
         if (mounted) setLoadingDetail(false)
       }
@@ -347,11 +347,6 @@ const PlanTemplateCreate = () => {
       }
 
       await syncSteps(processTemplateId, normalizedSteps)
-      message.success(
-        isEdit
-          ? "Cập nhật mẫu quy trình thành công."
-          : "Tạo mẫu quy trình thành công.",
-      )
       navigate(ROUTER.FM_PLAN_TEMPLATES)
     } catch (error) {
       console.error("Process template submit failed:", {
@@ -360,7 +355,7 @@ const PlanTemplateCreate = () => {
         responseData: error.responseData,
         error,
       })
-      message.error(error.message || "Không thể lưu mẫu quy trình.")
+      // axios interceptor handles error notification
     } finally {
       setSubmitting(false)
     }
