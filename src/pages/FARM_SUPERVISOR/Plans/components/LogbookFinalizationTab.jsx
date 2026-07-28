@@ -44,6 +44,7 @@ import {
   saveCompiledDescription,
   unwrap,
 } from "./compileLogHelpers"
+import { getOrderedStageLogs, getStageTaskName } from "./logbookOrdering"
 
 const { Text, Title } = Typography
 const { TextArea } = Input
@@ -633,6 +634,15 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
   }, [stages, selectedId])
 
   const selectedStage = stages.find(s => s.id === selectedId)
+  const selectedStageTasks = useMemo(
+    () => tasks[selectedId] || [],
+    [tasks, selectedId],
+  )
+
+  const orderedStageLogs = useMemo(
+    () => getOrderedStageLogs(stageLogs, selectedStageTasks),
+    [stageLogs, selectedStageTasks],
+  )
 
   const pendingSummaries = useMemo(() => {
     if (stageSummary) {
@@ -903,11 +913,9 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                   />
                 ) : (
                   <div className="space-y-1">
-                    {stageLogs.map((log, index) => {
+                    {orderedStageLogs.map((log, index) => {
                       const taskName =
-                        log.taskName ||
-                        log.workTaskName ||
-                        log.name ||
+                        getStageTaskName(log, selectedStageTasks) ||
                         `Mục ${index + 1}`
                       const description =
                         log.supervisorDescription ||
