@@ -19,10 +19,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        # Avoid GitHub Actions cache restore on the self-hosted runner. The
+        # remote cache can be hundreds of MB and may stall until timeout.
+        # npm still reuses the runner-local cache when it is available.
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Create production env
         run: |
