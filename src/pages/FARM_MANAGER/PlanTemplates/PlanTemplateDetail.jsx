@@ -82,7 +82,7 @@ const PlanTemplateDetail = () => {
         setItem(template)
         setSteps(templateSteps)
       } catch (error) {
-        message.error(error.message || 'Không thể tải mẫu quy trình.')
+        // axios interceptor handles error notification
         navigate(ROUTER.FM_PLAN_TEMPLATES)
       } finally {
         if (mounted) setLoading(false)

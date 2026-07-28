@@ -20,13 +20,11 @@ const FertilizerEdit = () => {
         setInitialLoading(true)
         const res = await FertilizerService.getFertilizerById(id)
         if (res?.success === false) {
-          message.error('Không tìm thấy phân bón')
           navigate(ROUTER.FM_VIEW_FERTILIZERS)
           return
         }
         setEditingItem(res?.data)
       } catch (err) {
-        message.error('Lấy thông tin phân bón thất bại')
         navigate(ROUTER.FM_VIEW_FERTILIZERS)
       } finally {
         setInitialLoading(false)

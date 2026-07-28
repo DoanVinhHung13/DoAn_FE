@@ -82,7 +82,7 @@ const FarmSupervisorPlans = () => {
       } catch (error) {
         if (mounted) {
           console.error(error)
-          message.error(error?.message || 'Không thể tải danh sách kế hoạch.')
+          // axios interceptor handles error notification
           setPlans([])
         }
       } finally {

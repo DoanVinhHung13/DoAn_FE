@@ -133,15 +133,14 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         const errMsg = (res.message || "").toLowerCase()
         if (errMsg.includes("code") || errMsg.includes("mã")) {
           form.setFields([{ name: "code", errors: ["Mã thuốc đã tồn tại."] }])
-        } else {
-          message.error(res.message || "Có lỗi xảy ra.")
         }
+        // axios interceptor handles error notification
         return
       }
 
       navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
     } catch (err) {
-      message.error("Vui lòng kiểm tra lại thông tin bắt buộc.")
+      // axios interceptor handles error notification
     } finally {
       setLoading(false)
     }

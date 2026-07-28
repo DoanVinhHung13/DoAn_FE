@@ -106,8 +106,7 @@ const LandsManagement = () => {
       setStatusTarget(null)
       fetchLandPlots() // tải lại danh sách sau khi đổi trạng thái
     } catch (err) {
-      const errorMsg = err?.response?.data?.message || err?.message;
-      if (errorMsg) message.error(errorMsg);
+      // axios interceptor handles error notification
     } finally {
       setStatusLoading(false)
     }

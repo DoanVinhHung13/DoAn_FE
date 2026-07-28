@@ -86,7 +86,7 @@ const AssignTaskModal = ({
       )
     } catch (err) {
       console.error(err)
-      message.error("Lỗi khi tải danh sách nhân sự.")
+      // axios interceptor handles error notification
     } finally {
       setLoading(false)
     }
@@ -110,7 +110,7 @@ const AssignTaskModal = ({
       onSuccess()
     } catch (err) {
       if (!err?.errorFields) {
-        message.error("Phân công thất bại.")
+        // axios interceptor handles error notification
       }
     } finally {
       setSaving(false)

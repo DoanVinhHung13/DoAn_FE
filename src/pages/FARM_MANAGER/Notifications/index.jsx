@@ -214,12 +214,8 @@ const FarmManagerNotifications = () => {
       };
 
       setDocuments(prev => [...prev, newDoc]);
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
       onSuccess(response);
     } catch (error) {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) message.error(errorMsg);
       onError(error);
     } finally {
       setUploadingDoc(false);

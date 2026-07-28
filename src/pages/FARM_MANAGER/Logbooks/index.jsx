@@ -66,7 +66,7 @@ const FarmManagerLogbooks = () => {
         console.error(err)
         if (mounted) {
           setLogbooks([])
-          message.error('Không tải được danh sách chờ chốt sổ.')
+          // axios interceptor handles error notification
         }
       } finally {
         if (mounted) setLoading(false)

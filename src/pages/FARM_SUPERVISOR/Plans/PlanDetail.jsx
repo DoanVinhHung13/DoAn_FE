@@ -76,14 +76,12 @@ const FarmSupervisorPlanDetail = () => {
     try {
       const planRes = await CultivationLogbookService.getById(planId)
       if (planRes?.success === false) {
-        message.error(planRes?.message || 'Không tìm thấy kế hoạch.')
         navigate(ROUTER.FS_PLANS)
         return
       }
       // Interceptor trả body: { success, data: plan }
       const planData = planRes?.data ?? planRes
       if (!planData) {
-        message.error('Không tìm thấy kế hoạch.')
         navigate(ROUTER.FS_PLANS)
         return
       }
@@ -101,7 +99,7 @@ const FarmSupervisorPlanDetail = () => {
       setTasks(tasksMap)
     } catch (error) {
       console.error(error)
-      message.error('Không thể tải dữ liệu kế hoạch.')
+      // axios interceptor handles error notification
       navigate(ROUTER.FS_PLANS)
     } finally {
       setLoading(false)

@@ -132,7 +132,6 @@ const PlanTemplateList = () => {
       setDeleteLoading(true)
       const res = await PlanTemplateService.remove(deleteModal.item.id)
       if (res?.success === false) return
-      message.success('Xóa mẫu quy trình thành công.')
       setDeleteModal({ open: false, item: null })
       getList()
     } finally {

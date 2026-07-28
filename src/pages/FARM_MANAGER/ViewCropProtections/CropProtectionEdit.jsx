@@ -20,13 +20,11 @@ const CropProtectionEdit = () => {
         setInitialLoading(true)
         const res = await PesticideService.getById(id)
         if (res?.success === false) {
-          message.error('Không tìm thấy thuốc BVTV')
           navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
           return
         }
         setEditingItem(res?.data)
       } catch (err) {
-        message.error('Lấy thông tin thuốc BVTV thất bại')
         navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
       } finally {
         setInitialLoading(false)

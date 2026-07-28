@@ -139,7 +139,6 @@ const FarmSupervisorTaskDetail = () => {
               })
             }
           } else {
-            message.error('Không tìm thấy công việc.')
             navigate(ROUTER.FS_PLAN_DETAIL.replace(':planId', planId))
           }
         }
@@ -154,7 +153,7 @@ const FarmSupervisorTaskDetail = () => {
 
       } catch (error) {
         console.error(error)
-        message.error('Lỗi khi tải dữ liệu.')
+        // axios interceptor handles error notification
       } finally {
         setLoading(false)
       }

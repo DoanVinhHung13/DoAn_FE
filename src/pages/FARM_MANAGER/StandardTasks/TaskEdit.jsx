@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, CheckSquareOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Card, Form, message, Skeleton } from 'antd'
+import { Button, Card, Form, Skeleton } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
@@ -22,7 +22,6 @@ const TaskEdit = () => {
         setInitialLoading(true)
         const res = await TaskCatalogService.getById(id)
         if (res?.success === false) {
-          message.error('Không tìm thấy công việc')
           navigate(ROUTER.FM_TASKS)
           return
         }
@@ -34,7 +33,6 @@ const TaskEdit = () => {
           description: data.description,
         })
       } catch (err) {
-        message.error('Lấy thông tin công việc thất bại')
         navigate(ROUTER.FM_TASKS)
       } finally {
         setInitialLoading(false)
@@ -54,14 +52,11 @@ const TaskEdit = () => {
 
       const res = await TaskCatalogService.update(id, body)
 
-      if (res?.success === false) {
-        message.error(res.message || 'Có lỗi xảy ra khi cập nhật công việc.')
-        return
-      }
+      if (res?.success === false) return
 
       navigate(ROUTER.FM_TASKS)
     } catch (err) {
-      message.error('Vui lòng nhập đầy đủ các trường thông tin bắt buộc.')
+      // axios interceptor handles error notification
     } finally {
       setLoading(false)
     }

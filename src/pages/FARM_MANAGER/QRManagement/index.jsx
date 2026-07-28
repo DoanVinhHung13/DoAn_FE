@@ -281,7 +281,7 @@ const QRManagement = () => {
     onError: (error) => {
       setPreviewData(null);
       setPreviewModalOpen(false);
-      message.error(error?.response?.data?.message || 'Không thể xem trước mã QR.');
+      // axios interceptor handles error notification
     },
   });
 
@@ -297,13 +297,12 @@ const QRManagement = () => {
         createdAt: new Date().toISOString(),
       };
       setQrData(result);
-      message.success('Tạo mã QR chính thức thành công!');
       queryClient.invalidateQueries({ queryKey: ['qr-stats'] });
       queryClient.invalidateQueries({ queryKey: ['harvest-batch-detail', selectedBatchId] });
       queryClient.invalidateQueries({ queryKey: ['batches'] });
     },
-    onError: (error) => {
-      message.error(error?.response?.data?.message || 'Tạo mã QR thất bại.');
+    onError: () => {
+      // axios interceptor handles error notification
     },
   });
 

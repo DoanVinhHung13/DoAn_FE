@@ -159,7 +159,7 @@ const ReportStatistics = () => {
       setLandPlots(normalized.items)
       setSelectedLandPlotId((current) => current || normalized.items?.[0]?.id)
     } catch (error) {
-      message.error(error?.response?.data?.message || 'Không thể tải danh sách vùng trồng')
+      // axios interceptor handles error notification
     } finally {
       setLandLoading(false)
     }
