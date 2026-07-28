@@ -20,6 +20,7 @@ export const normalizeWeather = (response) => {
   if (!current || typeof current !== 'object') return null
 
   const condition = valueFromArrayOrObject(firstValue(
+    current.weatherCondition,
     current.condition,
     current.description,
     current.conditionDescription,

@@ -154,32 +154,41 @@ const LandPlotDetail = () => {
 
       <Row gutter={[16, 16]}>
 
-        {/* Cột trái: thông tin hành chính */}
+        {/* Cột trái: thông tin vùng trồng và thời tiết */}
         <Col xs={24} xl={10}>
-          <Card title="Thông tin hành chính">
-            <Descriptions column={1} bordered size="small">
-              <Descriptions.Item label="Mã vùng trồng">
-                {displayValue(plot.code)}
-              </Descriptions.Item>
-              <Descriptions.Item label="Tên vùng trồng">
-                {displayValue(plot.name)}
-              </Descriptions.Item>
-              <Descriptions.Item label="Diện tích">
-                {formatLandArea(plot.area, plot.areaUnit)}
-              </Descriptions.Item>
-              <Descriptions.Item label="Địa chỉ">
-                {displayValue(plot.address)}
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">
-                <Tag color={isActive ? 'success' : 'default'}>
-                  {getStatusLabel(plot)}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Mô tả">
-                {displayValue(plot.description)}
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
+          <div className="space-y-4">
+            <Card title="Thông tin vùng trồng">
+              <Descriptions column={1} bordered size="small">
+                <Descriptions.Item label="Mã vùng trồng">
+                  {displayValue(plot.code)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Tên vùng trồng">
+                  {displayValue(plot.name)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Diện tích">
+                  {formatLandArea(plot.area, plot.areaUnit)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Địa chỉ">
+                  {displayValue(plot.address)}
+                </Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                  <Tag color={isActive ? 'success' : 'default'}>
+                    {getStatusLabel(plot)}
+                  </Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Mô tả">
+                  {displayValue(plot.description)}
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+
+            <LandPlotWeather
+              weather={weather}
+              loading={weatherLoading}
+              error={weatherError}
+              onRetry={fetchPlotWeather}
+            />
+          </div>
         </Col>
 
         {/* Cột phải: bản đồ GIS */}
@@ -193,14 +202,6 @@ const LandPlotDetail = () => {
           </Card>
         </Col>
 
-        <Col xs={24}>
-          <LandPlotWeather
-            weather={weather}
-            loading={weatherLoading}
-            error={weatherError}
-            onRetry={fetchPlotWeather}
-          />
-        </Col>
       </Row>
     </div>
   )
