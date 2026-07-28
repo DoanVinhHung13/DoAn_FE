@@ -51,12 +51,29 @@ const { Text, Paragraph } = Typography
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
+const taskOrderValue = (task, fallback = 0) => {
+  const order = Number(task?.taskOrder)
+  return Number.isFinite(order) && order > 0 ? order : fallback
+}
+
+const orderTasks = tasks =>
+  tasks
+    .map((task, index) => ({ task, index }))
+    .sort(
+      (a, b) =>
+        taskOrderValue(a.task, Number.MAX_SAFE_INTEGER) -
+          taskOrderValue(b.task, Number.MAX_SAFE_INTEGER) ||
+        a.index - b.index,
+    )
+    .map(({ task }) => task)
+
 /**
  * Modern Task Card Component
  */
-const TaskCard = ({ task, onOpen, getTaskStatus }) => {
+const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
   const cfg = getTaskStatus(task.status)
   const canLog = canWriteDailyLog(task.status)
+  const taskNumber = taskOrderValue(task, taskIndex + 1)
 
   let ctaLabel = "Xem chi tiết"
   let ctaIcon = <EyeOutlined />
@@ -96,13 +113,21 @@ const TaskCard = ({ task, onOpen, getTaskStatus }) => {
     >
       {/* Top Banner Header */}
       <div className="p-4 transition-colors border-b border-slate-100 bg-gradient-to-r from-slate-50/80 via-emerald-50/15 to-white group-hover:from-emerald-50/30">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <h3
-            className="text-base font-bold transition-colors text-slate-800 group-hover:text-emerald-700 line-clamp-1"
-            title={task.name}
-          >
-            {task.name}
-          </h3>
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-start min-w-0 gap-2">
+            <span
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700"
+              aria-label={`Số thứ tự ${taskNumber}`}
+            >
+              {taskNumber}
+            </span>
+            <h3
+              className="text-base font-bold transition-colors text-slate-800 group-hover:text-emerald-700 line-clamp-1"
+              title={task.name || task.taskName}
+            >
+              {task.name || task.taskName}
+            </h3>
+          </div>
           <Tag
             color={cfg.color}
             className="rounded-full px-3 py-0.5 text-xs font-semibold m-0 shadow-2xs flex-shrink-0"
@@ -223,7 +248,7 @@ const FarmLeaderTasks = () => {
   // ── State ─────────────────────────────────────────────────────────────────
   const [logbookSummaries, setLogbookSummaries] = useState([])
   const [selectedLogbookId, setSelectedLogbookId] = useState(null)
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("IN_PROGRESS")
   const [treeSearch, setTreeSearch] = useState("")
 
   // Right panel: tasks loaded per logbook
@@ -396,7 +421,7 @@ const FarmLeaderTasks = () => {
         .map(s => ({
           id: s.stageId,
           name: s.stageName,
-          filteredTasks: Array.isArray(s.tasks) ? s.tasks : [],
+          filteredTasks: orderTasks(Array.isArray(s.tasks) ? s.tasks : []),
         }))
         .filter(s => s.filteredTasks.length > 0)
     }
@@ -411,7 +436,10 @@ const FarmLeaderTasks = () => {
       }
       stageMap.get(stId).filteredTasks.push(t)
     })
-    return Array.from(stageMap.values())
+    return Array.from(stageMap.values()).map(stage => ({
+      ...stage,
+      filteredTasks: orderTasks(stage.filteredTasks),
+    }))
   }, [stages, tasks])
 
   const openTaskLog = taskId => {
@@ -772,10 +800,11 @@ const FarmLeaderTasks = () => {
                           {/* Task Cards Grid */}
                           {stageTasks.length > 0 ? (
                             <div className="grid gap-4 md:grid-cols-2">
-                              {stageTasks.map(task => (
+                              {stageTasks.map((task, taskIndex) => (
                                 <TaskCard
                                   key={task.id}
                                   task={task}
+                                  taskIndex={taskIndex}
                                   onOpen={openTaskLog}
                                   getTaskStatus={getTaskStatus}
                                 />
