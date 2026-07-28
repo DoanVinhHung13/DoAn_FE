@@ -21,7 +21,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import CultivationStageService from 'src/services/CultivationStageService'
 import { getLandPlotsFromLogbook } from 'src/utils/helpers'
 
 
@@ -49,7 +48,6 @@ const CultivationLogbookDetail = () => {
       try {
         setInitialLoading(true)
 
-        // 1.1 Lấy thông tin logbook (không lấy cultivationStages từ đây)
         const response = await CultivationLogbookService.getById(id)
         if (response?.success === false || !response?.data) {
           message.error('Không tìm thấy nhật ký canh tác')
@@ -59,23 +57,11 @@ const CultivationLogbookDetail = () => {
 
         const plan = response.data
         const planTasks = plan.tasks || plan.cultivationTasks || []
+        const planStages = Array.isArray(plan.cultivationStages) ? plan.cultivationStages : []
 
         if (!isMounted) return
-        // Lưu thông tin logbook nhưng bỏ cultivationStages
         setItem({ ...plan, tasks: planTasks })
-
-        // 1.2 Lấy stages riêng bằng API cultivation-stages/logbook/{logbookId}
-        try {
-          const stagesResponse = await CultivationStageService.getByLogbookId(id)
-          if (isMounted && stagesResponse?.data) {
-            const stagesData = Array.isArray(stagesResponse.data)
-              ? stagesResponse.data
-              : stagesResponse.data?.data || stagesResponse.data?.items || []
-            setStages(stagesData)
-          }
-        } catch (stageErr) {
-          console.error('Lỗi khi lấy giai đoạn canh tác:', stageErr)
-        }
+        setStages(planStages)
 
       } catch {
         message.error('Lấy thông tin nhật ký canh tác thất bại')
@@ -270,4 +256,3 @@ const CultivationLogbookDetail = () => {
 }
 
 export default CultivationLogbookDetail
-

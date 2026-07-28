@@ -105,6 +105,7 @@ const CultivationLogbookCreate = () => {
   const [isCropsLoading, setIsCropsLoading] = useState(false)
   const [landsData, setLandsData] = useState(null)
   const [isLandsLoading, setIsLandsLoading] = useState(false)
+  const [selectedLandPlotOptions, setSelectedLandPlotOptions] = useState([])
 
   // ── Template modal ──
   const [templateModal, setTemplateModal] = useState(false)
@@ -216,6 +217,7 @@ const CultivationLogbookCreate = () => {
         const response = await LandPlotService.getAvailableForLogbook({
           PageIndex: 1,
           PageSize: 1000,
+          logbookId: isEdit ? id : undefined,
         })
         if (!isMounted) return
         const lands = normalizeResponse(response)
@@ -230,7 +232,7 @@ const CultivationLogbookCreate = () => {
 
     fetchLands()
     return () => { isMounted = false }
-  }, [])
+  }, [id, isEdit])
 
   // ── Load plan data for edit mode ──────────────────────────────────
   useEffect(() => {
@@ -273,6 +275,18 @@ const CultivationLogbookCreate = () => {
           selectedLandPlotIds = [plan.landPlot.id]
         }
 
+        const planLandPlots = Array.isArray(plan.landPlots) ? plan.landPlots : []
+        const planLandPlotNames = Array.isArray(plan.landPlotNames) ? plan.landPlotNames : []
+        setSelectedLandPlotOptions(selectedLandPlotIds.map((landPlotId, index) => {
+          const plot = planLandPlots.find((landPlot) =>
+            String(landPlot?.id || landPlot?._id || landPlot?.landPlotId) === String(landPlotId)
+          )
+          return {
+            value: landPlotId,
+            label: plot?.name || plot?.landPlotName || planLandPlotNames[index] || `Vùng trồng ${index + 1}`,
+          }
+        }))
+
         // Set form values
         form.setFieldsValue({
           logbookName: plan.logbookName || '',
@@ -312,6 +326,16 @@ const CultivationLogbookCreate = () => {
     loadCultivationLogbook()
     return () => { isMounted = false }
   }, [id, isEdit, form])
+
+  const landPlotOptions = [...(landsData || [])]
+  selectedLandPlotOptions.forEach((selectedPlot) => {
+    const existingPlot = landPlotOptions.find((landPlot) => String(landPlot.id) === String(selectedPlot.value))
+    if (!existingPlot) {
+      landPlotOptions.push(selectedPlot)
+    } else if (!existingPlot.name && selectedPlot.label) {
+      existingPlot.name = selectedPlot.label
+    }
+  })
 
   // ── Helper resolution for template crop & category ─────────────────
   const resolveTemplateCropData = useCallback(async (templateData, template) => {
@@ -564,7 +588,7 @@ const CultivationLogbookCreate = () => {
           </TitleCustom>
         </div>
         <div className="flex flex-wrap gap-2">
-          {!isEdit && (
+          {(!isEdit || planStatus === 'PLANNED') && (
             <Button
               type="default" icon={<BookOutlined />}
               onClick={openTemplateModal}
@@ -649,7 +673,7 @@ const CultivationLogbookCreate = () => {
               >
                 <Select
                   mode="multiple"
-                  options={landsData?.map((land) => ({
+                  options={landPlotOptions.map((land) => ({
                     value: land.id,
                     label: land.name,
                   }))}

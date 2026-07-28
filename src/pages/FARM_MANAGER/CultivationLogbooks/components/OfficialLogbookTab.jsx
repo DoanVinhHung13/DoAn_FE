@@ -164,6 +164,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                     stageLogs.map((task, logIndex) => {
                       const summary = task.summary || task.officialLog || {}
                       const taskName = task.taskName || task.name || task.title || `Công việc ${logIndex + 1}`
+                      const displayTaskName = task.cultivationTaskName || taskName
                       const description = summary.description || task.summaryDescription || task.finalDescription || ''
                       const materialsText = summary.materialsText || task.materialsText || ''
                       const workStartDate = task.workStartDate || summary.workStartDate || task.startDate
@@ -190,7 +191,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
 
                           {/* ── Nội dung log ── */}
                           <div className="flex-1 py-2 pb-4">
-                            <div className="mb-1 text-sm font-bold text-gray-800">{taskName}</div>
+                            <div className="mb-1 text-sm font-bold text-gray-800">{displayTaskName}</div>
                             {/* 1. Ngày bắt đầu - kết thúc */}
                             {(workStartDate || workEndDate) && (
                               <div className="mb-2 text-sm font-semibold text-gray-800">

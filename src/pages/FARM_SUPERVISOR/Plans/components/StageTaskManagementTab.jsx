@@ -2,6 +2,7 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
   EditOutlined,
   InfoCircleOutlined,
   PlusOutlined,
@@ -198,13 +199,34 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
     }
   }
 
-  // Mặc định chọn giai đoạn đầu tiên khi load
+  const handleDeleteTask = task => {
+    Modal.confirm({
+      title: "Xóa công việc chưa kích hoạt?",
+      content: `Công việc “${task.name || task.taskName}” sẽ được xóa khỏi kế hoạch.`,
+      okText: "Xóa công việc",
+      cancelText: "Hủy",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await CultivationTaskService.remove(task.id)
+          message.success("Đã xóa công việc.")
+          await loadData()
+        } catch (err) {
+          console.error(err)
+          // axios interceptor handles error notification
+        }
+      },
+    })
+  }
+
+  // Mở đúng giai đoạn đang thực hiện; nếu chưa có thì chọn giai đoạn chưa hoàn thành đầu tiên.
   useEffect(() => {
     if (stages.length > 0 && !selectedId) {
-      const firstActive =
+      const currentStage =
         stages.find(s => s.status === "ACTIVE" || s.status === "IN_PROGRESS") ||
-        stages[0]
-      setSelectedId(firstActive?.id ?? null)
+        stages.find(s => !["COMPLETED", "CANCELLED"].includes(s.status)) ||
+        stages[stages.length - 1]
+      setSelectedId(currentStage?.id ?? null)
     }
   }, [stages, selectedId])
 
@@ -517,7 +539,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                                         <UserOutlined className="text-green-600" />
                                         <Text className="text-xs">
                                           <span className="font-semibold">
-                                            Farm Leader:
+                                            Người phụ trách:
                                           </span>{" "}
                                           {task.assignedLeaderName}
                                         </Text>
@@ -529,7 +551,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                                           <TeamOutlined className="mt-1 text-blue-600" />
                                           <div className="flex-1">
                                             <Text className="block mb-1 text-xs font-semibold">
-                                              Farmers (
+                                              Người hỗ trợ (
                                               {
                                                 task.assignments.filter(
                                                   f => !f.isLeader,
@@ -597,6 +619,18 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                                       }}
                                     >
                                       Kích hoạt
+                                    </Button>
+                                    <Button
+                                      danger
+                                      size="small"
+                                      icon={<DeleteOutlined />}
+                                      onClick={e => {
+                                        e.stopPropagation()
+                                        handleDeleteTask(task)
+                                      }}
+                                      className="rounded-lg"
+                                    >
+                                      Xóa
                                     </Button>
                                   </>
                                 )}
@@ -749,14 +783,14 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                                     <Form.Item
                                       {...restField}
                                       name={[name, "leaderId"]}
-                                      label="Farm Leader phụ trách"
+                                      label="Người phụ trách"
                                       className="!mb-3"
                                     >
                                       <Select
                                         allowClear
                                         showSearch
                                         options={leaders}
-                                        placeholder="Chọn Farm Leader..."
+                                        placeholder="Chọn người phụ trách..."
                                         loading={loadingUsers}
                                         filterOption={(input, option) =>
                                           String(option?.label || "")
@@ -770,7 +804,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                                     <Form.Item
                                       {...restField}
                                       name={[name, "farmerIds"]}
-                                      label="Danh sách Farmer"
+                                      label="Người hỗ trợ"
                                       className="!mb-3"
                                     >
                                       <Select
@@ -778,7 +812,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                                         allowClear
                                         showSearch
                                         options={farmers}
-                                        placeholder="Chọn Farmers..."
+                                        placeholder="Chọn người hỗ trợ..."
                                         loading={loadingUsers}
                                         filterOption={(input, option) =>
                                           String(option?.label || "")
@@ -895,12 +929,12 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
           </Form.Item>
           <Row gutter={12}>
             <Col xs={24} md={12}>
-              <Form.Item name="leaderId" label="Farm Leader phụ trách">
+              <Form.Item name="leaderId" label="Người phụ trách">
                 <Select
                   allowClear
                   showSearch
                   options={leaders}
-                  placeholder="Chọn Farm Leader..."
+                  placeholder="Chọn người phụ trách..."
                   loading={loadingUsers}
                   filterOption={(input, option) =>
                     String(option?.label || "")
@@ -911,13 +945,13 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
-              <Form.Item name="farmerIds" label="Danh sách Farmer">
+              <Form.Item name="farmerIds" label="Người hỗ trợ">
                 <Select
                   mode="multiple"
                   allowClear
                   showSearch
                   options={farmers}
-                  placeholder="Chọn Farmers..."
+                  placeholder="Chọn người hỗ trợ..."
                   loading={loadingUsers}
                   filterOption={(input, option) =>
                     String(option?.label || "")

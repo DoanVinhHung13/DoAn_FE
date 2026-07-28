@@ -12,7 +12,6 @@ export const apiRejectCompletion = (id) => `/cultivation-logbooks/${id}/reject-c
 export const apiPlanLogbook = (id) => `/cultivation-logbooks/${id}/plan`
 export const apiStartLogbook = (id) => `/cultivation-logbooks/${id}/start`
 export const apiCompleteLogbook = (id) => `/cultivation-logbooks/${id}/complete`
-export const apiCancelLogbook = (id) => `/cultivation-logbooks/${id}/cancel`
 
 // Manager bước 6 — danh sách chờ chốt sổ
 // Swagger: GET /api/cultivation-logbooks/closing-reviews

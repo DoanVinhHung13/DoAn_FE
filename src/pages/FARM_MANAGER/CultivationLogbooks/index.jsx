@@ -7,6 +7,7 @@
  */
 import {
   CalendarOutlined,
+  DeleteOutlined,
   EditOutlined,
   PlusOutlined,
   ReloadOutlined,
@@ -17,6 +18,7 @@ import {
   Card,
   Input,
   message,
+  Modal,
   Select,
   Space,
   Tooltip,
@@ -99,6 +101,25 @@ const CultivationLogbookList = () => {
     setPage(1)
   }
 
+  const handleDelete = useCallback((record) => {
+    Modal.confirm({
+      title: 'Xóa nhật ký canh tác?',
+      content: `Nhật ký “${record.logbookName || 'này'}” sẽ được xóa khỏi danh sách.`,
+      okText: 'Xóa',
+      cancelText: 'Hủy',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        await CultivationLogbookService.deleteById(record.id)
+        message.success('Đã xóa nhật ký canh tác.')
+        if (listData.length === 1 && page > 1) {
+          setPage(page - 1)
+        } else {
+          await getList()
+        }
+      },
+    })
+  }, [getList, listData.length, page])
+
   const columns = [
     {
       title: 'STT',
@@ -180,24 +201,40 @@ const CultivationLogbookList = () => {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 80,
+      width: 112,
       align: 'center',
       render: (_, record) => (
         <Space size={4}>
-          <Tooltip title="Sửa">
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
-              onClick={(event) => {
-                event.stopPropagation()
-                navigate(
-                  ROUTER.FM_CULTIVATION_LOGBOOK_EDIT.replace(':id', record.id)
-                )
-              }}
-            />
-          </Tooltip>
+          {String(record.status).toUpperCase() !== 'CANCELLED' && (
+            <Tooltip title="Sửa">
+              <Button
+                type="text"
+                size="small"
+                icon={<EditOutlined />}
+                className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  navigate(
+                    ROUTER.FM_CULTIVATION_LOGBOOK_EDIT.replace(':id', record.id)
+                  )
+                }}
+              />
+            </Tooltip>
+          )}
+          {['PLANNED', 'CANCELLED'].includes(String(record.status).toUpperCase()) && (
+            <Tooltip title="Xóa">
+              <Button
+                type="text"
+                size="small"
+                icon={<DeleteOutlined />}
+                className="!h-8 !w-8 rounded-lg text-red-500 hover:bg-red-50"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  handleDelete(record)
+                }}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
