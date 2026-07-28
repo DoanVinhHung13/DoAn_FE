@@ -64,25 +64,30 @@ const Trace = () => {
 
   // Construct dynamic trace data
   const traceData = useMemo(() => {
-    const source = traceability?.harvestBatch || traceability;
+    // The API returns { success, data: { ...traceability } }.
+    const payload = traceability?.data ?? traceability;
+    const source = payload?.harvestBatch || payload;
     if (!source) return null;
+
+    const toArray = (value) => (Array.isArray(value) ? value : []);
 
     const b = {
       ...source,
-      dailyLogs: traceability?.dailyLogs || source.dailyLogs || [],
-      materials: traceability?.materials || source.materials || [],
-      photos: traceability?.photos || source.photos || [],
-      certifications: traceability?.certifications || source.certifications || [],
+      dailyLogs: toArray(payload?.dailyLogs ?? source.dailyLogs),
+      materials: toArray(payload?.materials ?? source.materials),
+      photos: toArray(payload?.photos ?? source.photos),
+      certifications: toArray(payload?.certifications ?? source.certifications),
     };
     return {
-      qrCode: traceability?.traceCode || qrCode || '—',
+      qrCode: payload?.traceCode || qrCode || '—',
       batchCode: b.batchCode || '—',
-      cropName: b.cropName || b.cropType || '—',
-      farmName: b.farmName || b.landPlotName || '—',
-      harvestDate: traceability?.harvestDate || b.harvestDate || null,
+      cropName: payload?.cropName || b.cropName || b.cropType || '—',
+      farmName: payload?.farmName || b.farmName || b.landPlotName || '—',
+      harvestDate: payload?.harvestDate || b.harvestDate || null,
       startDate: b.startDate,
-      area: traceability?.area ? `${traceability.area} ${traceability.areaUnit || 'ha'}` : '—',
+      area: payload?.area ? `${payload.area} ${payload.areaUnit || 'ha'}` : '—',
       yield: b.quantity != null ? `${b.quantity} ${b.unit || ''}`.trim() : '—',
+      dailyLogs: b.dailyLogs,
       certifications: b.certifications,
 
       displayOptions,
