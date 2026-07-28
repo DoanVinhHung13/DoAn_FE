@@ -31,7 +31,9 @@ import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
+import { isActiveCropCatalog } from 'src/utils/cropCatalog';
 
+const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
 
 const CropEdit = () => {
   const navigate = useNavigate();
@@ -85,7 +87,7 @@ const CropEdit = () => {
     queryKey: ['crop-catalogs-dropdown'],
     queryFn: async () => {
       try {
-        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
+        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE' });
         const payload = response?.data ?? response ?? {};
         const data = payload?.data ?? payload;
         const items = Array.isArray(data)
@@ -97,11 +99,7 @@ const CropEdit = () => {
             payload?.items ||
             payload?.results ||
             [];
-        return items.filter(item => {
-          if (typeof item?.isActive === 'boolean') return item.isActive;
-          const status = String(item?.status || '').toLowerCase();
-          return !['inactive', 'disabled', 'deleted', 'ngừng hoạt động'].includes(status);
-        });
+        return items.filter(isActiveCropCatalog);
       } catch {
         return [];
       }

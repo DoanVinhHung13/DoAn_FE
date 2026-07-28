@@ -10,6 +10,7 @@ import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
+import { isActiveCropCatalog } from 'src/utils/cropCatalog';
 
 const normalizeCropResponse = (response) => {
   const payload = response?.data ?? response ?? {};
@@ -41,13 +42,9 @@ const CropCreate = () => {
     queryKey: ['crop-catalogs-dropdown'],
     queryFn: async () => {
       try {
-        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
+        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE' });
         const items = normalizeCropResponse(response).items;
-        return items.filter(item => {
-          if (typeof item?.isActive === 'boolean') return item.isActive;
-          const status = String(item?.status || '').toLowerCase();
-          return !['inactive', 'disabled', 'deleted', 'ngừng hoạt động'].includes(status);
-        });
+        return items.filter(isActiveCropCatalog);
       } catch (err) {
         if (err?.response?.status === 405) {
           return [
