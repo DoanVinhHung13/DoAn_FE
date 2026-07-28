@@ -6,8 +6,22 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-frontend-main
+  cancel-in-progress: false
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: 22
+  WEB_ROOT: /var/www/eapls-fe
+  SITE_URL: https://eapls.io.vn
+
 jobs:
   deploy:
+    name: Build & Deploy to Nginx
     runs-on:
       - self-hosted
 
@@ -18,16 +32,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        # Avoid GitHub Actions cache restore on the self-hosted runner. The
-        # remote cache can be hundreds of MB and may stall until timeout.
-        # npm still reuses the runner-local cache when it is available.
         run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Create production env
         run: |
+          set -euo pipefail
+
           cat > .env.production <<'EOF'
           VITE_API_URL=https://api.eapls.io.vn
           VITE_API_ROOT=https://api.eapls.io.vn/api
@@ -46,13 +59,48 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Publish to Nginx web root
+      - name: Verify deploy prerequisites
+        shell: bash
         run: |
+          set -euo pipefail
+
+          if [ ! -d "$WEB_ROOT" ]; then
+            echo "$WEB_ROOT does not exist. Create the directory and grant write access to the runner user."
+            exit 1
+          fi
+
+          if [ ! -w "$WEB_ROOT" ]; then
+            echo "$WEB_ROOT is not writable by $(whoami). Run: sudo chown -R $(whoami):$(whoami) $WEB_ROOT"
+            exit 1
+          fi
+
+          echo "Deploy target $WEB_ROOT is ready (writable by $(whoami))."
+
+      - name: Publish to Nginx web root
+        shell: bash
+        run: |
+          set -euo pipefail
+
           # Keep old hashed assets so already-open browser tabs can finish loading.
           # npm run build already verified that the new dist is internally consistent.
-          # The self-hosted runner user must have write access to this web root.
-          # Do not use sudo: the server sudoers policy denies the deploy user.
-          rsync -rlt --delay-updates --no-owner --no-group --no-perms dist/ /var/www/eapls-fe/
+          rsync -rlt --delay-updates --no-owner --no-group --no-perms dist/ "$WEB_ROOT/"
 
       - name: Verify published assets
-        run: node scripts/verify-dist-assets.mjs /var/www/eapls-fe
+        run: node scripts/verify-dist-assets.mjs "$WEB_ROOT"
+
+      - name: Verify site is accessible
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for attempt in {1..5}; do
+            if curl --fail --silent --show-error -o /dev/null "$SITE_URL"; then
+              echo "Site is accessible at $SITE_URL"
+              exit 0
+            fi
+            echo "Site not ready yet. Attempt $attempt/5."
+            sleep 2
+          done
+
+          echo "Site is not accessible at $SITE_URL after 5 attempts."
+          curl --fail --show-error "$SITE_URL"
