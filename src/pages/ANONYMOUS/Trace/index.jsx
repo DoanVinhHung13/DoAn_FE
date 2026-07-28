@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Card,
   Typography,
-  Timeline,
   Image,
   Tag,
   Space,
@@ -24,6 +23,87 @@ import dayjs from 'dayjs';
 import http from 'src/services/01_axios';
 
 const { Title, Paragraph, Text } = Typography;
+
+const getImageUrl = (image) => {
+  if (typeof image === 'string') return image;
+  return image?.url || image?.imageUrl || image?.filePath || image?.path || image?.src || image?.fileUrl || null;
+};
+
+const formatDateRange = (startDate, endDate) => {
+  const start = startDate ? dayjs(startDate) : null;
+  const end = endDate ? dayjs(endDate) : null;
+  const formattedStart = start?.isValid() ? start.format('DD/MM/YYYY') : '—';
+  const formattedEnd = end?.isValid() ? end.format('DD/MM/YYYY') : formattedStart;
+
+  return `${formattedStart} – ${formattedEnd}`;
+};
+
+const buildTimelineGroups = (traceData) => {
+  if (!traceData) return [];
+
+  const officialLogs = Array.isArray(traceData.cultivationLogs) ? traceData.cultivationLogs : [];
+  const dailyLogs = Array.isArray(traceData.dailyLogs) ? traceData.dailyLogs : [];
+  const rawEntries = officialLogs.length
+    ? officialLogs.map((log, index) => {
+        const dailyLog = dailyLogs[index] || dailyLogs.find((item) => (
+          item?.date && log?.activityDate && dayjs(item.date).isSame(log.activityDate, 'day')
+        ));
+        const materials = Array.isArray(log.materials) ? log.materials : [];
+        const materialsText = log.materialsText || materials
+          .map((material) => {
+            const name = material.materialName || material.name || 'Vật tư';
+            const quantity = material.quantity ?? material.totalQuantity;
+            const unit = material.unit || '';
+            return quantity == null ? name : `${name}: ${quantity} ${unit}`.trim();
+          })
+          .join('; ');
+
+        return {
+          stage: dailyLog?.stage || log.stage || 'Giai đoạn canh tác',
+          taskName: log.cultivationTaskName || log.taskName || dailyLog?.activity || `Công việc ${index + 1}`,
+          startDate: log.workStartDate || log.activityDate || dailyLog?.date,
+          endDate: log.workEndDate || log.activityDate || dailyLog?.date,
+          description: log.description || dailyLog?.activity || '',
+          updatedBy: log.supervisorEditorName || 'Supervisor',
+          materialsText,
+          images: (Array.isArray(log.images) ? log.images : []).map(getImageUrl).filter(Boolean),
+        };
+      })
+    : dailyLogs.map((log, index) => ({
+        stage: log.stage || 'Giai đoạn canh tác',
+        taskName: log.taskName || log.activity || `Công việc ${index + 1}`,
+        startDate: log.date,
+        endDate: log.date,
+        description: log.activity || log.notes || '',
+        updatedBy: log.updatedBy || 'Supervisor',
+        materialsText: '',
+        images: [],
+      }));
+
+  return rawEntries.reduce((groups, entry) => {
+    let group = groups.find((item) => item.stage === entry.stage);
+    if (!group) {
+      group = {
+        stage: entry.stage,
+        startDate: entry.startDate,
+        endDate: entry.endDate,
+        entries: [],
+      };
+      groups.push(group);
+    }
+
+    const start = entry.startDate ? dayjs(entry.startDate) : null;
+    const end = entry.endDate ? dayjs(entry.endDate) : null;
+    if (start?.isValid() && (!group.startDate || start.isBefore(dayjs(group.startDate), 'day'))) {
+      group.startDate = entry.startDate;
+    }
+    if (end?.isValid() && (!group.endDate || end.isAfter(dayjs(group.endDate), 'day'))) {
+      group.endDate = entry.endDate;
+    }
+    group.entries.push(entry);
+    return groups;
+  }, []);
+};
 
 const Trace = () => {
   const { qrCode } = useParams();
@@ -95,8 +175,11 @@ const Trace = () => {
       materials: b.materials,
 
       photos: b.photos,
+      cultivationLogs: toArray(payload?.cultivationLogs ?? source.cultivationLogs),
     };
   }, [traceability, qrCode, displayOptions]);
+
+  const timelineGroups = useMemo(() => buildTimelineGroups(traceData), [traceData]);
 
   if (isLoading) {
     return (
@@ -222,38 +305,65 @@ const Trace = () => {
               </Title>
             </div>
 
-            <Timeline
-              mode="left"
-              className="mt-2 px-1 sm:px-2"
-              items={traceData.dailyLogs.map((log, index) => ({
-                key: index,
-                color: 'green',
-                dot: <CheckCircleOutlined className="text-base text-emerald-600 bg-white rounded-full" />,
-                children: (
-                  <div className="pb-3 text-xs sm:text-sm">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <Tag color="blue" className="rounded-md font-semibold text-xs m-0">
-                        {log.date ? dayjs(log.date).format('DD/MM/YYYY') : '—'}
-                      </Tag>
-                      <Text strong className="text-slate-800 text-xs sm:text-sm">{log.stage}</Text>
+            {timelineGroups.length > 0 ? (
+              <div className="space-y-8 px-1 sm:px-2">
+                {timelineGroups.map((group) => (
+                  <section key={group.stage}>
+                    <div className="mb-5">
+                      <Text strong className="block text-slate-800 text-sm sm:text-base">{group.stage}</Text>
+                      <Text className="block mt-1 text-emerald-600 text-xs sm:text-sm">
+                        <CalendarOutlined className="mr-1" />
+                        <span className="font-medium">Thực tế:</span> {formatDateRange(group.startDate, group.endDate)}
+                      </Text>
                     </div>
-                    <div className="p-2.5 sm:p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1 mt-1">
-                      <Paragraph className="!mb-0 text-slate-700">
-                        <strong className="text-slate-900">Hoạt động:</strong> {log.activity}
-                      </Paragraph>
-                      {log.weather && (
-                        <Paragraph className="!mb-0 text-slate-500 text-xs">
-                          <strong>Thời tiết:</strong> {log.weather}
-                        </Paragraph>
-                      )}
-                      <Paragraph className="!mb-0 text-slate-500 text-xs">
-                        <strong>Ghi chú:</strong> {log.notes}
-                      </Paragraph>
+
+                    <div className="relative ml-1 border-l-2 border-emerald-300 pl-6 sm:pl-7">
+                      {group.entries.map((entry, index) => (
+                        <article key={`${entry.taskName}-${entry.startDate}-${index}`} className="relative pb-7 last:pb-0">
+                          <span className="absolute -left-[31px] sm:-left-[34px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
+                          <Text strong className="block text-slate-800 text-sm sm:text-base">{entry.taskName}</Text>
+                          <Text strong className="block mt-1 text-slate-800 text-xs sm:text-sm">
+                            {formatDateRange(entry.startDate, entry.endDate)}
+                          </Text>
+                          <Text className="block mt-2 text-slate-500 text-xs sm:text-sm">
+                            Cập nhật bởi {entry.updatedBy}
+                          </Text>
+                          {entry.description && (
+                            <Paragraph className="!mb-1 !mt-2 text-slate-700 text-xs sm:text-sm whitespace-pre-wrap">
+                              {entry.description}
+                            </Paragraph>
+                          )}
+                          {entry.materialsText && (
+                            <Paragraph className="!mb-1 !mt-1 text-slate-700 text-xs sm:text-sm whitespace-pre-wrap">
+                              {entry.materialsText}
+                            </Paragraph>
+                          )}
+                          {traceData.displayOptions.showPhotos && entry.images.length > 0 && (
+                            <Image.PreviewGroup items={entry.images}>
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {entry.images.map((src, imageIndex) => (
+                                  <Image
+                                    key={`${src}-${imageIndex}`}
+                                    src={src}
+                                    alt={`${entry.taskName} - ảnh ${imageIndex + 1}`}
+                                    width={64}
+                                    height={64}
+                                    className="rounded-lg border border-slate-200 object-cover"
+                                    preview={{ src }}
+                                  />
+                                ))}
+                              </div>
+                            </Image.PreviewGroup>
+                          )}
+                        </article>
+                      ))}
                     </div>
-                  </div>
-                ),
-              }))}
-            />
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className="py-6 text-center text-sm text-slate-400">Chưa có nhật ký chính thức</div>
+            )}
           </Card>
         )}
 

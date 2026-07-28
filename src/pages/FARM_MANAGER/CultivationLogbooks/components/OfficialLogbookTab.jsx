@@ -171,10 +171,10 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                       const editedBy = summary.editedBy || task.editedByName || summary.supervisorName || 'Supervisor'
                       const editedAt = summary.editedAt || task.editedAt || task.updatedAt
 
-                      const rawImages = summary.images || task.images || []
+                      const rawImages = summary.images?.length ? summary.images : task.images || []
                       const images = rawImages.map(img => {
                         if (typeof img === 'string') return img
-                        return img.url ?? null
+                        return img.url ?? img.imageUrl ?? img.filePath ?? img.path ?? img.src ?? img.fileUrl ?? null
                       }).filter(Boolean)
 
                       const totalFertilizers = summary.totalFertilizers || summary.fertilizers || task.totalFertilizers || []
