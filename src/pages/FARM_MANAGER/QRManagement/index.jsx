@@ -24,12 +24,10 @@ import {
   DownloadOutlined,
   PrinterOutlined,
   CopyOutlined,
-  PlusOutlined,
   SafetyOutlined,
   EyeOutlined,
   ArrowLeftOutlined,
   CheckCircleOutlined,
-  SafetyCertificateOutlined,
   EnvironmentOutlined,
   CalendarOutlined,
   ExperimentOutlined,
@@ -64,7 +62,6 @@ const QRManagement = () => {
   const showDailyLog = Form.useWatch('showDailyLog', form);
   const showMaterials = Form.useWatch('showMaterials', form);
   const showPhotos = Form.useWatch('showPhotos', form);
-  const showCertificates = Form.useWatch('showCertificates', form);
 
   // 1. Fetch harvest batches list for selection dropdown
   const { data: harvestBatches = [] } = useQuery({
@@ -166,7 +163,6 @@ const QRManagement = () => {
     showDailyLog: !!showDailyLog,
     showMaterials: !!showMaterials,
     showPhotos: !!showPhotos,
-    showCertificates: !!showCertificates,
   };
   const displayOptionsDisabled = Boolean(qrData);
 
@@ -238,7 +234,6 @@ const QRManagement = () => {
         date: activeBatch?.harvestDate || '2024-05-20',
       },
     ],
-    certifications: previewData?.traceability?.certifications || previewData?.traceability?.certificates || activeBatch?.certifications || activeBatch?.certificates || ['VietGAP'],
   };
 
   const getPublicTraceUrl = (code, displayOptions = previewDisplayOptions) => {
@@ -247,7 +242,6 @@ const QRManagement = () => {
     params.set('log', displayOptions.showDailyLog ? '1' : '0');
     params.set('mat', displayOptions.showMaterials ? '1' : '0');
     params.set('pic', displayOptions.showPhotos ? '1' : '0');
-    params.set('cert', displayOptions.showCertificates ? '1' : '0');
     return `${window.location.origin}/trace/${code}?${params.toString()}`;
   };
 
@@ -278,7 +272,7 @@ const QRManagement = () => {
       setPreviewData(result);
       setPreviewModalOpen(true);
     },
-    onError: (error) => {
+    onError: () => {
       setPreviewData(null);
       setPreviewModalOpen(false);
       // axios interceptor handles error notification
@@ -314,7 +308,6 @@ const QRManagement = () => {
         showDailyLog: !!form.getFieldValue('showDailyLog'),
         showMaterials: !!form.getFieldValue('showMaterials'),
         showPhotos: !!form.getFieldValue('showPhotos'),
-        showCertificates: !!form.getFieldValue('showCertificates'),
       };
 
       previewQRMutation.mutate({
@@ -414,12 +407,6 @@ const QRManagement = () => {
     message.success('Đã sao chép liên kết truy xuất!');
   };
 
-  const handleReset = () => {
-    form.resetFields();
-    setPreviewData(null);
-    setQrData(null);
-  };
-
   return (
     <>
       <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
@@ -438,14 +425,6 @@ const QRManagement = () => {
               Quản lý mã QR
             </TitleCustom>
           </div>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleReset}
-            className="h-10 rounded-xl bg-green-600 hover:bg-green-700 font-semibold"
-          >
-            Tạo mới
-          </Button>
         </div>
 
         {/* Description */}
@@ -477,7 +456,6 @@ const QRManagement = () => {
                   showDailyLog: true,
                   showMaterials: true,
                   showPhotos: true,
-                  showCertificates: false,
                 }}
               >
                 <Form.Item
@@ -586,11 +564,6 @@ const QRManagement = () => {
                     </Checkbox>
                   </Form.Item>
 
-                  <Form.Item name="showCertificates" valuePropName="checked" noStyle>
-                    <Checkbox disabled={displayOptionsDisabled} className="text-sm font-medium">
-                      <span className="ml-1">📜 Chứng nhận chất lượng</span>
-                    </Checkbox>
-                  </Form.Item>
                 </div>
               </Form>
 
@@ -769,9 +742,6 @@ const QRManagement = () => {
                       </Tag>
                       <Tag color={showPhotos ? 'green' : 'default'} className="rounded-full text-xs">
                         {showPhotos ? '✓ Ảnh thực địa' : '✕ Ảnh thực địa'}
-                      </Tag>
-                      <Tag color={showCertificates ? 'purple' : 'default'} className="rounded-full text-xs">
-                        {showCertificates ? '✓ Chứng nhận' : '✕ Chứng nhận'}
                       </Tag>
                     </div>
                   </div>
@@ -1058,34 +1028,6 @@ const QRManagement = () => {
                 <div className="flex items-center gap-2 text-gray-400">
                   <span>📷</span>
                   <Text type="secondary" className="text-sm italic">Hình ảnh thực địa: <strong>Không hiển thị</strong> (chưa được tích)</Text>
-                </div>
-              </Card>
-            )}
-
-            {/* Chứng nhận chất lượng */}
-            {previewDisplayOptions.showCertificates ? (
-              <Card className="shadow-sm rounded-xl">
-                <Typography.Title level={5} className="flex items-center gap-2 !mb-3">
-                  <SafetyCertificateOutlined className="text-blue-600" /> Giấy chứng nhận chất lượng
-                </Typography.Title>
-                {previewBatchData.certifications?.length > 0 ? (
-                  <div className="space-y-2">
-                    {previewBatchData.certifications.map((cert, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl border border-purple-100">
-                        <SafetyCertificateOutlined className="text-2xl text-purple-600" />
-                        <Text strong>{typeof cert === 'string' ? cert : cert.name || '—'}</Text>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <Empty description="Chưa có chứng nhận" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                )}
-              </Card>
-            ) : (
-              <Card className="shadow-sm rounded-xl border-dashed border-gray-200 bg-gray-50">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <span>📜</span>
-                  <Text type="secondary" className="text-sm italic">Chứng nhận chất lượng: <strong>Không hiển thị</strong> (chưa được tích)</Text>
                 </div>
               </Card>
             )}
