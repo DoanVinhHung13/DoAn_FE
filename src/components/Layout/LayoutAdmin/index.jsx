@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { Layout, Menu, Button, Avatar, Dropdown, Space, Typography, Drawer, Grid } from 'antd'
-import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from 'src/redux/hooks'
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers'
-import STORAGE, { clearAuthStorage } from 'src/redux/storage'
+import { clearAuthStorage } from 'src/redux/storage'
 import AuthService from 'src/services/AuthService'
 import NotificationBell from '../../NotificationBell'
 import {
@@ -19,7 +19,7 @@ import ROUTER from 'src/router/ROUTER'
 import logoImg from 'src/assets/images/logo/logo-eapls.jpg'
 
 const { Header, Sider, Content } = Layout
-const { Title, Text } = Typography
+const { Text } = Typography
 const { useBreakpoint } = Grid
 
 const LayoutAdmin = () => {

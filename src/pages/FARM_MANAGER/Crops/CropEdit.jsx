@@ -6,7 +6,6 @@ import {
   Card,
   Form,
   Input,
-  InputNumber,
   Modal,
   Select,
   Spin,
@@ -26,7 +25,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-import GrowthStages from 'src/components/GrowthStages';
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import GrowthStageService from 'src/services/GrowthStageService';
@@ -76,7 +74,7 @@ const CropEdit = () => {
         const items = Array.isArray(data) ? data : data?.items || [];
         const cropStages = items.filter((s) => String(s.cropId) === String(id));
         return cropStages.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
-      } catch (err) {
+      } catch {
         return [];
       }
     },
@@ -106,14 +104,7 @@ const CropEdit = () => {
           const status = String(item?.status || '').toLowerCase();
           return !['inactive', 'disabled', 'deleted', 'ngừng hoạt động'].includes(status);
         });
-      } catch (err) {
-        if (err?.response?.status === 405) {
-          return [
-            { id: '1', name: 'Cây rau', description: 'Các loại rau ăn lá', isActive: true },
-            { id: '2', name: 'Cây củ', description: 'Các loại củ quả', isActive: true },
-            { id: '3', name: 'Cây ăn trái', description: 'Các loại cây ăn quả', isActive: true },
-          ];
-        }
+      } catch {
         return [];
       }
     },

@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Row, Col, Typography, Button, Skeleton, Space, Tag, Avatar, Divider, Card, Tabs } from 'antd';
+import { Row, Col, Typography, Button, Skeleton, Space, Avatar } from 'antd';
 import {
     ArrowLeftOutlined,
     CalendarOutlined,
@@ -8,7 +8,6 @@ import {
     BookOutlined,
     MoreOutlined,
     FireOutlined,
-    GlobalOutlined,
     YoutubeFilled,
     FacebookFilled
 } from '@ant-design/icons';
@@ -235,5 +234,4 @@ const NewsListAll = () => {
 };
 
 export default NewsListAll;
-
 

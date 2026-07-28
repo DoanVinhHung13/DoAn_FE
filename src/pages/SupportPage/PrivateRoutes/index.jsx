@@ -34,7 +34,7 @@ function PrivateRoutes() {
     if (!isLoggedIn) {
       setRouterBeforeLogin(`${location.pathname}${location.search}`)
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn, location.pathname, location.search, setRouterBeforeLogin])
 
   if (!isLoggedIn) {
     return <Navigate to={ROUTER.LOGIN} replace />

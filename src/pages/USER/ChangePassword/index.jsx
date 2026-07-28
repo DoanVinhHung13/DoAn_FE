@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Typography, Form, Input, Button, Divider, Space, Breadcrumb } from 'antd';
-import { LockOutlined, SaveOutlined, HomeOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
+import { Card, Form, Input, Button, Divider, Space } from 'antd';
+import { LockOutlined, SaveOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 
 import notice from 'src/components/Notice'
@@ -11,8 +11,6 @@ import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import TitleCustom from 'src/components/TitleCustom';
-
-const { Title, Text, Paragraph } = Typography;
 
 const ChangePassword = () => {
     const [form] = Form.useForm();

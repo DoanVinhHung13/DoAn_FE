@@ -21,7 +21,6 @@
  *   MSG-FER-09: "Cập nhật thông tin phân bón thành công."
  */
 import {
-  BarcodeOutlined,
   EditOutlined,
   ExperimentOutlined,
   MinusCircleOutlined,
@@ -42,7 +41,6 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import FertilizerService from 'src/services/FertilizerService'
-import CropManagementService from 'src/services/CropManagementService'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 
@@ -242,7 +240,8 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             if (c.unit === 'CFU/g') {
               finalValue = Number(c.base) * Math.pow(10, Number(c.exponent));
             } else {
-              finalValue = Number(c.value) ?? 0;
+              const numericValue = Number(c.value);
+              finalValue = Number.isNaN(numericValue) ? 0 : numericValue;
             }
             const comp = {
               name: c.name,

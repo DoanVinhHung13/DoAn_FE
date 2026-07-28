@@ -49,11 +49,6 @@ const getQrStatus = batch => {
   return batch?.hasActiveQrCode === true ? "CREATED" : "NOT_CREATED"
 }
 
-const filterByQrStatus = (batches, statusFilter) =>
-  statusFilter === "all"
-    ? batches
-    : batches.filter(batch => getQrStatus(batch) === statusFilter)
-
 const Batches = () => {
   const navigate = useNavigate()
   const { getCombo, getDescription } = useSystemKey()
@@ -100,7 +95,8 @@ const Batches = () => {
         PageSize: pageSize,
         SearchKeyword: search || undefined,
         BatchCode: search || undefined,
-        Status: statusFilter === "all" ? undefined : statusFilter,
+        QrEligible:
+          statusFilter === "all" ? undefined : statusFilter === "CREATED",
       })
 
       const innerData = response?.data?.data || response?.data || {}

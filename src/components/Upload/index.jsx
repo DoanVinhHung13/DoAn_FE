@@ -1,7 +1,6 @@
 import { Upload } from "antd"
 import axios from "axios"
-import React, { useEffect, useState } from "react"
-import { useDispatch } from "react-redux"
+import React, { useCallback, useEffect, useState } from "react"
 import STORAGE, { getStorage } from "src/redux/storage"
 import Notice from "../Notice"
 
@@ -17,31 +16,8 @@ const UploadCustom = ({
   ...props
 }) => {
   const [listFile, setListFile] = useState([])
-  const dispatch = useDispatch()
 
-  useEffect(() => {
-    if (listFile?.length) onUpload()
-  }, [listFile])
-
-  const dragProps = {
-    name: "file",
-    multiple: false,
-    itemRender: () => <div />,
-    headers: {
-      Authorization: getStorage(STORAGE.TOKEN),
-    },
-    fileList: [],
-
-    onDrop(e) {},
-    ...props,
-    beforeUpload: (file, filelist) => {
-      beforeUpload && beforeUpload(filelist)
-      setListFile(filelist)
-      return false
-    },
-  }
-
-  const onUpload = () => {
+  const onUpload = useCallback(() => {
     const formData = new FormData()
     listFile.forEach(file => {
       formData.append(nameFileUpload, file)
@@ -53,7 +29,7 @@ const UploadCustom = ({
 
     axios({
       method: "POST",
-      url: `${window.env?.API_ROOT || process.env.REACT_APP_API_ROOT}/${api}`,
+      url: `${window.env?.API_ROOT || import.meta.env.VITE_API_ROOT}/api/${api}`,
       headers: {
         Authorization: getStorage(STORAGE.TOKEN),
       },
@@ -66,12 +42,33 @@ const UploadCustom = ({
             isSuccess: false,
             msg: res?.Object,
           })
-        onOk && onOk(res)
+        if (onOk) onOk(res)
       })
       .finally(() => {
         setListFile([])
-        dispatch(changeImportLoading(false))
       })
+  }, [api, listFile, nameFileUpload, onOk, params])
+
+  useEffect(() => {
+    if (listFile?.length) onUpload()
+  }, [listFile, onUpload])
+
+  const dragProps = {
+    name: "file",
+    multiple: false,
+    itemRender: () => <div />,
+    headers: {
+      Authorization: getStorage(STORAGE.TOKEN),
+    },
+    fileList: [],
+
+    onDrop() {},
+    ...props,
+    beforeUpload: (file, filelist) => {
+      if (beforeUpload) beforeUpload(filelist)
+      setListFile(filelist)
+      return false
+    },
   }
 
   return React.createElement(isDragger ? Dragger : Upload, { ...dragProps })

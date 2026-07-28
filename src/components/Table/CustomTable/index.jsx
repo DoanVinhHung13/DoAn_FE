@@ -42,5 +42,3 @@ function TableCustom(props) {
 }
 
 export default TableCustom
-
-export const SELECTION_COLUMN = Table.SELECTION_COLUMN

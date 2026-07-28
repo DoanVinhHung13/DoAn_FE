@@ -53,6 +53,7 @@ const ForgotPassword = () => {
       setCountdown(OTP_EXPIRE_SECONDS)
       setCurrentStep(STEPS.OTP)
     } catch {
+      setLoading(false)
     } finally {
       setLoading(false)
     }
@@ -67,6 +68,7 @@ const ForgotPassword = () => {
       setOtp("")
       setCountdown(OTP_EXPIRE_SECONDS)
     } catch {
+      setLoading(false)
     } finally {
       setLoading(false)
     }
@@ -80,6 +82,7 @@ const ForgotPassword = () => {
       if (res?.success === false) return
       setCurrentStep(STEPS.PASSWORD)
     } catch {
+      setLoading(false)
     } finally {
       setLoading(false)
     }
@@ -97,6 +100,7 @@ const ForgotPassword = () => {
       if (res?.success === false) return
       setCurrentStep(STEPS.SUCCESS)
     } catch {
+      setLoading(false)
     } finally {
       setLoading(false)
     }

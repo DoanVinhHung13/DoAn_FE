@@ -25,7 +25,7 @@ const FertilizerEdit = () => {
           return
         }
         setEditingItem(res?.data)
-      } catch (err) {
+      } catch {
         message.error('Lấy thông tin phân bón thất bại')
         navigate(ROUTER.FM_VIEW_FERTILIZERS)
       } finally {

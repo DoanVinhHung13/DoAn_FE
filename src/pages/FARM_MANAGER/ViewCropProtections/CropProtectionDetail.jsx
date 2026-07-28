@@ -96,7 +96,7 @@ const CropProtectionDetail = () => {
           return
         }
         setItem(res?.data)
-      } catch (err) {
+      } catch {
         message.error('Lấy thông tin thuốc BVTV thất bại')
         navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
       } finally {

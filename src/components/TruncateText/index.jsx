@@ -10,13 +10,13 @@ function TruncateText(props) {
   const [isShowTooltips, setIsShowTooltips] = useState(false)
 
   useEffect(() => {
-    const { scrollHeight, clientHeight } = truncateElement.current
-
-    if (scrollHeight > clientHeight) {
-      setIsShowTooltips(true)
-    }
-    return () => {}
-  }, [truncateElement])
+    const frame = requestAnimationFrame(() => {
+      const element = truncateElement.current
+      if (!element) return
+      setIsShowTooltips(element.scrollHeight > element.clientHeight)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [children, content])
 
   return (
     <TruncateTextWrapper {...props} title={isShowTooltips ? content : ''} ref={truncateElement}>

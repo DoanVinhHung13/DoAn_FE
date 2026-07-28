@@ -1,10 +1,9 @@
 import { ArrowLeftOutlined, ExperimentOutlined } from '@ant-design/icons'
-import { Button, Card, message, Skeleton } from 'antd'
-import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Button, Card } from 'antd'
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import FertilizerService from 'src/services/FertilizerService'
 
 import FertilizerFormFields from './FertilizerFormFields'
 

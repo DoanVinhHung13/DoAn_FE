@@ -3,18 +3,11 @@ import { Form, Select, Button, Typography } from 'antd'
 import { SafetyCertificateOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import CustomModal from 'src/components/Modal/CustomModal'
 import UserService from 'src/services/UserService'
-import { ROLES } from 'src/constants/roles'
 import Notice from 'src/components/Notice'
+import { ROLE_CONFIG } from './roleConfig'
 
 const { Text } = Typography
 const { Option } = Select
-
-export const ROLE_CONFIG = {
-  FARM_MANAGER:     { label: 'Farm Manager' },
-  LAND_MANAGER:     { label: 'Land Manager'   },
-  MATERIAL_MANAGER: { label: 'Material Manager' },
-  FARMER:           { label: 'Farmer'  },
-}
 
 const ALL_ROLES = Object.entries(ROLE_CONFIG).map(([value, cfg]) => ({
   value,

@@ -6,10 +6,8 @@ import {
   Typography,
   Timeline,
   Image,
-  Descriptions,
   Tag,
   Space,
-  Alert,
   Row,
   Col,
   Spin,
@@ -23,7 +21,7 @@ import {
 } from '@ant-design/icons';
 import { Sprout, Wheat } from 'lucide-react';
 import dayjs from 'dayjs';
-import BatchService from 'src/services/BatchService';
+import http from 'src/services/01_axios';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -48,150 +46,65 @@ const Trace = () => {
     };
   }, [searchParams]);
 
-  // 1. Fetch real batches from API (silently fail if guest/unauthenticated)
-  const { data: apiBatches = [], isLoading } = useQuery({
-    queryKey: ['trace-api-batches'],
+  const { data: traceability, isLoading } = useQuery({
+    queryKey: ['traceability', qrCode],
     queryFn: async () => {
       try {
-        const response = await BatchService.getBatches(undefined, { skipNotice: true, skipAuthRedirect: true });
-        const list = response?.data?.items || response?.data?.data?.items || response?.data?.data || response?.data || [];
-        return Array.isArray(list) ? list : [];
-      } catch (error) {
-        return [];
+        return await http.get(`/traceability/${encodeURIComponent(qrCode)}`, {
+          skipNotice: true,
+          skipAuthRedirect: true,
+        });
+      } catch {
+        return null;
       }
     },
+    enabled: Boolean(qrCode),
     retry: false,
   });
 
-  // 2. Resolve matching batch dynamically
-  const resolvedBatch = useMemo(() => {
-    const rawCode = (qrCode || '').trim();
-    const normalizedRaw = rawCode.toLowerCase();
-    const cleanCode = rawCode.replace(/^(TR-|QR-|EAPLS-)/i, '').trim().toLowerCase();
-
-    const allBatches = apiBatches;
-
-    // Priority 1: Exact match by activeTraceCode, batchCode, or id
-    let matched = allBatches.find(
-      (b) =>
-        (b.activeTraceCode && String(b.activeTraceCode).toLowerCase() === normalizedRaw) ||
-        (b.activeTraceCode && String(b.activeTraceCode).replace(/^(TR-|QR-|EAPLS-)/i, '').toLowerCase() === cleanCode) ||
-        String(b.id).toLowerCase() === normalizedRaw ||
-        String(b.id).toLowerCase() === cleanCode ||
-        String(b.batchCode || '').toLowerCase() === normalizedRaw ||
-        String(b.batchCode || '').toLowerCase() === cleanCode
-    );
-
-    // Priority 2: Partial match (batchCode or activeTraceCode contains code core)
-    if (!matched) {
-      matched = allBatches.find((b) => {
-        const bCode = String(b.batchCode || '').toLowerCase();
-        const aCode = String(b.activeTraceCode || '').toLowerCase();
-        return (
-          (bCode && (cleanCode.includes(bCode) || bCode.includes(cleanCode))) ||
-          (aCode && (cleanCode.includes(aCode) || aCode.includes(cleanCode)))
-        );
-      });
-    }
-
-    // Priority 3: Smart fallback based on code keywords
-    if (!matched) {
-      if (cleanCode.includes('a05') || cleanCode.includes('cafe') || cleanCode.includes('robusta')) {
-        matched = allBatches.find((b) => String(b.batchCode).includes('A05')) || mockBatches.find((b) => b.batchCode === 'LOT-A05-2024');
-      } else if (cleanCode.includes('b12') || cleanCode.includes('ngo')) {
-        matched = allBatches.find((b) => String(b.batchCode).includes('B12')) || mockBatches.find((b) => b.batchCode === 'LOT-B12-2024');
-      } else if (cleanCode.includes('c22') || cleanCode.includes('cai')) {
-        matched = allBatches.find((b) => String(b.batchCode).includes('C22')) || mockBatches.find((b) => b.batchCode === 'LOT-C22-2024');
-      } else if (cleanCode.includes('d33') || cleanCode.includes('nang-hoa') || cleanCode.includes('d33-2024')) {
-        matched = allBatches.find((b) => String(b.batchCode).includes('D33')) || mockBatches.find((b) => b.batchCode === 'LOT-D33-2024');
-      } else if (cleanCode.includes('x01') || cleanCode.includes('st25')) {
-        matched = allBatches.find((b) => String(b.batchCode).includes('X01')) || mockBatches.find((b) => b.batchCode === 'LOT-X01-2024');
-      } else if (cleanCode.includes('01') || cleanCode.includes('batch-01')) {
-        matched = allBatches.find((b) => String(b.batchCode).includes('BATCH-01')) || mockBatches.find((b) => b.batchCode === 'BATCH-01');
-      }
-    }
-
-    // Priority 4: Default fallback
-    return matched || allBatches[0] || mockBatches[0];
-  }, [qrCode, apiBatches]);
-
   // Construct dynamic trace data
   const traceData = useMemo(() => {
-    const b = resolvedBatch;
+    const source = traceability?.harvestBatch || traceability;
+    if (!source) return null;
+
+    const b = {
+      ...source,
+      dailyLogs: traceability?.dailyLogs || source.dailyLogs || [],
+      materials: traceability?.materials || source.materials || [],
+      photos: traceability?.photos || source.photos || [],
+      certifications: traceability?.certifications || source.certifications || [],
+    };
     return {
-      qrCode: qrCode || `TR-${b.batchCode || 'LOT'}`,
-      batchCode: b.batchCode || 'LOT-DEMO',
-      cropName: b.cropName || b.cropType || 'Nông sản',
-      farmName: b.landPlotName ? `Vùng trồng ${b.landPlotName} - Trang trại Nông nghiệp` : 'Trang trại Hữu Nghị',
-      harvestDate: b.harvestDate || '2024-05-20',
-      startDate: b.startDate || '2024-01-15',
-      area: b.area ? `${b.area} ha` : '2.5 ha',
-      yield: b.yield || '15.5 tấn',
-      certifications: b.certifications || ['VietGAP', 'Organic'],
+      qrCode: traceability?.traceCode || qrCode || '—',
+      batchCode: b.batchCode || '—',
+      cropName: b.cropName || b.cropType || '—',
+      farmName: b.farmName || b.landPlotName || '—',
+      harvestDate: traceability?.harvestDate || b.harvestDate || null,
+      startDate: b.startDate,
+      area: traceability?.area ? `${traceability.area} ${traceability.areaUnit || 'ha'}` : '—',
+      yield: b.quantity != null ? `${b.quantity} ${b.unit || ''}`.trim() : '—',
+      certifications: b.certifications,
 
       displayOptions,
 
-      dailyLogs: b.dailyLogs || [
-        {
-          date: b.startDate || '2024-03-12',
-          stage: 'Gieo trồng / Chuẩn bị',
-          activity: `Bắt đầu gieo trồng & canh tác ${b.cropName || 'nông sản'}`,
-          weather: 'Nắng nhẹ, 28°C',
-          notes: `Chuẩn bị đất tại ${b.landPlotName || 'vùng trồng'}`,
-        },
-        {
-          date: dayjs(b.startDate || '2024-03-12').add(20, 'day').format('YYYY-MM-DD'),
-          stage: 'Chăm sóc',
-          activity: 'Bón phân & tưới tiêu định kỳ',
-          weather: 'Nắng, 30°C',
-          notes: 'Cung cấp dinh dưỡng phát triển cây trồng',
-        },
-        {
-          date: dayjs(b.startDate || '2024-03-12').add(45, 'day').format('YYYY-MM-DD'),
-          stage: 'Phòng trừ sâu bệnh',
-          activity: 'Phun chế phẩm sinh học bảo vệ',
-          weather: 'Mát mẻ, 26°C',
-          notes: 'Đảm bảo an toàn vệ sinh sản phẩm',
-        },
-        {
-          date: b.harvestDate || '2024-05-20',
-          stage: 'Thu hoạch',
-          activity: `Thu hoạch ${b.cropName || 'nông sản'} chín rộ`,
-          weather: 'Nắng đẹp, 32°C',
-          notes: 'Đạt chỉ tiêu chất lượng xuất kho',
-        },
-      ],
+      materials: b.materials,
 
-      materials: b.materials || [
-        { type: 'Phân bón', name: 'NPK Hữu cơ sinh học', quantity: '300 kg', supplier: 'Công ty Phân bón Đồng Nai' },
-        { type: 'Thuốc BVTV', name: 'Biotin Plus (Sinh học)', quantity: '5 lít', supplier: 'Công ty TNHH Sinh học An Nông' },
-        { type: 'Giống', name: b.cropName || 'Giống chuẩn', quantity: '120 kg', supplier: 'Trung tâm Giống cây trồng' },
-      ],
-
-      photos: b.photos || [
-        {
-          url: `https://placehold.co/400x300/22c55e/ffffff?text=${encodeURIComponent(b.cropName || 'Nông sản')}+giai+đoạn+đầu`,
-          caption: `${b.cropName || 'Nông sản'} giai đoạn sinh trưởng`,
-          date: b.startDate || '2024-03-12',
-        },
-        {
-          url: `https://placehold.co/400x300/facc15/333333?text=${encodeURIComponent(b.cropName || 'Nông sản')}+trước+thu+hoạch`,
-          caption: 'Phát triển tốt trước thu hoạch',
-          date: dayjs(b.harvestDate || '2024-05-20').subtract(10, 'day').format('YYYY-MM-DD'),
-        },
-        {
-          url: `https://placehold.co/400x300/3b82f6/ffffff?text=${encodeURIComponent(b.cropName || 'Nông sản')}+thu+hoạch`,
-          caption: 'Ngày thu hoạch chính thức',
-          date: b.harvestDate || '2024-05-20',
-        },
-      ],
+      photos: b.photos,
     };
-  }, [resolvedBatch, qrCode, displayOptions]);
+  }, [traceability, qrCode, displayOptions]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spin size="large" tip="Đang tải thông tin truy xuất..." />
+      </div>
+    );
+  }
+
+  if (!traceData) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6 text-center">
+        Không tìm thấy thông tin truy xuất cho mã này.
       </div>
     );
   }
@@ -266,7 +179,9 @@ const Trace = () => {
               <Text className="text-slate-500 text-xs font-semibold block mb-1">Ngày thu hoạch</Text>
               <Space className="text-xs sm:text-sm">
                 <CalendarOutlined className="text-blue-600" />
-                <Text strong className="text-blue-700">{dayjs(traceData.harvestDate).format('DD/MM/YYYY')}</Text>
+                <Text strong className="text-blue-700">
+                  {traceData.harvestDate ? dayjs(traceData.harvestDate).format('DD/MM/YYYY') : '—'}
+                </Text>
               </Space>
             </div>
 
@@ -313,7 +228,7 @@ const Trace = () => {
                   <div className="pb-3 text-xs sm:text-sm">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
                       <Tag color="blue" className="rounded-md font-semibold text-xs m-0">
-                        {dayjs(log.date).format('DD/MM/YYYY')}
+                        {log.date ? dayjs(log.date).format('DD/MM/YYYY') : '—'}
                       </Tag>
                       <Text strong className="text-slate-800 text-xs sm:text-sm">{log.stage}</Text>
                     </div>
@@ -396,7 +311,7 @@ const Trace = () => {
                           {photo.caption}
                         </Paragraph>
                         <Text className="text-slate-400 text-[11px] block mt-0.5">
-                          {dayjs(photo.date).format('DD/MM/YYYY')}
+                          {photo.date ? dayjs(photo.date).format('DD/MM/YYYY') : '—'}
                         </Text>
                       </div>
                     </div>
@@ -422,8 +337,20 @@ const Trace = () => {
             <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-teal-50/80 rounded-xl border border-teal-200/70 text-xs sm:text-sm">
               <SafetyCertificateOutlined className="text-2xl sm:text-3xl text-teal-600 flex-shrink-0" />
               <div>
-                <Text strong className="block text-slate-900 font-bold sm:text-base">Chứng nhận VietGAP No. 2024-AGRI-088</Text>
-                <Text className="text-slate-600 text-xs block mt-0.5">Hiệu lực đến: 12/2026 • Cấp bởi Cục Trồng Trọt & Nông Sản</Text>
+                {traceData.certifications.length ? traceData.certifications.map((cert, index) => (
+                  <div key={cert?.id || cert?.code || index}>
+                    <Text strong className="block text-slate-900 font-bold sm:text-base">
+                      {typeof cert === 'string' ? cert : cert?.name || cert?.certificateName || '—'}
+                    </Text>
+                    {(cert?.expiryDate || cert?.issuedBy) && (
+                      <Text className="text-slate-600 text-xs block mt-0.5">
+                        {cert?.expiryDate ? `Hiệu lực đến: ${cert.expiryDate}` : ''}
+                        {cert?.expiryDate && cert?.issuedBy ? ' • ' : ''}
+                        {cert?.issuedBy ? `Cấp bởi ${cert.issuedBy}` : ''}
+                      </Text>
+                    )}
+                  </div>
+                )) : <Text className="text-slate-600 text-xs">Chưa có chứng nhận từ hệ thống.</Text>}
               </div>
             </div>
           </Card>

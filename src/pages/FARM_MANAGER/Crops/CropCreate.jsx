@@ -1,18 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Input, InputNumber, Select, Upload, Spin, message, Row, Col, Modal } from 'antd';
+import { Button, Card, Form, Input, Select, Upload, Spin, message, Row, Col, Modal } from 'antd';
 import { ArrowLeftOutlined, DeleteOutlined, EyeOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-import GrowthStages from 'src/components/GrowthStages';
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
-import { useSystemKey } from 'src/hooks/useSystemKey';
-import { SYSTEM_KEY } from 'src/constants/systemKey';
 
 const normalizeCropResponse = (response) => {
   const payload = response?.data ?? response ?? {};
@@ -35,9 +32,6 @@ const CropCreate = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   
-  const { getCombo } = useSystemKey();
-  const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE);
-
   const [uploadingCreate, setUploadingCreate] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   

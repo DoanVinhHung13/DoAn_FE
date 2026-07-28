@@ -2,10 +2,9 @@ import React from 'react';
 import { Button, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Leaf, ShieldX } from 'lucide-react';
 import ROUTER from 'src/router/ROUTER';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const Forbidden = () => {
   const navigate = useNavigate();

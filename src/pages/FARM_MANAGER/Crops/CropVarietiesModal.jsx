@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   Button,
-  Card,
   Empty,
   Form,
   Input,
@@ -39,7 +38,7 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
   const [uploading, setUploading] = useState(false);
   const watchedImageUrl = Form.useWatch('imageUrl', form);
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['crop-varieties', cropId],
     queryFn: async () => {
       console.log('🔍 Fetching crop varieties for cropId:', cropId);

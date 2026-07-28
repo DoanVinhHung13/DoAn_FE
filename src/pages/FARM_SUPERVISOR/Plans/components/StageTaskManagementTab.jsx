@@ -3,7 +3,6 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   EditOutlined,
-  FileTextOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   TeamOutlined,
@@ -29,7 +28,6 @@ import {
   Typography,
 } from "antd"
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
 import { ROLES } from "src/constants/roles"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import CultivationTaskService from "src/services/CultivationTaskService"
@@ -97,8 +95,7 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
   )
 }
 
-const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
-  const navigate = useNavigate()
+const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
   const { getStageStatus, getTaskStatus } = useCultivationStatus()
   const getTaskCfg = s => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
   const [selectedId, setSelectedId] = useState(null)
@@ -196,7 +193,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     try {
       await CultivationTaskService.start(taskId)
       loadData()
-    } catch (err) {
+    } catch {
       message.error("Kích hoạt thất bại.")
     }
   }

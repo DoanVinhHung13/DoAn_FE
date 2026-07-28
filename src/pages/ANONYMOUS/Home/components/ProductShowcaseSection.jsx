@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react'
-import { Row, Col, Card, Typography, Tag, Button, Modal, Steps, Divider } from 'antd'
+import { Row, Col, Typography, Tag, Button, Modal, Steps } from 'antd'
 import { QrcodeOutlined, ArrowRightOutlined, CheckCircleFilled, SafetyCertificateFilled } from '@ant-design/icons'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
@@ -213,7 +213,7 @@ const ProductShowcaseSection = () => {
                   Hành trình sản xuất sạch
                 </Title>
                 <Steps direction="vertical" size="small" current={selectedProduct.detail.timeline.length}
-                  items={selectedProduct.detail.timeline.map((t, i) => ({
+                  items={selectedProduct.detail.timeline.map(t => ({
                     title: <Text strong className="text-sm">{t.activity}</Text>,
                     description: (
                       <div className="mt-1 text-xs text-gray-500">

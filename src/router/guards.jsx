@@ -6,6 +6,9 @@ import ROUTER from './ROUTER'
 import { getDashboardPathByRole } from './roleRedirects'
 import { hasRoleAccess } from './authUtils'
 
+// Guard helpers are kept beside the route components because the router imports
+// both from this module.
+/* eslint-disable react-refresh/only-export-components */
 export { hasRoleAccess } from './authUtils'
 
 /**

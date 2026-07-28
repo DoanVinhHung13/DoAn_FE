@@ -36,7 +36,6 @@ import {
   Input,
   message,
   Select,
-  Switch,
   Tag,
   Tooltip,
 } from 'antd'

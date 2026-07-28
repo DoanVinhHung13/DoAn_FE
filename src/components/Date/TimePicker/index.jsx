@@ -1,3 +1,4 @@
+import React from "react"
 import { TimePicker } from "antd"
 import PropTypes from "prop-types"
 import "../index.scss"
@@ -8,10 +9,10 @@ const getDateTimeType = ({ ranger }) => {
 }
 const TimePickerCustom = ({ ranger, children, style, ...rest }) => {
   const ElementInput = getDateTimeType({ ranger })
-  return (
-    <ElementInput {...rest} style={{ width: "100%", ...style }}>
-      {children}
-    </ElementInput>
+  return React.createElement(
+    ElementInput,
+    { ...rest, style: { width: "100%", ...style } },
+    children,
   )
 }
 export default TimePickerCustom

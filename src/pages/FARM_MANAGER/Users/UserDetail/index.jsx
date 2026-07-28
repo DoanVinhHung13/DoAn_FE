@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { Button, Avatar, Typography, Tag, Card, Row, Col, Spin, Divider } from 'antd'
 import {
   UserOutlined, CheckCircleOutlined, StopOutlined, ArrowLeftOutlined,
-  MailOutlined, PhoneOutlined, ClockCircleOutlined, CalendarOutlined,
-  InfoCircleOutlined, ManOutlined, WomanOutlined
+  MailOutlined, PhoneOutlined, CalendarOutlined,
+  InfoCircleOutlined
 } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import UserService from 'src/services/UserService'
-import { formatDate, formatDateTime } from 'src/utils/dateFormatters'
+import { formatDate } from 'src/utils/dateFormatters'
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers'
-import { ROLE_CONFIG } from '../components/AssignRolesModal'
+import { ROLE_CONFIG } from '../components/roleConfig'
 import TitleCustom from 'src/components/TitleCustom'
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
@@ -45,7 +45,7 @@ const UserDetail = () => {
         if (isMounted) {
           setUser(res?.data?.data || res?.data)
         }
-      } catch (err) {
+      } catch {
         if (isMounted) setIsError(true)
       } finally {
         if (isMounted) setIsLoading(false)

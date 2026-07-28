@@ -1,13 +1,11 @@
 import React from 'react'
-import { Row, Col, Card, Typography, Tag, Divider } from 'antd'
+import { Row, Col, Typography, Tag } from 'antd'
 import {
   FileTextOutlined,
   CloudServerOutlined,
   ShareAltOutlined,
   SecurityScanOutlined,
 } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-
 const { Title, Text, Paragraph } = Typography
 
 const technologies = [
@@ -35,7 +33,7 @@ const technologies = [
 
 const TechSection = () => {
   return (
-    <section className="relative px-6 py-16 overflow-hidden bg-gradient-to-br from-blue-50 to-green-50 md:py-20">
+    <section data-technology-count={technologies.length} className="relative px-6 py-16 overflow-hidden bg-gradient-to-br from-blue-50 to-green-50 md:py-20">
       <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-200/30 blur-[100px] rounded-full blob-animate"></div>
       <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-green-200/30 blur-[100px] rounded-full blob-animate" style={{ animationDelay: '3s' }}></div>
 

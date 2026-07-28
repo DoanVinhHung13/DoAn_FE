@@ -1,6 +1,5 @@
 // InputDebounceCustom.js - Sửa lại
 import { Input, InputNumber } from "antd"
-import PropTypes from "prop-types"
 import { useEffect, useRef } from "react"
 import useDebounce from "src/hooks/useDebounce"
 

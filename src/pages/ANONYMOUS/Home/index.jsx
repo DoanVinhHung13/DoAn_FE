@@ -10,9 +10,7 @@ import {
   SupplyChainSection,
   ProductShowcaseSection,
   SuccessStoriesSection,
-  AboutSection,
   ConsultationSection,
-  FooterSection,
 } from './components'
 
 const LandingPage = () => {

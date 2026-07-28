@@ -1,7 +1,7 @@
 // Thường dùng trong onChange của input
 // Cơ chế: khi nhập text thì sẽ phải dừng khoảng 500ms thì mới thực hiện logic tiếp
 // Nhằm tránh lãng phí tài nguyên gây lag
-/* eslint-disable func-style */
+
 import { useEffect, useState } from "react"
 
 function useDebounce<T>(value: T, delay?: number): T {

@@ -8,19 +8,15 @@
  */
 import {
   ArrowLeftOutlined,
-  BookOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   EditOutlined,
-  EnvironmentOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
   PlayCircleOutlined,
   SaveOutlined,
-  SendOutlined,
   TeamOutlined,
   UserOutlined,
-  ClockCircleOutlined
 
 } from '@ant-design/icons'
 import {
@@ -29,8 +25,6 @@ import {
   Card,
   Col,
   Collapse,
-  Descriptions,
-  Divider,
   Form,
   Image,
   Input,
@@ -41,12 +35,9 @@ import {
   Select,
   Spin,
   Tag,
-  Timeline,
-  Typography,
 } from 'antd'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import dayjs from 'dayjs'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
@@ -58,7 +49,6 @@ import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { ROLES } from 'src/constants/roles'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 
-const { Text, Title, Paragraph } = Typography
 const { TextArea } = Input
 
 const buildDataSentence = (summary) => {
@@ -83,7 +73,6 @@ const FarmSupervisorTaskDetail = () => {
   const location = useLocation()
   const { planData: passedPlanData } = location.state || {}
   const [task, setTask] = useState(null)
-  const [plan, setPlan] = useState({})
   const [stage, setStage] = useState(null)
   const [leaders, setLeaders] = useState([])
   const [farmers, setFarmers] = useState([])
@@ -108,7 +97,6 @@ const FarmSupervisorTaskDetail = () => {
         ])
 
         const planData = planRes?.data ?? planRes
-        setPlan(planData || {})
 
         if (planData) {
           const stageList = planData.cultivationStages || planData.productionStages || planData.stages || []
@@ -160,7 +148,7 @@ const FarmSupervisorTaskDetail = () => {
       }
     }
     loadTaskAndUsers()
-  }, [taskId, planId, navigate, assignForm, compileForm])
+  }, [taskId, planId, navigate, assignForm, compileForm, passedPlanData])
 
   const handleAssignTeam = async () => {
     try {
@@ -186,8 +174,8 @@ const FarmSupervisorTaskDetail = () => {
         assignedLeaderName: leader?.fullName || leader?.name || '',
         assignments: farmersList.map((f) => ({ userId: f.id, fullName: f.fullName || f.name })),
       }))
-    } catch (err) {
-      // form or api error
+    } catch (error) {
+      console.error(error)
     } finally {
       setSavingAssign(false)
     }
@@ -211,13 +199,6 @@ const FarmSupervisorTaskDetail = () => {
     try {
       const values = await compileForm.validateFields()
       setSavingCompile(true)
-      const dataSentence = buildDataSentence(task.leaderSummary)
-      const officialLog = {
-        dataSentence,
-        supervisorDescription: values.supervisorDescription,
-        images: task.leaderSummary?.images || [],
-        compiledAt: dayjs().format('YYYY-MM-DD'),
-      }
       // Call approve with modifiedDescription directly
       const cultivationLogId = task.cultivationLogId || task.officialLogId
       if (cultivationLogId) {
@@ -330,7 +311,7 @@ const FarmSupervisorTaskDetail = () => {
                     Lưu phân công
                   </Button>
                   <Button
-                    type="primary" icon={<PlayCircleOutlined />} className="w-full h-10 mt-2 font-semibold bg-blue-600"
+                    type="primary" icon={<PlayCircleOutlined />} loading={activating} className="w-full h-10 mt-2 font-semibold bg-blue-600"
                     onClick={handleActivate} disabled={!task.assignedLeaderId && !task.farmLeaderId}
                   >
                     Kích hoạt công việc

@@ -21,7 +21,6 @@ import {
   Select,
   Typography,
   Upload,
-  message,
 } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
@@ -73,8 +72,7 @@ const AccountInfo = () => {
 
   useEffect(() => {
     form.setFieldsValue(initialValues);
-    setAvatarUrl(user?.avatarUrl || "");
-  }, [form, initialValues, user?.avatarUrl]);
+  }, [form, initialValues]);
 
   const updateMutation = useMutation({
     mutationFn: async (values) => {

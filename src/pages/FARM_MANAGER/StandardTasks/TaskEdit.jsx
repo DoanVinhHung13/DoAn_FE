@@ -33,7 +33,7 @@ const TaskEdit = () => {
           name: data.name,
           description: data.description,
         })
-      } catch (err) {
+      } catch {
         message.error('Lấy thông tin công việc thất bại')
         navigate(ROUTER.FM_TASKS)
       } finally {
@@ -60,7 +60,7 @@ const TaskEdit = () => {
       }
 
       navigate(ROUTER.FM_TASKS)
-    } catch (err) {
+      } catch {
       message.error('Vui lòng nhập đầy đủ các trường thông tin bắt buộc.')
     } finally {
       setLoading(false)
