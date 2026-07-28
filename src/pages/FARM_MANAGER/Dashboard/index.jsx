@@ -1,411 +1,350 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Card, Col, Row, Typography, Space, Button, Badge, Skeleton, Tag } from 'antd';
-import { CloudOutlined, CompassOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import React from 'react'
+import { Link } from 'react-router-dom'
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Col,
+  Empty,
+  Row,
+  Skeleton,
+  Typography,
+} from 'antd'
+import {
+  ArrowRightOutlined,
+  CloudOutlined,
+  CompassOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons'
 import {
   BookOpenText,
   ClipboardList,
+  CloudRain,
+  Droplets,
   MapPinned,
   Package,
   Sprout,
   Sun,
-  CloudRain,
-  Wind,
-  Droplets,
   Users,
-} from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import moment from 'moment';
-import 'moment/locale/vi';
-import { useSelector } from 'react-redux';
+  Wind,
+} from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { useSelector } from 'react-redux'
 
 import ROUTER from 'src/router/ROUTER'
-import http from 'src/services/01_axios'
+import LandPlotService from 'src/services/LandPlotService'
+import {
+  getItemId,
+  isLandPlotActive,
+  normalizeLandPlotResponse,
+} from '../Lands/landPlotUtils'
 import { normalizeWeather } from '../Lands/landPlotWeatherUtils'
 
-moment.locale('vi');
+const { Title, Text } = Typography
 
-const { Title, Text } = Typography;
+const getPlotName = (plot) => plot?.name || plot?.landPlotName || plot?.title || 'Vùng trồng'
+
+const getPlotCropName = (plot) => (
+  plot?.cropName
+  || plot?.crop?.name
+  || plot?.cropCatalogName
+  || plot?.cropCatalog?.name
+  || 'Đang cập nhật cây trồng'
+)
+
+const getWeatherIcon = (weather, className = 'h-10 w-10') => {
+  const code = Number(weather?.iconCode)
+  const rainCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99]
+
+  if ([0, 1].includes(code)) return <Sun aria-hidden="true" className={`${className} text-amber-500`} />
+  if (rainCodes.includes(code)) return <CloudRain aria-hidden="true" className={`${className} text-sky-500`} />
+  return <CloudOutlined aria-hidden="true" className={`${className} text-sky-400`} />
+}
+
+const translateCondition = (condition) => {
+  if (!condition) return 'Chưa cập nhật'
+
+  const dictionary = {
+    Sunny: 'Trời nắng',
+    Clear: 'Trời quang',
+    'Partly cloudy': 'Trời nhiều mây',
+    Cloudy: 'Có mây',
+    Overcast: 'Trời u ám',
+    Mist: 'Sương mù nhẹ',
+    Fog: 'Sương mù',
+    Haze: 'Sương mù khô',
+    'Patchy rain possible': 'Có thể có mưa',
+    'Patchy light rain with thunder': 'Mưa nhẹ và có dông',
+    'Thundery outbreaks possible': 'Có thể có dông',
+    'Light rain': 'Mưa nhẹ',
+    'Light drizzle': 'Mưa phùn nhẹ',
+    'Moderate rain': 'Mưa vừa',
+    'Heavy rain': 'Mưa lớn',
+    Thunderstorm: 'Giông bão',
+  }
+
+  return dictionary[condition] || condition
+}
+
+const formatMetric = (value, unit = '') => (
+  value === undefined || value === null || value === ''
+    ? '—'
+    : `${typeof value === 'number' ? new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(value) : value}${unit}`
+)
+
+const formatCurrentDate = () => new Intl.DateTimeFormat('vi-VN', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+}).format(new Date())
+
+const formatWeatherTime = (value) => {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return new Intl.DateTimeFormat('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date)
+}
+
+const FeaturedPlotWeather = ({ plot, weather }) => (
+  <Link
+    to={ROUTER.FM_LAND_DETAIL.replace(':id', String(getItemId(plot)))}
+    className="group flex min-h-[218px] w-full flex-col rounded-2xl border border-white/80 bg-white/70 p-4 text-left shadow-sm transition-[transform,background-color,box-shadow] hover:-translate-y-1 hover:bg-white hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+    aria-label={`Xem chi tiết ${getPlotName(plot)}`}
+  >
+    <div className="flex items-start justify-between gap-2">
+      <div className="min-w-0">
+        <div className="mb-1 flex items-center gap-1.5">
+          <MapPinned aria-hidden="true" className="h-4 w-4 shrink-0 text-green-600" />
+          <span className="truncate text-sm font-bold text-slate-800">{getPlotName(plot)}</span>
+        </div>
+        <span className="block truncate text-[11px] text-slate-500">{plot?.address || 'Chưa cập nhật địa chỉ'}</span>
+      </div>
+      <ArrowRightOutlined aria-hidden="true" className="mt-1 shrink-0 text-xs text-slate-300 transition-colors group-hover:text-green-600" />
+    </div>
+
+    <div className="mt-5 flex items-center gap-3">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-sky-50">
+        {getWeatherIcon(weather)}
+      </div>
+      <div className="min-w-0">
+        <div className="flex items-baseline gap-1">
+          <span className="text-3xl font-black tracking-tight text-slate-900">
+            {formatMetric(weather?.temperature)}
+          </span>
+          {weather?.temperature !== undefined && weather?.temperature !== null && <span className="text-lg font-bold text-slate-700">°C</span>}
+        </div>
+        <span className="block truncate text-xs font-semibold text-slate-600">{translateCondition(weather?.condition)}</span>
+      </div>
+    </div>
+
+    <div className="mt-auto grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+      <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+        <Droplets aria-hidden="true" className="h-3.5 w-3.5 text-sky-500" />
+        {formatMetric(weather?.humidity, '%')}
+      </span>
+      <span className="flex items-center gap-1 text-[11px] font-semibold text-slate-500">
+        <Wind aria-hidden="true" className="h-3.5 w-3.5 text-emerald-500" />
+        {formatMetric(weather?.windSpeed, ' km/h')}
+      </span>
+    </div>
+    <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-slate-400">
+      <span className="truncate">{getPlotCropName(plot)}</span>
+      <span className="shrink-0">
+        {formatWeatherTime(weather?.updatedAt)}
+      </span>
+    </div>
+  </Link>
+)
 
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const user = useSelector((state) => state.appGlobal.userInfo);
-  const [coords, setCoords] = useState(null);
+  const user = useSelector((state) => state.appGlobal.userInfo)
 
-  // Get Geolocation
-  useEffect(() => {
-    const fallbackToHanoi = () => setCoords({ lat: 21.0285, lon: 105.8542 })
-    const requestLocation = () => {
-      navigator.geolocation.getCurrentPosition(
-        pos => setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-        fallbackToHanoi,
-      )
-    }
-
-    if (!("geolocation" in navigator)) {
-      fallbackToHanoi()
-      return
-    }
-
-    if (!navigator.permissions?.query) {
-      requestLocation()
-      return
-    }
-
-    navigator.permissions
-      .query({ name: "geolocation" })
-      .then(permission => {
-        if (permission.state === "denied") {
-          fallbackToHanoi()
-          return
-        }
-        requestLocation()
-      })
-      .catch(requestLocation)
-  }, []);
-
-  // Fetch Weather with coordinates
-  const { data: weather, isLoading: weatherLoading, dataUpdatedAt: weatherUpdatedAt } = useQuery({
-    queryKey: ['weather', coords],
+  const {
+    data: featuredPlots = [],
+    isLoading: plotsLoading,
+    isError: plotsError,
+    refetch: refetchPlots,
+  } = useQuery({
+    queryKey: ['dashboard-featured-land-plots'],
     queryFn: async () => {
-      if (!coords) return null;
-      const response = await http.get('/weather/current', {
-        params: { latitude: coords.lat, longitude: coords.lon },
-        skipNotice: true,
-      });
-      return normalizeWeather(response);
+      const response = await LandPlotService.getLandPlots({
+        PageIndex: 1,
+        PageSize: 6,
+        Status: 'Active',
+      })
+      const { items } = normalizeLandPlotResponse(response)
+
+      return items
+        .filter(isLandPlotActive)
+        .sort((first, second) => Number(second.area || 0) - Number(first.area || 0))
+        .slice(0, 3)
     },
-    enabled: !!coords,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  })
+
+  const {
+    data: weatherByPlotId = {},
+    isLoading: weatherLoading,
+  } = useQuery({
+    queryKey: ['dashboard-featured-land-plots-weather', featuredPlots.map(getItemId)],
+    queryFn: async () => {
+      const weatherEntries = await Promise.all(
+        featuredPlots.map(async (plot) => {
+          const plotId = getItemId(plot)
+          try {
+            const response = await LandPlotService.getLandPlotWeather(plotId)
+            return [plotId, normalizeWeather(response)]
+          } catch {
+            return [plotId, null]
+          }
+        }),
+      )
+
+      return Object.fromEntries(weatherEntries)
+    },
+    enabled: featuredPlots.length > 0,
     staleTime: 10 * 60 * 1000,
     refetchInterval: 10 * 60 * 1000,
     refetchIntervalInBackground: false,
-    retry: 1,
-  });
-
-  // Fetch Vietnamese Address from GPS (Reverse Geocoding)
-  const { data: addressData } = useQuery({
-    queryKey: ['address', coords],
-    queryFn: async () => {
-      if (!coords) return null;
-      try {
-        const { data } = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${coords.lat}&lon=${coords.lon}&accept-language=vi`);
-        return data;
-      } catch {
-        return null;
-      }
-    },
-    enabled: !!coords
-  });
-
-  const getVietnameseLocation = () => {
-    if (!addressData?.address) return area?.areaName?.[0]?.value || 'Hà Nội';
-    const addr = addressData.address;
-    return addr.suburb || addr.village || addr.city_district || addr.county || addr.city || addr.state || 'Việt Nam';
-  };
-
-  const getWeatherIcon = (code) => {
-    const normalizedCode = Number(code);
-    const sunCodes = [0, 1];
-    const rainCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99];
-
-    if (sunCodes.includes(normalizedCode)) return <Sun className="w-12 h-12 text-yellow-500 relative z-10" />;
-    if (rainCodes.includes(normalizedCode)) return <CloudRain className="w-12 h-12 text-blue-400 relative z-10" />;
-    return <CloudOutlined className="text-7xl text-blue-400 relative z-10" />;
-  };
-
-  const translateCondition = (text) => {
-    if (!text) return 'Có Mây';
-
-    const dict = {
-      'Sunny': 'Trời Nắng',
-      'Clear': 'Trời Quang',
-      'Partly cloudy': 'Trời Nhiều Mây',
-      'Cloudy': 'Có Mây',
-      'Overcast': 'Trời U Ám',
-      'Mist': 'Có Sương Mù Nhẹ',
-      'Fog': 'Sương Mù',
-      'Smoky haze': 'Khói Mù',
-      'Haze': 'Sương Mù Khô',
-      'Smoke': 'Có Khói',
-      'Patchy rain possible': 'Có Thể Có Mưa',
-      'Patchy rain nearby': 'Mưa Rải Rác',
-      'Patchy light rain with thunder': 'Mưa Nhẹ Và Có Dong',
-      'Thundery outbreaks possible': 'Có Thể Có Dong',
-      'Light rain': 'Mưa Nhẹ',
-      'Light drizzle': 'Mưa Phùn Nhẹ',
-      'Moderate rain': 'Mưa Vừa',
-      'Heavy rain': 'Mưa Lớn',
-      'Thunderstorm': 'Giông Bão',
-      'Light snow': 'Tuyết Nhẹ',
-      'Moderate snow': 'Tuyết Vừa',
-      'Heavy snow': 'Tuyết Lớn',
-      'with': 'Kèm',
-      'and': 'Và'
-    };
-
-    let translated = text;
-    Object.keys(dict).sort((a, b) => b.length - a.length).forEach(key => {
-      const regex = new RegExp(`\\b${key}\\b`, 'gi');
-      translated = translated.replace(regex, dict[key]);
-    });
-
-    return translated;
-  };
-
-  const current = weather;
-  const weatherText = current?.condition;
-  const area = null;
+  })
 
   const quickAccessItems = [
-    { title: 'Quản lý người dùng', icon: <Users className="w-8 h-8" />, path: ROUTER.FM_USERS, color: '#6366f1' },
-    { title: 'Quản lý vùng trồng', icon: <MapPinned className="w-8 h-8" />, path: ROUTER.FM_LANDS, color: '#22c55e' },
-    { title: 'Danh mục cây trồng', icon: <Sprout className="w-8 h-8" />, path: ROUTER.FM_CROP_CATALOGS, color: '#10b981' },
-    { title: 'Nhật ký canh tác', icon: <ClipboardList className="w-8 h-8" />, path: ROUTER.FM_PRODUCTION_PLANS, color: '#f59e0b' },
-    { title: 'Thư viện mẫu', icon: <BookOpenText className="w-8 h-8" />, path: ROUTER.FM_PLAN_TEMPLATES, color: '#06b6d4' },
-    { title: 'Quản lý vật tư', icon: <Package className="w-8 h-8" />, path: ROUTER.FM_VIEW_FERTILIZERS, color: '#ec4899' },
-  ];
+    { title: 'Quản lý người dùng', icon: <Users className="h-8 w-8" />, path: ROUTER.FM_USERS, color: '#6366f1' },
+    { title: 'Quản lý vùng trồng', icon: <MapPinned className="h-8 w-8" />, path: ROUTER.FM_LANDS, color: '#22c55e' },
+    { title: 'Danh mục cây trồng', icon: <Sprout className="h-8 w-8" />, path: ROUTER.FM_CROP_CATALOGS, color: '#10b981' },
+    { title: 'Nhật ký canh tác', icon: <ClipboardList className="h-8 w-8" />, path: ROUTER.FM_PRODUCTION_PLANS, color: '#f59e0b' },
+    { title: 'Thư viện mẫu', icon: <BookOpenText className="h-8 w-8" />, path: ROUTER.FM_PLAN_TEMPLATES, color: '#06b6d4' },
+    { title: 'Quản lý vật tư', icon: <Package className="h-8 w-8" />, path: ROUTER.FM_VIEW_FERTILIZERS, color: '#ec4899' },
+  ]
 
-  // Fetch News
-  // const { data: newsItems = [], isLoading: newsLoading } = useQuery({
-  //   queryKey: ['news'],
-  //   queryFn: async () => {
-  //     const { data } = await NewsService.getNews();
-  //     return data.data;
-  //   }
-  // });
+  const weatherSectionLoading = plotsLoading || (featuredPlots.length > 0 && weatherLoading)
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
-
-      {/* Top Welcome Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
+    <div className="mx-auto max-w-7xl space-y-8 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-700">
+      <div className="mb-2 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div className="space-y-1">
-          <Title level={4} className="!mb-0 !text-gray-400 font-medium uppercase tracking-widest text-[10px] md:text-xs">
-            {user?.role?.toUpperCase() === 'FARM_MANAGER' 
-              ? 'Tổng quan hệ thống' 
-              : 'Tổng quan nông trại'}
+          <Title level={4} className="!mb-0 !text-xs !font-medium uppercase tracking-widest !text-gray-400">
+            {user?.role?.toUpperCase() === 'FARM_MANAGER' ? 'Tổng quan hệ thống' : 'Tổng quan nông trại'}
           </Title>
           <Title level={2} className="!mb-0">
             Chào bạn,{' '}
-            <span className="text-green-600">
-              {user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}
-            </span>
-            ! 👋
+            <span className="text-green-600">{user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}</span>! 👋
           </Title>
-          <Text className="text-gray-500 font-medium whitespace-nowrap">Hôm nay là {new Date().toLocaleDateString('vi-VN', { weekday: 'long' })}, ngày {moment().format('D [tháng] M [năm] YYYY')}</Text>
+          <Text className="whitespace-nowrap font-medium text-gray-500">
+            Hôm nay là {formatCurrentDate()}
+          </Text>
         </div>
-        <Button icon={<CompassOutlined />} className="rounded-xl font-bold border-gray-200 text-gray-600 hover:text-green-600">Khám phá module</Button>
+        <Button icon={<CompassOutlined />} className="rounded-xl border-gray-200 font-bold text-gray-600 hover:text-green-600">
+          Khám phá module
+        </Button>
       </div>
 
       <Row gutter={[24, 24]}>
-        {/* Weather & IoT Card */}
         <Col xs={24} lg={14}>
           <Card variant="borderless" className="weather-gradient h-full !p-0 overflow-hidden">
-            <div className="p-6">
-              {weatherLoading ? (
-                <Skeleton active paragraph={{ rows: 4 }} />
-              ) : (
-                <>
-                  <div className="flex justify-between items-start mb-8">
-                    <Badge
-                      status="processing"
-                      color="#22c55e"
-                      text={<span className="font-bold text-gray-800 tracking-tight text-xs">Thời tiết {getVietnameseLocation()}</span>}
-                    />
-                    <Space>
-                      <Tag color="green" className="text-[10px] font-bold m-0 rounded-full uppercase">Trực tiếp</Tag>
-                      <Text className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-                        Cập nhật lúc: {weatherUpdatedAt ? moment(weatherUpdatedAt).format('HH:mm') : '--:--'}
-                      </Text>
-                    </Space>
+            <div className="flex h-full min-h-[420px] flex-col p-6">
+              <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                <div>
+                  <div className="mb-1 flex items-center gap-2">
+                    <Badge status="processing" color="#22c55e" />
+                    <Title level={5} className="!mb-0 !text-gray-800">Vùng trồng nổi bật</Title>
                   </div>
+                  <Text className="text-xs text-slate-500">Thời tiết được cập nhật theo từng vùng trồng</Text>
+                </div>
+                <Link to={ROUTER.FM_LANDS} className="text-sm font-bold text-green-600 hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2">
+                  Xem tất cả <ArrowRightOutlined />
+                </Link>
+              </div>
 
-                  <Row gutter={[24, 24]} align="middle">
-                    <Col xs={24} md={12}>
-                      <div className="flex items-center gap-6">
-                        <div className="relative">
-                          <div className="absolute -inset-4 bg-yellow-200/40 blur-2xl rounded-full animate-pulse"></div>
-                          {getWeatherIcon(current?.weatherCode)}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-7xl font-bold tracking-tighter text-gray-900 leading-none">{current?.temperature ?? '--'}°</span>
-                          <span className="text-lg text-gray-800 font-bold ml-1">{translateCondition(weatherText)}</span>
-                        </div>
-                      </div>
-                    </Col>
-                    
-                    <Col xs={24} md={12}>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white/60 backdrop-blur-sm p-3 rounded-2xl border border-white flex flex-col justify-center">
-                          <Text className="text-gray-400 text-[10px] font-bold uppercase flex items-center gap-1"><Droplets className="w-3 h-3 text-blue-500" /> Độ ẩm</Text>
-                          <Text className="text-lg text-gray-800 font-black">{current?.humidity}%</Text>
-                        </div>
-                        <div className="bg-white/60 backdrop-blur-sm p-3 rounded-2xl border border-white flex flex-col justify-center">
-                          <Text className="text-gray-400 text-[10px] font-bold uppercase flex items-center gap-1"><Wind className="w-3 h-3 text-green-500" /> Gió</Text>
-                          <Text className="text-lg text-gray-800 font-black">{current?.windSpeed}<small className="text-[10px] ml-1">km/h</small></Text>
-                        </div>
-                      </div>
-                    </Col>
-                  </Row>
-
-                  {/* IoT Sensors Section */}
-                  <div className="mt-8 pt-6 border-t border-gray-100/50">
-                    <Text className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-4">Trạm cảm biến IoT (Kết nối API)</Text>
-                    <Row gutter={[12, 12]}>
-                      {[
-                        { label: 'Độ ẩm đất', value: '42%', icon: <Droplets className="w-4 h-4" />, color: 'blue', status: 'Tốt' },
-                        { label: 'Nhiệt độ đất', value: '24°C', icon: <Sun className="w-4 h-4" />, color: 'orange', status: 'Ổn định' },
-                        { label: 'Drone phun thuốc', value: 'Sẵn sàng', icon: <Wind className="w-4 h-4" />, color: 'green', status: 'Trực tuyến' },
-                      ].map((sensor, idx) => (
-                        <Col xs={12} sm={8} key={idx}>
-                          <div className="bg-white/40 p-3 rounded-xl border border-white/60 hover:bg-white/80 transition-all cursor-pointer group">
-                            <div className={`w-8 h-8 rounded-lg bg-${sensor.color}-100 text-${sensor.color}-600 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
-                              {sensor.icon}
-                            </div>
-                            <Text className="text-[10px] text-gray-500 block leading-tight mb-1">{sensor.label}</Text>
-                            <Text strong className="text-sm block">{sensor.value}</Text>
-                            <Badge status={sensor.color === 'green' ? 'success' : 'processing'} text={<span className="text-[9px] font-bold uppercase text-gray-400">{sensor.status}</span>} />
-                          </div>
-                        </Col>
-                      ))}
-                    </Row>
-                  </div>
-                </>
+              {weatherSectionLoading && (
+                <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-3">
+                  {[1, 2, 3].map((item) => (
+                    <div key={item} className="rounded-2xl bg-white/60 p-4">
+                      <Skeleton active paragraph={{ rows: 5 }} title={{ width: '75%' }} />
+                    </div>
+                  ))}
+                </div>
               )}
+
+              {!weatherSectionLoading && plotsError && (
+                <Alert
+                  className="my-auto"
+                  type="error"
+                  showIcon
+                  message="Không thể tải danh sách vùng trồng"
+                  action={<Button icon={<ReloadOutlined />} onClick={refetchPlots}>Thử lại</Button>}
+                />
+              )}
+
+              {!weatherSectionLoading && !plotsError && featuredPlots.length === 0 && (
+                <div className="my-auto rounded-2xl bg-white/50 py-8">
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có vùng trồng nổi bật" />
+                  <div className="text-center">
+                    <Link to={ROUTER.FM_LANDS} className="font-bold text-green-600 hover:text-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2">
+                      Quản lý vùng trồng
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {!weatherSectionLoading && !plotsError && featuredPlots.length > 0 && (
+                <div className="grid flex-1 grid-cols-1 gap-3 md:grid-cols-3">
+                  {featuredPlots.map((plot) => (
+                    <FeaturedPlotWeather
+                      key={getItemId(plot)}
+                      plot={plot}
+                      weather={weatherByPlotId[getItemId(plot)]}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-5 flex items-center gap-2 border-t border-gray-100/70 pt-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                Dữ liệu thời tiết trực tiếp
+                <span className="ml-auto font-medium normal-case tracking-normal text-slate-400">Tự động cập nhật mỗi 10 phút</span>
+              </div>
             </div>
           </Card>
         </Col>
 
-        {/* Quick Access Card */}
         <Col xs={24} lg={10}>
           <Card variant="borderless" className="h-full !p-2">
-            <div className="flex justify-between items-center mb-10">
+            <div className="mb-10 flex items-center justify-between">
               <Title level={5} className="!mb-0 !text-gray-800">Truy cập nhanh</Title>
-              <Text className="text-xs text-gray-400 font-medium">
-                Các chức năng quản lý
-              </Text>
+              <Text className="text-xs font-medium text-gray-400">Các chức năng quản lý</Text>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-8 md:gap-y-12 gap-x-4 md:gap-x-6">
-              {quickAccessItems.map((item, index) => (
-                <div
-                  key={index}
-                  onClick={() => navigate(item.path)}
-                  className="flex flex-col items-center text-center group cursor-pointer"
+            <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 md:gap-x-6 md:gap-y-12">
+              {quickAccessItems.map((item) => (
+                <Link
+                  key={item.title}
+                  to={item.path}
+                  className="group flex cursor-pointer flex-col items-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
                 >
                   <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 mb-4 shadow-sm group-hover:shadow-lg group-hover:-translate-y-1"
+                    className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl shadow-sm transition-[transform,box-shadow] duration-300 group-hover:-translate-y-1 group-hover:shadow-lg"
                     style={{ backgroundColor: `${item.color}15`, color: item.color }}
                   >
-                    {item.icon}
+                    <span aria-hidden="true">{item.icon}</span>
                   </div>
-                  <span className="text-[13px] font-bold text-gray-700 group-hover:text-green-600 transition-colors leading-tight">
+                  <span className="text-[13px] font-bold leading-tight text-gray-700 transition-colors group-hover:text-green-600">
                     {item.title}
                   </span>
-                </div>
+                </Link>
               ))}
             </div>
           </Card>
         </Col>
       </Row>
-
-      {/* News Section */}
-      <div id="news-section" className="space-y-6">
-        <div className="text-center">
-          <Title level={3} className="!mb-2 !text-gray-800 font-bold">Tin tức</Title>
-        </div>
-
-        {/* {newsLoading ? (
-          <Row gutter={[24, 24]}>
-            {[1, 2].map(i => (
-              <Col xs={24} lg={12} key={i}>
-                <Skeleton active avatar={{ size: 'large', shape: 'square' }} paragraph={{ rows: 3 }} />
-              </Col>
-            ))}
-          </Row>
-        ) : newsItems.length === 0 ? (
-          <div className="py-12 text-center bg-gray-50/50 rounded-2xl border border-dashed border-gray-100 italic text-gray-400">
-            Chưa có tin tức mới nào được đăng tải.
-          </div>
-        ) : (
-          <>
-            <Row gutter={[24, 24]}>
-              {newsItems.slice(0, visibleNews).map((news, index) => (
-                <Col xs={24} lg={12} key={index}>
-                  <div
-                    onClick={() => navigate(`/news/${news._id}`)}
-                    className="group bg-white border-2 border-gray-300 rounded-xl p-4 h-full shadow-md hover:border-green-600 hover:shadow-lg transition-all flex flex-col sm:flex-row gap-5 cursor-pointer"
-                  >
-                    <div className="w-full sm:w-40 h-40 shrink-0 relative overflow-hidden rounded-xl">
-                      <img
-                        src={news.image || getFallbackImage(news.category)}
-                        alt="News"
-                        onError={(e) => { e.target.src = getFallbackImage(news.category); }}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    </div>
-
-                    <div className="flex-1 flex flex-col justify-between py-1">
-                      <div>
-                        <Title level={5} className="!text-gray-800 !mb-3 group-hover:text-green-600 transition-colors line-clamp-2 leading-snug">
-                          {news.title}
-                        </Title>
-                        <Paragraph className="text-gray-500 text-sm line-clamp-3 !mb-0 font-normal leading-relaxed">
-                          {news.summary}
-                        </Paragraph>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4 mt-auto border-t border-gray-50">
-                        <Text className="text-[11px] text-gray-400 font-medium">
-                          {new Date(news.publishedAt).toLocaleDateString('vi-VN')} {new Date(news.publishedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
-                        <Button
-                          type="link"
-                          size="small"
-                          className="text-green-600 font-bold p-0 flex items-center gap-1 hover:gap-2 transition-all"
-                          onClick={(e) => { e.stopPropagation(); navigate(`/news/${news._id}`); }}
-                        >
-                          Xem chi tiết <ArrowRightOutlined className="text-[10px]" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Col>
-              ))}
-            </Row>
-
-            {(visibleNews < newsItems.length || visibleNews > 2) && (
-              <div className="flex justify-center items-center gap-4 mt-6">
-                {visibleNews < newsItems.length && (
-                  <Button
-                    size="large"
-                    onClick={() => setVisibleNews(prev => prev + 2)}
-                    className="bg-green-600 hover:bg-green-700 text-white rounded-lg h-10 px-8 font-bold border-0 shadow-lg shadow-green-100 flex items-center justify-center transition-all hover:scale-105"
-                  >
-                    Xem thêm
-                  </Button>
-                )}
-
-                {visibleNews > 2 && (
-                  <Button
-                    size="large"
-                    onClick={() => {
-                      setVisibleNews(2);
-                      document.getElementById('news-section')?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="bg-green-600 hover:bg-green-700 text-white rounded-lg h-10 px-8 font-bold border-0 shadow-lg shadow-green-100 flex items-center justify-center transition-all hover:scale-105"
-                  >
-                    Thu gọn
-                  </Button>
-                )}
-              </div>
-            )}
-          </>
-        )} */}
-      </div>
-
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard
