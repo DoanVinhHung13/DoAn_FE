@@ -287,7 +287,7 @@ const FarmSupervisorTaskDetail = () => {
                 )}
               </div>
 
-              {task.status === 'PENDING' ? (
+              {['PENDING', 'ASSIGNED'].includes(task.status) ? (
                 <Form form={assignForm} layout="vertical">
                   <Form.Item
                     name="farmLeaderId" label="Người phụ trách"
@@ -475,7 +475,7 @@ const FarmSupervisorTaskDetail = () => {
                   <div className="text-sm text-gray-500 mt-2">Tiến độ hiện tại: {task.progress}%</div>
                 </div>
               </Card>
-            ) : task.status === 'PENDING' ? (
+            ) : ['PENDING', 'ASSIGNED'].includes(task.status) ? (
               <Card bordered={false} className="shadow-sm rounded-2xl border border-gray-100">
                 <div className="text-center py-8 text-gray-400">
                   <CalendarOutlined className="text-3xl mb-3" />

@@ -667,7 +667,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
 
                               {/* Actions */}
                               <div className="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
-                                {task.status === "PENDING" && (
+                                {["PENDING", "ASSIGNED"].includes(task.status) && (
                                   <>
                                     <Button
                                       type="primary"
@@ -962,7 +962,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
         </Row>
       </Card>
 
-      {/* Modal Sửa công việc (PENDING) */}
+      {/* Modal Sửa công việc chưa bắt đầu */}
       <Modal
         open={editTaskModal.open}
         title={
