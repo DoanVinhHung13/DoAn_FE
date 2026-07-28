@@ -7,6 +7,8 @@ import {
   apiDistributeInventory,
   apiCreateTransaction,
   apiGetTransactions,
+  apiGetImportHistory,
+  apiGetImportHistoryById,
   apiGetInventoryById,
   apiUpdateInventory,
   apiDeleteInventory,
@@ -23,6 +25,8 @@ const consumeStock = (body) => http.post(apiConsumeInventory, body)
 const distributeStock = (body) => http.post(apiDistributeInventory, body)
 const createTransaction = (body) => http.post(apiCreateTransaction, body)
 const getTransactions = (params) => http.get(apiGetTransactions, { params })
+const getImportHistory = (params) => http.get(apiGetImportHistory, { params })
+const getImportHistoryById = (id) => http.get(apiGetImportHistoryById(id))
 const getInventoryById = (id) => http.get(apiGetInventoryById(id))
 const updateInventory = (id, body) => http.put(apiUpdateInventory(id), body)
 const deleteInventory = (id) => http.delete(apiDeleteInventory(id))
@@ -41,6 +45,8 @@ const InventoryService = {
   distributeStock,
   createTransaction,
   getTransactions,
+  getImportHistory,
+  getImportHistoryById,
   getInventoryById,
   updateInventory,
   deleteInventory,

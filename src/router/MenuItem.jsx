@@ -90,6 +90,7 @@ export const farmManagerItem = () => [
     children: [
       { key: ROUTER.FM_VIEW_FERTILIZERS, label: 'Phân bón' },
       { key: ROUTER.FM_VIEW_CROP_PROTECTIONS, label: 'Thuốc BVTV' },
+      { key: ROUTER.FM_INVENTORY_IMPORT_HISTORY, label: 'Lịch sử nhập kho' },
     ],
   },
   {

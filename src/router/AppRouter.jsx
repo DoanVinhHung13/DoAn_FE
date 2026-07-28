@@ -74,6 +74,7 @@ const FarmManagerViewCropProtections = React.lazy(() => import('../pages/FARM_MA
 const FarmManagerCropProtectionCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionCreate'))
 const FarmManagerCropProtectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionDetail'))
 const FarmManagerCropProtectionEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionEdit'))
+const FarmManagerInventoryImportHistory = React.lazy(() => import('../pages/FARM_MANAGER/InventoryImportHistory'))
 const FarmManagerReferenceFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/Reference/FertilizerList'))
 const FarmManagerReferencePesticides = React.lazy(() => import('../pages/FARM_MANAGER/Reference/PesticideList'))
 
@@ -219,6 +220,7 @@ const routes = [
               { path: ROUTER.FM_VIEW_CROP_PROTECTION_CREATE, element: <Lazy><FarmManagerCropProtectionCreate /></Lazy> },
               { path: ROUTER.FM_VIEW_CROP_PROTECTION_DETAIL, element: <Lazy><FarmManagerCropProtectionDetail /></Lazy> },
               { path: ROUTER.FM_VIEW_CROP_PROTECTION_EDIT, element: <Lazy><FarmManagerCropProtectionEdit /></Lazy> },
+              { path: ROUTER.FM_INVENTORY_IMPORT_HISTORY, element: <Lazy><FarmManagerInventoryImportHistory /></Lazy> },
 
               // Reference Management
               { path: ROUTER.FM_REF_FERTILIZER, element: <Lazy><FarmManagerReferenceFertilizers /></Lazy> },

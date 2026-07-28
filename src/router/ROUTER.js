@@ -68,6 +68,7 @@ const ROUTER = {
   FM_VIEW_CROP_PROTECTION_CREATE: '/farm-manager/pesticides/create',
   FM_VIEW_CROP_PROTECTION_DETAIL: '/farm-manager/pesticides/:id',
   FM_VIEW_CROP_PROTECTION_EDIT: '/farm-manager/pesticides/:id/edit',
+  FM_INVENTORY_IMPORT_HISTORY: '/farm-manager/inventory/import-history',
   FM_LOGBOOKS: '/farm-manager/logbooks',
   FM_LOGBOOK_REVIEW: '/farm-manager/logbooks/:id/review',
   FM_REPORTS: '/farm-manager/reports',
