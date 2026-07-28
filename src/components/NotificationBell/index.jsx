@@ -41,7 +41,7 @@ const NotificationBell = () => {
   const { userInfo } = useSelector((state) => state.appGlobal);
   const [visible, setVisible] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => normalizeNotifications(await getNotifications()),
     staleTime: 5 * 60 * 1000, // cache 5 phút, không tự re-fetch
@@ -60,6 +60,13 @@ const NotificationBell = () => {
       message.success('Đã đánh dấu tất cả là đã đọc');
     },
   });
+
+  const handleOpenChange = (nextOpen) => {
+    setVisible(nextOpen);
+    if (nextOpen) {
+      refetch();
+    }
+  };
 
   const handleNotificationClick = async (item) => {
     setVisible(false);
@@ -178,7 +185,7 @@ const NotificationBell = () => {
       content={content}
       trigger="click"
       open={visible}
-      onOpenChange={setVisible}
+      onOpenChange={handleOpenChange}
       placement="bottomRight"
       contentStyle={{ padding: 0 }}
     >
