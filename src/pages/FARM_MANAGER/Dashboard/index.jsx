@@ -50,7 +50,7 @@ const getPlotCropName = (plot) => (
   || plot?.crop?.name
   || plot?.cropCatalogName
   || plot?.cropCatalog?.name
-  || 'Đang cập nhật cây trồng'
+  || 'Cập nhật lần cuối'
 )
 
 const getWeatherIcon = (weather, className = 'h-10 w-10') => {
