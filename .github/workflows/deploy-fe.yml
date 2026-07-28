@@ -50,9 +50,9 @@ jobs:
         run: |
           # Keep old hashed assets so already-open browser tabs can finish loading.
           # npm run build already verified that the new dist is internally consistent.
-          # The Nginx web root is root-owned on the self-hosted runner. Use
-          # non-interactive sudo and do not copy runner ownership metadata.
-          sudo -n rsync -rlt --delay-updates --no-owner --no-group --no-perms dist/ /var/www/eapls-fe/
+          # The self-hosted runner user must have write access to this web root.
+          # Do not use sudo: the server sudoers policy denies the deploy user.
+          rsync -rlt --delay-updates --no-owner --no-group --no-perms dist/ /var/www/eapls-fe/
 
       - name: Verify published assets
         run: node scripts/verify-dist-assets.mjs /var/www/eapls-fe
