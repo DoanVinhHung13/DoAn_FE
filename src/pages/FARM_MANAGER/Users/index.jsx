@@ -65,7 +65,10 @@ const getRoleTag = (role, roleDesc) => {
 const UsersManagement = () => {
   const navigate = useNavigate()
   const currentUser = useSelector(state => state.appGlobal.userInfo)
-  const isFarmManager = currentUser?.role === ROLES.FARM_MANAGER
+  const currentRoles = currentUser?.roles?.length ? currentUser.roles : [currentUser?.role]
+  const isFarmManager = currentRoles.includes(ROLES.FARM_MANAGER)
+  const isFarmSupervisor = currentRoles.includes(ROLES.FARM_SUPERVISOR)
+  const canManageUsers = isFarmManager || isFarmSupervisor
 
   const { getOptions, getDescription } = useSystemKey()
 
@@ -85,6 +88,8 @@ const UsersManagement = () => {
 
   const [formModal, setFormModal] = useState({ open: false, user: null })
   const [createAccountModalOpen, setCreateAccountModalOpen] = useState(false)
+  const [accountCandidates, setAccountCandidates] = useState([])
+  const [accountCandidatesLoading, setAccountCandidatesLoading] = useState(false)
   const [rolesModal, setRolesModal] = useState({ open: false, user: null })
   const [pwdModal, setPwdModal] = useState({ open: false, user: null })
   const [statusModal, setStatusModal] = useState({ open: false, user: null })
@@ -98,11 +103,11 @@ const UsersManagement = () => {
     try {
       setLoading(true)
       const res = await UserService.getUsers({
-        PageIndex: page,
-        PageSize: pageSize,
-        SearchKeyword: search || undefined,
-        Role: roleFilter || undefined,
-        Status: statusFilter === "all" ? undefined : statusFilter,
+        pageIndex: page,
+        pageSize,
+        searchKeyword: search || undefined,
+        role: roleFilter || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
       })
       if (res?.success === false) return
       setListData(res?.data?.items || [])
@@ -111,6 +116,21 @@ const UsersManagement = () => {
       setLoading(false)
     }
   }, [page, pageSize, roleFilter, search, statusFilter])
+
+  const getAccountCandidates = useCallback(async () => {
+    if (!canManageUsers) return
+    try {
+      setAccountCandidatesLoading(true)
+      const res = await UserService.getUsers({
+        pageIndex: 1,
+        pageSize: 100,
+        hasAccount: false,
+      })
+      setAccountCandidates(res?.data?.items || [])
+    } finally {
+      setAccountCandidatesLoading(false)
+    }
+  }, [canManageUsers])
 
   useEffect(() => {
     getList()
@@ -322,7 +342,7 @@ const UsersManagement = () => {
  
           </TitleCustom>
         </div>
-        {isFarmManager && (
+        {canManageUsers && (
           <div className="flex flex-wrap gap-2">
             <Button
               type="primary"
@@ -334,7 +354,10 @@ const UsersManagement = () => {
             </Button>
             <Button
               icon={<KeyOutlined />}
-              onClick={() => setCreateAccountModalOpen(true)}
+              onClick={() => {
+                setCreateAccountModalOpen(true)
+                getAccountCandidates()
+              }}
               className="flex-shrink-0 h-10 px-5 font-bold text-blue-600 border-blue-200 rounded-xl hover:text-blue-700 hover:border-blue-400 hover:bg-blue-50"
             >
               Tạo tài khoản
@@ -452,9 +475,13 @@ const UsersManagement = () => {
       />
       <CreateAccountModal
         open={createAccountModalOpen}
-        users={listData}
+        users={accountCandidates}
+        loadingUsers={accountCandidatesLoading}
         onClose={() => setCreateAccountModalOpen(false)}
-        onSuccess={() => getList()}
+        onSuccess={() => {
+          getList()
+          getAccountCandidates()
+        }}
       />
       <AssignRolesModal
         open={rolesModal.open}

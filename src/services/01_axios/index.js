@@ -75,14 +75,14 @@ export function parseBody(response) {
       isSuccess: false,
     })
   }
-  if (+response?.status < 500 && +response?.status !== 200) {
+  if (+response?.status >= 400 && +response?.status < 500) {
     return notice({
       msg: `Hệ thống xảy ra lỗi. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ (SC${response?.status})`,
       isSuccess: false,
     })
   }
 
-  if (response?.status === 200) {
+  if (+response?.status >= 200 && +response?.status < 300) {
     if (typeof resData?.success === "boolean") {
       return handleEaplsBody(resData, response.config)
     }

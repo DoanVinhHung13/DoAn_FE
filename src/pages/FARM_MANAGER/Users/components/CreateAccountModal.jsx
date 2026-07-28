@@ -2,6 +2,7 @@ import React from "react"
 import { Button, Form, Input, Select } from "antd"
 import { KeyOutlined, LockOutlined, MailOutlined, PhoneOutlined, UserOutlined } from "@ant-design/icons"
 import CustomModal from "src/components/Modal/CustomModal"
+import { ROLES } from "src/constants/roles"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import UserService from "src/services/UserService"
@@ -19,11 +20,13 @@ const contactRequiredRule = ({ getFieldValue }) => ({
   },
 })
 
-const CreateAccountModal = ({ open, onClose, users = [], onSuccess }) => {
+const CreateAccountModal = ({ open, onClose, users = [], loadingUsers = false, onSuccess }) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = React.useState(false)
   const { getOptions } = useSystemKey()
-  const roleOptions = getOptions(SYSTEM_KEY.ROLE)
+  const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(
+    option => (option.codeValue || option.value) !== ROLES.FARM_MANAGER,
+  )
 
   const userOptions = users
     .filter(user => user?.id)
@@ -96,6 +99,7 @@ const CreateAccountModal = ({ open, onClose, users = [], onSuccess }) => {
           <Select
             showSearch
             optionFilterProp="label"
+            loading={loadingUsers}
             placeholder="Chọn nhân viên đã tồn tại"
             options={userOptions}
             onChange={handleUserChange}

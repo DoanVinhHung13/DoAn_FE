@@ -8,8 +8,8 @@ export const apiGetUserById       = (id) => `/users/${id}`
 export const apiUpdateUser        = (id) => `/users/${id}`
 export const apiDeleteUser        = (id) => `/users/${id}`
 export const apiChangeUserStatus  = (id) => `/users/${id}/status`   // PUT { isActive }
-export const apiAssignRoles       = (id) => `/users/${id}/roles`    // POST { roles[] }
-export const apiCreateAccount     = (id) => `/users/${id}/create-account` // POST { password, roles[] }
+export const apiAssignRoles       = (id) => `/users/${id}/roles`    // PUT { roles[] }
+export const apiCreateAccount     = (id) => `/users/${id}/account` // POST { email?, phoneNumber?, password, roles[] }
 export const apiChangeUserPassword = (id) => `/users/${id}/password`
 
 // Profile của user đang login

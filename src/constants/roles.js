@@ -12,9 +12,8 @@ export const normalizeRole = (apiRole) => {
   if (normalized === "FARMMANAGER") return ROLES.FARM_MANAGER
   if (normalized === "FARMSUPERVISOR") return ROLES.FARM_SUPERVISOR
   if (normalized === "FARMLEADER") return ROLES.FARM_LEADER
-  if (normalized === "FARMER") return ROLES.FARM_LEADER
+  if (normalized === "FARMER") return ROLES.FARMER
   return apiRole // fallback
 }
 
 export default ROLES
-

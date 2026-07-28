@@ -6,11 +6,11 @@
  * GET    /users                       → getUsers(params)
  * GET    /users/:id                   → getUserById(id)
  * POST   /users                       → createUser(body)      [Farm Manager only]
- * POST   /users/:id/create-account    → createAccount(id, body) [Farm Manager only]
+ * POST   /users/:id/account           → createAccount(id, body) [Manager/Supervisor]
  * PUT    /users/:id                   → updateUser(id, body)  [Farm Manager only]
  * DELETE /users/:id                   → deleteUser(id)        [Farm Manager only]
  * PUT    /users/:id/status            → changeUserStatus(id, body) — { isActive }
- * POST   /users/:id/roles             → assignRoles(id, body) — { roles: string[] }
+ * PUT    /users/:id/roles             → assignRoles(id, body) — replaces roles
  * PUT    /users/:id/password          → changeUserPassword(id, body)
  *
  * ─── Profile của user đang đăng nhập ─────────────────────
@@ -33,7 +33,7 @@ export const USER_URLS = {
   byId: id => `/users/${id}`,
   status: id => `/users/${id}/status`,
   roles: id => `/users/${id}/roles`,
-  createAccount: id => `/users/${id}/create-account`,
+  createAccount: id => `/users/${id}/account`,
   password: id => `/users/${id}/password`,
   myProfile: "/users/me/profile",
   myAvatar: "/users/me/avatar",
@@ -41,11 +41,18 @@ export const USER_URLS = {
 
 // ─── Quản lý danh sách ─────────────────────────────────────
 
-/**
- * GET /users?PageIndex&PageSize&SearchKeyword
- * Land Manager chỉ thấy tài khoản FARMER
- */
-const getUsers = params => http.get(USER_URLS.list, { params })
+const normalizeListParams = (params = {}) => ({
+  pageIndex: params.pageIndex ?? params.PageIndex,
+  pageSize: params.pageSize ?? params.PageSize,
+  searchKeyword: params.searchKeyword ?? params.SearchKeyword,
+  role: params.role ?? params.Role,
+  isActive: params.isActive ?? params.IsActive,
+  hasAccount: params.hasAccount ?? params.HasAccount,
+  status: params.status ?? params.Status,
+})
+
+/** GET /users with canonical camelCase query parameters. */
+const getUsers = params => http.get(USER_URLS.list, { params: normalizeListParams(params) })
 
 /** GET /user/:id */
 const getUserById = id => http.get(USER_URLS.detail(id))
@@ -73,12 +80,12 @@ const deleteUser = id => http.delete(USER_URLS.byId(id))
 const changeUserStatus = (id, body) => http.put(USER_URLS.status(id), body)
 
 /**
- * POST /users/:id/roles — thay thế danh sách vai trò (Farm Manager)
+ * PUT /users/:id/roles — thay thế danh sách vai trò (Farm Manager)
  * Body: { roles: string[] }
  */
-const assignRoles = (id, body) => http.post(USER_URLS.roles(id), body)
+const assignRoles = (id, body) => http.put(USER_URLS.roles(id), body)
 
-/** POST /users/:id/create-account — cấp mật khẩu và vai trò cho nhân viên đã tồn tại */
+/** POST /users/:id/account — cấp mật khẩu và vai trò cho nhân viên đã tồn tại */
 const createAccount = (id, body) => http.post(USER_URLS.createAccount(id), body)
 
 /** PUT /users/:id/password — đổi mật khẩu người dùng khác (Farm Manager) */

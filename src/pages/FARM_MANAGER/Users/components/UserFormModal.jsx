@@ -19,14 +19,17 @@ import {
 } from "antd"
 import dayjs from "dayjs"
 import React from "react"
+import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import CustomModal from "src/components/Modal/CustomModal"
+import { ROLES } from "src/constants/roles"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import ROUTER from "src/router/ROUTER"
 import UploadService from "src/services/UploadService"
 import UserService from "src/services/UserService"
 import {
+  CONTACT_REQUIRED_RULE,
   EMAIL_RULES,
   FULL_NAME_RULES,
   PHONE_RULES,
@@ -38,11 +41,16 @@ const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
 const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = React.useState(false)
+  const currentUser = useSelector(state => state.appGlobal.userInfo)
+  const currentRoles = currentUser?.roles?.length ? currentUser.roles : [currentUser?.role]
   const navigate = useNavigate()
   const isEdit = !!editingUser
   const { getOptions } = useSystemKey()
   const genderOptions = getOptions(SYSTEM_KEY.GENDER)
   const roleOptions = getOptions(SYSTEM_KEY.ROLE)
+  const allowedRoleOptions = currentRoles.includes(ROLES.FARM_MANAGER)
+    ? roleOptions
+    : roleOptions.filter(option => (option.codeValue || option.value) !== ROLES.FARM_MANAGER)
 
   const [avatarFile, setAvatarFile] = React.useState(null)
   const [previewAvatar, setPreviewAvatar] = React.useState("")
@@ -239,7 +247,8 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                     Email
                   </span>
                 }
-                rules={OPTIONAL_EMAIL_RULES}
+                dependencies={["phoneNumber"]}
+                rules={[...OPTIONAL_EMAIL_RULES, CONTACT_REQUIRED_RULE]}
               >
                 <Input
                   type="email"
@@ -265,7 +274,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
               <Select
                 placeholder="Chọn vai trò"
                 className="h-10 rounded-lg"
-                options={roleOptions}
+                options={allowedRoleOptions}
               />
             </Form.Item>
           </Col>
@@ -273,12 +282,13 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           <Col xs={24} md={12}>
             <Form.Item
               name="phoneNumber"
+              dependencies={["email"]}
               label={
                 <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
                   Số điện thoại
                 </span>
               }
-              rules={PHONE_RULES}
+              rules={isEdit ? PHONE_RULES : [...PHONE_RULES, CONTACT_REQUIRED_RULE]}
             >
               <Input
                 type="tel"

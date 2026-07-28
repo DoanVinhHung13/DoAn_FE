@@ -82,7 +82,18 @@ export const trimData = (data) => {
   if (Array.isArray(data)) return data.map(item => trimData(item));
 
   const newData = { ...data };
+  const preserveWhitespace = new Set([
+    'password',
+    'currentPassword',
+    'newPassword',
+    'confirmPassword',
+    'confirmNewPassword',
+    'refreshToken',
+    'accessToken',
+    'otp',
+  ]);
   for (const key in newData) {
+    if (preserveWhitespace.has(key)) continue;
     if (typeof newData[key] === 'string') {
       newData[key] = newData[key].trim();
     } else if (typeof newData[key] === 'object') {
@@ -130,6 +141,15 @@ export const PHONE_RULES = [
     }
   }
 ];
+
+export const CONTACT_REQUIRED_RULE = ({ getFieldValue }) => ({
+  validator: (_, value) => {
+    const hasEmail = getFieldValue('email')?.trim();
+    const hasPhone = getFieldValue('phoneNumber')?.trim();
+    if (value?.trim() || hasEmail || hasPhone) return Promise.resolve();
+    return Promise.reject(new Error('Vui lòng nhập email hoặc số điện thoại!'));
+  },
+});
 
 export const LOGIN_IDENTIFIER_RULES = [
   { required: true, message: "Thông tin này là bắt buộc!" },
@@ -194,4 +214,3 @@ export const getLandPlotNamesDisplay = (item, fallback = 'Chưa cập nhật') =
   if (!plots.length) return fallback
   return plots.map((p) => p.name).join(', ')
 }
-
