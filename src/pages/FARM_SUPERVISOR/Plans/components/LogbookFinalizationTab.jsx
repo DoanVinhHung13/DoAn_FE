@@ -286,7 +286,7 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
         if (!cancelled) {
           setLeaderSummary(task)
           setDescription(task?.description || "")
-          message.error("Không tải được Summary từ Leader.")
+          // axios interceptor handles error notification
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -351,13 +351,10 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
       }
 
       await saveCompiledDescription(targetStageId, taskId, description.trim())
-      message.success("Đã lưu mô tả vào Logbook!")
       onSaved?.()
     } catch (err) {
       console.error(err)
-      message.error(
-        err?.response?.data?.message || err?.message || "Lưu thất bại.",
-      )
+      // axios interceptor handles error notification
     } finally {
       setSaving(false)
     }
@@ -604,7 +601,6 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
         await CultivationLogService.update(logId, { description: newDesc })
       }
 
-      message.success("Đã cập nhật mô tả Logbook thành công!")
       setEditModal({ open: false, log: null, description: "" })
 
       if (selectedId) {
@@ -620,11 +616,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
       }
     } catch (err) {
       console.error(err)
-      message.error(
-        err?.response?.data?.message ||
-          err?.message ||
-          "Cập nhật mô tả thất bại.",
-      )
+      // axios interceptor handles error notification
     } finally {
       setSavingEdit(false)
     }
@@ -682,22 +674,14 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
   }, [selectedId])
 
   const handleCompleteStage = async () => {
-    if (!selectedId) {
-      message.error("Vui lòng chọn giai đoạn cần hoàn tất.")
-      return
-    }
+    if (!selectedId) return
     try {
       setSubmitting(true)
       await CultivationStageService.submitReview(selectedId, {})
-      message.success("Đã hoàn tất giai đoạn và gửi lên Farm Manager!")
       await loadData?.()
     } catch (error) {
       console.error(error)
-      message.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Hoàn tất giai đoạn thất bại.",
-      )
+      // axios interceptor handles error notification
     } finally {
       setSubmitting(false)
     }
@@ -741,7 +725,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
           description="Nhật ký canh tác đã được gửi thành công. Vui lòng chờ Farm Manager xem xét và phê duyệt."
         />
       )}
-      {!isReadOnly && (
+      {!isReadOnly && selectedStage?.status !== 'COMPLETED' && (
         <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
           <Button
             type="primary"

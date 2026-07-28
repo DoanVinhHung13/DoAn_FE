@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Input, Select, message } from 'antd';
+import { Button, Card, Form, Input, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -25,18 +25,15 @@ const CatalogCreate = () => {
       };
       return CropService.createCrop(payload);
     },
-    onSuccess: async (response) => {
+    onSuccess: async () => {
       setInlineError('');
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       await refetchSystemKey();
       navigate(ROUTER.FM_CROP_CATALOGS);
     },
-    onError: (error) => {
-      const apiMessage = error?.response?.data?.message || error?.response?.data?.title || error?.message;
-      if (apiMessage) message.error(apiMessage);
+    onError: () => {
+      // axios interceptor handles error notification
     },
   });
 

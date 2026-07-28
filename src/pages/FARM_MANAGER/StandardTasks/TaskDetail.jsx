@@ -21,7 +21,6 @@ const TaskDetail = () => {
         setInitialLoading(true)
         const res = await TaskCatalogService.getById(id)
         if (res?.success === false) {
-          message.error('Không tìm thấy công việc')
           navigate(ROUTER.FM_TASKS)
           return
         }
@@ -33,7 +32,6 @@ const TaskDetail = () => {
           description: data.description,
         })
       } catch (err) {
-        message.error('Lấy thông tin công việc thất bại')
         navigate(ROUTER.FM_TASKS)
       } finally {
         setInitialLoading(false)

@@ -16,7 +16,6 @@ import {
   Tag,
   Tooltip,
   Typography,
-  message,
 } from 'antd';
 import {
   CheckCircleOutlined,
@@ -148,12 +147,10 @@ const CropCatalogs = () => {
       };
       return CropService.updateCrop(id, payload);
     },
-    onSuccess: async (response) => {
+    onSuccess: async () => {
       setInlineError('');
       setEditingCatalog(null);
       form.resetFields();
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
@@ -168,8 +165,7 @@ const CropCatalogs = () => {
         queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
         return;
       }
-      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
-      if (errorMsg) message.error(errorMsg);
+      // axios interceptor handles error notification
     },
   });
 
@@ -178,10 +174,8 @@ const CropCatalogs = () => {
       nextActive
         ? CropService.activateCrop(id)
         : CropService.deactivateCrop(id),
-    onSuccess: async (response) => {
+    onSuccess: async () => {
       setInlineError('');
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail'] });
@@ -189,7 +183,6 @@ const CropCatalogs = () => {
     },
     onError: (error) => {
       const statusCode = error?.response?.status;
-      const apiMessage = error?.response?.data?.message || error?.response?.data?.title || error?.message || '';
       if (statusCode === 404) {
         setInlineError(EMPTY_MESSAGE);
         setSelectedCatalogId(null);
@@ -197,7 +190,7 @@ const CropCatalogs = () => {
         queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
         return;
       }
-      if (apiMessage) message.error(apiMessage);
+      // axios interceptor handles error notification
     },
   });
 

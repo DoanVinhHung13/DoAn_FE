@@ -22,14 +22,11 @@ const TaskCreate = () => {
 
       const res = await TaskCatalogService.create(body)
 
-      if (res?.success === false) {
-        message.error(res.message || 'Có lỗi xảy ra khi lưu công việc.')
-        return
-      }
+      if (res?.success === false) return
 
       navigate(ROUTER.FM_TASKS)
     } catch (err) {
-      message.error('Vui lòng nhập đầy đủ các trường thông tin bắt buộc.')
+      // axios interceptor handles error notification
     } finally {
       setLoading(false)
     }

@@ -106,12 +106,8 @@ const CropCreate = () => {
       }
 
       form.setFieldsValue({ imageUrl });
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
       onSuccess(response);
     } catch (error) {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) message.error(errorMsg);
       onError(error);
     } finally {
       setUploadingCreate(false);
@@ -145,9 +141,7 @@ const CropCreate = () => {
       };
       return CropManagementService.createCrop(payload);
     },
-    onSuccess: (response) => {
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       navigate(ROUTER.FM_CROPS);
     },
@@ -162,9 +156,8 @@ const CropCreate = () => {
             errors: ['Tên cây trồng đã tồn tại trong hệ thống.'],
           },
         ]);
-      } else if (errorMessage) {
-        message.error(errorMessage);
       }
+      // axios interceptor handles error notification
     },
   });
 

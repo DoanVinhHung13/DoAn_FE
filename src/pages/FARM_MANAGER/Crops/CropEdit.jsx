@@ -11,7 +11,6 @@ import {
   Select,
   Spin,
   Upload,
-  message,
   Row,
   Col,
 } from 'antd';
@@ -35,7 +34,6 @@ import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 
-const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
 
 const CropEdit = () => {
   const navigate = useNavigate();
@@ -213,11 +211,7 @@ const CropEdit = () => {
         return res;
       });
     },
-    onSuccess: (response) => {
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
       queryClient.invalidateQueries({ queryKey: ['growth-stages', id] });
@@ -225,14 +219,10 @@ const CropEdit = () => {
     },
     onError: (error) => {
       if (error?.response?.status === 404) {
-        message.error(EMPTY_MESSAGE);
         navigate(ROUTER.FM_CROPS);
         return;
       }
-      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
-      if (errorMsg) {
-        message.error(errorMsg);
-      }
+      // axios interceptor handles error notification
     },
   });
 
@@ -265,16 +255,8 @@ const CropEdit = () => {
       }
 
       form.setFieldsValue({ imageUrl });
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
       onSuccess(response);
     } catch (error) {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) {
-        message.error(errorMsg);
-      }
       onError(error);
     } finally {
       setUploading(false);
