@@ -3,6 +3,8 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   DeleteOutlined,
+  ArrowDownOutlined,
+  ArrowUpOutlined,
   EditOutlined,
   InfoCircleOutlined,
   PlusOutlined,
@@ -52,6 +54,11 @@ const taskStatusIcon = s =>
   ) : (
     <ClockCircleOutlined />
   )
+
+const taskOrderValue = (task, fallback = 0) => {
+  const order = Number(task?.taskOrder)
+  return Number.isFinite(order) && order > 0 ? order : fallback
+}
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
 const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
@@ -116,6 +123,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
   })
   const [editTaskForm] = Form.useForm()
   const [savingEdit, setSavingEdit] = useState(false)
+  const [savingOrder, setSavingOrder] = useState(false)
 
   useEffect(() => {
     const loadCatalogs = async () => {
@@ -233,6 +241,12 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
 
   const selectedStage = stages.find(s => s.id === selectedId) ?? null
   const selectedTasks = selectedId ? tasks[selectedId] || [] : []
+  const orderedSelectedTasks = [...selectedTasks].sort(
+    (a, b) =>
+      taskOrderValue(a, Number.MAX_SAFE_INTEGER) -
+        taskOrderValue(b, Number.MAX_SAFE_INTEGER) ||
+      String(a.id).localeCompare(String(b.id)),
+  )
   const selectedIdx = stages.findIndex(s => s.id === selectedId)
 
   // ── Handlers ──────────────────────────────────────────────────────────────
@@ -306,6 +320,33 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
       // axios interceptor handles error notification
     } finally {
       setSavingTask(false)
+    }
+  }
+
+  const handleMoveTask = async (taskId, direction) => {
+    const currentIndex = orderedSelectedTasks.findIndex(task => task.id === taskId)
+    const targetIndex = currentIndex + direction
+
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= orderedSelectedTasks.length) {
+      return
+    }
+
+    const nextTasks = [...orderedSelectedTasks]
+    const [movedTask] = nextTasks.splice(currentIndex, 1)
+    nextTasks.splice(targetIndex, 0, movedTask)
+
+    try {
+      setSavingOrder(true)
+      await CultivationTaskService.reorder({
+        cultivationLogbookId: planId,
+        cultivationStageId: selectedId,
+        taskIds: nextTasks.map(task => task.id),
+      })
+      await loadData()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setSavingOrder(false)
     }
   }
 
@@ -442,9 +483,9 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                 {/* Danh sách công việc */}
                 {selectedTasks.length > 0 ? (
                   <List
-                    dataSource={selectedTasks}
+                    dataSource={orderedSelectedTasks}
                     split={false}
-                    renderItem={task => {
+                    renderItem={(task, taskIndex) => {
                       const cfg = getTaskCfg(task.status)
                       return (
                         <List.Item key={task.id} className="mb-4">
@@ -468,6 +509,40 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                               {/* Header */}
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex items-center gap-3">
+                                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                                    <Text className="text-xs font-bold text-green-700">
+                                      {taskOrderValue(task, taskIndex + 1)}
+                                    </Text>
+                                    <div className="flex gap-1">
+                                      <Button
+                                        type="text"
+                                        size="small"
+                                        icon={<ArrowUpOutlined />}
+                                        aria-label="Đưa công việc lên trước"
+                                        disabled={
+                                          savingOrder || taskIndex === 0
+                                        }
+                                        onClick={e => {
+                                          e.stopPropagation()
+                                          handleMoveTask(task.id, -1)
+                                        }}
+                                      />
+                                      <Button
+                                        type="text"
+                                        size="small"
+                                        icon={<ArrowDownOutlined />}
+                                        aria-label="Đưa công việc xuống sau"
+                                        disabled={
+                                          savingOrder ||
+                                          taskIndex === orderedSelectedTasks.length - 1
+                                        }
+                                        onClick={e => {
+                                          e.stopPropagation()
+                                          handleMoveTask(task.id, 1)
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
                                   <div
                                     className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg
                                       ${task.status === "COMPLETED"
