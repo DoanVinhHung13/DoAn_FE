@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationLogService from 'src/services/CultivationLogService'
 import SectionTitle from 'src/components/Common/SectionTitle'
+import { getUserDisplayName } from 'src/utils/userDisplayName'
 
 const { Text } = Typography
 
@@ -59,7 +60,19 @@ const StageListItem = ({ stage, index, isActive, onClick }) => (
 const DailyLogCard = ({ log, index }) => {
   // Parse data từ API
   const logDate = log.logDate || log.workDate || log.date || log.createdAt
-  const recordedBy = log.recordedByName || log.createdByName || log.farmerName || log.recordedBy || 'Chưa xác định'
+  const recordedBy = getUserDisplayName(
+    log.recordedByName,
+    log.createdByName,
+    log.farmerName,
+    log.recordedBy,
+    log.updatedByName,
+    log.updatedBy,
+    log.createdBy,
+    log.user,
+    log.author,
+    log.performedByName,
+    log.performedBy,
+  )
   const description = log.description || log.note || log.workDescription
   const status = log.status || log.approvalStatus
 

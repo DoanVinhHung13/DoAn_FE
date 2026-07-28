@@ -45,6 +45,7 @@ import CultivationTaskService from 'src/services/CultivationTaskService'
 import CultivationLogService from 'src/services/CultivationLogService'
 import UserService from 'src/services/UserService'
 import { formatDate } from 'src/utils/dateFormatters'
+import { getUserDisplayName } from 'src/utils/userDisplayName'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { ROLES } from 'src/constants/roles'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
@@ -254,6 +255,19 @@ const FarmSupervisorTaskDetail = () => {
             <InfoCircleOutlined className="mr-2" /> <strong>Hướng dẫn:</strong> {task.description}
           </div>
         )}
+        <div className="mt-3 text-sm text-gray-500">
+          Cập nhật bởi:{' '}
+          <span className="font-semibold text-gray-700">
+            {getUserDisplayName(
+              task.updatedByName,
+              task.updatedBy,
+              task.editedByName,
+              task.editedBy,
+              task.createdByName,
+              task.createdBy,
+            )}
+          </span>
+        </div>
       </div>
 
       <Row gutter={[24, 24]}>

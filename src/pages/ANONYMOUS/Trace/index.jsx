@@ -21,6 +21,7 @@ import {
 import { Sprout, Wheat } from 'lucide-react';
 import dayjs from 'dayjs';
 import http from 'src/services/01_axios';
+import { getUserDisplayName } from 'src/utils/userDisplayName';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -64,7 +65,18 @@ const buildTimelineGroups = (traceData) => {
           startDate: log.workStartDate || log.activityDate || dailyLog?.date,
           endDate: log.workEndDate || log.activityDate || dailyLog?.date,
           description: log.description || dailyLog?.activity || '',
-          updatedBy: log.supervisorEditorName || 'Supervisor',
+          updatedBy: getUserDisplayName(
+            log.supervisorEditorName,
+            log.editedByName,
+            log.editedBy,
+            log.updatedByName,
+            log.updatedBy,
+            log.editorName,
+            log.updatedByUser,
+            log.editor,
+            log.performedByName,
+            log.performedBy,
+          ),
           materialsText,
           images: (Array.isArray(log.images) ? log.images : []).map(getImageUrl).filter(Boolean),
         };
@@ -75,7 +87,18 @@ const buildTimelineGroups = (traceData) => {
         startDate: log.date,
         endDate: log.date,
         description: log.activity || log.notes || '',
-        updatedBy: log.updatedBy || 'Supervisor',
+        updatedBy: getUserDisplayName(
+          log.updatedByName,
+          log.updatedBy,
+          log.createdByName,
+          log.createdBy,
+          log.recordedByName,
+          log.recordedBy,
+          log.user,
+          log.author,
+          log.performedByName,
+          log.performedBy,
+        ),
         materialsText: '',
         images: [],
       }));

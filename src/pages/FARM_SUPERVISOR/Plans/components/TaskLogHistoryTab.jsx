@@ -9,6 +9,7 @@ import { Alert, Card, Col, Empty, Image, Row, Spin, Tag, Tree, Typography } from
 import { useState } from 'react'
 import CultivationLogService from 'src/services/CultivationLogService'
 import { formatDate } from 'src/utils/dateFormatters'
+import { getUserDisplayName } from 'src/utils/userDisplayName'
 
 const { Text, Title } = Typography
 
@@ -118,12 +119,24 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                             </Tag>
                           )}
                         </div>
-                        {log.createdByName && log.createdByName !== 'Không xác định' && (
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <UserOutlined className="text-gray-400" />
-                            Người ghi: <span className="font-semibold text-gray-700">{log.createdByName}</span>
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <UserOutlined className="text-gray-400" />
+                          Cập nhật bởi:{' '}
+                          <span className="font-semibold text-gray-700">
+                            {getUserDisplayName(
+                              log.updatedByName,
+                              log.updatedBy,
+                              log.createdByName,
+                              log.createdBy,
+                              log.recordedByName,
+                              log.recordedBy,
+                              log.user,
+                              log.author,
+                              log.performedByName,
+                              log.performedBy,
+                            )}
                           </span>
-                        )}
+                        </span>
                       </div>
 
                       {/* Mô tả / Nội dung ghi chép */}

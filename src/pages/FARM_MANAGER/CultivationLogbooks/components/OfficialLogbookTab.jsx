@@ -6,6 +6,7 @@ import { Card, Empty, Image, Spin, List, Avatar, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationStageService from 'src/services/CultivationStageService'
+import { getUserDisplayName } from 'src/utils/userDisplayName'
 
 const { Text, Paragraph } = Typography
 
@@ -169,7 +170,22 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                       const materialsText = summary.materialsText || task.materialsText || ''
                       const workStartDate = task.workStartDate || summary.workStartDate || task.startDate
                       const workEndDate = task.workEndDate || summary.workEndDate || task.endDate
-                      const editedBy = summary.editedBy || task.editedByName || summary.supervisorName || 'Supervisor'
+                      const editedBy = getUserDisplayName(
+                        summary.editedBy,
+                        summary.editedByName,
+                        summary.editorName,
+                        summary.updatedBy,
+                        task.editedByName,
+                        task.editedBy,
+                        task.updatedByName,
+                        task.updatedBy,
+                        task.supervisorEditorName,
+                        summary.supervisorName,
+                        summary.performedByName,
+                        summary.performedBy,
+                        task.performedByName,
+                        task.performedBy,
+                      )
                       const editedAt = summary.editedAt || task.editedAt || task.updatedAt
 
                       const rawImages = summary.images?.length ? summary.images : task.images || []

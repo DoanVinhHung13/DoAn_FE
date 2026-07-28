@@ -67,6 +67,7 @@ import PesticideService from "src/services/PesticideService"
 import UploadService from "src/services/UploadService"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
+import { getUserDisplayName } from "src/utils/userDisplayName"
 
 const { Text } = Typography
 const { TextArea } = Input
@@ -1086,15 +1087,23 @@ const DailyLog = () => {
                             >
                               {formatDate(log.date)}
                             </Tag>
-                            {log.createdByName &&
-                              log.createdByName !== "Không xác định" && (
-                                <span className="text-[11px] text-gray-400">
-                                  Người ghi:{" "}
-                                  <span className="font-medium text-gray-600">
-                                    {log.createdByName}
-                                  </span>
-                                </span>
-                              )}
+                            <span className="text-[11px] text-gray-400">
+                              Cập nhật bởi:{" "}
+                              <span className="font-medium text-gray-600">
+                                {getUserDisplayName(
+                                  log.updatedByName,
+                                  log.updatedBy,
+                                  log.createdByName,
+                                  log.createdBy,
+                                  log.recordedByName,
+                                  log.recordedBy,
+                                  log.user,
+                                  log.author,
+                                  log.performedByName,
+                                  log.performedBy,
+                                )}
+                              </span>
+                            </span>
                           </div>
                           {log.description && (
                             <p className="text-sm m-0 mt-1.5 text-gray-700 font-medium leading-relaxed">

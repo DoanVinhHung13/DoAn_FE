@@ -35,6 +35,7 @@ import CultivationTaskService from "src/services/CultivationTaskService"
 import TaskCatalogService from "src/services/TaskCatalogService"
 import UserService from "src/services/UserService"
 import { formatDate } from "src/utils/dateFormatters"
+import { getUserDisplayName } from "src/utils/userDisplayName"
 import AssignTaskModal from "./AssignTaskModal"
 
 const { Text } = Typography
@@ -520,6 +521,16 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
                                         </Text>
                                       )}
                                     </div>
+                                    <Text type="secondary" className="block mt-1 text-xs">
+                                      Cập nhật bởi: {getUserDisplayName(
+                                        task.updatedByName,
+                                        task.updatedBy,
+                                        task.editedByName,
+                                        task.editedBy,
+                                        task.createdByName,
+                                        task.createdBy,
+                                      )}
+                                    </Text>
                                   </div>
                                 </div>
                                 <Tag

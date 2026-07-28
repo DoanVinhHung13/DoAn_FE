@@ -8,6 +8,7 @@ import { Card, Empty, Timeline, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { formatDateTime } from 'src/utils/dateFormatters'
 import SectionTitle from 'src/components/Common/SectionTitle'
+import { getUserDisplayName } from 'src/utils/userDisplayName'
 
 const ReviewHistoryTab = ({ item }) => {
   const [reviewHistory, setReviewHistory] = useState([])
@@ -22,7 +23,7 @@ const ReviewHistoryTab = ({ item }) => {
         history.push({
           action: 'CREATED',
           actor: 'Farm Manager',
-          actorName: item.createdByName || item.managerName || 'Farm Manager',
+          actorName: getUserDisplayName(item.createdByName, item.createdBy, item.managerName, item.manager),
           timestamp: item.createdAt,
           description: 'Tạo kế hoạch sản xuất và phân công cho Supervisor',
         })
@@ -33,7 +34,7 @@ const ReviewHistoryTab = ({ item }) => {
         history.push({
           action: 'SUBMITTED_FOR_REVIEW',
           actor: 'Farm Supervisor',
-          actorName: item.submittedByName || item.supervisorName || 'Farm Supervisor',
+          actorName: getUserDisplayName(item.submittedByName, item.submittedBy, item.supervisorName, item.supervisor),
           timestamp: item.submittedAt,
           description: 'Gửi yêu cầu phê duyệt nhật ký',
         })
@@ -45,7 +46,7 @@ const ReviewHistoryTab = ({ item }) => {
           history.push({
             action: 'EDITED',
             actor: edit.role || 'Farm Supervisor',
-            actorName: edit.editorName || edit.userName || 'Farm Supervisor',
+            actorName: getUserDisplayName(edit.editorName, edit.userName, edit.editor, edit.updatedBy, edit.createdBy),
             timestamp: edit.editedAt || edit.timestamp,
             description: edit.description || `Biên tập mô tả của công việc "${edit.taskName || 'công việc'}"`,
             changes: edit.changes ? {
@@ -61,7 +62,7 @@ const ReviewHistoryTab = ({ item }) => {
         history.push({
           action: item.reviewStatus === 'APPROVED' ? 'APPROVED' : item.reviewStatus === 'REJECTED' ? 'REJECTED' : 'REVIEWED',
           actor: 'Farm Manager',
-          actorName: item.reviewedByName || item.reviewerName || 'Farm Manager',
+          actorName: getUserDisplayName(item.reviewedByName, item.reviewerName, item.reviewedBy, item.reviewer),
           timestamp: item.reviewedAt,
           description: item.reviewStatus === 'APPROVED' 
             ? 'Phê duyệt nhật ký và cho phép tạo mã QR truy xuất nguồn gốc'

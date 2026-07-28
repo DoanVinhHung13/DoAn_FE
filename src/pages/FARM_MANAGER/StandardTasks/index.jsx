@@ -6,6 +6,7 @@ import {
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
+  UserOutlined,
 } from '@ant-design/icons'
 import { Button, Card, Input, message, Popconfirm, Tooltip } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
@@ -19,6 +20,7 @@ import ROUTER from 'src/router/ROUTER'
 
 import TaskCatalogService from 'src/services/TaskCatalogService'
 import { invalidCharsRegex } from 'src/utils/helpers'
+import { getUserDisplayName } from 'src/utils/userDisplayName'
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const TasksManagement = () => {
@@ -115,6 +117,24 @@ const TasksManagement = () => {
       key: 'description',
       render: (v) => (
         <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
+      ),
+    },
+    {
+      title: 'Cập nhật bởi',
+      key: 'updatedBy',
+      width: 180,
+      render: (_, record) => (
+        <span className="inline-flex items-center gap-1 text-sm text-gray-600">
+          <UserOutlined className="text-gray-400" />
+          {getUserDisplayName(
+            record.updatedByName,
+            record.updatedBy,
+            record.editedByName,
+            record.editedBy,
+            record.createdByName,
+            record.createdBy,
+          )}
+        </span>
       ),
     },
     {
