@@ -3,6 +3,7 @@ import {
   apiGetLandPlots,
   apiCreateLandPlot,
   apiGetLandPlotById,
+  apiGetLandPlotWeather,
   apiUpdateLandPlot,
 
   apiActivateLandPlot,
@@ -12,6 +13,7 @@ import {
 
 const getLandPlots = (params) => http.get(apiGetLandPlots, { params })
 const getLandPlotById = (id) => http.get(apiGetLandPlotById(id))
+const getLandPlotWeather = (id) => http.get(apiGetLandPlotWeather(id), { skipNotice: true })
 const createLandPlot = (body) => http.post(apiCreateLandPlot, body)
 const updateLandPlot = (id, body) => http.put(apiUpdateLandPlot(id), body)
 
@@ -24,6 +26,7 @@ const getAvailableForLogbook = (params) =>
 const LandPlotService = {
   getLandPlots,
   getLandPlotById,
+  getLandPlotWeather,
   createLandPlot,
   updateLandPlot,
 

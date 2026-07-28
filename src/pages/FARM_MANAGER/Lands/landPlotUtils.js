@@ -21,13 +21,6 @@ export const STATUS_OPTIONS = [
   { value: 'Inactive', label: 'Ngừng hoạt động' },
 ]
 
-export const OWNERSHIP_OPTIONS = [
-  { value: 'Owned', label: 'Sở hữu' },
-  { value: 'Leased', label: 'Thuê' },
-  { value: 'Cooperative', label: 'Hợp tác xã' },
-  { value: 'Other', label: 'Khác' },
-]
-
 export const AREA_UNIT_OPTIONS = [
   { value: 'ha', label: 'Hecta (ha)' },
   { value: 'm2', label: 'Mét vuông (m²)' },
@@ -77,10 +70,6 @@ export const getStatusLabel = (item) =>
 
 /** Hiển thị giá trị hoặc "Chưa cập nhật" nếu rỗng */
 export const displayValue = (value) => value || 'Chưa cập nhật'
-
-/** Trả về label loại sở hữu */
-export const getOwnershipLabel = (value) =>
-  OWNERSHIP_OPTIONS.find((item) => item.value === value)?.label || displayValue(value)
 
 /** Format diện tích để hiển thị (VD: "1.5 ha" hoặc "500 m²") */
 export const formatLandArea = (area, unit = 'ha') => {
@@ -155,12 +144,10 @@ export const buildLandPlotPayload = (values, polygonData) => {
     area: area || 0.0001,
     areaUnit: values.areaUnit,
     address: values.address?.trim() || null,
-    ownershipType: values.ownershipType || null,
     soilTypeId: values.soilTypeId || null,
     latitude: latitude ?? null,
     longitude: longitude ?? null,
     boundaryJson: ensureBoundaryString(polygonData?.boundaryJson),
-    imageUrl: values.imageUrl || null,
     description: values.description?.trim() || null,
     status: values.status || 'Active',
   }

@@ -28,13 +28,10 @@ const LandPlotCreate = () => {
   const {
     polygonData,
     mapError,
-    certPreview,
     isSaving,
     setMapError,
     setIsSubmitting,
     handlePolygonChange,
-    handleBeforeUpload,
-    uploadCertImage,
   } = useLandPlotForm(form)
 
   // ── State riêng: vùng trồng hiện có (kiểm tra chồng lấn) ─────────────────
@@ -72,11 +69,9 @@ const LandPlotCreate = () => {
         return
       }
 
-      const imageUrl = await uploadCertImage()
-
       setIsSubmitting(true)
       try {
-        const payload = buildLandPlotPayload({ ...values, imageUrl }, polygonData)
+        const payload = buildLandPlotPayload(values, polygonData)
         const res = await LandPlotService.createLandPlot(payload)
 
         if (res?.success === false) {
@@ -125,11 +120,8 @@ const LandPlotCreate = () => {
             <Form
               form={form}
               layout="vertical"
-              initialValues={{ ownershipType: 'Owned' }}
             >
               <LandPlotFormFields
-                certPreview={certPreview}
-                onBeforeUpload={handleBeforeUpload}
                 showAddressRequired
                 showAreaPlaceholder
               />

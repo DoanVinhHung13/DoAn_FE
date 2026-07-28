@@ -37,6 +37,8 @@ import {
   normalizeLandPlotResponse,
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
+import LandPlotWeather from './LandPlotWeather'
+import { normalizeWeather } from './landPlotWeatherUtils'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -57,6 +59,7 @@ const LandsManagement = () => {
   const [totalRecords, setTotalRecords] = useState(0)
   const [listLoading, setListLoading] = useState(false)
   const [listError, setListError] = useState(null)
+  const [weatherByPlotId, setWeatherByPlotId] = useState({})
 
   // ── Modal đổi trạng thái ─────────────────────────────────────────────────
   const [statusTarget, setStatusTarget] = useState(null) // plot đang chờ xác nhận
@@ -90,6 +93,32 @@ const LandsManagement = () => {
     fetchLandPlots()
   }, [fetchLandPlots])
 
+  const loadWeatherForPlot = useCallback(async (plotId) => {
+    if (!plotId) return
+
+    setWeatherByPlotId((current) => ({
+      ...current,
+      [plotId]: { loading: true, data: current[plotId]?.data || null, error: null },
+    }))
+
+    try {
+      const response = await LandPlotService.getLandPlotWeather(plotId)
+      setWeatherByPlotId((current) => ({
+        ...current,
+        [plotId]: { loading: false, data: normalizeWeather(response), error: null },
+      }))
+    } catch (err) {
+      setWeatherByPlotId((current) => ({
+        ...current,
+        [plotId]: { loading: false, data: null, error: err },
+      }))
+    }
+  }, [])
+
+  useEffect(() => {
+    listData.forEach((plot) => loadWeatherForPlot(getItemId(plot)))
+  }, [listData, loadWeatherForPlot])
+
   // ── API: đổi trạng thái kích hoạt / vô hiệu hóa ─────────────────────────
   const handleConfirmChangeStatus = async () => {
     if (!statusTarget) return
@@ -105,7 +134,7 @@ const LandsManagement = () => {
       if (res?.success === false) return
       setStatusTarget(null)
       fetchLandPlots() // tải lại danh sách sau khi đổi trạng thái
-    } catch (err) {
+    } catch {
       // axios interceptor handles error notification
     } finally {
       setStatusLoading(false)
@@ -165,6 +194,22 @@ const LandsManagement = () => {
       dataIndex: 'address',
       ellipsis: true,
       render: (value) => value || 'Chưa cập nhật',
+    },
+    {
+      title: 'Thời tiết hiện tại',
+      width: 190,
+      render: (_, record) => {
+        const weatherState = weatherByPlotId[getItemId(record)] || { loading: true }
+        return (
+          <LandPlotWeather
+            compact
+            loading={weatherState.loading}
+            weather={weatherState.data}
+            error={weatherState.error}
+            onRetry={() => loadWeatherForPlot(getItemId(record))}
+          />
+        )
+      },
     },
     {
       title: 'Diện tích',
@@ -338,7 +383,7 @@ const LandsManagement = () => {
           loading={listLoading}
           columns={columns}
           dataSource={listData}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 1180 }}
           onRow={(record) => ({
             onClick: () => navigate(routes.detail(getItemId(record))),
             className: 'cursor-pointer',

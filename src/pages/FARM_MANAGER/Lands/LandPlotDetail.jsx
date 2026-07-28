@@ -7,7 +7,6 @@ import {
   Col,
   Descriptions,
   Empty,
-  Image,
   Row,
   Spin,
   Tag,
@@ -20,12 +19,13 @@ import LandPlotService from 'src/services/LandPlotService'
 import {
   displayValue,
   formatLandArea,
-  getOwnershipLabel,
   getStatusLabel,
   isLandPlotActive,
   normalizeApiDetail,
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
+import LandPlotWeather from './LandPlotWeather'
+import { normalizeWeather } from './landPlotWeatherUtils'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -38,6 +38,9 @@ const LandPlotDetail = () => {
   const [plot, setPlot] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [weather, setWeather] = useState(null)
+  const [weatherLoading, setWeatherLoading] = useState(false)
+  const [weatherError, setWeatherError] = useState(null)
 
   // ── Fetch: lấy chi tiết vùng trồng ───────────────────────────────────────
   const fetchPlotDetail = useCallback(async () => {
@@ -57,6 +60,25 @@ const LandPlotDetail = () => {
   useEffect(() => {
     fetchPlotDetail()
   }, [fetchPlotDetail])
+
+  const fetchPlotWeather = useCallback(async () => {
+    if (!id) return
+    try {
+      setWeatherLoading(true)
+      setWeatherError(null)
+      const response = await LandPlotService.getLandPlotWeather(id)
+      setWeather(normalizeWeather(response))
+    } catch (err) {
+      setWeather(null)
+      setWeatherError(err)
+    } finally {
+      setWeatherLoading(false)
+    }
+  }, [id])
+
+  useEffect(() => {
+    fetchPlotWeather()
+  }, [fetchPlotWeather])
 
   const isActive = plot ? isLandPlotActive(plot) : false
 
@@ -148,22 +170,6 @@ const LandPlotDetail = () => {
               <Descriptions.Item label="Địa chỉ">
                 {displayValue(plot.address)}
               </Descriptions.Item>
-              <Descriptions.Item label="Loại sở hữu">
-                {getOwnershipLabel(plot.ownershipType)}
-              </Descriptions.Item>
-              <Descriptions.Item label="Giấy chứng nhận đất">
-                {plot.imageUrl ? (
-                  <Image
-                    src={plot.imageUrl}
-                    alt="Giấy chứng nhận đất"
-                    width={120}
-                    style={{ borderRadius: 8 }}
-                    placeholder
-                  />
-                ) : (
-                  'Chưa cập nhật'
-                )}
-              </Descriptions.Item>
               <Descriptions.Item label="Trạng thái">
                 <Tag color={isActive ? 'success' : 'default'}>
                   {getStatusLabel(plot)}
@@ -185,6 +191,15 @@ const LandPlotDetail = () => {
               boundaryJson={plot.boundaryJson}
             />
           </Card>
+        </Col>
+
+        <Col xs={24}>
+          <LandPlotWeather
+            weather={weather}
+            loading={weatherLoading}
+            error={weatherError}
+            onRetry={fetchPlotWeather}
+          />
         </Col>
       </Row>
     </div>

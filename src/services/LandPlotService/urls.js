@@ -1,6 +1,7 @@
 export const apiGetLandPlots = '/land-plots'
 export const apiCreateLandPlot = '/land-plots'
 export const apiGetLandPlotById = (id) => `/land-plots/${id}`
+export const apiGetLandPlotWeather = (id) => `/land-plots/${id}/weather`
 export const apiUpdateLandPlot = (id) => `/land-plots/${id}`
 
 export const apiActivateLandPlot = (id) => `/land-plots/${id}/activate`

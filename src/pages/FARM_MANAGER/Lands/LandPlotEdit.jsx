@@ -31,14 +31,10 @@ const LandPlotEdit = () => {
   const {
     polygonData,
     mapError,
-    certPreview,
     isSaving,
     setMapError,
     setIsSubmitting,
     handlePolygonChange,
-    handleBeforeUpload,
-    uploadCertImage,
-    initCertPreview,
   } = useLandPlotForm(form)
 
   // ── State riêng: chi tiết vùng trồng đang sửa ─────────────────────────────
@@ -78,11 +74,9 @@ const LandPlotEdit = () => {
       area: plot.area,
       areaUnit: plot.areaUnit || 'ha',
       address: plot.address,
-      ownershipType: plot.ownershipType,
       description: plot.description,
     })
-    initCertPreview(plot.imageUrl)
-  }, [plot, form, initCertPreview])
+  }, [plot, form])
 
   // ── Fetch: vùng trồng khác (kiểm tra chồng lấn, loại trừ chính mình) ─────
   const fetchExistingPlots = useCallback(async () => {
@@ -119,14 +113,11 @@ const LandPlotEdit = () => {
         return
       }
 
-      // Upload ảnh mới (nếu có)
-      const imageUrl = (await uploadCertImage()) || plot?.imageUrl || null
-
       // Gọi API cập nhật
       setIsSubmitting(true)
       try {
         const payload = buildLandPlotPayload(
-          { ...values, imageUrl },
+          values,
           polygonData || { boundaryJson: boundary },
         )
         const res = await LandPlotService.updateLandPlot(id, payload)
@@ -204,10 +195,7 @@ const LandPlotEdit = () => {
         <Col xs={24} xl={10}>
           <Card title="Thông tin vùng trồng">
             <Form form={form} layout="vertical">
-              <LandPlotFormFields
-                certPreview={certPreview}
-                onBeforeUpload={handleBeforeUpload}
-              />
+              <LandPlotFormFields />
             </Form>
           </Card>
         </Col>
