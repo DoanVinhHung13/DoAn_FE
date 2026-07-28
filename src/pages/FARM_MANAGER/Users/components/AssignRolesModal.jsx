@@ -20,14 +20,14 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
 
   React.useEffect(() => {
     if (open && user) {
-      form.setFieldsValue({ roles: user.roles || [] })
+      form.setFieldsValue({ role: user.roles?.[0] || undefined })
     }
   }, [open, user, form])
 
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
-      const res = await UserService.assignRoles(user.id, { roles: values.roles })
+      const res = await UserService.assignRoles(user.id, { roles: [values.role] })
       if (res?.success === false) return
       Notice({ msg: 'Phân quyền thành công!', isSuccess: true })
       onClose()
@@ -57,12 +57,11 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
         <Form.Item
-          name="roles"
+          name="role"
           label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Vai trò được gán</span>}
           rules={[{ required: true, message: 'Phải chọn ít nhất một vai trò!' }]}
         >
           <Select
-            mode="multiple"
             placeholder="Chọn vai trò"
             className="rounded-lg"
             optionLabelProp="label"

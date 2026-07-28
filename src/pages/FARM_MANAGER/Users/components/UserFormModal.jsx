@@ -1,6 +1,5 @@
 import {
   CameraOutlined,
-  LockOutlined,
   MailOutlined,
   PhoneOutlined,
   UserAddOutlined,
@@ -30,10 +29,11 @@ import UserService from "src/services/UserService"
 import {
   EMAIL_RULES,
   FULL_NAME_RULES,
-  PASSWORD_RULES,
   PHONE_RULES,
   getAvatarUrl,
 } from "src/utils/helpers"
+
+const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
 
 const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   const [form] = Form.useForm()
@@ -137,8 +137,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         // Thêm người dùng mới
         res = await UserService.createUser({
           fullName: values.fullName,
-          email: values.email,
-          password: values.password,
+          email: values.email?.trim() || null,
           phoneNumber: values.phoneNumber || null,
           gender: values.gender || null,
           dateOfBirth: values.dateOfBirth
@@ -240,34 +239,13 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                     Email
                   </span>
                 }
-                rules={EMAIL_RULES}
+                rules={OPTIONAL_EMAIL_RULES}
               >
                 <Input
                   type="email"
                   autoComplete="email"
                   prefix={<MailOutlined className="text-gray-300" />}
                   placeholder="example@eapls.com"
-                  className="h-10 rounded-lg"
-                />
-              </Form.Item>
-            </Col>
-          )}
-
-          {!isEdit && (
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="password"
-                label={
-                  <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                    Mật khẩu
-                  </span>
-                }
-                rules={PASSWORD_RULES}
-              >
-                <Input.Password
-                  autoComplete="new-password"
-                  prefix={<LockOutlined className="text-gray-300" />}
-                  placeholder="••••••••"
                   className="h-10 rounded-lg"
                 />
               </Form.Item>

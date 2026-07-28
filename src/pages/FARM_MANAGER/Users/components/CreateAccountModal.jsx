@@ -1,12 +1,23 @@
 import React from "react"
 import { Button, Form, Input, Select } from "antd"
-import { KeyOutlined, LockOutlined, UserOutlined } from "@ant-design/icons"
+import { KeyOutlined, LockOutlined, MailOutlined, PhoneOutlined, UserOutlined } from "@ant-design/icons"
 import CustomModal from "src/components/Modal/CustomModal"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import UserService from "src/services/UserService"
 import Notice from "src/components/Notice"
-import { PASSWORD_RULES } from "src/utils/helpers"
+import { EMAIL_RULES, PASSWORD_RULES, PHONE_RULES } from "src/utils/helpers"
+
+const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
+
+const contactRequiredRule = ({ getFieldValue }) => ({
+  validator: (_, value) => {
+    const hasEmail = getFieldValue("email")?.trim()
+    const hasPhone = getFieldValue("phoneNumber")?.trim()
+    if (value?.trim() || hasEmail || hasPhone) return Promise.resolve()
+    return Promise.reject(new Error("Vui lòng nhập email hoặc số điện thoại!"))
+  },
+})
 
 const CreateAccountModal = ({ open, onClose, users = [], onSuccess }) => {
   const [form] = Form.useForm()
@@ -24,16 +35,26 @@ const CreateAccountModal = ({ open, onClose, users = [], onSuccess }) => {
   React.useEffect(() => {
     if (open) {
       form.resetFields()
-      form.setFieldsValue({ roles: ["FARMER"] })
+      form.setFieldsValue({ role: "FARMER" })
     }
   }, [open, form])
+
+  const handleUserChange = userId => {
+    const selectedUser = users.find(user => user.id === userId)
+    form.setFieldsValue({
+      email: selectedUser?.email || "",
+      phoneNumber: selectedUser?.phoneNumber || selectedUser?.phone || "",
+    })
+  }
 
   const handleSubmit = async values => {
     try {
       setLoading(true)
       const res = await UserService.createAccount(values.userId, {
         password: values.password,
-        roles: values.roles,
+        roles: [values.role],
+        email: values.email?.trim() || null,
+        phoneNumber: values.phoneNumber?.trim() || null,
       })
 
       if (res?.success === false) return
@@ -77,12 +98,45 @@ const CreateAccountModal = ({ open, onClose, users = [], onSuccess }) => {
             optionFilterProp="label"
             placeholder="Chọn nhân viên đã tồn tại"
             options={userOptions}
+            onChange={handleUserChange}
             disabled={!userOptions.length}
             suffixIcon={<UserOutlined className="text-gray-300" />}
             className="h-10 rounded-lg"
             notFoundContent="Chưa có nhân viên phù hợp"
           />
         </Form.Item>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Form.Item
+            name="email"
+            dependencies={["phoneNumber"]}
+            label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Email</span>}
+            rules={[...OPTIONAL_EMAIL_RULES, contactRequiredRule]}
+          >
+            <Input
+              type="email"
+              autoComplete="email"
+              prefix={<MailOutlined className="text-gray-300" />}
+              placeholder="example@eapls.com"
+              className="h-10 rounded-lg"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="phoneNumber"
+            dependencies={["email"]}
+            label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Số điện thoại</span>}
+            rules={[...PHONE_RULES, contactRequiredRule]}
+          >
+            <Input
+              type="tel"
+              autoComplete="tel"
+              prefix={<PhoneOutlined className="text-gray-300" />}
+              placeholder="0912345678"
+              className="h-10 rounded-lg"
+            />
+          </Form.Item>
+        </div>
 
         <Form.Item
           name="password"
@@ -120,12 +174,11 @@ const CreateAccountModal = ({ open, onClose, users = [], onSuccess }) => {
         </Form.Item>
 
         <Form.Item
-          name="roles"
+          name="role"
           label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Vai trò</span>}
-          rules={[{ required: true, message: "Vui lòng chọn ít nhất một vai trò!" }]}
+          rules={[{ required: true, message: "Vui lòng chọn một vai trò!" }]}
         >
           <Select
-            mode="multiple"
             placeholder="Chọn vai trò"
             options={roleOptions}
             className="rounded-lg"
