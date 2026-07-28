@@ -5,6 +5,7 @@
 import {
   CheckCircleOutlined,
   EditOutlined,
+  KeyOutlined,
   ReloadOutlined,
   SearchOutlined,
   StopOutlined,
@@ -40,6 +41,7 @@ import ROUTER from "src/router/ROUTER"
 import { formatDate } from "src/utils/dateFormatters"
 import { getAvatarUrl, invalidCharsRegex } from "src/utils/helpers"
 import AssignRolesModal from "./components/AssignRolesModal"
+import CreateAccountModal from "./components/CreateAccountModal"
 import ResetPasswordModal from "./components/ResetPasswordModal"
 import UserFormModal from "./components/UserFormModal"
 
@@ -82,6 +84,7 @@ const UsersManagement = () => {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   const [formModal, setFormModal] = useState({ open: false, user: null })
+  const [createAccountModalOpen, setCreateAccountModalOpen] = useState(false)
   const [rolesModal, setRolesModal] = useState({ open: false, user: null })
   const [pwdModal, setPwdModal] = useState({ open: false, user: null })
   const [statusModal, setStatusModal] = useState({ open: false, user: null })
@@ -254,6 +257,7 @@ const UsersManagement = () => {
               <Button
                 type="text"
                 icon={<EditOutlined className="text-lg text-green-500" />}
+                aria-label="Chỉnh sửa người dùng"
                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
                 onClick={e => {
                   e.stopPropagation()
@@ -293,6 +297,7 @@ const UsersManagement = () => {
                     <CheckCircleOutlined className="text-lg text-green-500" />
                   )
                 }
+                aria-label={record.isActive ? "Vô hiệu hóa người dùng" : "Kích hoạt người dùng"}
                 className={`flex items-center justify-center w-8 h-8 rounded-lg ${record.isActive ? "hover:bg-red-50" : "hover:bg-green-50"}`}
                 onClick={e => {
                   e.stopPropagation()
@@ -318,14 +323,23 @@ const UsersManagement = () => {
           </TitleCustom>
         </div>
         {isFarmManager && (
-          <Button
-            type="primary"
-            icon={<UserAddOutlined />}
-            onClick={() => setFormModal({ open: true, user: null })}
-            className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
-          >
-            Thêm người dùng
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="primary"
+              icon={<UserAddOutlined />}
+              onClick={() => setFormModal({ open: true, user: null })}
+              className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
+            >
+              Thêm người dùng
+            </Button>
+            <Button
+              icon={<KeyOutlined />}
+              onClick={() => setCreateAccountModalOpen(true)}
+              className="flex-shrink-0 h-10 px-5 font-bold text-blue-600 border-blue-200 rounded-xl hover:text-blue-700 hover:border-blue-400 hover:bg-blue-50"
+            >
+              Tạo tài khoản
+            </Button>
+          </div>
         )}
       </div>
 
@@ -386,6 +400,7 @@ const UsersManagement = () => {
             </Button>
             <Button
               icon={<ReloadOutlined />}
+              aria-label="Tải lại danh sách người dùng"
               onClick={() => getList()}
               loading={loading}
               className="h-10 px-3 rounded-xl bg-gray-50"
@@ -433,6 +448,12 @@ const UsersManagement = () => {
         open={formModal.open}
         editingUser={formModal.user}
         onClose={() => setFormModal({ open: false, user: null })}
+        onSuccess={() => getList()}
+      />
+      <CreateAccountModal
+        open={createAccountModalOpen}
+        users={listData}
+        onClose={() => setCreateAccountModalOpen(false)}
         onSuccess={() => getList()}
       />
       <AssignRolesModal

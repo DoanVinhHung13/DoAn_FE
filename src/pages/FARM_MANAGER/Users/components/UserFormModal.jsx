@@ -243,6 +243,8 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                 rules={EMAIL_RULES}
               >
                 <Input
+                  type="email"
+                  autoComplete="email"
                   prefix={<MailOutlined className="text-gray-300" />}
                   placeholder="example@eapls.com"
                   className="h-10 rounded-lg"
@@ -263,6 +265,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                 rules={PASSWORD_RULES}
               >
                 <Input.Password
+                  autoComplete="new-password"
                   prefix={<LockOutlined className="text-gray-300" />}
                   placeholder="••••••••"
                   className="h-10 rounded-lg"
@@ -300,6 +303,8 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
               rules={PHONE_RULES}
             >
               <Input
+                type="tel"
+                autoComplete="tel"
                 prefix={<PhoneOutlined className="text-gray-300" />}
                 placeholder="0912345678"
                 className="h-10 rounded-lg"
@@ -413,7 +418,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             loading={loading}
             className="h-10 px-6 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
           >
-            {isEdit ? "Lưu thay đổi" : "Tạo tài khoản"}
+            {isEdit ? "Lưu thay đổi" : "Thêm người dùng"}
           </Button>
         </div>
       </Form>

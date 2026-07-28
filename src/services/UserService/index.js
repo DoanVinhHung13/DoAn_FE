@@ -6,6 +6,7 @@
  * GET    /users                       → getUsers(params)
  * GET    /users/:id                   → getUserById(id)
  * POST   /users                       → createUser(body)      [Farm Manager only]
+ * POST   /users/:id/create-account    → createAccount(id, body) [Farm Manager only]
  * PUT    /users/:id                   → updateUser(id, body)  [Farm Manager only]
  * DELETE /users/:id                   → deleteUser(id)        [Farm Manager only]
  * PUT    /users/:id/status            → changeUserStatus(id, body) — { isActive }
@@ -32,6 +33,7 @@ export const USER_URLS = {
   byId: id => `/users/${id}`,
   status: id => `/users/${id}/status`,
   roles: id => `/users/${id}/roles`,
+  createAccount: id => `/users/${id}/create-account`,
   password: id => `/users/${id}/password`,
   myProfile: "/users/me/profile",
   myAvatar: "/users/me/avatar",
@@ -76,6 +78,9 @@ const changeUserStatus = (id, body) => http.put(USER_URLS.status(id), body)
  */
 const assignRoles = (id, body) => http.post(USER_URLS.roles(id), body)
 
+/** POST /users/:id/create-account — cấp mật khẩu và vai trò cho nhân viên đã tồn tại */
+const createAccount = (id, body) => http.post(USER_URLS.createAccount(id), body)
+
 /** PUT /users/:id/password — đổi mật khẩu người dùng khác (Farm Manager) */
 const changeUserPassword = (id, body) => http.put(USER_URLS.password(id), body)
 
@@ -106,6 +111,7 @@ const UserService = {
   deleteUser,
   changeUserStatus,
   assignRoles,
+  createAccount,
   changeUserPassword,
   // Me
   updateMyProfile,
