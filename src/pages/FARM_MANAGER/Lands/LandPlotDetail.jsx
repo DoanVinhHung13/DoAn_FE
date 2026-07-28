@@ -78,6 +78,9 @@ const LandPlotDetail = () => {
 
   useEffect(() => {
     fetchPlotWeather()
+    const intervalId = window.setInterval(fetchPlotWeather, 10 * 60 * 1000)
+
+    return () => window.clearInterval(intervalId)
   }, [fetchPlotWeather])
 
   const isActive = plot ? isLandPlotActive(plot) : false

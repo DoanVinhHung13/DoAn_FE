@@ -21,6 +21,8 @@ import 'moment/locale/vi';
 import { useSelector } from 'react-redux';
 
 import ROUTER from 'src/router/ROUTER'
+import http from 'src/services/01_axios'
+import { normalizeWeather } from '../Lands/landPlotWeatherUtils'
 
 moment.locale('vi');
 
@@ -68,10 +70,17 @@ const Dashboard = () => {
     queryKey: ['weather', coords],
     queryFn: async () => {
       if (!coords) return null;
-      const { data } = await axios.get(`https://wttr.in/${coords.lat},${coords.lon}?format=j1&lang=vi`);
-      return data;
+      const response = await http.get('/weather/current', {
+        params: { latitude: coords.lat, longitude: coords.lon },
+        skipNotice: true,
+      });
+      return normalizeWeather(response);
     },
-    enabled: !!coords
+    enabled: !!coords,
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
+    refetchIntervalInBackground: false,
+    retry: 1,
   });
 
   // Fetch Vietnamese Address from GPS (Reverse Geocoding)
@@ -96,11 +105,12 @@ const Dashboard = () => {
   };
 
   const getWeatherIcon = (code) => {
-    const sunCodes = ['113'];
-    const rainCodes = ['263', '266', '293', '296', '299', '302', '305', '308', '353', '356', '359'];
+    const normalizedCode = Number(code);
+    const sunCodes = [0, 1];
+    const rainCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99];
 
-    if (sunCodes.includes(code)) return <Sun className="w-12 h-12 text-yellow-500 relative z-10" />;
-    if (rainCodes.includes(code)) return <CloudRain className="w-12 h-12 text-blue-400 relative z-10" />;
+    if (sunCodes.includes(normalizedCode)) return <Sun className="w-12 h-12 text-yellow-500 relative z-10" />;
+    if (rainCodes.includes(normalizedCode)) return <CloudRain className="w-12 h-12 text-blue-400 relative z-10" />;
     return <CloudOutlined className="text-7xl text-blue-400 relative z-10" />;
   };
 
@@ -143,9 +153,9 @@ const Dashboard = () => {
     return translated;
   };
 
-  const current = weather?.current_condition?.[0];
-  const weatherText = current?.lang_vi?.[0]?.value || current?.weatherDesc?.[0]?.value;
-  const area = weather?.nearest_area?.[0];
+  const current = weather;
+  const weatherText = current?.condition;
+  const area = null;
 
   const quickAccessItems = [
     { title: 'Quản lý người dùng', icon: <Users className="w-8 h-8" />, path: ROUTER.FM_USERS, color: '#6366f1' },
@@ -219,7 +229,7 @@ const Dashboard = () => {
                           {getWeatherIcon(current?.weatherCode)}
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-7xl font-bold tracking-tighter text-gray-900 leading-none">{current?.temp_C || '--'}°</span>
+                          <span className="text-7xl font-bold tracking-tighter text-gray-900 leading-none">{current?.temperature ?? '--'}°</span>
                           <span className="text-lg text-gray-800 font-bold ml-1">{translateCondition(weatherText)}</span>
                         </div>
                       </div>
@@ -233,7 +243,7 @@ const Dashboard = () => {
                         </div>
                         <div className="bg-white/60 backdrop-blur-sm p-3 rounded-2xl border border-white flex flex-col justify-center">
                           <Text className="text-gray-400 text-[10px] font-bold uppercase flex items-center gap-1"><Wind className="w-3 h-3 text-green-500" /> Gió</Text>
-                          <Text className="text-lg text-gray-800 font-black">{current?.windspeedKmph}<small className="text-[10px] ml-1">km/h</small></Text>
+                          <Text className="text-lg text-gray-800 font-black">{current?.windSpeed}<small className="text-[10px] ml-1">km/h</small></Text>
                         </div>
                       </div>
                     </Col>
