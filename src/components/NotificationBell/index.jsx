@@ -12,6 +12,10 @@ import {
 import ROUTER from 'src/router/ROUTER';
 import { getNotificationTypeLabel } from 'src/constants/notificationTypes';
 import { timeAgo } from 'src/utils/dateFormatters';
+import {
+  getNotificationActionUrl,
+  getNotificationContext,
+} from 'src/utils/notificationUtils';
 
 const { Text } = Typography;
 
@@ -72,8 +76,9 @@ const NotificationBell = () => {
       await markReadMutation.mutateAsync(id).catch(() => undefined);
     }
 
-    if (item.actionUrl?.startsWith('/')) {
-      navigate(item.actionUrl);
+    const actionUrl = getNotificationActionUrl(item);
+    if (actionUrl?.startsWith('/')) {
+      navigate(actionUrl);
       return;
     }
 
@@ -112,8 +117,11 @@ const NotificationBell = () => {
         ) : data?.items?.length ? (
           <List
             dataSource={data.items}
-            renderItem={(item) => (
-              <List.Item
+            renderItem={(item) => {
+              const context = getNotificationContext(item);
+
+              return (
+                <List.Item
                 className={`cursor-pointer border-b border-gray-100 px-4 py-3 hover:bg-white ${
                   item.isRead ? 'bg-white/50' : 'bg-green-50/50'
                 }`}
@@ -145,11 +153,18 @@ const NotificationBell = () => {
                           markReadMutation.mutate(item._id || item.id);
                         }}
                       />
-                    )}
+                      )}
                   </div>
+                  {(context.logbookName || context.stageName) && (
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                      {context.logbookName && <span>Nhật ký: {context.logbookName}</span>}
+                      {context.stageName && <span>Giai đoạn: {context.stageName}</span>}
+                    </div>
+                  )}
                 </div>
-              </List.Item>
-            )}
+                </List.Item>
+              )
+            }}
           />
         ) : (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có thông báo nào" className="py-12" />

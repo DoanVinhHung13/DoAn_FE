@@ -18,6 +18,7 @@ import {
 import ROUTER from 'src/router/ROUTER';
 import { getNotificationTypeLabel } from 'src/constants/notificationTypes';
 import { formatDateTime, parseDate } from 'src/utils/dateFormatters';
+import { getNotificationContext } from 'src/utils/notificationUtils';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -181,6 +182,7 @@ const NotificationDetail = () => {
     rawTime: sentTime,
   });
   const category = getNotificationTypeLabel(notification);
+  const context = getNotificationContext(notification);
 
   return (
     <div className="space-y-6">
@@ -218,6 +220,19 @@ const NotificationDetail = () => {
           <Title level={1} className="!mb-0 !text-3xl !font-bold">
             {notification.title || 'Thông báo'}
           </Title>
+          {(context.logbookName || context.stageName || context.taskName) && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {context.logbookName && (
+                <Tag color="green">Nhật ký: {context.logbookName}</Tag>
+              )}
+              {context.stageName && (
+                <Tag color="blue">Giai đoạn: {context.stageName}</Tag>
+              )}
+              {context.taskName && (
+                <Tag color="purple">Công việc: {context.taskName}</Tag>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="border-b border-gray-100 py-6">

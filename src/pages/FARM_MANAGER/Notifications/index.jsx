@@ -43,6 +43,10 @@ import {
   NOTIFICATION_TYPE_COLORS,
 } from 'src/constants/notificationTypes';
 import { parseDate, timeAgo } from 'src/utils/dateFormatters';
+import {
+  getNotificationActionUrl,
+  getNotificationContext,
+} from 'src/utils/notificationUtils';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -265,7 +269,14 @@ const FarmManagerNotifications = () => {
     return (sourceData?.items || []).filter((item) => {
       const matchesKeyword =
         !normalizedKeyword ||
-        [item.title, item.message, item.content, getCategory(item)]
+        [
+          item.title,
+          item.message,
+          item.content,
+          getCategory(item),
+          getNotificationContext(item).logbookName,
+          getNotificationContext(item).stageName,
+        ]
           .filter(Boolean)
           .some((value) =>
             String(value).toLocaleLowerCase('vi').includes(normalizedKeyword)
@@ -287,8 +298,9 @@ const FarmManagerNotifications = () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
 
-    if (item.actionUrl?.startsWith('/')) {
-      navigate(item.actionUrl);
+    const actionUrl = getNotificationActionUrl(item);
+    if (actionUrl?.startsWith('/')) {
+      navigate(actionUrl);
       return;
     }
 
@@ -414,6 +426,7 @@ const FarmManagerNotifications = () => {
               const id = item._id || item.id;
               const createdAt = item.createdAt || item.timestamp || item.date;
               const content = item.message || item.content || '';
+              const context = getNotificationContext(item);
 
               return (
                 <button
@@ -444,6 +457,12 @@ const FarmManagerNotifications = () => {
                     <Text type="secondary" className="block !text-sm !leading-6">
                       {content}
                     </Text>
+                    {(context.logbookName || context.stageName) && (
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                        {context.logbookName && <span>Nhật ký: {context.logbookName}</span>}
+                        {context.stageName && <span>Giai đoạn: {context.stageName}</span>}
+                      </div>
+                    )}
                   </span>
                   <span className="col-start-2 flex items-center gap-2 sm:col-start-auto">
                     <Text type="secondary" className="whitespace-nowrap !text-xs">

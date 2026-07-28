@@ -25,7 +25,7 @@ import {
   Typography,
 } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
 import { formatDate } from 'src/utils/dateFormatters'
@@ -39,18 +39,48 @@ import TaskLogHistoryTab from './components/TaskLogHistoryTab'
 
 const { Text } = Typography
 
+const normalizeTabKey = value => {
+  if (value === '2' || value === 'history') return '2'
+  if (value === '3' || value === 'finalization' || value === 'closing') return '3'
+  return '1'
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 const FarmSupervisorPlanDetail = () => {
   const { planId } = useParams()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [activeTabKey, setActiveTabKey] = useState('1')
+  const [activeTabKey, setActiveTabKey] = useState(() =>
+    normalizeTabKey(searchParams.get('tab')),
+  )
   const [plan, setPlan] = useState(null)
   const [stages, setStages] = useState([])
   const [tasks, setTasks] = useState({})
   const [loading, setLoading] = useState(true)
   const [submitModal, setSubmitModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    const nextTabKey = normalizeTabKey(searchParams.get('tab'))
+    setActiveTabKey(currentTabKey =>
+      currentTabKey === nextTabKey ? currentTabKey : nextTabKey,
+    )
+  }, [searchParams])
+
+  const handleTabChange = tabKey => {
+    setActiveTabKey(tabKey)
+    setSearchParams(
+      currentParams => {
+        const nextParams = new URLSearchParams(currentParams)
+        if (tabKey === '3') nextParams.set('tab', 'finalization')
+        else if (tabKey === '2') nextParams.set('tab', 'history')
+        else nextParams.delete('tab')
+        return nextParams
+      },
+      { replace: true },
+    )
+  }
 
   // ── Load ──────────────────────────────────────────────────────────────────
   const loadData = useCallback(async (isInitial = false) => {
@@ -241,7 +271,7 @@ const FarmSupervisorPlanDetail = () => {
       {/* ── Tabs ─────────────────────────────────────────────────────────────── */}
       <Tabs
         activeKey={activeTabKey}
-        onChange={setActiveTabKey}
+        onChange={handleTabChange}
         type="card"
         className="plan-tabs mt-4"
         items={[
