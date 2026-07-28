@@ -10,8 +10,6 @@ const AssignTaskModal = ({
   onCancel,
   onSuccess,
   task,
-  planId,
-  stageId,
 }) => {
   const [form] = Form.useForm()
   const [leaders, setLeaders] = useState([])
@@ -98,15 +96,11 @@ const AssignTaskModal = ({
       setSaving(true)
 
       const payload = {
-        name: task.name || task.taskName,
-        description: task.description,
         leaderId: values.farmLeaderId,
         farmerIds: values.farmerIds || [],
-        cultivationLogbookId: planId,
-        cultivationStageId: stageId,
       }
 
-      await CultivationTaskService.update(task.id, payload)
+      await CultivationTaskService.assign(task.id, payload)
       onSuccess()
     } catch (err) {
       if (!err?.errorFields) {

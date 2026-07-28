@@ -46,6 +46,13 @@ const RealtimeSync = () => {
       }, INVALIDATION_DELAY_MS)
     }
 
+    const invalidateNotifications = () => {
+      queryClient.invalidateQueries({
+        queryKey: ['notifications'],
+        refetchType: 'active',
+      })
+    }
+
     const refreshGroupsNow = () => {
       signalRService.invoke('RefreshGroups').catch(() => {})
     }
@@ -89,6 +96,7 @@ const RealtimeSync = () => {
         }
 
         signalRService.on('data-changed', handleDataChanged)
+        signalRService.on('notification-changed', invalidateNotifications)
         signalRService.on('qr-stats-updated', invalidateActiveQueries)
         retryAttempt = 0
         refreshGroupsNow()
@@ -108,6 +116,7 @@ const RealtimeSync = () => {
     return () => {
       disposed = true
       signalRService.off('data-changed', handleDataChanged)
+      signalRService.off('notification-changed', invalidateNotifications)
       signalRService.off('qr-stats-updated', invalidateActiveQueries)
       unsubscribeReconnect()
       unsubscribeClosed()

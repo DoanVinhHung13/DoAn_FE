@@ -1059,8 +1059,6 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
           loadData() // Refresh parent data
         }}
         task={assignTaskData}
-        planId={planId}
-        stageId={selectedId}
       />
     </div>
   )

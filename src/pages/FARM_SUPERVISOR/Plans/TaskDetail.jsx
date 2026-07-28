@@ -158,15 +158,11 @@ const FarmSupervisorTaskDetail = () => {
       const farmersList = farmers.filter((f) => (values.farmerIds || []).includes(f.id))
 
       const payload = {
-        name: task.name,
-        description: task.description,
         leaderId: values.farmLeaderId,
         farmerIds: values.farmerIds || [],
-        cultivationLogbookId: planId,
-        cultivationStageId: stage?.id
       }
 
-      await CultivationTaskService.update(taskId, payload)
+      await CultivationTaskService.assign(taskId, payload)
 
       setTask((prev) => ({
         ...prev,

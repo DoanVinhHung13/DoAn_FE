@@ -8,6 +8,7 @@ import {
   apiGetCultivationTasks,
   apiGetMyCultivationTasks,
   apiUpdateCultivationTask,
+  apiAssignCultivationTask,
   apiStartCultivationTask,
   apiGetLeaderSummary,
   apiSubmitTaskSummary,
@@ -38,6 +39,9 @@ const reorder = (body) =>
 const update = (id, body) =>
   http.put(apiUpdateCultivationTask(id), body)
 
+const assign = (id, body) =>
+  http.post(apiAssignCultivationTask(id), body)
+
 const remove = (id) =>
   http.delete(apiDeleteCultivationTask(id))
 
@@ -67,6 +71,7 @@ const CultivationTaskService = {
   createBulk,
   reorder,
   update,
+  assign,
   remove,
   start,
   getLeaderSummary,
