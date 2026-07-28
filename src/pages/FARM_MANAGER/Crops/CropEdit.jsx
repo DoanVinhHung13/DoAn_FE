@@ -111,7 +111,7 @@ const CropEdit = () => {
     if (!cropCatalogsData || cropCatalogsData.length === 0) {
       return [];
     }
-    return cropCatalogsData.map((catalog) => ({
+    return cropCatalogsData.filter(isActiveCropCatalog).map((catalog) => ({
       value: catalog.id || catalog.cropCatalogId,
       label: catalog.name || catalog.cropCatalogName,
     }));

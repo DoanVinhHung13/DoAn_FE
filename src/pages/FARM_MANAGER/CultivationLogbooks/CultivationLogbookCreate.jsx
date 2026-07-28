@@ -42,6 +42,7 @@ import UserService from 'src/services/UserService'
 import { ROLES } from 'src/constants/roles'
 
 import SectionTitle from 'src/components/Common/SectionTitle'
+import { isActiveCropCatalog } from 'src/utils/cropCatalog'
 
 const normalizeResponse = (response) => {
   const data = response?.data?.data ?? response?.data ?? response
@@ -157,7 +158,7 @@ const CultivationLogbookCreate = () => {
           Status: true,
         })
         if (!isMounted) return
-        setCatalogsData(normalizeResponse(response))
+        setCatalogsData(normalizeResponse(response).filter(isActiveCropCatalog))
       } catch (error) {
         console.error(error)
         if (isMounted) setCatalogsData([])

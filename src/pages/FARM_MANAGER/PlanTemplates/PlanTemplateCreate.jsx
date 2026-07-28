@@ -26,6 +26,7 @@ import CropManagementService from "src/services/CropManagementService"
 import CropService from "src/services/CropService"
 import PlanTemplateService from "src/services/PlanTemplateService"
 import ProcessStepService from "src/services/ProcessStepService"
+import { isActiveCropCatalog } from "src/utils/cropCatalog"
 
 const { Text } = Typography
 
@@ -201,7 +202,7 @@ const PlanTemplateCreate = () => {
         }))
         setSteps(mappedSteps.length ? mappedSteps : [createEmptyStep(1)])
         setOriginalSteps(mappedSteps)
-      } catch (error) {
+      } catch {
         // axios interceptor handles error notification
       } finally {
         if (mounted) setLoadingDetail(false)
@@ -217,7 +218,7 @@ const PlanTemplateCreate = () => {
   const catalogOptions = useMemo(
     () =>
       catalogs
-        .filter(item => item.isActive !== false)
+        .filter(isActiveCropCatalog)
         .map(item => ({
           value: item.id || item.cropCatalogId,
           label: item.name,

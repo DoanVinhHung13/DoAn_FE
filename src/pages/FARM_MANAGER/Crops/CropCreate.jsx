@@ -61,7 +61,7 @@ const CropCreate = () => {
 
   const cropCatalogOptions = useMemo(() => {
     if (!cropCatalogsData) return [];
-    return cropCatalogsData.map(catalog => ({
+    return cropCatalogsData.filter(isActiveCropCatalog).map(catalog => ({
       value: catalog.id || catalog.cropCatalogId,
       label: catalog.name || catalog.cropCatalogName,
     }));

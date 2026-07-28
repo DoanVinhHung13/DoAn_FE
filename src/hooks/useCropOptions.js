@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import CropManagementService from 'src/services/CropManagementService'
+import { isActiveCropCatalog } from 'src/utils/cropCatalog'
 
 export const useCropOptions = () => {
   const { data, isLoading } = useQuery({
@@ -11,7 +12,7 @@ export const useCropOptions = () => {
         ? payload
         : payload?.items || payload?.crops || payload?.cropCatalogs || []
       return items
-        .filter((c) => c.isActive !== false)
+        .filter(isActiveCropCatalog)
         .map((c) => ({
           value: c.id,
           label: c.name,
