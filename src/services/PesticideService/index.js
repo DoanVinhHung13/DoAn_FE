@@ -1,5 +1,5 @@
 /**
- * PesticideService — thuốc BVTV
+ * PesticideService — nông dược
  * Swagger: /api/pesticides
  */
 import http from '../01_axios'

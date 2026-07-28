@@ -187,8 +187,8 @@ const QRManagement = () => {
       {
         date: dayjs(activeBatch?.startDate || '2024-03-12').add(45, 'day').format('YYYY-MM-DD'),
         stage: 'Phòng trừ sâu bệnh',
-        activity: 'Kiểm tra và phun thuốc sinh học',
-        notes: 'Phun thuốc bảo vệ thực vật sinh học, an toàn cho sức khỏe',
+        activity: 'Kiểm tra và phun nông dược sinh học',
+        notes: 'Phun nông dược sinh học, an toàn cho sức khỏe',
       },
       {
         date: activeBatch?.harvestDate || '2024-05-20',
@@ -205,7 +205,7 @@ const QRManagement = () => {
         supplier: 'Công ty Phân bón Đồng Nai',
       },
       {
-        type: 'Thuốc BVTV',
+        type: 'Nông dược',
         name: 'Biotin Plus (Sinh học)',
         quantity: '5 lít',
         supplier: 'Công ty TNHH Sinh học An Nông',

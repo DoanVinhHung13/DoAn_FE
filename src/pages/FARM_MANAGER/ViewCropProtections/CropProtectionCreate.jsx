@@ -19,7 +19,7 @@ const CropProtectionCreate = () => {
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <BugOutlined className="text-emerald-600" />
-            Thêm mới thuốc BVTV
+            Thêm mới nông dược
           </TitleCustom>
         </div>
       </div>

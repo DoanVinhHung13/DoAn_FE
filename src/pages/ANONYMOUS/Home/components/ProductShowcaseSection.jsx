@@ -24,7 +24,7 @@ const products = [
         { date: '01/06/2025', activity: 'Làm đất và gieo mạ', note: 'Sử dụng giống ST25 thuần chủng' },
         { date: '20/06/2025', activity: 'Cấy lúa', note: 'Mật độ 25 khóm/m²' },
         { date: '15/07/2025', activity: 'Bón phân hữu cơ đợt 1', note: 'Sử dụng phân bón vi sinh chuyên dụng' },
-        { date: '10/09/2025', activity: 'Kiểm tra chất lượng', note: 'Không phát hiện dư lượng thuốc BVTV' },
+        { date: '10/09/2025', activity: 'Kiểm tra chất lượng', note: 'Không phát hiện dư lượng nông dược' },
         { date: '15/10/2025', activity: 'Thu hoạch và sấy khô', note: 'Độ ẩm đạt chuẩn 14%' },
       ],
     },

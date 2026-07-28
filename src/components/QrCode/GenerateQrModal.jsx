@@ -56,7 +56,7 @@ const GenerateQrModal = ({ open, onCancel, batchId, batchName }) => {
               <ul className="list-disc pl-4 space-y-1">
                 <li>Thông tin nông hộ & vùng trồng (Land Plot)</li>
                 <li>Toàn bộ nhật ký canh tác chính thức (Official Logbook)</li>
-                <li>Lịch sử bón phân, phun thuốc & kiểm định chất lượng</li>
+                <li>Lịch sử bón phân, phun nông dược & kiểm định chất lượng</li>
               </ul>
             </div>
 

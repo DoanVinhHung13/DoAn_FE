@@ -243,7 +243,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                                 )}
                                 {totalPesticides.length > 0 && (
                                   <div>
-                                    <p className="mb-1 text-xs text-gray-500 font-medium">Thuốc BVTV:</p>
+                                    <p className="mb-1 text-xs text-gray-500 font-medium">Nông dược:</p>
                                     <div className="space-y-1">
                                       {totalPesticides.map((pest, idx) => (
                                         <div key={idx} className="flex items-center gap-2 text-xs text-gray-700">

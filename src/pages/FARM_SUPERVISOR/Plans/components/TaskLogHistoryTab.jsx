@@ -135,7 +135,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                         <div className="text-sm text-gray-400 italic mb-3">Không có ghi chú</div>
                       )}
 
-                      {/* Vật tư: Phân bón & Thuốc BVTV */}
+                      {/* Vật tư: Phân bón & Nông dược */}
                       {(log.fertilizers?.length > 0 || log.pesticides?.length > 0) && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                           {/* Phân bón */}
@@ -172,16 +172,16 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                             </div>
                           )}
 
-                          {/* Thuốc BVTV */}
+                          {/* Nông dược */}
                           {log.pesticides?.length > 0 && (
                             <div className="bg-purple-50/60 rounded-xl p-3 border border-purple-100">
                               <div className="text-xs font-bold text-purple-800 mb-2 flex items-center gap-1.5">
                                 <ExperimentOutlined className="text-purple-600 text-sm" />
-                                Thuốc BVTV sử dụng:
+                                Nông dược sử dụng:
                               </div>
                               <div className="space-y-1.5">
                                 {log.pesticides.map((p, i) => {
-                                  const name = p.name || p.materialName || 'Thuốc BVTV'
+                                  const name = p.name || p.materialName || 'Nông dược'
                                   const qty = p.quantity
                                   const unit = p.quantityUnit || p.unit || 'ml'
                                   const area = p.area

@@ -215,7 +215,7 @@ const DailyLog = () => {
         const areaUnit = p.areaUnit || "ha"
         const key = `${id}|${unit}`
         const opt = pesticideOptions.find(o => o.value === id)
-        const name = p.name || opt?.name || p.materialName || id || "Thuốc BVTV"
+        const name = p.name || opt?.name || p.materialName || id || "Nông dược"
         if (!pestMap[key]) {
           pestMap[key] = {
             id,
@@ -847,7 +847,7 @@ const DailyLog = () => {
               bodyStyle={{ padding: "20px" }}
             >
               <div className="mb-4 text-base font-bold text-gray-800">
-                Thuốc bảo vệ thực vật
+                Nông dược
               </div>
               <Form.List name="pesticides">
                 {(fields, { add, remove }) => (
@@ -877,13 +877,13 @@ const DailyLog = () => {
                               {...field}
                               name={[field.name, "pesticideId"]}
                               rules={[
-                                { required: true, message: "Chọn loại thuốc" },
+                                { required: true, message: "Chọn loại nông dược" },
                               ]}
                             >
                               <Select
                                 showSearch
                                 optionFilterProp="label"
-                                placeholder="Chọn thuốc BVTV"
+                                placeholder="Chọn nông dược"
                                 options={pesticideOptions}
                                 disabled={isViewOnly}
                                 onChange={(value, option) => {
@@ -1018,7 +1018,7 @@ const DailyLog = () => {
                         icon={<PlusOutlined />}
                         className="w-full text-green-700 border-green-300"
                       >
-                        Thêm thuốc BVTV
+                        Thêm nông dược
                       </Button>
                     )}
                   </div>
@@ -1143,16 +1143,16 @@ const DailyLog = () => {
                             </div>
                           )}
 
-                          {/* Thuốc BVTV */}
+                          {/* Nông dược */}
                           {log.pesticides?.length > 0 && (
                             <div className="mt-2 bg-purple-50/60 rounded-xl p-2.5 border border-purple-100/80 space-y-1">
                               <div className="text-[11px] font-bold text-purple-800 flex items-center gap-1">
                                 <ExperimentOutlined className="text-purple-600" />
-                                Thuốc BVTV đã sử dụng:
+                                Nông dược đã sử dụng:
                               </div>
                               {log.pesticides.map((p, i) => {
                                 const name =
-                                  p.name || p.materialName || "Thuốc BVTV"
+                                  p.name || p.materialName || "Nông dược"
                                 const qty = p.quantity
                                 const unit = p.quantityUnit || p.unit || "ml"
                                 const area = p.area
@@ -1423,7 +1423,7 @@ const DailyLog = () => {
               )
             })()}
 
-            {/* ── Bảng thuốc BVTV ── */}
+            {/* ── Bảng nông dược ── */}
             {(() => {
               const rows =
                 leaderSummary?.pesticides?.length > 0
@@ -1433,7 +1433,7 @@ const DailyLog = () => {
                         p.name ||
                         p.pesticideName ||
                         p.materialName ||
-                        `Thuốc ${i + 1}`,
+                        `Nông dược ${i + 1}`,
                       totalQuantity: p.totalQuantity ?? p.quantity ?? 0,
                       unit: p.unit ?? "",
                       totalArea: p.totalArea ?? p.area ?? 0,
@@ -1452,7 +1452,7 @@ const DailyLog = () => {
 
               const cols = [
                 {
-                  title: "Loại thuốc BVTV",
+                  title: "Loại nông dược",
                   dataIndex: "name",
                   key: "name",
                   render: v => (
@@ -1492,7 +1492,7 @@ const DailyLog = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-2 font-semibold text-purple-800">
                     <ExperimentOutlined className="text-purple-500" />
-                    Thuốc bảo vệ thực vật đã sử dụng
+                    Nông dược đã sử dụng
                     {rows.length === 0 && (
                       <span className="text-xs font-normal text-gray-400">
                         (chưa có dữ liệu)
@@ -1508,7 +1508,7 @@ const DailyLog = () => {
                     locale={{
                       emptyText: (
                         <div className="py-2 text-xs text-center text-gray-400">
-                          Chưa ghi nhận thuốc BVTV nào
+                          Chưa ghi nhận nông dược nào
                         </div>
                       ),
                     }}
@@ -1598,7 +1598,7 @@ const DailyLog = () => {
               >
                 <TextArea
                   rows={3}
-                  placeholder="VD: Đã hoàn thành công việc phun thuốc theo kế hoạch, cây trồng phát triển tốt..."
+                  placeholder="VD: Đã hoàn thành công việc phun nông dược theo kế hoạch, cây trồng phát triển tốt…"
                   disabled={task.status === "WAITING_APPROVAL"}
                 />
               </Form.Item>

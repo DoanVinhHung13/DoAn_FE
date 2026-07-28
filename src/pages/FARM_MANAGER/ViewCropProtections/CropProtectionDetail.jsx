@@ -6,7 +6,7 @@ import {
   ShopOutlined,
   TagOutlined,
 } from '@ant-design/icons'
-import { Badge, Button, Card, Descriptions, Empty, Skeleton, Table, Tag, Typography, message } from 'antd'
+import { Badge, Button, Card, Descriptions, Empty, Skeleton, Table, Tag, Typography } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
@@ -95,7 +95,7 @@ const CropProtectionDetail = () => {
           return
         }
         setItem(res?.data)
-      } catch (err) {
+      } catch {
         navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
       } finally {
         setInitialLoading(false)
@@ -109,7 +109,7 @@ const CropProtectionDetail = () => {
       <div className="space-y-6">
         <TitleCustom className="!mb-0 flex items-center gap-2">
           <BugOutlined className="text-emerald-600" />
-          Chi tiết thuốc bảo vệ thực vật
+          Chi tiết nông dược
         </TitleCustom>
         <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: '24px' }}>
           <Skeleton active paragraph={{ rows: 8 }} />
@@ -132,7 +132,7 @@ const CropProtectionDetail = () => {
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <BugOutlined className="text-emerald-600" />
-            Chi tiết thuốc bảo vệ thực vật
+              Chi tiết nông dược
           </TitleCustom>
         </div>
       </div>
@@ -148,7 +148,7 @@ const CropProtectionDetail = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="mb-0.5 text-xs font-semibold tracking-wider text-gray-400 uppercase">
-              Mã thuốc BVTV
+              Mã nông dược
             </p>
             <span className="text-lg font-bold text-gray-800 font-mono">
               {item.code || '—'}
@@ -192,7 +192,7 @@ const CropProtectionDetail = () => {
             <Descriptions.Item
               label={
                 <span className="flex items-center gap-1">
-                  <TagOutlined /> Tên thuốc BVTV
+                  <TagOutlined /> Tên nông dược
                 </span>
               }
               span={2}

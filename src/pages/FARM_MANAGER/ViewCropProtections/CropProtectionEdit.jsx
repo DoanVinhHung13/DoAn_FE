@@ -24,7 +24,7 @@ const CropProtectionEdit = () => {
           return
         }
         setEditingItem(res?.data)
-      } catch (err) {
+      } catch {
         navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
       } finally {
         setInitialLoading(false)
@@ -42,7 +42,7 @@ const CropProtectionEdit = () => {
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <BugOutlined className="text-emerald-600" />
-            Chỉnh sửa thuốc BVTV
+            Chỉnh sửa nông dược
           </TitleCustom>
         </div>
       </div>

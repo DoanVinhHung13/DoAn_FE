@@ -151,7 +151,7 @@ const ViewCropProtections = () => {
       ),
     },
     {
-      title: 'Tên Thuốc BVTV',
+      title: 'Tên nông dược',
       dataIndex: 'name',
       key: 'name',
       render: (v) => (
@@ -250,7 +250,7 @@ const ViewCropProtections = () => {
             <Tooltip
               title={
                 locked
-                  ? 'Thuốc đang được sử dụng, không thể chỉnh sửa'
+                  ? 'Nông dược đang được sử dụng, không thể chỉnh sửa'
                   : 'Chỉnh sửa'
               }
             >
@@ -273,7 +273,7 @@ const ViewCropProtections = () => {
             <Tooltip
               title={
                 locked
-                  ? 'Thuốc đang được sử dụng'
+                  ? 'Nông dược đang được sử dụng'
                   : active
                     ? 'Vô hiệu hóa'
                     : 'Kích hoạt'
@@ -311,7 +311,7 @@ const ViewCropProtections = () => {
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <BugOutlined className="text-green-600" />
-            Quản lý Thuốc bảo vệ thực vật
+            Quản lý nông dược
           </TitleCustom>
         </div>
         <Button
@@ -327,7 +327,7 @@ const ViewCropProtections = () => {
       {/* Alert */}
       {inUseAlert && (
         <Alert
-          message="Thuốc bảo vệ thực vật đang được sử dụng, không thể chỉnh sửa hoặc vô hiệu hóa."
+          message="Nông dược đang được sử dụng, không thể chỉnh sửa hoặc vô hiệu hóa."
           type="warning"
           showIcon
           closable
@@ -347,7 +347,7 @@ const ViewCropProtections = () => {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
-            placeholder="Tìm theo mã, tên thuốc..."
+            placeholder="Tìm theo mã, tên nông dược…"
             prefix={<SearchOutlined className="text-gray-300" />}
             className="w-64 h-10 rounded-xl"
             allowClear
@@ -389,7 +389,7 @@ const ViewCropProtections = () => {
             onClick: () => navigate(ROUTER.FM_VIEW_CROP_PROTECTION_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
-          locale={{ emptyText: 'Không có dữ liệu thuốc bảo vệ thực vật.' }}
+          locale={{ emptyText: 'Không có dữ liệu nông dược.' }}
           pagination={{
             current: page,
             pageSize,
@@ -425,7 +425,7 @@ const ViewCropProtections = () => {
       >
         <div className="mt-4 mb-6 ml-4">
           <p className="text-gray-600">
-            Bạn có chắc chắn muốn thay đổi trạng thái của thuốc BVTV này?
+            Bạn có chắc chắn muốn thay đổi trạng thái của nông dược này?
           </p>
           {statusModal.item && (
             <p className="mt-2 text-sm font-semibold text-gray-800">

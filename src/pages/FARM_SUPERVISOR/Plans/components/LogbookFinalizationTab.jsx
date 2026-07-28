@@ -159,7 +159,7 @@ const fertColumns = [
 
 const pestColumns = [
   {
-    title: "Thuốc BVTV",
+    title: "Nông dược",
     dataIndex: "name",
     key: "name",
     render: (v, r) => (
@@ -320,7 +320,7 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
     if (allMaterials) {
       return allMaterials.filter(m => m.type.toLowerCase().includes("thuốc"))
     }
-    return mapMaterialRows(leaderSummary?.pesticides, "Thuốc")
+    return mapMaterialRows(leaderSummary?.pesticides, "Nông dược")
   }, [allMaterials, leaderSummary])
 
   const otherRows = useMemo(() => {
@@ -462,14 +462,14 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
         {pestRows.length > 0 && (
           <div>
             <div className="mb-2 font-semibold text-purple-800">
-              Thuốc BVTV ({pestRows.length})
+              Nông dược ({pestRows.length})
             </div>
             <Table
               columns={pestColumns}
               dataSource={pestRows}
               size="small"
               pagination={false}
-              locale={{ emptyText: "Chưa ghi nhận thuốc BVTV" }}
+              locale={{ emptyText: "Chưa ghi nhận nông dược" }}
               className="overflow-hidden border border-purple-100 rounded-xl"
             />
           </div>
@@ -1041,7 +1041,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                             </div>
                           )}
 
-                          {/* Vật tư: Phân bón & Thuốc BVTV */}
+                          {/* Vật tư: Phân bón & Nông dược */}
                           {(fertilizers.length > 0 ||
                             pesticides.length > 0) && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-3">
@@ -1076,7 +1076,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                                 <div className="bg-purple-50/50 rounded-lg p-2.5 border border-purple-100 text-xs">
                                   <div className="flex items-center gap-1 mb-1 font-bold text-purple-800">
                                     <ExperimentOutlined className="text-purple-600" />{" "}
-                                    Thuốc BVTV:
+                                    Nông dược:
                                   </div>
                                   <div className="space-y-1">
                                     {pesticides.map((p, i) => (

@@ -12,7 +12,6 @@ import {
   Table,
   Tag,
   Typography,
-  message,
 } from 'antd'
 import {
   BarChartOutlined,
@@ -158,7 +157,7 @@ const ReportStatistics = () => {
       const normalized = normalizeLandPlotResponse(response)
       setLandPlots(normalized.items)
       setSelectedLandPlotId((current) => current || normalized.items?.[0]?.id)
-    } catch (error) {
+    } catch {
       // axios interceptor handles error notification
     } finally {
       setLandLoading(false)
@@ -200,7 +199,7 @@ const ReportStatistics = () => {
     [filteredLogs],
   )
   const pesticideRows = useMemo(
-    () => aggregateMaterials(filteredLogs, 'pesticides', 'Thuốc BVTV', 'ml'),
+    () => aggregateMaterials(filteredLogs, 'pesticides', 'Nông dược', 'ml'),
     [filteredLogs],
   )
 
@@ -262,7 +261,7 @@ const ReportStatistics = () => {
             Báo cáo thống kê
           </TitleCustom>
           <Text className="text-gray-500">
-            Thống kê lượng phân bón và thuốc BVTV đã sử dụng theo vùng trồng trong khoảng thời gian.
+            Thống kê lượng phân bón và nông dược đã sử dụng theo vùng trồng trong khoảng thời gian.
           </Text>
         </div>
         <Button icon={<ReloadOutlined />} onClick={fetchReport} loading={reportLoading} disabled={!selectedLandPlotId}>
@@ -346,7 +345,7 @@ const ReportStatistics = () => {
             <Col xs={24} md={8}>
               <Card bordered={false} className="shadow-sm rounded-2xl">
                 <Statistic
-                  title="Tổng thuốc BVTV"
+                  title="Tổng nông dược"
                   value={formatQuantity(totalPesticideQuantity)}
                   suffix={pesticideRows.length === 1 ? pesticideRows[0].unit : ''}
                   prefix={<ExperimentOutlined className="text-purple-600" />}
@@ -375,7 +374,7 @@ const ReportStatistics = () => {
           </Card>
 
           <Card
-            title="Thuốc BVTV đã sử dụng"
+            title="Nông dược đã sử dụng"
             bordered={false}
             className="shadow-sm rounded-2xl"
             extra={<Tag color="purple">{filteredLogs.length} nhật ký</Tag>}
@@ -387,7 +386,7 @@ const ReportStatistics = () => {
               rowKey="key"
               pagination={false}
               scroll={{ x: 720 }}
-              locale={{ emptyText: 'Không có dữ liệu thuốc BVTV trong khoảng thời gian này.' }}
+              locale={{ emptyText: 'Không có dữ liệu nông dược trong khoảng thời gian này.' }}
             />
           </Card>
         </>

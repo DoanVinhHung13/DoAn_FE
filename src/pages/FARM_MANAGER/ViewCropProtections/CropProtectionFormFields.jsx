@@ -5,7 +5,6 @@ import {
   Form,
   Input,
   InputNumber,
-  message,
   Row,
   Select,
 } from "antd"
@@ -131,14 +130,14 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
       if (res?.success === false) {
         const errMsg = (res.message || "").toLowerCase()
         if (errMsg.includes("code") || errMsg.includes("mã")) {
-          form.setFields([{ name: "code", errors: ["Mã thuốc đã tồn tại."] }])
+          form.setFields([{ name: "code", errors: ["Mã nông dược đã tồn tại."] }])
         }
         // axios interceptor handles error notification
         return
       }
 
       navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
-    } catch (err) {
+    } catch {
       // axios interceptor handles error notification
     } finally {
       setLoading(false)
@@ -155,7 +154,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
             name="name"
             label={
               <span className="font-semibold text-gray-700">
-                Tên Thuốc bảo vệ thực vật{" "}
+                Tên nông dược{" "}
               </span>
             }
             rules={[{ required: true, message: "Bắt buộc" }]}
@@ -314,11 +313,11 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                     </Col>
                     <Col xs={24} sm={24} md={12}>
                       <Form.Item
-                        label={<>Lượng nước pha loãng (Tỉ lệ thuốc : nước) </>}
+                        label={<>Lượng nước pha loãng (Tỉ lệ nông dược : nước) </>}
                         className="mb-3"
                       >
                         <div className="flex items-center gap-3">
-                          {/* Thuốc */}
+                          {/* Nông dược */}
                           <div className="flex items-center flex-1 gap-2">
                             <Form.Item
                               {...restField}

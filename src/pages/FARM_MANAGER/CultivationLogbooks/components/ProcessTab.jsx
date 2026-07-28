@@ -102,7 +102,7 @@ const DailyLogCard = ({ log, index }) => {
           </div>
         )}
 
-        {/* Vật tư sử dụng (Phân bón & Thuốc) */}
+        {/* Vật tư sử dụng (Phân bón & Nông dược) */}
         {(fertilizers.length > 0 || pesticides.length > 0) && (
           <div className="mb-4 p-3 bg-gray-50/50 rounded-lg border border-gray-100">
             <p className="mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vật tư sử dụng</p>
@@ -131,7 +131,7 @@ const DailyLogCard = ({ log, index }) => {
 
             {pesticides.length > 0 && (
               <div>
-                <p className="mb-1.5 text-xs text-orange-600 font-semibold">Thuốc BVTV:</p>
+                <p className="mb-1.5 text-xs text-orange-600 font-semibold">Nông dược:</p>
                 <div className="space-y-1.5 pl-1">
                   {pesticides.map((pest, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">

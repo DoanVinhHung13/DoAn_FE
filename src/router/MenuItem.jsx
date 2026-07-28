@@ -89,7 +89,7 @@ export const farmManagerItem = () => [
     label: 'Quản lý vật tư',
     children: [
       { key: ROUTER.FM_VIEW_FERTILIZERS, label: 'Phân bón' },
-      { key: ROUTER.FM_VIEW_CROP_PROTECTIONS, label: 'Thuốc BVTV' },
+      { key: ROUTER.FM_VIEW_CROP_PROTECTIONS, label: 'Nông dược' },
       { key: ROUTER.FM_INVENTORY_IMPORT_HISTORY, label: 'Lịch sử nhập kho' },
     ],
   },
@@ -99,7 +99,7 @@ export const farmManagerItem = () => [
     label: 'Tra cứu cấp phép',
     children: [
       { key: ROUTER.FM_REF_FERTILIZER, label: 'Danh mục phân bón' },
-      { key: ROUTER.FM_REF_PESTICIDE, label: 'Danh mục thuốc BVTV' },
+      { key: ROUTER.FM_REF_PESTICIDE, label: 'Danh mục nông dược' },
     ],
   },
 ]

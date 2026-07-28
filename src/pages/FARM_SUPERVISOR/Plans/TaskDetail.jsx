@@ -60,9 +60,9 @@ const buildDataSentence = (summary) => {
   })
   // API returns: pesticides (not totalPesticides)
   ; (summary.pesticides || []).forEach((p) => {
-    parts.push(`Đã phun ${p.name || 'Thuốc BVTV'}`)
+    parts.push(`Đã phun ${p.name || 'Nông dược'}`)
   })
-  return parts.length ? parts.join('. ') : 'Không có số liệu phân bón/thuốc BVTV'
+  return parts.length ? parts.join('. ') : 'Không có số liệu phân bón/nông dược'
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -379,9 +379,9 @@ const FarmSupervisorTaskDetail = () => {
                     </Collapse.Panel>
                   )}
 
-                  {/* Chi tiết thuốc BVTV */}
+                  {/* Chi tiết nông dược */}
                   {task.leaderSummary.totalPesticides?.length > 0 && (
-                    <Collapse.Panel header="🔬 Chi tiết Thuốc BVTV" key="pesticides">
+                    <Collapse.Panel header="🔬 Chi tiết nông dược" key="pesticides">
                       <div className="space-y-2">
                         {task.leaderSummary.totalPesticides.map((p) => (
                           <div key={p.name} className="rounded-lg bg-orange-50 p-2 text-sm">

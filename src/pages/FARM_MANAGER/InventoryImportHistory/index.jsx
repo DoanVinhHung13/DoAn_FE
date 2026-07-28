@@ -91,6 +91,7 @@ const getUnit = record =>
 
 const getTransactionDate = record =>
   record.importDate ||
+  record.importedAt ||
   record.transactionDate ||
   record.occurredAt ||
   record.createdAt ||

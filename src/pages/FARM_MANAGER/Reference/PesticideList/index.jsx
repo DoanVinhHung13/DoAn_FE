@@ -88,7 +88,7 @@ const PesticideList = () => {
     const categories = [...new Set(pesticideData.map(item => item.category).filter(Boolean))]
 
     return [
-      { value: 'all', label: 'Tất cả nhóm thuốc' },
+      { value: 'all', label: 'Tất cả nhóm nông dược' },
       ...categories.map(category => ({ value: category, label: category })),
     ]
   }, [pesticideData])
@@ -123,7 +123,7 @@ const PesticideList = () => {
       render: (text) => <Text className="text-gray-600 text-sm">{text || '—'}</Text>,
     },
     {
-      title: 'Nhóm thuốc',
+      title: 'Nhóm nông dược',
       dataIndex: 'category',
       key: 'category',
       width: 160,
@@ -158,7 +158,7 @@ const PesticideList = () => {
           items={[
             { title: 'Trang chủ' },
             { title: 'Tra cứu cấp phép' },
-            { title: 'Danh mục Thuốc BVTV' },
+            { title: 'Danh mục nông dược' },
           ]}
         />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -167,9 +167,9 @@ const PesticideList = () => {
               <SafetyCertificateOutlined className="text-3xl" />
             </div>
             <div>
-              <Title level={4} className="!mb-1 font-bold">Danh mục Thuốc bảo vệ thực vật</Title>
+              <Title level={4} className="!mb-1 font-bold">Danh mục nông dược</Title>
               <Text className="text-gray-500">
-                Danh sách thuốc BVTV đang hoạt động từ hệ thống EAPLS.
+                Danh sách nông dược đang hoạt động từ hệ thống EAPLS.
               </Text>
             </div>
           </div>
@@ -185,7 +185,7 @@ const PesticideList = () => {
         <div className="flex flex-col sm:flex-row gap-3">
           <Input
             value={searchText}
-            placeholder="Tìm theo tên hoặc mã thuốc BVTV..."
+            placeholder="Tìm theo tên hoặc mã nông dược…"
             size="large"
             prefix={<SearchOutlined className="text-gray-400" />}
             allowClear
@@ -214,7 +214,7 @@ const PesticideList = () => {
         <Alert
           type="error"
           showIcon
-          message="Không thể tải danh mục thuốc BVTV"
+          message="Không thể tải danh mục nông dược"
           description="Vui lòng kiểm tra đăng nhập hoặc thử lại sau."
         />
       )}
@@ -233,7 +233,7 @@ const PesticideList = () => {
             pageSizeOptions: ['10', '20', '50', '100'],
             showTotal: (total, range) => (
               <span className="text-xs text-gray-500">
-                {range[0]}-{range[1]} / <strong>{total.toLocaleString()}</strong> thuốc
+                {range[0]}-{range[1]} / <strong>{total.toLocaleString()}</strong> nông dược
               </span>
             ),
             onChange: (page, size) => {
@@ -244,7 +244,7 @@ const PesticideList = () => {
           }}
           rowClassName="hover:bg-green-50/30 transition-colors"
           className="custom-tcvn-table"
-          locale={{ emptyText: 'Không tìm thấy thuốc BVTV phù hợp.' }}
+          locale={{ emptyText: 'Không tìm thấy nông dược phù hợp.' }}
         />
       </Card>
 
@@ -255,7 +255,7 @@ const PesticideList = () => {
         <div>
           <Text className="block font-bold text-gray-800 mb-1">Nguồn dữ liệu:</Text>
           <Text className="text-gray-600 text-[13px]">
-            Dữ liệu lấy trực tiếp từ API danh mục thuốc bảo vệ thực vật đang hoạt động của EAPLS.
+            Dữ liệu lấy trực tiếp từ API danh mục nông dược đang hoạt động của EAPLS.
           </Text>
         </div>
       </div>
