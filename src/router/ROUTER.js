@@ -52,6 +52,10 @@ const ROUTER = {
   FM_BATCHES: '/farm-manager/batches',
   FM_BATCH_DETAIL: '/farm-manager/batches/:id',
   FM_QR_MANAGEMENT: '/farm-manager/qr-management',
+  // Legacy routes - kept for backward compatibility
+  FM_PRODUCTION_PLAN_CREATE: '/farm-manager/cultivation-logbooks/create',
+  FM_PRODUCTION_PLAN_DETAIL: '/farm-manager/cultivation-logbooks/:id',
+  FM_PRODUCTION_PLAN_EDIT: '/farm-manager/cultivation-logbooks/:id/edit',
   FM_NOTIFICATIONS: '/farm-manager/notifications',
   FM_NOTIFICATION_DETAIL: '/farm-manager/notifications/:id',
   FM_REF_FERTILIZER: '/farm-manager/reference/fertilizers',

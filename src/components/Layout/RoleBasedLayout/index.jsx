@@ -16,7 +16,7 @@ const LoadingScreen = () => (
   </div>
 )
 
-const validRoles = [ROLES.FARM_MANAGER, ROLES.FARM_SUPERVISOR, ROLES.FARMER]
+const validRoles = [ROLES.FARM_MANAGER, ROLES.FARM_SUPERVISOR, ROLES.FARM_LEADER]
 
 const RoleBasedLayout = () => {
   const { userInfo } = useSelector((state) => state.appGlobal)

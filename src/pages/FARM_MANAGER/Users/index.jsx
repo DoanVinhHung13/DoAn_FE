@@ -68,7 +68,6 @@ const UsersManagement = () => {
   const { getOptions, getDescription } = useSystemKey()
 
   const roleOptions = getOptions(SYSTEM_KEY.ROLE)
-
   const selectStatusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
     ...getOptions(SYSTEM_KEY.STATUS),
