@@ -10,13 +10,6 @@ import {
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
-
 import {
   getNotifications,
   getNotificationById,
@@ -24,6 +17,7 @@ import {
 } from 'src/services/NotificationService';
 import ROUTER from 'src/router/ROUTER';
 import { getNotificationTypeLabel } from 'src/constants/notificationTypes';
+import { formatDateTime, parseDate } from 'src/utils/dateFormatters';
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -247,8 +241,8 @@ const NotificationDetail = () => {
                 </Text>
               </div>
               <Text strong className="!text-base">
-                {sentTime && dayjs(sentTime).isValid()
-                  ? dayjs.utc(sentTime).tz('Asia/Ho_Chi_Minh').format('HH:mm, DD/MM/YYYY')
+                {sentTime && parseDate(sentTime)?.isValid()
+                  ? formatDateTime(sentTime, 'HH:mm, DD/MM/YYYY')
                   : 'Không rõ thời gian'}
               </Text>
             </div>

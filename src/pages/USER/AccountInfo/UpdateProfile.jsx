@@ -8,6 +8,7 @@ import {
 import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd"
 import dayjs from "dayjs"
 import { isValidPhone } from "src/utils/helpers"
+import { getLocalNow } from "src/utils/dateFormatters"
 
 const fullNamePattern = /^[\p{L}\s]+$/u
 const addressPattern = /^[\p{L}\d\s,./#()-]+$/u
@@ -97,10 +98,10 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
               {
                 validator: (_, value) => {
                   if (!value) return Promise.resolve()
-                  if (!dayjs(value).isValid() || value.isAfter(dayjs(), "day")) {
+                  if (!dayjs(value).isValid() || value.isAfter(getLocalNow(), "day")) {
                     return Promise.reject(new Error("Ngày sinh không hợp lệ."))
                   }
-                  if (dayjs().diff(value, "year") < 15) {
+                  if (getLocalNow().diff(value, "year") < 15) {
                     return Promise.reject(new Error("Người dùng phải từ đủ 15 tuổi."))
                   }
                   return Promise.resolve()
@@ -112,7 +113,7 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
               format="DD/MM/YYYY"
               placeholder="Chọn ngày sinh"
               className="w-full h-11"
-              disabledDate={current => current && current > dayjs().endOf("day")}
+              disabledDate={current => current && current > getLocalNow().endOf("day")}
             />
           </Form.Item>
         </Col>

@@ -34,10 +34,10 @@ import {
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
-import dayjs from 'dayjs';
 
 import TitleCustom from 'src/components/TitleCustom';
 import QRService from 'src/services/QRService';
+import { formatDate, parseDate } from 'src/utils/dateFormatters';
 import BatchService from 'src/services/BatchService';
 import ROUTER from 'src/router/ROUTER';
 
@@ -104,8 +104,8 @@ const QRManagement = () => {
       form.setFieldsValue({
         batchCode: batchDetail.batchCode || '',
         cropName: batchDetail.cropName || batchDetail.cropType || '',
-        startDate: batchDetail.startDate ? dayjs(batchDetail.startDate) : null,
-        harvestDate: batchDetail.harvestDate ? dayjs(batchDetail.harvestDate) : null,
+        startDate: batchDetail.startDate ? parseDate(batchDetail.startDate) : null,
+        harvestDate: batchDetail.harvestDate ? parseDate(batchDetail.harvestDate) : null,
       });
     }
   }, [batchDetail, form]);
@@ -179,13 +179,13 @@ const QRManagement = () => {
         notes: 'Chuẩn bị đất và gieo hạt giống',
       },
       {
-        date: dayjs(activeBatch?.startDate || '2024-03-12').add(20, 'day').format('YYYY-MM-DD'),
+        date: parseDate(activeBatch?.startDate || '2024-03-12').add(20, 'day').format('YYYY-MM-DD'),
         stage: 'Chăm sóc',
         activity: 'Bón phân và tưới nước',
         notes: 'Bón phân NPK theo định kỳ, kiểm tra độ ẩm đất',
       },
       {
-        date: dayjs(activeBatch?.startDate || '2024-03-12').add(45, 'day').format('YYYY-MM-DD'),
+        date: parseDate(activeBatch?.startDate || '2024-03-12').add(45, 'day').format('YYYY-MM-DD'),
         stage: 'Phòng trừ sâu bệnh',
         activity: 'Kiểm tra và phun nông dược sinh học',
         notes: 'Phun nông dược sinh học, an toàn cho sức khỏe',
@@ -221,12 +221,12 @@ const QRManagement = () => {
       {
         url: `https://placehold.co/400x300/22c55e/ffffff?text=${encodeURIComponent(activeBatch?.cropName || 'Nông sản')}+giai+đoạn+đầu`,
         caption: `${activeBatch?.cropName || 'Nông sản'} giai đoạn sinh trưởng`,
-        date: dayjs(activeBatch?.startDate || '2024-03-12').add(30, 'day').format('YYYY-MM-DD'),
+        date: parseDate(activeBatch?.startDate || '2024-03-12').add(30, 'day').format('YYYY-MM-DD'),
       },
       {
         url: `https://placehold.co/400x300/facc15/333333?text=Gần+đến+ngày+thu+hoạch`,
         caption: 'Sắp đến ngày thu hoạch',
-        date: dayjs(activeBatch?.harvestDate || '2024-05-20').subtract(10, 'day').format('YYYY-MM-DD'),
+        date: parseDate(activeBatch?.harvestDate || '2024-05-20').subtract(10, 'day').format('YYYY-MM-DD'),
       },
       {
         url: `https://placehold.co/400x300/3b82f6/ffffff?text=Thu+hoạch`,
@@ -920,13 +920,13 @@ const QRManagement = () => {
                 <Descriptions.Item label="Ngày bắt đầu" span={1}>
                   <Space>
                     <CalendarOutlined className="text-blue-600" />
-                    {previewBatchData?.startDate ? dayjs(previewBatchData.startDate).format('DD/MM/YYYY') : '—'}
+                    {previewBatchData?.startDate ? formatDate(previewBatchData.startDate) : '—'}
                   </Space>
                 </Descriptions.Item>
                 <Descriptions.Item label="Ngày thu hoạch" span={1}>
                   <Space>
                     <CalendarOutlined className="text-green-600" />
-                    {previewBatchData?.harvestDate ? dayjs(previewBatchData.harvestDate).format('DD/MM/YYYY') : '—'}
+                    {previewBatchData?.harvestDate ? formatDate(previewBatchData.harvestDate) : '—'}
                   </Space>
                 </Descriptions.Item>
                 {previewBatchData?.area && (
@@ -951,7 +951,7 @@ const QRManagement = () => {
                       children: (
                         <div className="pb-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <Tag color="blue">{log.date ? dayjs(log.date).format('DD/MM/YYYY') : '—'}</Tag>
+                            <Tag color="blue">{log.date ? formatDate(log.date) : '—'}</Tag>
                             <Text strong>{log.stage || log.activity || ''}</Text>
                           </div>
                           {log.activity && <Typography.Paragraph className="!mb-1"><Text strong>Hoạt động:</Text> {log.activity}</Typography.Paragraph>}

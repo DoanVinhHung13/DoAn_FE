@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom"
 import CustomModal from "src/components/Modal/CustomModal"
 import { ROLES } from "src/constants/roles"
 import { SYSTEM_KEY } from "src/constants/systemKey"
+import { getLocalNow, parseDate } from "src/utils/dateFormatters"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import ROUTER from "src/router/ROUTER"
 import UploadService from "src/services/UploadService"
@@ -63,7 +64,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           phoneNumber: editingUser.phoneNumber || "",
           gender: editingUser.gender || undefined,
           dateOfBirth: editingUser.dateOfBirth
-            ? dayjs(editingUser.dateOfBirth)
+            ? parseDate(editingUser.dateOfBirth)
             : null,
           roles: editingUser.roles?.[0] || "FARMER",
           isActive: editingUser.isActive ?? true,
@@ -338,13 +339,13 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                     if (!value) return Promise.resolve()
                     if (
                       !dayjs(value).isValid() ||
-                      value.isAfter(dayjs(), "day")
+                      value.isAfter(getLocalNow(), "day")
                     ) {
                       return Promise.reject(
                         new Error("Ngày sinh không hợp lệ."),
                       )
                     }
-                    if (dayjs().diff(value, "year") < 15) {
+                    if (getLocalNow().diff(value, "year") < 15) {
                       return Promise.reject(
                         new Error("Người dùng phải từ đủ 15 tuổi."),
                       )
@@ -359,7 +360,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                 placeholder="Chọn ngày sinh"
                 className="w-full h-10 rounded-lg"
                 disabledDate={current =>
-                  current && current > dayjs().endOf("day")
+                  current && current > getLocalNow().endOf("day")
                 }
               />
             </Form.Item>

@@ -19,8 +19,8 @@ import {
   ExperimentOutlined,
 } from '@ant-design/icons';
 import { Sprout, Wheat } from 'lucide-react';
-import dayjs from 'dayjs';
 import http from 'src/services/01_axios';
+import { formatDate, parseDate } from 'src/utils/dateFormatters';
 import { getUserDisplayName } from 'src/utils/userDisplayName';
 
 const { Title, Paragraph, Text } = Typography;
@@ -31,10 +31,10 @@ const getImageUrl = (image) => {
 };
 
 const formatDateRange = (startDate, endDate) => {
-  const start = startDate ? dayjs(startDate) : null;
-  const end = endDate ? dayjs(endDate) : null;
-  const formattedStart = start?.isValid() ? start.format('DD/MM/YYYY') : '—';
-  const formattedEnd = end?.isValid() ? end.format('DD/MM/YYYY') : formattedStart;
+  const start = startDate ? parseDate(startDate) : null;
+  const end = endDate ? parseDate(endDate) : null;
+  const formattedStart = start?.isValid() ? formatDate(startDate) : '—';
+  const formattedEnd = end?.isValid() ? formatDate(endDate) : formattedStart;
 
   return `${formattedStart} – ${formattedEnd}`;
 };
@@ -47,7 +47,7 @@ const buildTimelineGroups = (traceData) => {
   const rawEntries = officialLogs.length
     ? officialLogs.map((log, index) => {
         const dailyLog = dailyLogs[index] || dailyLogs.find((item) => (
-          item?.date && log?.activityDate && dayjs(item.date).isSame(log.activityDate, 'day')
+          item?.date && log?.activityDate && parseDate(item.date).isSame(parseDate(log.activityDate), 'day')
         ));
         const materials = Array.isArray(log.materials) ? log.materials : [];
         const materialsText = log.materialsText || materials
@@ -115,12 +115,12 @@ const buildTimelineGroups = (traceData) => {
       groups.push(group);
     }
 
-    const start = entry.startDate ? dayjs(entry.startDate) : null;
-    const end = entry.endDate ? dayjs(entry.endDate) : null;
-    if (start?.isValid() && (!group.startDate || start.isBefore(dayjs(group.startDate), 'day'))) {
+    const start = entry.startDate ? parseDate(entry.startDate) : null;
+    const end = entry.endDate ? parseDate(entry.endDate) : null;
+    if (start?.isValid() && (!group.startDate || start.isBefore(parseDate(group.startDate), 'day'))) {
       group.startDate = entry.startDate;
     }
-    if (end?.isValid() && (!group.endDate || end.isAfter(dayjs(group.endDate), 'day'))) {
+    if (end?.isValid() && (!group.endDate || end.isAfter(parseDate(group.endDate), 'day'))) {
       group.endDate = entry.endDate;
     }
     group.entries.push(entry);
@@ -291,7 +291,7 @@ const Trace = () => {
               <Space className="text-xs sm:text-sm">
                 <CalendarOutlined className="text-blue-600" />
                 <Text strong className="text-blue-700">
-                  {traceData.harvestDate ? dayjs(traceData.harvestDate).format('DD/MM/YYYY') : '—'}
+                  {traceData.harvestDate ? formatDate(traceData.harvestDate) : '—'}
                 </Text>
               </Space>
             </div>
@@ -449,7 +449,7 @@ const Trace = () => {
                           {photo.caption}
                         </Paragraph>
                         <Text className="text-slate-400 text-[11px] block mt-0.5">
-                          {photo.date ? dayjs(photo.date).format('DD/MM/YYYY') : '—'}
+                          {photo.date ? formatDate(photo.date) : '—'}
                         </Text>
                       </div>
                     </div>

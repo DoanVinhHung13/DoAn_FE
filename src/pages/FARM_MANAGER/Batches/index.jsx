@@ -5,7 +5,6 @@ import {
 } from "@ant-design/icons"
 import { useQuery } from "@tanstack/react-query"
 import { Button, Card, Input, Select, Tag, Tooltip, Typography } from "antd"
-import dayjs from "dayjs"
 import { Coffee, Sprout, Wheat } from "lucide-react"
 import { useCallback, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
@@ -18,6 +17,7 @@ import BatchService from "src/services/BatchService"
 import { invalidCharsRegex } from "src/utils/helpers"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import { SYSTEM_KEY } from "src/constants/systemKey"
+import { formatDate } from "src/utils/dateFormatters"
 
 const { Text } = Typography
 
@@ -177,7 +177,7 @@ const Batches = () => {
             {text}
           </Text>
           <Text className="text-xs text-gray-500">
-            Bắt đầu: {record.startDate ? dayjs(record.startDate).format("DD/MM/YYYY") : "-"}
+            Bắt đầu: {record.startDate ? formatDate(record.startDate) : "-"}
           </Text>
         </div>
       ),

@@ -1,4 +1,5 @@
 import React from 'react'
+import { formatDateTime } from 'src/utils/dateFormatters'
 import { Button, Card, Spin, Tooltip } from 'antd'
 import {
   AlertCircle,
@@ -17,12 +18,7 @@ const hasValue = (value) => value !== undefined && value !== null && value !== '
 
 const formatUpdatedAt = (value) => {
   if (!hasValue(value)) return ''
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('vi-VN', {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(date)
+  return formatDateTime(value, 'DD/MM/YYYY HH:mm')
 }
 
 const translateCondition = (condition) => {

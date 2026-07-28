@@ -30,6 +30,7 @@ import {
   Wind,
 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { formatDateTime } from 'src/utils/dateFormatters'
 import { useSelector } from 'react-redux'
 
 import ROUTER from 'src/router/ROUTER'
@@ -93,22 +94,11 @@ const formatMetric = (value, unit = '') => (
     : `${typeof value === 'number' ? new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(value) : value}${unit}`
 )
 
-const formatCurrentDate = () => new Intl.DateTimeFormat('vi-VN', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-}).format(new Date())
+const formatCurrentDate = () => formatDateTime(new Date(), 'dddd, D MMMM YYYY')
 
 const formatWeatherTime = (value) => {
   if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return new Intl.DateTimeFormat('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).format(date)
+  return formatDateTime(value, 'HH:mm')
 }
 
 const FeaturedPlotWeather = ({ plot, weather }) => (

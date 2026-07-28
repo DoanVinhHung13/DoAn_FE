@@ -33,6 +33,7 @@ import authSession from "src/redux/authSession";
 import { setUserInfo } from "src/redux/slices/appGlobalSlice";
 import UserService from "src/services/UserService";
 import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers";
+import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters";
 
 const { Text, Title } = Typography;
 
@@ -63,7 +64,7 @@ const AccountInfo = () => {
       fullName: user?.fullName || "",
       email: user?.email || "",
       phoneNumber: user?.phoneNumber || "",
-      dateOfBirth: user?.dateOfBirth ? dayjs(user.dateOfBirth) : null,
+      dateOfBirth: user?.dateOfBirth ? parseDate(user.dateOfBirth) : null,
       gender: user?.gender || undefined,
       address: user?.address || "",
     }),
@@ -256,7 +257,7 @@ const AccountInfo = () => {
                   <Text type="secondary">Ngày sinh</Text>
                   <Text strong>
                     {user?.dateOfBirth
-                      ? dayjs(user.dateOfBirth).format("DD/MM/YYYY")
+                      ? formatDate(user.dateOfBirth)
                       : "Chưa cập nhật"}
                   </Text>
 
@@ -373,10 +374,10 @@ const AccountInfo = () => {
                           {
                             validator: (_, value) => {
                               if (!value) return Promise.resolve();
-                              if (!dayjs(value).isValid() || value.isAfter(dayjs(), "day")) {
+                              if (!dayjs(value).isValid() || value.isAfter(getLocalNow(), "day")) {
                                 return Promise.reject(new Error("Ngày sinh không hợp lệ."));
                               }
-                              if (dayjs().diff(value, "year") < 15) {
+                              if (getLocalNow().diff(value, "year") < 15) {
                                 return Promise.reject(
                                   new Error("Người dùng phải từ đủ 15 tuổi.")
                                 );
@@ -391,7 +392,7 @@ const AccountInfo = () => {
                           placeholder="Chọn ngày sinh"
                           className="h-11 w-full"
                           disabledDate={(current) =>
-                            current && current > dayjs().endOf("day")
+                            current && current > getLocalNow().endOf("day")
                           }
                         />
                       </Form.Item>

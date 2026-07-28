@@ -9,14 +9,9 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from 'src/services/NotificationService';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import 'dayjs/locale/vi';
 import ROUTER from 'src/router/ROUTER';
 import { getNotificationTypeLabel } from 'src/constants/notificationTypes';
-
-dayjs.extend(relativeTime);
-dayjs.locale('vi');
+import { timeAgo } from 'src/utils/dateFormatters';
 
 const { Text } = Typography;
 
@@ -131,7 +126,7 @@ const NotificationBell = () => {
                       </Text>
                     </div>
                     <Text type="secondary" className="whitespace-nowrap text-[10px]">
-                      {dayjs(item.createdAt).fromNow()}
+                      {timeAgo(item.createdAt)}
                     </Text>
                   </div>
                   <div className="flex items-end justify-between gap-3">

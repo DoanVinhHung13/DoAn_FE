@@ -23,7 +23,7 @@ import {
 } from '@ant-design/icons';
 import { Coffee, Wheat, Sprout } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import { formatDate } from 'src/utils/dateFormatters';
 
 import TitleCustom from 'src/components/TitleCustom';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
@@ -229,7 +229,7 @@ const BatchDetail = () => {
               <Descriptions.Item label="Ngày trồng">
                 <Space>
                   <CalendarOutlined className="text-blue-500" />
-                  <Text>{batch.startDate ? dayjs(batch.startDate).format('DD/MM/YYYY') : '-'}</Text>
+                  <Text>{batch.startDate ? formatDate(batch.startDate) : '-'}</Text>
                 </Space>
               </Descriptions.Item>
 
@@ -238,7 +238,7 @@ const BatchDetail = () => {
                 <Space>
                   <CalendarOutlined className="text-green-600" />
                   <Text strong className="text-green-700">
-                    {batch.harvestDate ? dayjs(batch.harvestDate).format('DD/MM/YYYY') : '-'}
+                    {batch.harvestDate ? formatDate(batch.harvestDate) : '-'}
                   </Text>
                 </Space>
               </Descriptions.Item>

@@ -14,11 +14,6 @@ import { BellOutlined, CheckOutlined, SearchOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import 'dayjs/locale/vi';
 
 import {
   getNotifications,
@@ -31,11 +26,7 @@ import {
   getNotificationTypeLabel,
   NOTIFICATION_TYPE_COLORS,
 } from 'src/constants/notificationTypes';
-
-dayjs.extend(relativeTime);
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.locale('vi');
+import { parseDate, timeAgo } from 'src/utils/dateFormatters';
 
 const { Text } = Typography;
 
@@ -255,8 +246,8 @@ const Notifications = () => {
                   </span>
                   <span className="col-start-2 flex items-center gap-2 sm:col-start-auto">
                     <Text type="secondary" className="whitespace-nowrap !text-xs">
-                      {createdAt && dayjs(createdAt).isValid()
-                        ? dayjs.utc(createdAt).tz('Asia/Ho_Chi_Minh').fromNow()
+                      {createdAt && parseDate(createdAt)?.isValid()
+                        ? timeAgo(createdAt)
                         : 'Không rõ thời gian'}
                     </Text>
                     {!item.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />}

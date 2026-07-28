@@ -5,7 +5,6 @@ import {
   SearchOutlined,
 } from '@ant-design/icons'
 import { Button, Card, DatePicker, Input, Select, Tag, message } from 'antd'
-import dayjs from 'dayjs'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import CustomTable from 'src/components/Table/CustomTable'
@@ -13,6 +12,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import InventoryService from 'src/services/InventoryService'
+import { formatDate as formatConfiguredDate } from 'src/utils/dateFormatters'
 
 const { RangePicker } = DatePicker
 
@@ -24,7 +24,6 @@ const MATERIAL_TYPE_OPTIONS = [
 
 const EMPTY_VALUE = '—'
 const numberFormatter = new Intl.NumberFormat('vi-VN')
-const dateFormatter = new Intl.DateTimeFormat('vi-VN')
 
 const asArray = value => {
   if (Array.isArray(value)) return value
@@ -100,8 +99,7 @@ const getTransactionDate = record =>
 
 const formatDate = value => {
   if (!value) return EMPTY_VALUE
-  const date = dayjs(value)
-  return date.isValid() ? dateFormatter.format(date.toDate()) : value
+  return formatConfiguredDate(value)
 }
 
 const getNote = record =>

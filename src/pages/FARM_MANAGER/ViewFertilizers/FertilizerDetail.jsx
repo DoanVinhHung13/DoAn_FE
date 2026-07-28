@@ -15,12 +15,13 @@ import {
   ShopOutlined,
   TagOutlined,
 } from '@ant-design/icons'
-import { Badge, Button, Card, Descriptions, Empty, Skeleton, Table, Tag, Typography, message } from 'antd'
+import { Badge, Button, Card, Descriptions, Empty, Skeleton, Table, Tag, Typography } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import FertilizerService from 'src/services/FertilizerService'
+import { formatDateTime } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
 
@@ -118,7 +119,7 @@ const FertilizerDetail = () => {
           return
         }
         setItem(res?.data)
-      } catch (err) {
+      } catch {
         navigate(ROUTER.FM_VIEW_FERTILIZERS)
       } finally {
         setInitialLoading(false)
@@ -299,13 +300,7 @@ const FertilizerDetail = () => {
                   }
                   span={2}
                 >
-                  {new Date(item.createdAt).toLocaleDateString('vi-VN', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatDateTime(item.createdAt, 'HH:mm - DD/MM/YYYY')}
                 </Descriptions.Item>
               )}
             </Descriptions>

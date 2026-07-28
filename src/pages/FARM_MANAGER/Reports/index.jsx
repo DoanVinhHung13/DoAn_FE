@@ -19,12 +19,12 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
-import dayjs from 'dayjs'
 
 import TitleCustom from 'src/components/TitleCustom'
 import CultivationLogService from 'src/services/CultivationLogService'
 import LandPlotService from 'src/services/LandPlotService'
 import { normalizeLandPlotResponse } from 'src/pages/FARM_MANAGER/Lands/landPlotUtils'
+import { getLocalNow, parseDate } from 'src/utils/dateFormatters'
 
 const { RangePicker } = DatePicker
 const { Text } = Typography
@@ -88,7 +88,7 @@ const filterLogsByDate = (logs, dateRange) => {
     const value = getLogDate(log)
     if (!value) return false
 
-    const date = dayjs(value)
+    const date = parseDate(value)
     return date.isValid() && !date.isBefore(start) && !date.isAfter(end)
   })
 }
@@ -120,7 +120,7 @@ const aggregateMaterials = (logs, materialKey, fallbackName, fallbackUnit) => {
       const row = map.get(key)
       row.totalQuantity += getMaterialQuantity(item)
       row.usageCount += 1
-      if (logDate) row.dates.add(dayjs(logDate).format('YYYY-MM-DD'))
+      if (logDate) row.dates.add(parseDate(logDate).format('YYYY-MM-DD'))
     })
   })
 
@@ -141,7 +141,7 @@ const formatQuantity = (value) =>
 const ReportStatistics = () => {
   const [landPlots, setLandPlots] = useState([])
   const [selectedLandPlotId, setSelectedLandPlotId] = useState()
-  const [dateRange, setDateRange] = useState([dayjs().subtract(30, 'day'), dayjs()])
+  const [dateRange, setDateRange] = useState([getLocalNow().subtract(30, 'day'), getLocalNow()])
   const [landLoading, setLandLoading] = useState(false)
   const [reportLoading, setReportLoading] = useState(false)
   const [reportError, setReportError] = useState(null)

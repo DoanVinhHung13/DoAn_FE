@@ -29,7 +29,6 @@ import {
 } from 'antd'
 import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import dayjs from 'dayjs'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
@@ -38,6 +37,7 @@ import PlanTemplateService from 'src/services/PlanTemplateService'
 import CropService from 'src/services/CropService'
 import CropManagementService from 'src/services/CropManagementService'
 import LandPlotService from 'src/services/LandPlotService'
+import { parseDate } from 'src/utils/dateFormatters'
 import UserService from 'src/services/UserService'
 import { ROLES } from 'src/constants/roles'
 
@@ -294,8 +294,8 @@ const CultivationLogbookCreate = () => {
           cropId: selectedCropId,
           landPlotIds: selectedLandPlotIds,
           area: plan.area || '',
-          expectedStartDate: plan.startDate ? dayjs(plan.startDate) : null,
-          expectedEndDate: plan.expectedEndDate ? dayjs(plan.expectedEndDate) : null,
+          expectedStartDate: plan.startDate ? parseDate(plan.startDate) : null,
+          expectedEndDate: plan.expectedEndDate ? parseDate(plan.expectedEndDate) : null,
           assignedFarmSupervisorId: originalSupervisorId,
           description: plan.description || '',
         })
@@ -312,8 +312,8 @@ const CultivationLogbookCreate = () => {
           order: index + 1,
           title: stage.stageName || '',
           description: stage.description || '',
-          startDate: stage.startDate ? dayjs(stage.startDate) : null,
-          endDate: stage.endDate ? dayjs(stage.endDate) : null,
+          startDate: stage.startDate ? parseDate(stage.startDate) : null,
+          endDate: stage.endDate ? parseDate(stage.endDate) : null,
         }))
 
         setStages(normalizedStages.length ? normalizedStages : [createEmptyStage(1)])

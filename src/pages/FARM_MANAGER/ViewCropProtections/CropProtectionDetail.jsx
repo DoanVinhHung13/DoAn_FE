@@ -12,6 +12,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import PesticideService from 'src/services/PesticideService'
+import { formatDateTime } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
 
@@ -262,13 +263,7 @@ const CropProtectionDetail = () => {
                 }
                 span={2}
               >
-                {new Date(item.createdAt).toLocaleDateString('vi-VN', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
+                {formatDateTime(item.createdAt, 'HH:mm - DD/MM/YYYY')}
               </Descriptions.Item>
             )}
           </Descriptions>

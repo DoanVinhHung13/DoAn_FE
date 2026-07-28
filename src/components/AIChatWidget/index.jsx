@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import { API_URL } from 'src/utils/helpers';
+import { formatDateTime } from 'src/utils/dateFormatters';
 import './index.css';
 
 const { TextArea } = Input;
@@ -243,7 +244,7 @@ const AIChatWidget = () => {
     };
 
     const formatTime = (date) => {
-        return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        return formatDateTime(date, 'HH:mm');
     };
 
     return (

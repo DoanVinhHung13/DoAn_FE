@@ -54,7 +54,6 @@ import {
 
 import { useEffect, useMemo, useState } from "react"
 
-import dayjs from "dayjs"
 import { useNavigate, useParams } from "react-router-dom"
 
 import TitleCustom from "src/components/TitleCustom"
@@ -66,7 +65,7 @@ import FertilizerService from "src/services/FertilizerService"
 import PesticideService from "src/services/PesticideService"
 import UploadService from "src/services/UploadService"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
-import { formatDate } from "src/utils/dateFormatters"
+import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
 import { getUserDisplayName } from "src/utils/userDisplayName"
 
 const { Text } = Typography
@@ -281,7 +280,7 @@ const DailyLog = () => {
         )
 
         form.setFieldsValue({
-          date: dayjs(),
+          date: getLocalNow(),
           fertilizers: [],
           pesticides: [],
         })
@@ -331,7 +330,7 @@ const DailyLog = () => {
         taskId,
         date: values.date
           ? values.date.format("YYYY-MM-DD")
-          : dayjs().format("YYYY-MM-DD"),
+          : getLocalNow().format("YYYY-MM-DD"),
         description: values.description || "",
         fertilizers: mapFertilizers(values.fertilizers),
         pesticides: mapPesticides(values.pesticides),
@@ -386,7 +385,7 @@ const DailyLog = () => {
 
       await CultivationTaskService.submitSummary(taskId, {
         descriptionSummary: summaryValues.descriptionSummary,
-        completedAt: dayjs().format("YYYY-MM-DD"),
+        completedAt: getLocalNow().format("YYYY-MM-DD"),
       })
 
       setSubmitModal(false)
@@ -1297,13 +1296,13 @@ const DailyLog = () => {
                 task?.actualEndDate ||
                 task?.endDate ||
                 (dailyLogs.length > 0 ? dailyLogs[0]?.date : null) ||
-                dayjs().format("YYYY-MM-DD")
+                getLocalNow().format("YYYY-MM-DD")
 
               const formattedStartDate = startDateStr
-                ? dayjs(startDateStr).format("DD/MM/YYYY")
+                ? parseDate(startDateStr).format("DD/MM/YYYY")
                 : "—"
               const formattedEndDate = endDateStr
-                ? dayjs(endDateStr).format("DD/MM/YYYY")
+                ? parseDate(endDateStr).format("DD/MM/YYYY")
                 : "—"
 
               return (
