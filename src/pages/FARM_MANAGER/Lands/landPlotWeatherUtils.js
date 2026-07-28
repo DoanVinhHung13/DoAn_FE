@@ -41,12 +41,9 @@ export const normalizeWeather = (response) => {
       current.temp,
       current.temperatureCelsius,
     ),
-    feelsLike: firstValue(
-      current.feelsLike,
-      current.feelslikeC,
-      current.feelsLikeC,
-      current.FeelsLikeC,
-      current.feelsLikeCelsius,
+    apparentTemperature: firstValue(
+      current.apparentTemperature,
+      current.apparent_temperature,
     ),
     condition: condition || 'Chưa cập nhật',
     humidity: firstValue(current.humidity, current.humidityPercent, current.relativeHumidity),

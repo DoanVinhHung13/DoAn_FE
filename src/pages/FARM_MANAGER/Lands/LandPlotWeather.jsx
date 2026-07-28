@@ -175,7 +175,9 @@ const LandPlotWeather = ({ weather, loading = false, error = null, onRetry, comp
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
               <Thermometer className="h-4 w-4 text-orange-500" /> Cảm giác
             </div>
-            <div className="mt-1 font-semibold text-slate-800">{formatTemperature(weather.feelsLike)}</div>
+            <div className="mt-1 font-semibold text-slate-800">
+              {formatTemperature(weather.apparentTemperature)}
+            </div>
           </div>
         </div>
       </div>
