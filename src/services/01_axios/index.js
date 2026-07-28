@@ -25,10 +25,11 @@ function parseError(messages) {
 const GENERIC_SUCCESS_MESSAGES = new Set(['Success', 'success', 'OK', 'ok'])
 
 const getEaplsMessage = (resData) => {
-  const topLevel =
-    resData?.message ||
-    (Array.isArray(resData?.errors) ? resData.errors[0] : null) ||
-    null
+  if (Array.isArray(resData?.errors) && resData.errors.length > 0) {
+    return resData.errors.join(", ")
+  }
+
+  const topLevel = resData?.message || null
 
   if (topLevel && !GENERIC_SUCCESS_MESSAGES.has(topLevel)) {
     return topLevel
