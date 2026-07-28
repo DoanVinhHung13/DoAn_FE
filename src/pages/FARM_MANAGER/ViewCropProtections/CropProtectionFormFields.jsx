@@ -14,7 +14,6 @@ import { useNavigate } from "react-router-dom"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import ROUTER from "src/router/ROUTER"
-import CropManagementService from "src/services/CropManagementService"
 import PesticideService from "src/services/PesticideService"
 
 import SectionTitle from "src/components/Common/SectionTitle"
@@ -144,14 +143,6 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleCopyUsage = name => {
-    const usages = form.getFieldValue("usages") || []
-    const itemToCopy = usages[name]
-    const newUsages = [...usages]
-    newUsages.splice(name + 1, 0, { ...itemToCopy })
-    form.setFieldsValue({ usages: newUsages })
   }
 
   return (

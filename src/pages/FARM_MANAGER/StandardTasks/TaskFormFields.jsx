@@ -2,7 +2,7 @@ import { CheckSquareOutlined, FileTextOutlined } from '@ant-design/icons'
 import { Col, Form, Input, Row } from 'antd'
 import React from 'react'
 
-const TaskFormFields = ({ isEdit = false, readOnly = false }) => {
+const TaskFormFields = ({ readOnly = false }) => {
   return (
     <Row gutter={16}>
       <Col xs={24} md={24}>

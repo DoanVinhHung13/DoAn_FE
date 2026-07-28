@@ -4,62 +4,35 @@ import {
   Alert,
   Button,
   Card,
-  Descriptions,
-  Drawer,
   Empty,
-  Form,
   Input,
-  InputNumber,
   Modal,
   Select,
   Space,
-  Spin,
-  Table,
   Tag,
   Tooltip,
   Typography,
-  Upload,
   message,
 } from 'antd';
 import {
   CheckCircleOutlined,
-  DeleteOutlined,
   EditOutlined,
   EyeOutlined,
-  FileTextOutlined,
-  PlusOutlined,
   SearchOutlined,
   StopOutlined,
-  UploadOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-import GrowthStages from 'src/components/GrowthStages';
 import CropManagementService from 'src/services/CropManagementService';
 import CropService from 'src/services/CropService';
-import GrowthStageService from 'src/services/GrowthStageService';
-import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import TableCustom from 'src/components/Table/CustomTable';
 
-const formatDuration = (days) => {
-  if (!days) return 'Chưa cập nhật';
-  if (days % 365 === 0) return `${days / 365} năm`;
-  if (days % 30 === 0) return `${days / 30} tháng`;
-  return `${days} ngày`;
-};
-
 const { Text } = Typography;
-
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'inactive', label: 'Ngừng hoạt động' },
-];
 
 const SORT_OPTIONS = [
   { value: 'name-asc', label: 'Tên cây A-Z' },
@@ -129,18 +102,13 @@ const getStatusLabel = (item) =>
 const Crops = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [form] = Form.useForm();
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('all');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name-asc');
   const [statusTarget, setStatusTarget] = useState(null);
-  const [inlineError, setInlineError] = useState('');
-  const [uploadingUpdate, setUploadingUpdate] = useState(false);
-  const watchedImageUrl = Form.useWatch('imageUrl', form);
 
   const { getCombo } = useSystemKey();
-  const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE);
   const cropStatusOptions = getCombo(SYSTEM_KEY.CROP_STATUS);
 
   const statusFilterOptions = useMemo(() => {
@@ -166,53 +134,24 @@ const Crops = () => {
   const { data, isLoading, isError, refetch, error } = useQuery({
     queryKey: ['crops'],
     queryFn: async () => {
-      try {
-        const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 200 });
-        return normalizeCropResponse(response);
-      } catch (err) {
-        throw err;
-      }
+      const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 200 });
+      return normalizeCropResponse(response);
     },
     retry: false,
   });
 
-  const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
+  const { data: cropCatalogsData } = useQuery({
     queryKey: ['crop-catalogs-dropdown'],
     queryFn: async () => {
       try {
         const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
         return normalizeCropResponse(response).items;
-      } catch (err) {
+      } catch {
         return [];
       }
     },
     retry: false,
   });
-
-  const cropCatalogOptions = useMemo(() => {
-    if (!cropCatalogsData || cropCatalogsData.length === 0) {
-      return [];
-    }
-    return cropCatalogsData.map((catalog) => ({
-      value: catalog.id || catalog.cropCatalogId,
-      label: catalog.name || catalog.cropCatalogName,
-    }));
-  }, [cropCatalogsData]);
-
-  const cropTypeFormOptions = useMemo(() => {
-    if (cropTypeOptions && cropTypeOptions.length > 0) {
-      return cropTypeOptions.map((opt) => ({
-        value: opt.codeValue || opt.CodeValue,
-        label: opt.description || opt.Description,
-      }));
-    }
-    
-    if (cropCatalogOptions && cropCatalogOptions.length > 0) {
-      return cropCatalogOptions;
-    }
-    
-    return [];
-  }, [cropTypeOptions, cropCatalogOptions]);
 
   const statusMutation = useMutation({
     mutationFn: ({ id, nextActive }) =>
@@ -220,7 +159,6 @@ const Crops = () => {
         ? CropManagementService.activateCrop(id)
         : CropManagementService.deactivateCrop(id),
     onSuccess: (response) => {
-      setInlineError('');
       const successMsg = response?.data?.message || response?.message;
       if (successMsg) {
         message.success(successMsg);
@@ -233,7 +171,6 @@ const Crops = () => {
       const apiMessage = error?.response?.data?.message || error?.message || '';
 
       if (statusCode === 404) {
-        setInlineError(EMPTY_MESSAGE);
         setStatusTarget(null);
         queryClient.invalidateQueries({ queryKey: ['crops'] });
         return;

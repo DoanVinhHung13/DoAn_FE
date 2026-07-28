@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { Modal, Button, Spin, Result, message, Image } from 'antd'
-import { QrcodeOutlined, DownloadOutlined, CheckCircleOutlined } from '@ant-design/icons'
+import { Modal, Button, Result, message, Image } from 'antd'
+import { QrcodeOutlined, DownloadOutlined } from '@ant-design/icons'
 import QrCodeService from 'src/services/QrCodeService'
 
 const GenerateQrModal = ({ open, onCancel, batchId, batchName }) => {

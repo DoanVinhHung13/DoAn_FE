@@ -5,13 +5,10 @@
 import {
   AppstoreOutlined,
   CalendarOutlined,
-  CheckCircleOutlined,
-  EnvironmentOutlined,
   EyeOutlined,
   FileTextOutlined,
   ReloadOutlined,
   SearchOutlined,
-  StopOutlined,
   UnorderedListOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -24,10 +21,9 @@ import {
   Select,
   Skeleton,
   Tag,
-  Typography,
   message,
 } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import CustomTable from 'src/components/Table/CustomTable'
@@ -37,8 +33,6 @@ import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
-
-const { Text } = Typography
 
 const FarmSupervisorPlans = () => {
   const navigate = useNavigate()
@@ -51,6 +45,7 @@ const FarmSupervisorPlans = () => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [reloadKey, setReloadKey] = useState(0)
+  const [totalPlans, setTotalPlans] = useState(0)
   const [viewMode, setViewMode] = useState(
     () => localStorage.getItem('fs-plan-view') || 'card'
   )
@@ -65,8 +60,10 @@ const FarmSupervisorPlans = () => {
       try {
         setLoading(true)
         const res = await CultivationLogbookService.getAll({
-          PageIndex: 1,
-          PageSize: 1000,
+          PageIndex: page,
+          PageSize: pageSize,
+          SearchKeyword: search || undefined,
+          Status: statusFilter === 'all' ? undefined : statusFilter,
         })
         if (!mounted) return
         if (res?.success === false) {
@@ -79,6 +76,7 @@ const FarmSupervisorPlans = () => {
           ? data
           : data?.items || data?.Items || []
         setPlans(Array.isArray(items) ? items : [])
+        setTotalPlans(Array.isArray(data) ? items.length : (data?.totalItems || data?.TotalItems || 0))
       } catch (error) {
         if (mounted) {
           console.error(error)
@@ -91,26 +89,11 @@ const FarmSupervisorPlans = () => {
     }
     load()
     return () => { mounted = false }
-  }, [reloadKey])
+  }, [reloadKey, page, pageSize, search, statusFilter])
 
-  const visiblePlans = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-    return plans.filter((plan) => {
-      const matchesKeyword =
-        !keyword ||
-        [plan.logbookName, plan.cropName, plan.supervisorName]
-          .filter(Boolean)
-          .some((v) => String(v).toLowerCase().includes(keyword))
-      const matchesStatus =
-        statusFilter === 'all' || plan.status === statusFilter
-      return matchesKeyword && matchesStatus
-    })
-  }, [plans, search, statusFilter])
+  const visiblePlans = plans
 
-  const pagedCards = useMemo(
-    () => visiblePlans.slice((page - 1) * pageSize, page * pageSize),
-    [page, pageSize, visiblePlans]
-  )
+  const pagedCards = visiblePlans
 
   const openDetail = (id) =>
     navigate(ROUTER.FS_PLAN_DETAIL.replace(':planId', id))
@@ -208,7 +191,7 @@ const FarmSupervisorPlans = () => {
               ))}
             </div>
             <span className="text-xs text-gray-400">
-              {visiblePlans.length} kế hoạch
+              {totalPlans} kế hoạch
             </span>
           </div>
         </div>
@@ -226,7 +209,7 @@ const FarmSupervisorPlans = () => {
             rowClassName="hover:bg-green-50/30 transition-colors"
             locale={{ emptyText: 'Không có kế hoạch phù hợp.' }}
             pagination={{
-              current: page, pageSize, total: visiblePlans.length,
+              current: page, pageSize, total: totalPlans,
               showSizeChanger: true, pageSizeOptions: PAGE_SIZE,
               onChange: (p, ps) => { setPage(p); setPageSize(ps) },
             }}
@@ -280,7 +263,7 @@ const FarmSupervisorPlans = () => {
             </div>
             <div className="flex justify-end mt-4">
               <Pagination
-                current={page} pageSize={pageSize} total={visiblePlans.length}
+                current={page} pageSize={pageSize} total={totalPlans}
                 showSizeChanger pageSizeOptions={PAGE_SIZE}
                 onChange={(p, ps) => { setPage(p); setPageSize(ps) }}
               />

@@ -54,29 +54,25 @@ export function handleError(status, isNotice = true) {
       window.location.replace(ROUTER.HOME)
       break
     case 500:
-      !!isNotice &&
-        notice({
+      if (isNotice) notice({
           msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
           isSuccess: false,
         })
       break
     case 404: //không tìm thấy
-      !!isNotice &&
-        notice({
+      if (isNotice) notice({
           msg: `Không tìm thấy API [404]`,
           isSuccess: false,
         })
       break
     case 405:
-      !!isNotice &&
-        notice({
+      if (isNotice) notice({
           msg: `Method Not Allowed [405]`,
           isSuccess: false,
         })
       break
     default:
-      !!isNotice &&
-        notice({
+      if (isNotice) notice({
           msg: `Lỗi không xác định!`,
           isSuccess: false,
         })
@@ -88,8 +84,7 @@ export function handleOk(response, isNotice = true) {
   if (response.StatusCode !== 200) {
     switch (response.StatusCode) {
       case 400:
-        !!isNotice &&
-          notice({
+    if (isNotice) notice({
             msg: response?.Object,
             isSuccess: false,
           })

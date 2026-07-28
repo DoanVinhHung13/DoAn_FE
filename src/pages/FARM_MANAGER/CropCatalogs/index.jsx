@@ -22,7 +22,6 @@ import {
   EditOutlined,
   EyeOutlined,
   FileTextOutlined,
-  PlusOutlined,
   SearchOutlined,
   StopOutlined,
 } from '@ant-design/icons';
@@ -93,7 +92,7 @@ const CropCatalogs = () => {
 
   // Status filter options với SystemKey
   const statusFilterOptions = useMemo(() => {
-    const baseOptions = [{ value: 'all', label: 'Tất cả trạng thái' }];
+    const baseOptions = STATUS_OPTIONS.slice(0, 1);
     
     if (catalogStatusOptions && catalogStatusOptions.length > 0) {
       return [

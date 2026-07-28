@@ -4,8 +4,6 @@ const darkText = "#333"
 const lightText = "#FFF"
 const colorActiveDark = "#FFF"
 const colorActiveLight = "#01638D"
-const dark = "#001529"
-const light = "#ffffff"
 
 export const UserMenuStyled = styled.div`
   position: sticky;

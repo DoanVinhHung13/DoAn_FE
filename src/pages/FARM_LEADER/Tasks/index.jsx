@@ -37,7 +37,6 @@ import {
   message,
 } from "antd"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
 import TitleCustom from "src/components/TitleCustom"
@@ -48,9 +47,8 @@ import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
 import { getLandPlotNamesDisplay } from "src/utils/helpers"
 
-const { Text, Title, Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
-const userIdOf = user => user?.id || user?._id || user?.userId
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
 /**
@@ -59,7 +57,6 @@ const unwrap = res => res?.data?.data ?? res?.data ?? res
 const TaskCard = ({ task, onOpen, getTaskStatus }) => {
   const cfg = getTaskStatus(task.status)
   const canLog = canWriteDailyLog(task.status)
-  const progress = task.progress ?? 0
 
   let ctaLabel = "Xem chi tiết"
   let ctaIcon = <EyeOutlined />
@@ -222,8 +219,6 @@ const TaskCard = ({ task, onOpen, getTaskStatus }) => {
 const FarmLeaderTasks = () => {
   const navigate = useNavigate()
   const { getTaskStatus } = useCultivationStatus()
-  const user = useSelector(state => state.appGlobal.userInfo)
-  const currentUserId = userIdOf(user)
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [logbookSummaries, setLogbookSummaries] = useState([])

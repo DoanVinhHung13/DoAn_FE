@@ -4,7 +4,6 @@ import {
   Checkbox,
   Form,
   Input,
-  Typography,
 } from "antd"
 import React, { useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
@@ -20,7 +19,6 @@ import logo from "src/assets/images/logo/logo-eapls.jpg"
 import AuthService from "../../../services/AuthService"
 import { LOGIN_IDENTIFIER_RULES, PASSWORD_RULES } from "src/utils/helpers"
 
-const { Title, Text, Paragraph } = Typography
 
 const Login = () => {
   const navigate = useNavigate()

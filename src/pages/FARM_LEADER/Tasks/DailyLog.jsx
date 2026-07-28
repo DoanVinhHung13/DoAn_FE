@@ -70,7 +70,6 @@ import { formatDate } from "src/utils/dateFormatters"
 
 const { Text } = Typography
 const { TextArea } = Input
-const { Dragger } = Upload
 
 const FERTILIZER_QUANTITY_UNITS = [
   "kg",
@@ -1270,7 +1269,6 @@ const DailyLog = () => {
           <div className="py-1 space-y-5 text-sm">
             {/* ── Thống kê thời gian thực tế ── */}
             {(() => {
-              const isLocal = !leaderSummary
               // Lấy ngày bắt đầu thực tế
               const startDateStr =
                 leaderSummary?.firstLogDate ||

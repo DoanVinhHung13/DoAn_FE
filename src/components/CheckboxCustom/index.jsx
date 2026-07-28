@@ -1,3 +1,4 @@
+import React from "react"
 import { Checkbox } from "antd"
 import PropTypes from "prop-types"
 
@@ -10,7 +11,7 @@ const getCheckboxType = ({ group, button }) => {
 const CheckboxCustom = props => {
   const { group, button, ...rest } = props
   const ElementCheckbox = getCheckboxType({ group, button })
-  return <ElementCheckbox {...rest} />
+  return React.createElement(ElementCheckbox, rest)
 }
 
 CheckboxCustom.propTypes = {

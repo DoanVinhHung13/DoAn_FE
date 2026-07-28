@@ -1,18 +1,16 @@
 import {
-  HistoryOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   EditOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Card, Empty, Timeline, Tag, Spin } from 'antd'
+import { Card, Empty, Timeline, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { formatDateTime } from 'src/utils/dateFormatters'
 import SectionTitle from 'src/components/Common/SectionTitle'
 
 const ReviewHistoryTab = ({ item }) => {
   const [reviewHistory, setReviewHistory] = useState([])
-  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     // Parse lịch sử từ item data

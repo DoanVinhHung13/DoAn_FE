@@ -1,10 +1,8 @@
 import {
-  CheckCircleOutlined,
-  EditOutlined,
   FileImageOutlined,
   CalendarOutlined,
 } from '@ant-design/icons'
-import { Card, Empty, Tag, Image, Spin, List, Avatar, Typography } from 'antd'
+import { Card, Empty, Image, Spin, List, Avatar, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationStageService from 'src/services/CultivationStageService'
@@ -98,7 +96,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
     }
 
     fetchOfficialLogs()
-  }, [selectedStageId])
+  }, [item?.id, selectedStageId])
 
   const selectedIndex = stages.findIndex((s, idx) => (s.id ?? idx) === selectedStageId)
   const selectedStage = selectedIndex >= 0 ? stages[selectedIndex] : null
@@ -192,11 +190,19 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
 
                           {/* ── Nội dung log ── */}
                           <div className="flex-1 py-2 pb-4">
+                            <div className="mb-1 text-sm font-bold text-gray-800">{taskName}</div>
                             {/* 1. Ngày bắt đầu - kết thúc */}
                             {(workStartDate || workEndDate) && (
                               <div className="mb-2 text-sm font-semibold text-gray-800">
                                 {workStartDate && formatDate(workStartDate)}
                                 {workEndDate && ` - ${formatDate(workEndDate)}`}
+                              </div>
+                            )}
+
+                            {(editedBy || editedAt) && (
+                              <div className="mb-2 text-xs text-gray-500">
+                                Cập nhật bởi {editedBy}
+                                {editedAt ? ` · ${formatDate(editedAt)}` : ''}
                               </div>
                             )}
 

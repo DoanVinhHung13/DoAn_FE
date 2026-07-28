@@ -18,7 +18,6 @@ export default function TooltipArrow(props) {
     keepHtml,
     styleWrapper,
     isShow,
-    setShow,
   } = props
 
   const tooltipContentRef = useRef(null)
@@ -32,7 +31,7 @@ export default function TooltipArrow(props) {
         tooltipContentRef.current.scrollHeight >
           tooltipContentRef.current.clientHeight,
       )
-  }, [])
+  }, [isShow])
 
   const renderTitle = text =>
     keepHtml ? (

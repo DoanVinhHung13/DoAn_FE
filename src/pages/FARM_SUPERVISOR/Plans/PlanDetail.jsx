@@ -8,38 +8,24 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   EnvironmentOutlined,
-  EyeOutlined,
   FileTextOutlined,
-  PlusOutlined,
   SendOutlined,
-  TeamOutlined,
   UserOutlined,
-  InfoCircleOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
-  Avatar,
-  Badge,
   Button,
   Card,
-  Col,
   Descriptions,
-  Divider,
   Empty,
-  Form,
-  Input,
-  List,
   message,
   Modal,
-  Progress,
-  Row,
   Skeleton,
   Tabs,
-  Tag,
   Tooltip,
   Typography,
 } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
@@ -47,13 +33,12 @@ import { formatDate } from 'src/utils/dateFormatters'
 import { getLandPlotsFromLogbook } from 'src/utils/helpers'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import CultivationStageService from 'src/services/CultivationStageService'
 
 import StageTaskManagementTab from './components/StageTaskManagementTab'
 import LogbookFinalizationTab from './components/LogbookFinalizationTab'
 import TaskLogHistoryTab from './components/TaskLogHistoryTab'
 
-const { Text, Paragraph } = Typography
+const { Text } = Typography
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 const FarmSupervisorPlanDetail = () => {
@@ -69,8 +54,8 @@ const FarmSupervisorPlanDetail = () => {
   const [submitting, setSubmitting] = useState(false)
 
   // ── Load ──────────────────────────────────────────────────────────────────
-  const loadData = async (isInitial = false) => {
-    if (isInitial || !plan) {
+  const loadData = useCallback(async (isInitial = false) => {
+    if (isInitial) {
       setLoading(true)
     }
     try {
@@ -104,9 +89,9 @@ const FarmSupervisorPlanDetail = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [navigate, planId])
 
-  useEffect(() => { loadData(true) }, [planId])
+  useEffect(() => { loadData(true) }, [loadData])
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const allTasks = useMemo(() => Object.values(tasks).flat(), [tasks])

@@ -69,6 +69,7 @@ const CultivationLogbookList = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
+        Status: statusFilter === 'all' ? undefined : statusFilter,
       }
       const res = await CultivationLogbookService.getAll(params)
       if (res?.success === false) return
@@ -77,12 +78,7 @@ const CultivationLogbookList = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search])
-
-  const displayedData =
-    statusFilter === 'all'
-      ? listData
-      : listData.filter((plan) => plan.status === statusFilter)
+  }, [page, pageSize, search, statusFilter])
 
   useEffect(() => {
     getList()
@@ -269,7 +265,7 @@ const CultivationLogbookList = () => {
         </div>
 
         <CustomTable
-          dataSource={displayedData}
+          dataSource={listData}
           columns={columns}
           rowKey="id"
           loading={loading}

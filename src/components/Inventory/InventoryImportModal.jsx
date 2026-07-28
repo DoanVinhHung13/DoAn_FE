@@ -5,7 +5,7 @@ import InventoryService from 'src/services/InventoryService'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 
-const InventoryImportModal = ({ open, onCancel, onSuccess, item, materialType = 'MATERIAL' }) => {
+const InventoryImportModal = ({ open, onCancel, onSuccess, item }) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const { getCombo } = useSystemKey()

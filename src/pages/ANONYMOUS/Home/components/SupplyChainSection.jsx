@@ -1,20 +1,9 @@
 import React from 'react'
-import { Row, Col, Card, Typography, Tag, Button, Divider } from 'antd'
-import {
-  CheckCircleFilled,
-} from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-import ROUTER from 'src/router/ROUTER'
+import { Card, Typography, Tag } from 'antd'
 
 const { Title, Text, Paragraph } = Typography
 
 const SupplyChainSection = () => {
-  const navigate = useNavigate()
-
-  const handleGetStarted = () => {
-    navigate(ROUTER.LOGIN)
-  }
-
   return (
     <section id="process" className="relative px-6 py-16 overflow-hidden bg-white md:py-20">
       <div

@@ -2,7 +2,6 @@ import STORAGE, {
   SESSION_DURATION_MS,
   clearAuthStorage,
   getStorage,
-  setStorage,
 } from 'src/redux/storage'
 
 const parseExpiryMs = (iso) => {
@@ -52,12 +51,6 @@ const setExpiryMeta = ({ accessTokenExpiredAt, refreshTokenExpiredAt }) => {
     refreshTokenExpiredAt ?? Date.now() + SESSION_DURATION_MS
   localStorage.setItem(STORAGE.REFRESH_TOKEN_EXPIRES_AT, String(refreshExpiry))
   localStorage.setItem(STORAGE.SESSION_EXPIRES_AT, String(refreshExpiry))
-}
-
-const clearExpiryMeta = () => {
-  localStorage.removeItem(STORAGE.ACCESS_TOKEN_EXPIRES_AT)
-  localStorage.removeItem(STORAGE.REFRESH_TOKEN_EXPIRES_AT)
-  localStorage.removeItem(STORAGE.SESSION_EXPIRES_AT)
 }
 
 /** Lưu accessToken + refreshToken + thời hạn từ response API */

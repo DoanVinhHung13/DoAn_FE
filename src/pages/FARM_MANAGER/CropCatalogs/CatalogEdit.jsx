@@ -6,7 +6,6 @@ import {
   Card,
   Form,
   Input,
-  Space,
   Spin,
   Typography,
 } from 'antd';
@@ -21,11 +20,7 @@ import TitleCustom from 'src/components/TitleCustom';
 import CropService from 'src/services/CropService';
 import ROUTER from 'src/router/ROUTER';
 
-const { Text } = Typography;
-
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin danh mục cây trồng.';
-
-const getItemId = (item) => item?.id || item?._id || item?.cropCatalogId;
 
 const CatalogEdit = () => {
   const navigate = useNavigate();

@@ -18,17 +18,13 @@ import {
   CheckCircleOutlined,
   EditOutlined,
   StopOutlined,
-  AppstoreOutlined,
 } from '@ant-design/icons';
-import { SYSTEM_KEY } from 'src/constants/systemKey';
 import { useQuery } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-import GrowthStages from 'src/components/GrowthStages';
 import CropService from 'src/services/CropService';
 import CropManagementService from 'src/services/CropManagementService';
-import GrowthStageService from 'src/services/GrowthStageService';
 import CropVarietiesModal from './CropVarietiesModal';
 import ROUTER from 'src/router/ROUTER';
 
@@ -37,13 +33,6 @@ const { Text, Paragraph } = Typography;
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
 
 const displayValue = (value) => value || 'Chưa cập nhật';
-
-const formatDuration = (days) => {
-  if (!days) return 'Chưa cập nhật';
-  if (days % 365 === 0) return `${days / 365} năm`;
-  if (days % 30 === 0) return `${days / 30} tháng`;
-  return `${days} ngày`;
-};
 
 const isCropActive = (item) => {
   if (typeof item?.isActive === 'boolean') return item.isActive;
@@ -113,7 +102,7 @@ const CropDetail = () => {
             payload?.results ||
             [];
         return items;
-      } catch (err) {
+      } catch {
         return [];
       }
     },
@@ -125,25 +114,6 @@ const CropDetail = () => {
     const catalog = cropCatalogsData.find(c => c.id === id || c.cropCatalogId === id);
     return catalog ? (catalog.name || catalog.cropCatalogName) : id;
   };
-
-  const { data: growthStagesData, isLoading: isGrowthStagesLoading } = useQuery({
-    queryKey: ['growth-stages', id],
-    queryFn: async () => {
-      try {
-        const response = await GrowthStageService.getGrowthStages({ cropId: id, PageSize: 100 });
-        const payload = response?.data ?? response ?? {};
-        const data = payload?.data ?? payload;
-        const items = Array.isArray(data) ? data : data?.items || [];
-        const cropStages = items.filter((s) => String(s.cropId) === String(id));
-        // Sort by orderIndex
-        return cropStages.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
-      } catch (err) {
-        return [];
-      }
-    },
-    enabled: !!id,
-    retry: false,
-  });
 
   if (isLoading) {
     return (

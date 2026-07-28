@@ -1,8 +1,7 @@
 import React from 'react';
-import { Button, Input, InputNumber, Card, Typography, Space, Table } from 'antd';
+import { Button, Input, Card, Space, Table } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 
-const { Text } = Typography;
 
 /**
  * Component quản lý các giai đoạn sinh trưởng của cây

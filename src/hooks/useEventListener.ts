@@ -1,4 +1,4 @@
-/* eslint-disable func-style */
+
 import { RefObject, useEffect, useRef } from "react"
 
 import useIsomorphicLayoutEffect from "./useIsomorphicLayoutEffect"
@@ -72,7 +72,7 @@ function useEventListener<
     targetElement.addEventListener(eventName, listener, options)
 
     // Remove event listener on cleanup
-    // eslint-disable-next-line consistent-return
+
     return () => {
       targetElement.removeEventListener(eventName, listener, options)
     }

@@ -17,7 +17,6 @@ import {
   Button,
   Card,
   Col,
-  DatePicker,
   Form,
   Input,
   message,
@@ -26,10 +25,9 @@ import {
   Select,
   Spin,
   Typography,
-  InputNumber,
   Empty
 } from 'antd'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 
@@ -50,7 +48,7 @@ const normalizeResponse = (response) => {
   return Array.isArray(data) ? data : (data?.items || [])
 }
 
-const { Text, Title } = Typography
+const { Text } = Typography
 
 // Ngày kế hoạch là ngày nghiệp vụ, không phải một thời điểm UTC.
 const formatApiDate = (date) =>
@@ -77,13 +75,10 @@ const CultivationLogbookCreate = () => {
   const templateIdFromQuery = searchParams.get('templateId')
   const [form] = Form.useForm()
   const selectedCatalogId = Form.useWatch('category', form)
-  const selectedPlanStartDate = Form.useWatch('expectedStartDate', form)
 
   // ── Stages state ──
   const [stages, setStages] = useState([createEmptyStage(1)])
   const [submitting, setSubmitting] = useState(false)
-  const [savingTemplate, setSavingTemplate] = useState(false)
-  const [immutablePlanFields, setImmutablePlanFields] = useState(null)
   const [planStatus, setPlanStatus] = useState(null)
 
   // ── Permission flags ──
@@ -292,14 +287,6 @@ const CultivationLogbookCreate = () => {
 
         // Set immutable fields — only lock when IN_PROGRESS or COMPLETED
         const currentStatus = plan.status || 'PLANNED'
-        if (currentStatus !== 'PLANNED') {
-          setImmutablePlanFields({
-            logbookName: plan.logbookName || '',
-            category: selectedCropCatalogId,
-            cropId: selectedCropId,
-            landPlotIds: selectedLandPlotIds,
-          })
-        }
 
         // Set plan status for field-level permission
         setPlanStatus(currentStatus)
@@ -326,7 +313,7 @@ const CultivationLogbookCreate = () => {
   }, [id, isEdit, form])
 
   // ── Helper resolution for template crop & category ─────────────────
-  const resolveTemplateCropData = async (templateData, template) => {
+  const resolveTemplateCropData = useCallback(async (templateData, template) => {
     let targetCatalogId =
       templateData?.cropCatalogId ||
       templateData?.cropCatalog?.id ||
@@ -370,9 +357,9 @@ const CultivationLogbookCreate = () => {
     }
 
     return { targetCatalogId, targetCropId }
-  }
+  }, [])
 
-  const applyTemplateFields = async (templateData, template) => {
+  const applyTemplateFields = useCallback(async (templateData, template) => {
     const { targetCatalogId, targetCropId } = await resolveTemplateCropData(templateData, template)
 
     const fieldsToUpdate = {}
@@ -396,7 +383,7 @@ const CultivationLogbookCreate = () => {
     if (Object.keys(fieldsToUpdate).length > 0) {
       form.setFieldsValue(fieldsToUpdate)
     }
-  }
+  }, [form, resolveTemplateCropData])
 
   // ── Load template data ───────────────────────────────────────────
   useEffect(() => {
@@ -432,7 +419,7 @@ const CultivationLogbookCreate = () => {
 
     loadTemplate()
     return () => { isMounted = false }
-  }, [templateIdFromQuery])
+  }, [applyTemplateFields, templateIdFromQuery])
 
   // ── Template modal handlers ──────────────────────────────────────
   const openTemplateModal = () => {
@@ -551,43 +538,11 @@ const CultivationLogbookCreate = () => {
       const createdPlanId = getCreatedPlanId(response)
       if (createdPlanId) {
         navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', createdPlanId))
-      } else {
       }
-    } catch (error) {
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleSaveAsTemplate = async () => {
-    const values = await form.validateFields()
-    if (stages.some((stage) => !stage.title.trim())) {
-      message.warning('Vui lòng nhập tên cho tất cả các giai đoạn.')
-      return
-    }
-
-    try {
-      setSavingTemplate(true)
-      const payload = {
-        templateName: `Mẫu từ kế hoạch: ${values.logbookName}`,
-        cropCatalogId: values.category,
-        cropId: values.cropId,
-        description: values.description || 'Mẫu kế hoạch được tạo từ kế hoạch sản xuất',
-        processSteps: stages.map((stage) => ({
-          stepName: stage.title,
-          description: stage.description,
-          order: stage.order,
-        })),
-      }
-
-      await PlanTemplateService.create(payload)
-      message.success('Đã lưu kế hoạch thành mẫu thành công!')
-      setTemplateModal(false)
     } catch (error) {
       console.error(error)
-      message.error(error.message || 'Lưu mẫu thất bại.')
     } finally {
-      setSavingTemplate(false)
+      setSubmitting(false)
     }
   }
 

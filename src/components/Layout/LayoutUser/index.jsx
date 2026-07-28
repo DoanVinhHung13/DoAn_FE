@@ -1,5 +1,5 @@
 import { Layout, Menu } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { StoreContext } from "src/contexts";
 import { MenuItemUser } from "src/router/MenuItem";
@@ -13,18 +13,16 @@ const LayoutUser = () => {
   const location = useLocation();
   const { themeStore } = useContext(StoreContext);
   const { isDarkMode } = themeStore;
-  const [selectedKey, setSelectedKey] = useState(location?.pathname);
   const [collapseMenu, setCollapseMenu] = useState(false);
+  const selectedKey = location?.pathname;
 
   const menuUser = MenuItemUser();
 
   const onChange = (menu) => {
-    !menu?.key?.includes("subkey") && navigate(menu?.key?.replace("submenu", ""));
+    if (!menu?.key?.includes("subkey")) {
+      navigate(menu?.key?.replace("submenu", ""));
+    }
   };
-
-  useEffect(() => {
-    setSelectedKey(location?.pathname);
-  }, [location?.pathname]);
 
   return (
     <Layout

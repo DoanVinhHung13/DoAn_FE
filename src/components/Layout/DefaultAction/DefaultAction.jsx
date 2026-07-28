@@ -81,7 +81,7 @@ const DefaultAction = ({ children }) => {
     }
 
     restoreUser()
-  }, [userInfo?._id])
+  }, [dispatch, userInfo?._id])
 
   return <>{children}</>
 }

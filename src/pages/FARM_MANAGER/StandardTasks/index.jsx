@@ -83,7 +83,8 @@ const TasksManagement = () => {
         return
       }
       getList()
-    } catch (err) {
+    } catch (error) {
+      console.error(error)
     }
   }
 

@@ -1,5 +1,5 @@
 import { Breadcrumb } from "antd"
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { useLocation, useNavigate } from "react-router"
 import LayoutCommon from "src/components/Common/LayoutCommon"
 import { findParent, treeToList } from "src/utils/helpers"
@@ -50,28 +50,25 @@ const BreadcrumbHome = () => {
   )
   const locationPathName = pathSpecial ? pathSpecial : location?.pathname
 
-  const treeLabel = tree => {
-    if (tree?.length <= 0) return
-    return tree?.map(i => ({
-      ...i,
-      title: i?.label,
-      children: treeLabel(i?.children),
-    }))
-  }
-  const [listParent, setListParent] = useState([])
-  useEffect(() => {
+  const listParent = useMemo(() => {
+    const treeLabel = tree => {
+      if (tree?.length <= 0) return
+      return tree?.map(i => ({
+        ...i,
+        title: i?.label,
+        children: treeLabel(i?.children),
+      }))
+    }
     const items = treeLabel(MenuItemBreadcrumbs())
     const parents =
       findParent(
         { children: items },
         `${locationPathName}${location?.search}`,
       ) || findParent({ children: items }, `${locationPathName}`)
-    setListParent(
-      treeToList([parents], "key")
-        .reverse()
-        ?.filter(i => i?.label),
-    )
-  }, [location])
+    return treeToList([parents], "key")
+      .reverse()
+      ?.filter(i => i?.label)
+  }, [location?.search, locationPathName])
 
   return (
     <BreadcrumbHomeStyle>

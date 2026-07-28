@@ -1,5 +1,9 @@
 import React, { useState } from 'react'
 
+// This module intentionally exports both the provider and its context for the
+// application's single context entry point.
+/* eslint-disable react-refresh/only-export-components */
+
 export const StoreContext = React.createContext(null)
 
 /**

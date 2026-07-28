@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Form, Input, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, FileTextOutlined } from '@ant-design/icons';
@@ -14,7 +14,6 @@ const CatalogCreate = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const { refetchSystemKey } = useSystemKey();
-  const [inlineError, setInlineError] = useState('');
 
   const createMutation = useMutation({
     mutationFn: (values) => {

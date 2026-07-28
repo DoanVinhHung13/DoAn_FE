@@ -1,15 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Button, Input, Avatar, Badge, Tooltip, Alert, Progress, QRCode } from 'antd';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Button, Input, Avatar, Badge, Tooltip, QRCode } from 'antd';
 import {
     MessageOutlined,
     SendOutlined,
     CloseOutlined,
     RobotOutlined,
     UserOutlined,
-    CrownOutlined,
-    LoginOutlined
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { API_URL } from 'src/utils/helpers';
 import './index.css';
@@ -17,7 +14,6 @@ import './index.css';
 const { TextArea } = Input;
 
 const AIChatWidget = () => {
-    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
         {
@@ -30,24 +26,13 @@ const AIChatWidget = () => {
     const [inputValue, setInputValue] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [hasNewMessage, setHasNewMessage] = useState(false);
-    const [showWelcome, setShowWelcome] = useState(true);
-    const [chatInfo, setChatInfo] = useState(null);
-    const [showUpgradeAlert, setShowUpgradeAlert] = useState(false);
+    const [, setChatInfo] = useState(null);
+    const [, setShowUpgradeAlert] = useState(false);
     const messagesEndRef = useRef(null);
 
     // Lấy thông tin user từ localStorage (key đồng nhất với STORAGE.TOKEN)
     const token = localStorage.getItem('token-eapls') || sessionStorage.getItem('token-eapls');
-    const userStr = localStorage.getItem('user-info-eapls') || sessionStorage.getItem('user-info-eapls');
-    const user = userStr ? JSON.parse(userStr) : null;
-
-    // Lấy thông tin chat khi mở widget
-    useEffect(() => {
-        if (isOpen && !chatInfo) {
-            fetchChatInfo();
-        }
-    }, [isOpen]);
-
-    const fetchChatInfo = async () => {
+    const fetchChatInfo = useCallback(async () => {
         try {
             const headers = {
                 'Content-Type': 'application/json'
@@ -68,7 +53,7 @@ const AIChatWidget = () => {
         } catch (error) {
             console.error('Failed to fetch chat info:', error);
         }
-    };
+    }, [token]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -257,43 +242,6 @@ const AIChatWidget = () => {
         }
     };
 
-    const getChatLevelIcon = (level) => {
-        switch (level) {
-            case 'admin':
-            case 'vip':
-                return <CrownOutlined className="text-yellow-400" />;
-            case 'user':
-                return <UserOutlined className="text-blue-400" />;
-            default:
-                return <UserOutlined className="text-gray-400" />;
-        }
-    };
-
-    const getChatLevelColor = (level) => {
-        switch (level) {
-            case 'admin':
-            case 'vip':
-                return 'gold';
-            case 'user':
-                return 'blue';
-            default:
-                return 'default';
-        }
-    };
-
-    const getChatLevelText = (level) => {
-        switch (level) {
-            case 'admin':
-                return 'Admin';
-            case 'vip':
-                return 'VIP';
-            case 'user':
-                return 'User';
-            default:
-                return 'Guest';
-        }
-    };
-
     const formatTime = (date) => {
         return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     };
@@ -384,7 +332,7 @@ const AIChatWidget = () => {
                                                 <ReactMarkdown
                                                     className="markdown-body"
                                                     components={{
-                                                        img: ({ node, alt, src, ...props }) => {
+                                                        img: ({ alt, src, ...props }) => {
                                                             if (alt === 'QR') {
                                                                 const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
                                                                 const qrUrl = src ? src.replace('https://eapls.vn', baseUrl) : `${baseUrl}/trace/demo-qr-123`;

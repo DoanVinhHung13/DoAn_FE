@@ -2,7 +2,6 @@ import React from 'react';
 import { Row, Col, Typography, Space, Divider } from 'antd';
 import { GlobalOutlined, ThunderboltFilled, EnvironmentOutlined, PhoneOutlined, MailOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { StoreContext } from 'src/contexts';
 import { useAppDispatch } from 'src/redux/hooks';
 import { setUserInfo } from 'src/redux/slices/appGlobalSlice';
 import { clearAuthStorage } from 'src/redux/storage';
@@ -10,7 +9,7 @@ import { useSelector } from 'react-redux';
 import logo from 'src/assets/images/logo/logo-eapls.jpg';
 import ROUTER from 'src/router/ROUTER';
 
-const { Title, Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography;
 
 const PublicFooter = () => {
     const navigate = useNavigate();

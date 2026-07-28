@@ -91,7 +91,7 @@ const UsersManagement = () => {
   const [totalRecords, setTotalRecords] = useState(0)
   const [loading, setLoading] = useState(false)
 
-  const getList = async () => {
+  const getList = useCallback(async () => {
     try {
       setLoading(true)
       const res = await UserService.getUsers({
@@ -107,11 +107,11 @@ const UsersManagement = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, pageSize, roleFilter, search, statusFilter])
 
   useEffect(() => {
     getList()
-  }, [page, pageSize, search, roleFilter, statusFilter])
+  }, [getList])
 
   const [statusLoading, setStatusLoading] = useState(false)
 

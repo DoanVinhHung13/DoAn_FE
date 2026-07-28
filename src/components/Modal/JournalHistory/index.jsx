@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Modal, Timeline, Tag, Empty, Spin, Descriptions, Alert, Tabs } from 'antd';
 import { ClockCircleOutlined, UserOutlined, EditOutlined, FileAddOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import api from 'src/services/01_axios';
@@ -10,14 +10,7 @@ const JournalHistoryModal = ({ visible, onClose, journalId }) => {
   const [summary, setSummary] = useState(null);
   const [activeTab, setActiveTab] = useState('timeline');
 
-  useEffect(() => {
-    if (visible && journalId) {
-      fetchHistory();
-      fetchSummary();
-    }
-  }, [visible, journalId]);
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get(`/journals/${journalId}/history`);
@@ -27,16 +20,23 @@ const JournalHistoryModal = ({ visible, onClose, journalId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [journalId]);
 
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     try {
       const response = await api.get(`/journals/${journalId}/history/summary`);
       setSummary(response.data.data);
     } catch (error) {
       console.error('Error fetching summary:', error);
     }
-  };
+  }, [journalId]);
+
+  useEffect(() => {
+    if (visible && journalId) {
+      fetchHistory();
+      fetchSummary();
+    }
+  }, [fetchHistory, fetchSummary, journalId, visible]);
 
   const getActionIcon = (action) => {
     const icons = {
@@ -60,7 +60,7 @@ const JournalHistoryModal = ({ visible, onClose, journalId }) => {
 
   const renderTimeline = () => (
     <Timeline mode="left" className="mt-6">
-      {history.map((item, index) => (
+      {history.map(item => (
         <Timeline.Item
           key={item._id}
           dot={getActionIcon(item.action)}
