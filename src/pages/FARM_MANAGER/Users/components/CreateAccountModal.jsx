@@ -1,5 +1,5 @@
 import React from "react"
-import { Button, Form, Input, Select } from "antd"
+import { Button, Form, Input, message, Select } from "antd"
 import { KeyOutlined, LockOutlined, MailOutlined, PhoneOutlined, UserOutlined } from "@ant-design/icons"
 import CustomModal from "src/components/Modal/CustomModal"
 import { ROLES } from "src/constants/roles"
@@ -11,6 +11,8 @@ import { EMAIL_RULES, PASSWORD_RULES, PHONE_RULES } from "src/utils/helpers"
 
 const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
 
+const getUserId = user => user?.id || user?._id || user?.userId
+
 const contactRequiredRule = ({ getFieldValue }) => ({
   validator: (_, value) => {
     const hasEmail = getFieldValue("email")?.trim()
@@ -20,19 +22,27 @@ const contactRequiredRule = ({ getFieldValue }) => ({
   },
 })
 
-const CreateAccountModal = ({ open, onClose, users = [], loadingUsers = false, onSuccess }) => {
+const CreateAccountModal = ({
+  open,
+  onClose,
+  users = [],
+  loadingUsers = false,
+  onSuccess,
+  canCreateSupervisor = true,
+}) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = React.useState(false)
   const { getOptions } = useSystemKey()
   const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option => {
     const role = option.codeValue || option.value
-    return role !== ROLES.FARM_MANAGER && role !== ROLES.FARMER
+    if (role === ROLES.FARM_MANAGER || role === ROLES.FARMER) return false
+    return canCreateSupervisor || role !== ROLES.FARM_SUPERVISOR
   })
 
   const userOptions = users
-    .filter(user => user?.id)
+    .filter(user => getUserId(user))
     .map(user => ({
-      value: user.id,
+      value: getUserId(user),
       label: `${user.fullName || "Người dùng"}${user.email ? ` — ${user.email}` : ""}`,
     }))
 
@@ -43,7 +53,7 @@ const CreateAccountModal = ({ open, onClose, users = [], loadingUsers = false, o
   }, [open, form])
 
   const handleUserChange = userId => {
-    const selectedUser = users.find(user => user.id === userId)
+    const selectedUser = users.find(user => String(getUserId(user)) === String(userId))
     form.setFieldsValue({
       email: selectedUser?.email || "",
       phoneNumber: selectedUser?.phoneNumber || selectedUser?.phone || "",
@@ -51,6 +61,11 @@ const CreateAccountModal = ({ open, onClose, users = [], loadingUsers = false, o
   }
 
   const handleSubmit = async values => {
+    if (!canCreateSupervisor && values.role === ROLES.FARM_SUPERVISOR) {
+      message.error("Supervisor không được cấp tài khoản Supervisor.")
+      return
+    }
+
     try {
       setLoading(true)
       const res = await UserService.createAccount(values.userId, {

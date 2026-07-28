@@ -45,9 +45,21 @@ import CreateAccountModal from "./components/CreateAccountModal"
 import ResetPasswordModal from "./components/ResetPasswordModal"
 import UserFormModal from "./components/UserFormModal"
 
-const hasFarmerRole = user => {
+const getUserListData = response => {
+  const data = response?.data?.data ?? response?.data ?? response
+  if (Array.isArray(data)) {
+    return { items: data, totalItems: data.length }
+  }
+
+  return {
+    items: data?.items ?? data?.Items ?? [],
+    totalItems: data?.totalItems ?? data?.totalCount ?? data?.TotalItems ?? 0,
+  }
+}
+
+const hasRole = (user, expectedRole) => {
   const roles = Array.isArray(user?.roles) ? user.roles : [user?.role]
-  return roles.some(role => String(role).toUpperCase() === ROLES.FARMER)
+  return roles.some(role => String(role).toUpperCase() === expectedRole)
 }
 
 const getRoleTag = (role, roleDesc) => {
@@ -77,7 +89,10 @@ const UsersManagement = () => {
 
   const { getOptions, getDescription } = useSystemKey()
 
-  const roleOptions = getOptions(SYSTEM_KEY.ROLE)
+  const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option => {
+    const role = option.codeValue || option.value
+    return !(isFarmSupervisor && role === ROLES.FARM_SUPERVISOR)
+  })
   const selectStatusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
     ...getOptions(SYSTEM_KEY.STATUS),
@@ -115,8 +130,9 @@ const UsersManagement = () => {
         status: statusFilter === "all" ? undefined : statusFilter,
       })
       if (res?.success === false) return
-      setListData(res?.data?.items || [])
-      setTotalRecords(res?.data?.totalItems || 0)
+      const { items, totalItems } = getUserListData(res)
+      setListData(items)
+      setTotalRecords(totalItems)
     } finally {
       setLoading(false)
     }
@@ -127,15 +143,22 @@ const UsersManagement = () => {
     try {
       setAccountCandidatesLoading(true)
       const res = await UserService.getUsers({
-        pageIndex: 1,
-        pageSize: 100,
-        hasAccount: false,
+        PageIndex: 1,
+        PageSize: 1000,
+        HasAccount: false,
       })
-      setAccountCandidates((res?.data?.items || []).filter(user => !hasFarmerRole(user)))
+      const { items } = getUserListData(res)
+      setAccountCandidates(
+        items.filter(
+          user =>
+            user?.isActive !== false &&
+            (!isFarmSupervisor || !hasRole(user, ROLES.FARM_SUPERVISOR)),
+        ),
+      )
     } finally {
       setAccountCandidatesLoading(false)
     }
-  }, [canManageUsers])
+  }, [canManageUsers, isFarmSupervisor])
 
   useEffect(() => {
     getList()
@@ -482,6 +505,7 @@ const UsersManagement = () => {
         open={createAccountModalOpen}
         users={accountCandidates}
         loadingUsers={accountCandidatesLoading}
+        canCreateSupervisor={isFarmManager}
         onClose={() => setCreateAccountModalOpen(false)}
         onSuccess={() => {
           getList()
