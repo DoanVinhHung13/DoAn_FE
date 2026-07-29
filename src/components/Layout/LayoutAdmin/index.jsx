@@ -55,7 +55,9 @@ const LayoutAdmin = () => {
   const selectedKey =
     menuItems
       .flatMap((item) => (item.children ? [item, ...item.children] : [item]))
-      .find((item) => item.key && location.pathname.startsWith(item.key))?.key || location.pathname
+      .filter((item) => item.key && location.pathname.startsWith(item.key))
+      .sort((a, b) => b.key.length - a.key.length)
+      .at(0)?.key || location.pathname
 
   const dropdownItems = [
     {
