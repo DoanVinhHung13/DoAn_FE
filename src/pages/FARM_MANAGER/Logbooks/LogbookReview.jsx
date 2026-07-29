@@ -66,6 +66,105 @@ const extractList = response => {
   return asList(data?.items || data?.data)
 }
 
+const AUDIT_ACTION_LABELS = {
+  CULTIVATION_LOGBOOK_SUBMIT_COMPLETION: "Gửi yêu cầu duyệt hoàn tất",
+  CULTIVATION_LOGBOOK_APPROVE_COMPLETION: "Duyệt hoàn tất nhật ký",
+  CULTIVATION_LOGBOOK_REJECT_COMPLETION: "Từ chối hoàn tất nhật ký",
+  CULTIVATION_LOGBOOK_CREATE: "Tạo nhật ký canh tác",
+  CULTIVATION_LOGBOOK_UPDATE: "Cập nhật nhật ký canh tác",
+  PRODUCTION_LOG_DESCRIPTION_EDIT: "Chỉnh sửa mô tả nhật ký",
+  CULTIVATION_STAGE_COMPLETED: "Hoàn tất giai đoạn canh tác",
+  CREATE: "Tạo mới",
+  UPDATE: "Cập nhật",
+  DELETE: "Xóa",
+  APPROVE: "Duyệt",
+  REJECT: "Từ chối",
+  COMPLETE: "Hoàn tất",
+  ASSIGN: "Phân công",
+  GENERATE: "Tạo mã",
+  DISABLE: "Vô hiệu hóa",
+  CANCEL: "Hủy",
+  IMPORT: "Nhập dữ liệu",
+  EXPORT: "Xuất dữ liệu",
+  ADJUST: "Điều chỉnh",
+}
+
+const getAuditAction = item =>
+  String(
+    item?.action ??
+      item?.Action ??
+      item?.eventType ??
+      item?.EventType ??
+      "",
+  )
+    .trim()
+    .toUpperCase()
+
+const getAuditEntityId = item =>
+  item?.entityId ?? item?.EntityId ?? item?.entityID ?? item?.EntityID ?? null
+
+const getAuditTimestamp = item => {
+  const value = item?.createdAt ?? item?.CreatedAt
+  const timestamp = value ? new Date(value).getTime() : NaN
+  return Number.isFinite(timestamp) ? timestamp : null
+}
+
+const getAuditActionLabel = item => {
+  const action = getAuditAction(item)
+  if (AUDIT_ACTION_LABELS[action]) return AUDIT_ACTION_LABELS[action]
+  if (action.endsWith("_SUBMIT_COMPLETION")) return "Gửi yêu cầu duyệt hoàn tất"
+  if (action.endsWith("_APPROVE_COMPLETION")) return "Duyệt hoàn tất nhật ký"
+  if (action.endsWith("_REJECT_COMPLETION")) return "Từ chối hoàn tất nhật ký"
+
+  return action
+    .toLowerCase()
+    .split("_")
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
+}
+
+const getExpectedGenericAction = action => {
+  if (action.endsWith("_APPROVE_COMPLETION")) return "APPROVE"
+  if (action.endsWith("_REJECT_COMPLETION")) return "REJECT"
+  if (action.endsWith("_SUBMIT_COMPLETION")) return "CREATE"
+  return null
+}
+
+const isDuplicateAuditPair = (genericItem, detailedItem) => {
+  const genericAction = getAuditAction(genericItem)
+  const detailedAction = getAuditAction(detailedItem)
+  if (getExpectedGenericAction(detailedAction) !== genericAction) return false
+
+  const genericEntityId = getAuditEntityId(genericItem)
+  const detailedEntityId = getAuditEntityId(detailedItem)
+  if (genericEntityId && detailedEntityId && genericEntityId !== detailedEntityId) {
+    return false
+  }
+
+  const genericTime = getAuditTimestamp(genericItem)
+  const detailedTime = getAuditTimestamp(detailedItem)
+  if (genericTime === null || detailedTime === null) return true
+
+  return Math.abs(genericTime - detailedTime) <= 30 * 1000
+}
+
+const normalizeAuditLogs = logs => {
+  const duplicateIndexes = new Set()
+
+  logs.forEach((item, index) => {
+    const action = getAuditAction(item)
+    if (!action.endsWith("_COMPLETION")) return
+
+    logs.forEach((candidate, candidateIndex) => {
+      if (candidateIndex === index || duplicateIndexes.has(candidateIndex)) return
+      if (isDuplicateAuditPair(candidate, item)) duplicateIndexes.add(candidateIndex)
+    })
+  })
+
+  return logs.filter((_, index) => !duplicateIndexes.has(index))
+}
+
 /** Display one official log with the same fields as the cultivation-logbook view. */
 const LogEntry = ({ log }) => {
   const summary = log.summary || log.officialLog || {}
@@ -362,7 +461,7 @@ const LogbookReview = () => {
       setLogbook(logbookData)
       setStageGroups(displayStageGroups)
       setLogs(displayStageGroups.flatMap(group => group.logs))
-      setAuditLogs(extractList(auditRes))
+      setAuditLogs(normalizeAuditLogs(extractList(auditRes)))
     } catch (error) {
       console.error(error)
       setLogbook(null)
@@ -601,18 +700,25 @@ const LogbookReview = () => {
           <Empty description="Chưa có lịch sử chỉnh sửa" image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (
           <Timeline
-            items={auditLogs.map(item => ({
+            items={auditLogs.map((item, index) => ({
+              key: item.id || item.Id || `${getAuditAction(item)}-${index}`,
               children: (
                 <div className="text-sm">
                   <div className="font-semibold text-gray-800">
-                    {item.action || item.eventType}
+                    {getAuditActionLabel(item)}
                   </div>
                   <div className="text-gray-500 text-xs">
-                    {item.createdAt ? formatDate(item.createdAt) : ''}{" "}
-                    {item.actorName ? `— ${item.actorName}` : ''}
+                    {item.createdAt || item.CreatedAt
+                      ? formatDate(item.createdAt || item.CreatedAt)
+                      : ""}{" "}
+                    {item.actorName || item.ActorName
+                      ? `— ${item.actorName || item.ActorName}`
+                      : ""}
                   </div>
-                  {item.message && (
-                    <div className="text-gray-600 mt-0.5">{item.message}</div>
+                  {(item.message || item.Message) && (
+                    <div className="text-gray-600 mt-0.5">
+                      {item.message || item.Message}
+                    </div>
                   )}
                 </div>
               ),
