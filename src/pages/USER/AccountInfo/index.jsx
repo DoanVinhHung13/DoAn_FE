@@ -33,7 +33,12 @@ import authSession from "src/redux/authSession";
 import { setUserInfo } from "src/redux/slices/appGlobalSlice";
 import UserService from "src/services/UserService";
 import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers";
-import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters";
+import {
+  formatDate,
+  formatDateForApi,
+  getLocalNow,
+  parseDate,
+} from "src/utils/dateFormatters";
 
 const { Text, Title } = Typography;
 
@@ -80,7 +85,7 @@ const AccountInfo = () => {
       const payload = {
         fullName: values.fullName.trim().replace(/\s+/g, " "),
         phoneNumber: values.phoneNumber?.trim() || null,
-        dateOfBirth: values.dateOfBirth?.toISOString() || null,
+        dateOfBirth: formatDateForApi(values.dateOfBirth),
         gender: values.gender || null,
         address: values.address?.trim().replace(/\s+/g, " ") || null,
       };

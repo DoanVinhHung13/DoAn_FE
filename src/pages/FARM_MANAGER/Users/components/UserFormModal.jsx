@@ -24,7 +24,11 @@ import { useNavigate } from "react-router-dom"
 import CustomModal from "src/components/Modal/CustomModal"
 import { ROLES } from "src/constants/roles"
 import { SYSTEM_KEY } from "src/constants/systemKey"
-import { getLocalNow, parseDate } from "src/utils/dateFormatters"
+import {
+  formatDateForApi,
+  getLocalNow,
+  parseDate,
+} from "src/utils/dateFormatters"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import ROUTER from "src/router/ROUTER"
 import UploadService from "src/services/UploadService"
@@ -129,7 +133,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           phoneNumber: values.phoneNumber || null,
           gender: values.gender || null,
           dateOfBirth: values.dateOfBirth
-            ? values.dateOfBirth.toISOString()
+            ? formatDateForApi(values.dateOfBirth)
             : null,
           avatarUrl: uploadedUrl || null,
           isActive: editingUser.isActive,
@@ -150,7 +154,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           phoneNumber: values.phoneNumber || null,
           gender: values.gender || null,
           dateOfBirth: values.dateOfBirth
-            ? values.dateOfBirth.toISOString()
+            ? formatDateForApi(values.dateOfBirth)
             : null,
           avatarUrl: uploadedUrl || null,
           roles: [ROLES.FARMER],
