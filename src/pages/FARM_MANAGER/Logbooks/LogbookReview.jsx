@@ -1,6 +1,6 @@
 /**
  * Farm Manager: Review chốt sổ + Duyệt/Từ chối
- * Route: /farm-manager/logbooks/:id/review
+ * Route: /farm-manager/cultivation-logbooks/:id/review
  *
  * API:
  *   GET  /cultivation-logbooks/{id}
@@ -15,6 +15,8 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   EnvironmentOutlined,
+  ExperimentOutlined,
+  FileImageOutlined,
   UserOutlined,
 } from "@ant-design/icons"
 import {
@@ -43,31 +45,96 @@ import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import ROUTER from "src/router/ROUTER"
 import CultivationLogbookService from "src/services/CultivationLogbookService"
 import CultivationLogService from "src/services/CultivationLogService"
+import CultivationStageService from "src/services/CultivationStageService"
 import AuditLogService from "src/services/AuditLogService"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { canApproveClosing } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
 import { getLandPlotNamesDisplay } from "src/utils/helpers"
+import { getUserDisplayName } from "src/utils/userDisplayName"
 
 const { Paragraph } = Typography
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
-/** Một log entry — hiển thị phẳng: ngày → mô tả → materialsText → ảnh */
-const LogEntry = ({ log }) => {
-  const workStartDate = log.workStartDate || log.startDate
-  const workEndDate = log.workEndDate || log.endDate
-  const description =
-    log.description || log.descriptionSummary || log.supervisorDescription
-  const materialsText = log.materialsText
+const asList = value => (Array.isArray(value) ? value : [])
 
-  const rawImages = log.images || log.attachmentImages || []
+const extractList = response => {
+  const data = unwrap(response)
+  if (Array.isArray(data)) return data
+  return asList(data?.items || data?.data)
+}
+
+/** Display one official log with the same fields as the cultivation-logbook view. */
+const LogEntry = ({ log }) => {
+  const summary = log.summary || log.officialLog || {}
+  const taskName =
+    log.cultivationTaskName ||
+    log.taskName ||
+    log.name ||
+    log.title ||
+    summary.taskName ||
+    summary.name
+  const description =
+    summary.description ||
+    summary.supervisorDescription ||
+    log.supervisorDescription ||
+    log.description ||
+    log.descriptionSummary ||
+    log.summaryDescription ||
+    log.finalDescription
+  const materialsText = summary.materialsText || log.materialsText
+  const workStartDate =
+    log.workStartDate || summary.workStartDate || log.startDate
+  const workEndDate = log.workEndDate || summary.workEndDate || log.endDate
+  const editorCandidates = [
+    summary.editedBy,
+    summary.editedByName,
+    summary.editorName,
+    summary.updatedBy,
+    log.editedByName,
+    log.editedBy,
+    log.updatedByName,
+    log.updatedBy,
+    log.supervisorEditorName,
+    summary.supervisorName,
+    summary.performedByName,
+    summary.performedBy,
+    log.performedByName,
+    log.performedBy,
+  ]
+  const editedBy = editorCandidates.some(Boolean)
+    ? getUserDisplayName(...editorCandidates)
+    : ""
+  const editedAt = summary.editedAt || log.editedAt || log.updatedAt
+  const totalFertilizers = asList(
+    summary.totalFertilizers ||
+      summary.fertilizers ||
+      log.totalFertilizers ||
+      log.fertilizers,
+  )
+  const totalPesticides = asList(
+    summary.totalPesticides ||
+      summary.pesticides ||
+      log.totalPesticides ||
+      log.pesticides,
+  )
+  const summaryImages = asList(summary.images)
+  const rawImages = summaryImages.length
+    ? summaryImages
+    : asList(log.images || log.attachmentImages)
   const images = rawImages
     .map(img => {
       if (typeof img === "string") return img
       return (
-        img.url || img.imageUrl || img.path || img.src || img.fileUrl || null
+        img.url ||
+        img.imageUrl ||
+        img.filePath ||
+        img.path ||
+        img.src ||
+        img.fileUrl ||
+        null
       )
     })
     .filter(Boolean)
@@ -82,30 +149,91 @@ const LogEntry = ({ log }) => {
 
       {/* ── Nội dung log ── */}
       <div className="flex-1 py-2 pb-4 transition-colors">
+        {taskName && (
+          <div className="mb-1 text-sm font-bold text-gray-800">{taskName}</div>
+        )}
+
         {(workStartDate || workEndDate) && (
-          <div className="mb-1 text-sm font-semibold text-gray-800">
-            {workStartDate && `  ${formatDate(workStartDate)}`}
-            {workEndDate && ` -  ${formatDate(workEndDate)}`}
+          <div className="mb-2 text-sm font-semibold text-gray-800">
+            {workStartDate && formatDate(workStartDate)}
+            {workEndDate && ` - ${formatDate(workEndDate)}`}
           </div>
         )}
 
-        {/* 2. Mô tả */}
+        {(editedBy || editedAt) && (
+          <div className="mb-2 text-xs text-gray-500">
+            Cập nhật bởi {editedBy}
+            {editedAt ? ` · ${formatDate(editedAt)}` : ""}
+          </div>
+        )}
+
         {description && (
           <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
             {description}
           </Paragraph>
         )}
 
-        {/* 3. Materials text */}
         {materialsText && (
           <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
             {materialsText}
           </Paragraph>
         )}
 
-        {/* 4. Ảnh minh chứng */}
+        {(totalFertilizers.length > 0 || totalPesticides.length > 0) && (
+          <div className="p-3 my-2 bg-gray-50 border border-gray-200 rounded-lg">
+            {totalFertilizers.length > 0 && (
+              <div className="mb-2">
+                <p className="mb-1 text-xs font-medium text-gray-500">
+                  <ExperimentOutlined className="mr-1 text-green-600" />
+                  Phân bón:
+                </p>
+                <div className="space-y-1">
+                  {totalFertilizers.map((fert, index) => (
+                    <div key={index} className="flex items-center gap-2 text-xs text-gray-700">
+                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full shrink-0" />
+                      <span className="font-medium">
+                        {fert.name || fert.fertilizerName || fert.materialName}
+                      </span>
+                      <span className="text-gray-400">-</span>
+                      <span className="font-medium text-green-700">
+                        {fert.quantity || fert.totalQuantity} {fert.unit || fert.quantityUnit || "kg"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {totalPesticides.length > 0 && (
+              <div>
+                <p className="mb-1 text-xs font-medium text-gray-500">
+                  <ExperimentOutlined className="mr-1 text-orange-600" />
+                  Nông dược:
+                </p>
+                <div className="space-y-1">
+                  {totalPesticides.map((pest, index) => (
+                    <div key={index} className="flex items-center gap-2 text-xs text-gray-700">
+                      <span className="w-1.5 h-1.5 bg-orange-500 rounded-full shrink-0" />
+                      <span className="font-medium">
+                        {pest.name || pest.pesticideName || pest.materialName}
+                      </span>
+                      <span className="text-gray-400">-</span>
+                      <span className="font-medium text-orange-700">
+                        {pest.quantity || pest.totalQuantity} {pest.unit || pest.quantityUnit || "lít"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {images.length > 0 && (
           <div className="mt-2">
+            <p className="mb-1.5 text-xs font-semibold text-gray-500">
+              <FileImageOutlined className="mr-1" />
+              Ảnh minh chứng ({images.length})
+            </p>
             <Image.PreviewGroup items={images}>
               <div className="flex flex-wrap gap-2">
                 {images.map((src, i) => (
@@ -125,6 +253,44 @@ const LogEntry = ({ log }) => {
   )
 }
 
+const getLogDate = (log, type) => {
+  const summary = log?.summary || log?.officialLog || {}
+  const dateKey = type === "start" ? "workStartDate" : "workEndDate"
+  const fallbackKey = type === "start" ? "startDate" : "endDate"
+  return log?.[dateKey] || summary?.[dateKey] || log?.[fallbackKey] || summary?.[fallbackKey]
+}
+
+const StageSectionHeader = ({ stage, index, stageLogs }) => {
+  if (!stage) return null
+
+  const firstLog = stageLogs[0]
+  const lastLog = stageLogs[stageLogs.length - 1]
+  const stageName = stage.stageName || stage.name || stage.title || `Giai đoạn ${index + 1}`
+  const plannedStart = stage.startDate || stage.plannedStartDate
+  const plannedEnd = stage.endDate || stage.plannedEndDate
+  const actualStart = stage.actualStartDate || getLogDate(firstLog, "start")
+  const actualEnd = stage.actualEndDate || getLogDate(lastLog, "end")
+
+  return (
+    <div className="flex items-start gap-3 pb-3 border-b border-green-100">
+      <div className="flex items-center justify-center w-8 h-8 font-bold text-white bg-green-600 rounded-full shrink-0">
+        {index + 1}
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="mb-1 text-base font-bold text-gray-800">{stageName}</h3>
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
+          <span className="text-gray-500">
+            Kế hoạch: {plannedStart ? formatDate(plannedStart) : "Chưa xác định"} - {plannedEnd ? formatDate(plannedEnd) : "Chưa xác định"}
+          </span>
+          <span className="font-medium text-green-600">
+            Thực tế: {actualStart ? formatDate(actualStart) : "Chưa bắt đầu"} - {actualEnd ? formatDate(actualEnd) : actualStart ? "Đang thực hiện" : "Chưa xác định"}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const LogbookReview = () => {
   const { getLogbookStatus, getReviewStatus } = useCultivationStatus()
   const { getCombo } = useSystemKey()
@@ -132,6 +298,7 @@ const LogbookReview = () => {
   const navigate = useNavigate()
   const [logbook, setLogbook] = useState(null)
   const [logs, setLogs] = useState([])
+  const [stageGroups, setStageGroups] = useState([])
   const [auditLogs, setAuditLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [rejectModal, setRejectModal] = useState(false)
@@ -149,16 +316,53 @@ const LogbookReview = () => {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [detailRes, logsRes, auditRes] = await Promise.all([
+      const [detailRes, logsRes, auditRes, stagesRes] = await Promise.all([
         CultivationLogbookService.getById(id),
         CultivationLogService.getLogbookLogs(id),
         AuditLogService.getAll({ PageIndex: 1, PageSize: 50, SearchKeyword: id }),
+        CultivationStageService.getByLogbookId(id).catch(() => null),
       ])
-      setLogbook(unwrap(detailRes))
-      const logsData = unwrap(logsRes)
-      setLogs(Array.isArray(logsData) ? logsData : logsData?.items || [])
-      const auditData = unwrap(auditRes)
-      setAuditLogs(Array.isArray(auditData) ? auditData : auditData?.items || [])
+
+      const logbookData = unwrap(detailRes)
+      const fallbackLogs = extractList(logsRes)
+      const stages = asList(logbookData?.cultivationStages).length
+        ? asList(logbookData.cultivationStages)
+        : extractList(stagesRes)
+
+      const fetchedStageGroups = await Promise.all(
+        stages.map(async stage => {
+          const stageId = stage.id || stage.stageId
+          if (!stageId) return { stage, logs: [] }
+
+          try {
+            const stageLogsRes = await CultivationStageService.getStageLogs(stageId, {
+              cultivationLogbookId: id,
+            })
+            return { stage, logs: extractList(stageLogsRes) }
+          } catch (error) {
+            console.error(`Không thể tải nhật ký của giai đoạn ${stageId}`, error)
+            return { stage, logs: [] }
+          }
+        }),
+      )
+      const hasStageLogs = fetchedStageGroups.some(group => group.logs.length > 0)
+      const fallbackStageGroups = stages.length
+        ? stages.map((stage, index) => ({
+            stage,
+            logs: index === 0 ? fallbackLogs : [],
+          }))
+        : fallbackLogs.length
+          ? [{ stage: null, logs: fallbackLogs }]
+          : []
+      const displayStageGroups =
+        fetchedStageGroups.length && hasStageLogs
+          ? fetchedStageGroups
+          : fallbackStageGroups
+
+      setLogbook(logbookData)
+      setStageGroups(displayStageGroups)
+      setLogs(displayStageGroups.flatMap(group => group.logs))
+      setAuditLogs(extractList(auditRes))
     } catch (error) {
       console.error(error)
       setLogbook(null)
@@ -335,7 +539,7 @@ const LogbookReview = () => {
         </Descriptions>
       </Card>
 
-      {/* ── Nhật ký chính thức — hiển thị phẳng full ── */}
+      {/* ── Nhật ký chính thức — stages and logs in one vertical flow ── */}
       <Card
         bordered={false}
         className="shadow-sm rounded-2xl"
@@ -349,12 +553,29 @@ const LogbookReview = () => {
           </span>
         }
       >
-        {logs.length === 0 ? (
+        {stageGroups.length === 0 ? (
           <Empty description="Chưa có nhật ký" />
         ) : (
-          <div className="space-y-1">
-            {logs.map((log, idx) => (
-              <LogEntry key={log.id || idx} log={log} />
+          <div className="space-y-6">
+            {stageGroups.map((group, stageIndex) => (
+              <section key={group.stage?.id || stageIndex}>
+                <StageSectionHeader
+                  stage={group.stage}
+                  index={stageIndex}
+                  stageLogs={group.logs}
+                />
+                {group.logs.length > 0 ? (
+                  <div className={group.stage ? "mt-3" : ""}>
+                    {group.logs.map((log, logIndex) => (
+                      <LogEntry key={log.id || logIndex} log={log} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-3 pl-11 text-sm text-gray-500">
+                    Chưa có nhật ký chính thức cho giai đoạn này
+                  </div>
+                )}
+              </section>
             ))}
           </div>
         )}
