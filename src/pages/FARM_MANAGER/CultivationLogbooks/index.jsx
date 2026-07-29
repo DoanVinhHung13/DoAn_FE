@@ -211,7 +211,8 @@ const CultivationLogbookList = () => {
                 type="text"
                 size="small"
                 icon={<EditOutlined />}
-                className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
+                disabled={String(record.status).toUpperCase() === 'COMPLETED'}
+                className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent"
                 onClick={(event) => {
                   event.stopPropagation()
                   navigate(
