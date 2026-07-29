@@ -104,7 +104,7 @@ export const isOverlapApiError = (msgOrError) => {
 /**
  * Tạo payload gửi API tạo/cập nhật vùng trồng.
  *
- * @param {Object} values   - Giá trị form (name, code, area, areaUnit,...)
+ * @param {Object} values   - Giá trị form (name, area, areaUnit,...)
  * @param {Object} polygonData - Dữ liệu polygon { geoJSON, areaM2, boundaryJson }
  * @returns {Object} Payload API
  */
@@ -132,7 +132,6 @@ export const buildLandPlotPayload = (values, polygonData) => {
 
   return {
     name: values.name?.trim(),
-    code: values.code?.trim(),
     area: area || 0.0001,
     areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
     address: values.address?.trim() || null,

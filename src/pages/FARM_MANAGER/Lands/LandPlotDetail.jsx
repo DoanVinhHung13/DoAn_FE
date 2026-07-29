@@ -162,9 +162,6 @@ const LandPlotDetail = () => {
           <div className="space-y-4">
             <Card title="Thông tin vùng trồng">
               <Descriptions column={1} bordered size="small">
-                <Descriptions.Item label="Mã vùng trồng">
-                  {displayValue(plot.code)}
-                </Descriptions.Item>
                 <Descriptions.Item label="Tên vùng trồng">
                   {displayValue(plot.name)}
                 </Descriptions.Item>

@@ -175,12 +175,6 @@ const LandsManagement = () => {
       render: (_, __, index) => (page - 1) * pageSize + index + 1,
     },
     {
-      title: 'Mã vùng trồng',
-      dataIndex: 'code',
-      width: 140,
-      render: (value) => value || '—',
-    },
-    {
       title: 'Tên vùng trồng',
       dataIndex: 'name',
       render: (value) => (
@@ -346,7 +340,7 @@ const LandsManagement = () => {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
-            placeholder="Tìm theo mã, tên, địa chỉ..."
+            placeholder="Tìm theo tên, địa chỉ..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="h-10 w-64 rounded-xl"
             allowClear

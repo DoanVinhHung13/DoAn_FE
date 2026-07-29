@@ -5,7 +5,7 @@ import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 /**
  * Form fields tái sử dụng cho LandPlotCreate và LandPlotEdit.
- * Render các trường: tên, mã, địa chỉ, diện tích, đơn vị và mô tả.
+ * Render các trường: tên, địa chỉ, diện tích, đơn vị và mô tả.
  *
  * Lưu ý: Component này KHÔNG bọc <Form>, parent phải cung cấp form context.
  */
@@ -20,14 +20,6 @@ const LandPlotFormFields = ({
       rules={[{ required: true, message: 'Vui lòng nhập tên vùng trồng' }]}
     >
       <Input placeholder="Ví dụ: Lô A1" maxLength={200} />
-    </Form.Item>
-
-    <Form.Item
-      label="Mã vùng trồng"
-      name="code"
-      rules={[{ required: true, message: 'Vui lòng nhập mã vùng trồng' }]}
-    >
-      <Input placeholder="Ví dụ: LP-001" maxLength={80} />
     </Form.Item>
 
     <Form.Item

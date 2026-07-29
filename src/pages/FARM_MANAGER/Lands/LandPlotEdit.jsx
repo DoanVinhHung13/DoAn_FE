@@ -71,7 +71,6 @@ const LandPlotEdit = () => {
     if (!plot) return
     form.setFieldsValue({
       name: plot.name,
-      code: plot.code,
       area: plot.area,
       areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
       address: plot.address,

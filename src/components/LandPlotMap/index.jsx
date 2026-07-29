@@ -91,7 +91,7 @@ const LandPlotMap = ({
       )
 
       if (overlapping) {
-        const plotLabel = overlapping.name || overlapping.code || 'lô đất khác'
+        const plotLabel = overlapping.name || 'lô đất khác'
         const message = `${MSG_LM_25} (${plotLabel})`
         setOverlapError(message)
         onOverlapErrorRef.current?.(message)
@@ -302,7 +302,7 @@ const LandPlotMap = ({
       })
       if (layer) {
         layer.bindTooltip(
-          `${plot.name || plot.code || 'Lô đất khác'} (đã đăng ký)`,
+          `${plot.name || 'Lô đất khác'} (đã đăng ký)`,
           { permanent: false, direction: 'center' },
         )
         overlapLayers.current.push(layer)
