@@ -12,6 +12,7 @@ import {
   buildLandPlotPayload,
   ensureBoundaryString,
   isOverlapApiError,
+  isLandPlotCultivationLocked,
   normalizeApiDetail,
   normalizeLandPlotResponse,
 } from './landPlotUtils'
@@ -92,8 +93,12 @@ const LandPlotEdit = () => {
 
   useEffect(() => { fetchExistingPlots() }, [fetchExistingPlots])
 
+  const cultivationLocked = isLandPlotCultivationLocked(plot)
+
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
+    if (cultivationLocked) return
+
     try {
       const values = await form.validateFields()
 
@@ -183,6 +188,7 @@ const LandPlotEdit = () => {
           type="primary"
           icon={<SaveOutlined />}
           loading={isSaving}
+          disabled={cultivationLocked}
           onClick={handleSubmit}
         >
           Lưu
@@ -194,8 +200,17 @@ const LandPlotEdit = () => {
         {/* Cột trái: form thông tin */}
         <Col xs={24} xl={10}>
           <Card title="Thông tin vùng trồng">
+            {cultivationLocked && (
+              <Alert
+                className="mb-4"
+                type="warning"
+                showIcon
+                message="Không thể chỉnh sửa vùng trồng"
+                description="Vùng trồng đang thuộc nhật ký kế hoạch hoặc đang trồng. Chỉ có thể chỉnh sửa khi không còn nhật ký đang sử dụng."
+              />
+            )}
             <Form form={form} layout="vertical">
-              <LandPlotFormFields />
+              <LandPlotFormFields disabled={cultivationLocked} />
             </Form>
           </Card>
         </Col>
@@ -207,7 +222,7 @@ const LandPlotEdit = () => {
               <Alert className="mb-3" type="error" showIcon message={mapError} />
             )}
             <LandPlotMap
-              mode="edit"
+              mode={cultivationLocked ? 'view' : 'edit'}
               height={520}
               boundaryJson={plot.boundaryJson}
               excludePlotId={id}
@@ -227,6 +242,7 @@ const LandPlotEdit = () => {
         <Space>
           <Button onClick={() => navigate(routes.detail(id))}>Hủy</Button>
           <Button
+            disabled={cultivationLocked}
             type="primary"
             icon={<SaveOutlined />}
             loading={isSaving}

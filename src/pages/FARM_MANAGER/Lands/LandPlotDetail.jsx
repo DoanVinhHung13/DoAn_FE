@@ -9,7 +9,7 @@ import {
   Empty,
   Row,
   Spin,
-  Tag,
+  Tooltip,
 } from 'antd'
 import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons'
 
@@ -19,13 +19,13 @@ import LandPlotService from 'src/services/LandPlotService'
 import {
   displayValue,
   formatLandArea,
-  getStatusLabel,
-  isLandPlotActive,
+  isLandPlotCultivationLocked,
   normalizeApiDetail,
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
 import LandPlotWeather from './LandPlotWeather'
 import { normalizeWeather } from './landPlotWeatherUtils'
+import LandPlotCultivationStatus from './LandPlotCultivationStatus'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -83,7 +83,7 @@ const LandPlotDetail = () => {
     return () => window.clearInterval(intervalId)
   }, [fetchPlotWeather])
 
-  const isActive = plot ? isLandPlotActive(plot) : false
+  const cultivationLocked = plot ? isLandPlotCultivationLocked(plot) : false
 
   // ── Trạng thái loading ────────────────────────────────────────────────────
   if (loading) {
@@ -145,13 +145,20 @@ const LandPlotDetail = () => {
         </div>
 
         {canManage && routes.edit && (
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => navigate(routes.edit(id))}
+          <Tooltip
+            title={cultivationLocked
+              ? 'Không thể chỉnh sửa khi vùng trồng đang có nhật ký kế hoạch hoặc đang trồng'
+              : ''}
           >
-            Chỉnh sửa
-          </Button>
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              disabled={cultivationLocked}
+              onClick={() => navigate(routes.edit(id))}
+            >
+              Chỉnh sửa
+            </Button>
+          </Tooltip>
         )}
       </div>
 
@@ -171,15 +178,22 @@ const LandPlotDetail = () => {
                 <Descriptions.Item label="Địa chỉ">
                   {displayValue(plot.address)}
                 </Descriptions.Item>
-                <Descriptions.Item label="Trạng thái">
-                  <Tag color={isActive ? 'success' : 'default'}>
-                    {getStatusLabel(plot)}
-                  </Tag>
+                <Descriptions.Item label="Trạng thái canh tác">
+                  <LandPlotCultivationStatus plot={plot} showContext />
                 </Descriptions.Item>
                 <Descriptions.Item label="Mô tả">
                   {displayValue(plot.description)}
                 </Descriptions.Item>
               </Descriptions>
+              {cultivationLocked && (
+                <Alert
+                  className="mt-4"
+                  type="warning"
+                  showIcon
+                  message="Vùng trồng đang được sử dụng"
+                  description="Thông tin vùng trồng và cây trồng sẽ được khóa cho đến khi nhật ký hoàn thành hoặc bị hủy."
+                />
+              )}
             </Card>
 
             <LandPlotWeather

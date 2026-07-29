@@ -61,6 +61,45 @@ export const isLandPlotActive = (item) => item?.isActive !== false
 export const getStatusLabel = (item) =>
   isLandPlotActive(item) ? 'Hoạt động' : 'Ngừng hoạt động'
 
+export const LAND_PLOT_CULTIVATION_STATUS = {
+  AVAILABLE: {
+    label: 'Đang trống',
+    badgeClass: 'bg-slate-100 text-slate-600',
+  },
+  PLANNED: {
+    label: 'Đã lên kế hoạch',
+    badgeClass: 'bg-amber-50 text-amber-700',
+  },
+  IN_PROGRESS: {
+    label: 'Đang trồng',
+    badgeClass: 'bg-sky-50 text-sky-700',
+  },
+}
+
+/** Trạng thái canh tác được tính từ các nhật ký đang giữ vùng trồng. */
+export const getCultivationStatus = (item) =>
+  String(item?.cultivationStatus ?? item?.CultivationStatus ?? 'AVAILABLE').toUpperCase()
+
+export const getCultivationStatusMeta = (item) => {
+  const status = getCultivationStatus(item)
+  return {
+    status,
+    ...(LAND_PLOT_CULTIVATION_STATUS[status] || {
+      label: 'Chưa xác định',
+      badgeClass: 'bg-slate-100 text-slate-600',
+    }),
+  }
+}
+
+export const isLandPlotCultivationLocked = (item) =>
+  ['PLANNED', 'IN_PROGRESS'].includes(getCultivationStatus(item))
+
+export const getCultivationLogbookName = (item) =>
+  item?.cultivationLogbookName ?? item?.CultivationLogbookName
+
+export const getCultivationCropName = (item) =>
+  item?.cultivationCropName ?? item?.CultivationCropName
+
 // ── Display Formatters ───────────────────────────────────────────────────────
 
 /** Hiển thị giá trị hoặc "Chưa cập nhật" nếu rỗng */

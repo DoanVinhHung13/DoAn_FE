@@ -32,20 +32,21 @@ import {
   MSG_LM_26,
   formatLandArea,
   getItemId,
-  getStatusLabel,
+  isLandPlotCultivationLocked,
   isLandPlotActive,
   normalizeLandPlotResponse,
 } from './landPlotUtils'
 import { useLandPlotAccess } from './useLandPlotAccess'
 import LandPlotWeather from './LandPlotWeather'
 import { normalizeWeather } from './landPlotWeatherUtils'
+import LandPlotCultivationStatus from './LandPlotCultivationStatus'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const LandsManagement = () => {
   const navigate = useNavigate()
   const { canManage, routes } = useLandPlotAccess()
-  const { getCombo, getDescription } = useSystemKey()
+  const { getCombo } = useSystemKey()
 
   // ── Bộ lọc & phân trang ──────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')  // ô input đang gõ
@@ -211,35 +212,9 @@ const LandsManagement = () => {
       render: (_, record) => formatLandArea(record.area, record.areaUnit),
     },
     {
-      title: 'Trạng thái',
-      width: 150,
-      render: (_, record) => {
-        const active = isLandPlotActive(record)
-        const sysVal = active ? 'ACTIVE' : 'INACTIVE'
-        const label =
-          getDescription(SYSTEM_KEY.STATUS, sysVal) ||
-          getStatusLabel(record) ||
-          (active ? 'Hoạt động' : 'Vô hiệu')
-
-        return (
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none
-                ${active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}
-          >
-            {active ? (
-              <>
-                <CheckCircleOutlined />
-                <span>{label}</span>
-              </>
-            ) : (
-              <>
-                <StopOutlined />
-                <span>{label}</span>
-              </>
-            )}
-          </div>
-        )
-      },
+      title: 'Trạng thái canh tác',
+      width: 170,
+      render: (_, record) => <LandPlotCultivationStatus plot={record} />,
     },
     ...(canManage
       ? [
@@ -252,12 +227,19 @@ const LandsManagement = () => {
             render: (_, record) => {
               const id = getItemId(record)
               const active = isLandPlotActive(record)
+              const cultivationLocked = isLandPlotCultivationLocked(record)
               return (
                 <div className="flex items-center justify-center gap-2">
                   {routes.edit && (
-                    <Tooltip title="Chỉnh sửa">
+                    <Tooltip
+                      title={cultivationLocked
+                        ? 'Không thể chỉnh sửa khi vùng trồng đang có nhật ký kế hoạch hoặc đang trồng'
+                        : 'Chỉnh sửa'}
+                    >
                       <Button
                         type="text"
+                        disabled={cultivationLocked}
+                        aria-label={cultivationLocked ? 'Không thể chỉnh sửa' : 'Chỉnh sửa'}
                         icon={<EditOutlined className="text-lg text-green-500" />}
                         className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
                         onClick={(e) => {
@@ -270,6 +252,7 @@ const LandsManagement = () => {
                   <Tooltip title={active ? 'Vô hiệu hóa' : 'Kích hoạt'}>
                     <Button
                       type="text"
+                      aria-label={active ? 'Vô hiệu hóa' : 'Kích hoạt'}
                       icon={
                         active ? (
                           <StopOutlined className="text-lg text-red-500" />

@@ -12,6 +12,7 @@ import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 const LandPlotFormFields = ({
   showAddressRequired = false,
   showAreaPlaceholder = false,
+  disabled = false,
 }) => (
   <>
     <Form.Item
@@ -19,7 +20,7 @@ const LandPlotFormFields = ({
       name="name"
       rules={[{ required: true, message: 'Vui lòng nhập tên vùng trồng' }]}
     >
-      <Input placeholder="Ví dụ: Lô A1" maxLength={200} />
+      <Input disabled={disabled} placeholder="Ví dụ: Lô A1" maxLength={200} />
     </Form.Item>
 
     <Form.Item
@@ -31,7 +32,7 @@ const LandPlotFormFields = ({
           : undefined
       }
     >
-      <Input.TextArea rows={2} maxLength={300} placeholder="Địa chỉ chi tiết" />
+      <Input.TextArea disabled={disabled} rows={2} maxLength={300} placeholder="Địa chỉ chi tiết" />
     </Form.Item>
 
     <Row gutter={12}>
@@ -42,6 +43,7 @@ const LandPlotFormFields = ({
           rules={[{ required: true, message: 'Vui lòng nhập diện tích' }]}
         >
           <InputNumber
+            disabled={disabled}
             className="w-full"
             min={0.0001}
             step={0.01}
@@ -51,7 +53,7 @@ const LandPlotFormFields = ({
       </Col>
       <Col span={10}>
         <Form.Item name="areaUnit" hidden>
-          <Input />
+          <Input disabled={disabled} />
         </Form.Item>
         <Form.Item label="Đơn vị">
           <span className="inline-flex h-10 items-center rounded-lg bg-gray-50 px-3 font-semibold text-gray-700">
@@ -62,7 +64,7 @@ const LandPlotFormFields = ({
     </Row>
 
     <Form.Item label="Mô tả" name="description">
-      <Input.TextArea rows={3} placeholder="Ghi chú thêm về vùng trồng" />
+      <Input.TextArea disabled={disabled} rows={3} placeholder="Ghi chú thêm về vùng trồng" />
     </Form.Item>
   </>
 )
@@ -70,6 +72,7 @@ const LandPlotFormFields = ({
 LandPlotFormFields.propTypes = {
   showAddressRequired: PropTypes.bool,
   showAreaPlaceholder: PropTypes.bool,
+  disabled: PropTypes.bool,
 }
 
 export default LandPlotFormFields
