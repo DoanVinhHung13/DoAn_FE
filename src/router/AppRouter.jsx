@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import { Navigate, useRoutes } from 'react-router-dom'
+import { useRoutes } from 'react-router-dom'
 import ROUTER from './ROUTER'
 // ── Layouts ───────────────────────────────────────────────────────────────────
 import LayoutCommon from 'src/components/Common/LayoutCommon'
@@ -143,15 +143,11 @@ const routes = [
       {
         element: <LayoutAdmin />,
         children: [
-          // Redirect /app → /farm-manager/dashboard
-          { path: ROUTER.APP_REDIRECT, element: <Navigate to={ROUTER.FM_DASHBOARD} replace /> },
-
           // Shared routes (mọi role đã login đều thấy)
           { path: ROUTER.ACCOUNT_INFO, element: <Lazy><AccountInfo /></Lazy> },
           { path: ROUTER.CHANGE_PASSWORD, element: <Lazy><ChangePassword /></Lazy> },
           { path: ROUTER.NOTIFICATIONS, element: <Lazy><Notifications /></Lazy> },
           { path: ROUTER.NOTIFICATIONS_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
-          { path: ROUTER.TCVN_AUTH, element: <Lazy><TCVNReference /></Lazy> },
 
           // ── Farm Manager Routes ────────────────────────────────────────────
           {
@@ -189,37 +185,37 @@ const routes = [
               { path: ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL, element: <Lazy><FarmManagerCultivationLogbookDetail /></Lazy> },
 
               // Plan Template Management
-              { path: ROUTER.FM_PLAN_TEMPLATES, element: <Lazy><FarmManagerPlanTemplates /></Lazy> },
-              { path: ROUTER.FM_PLAN_TEMPLATE_CREATE, element: <Lazy><FarmManagerPlanTemplateCreate /></Lazy> },
-              { path: ROUTER.FM_PLAN_TEMPLATE_EDIT, element: <Lazy><FarmManagerPlanTemplateCreate /></Lazy> },
-              { path: ROUTER.FM_PLAN_TEMPLATE_DETAIL, element: <Lazy><FarmManagerPlanTemplateDetail /></Lazy> },
+              { path: ROUTER.FM_PROCESS_TEMPLATES, element: <Lazy><FarmManagerPlanTemplates /></Lazy> },
+              { path: ROUTER.FM_PROCESS_TEMPLATE_CREATE, element: <Lazy><FarmManagerPlanTemplateCreate /></Lazy> },
+              { path: ROUTER.FM_PROCESS_TEMPLATE_EDIT, element: <Lazy><FarmManagerPlanTemplateCreate /></Lazy> },
+              { path: ROUTER.FM_PROCESS_TEMPLATE_DETAIL, element: <Lazy><FarmManagerPlanTemplateDetail /></Lazy> },
 
               // Task Catalog Management
-              { path: ROUTER.FM_TASKS, element: <Lazy><FarmManagerTasks /></Lazy> },
-              { path: ROUTER.FM_TASK_CREATE, element: <Lazy><FarmManagerTaskCreate /></Lazy> },
-              { path: ROUTER.FM_TASK_DETAIL, element: <Lazy><FarmManagerTaskDetail /></Lazy> },
-              { path: ROUTER.FM_TASK_EDIT, element: <Lazy><FarmManagerTaskEdit /></Lazy> },
+              { path: ROUTER.FM_TASK_CATALOGS, element: <Lazy><FarmManagerTasks /></Lazy> },
+              { path: ROUTER.FM_TASK_CATALOG_CREATE, element: <Lazy><FarmManagerTaskCreate /></Lazy> },
+              { path: ROUTER.FM_TASK_CATALOG_DETAIL, element: <Lazy><FarmManagerTaskDetail /></Lazy> },
+              { path: ROUTER.FM_TASK_CATALOG_EDIT, element: <Lazy><FarmManagerTaskEdit /></Lazy> },
 
               // Harvest Batch Management
-              { path: ROUTER.FM_BATCHES, element: <Lazy><FarmManagerBatches /></Lazy> },
-              { path: ROUTER.FM_BATCH_DETAIL, element: <Lazy><FarmManagerBatchDetail /></Lazy> },
-              { path: ROUTER.FM_QR_MANAGEMENT, element: <Lazy><FarmManagerQRManagement /></Lazy> },
+              { path: ROUTER.FM_HARVEST_BATCHES, element: <Lazy><FarmManagerBatches /></Lazy> },
+              { path: ROUTER.FM_HARVEST_BATCH_DETAIL, element: <Lazy><FarmManagerBatchDetail /></Lazy> },
+              { path: ROUTER.FM_QR_CODES, element: <Lazy><FarmManagerQRManagement /></Lazy> },
 
               // Notification Management
               { path: ROUTER.FM_NOTIFICATIONS, element: <Lazy><FarmManagerNotifications /></Lazy> },
               { path: ROUTER.FM_NOTIFICATION_DETAIL, element: <Lazy><NotificationDetail /></Lazy> },
 
               // Fertilizer Management
-              { path: ROUTER.FM_VIEW_FERTILIZERS, element: <Lazy><FarmManagerViewFertilizers /></Lazy> },
-              { path: ROUTER.FM_VIEW_FERTILIZER_CREATE, element: <Lazy><FarmManagerFertilizerCreate /></Lazy> },
-              { path: ROUTER.FM_VIEW_FERTILIZER_DETAIL, element: <Lazy><FarmManagerFertilizerDetail /></Lazy> },
-              { path: ROUTER.FM_VIEW_FERTILIZER_EDIT, element: <Lazy><FarmManagerFertilizerEdit /></Lazy> },
+              { path: ROUTER.FM_FERTILIZERS, element: <Lazy><FarmManagerViewFertilizers /></Lazy> },
+              { path: ROUTER.FM_FERTILIZER_CREATE, element: <Lazy><FarmManagerFertilizerCreate /></Lazy> },
+              { path: ROUTER.FM_FERTILIZER_DETAIL, element: <Lazy><FarmManagerFertilizerDetail /></Lazy> },
+              { path: ROUTER.FM_FERTILIZER_EDIT, element: <Lazy><FarmManagerFertilizerEdit /></Lazy> },
 
               // Crop Protection Management
-              { path: ROUTER.FM_VIEW_CROP_PROTECTIONS, element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
-              { path: ROUTER.FM_VIEW_CROP_PROTECTION_CREATE, element: <Lazy><FarmManagerCropProtectionCreate /></Lazy> },
-              { path: ROUTER.FM_VIEW_CROP_PROTECTION_DETAIL, element: <Lazy><FarmManagerCropProtectionDetail /></Lazy> },
-              { path: ROUTER.FM_VIEW_CROP_PROTECTION_EDIT, element: <Lazy><FarmManagerCropProtectionEdit /></Lazy> },
+              { path: ROUTER.FM_PESTICIDES, element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
+              { path: ROUTER.FM_PESTICIDE_CREATE, element: <Lazy><FarmManagerCropProtectionCreate /></Lazy> },
+              { path: ROUTER.FM_PESTICIDE_DETAIL, element: <Lazy><FarmManagerCropProtectionDetail /></Lazy> },
+              { path: ROUTER.FM_PESTICIDE_EDIT, element: <Lazy><FarmManagerCropProtectionEdit /></Lazy> },
               { path: ROUTER.FM_INVENTORY_IMPORT_HISTORY, element: <Lazy><FarmManagerInventoryImportHistory /></Lazy> },
 
               // Reference Management
@@ -240,15 +236,15 @@ const routes = [
             element: <ProtectedRoute allowedRoles={[ROLES.FARM_SUPERVISOR]} />,
             children: [
               // Plans & Logbooks
-              { path: ROUTER.FS_PLANS, element: <Lazy><FarmSupervisorPlans /></Lazy> },
-              { path: ROUTER.FS_PLAN_DETAIL, element: <Lazy><FarmSupervisorPlanDetail /></Lazy> },
+              { path: ROUTER.FS_CULTIVATION_LOGBOOKS, element: <Lazy><FarmSupervisorPlans /></Lazy> },
+              { path: ROUTER.FS_CULTIVATION_LOGBOOK_DETAIL, element: <Lazy><FarmSupervisorPlanDetail /></Lazy> },
 
               // Farmers
-              { path: ROUTER.LM_FARMERS, element: <Lazy><FarmSupervisorFarmers /></Lazy> },
+              { path: ROUTER.FS_FARMERS, element: <Lazy><FarmSupervisorFarmers /></Lazy> },
 
               // Lands
-              { path: ROUTER.LM_LANDS, element: <Lazy><FarmSupervisorLands /></Lazy> },
-              { path: ROUTER.LM_LAND_DETAIL, element: <Lazy><FarmSupervisorLandPlotDetail /></Lazy> },
+              { path: ROUTER.FS_LANDS, element: <Lazy><FarmSupervisorLands /></Lazy> },
+              { path: ROUTER.FS_LAND_DETAIL, element: <Lazy><FarmSupervisorLandPlotDetail /></Lazy> },
             ],
           },
 

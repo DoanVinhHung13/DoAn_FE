@@ -15,22 +15,22 @@ import {
 
 const silentConfig = { skipNotice: true }
 
-const getAll = (params) => http.get(apiGetTaskCatalogs, { params, ...silentConfig })
+const getTaskCatalogs = (params) => http.get(apiGetTaskCatalogs, { params, ...silentConfig })
 
-const getById = (id) => http.get(apiGetTaskCatalogById(id), silentConfig)
+const getTaskCatalogById = (id) => http.get(apiGetTaskCatalogById(id), silentConfig)
 
-const create = (body) => http.post(apiCreateTaskCatalog, body)
+const createTaskCatalog = (body) => http.post(apiCreateTaskCatalog, body)
 
-const update = (id, body) => http.put(apiUpdateTaskCatalog(id), body)
+const updateTaskCatalog = (id, body) => http.put(apiUpdateTaskCatalog(id), body)
 
-const remove = (id) => http.delete(apiDeleteTaskCatalog(id))
+const deleteTaskCatalog = (id) => http.delete(apiDeleteTaskCatalog(id))
 
 const TaskCatalogService = {
-  getAll,
-  getById,
-  create,
-  update,
-  remove,
+  getTaskCatalogs,
+  getTaskCatalogById,
+  createTaskCatalog,
+  updateTaskCatalog,
+  deleteTaskCatalog,
 }
 
 export default TaskCatalogService

@@ -28,7 +28,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
-import CropService from 'src/services/CropService';
+import CropCatalogService from 'src/services/CropCatalogService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
@@ -115,7 +115,7 @@ const CropCatalogs = () => {
     queryKey: ['crop-catalogs'],
     queryFn: async () => {
       try {
-        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 200 });
+        const response = await CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 200 });
         console.log('Crop Catalogs API Response:', response);
         return normalizeResponse(response);
       } catch (err) {
@@ -144,7 +144,7 @@ const CropCatalogs = () => {
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         isActive: typeof editingCatalog?.isActive === 'boolean' ? editingCatalog.isActive : true,
       };
-      return CropService.updateCrop(id, payload);
+      return CropCatalogService.updateCropCatalog(id, payload);
     },
     onSuccess: async () => {
       setInlineError('');
@@ -171,8 +171,8 @@ const CropCatalogs = () => {
   const statusMutation = useMutation({
     mutationFn: ({ id, nextActive }) =>
       nextActive
-        ? CropService.activateCrop(id)
-        : CropService.deactivateCrop(id),
+        ? CropCatalogService.activateCropCatalog(id)
+        : CropCatalogService.deactivateCropCatalog(id),
     onSuccess: async () => {
       setInlineError('');
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
@@ -200,7 +200,7 @@ const CropCatalogs = () => {
   } = useQuery({
     queryKey: ['crop-catalog-detail', selectedCatalogId],
     queryFn: async () => {
-      const response = await CropService.getCropById(selectedCatalogId);
+      const response = await CropCatalogService.getCropCatalogById(selectedCatalogId);
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
     },

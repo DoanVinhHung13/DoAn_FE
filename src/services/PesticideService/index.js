@@ -15,30 +15,30 @@ import {
 
 const silentConfig = { skipNotice: true }
 
-const getAll = (params) => http.get(apiGetPesticides, { params, ...silentConfig })
+const getPesticides = (params) => http.get(apiGetPesticides, { params, ...silentConfig })
 
-const getById = (id) => http.get(apiGetPesticideById(id), silentConfig)
+const getPesticideById = (id) => http.get(apiGetPesticideById(id), silentConfig)
 
-const create = (body) => http.post(apiCreatePesticide, body)
+const createPesticide = (body) => http.post(apiCreatePesticide, body)
 
-const update = (id, body) => http.put(apiUpdatePesticide(id), body)
+const updatePesticide = (id, body) => http.put(apiUpdatePesticide(id), body)
 
-const remove = (id) => http.delete(apiDeletePesticide(id))
+const deletePesticide = (id) => http.delete(apiDeletePesticide(id))
 
-const toggleStatus = (id, body) => http.patch(apiTogglePesticideStatus(id), body)
+const togglePesticideStatus = (id, body) => http.patch(apiTogglePesticideStatus(id), body)
 
 /** GET /pesticides/selection — dùng cho Daily Log Select */
-const getSelection = (params) =>
+const getPesticideSelection = (params) =>
   http.get(apiGetPesticideSelection, { params, ...silentConfig })
 
 const PesticideService = {
-  getAll,
-  getById,
-  create,
-  update,
-  remove,
-  toggleStatus,
-  getSelection,
+  getPesticides,
+  getPesticideById,
+  createPesticide,
+  updatePesticide,
+  deletePesticide,
+  togglePesticideStatus,
+  getPesticideSelection,
 }
 
 export default PesticideService

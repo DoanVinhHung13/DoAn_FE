@@ -1,6 +1,6 @@
 /**
  * Farm Supervisor: Danh sách Kế hoạch được giao
- * Route: /farm-supervisor/plans  (ROUTER.FS_PLANS)
+ * Route: /farm-supervisor/cultivation-logbooks  (ROUTER.FS_CULTIVATION_LOGBOOKS)
  */
 import {
   AppstoreOutlined,
@@ -21,7 +21,6 @@ import {
   Select,
   Skeleton,
   Tag,
-  message,
 } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -96,7 +95,7 @@ const FarmSupervisorPlans = () => {
   const pagedCards = visiblePlans
 
   const openDetail = (id) =>
-    navigate(ROUTER.FS_PLAN_DETAIL.replace(':planId', id))
+    navigate(ROUTER.FS_CULTIVATION_LOGBOOK_DETAIL.replace(':planId', id))
 
   const handleSearch = () => { setSearch(searchInput.trim()); setPage(1) }
   const handleClearSearch = () => { setSearchInput(''); setSearch(''); setPage(1) }

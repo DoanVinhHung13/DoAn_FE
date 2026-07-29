@@ -51,7 +51,7 @@ const CultivationLogbookDetail = () => {
         const response = await CultivationLogbookService.getById(id)
         if (response?.success === false || !response?.data) {
           message.error('Không tìm thấy nhật ký canh tác')
-          navigate(ROUTER.FM_PRODUCTION_PLANS)
+          navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)
           return
         }
 
@@ -65,7 +65,7 @@ const CultivationLogbookDetail = () => {
 
       } catch {
         message.error('Lấy thông tin nhật ký canh tác thất bại')
-        navigate(ROUTER.FM_PRODUCTION_PLANS)
+        navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)
       } finally {
         if (isMounted) setInitialLoading(false)
       }
@@ -128,7 +128,7 @@ const CultivationLogbookDetail = () => {
         <div className="flex items-center gap-4">
           <Button
             icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(ROUTER.FM_PRODUCTION_PLANS)}
+            onClick={() => navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)}
           >
             Quay lại
           </Button>
@@ -200,7 +200,7 @@ const CultivationLogbookDetail = () => {
                           <span key={plot.id || idx} className="inline-flex items-center">
                             {plot.id ? (
                               <button
-                                onClick={() => navigate(`/farm-manager/lands/${plot.id}`)}
+                                onClick={() => navigate(ROUTER.FM_LAND_DETAIL.replace(':id', plot.id))}
                                 className="font-medium text-green-600 hover:text-green-700 hover:underline"
                               >
                                 {plot.name}

@@ -22,7 +22,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
-import CropService from 'src/services/CropService';
+import CropCatalogService from 'src/services/CropCatalogService';
 import ROUTER from 'src/router/ROUTER';
 
 const { Text, Paragraph } = Typography;
@@ -52,7 +52,7 @@ const CatalogDetail = () => {
   } = useQuery({
     queryKey: ['crop-catalog-detail', id],
     queryFn: async () => {
-      const response = await CropService.getCropById(id);
+      const response = await CropCatalogService.getCropCatalogById(id);
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
     },

@@ -1,6 +1,6 @@
 /**
  * Farm Supervisor: Chi tiết Công việc (Work Task)
- * Route: /farm-supervisor/plans/:planId/tasks/:taskId  (ROUTER.FS_TASK_DETAIL)
+ * Route: /farm-supervisor/cultivation-logbooks/:planId/tasks/:taskId  (ROUTER.FS_TASK_DETAIL)
  *
  * Luồng:
  * - Xem công việc → Gán người phụ trách và người hỗ trợ → Kích hoạt
@@ -128,7 +128,7 @@ const FarmSupervisorTaskDetail = () => {
               })
             }
           } else {
-            navigate(ROUTER.FS_PLAN_DETAIL.replace(':planId', planId))
+            navigate(ROUTER.FS_CULTIVATION_LOGBOOK_DETAIL.replace(':planId', planId))
           }
         }
 
@@ -232,7 +232,7 @@ const FarmSupervisorTaskDetail = () => {
       <div>
         <Button
           type="text" icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(ROUTER.FS_PLAN_DETAIL.replace(':planId', planId))}
+          onClick={() => navigate(ROUTER.FS_CULTIVATION_LOGBOOK_DETAIL.replace(':planId', planId))}
           className="mb-3 -ml-2 h-9 text-gray-600 hover:text-green-700"
         >
           Quay lại kế hoạch

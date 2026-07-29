@@ -122,9 +122,9 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
 
       let res
       if (isEdit) {
-        res = await PesticideService.update(editingItem.id, body)
+        res = await PesticideService.updatePesticide(editingItem.id, body)
       } else {
-        res = await PesticideService.create(body)
+        res = await PesticideService.createPesticide(body)
       }
 
       if (res?.success === false) {
@@ -136,7 +136,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         return
       }
 
-      navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
+      navigate(ROUTER.FM_PESTICIDES)
     } catch {
       // axios interceptor handles error notification
     } finally {
@@ -470,7 +470,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
       {/* ── Footer actions ── */}
       <div className="flex justify-end gap-3 pt-4 mt-6 border-t border-gray-100">
         <Button
-          onClick={() => navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)}
+          onClick={() => navigate(ROUTER.FM_PESTICIDES)}
           className="h-10 px-6 rounded-xl"
           disabled={loading}
         >

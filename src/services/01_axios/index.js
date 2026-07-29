@@ -164,7 +164,6 @@ instance.interceptors.request.use(
     return config
   },
   error => Promise.reject(error),
-  ``,
 )
 const noticeError500 = message => {
   if (!message)

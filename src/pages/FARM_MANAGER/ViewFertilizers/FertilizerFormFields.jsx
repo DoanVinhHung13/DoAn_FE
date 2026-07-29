@@ -274,7 +274,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
       if (res?.success === false) return
 
-      navigate(ROUTER.FM_VIEW_FERTILIZERS)
+      navigate(ROUTER.FM_FERTILIZERS)
     } finally {
       setLoading(false)
     }
@@ -674,7 +674,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       {/* ── Footer actions ── */}
       <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
         <Button
-          onClick={() => navigate(ROUTER.FM_VIEW_FERTILIZERS)}
+          onClick={() => navigate(ROUTER.FM_FERTILIZERS)}
           className="h-10 px-6 rounded-xl"
           disabled={loading}
         >

@@ -45,7 +45,7 @@ const TasksManagement = () => {
         PageSize: pageSize,
         SearchKeyword: search || undefined,
       }
-      const res = await TaskCatalogService.getAll(params)
+      const res = await TaskCatalogService.getTaskCatalogs(params)
       if (res?.success === false) return
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
@@ -75,12 +75,12 @@ const TasksManagement = () => {
   }
 
   const handleOpenEdit = (record) => {
-    navigate(ROUTER.FM_TASK_EDIT.replace(':id', record.id))
+    navigate(ROUTER.FM_TASK_CATALOG_EDIT.replace(':id', record.id))
   }
 
   const handleDelete = async (record) => {
     try {
-      const res = await TaskCatalogService.remove(record.id)
+      const res = await TaskCatalogService.deleteTaskCatalog(record.id)
       if (res?.success === false) {
         return
       }
@@ -198,7 +198,7 @@ const TasksManagement = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => navigate(ROUTER.FM_TASK_CREATE)}
+          onClick={() => navigate(ROUTER.FM_TASK_CATALOG_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-blue-600 border-0 shadow-lg rounded-xl shadow-blue-100"
         >
           Thêm mới
@@ -246,7 +246,7 @@ const TasksManagement = () => {
           loading={loading}
           scroll={{ x: 1000 }}
           onRow={(record) => ({
-            onClick: () => navigate(ROUTER.FM_TASK_DETAIL.replace(':id', record.id)),
+            onClick: () => navigate(ROUTER.FM_TASK_CATALOG_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
           locale={{ emptyText: 'Không có dữ liệu công việc.' }}

@@ -14,7 +14,7 @@ const CropProtectionCreate = () => {
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)}>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_PESTICIDES)}>
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">

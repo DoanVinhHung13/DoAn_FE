@@ -1,6 +1,6 @@
 /**
  * Farm Manager: Danh sách Nhật ký chờ chốt sổ
- * Route: /farm-manager/logbooks
+ * Route: /farm-manager/cultivation-logbooks/reviews
  *
  * API: GET /cultivation-logbooks/closing-reviews
  */

@@ -252,7 +252,7 @@ const CultivationLogbookList = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => navigate(ROUTER.FM_PRODUCTION_PLAN_CREATE)}
+          onClick={() => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
           Tạo nhật ký mới

@@ -1,6 +1,6 @@
 /**
  * Farm Supervisor: Chi tiết Kế hoạch - Quản lý Giai đoạn & Công việc
- * Route: /farm-supervisor/plans/:planId  (ROUTER.FS_PLAN_DETAIL)
+ * Route: /farm-supervisor/cultivation-logbooks/:planId  (ROUTER.FS_CULTIVATION_LOGBOOK_DETAIL)
  */
 import {
   ArrowLeftOutlined,
@@ -90,13 +90,13 @@ const FarmSupervisorPlanDetail = () => {
     try {
       const planRes = await CultivationLogbookService.getById(planId)
       if (planRes?.success === false) {
-        navigate(ROUTER.FS_PLANS)
+        navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)
         return
       }
       // Interceptor trả body: { success, data: plan }
       const planData = planRes?.data ?? planRes
       if (!planData) {
-        navigate(ROUTER.FS_PLANS)
+        navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)
         return
       }
 
@@ -114,7 +114,7 @@ const FarmSupervisorPlanDetail = () => {
     } catch (error) {
       console.error(error)
       // axios interceptor handles error notification
-      navigate(ROUTER.FS_PLANS)
+      navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)
     } finally {
       setLoading(false)
     }
@@ -140,7 +140,7 @@ const FarmSupervisorPlanDetail = () => {
       setSubmitting(true)
       await CultivationLogbookService.submitCompletion(planId)
       setSubmitModal(false)
-      navigate(ROUTER.FS_PLANS)
+      navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)
     } finally {
       setSubmitting(false)
     }
@@ -162,7 +162,7 @@ const FarmSupervisorPlanDetail = () => {
     return (
       <div className="py-16 text-center">
         <Empty description="Không tìm thấy kế hoạch." />
-        <Button onClick={() => navigate(ROUTER.FS_PLANS)} className="mt-4">Quay lại</Button>
+        <Button onClick={() => navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)} className="mt-4">Quay lại</Button>
       </div>
     )
   }
@@ -173,7 +173,7 @@ const FarmSupervisorPlanDetail = () => {
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FS_PLANS)}>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)}>
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
@@ -227,7 +227,7 @@ const FarmSupervisorPlanDetail = () => {
                       {plot.id ? (
                         <Button
                           type="link"
-                          onClick={() => navigate(`/farm-supervisor/lands/${plot.id}`)}
+                          onClick={() => navigate(ROUTER.FS_LAND_DETAIL.replace(':id', plot.id))}
                           className="p-0 h-auto font-medium text-green-600 hover:text-green-700 hover:underline"
                         >
                           {plot.name}

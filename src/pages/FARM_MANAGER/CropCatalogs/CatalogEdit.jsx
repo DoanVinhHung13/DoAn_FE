@@ -7,7 +7,6 @@ import {
   Form,
   Input,
   Spin,
-  Typography,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -17,7 +16,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
-import CropService from 'src/services/CropService';
+import CropCatalogService from 'src/services/CropCatalogService';
 import ROUTER from 'src/router/ROUTER';
 
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin danh mục cây trồng.';
@@ -36,7 +35,7 @@ const CatalogEdit = () => {
   } = useQuery({
     queryKey: ['crop-catalog-detail', id],
     queryFn: async () => {
-      const response = await CropService.getCropById(id);
+      const response = await CropCatalogService.getCropCatalogById(id);
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
     },
@@ -60,7 +59,7 @@ const CatalogEdit = () => {
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         isActive: typeof catalogDetail?.isActive === 'boolean' ? catalogDetail.isActive : true,
       };
-      return CropService.updateCrop(id, payload);
+      return CropCatalogService.updateCropCatalog(id, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });

@@ -18,14 +18,14 @@ const CropProtectionEdit = () => {
     const fetchDetail = async () => {
       try {
         setInitialLoading(true)
-        const res = await PesticideService.getById(id)
+        const res = await PesticideService.getPesticideById(id)
         if (res?.success === false) {
-          navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
+          navigate(ROUTER.FM_PESTICIDES)
           return
         }
         setEditingItem(res?.data)
       } catch {
-        navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)
+        navigate(ROUTER.FM_PESTICIDES)
       } finally {
         setInitialLoading(false)
       }
@@ -37,7 +37,7 @@ const CropProtectionEdit = () => {
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_VIEW_CROP_PROTECTIONS)}>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_PESTICIDES)}>
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">

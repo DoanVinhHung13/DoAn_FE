@@ -1,8 +1,8 @@
 /**
  * PlanTemplates — Thư viện Kế hoạch Mẫu (Màn 4)
- * Route: /farm-manager/plan-templates  (ROUTER.FM_PLAN_TEMPLATES)
+ * Route: /farm-manager/process-templates  (ROUTER.FM_PROCESS_TEMPLATES)
  *
- * Architecture mirrors /farm-manager/view-fertilizers:
+ * Architecture mirrors the other resource management screens:
  *   - TitleCustom header + action button
  *   - Card toolbar (search + filters + reload)
  *   - CustomTable with pagination
@@ -34,7 +34,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
-import PlanTemplateService from 'src/services/PlanTemplateService'
+import ProcessTemplateService from 'src/services/ProcessTemplateService'
 import ProcessStepService from 'src/services/ProcessStepService'
 import { invalidCharsRegex } from 'src/utils/helpers'
 
@@ -75,7 +75,7 @@ const PlanTemplateList = () => {
         SearchKeyword: search || undefined,
       }
       const [templateResponse, stepResponse] = await Promise.all([
-        PlanTemplateService.getAll(params),
+        ProcessTemplateService.getProcessTemplates(params),
         ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
       ])
       if (templateResponse?.success === false) return
@@ -130,7 +130,7 @@ const PlanTemplateList = () => {
     if (!deleteModal.item) return
     try {
       setDeleteLoading(true)
-      const res = await PlanTemplateService.remove(deleteModal.item.id)
+      const res = await ProcessTemplateService.deleteProcessTemplate(deleteModal.item.id)
       if (res?.success === false) return
       setDeleteModal({ open: false, item: null })
       getList()
@@ -211,7 +211,7 @@ const PlanTemplateList = () => {
               className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
               onClick={(e) => {
                 e.stopPropagation()
-                navigate(`${ROUTER.FM_PRODUCTION_PLAN_CREATE}?templateId=${record.id}`)
+                navigate(`${ROUTER.FM_CULTIVATION_LOGBOOK_CREATE}?templateId=${record.id}`)
               }}
             />
           </Tooltip>
@@ -223,7 +223,7 @@ const PlanTemplateList = () => {
               onClick={(e) => {
                 e.stopPropagation()
                 navigate(
-                  ROUTER.FM_PLAN_TEMPLATE_EDIT.replace(':id', record.id)
+                  ROUTER.FM_PROCESS_TEMPLATE_EDIT.replace(':id', record.id)
                 )
               }}
             />
@@ -258,7 +258,7 @@ const PlanTemplateList = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => navigate(ROUTER.FM_PLAN_TEMPLATE_CREATE)}
+          onClick={() => navigate(ROUTER.FM_PROCESS_TEMPLATE_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
           Tạo mẫu quy trình
@@ -308,7 +308,7 @@ const PlanTemplateList = () => {
           loading={loading}
           scroll={{ x: 900 }}
           onRow={(record) => ({
-            onClick: () => navigate(ROUTER.FM_PLAN_TEMPLATE_DETAIL.replace(':id', record.id)),
+            onClick: () => navigate(ROUTER.FM_PROCESS_TEMPLATE_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
           locale={{ emptyText: 'Chưa có mẫu quy trình nào.' }}

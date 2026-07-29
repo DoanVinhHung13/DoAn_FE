@@ -128,7 +128,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
   useEffect(() => {
     const loadCatalogs = async () => {
       try {
-        const res = await TaskCatalogService.getAll({
+        const res = await TaskCatalogService.getTaskCatalogs({
           PageIndex: 1,
           PageSize: 200,
         })

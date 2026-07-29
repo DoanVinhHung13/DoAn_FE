@@ -33,8 +33,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import PlanTemplateService from 'src/services/PlanTemplateService'
-import CropService from 'src/services/CropService'
+import ProcessTemplateService from 'src/services/ProcessTemplateService'
+import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
 import LandPlotService from 'src/services/LandPlotService'
 import { parseDate } from 'src/utils/dateFormatters'
@@ -153,7 +153,7 @@ const CultivationLogbookCreate = () => {
     const fetchCatalogs = async () => {
       setIsCatalogsLoading(true)
       try {
-        const response = await CropService.getCrops({
+        const response = await CropCatalogService.getCropCatalogs({
           PageIndex: 1,
           PageSize: 1000,
           Status: true,
@@ -255,7 +255,7 @@ const CultivationLogbookCreate = () => {
         // Normalize stages
         if (!planStages.length && plan.processTemplateId) {
           try {
-            const templateRes = await PlanTemplateService.getById(plan.processTemplateId)
+          const templateRes = await ProcessTemplateService.getProcessTemplateById(plan.processTemplateId)
             const template = templateRes?.data ?? templateRes
             planStages = template?.processSteps || []
           } catch { /* ignore */ }
@@ -417,7 +417,7 @@ const CultivationLogbookCreate = () => {
     let isMounted = true
     const loadTemplate = async () => {
       try {
-        const response = await PlanTemplateService.getById(templateIdFromQuery)
+        const response = await ProcessTemplateService.getProcessTemplateById(templateIdFromQuery)
         const template = response?.data ?? response
         if (!isMounted || !template) return
 
@@ -456,7 +456,7 @@ const CultivationLogbookCreate = () => {
   const loadTemplates = async (search = '') => {
     try {
       setTemplatesLoading(true)
-      const response = await PlanTemplateService.getAll({
+        const response = await ProcessTemplateService.getProcessTemplates({
         PageIndex: 1,
         PageSize: 1000,
         Name: search || undefined,
@@ -473,7 +473,7 @@ const CultivationLogbookCreate = () => {
 
   const applyTemplate = async (template) => {
     try {
-      const response = await PlanTemplateService.getById(template.id)
+        const response = await ProcessTemplateService.getProcessTemplateById(template.id)
       const templateData = response?.data ?? response
       const steps = templateData.processSteps || []
 
@@ -578,7 +578,7 @@ const CultivationLogbookCreate = () => {
         <div>
           <Button
             type="text" icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(ROUTER.FM_PRODUCTION_PLANS)}
+            onClick={() => navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)}
             className="mb-3 -ml-2 h-9 text-gray-600 hover:text-green-700"
           >
             Quay lại danh sách

@@ -8,7 +8,6 @@ import {
   Button,
   Card,
   Empty,
-  message,
   Skeleton,
   Typography,
 } from 'antd'
@@ -17,7 +16,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
-import PlanTemplateService from 'src/services/PlanTemplateService'
+import ProcessTemplateService from 'src/services/ProcessTemplateService'
 import ProcessStepService from 'src/services/ProcessStepService'
 
 const { Text } = Typography
@@ -61,7 +60,7 @@ const PlanTemplateDetail = () => {
       try {
         setLoading(true)
         const [templateResponse, stepsResponse] = await Promise.all([
-          PlanTemplateService.getById(id),
+          ProcessTemplateService.getProcessTemplateById(id),
           ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
         ])
         if (!mounted) return
@@ -79,9 +78,9 @@ const PlanTemplateDetail = () => {
 
         setItem(template)
         setSteps(templateSteps)
-      } catch (error) {
+      } catch {
         // axios interceptor handles error notification
-        navigate(ROUTER.FM_PLAN_TEMPLATES)
+        navigate(ROUTER.FM_PROCESS_TEMPLATES)
       } finally {
         if (mounted) setLoading(false)
       }
@@ -116,7 +115,7 @@ const PlanTemplateDetail = () => {
         <div className="flex items-center gap-4">
           <Button
             icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(ROUTER.FM_PLAN_TEMPLATES)}
+            onClick={() => navigate(ROUTER.FM_PROCESS_TEMPLATES)}
             className="h-10 rounded-xl"
           >
             Quay lại
@@ -130,7 +129,7 @@ const PlanTemplateDetail = () => {
           type="primary"
           icon={<EditOutlined />}
           onClick={() =>
-            navigate(ROUTER.FM_PLAN_TEMPLATE_EDIT.replace(':id', id))
+            navigate(ROUTER.FM_PROCESS_TEMPLATE_EDIT.replace(':id', id))
           }
           className="h-10 rounded-xl border-0 bg-green-600 px-5 font-bold shadow-lg shadow-green-100"
         >

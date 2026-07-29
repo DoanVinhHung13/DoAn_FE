@@ -5,7 +5,7 @@ import { ArrowLeftOutlined, SaveOutlined, FileTextOutlined } from '@ant-design/i
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
-import CropService from 'src/services/CropService';
+import CropCatalogService from 'src/services/CropCatalogService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 
@@ -22,10 +22,9 @@ const CatalogCreate = () => {
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         isActive: values.isActive ?? true,
       };
-      return CropService.createCrop(payload);
+      return CropCatalogService.createCropCatalog(payload);
     },
     onSuccess: async () => {
-      setInlineError('');
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       await refetchSystemKey();

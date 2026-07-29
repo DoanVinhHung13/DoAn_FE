@@ -1,6 +1,6 @@
 /**
  * Farm Leader: Ghi nhật ký hàng ngày cho công việc
- * Route: /farm-leader/tasks/:taskId/log  (ROUTER.FL_TASK_LOG)
+ * Route: /farm-leader/cultivation-tasks/:taskId/daily-logs  (ROUTER.FL_TASK_LOG)
  *
  * API:
  *   GET  /cultivation-tasks/{id}
@@ -247,8 +247,8 @@ const DailyLog = () => {
         const [taskRes, logsRes, fertRes, pestRes] = await Promise.all([
           CultivationTaskService.getById(taskId),
           CultivationDailyLogService.getByTask(taskId),
-          FertilizerService.getSelection(),
-          PesticideService.getSelection(),
+          FertilizerService.getFertilizerSelection(),
+          PesticideService.getPesticideSelection(),
         ])
 
         const taskData = unwrap(taskRes)

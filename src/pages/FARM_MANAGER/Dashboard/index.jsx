@@ -209,9 +209,9 @@ const Dashboard = () => {
     { title: 'Quản lý người dùng', icon: <Users className="h-8 w-8" />, path: ROUTER.FM_USERS, color: '#6366f1' },
     { title: 'Quản lý vùng trồng', icon: <MapPinned className="h-8 w-8" />, path: ROUTER.FM_LANDS, color: '#22c55e' },
     { title: 'Danh mục cây trồng', icon: <Sprout className="h-8 w-8" />, path: ROUTER.FM_CROP_CATALOGS, color: '#10b981' },
-    { title: 'Nhật ký canh tác', icon: <ClipboardList className="h-8 w-8" />, path: ROUTER.FM_PRODUCTION_PLANS, color: '#f59e0b' },
-    { title: 'Thư viện mẫu', icon: <BookOpenText className="h-8 w-8" />, path: ROUTER.FM_PLAN_TEMPLATES, color: '#06b6d4' },
-    { title: 'Quản lý vật tư', icon: <Package className="h-8 w-8" />, path: ROUTER.FM_VIEW_FERTILIZERS, color: '#ec4899' },
+    { title: 'Nhật ký canh tác', icon: <ClipboardList className="h-8 w-8" />, path: ROUTER.FM_CULTIVATION_LOGBOOKS, color: '#f59e0b' },
+    { title: 'Thư viện mẫu', icon: <BookOpenText className="h-8 w-8" />, path: ROUTER.FM_PROCESS_TEMPLATES, color: '#06b6d4' },
+    { title: 'Quản lý vật tư', icon: <Package className="h-8 w-8" />, path: ROUTER.FM_FERTILIZERS, color: '#ec4899' },
   ]
 
   const weatherSectionLoading = plotsLoading || (featuredPlots.length > 0 && weatherLoading)

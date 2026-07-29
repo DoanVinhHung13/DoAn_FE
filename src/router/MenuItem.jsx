@@ -49,12 +49,12 @@ export const farmManagerItem = () => [
     label: 'Cây trồng',
   },
   {
-    key: ROUTER.FM_PLAN_TEMPLATES,
+    key: ROUTER.FM_PROCESS_TEMPLATES,
     icon: <ProfileOutlined className="text-lg" />,
     label: 'Thư viện mẫu',
   },
   {
-    key: ROUTER.FM_PRODUCTION_PLANS,
+    key: ROUTER.FM_CULTIVATION_LOGBOOKS,
     icon: <ContainerOutlined className="text-lg" />,
     label: 'Nhật ký canh tác',
   },
@@ -69,12 +69,12 @@ export const farmManagerItem = () => [
     label: 'Báo cáo thống kê',
   },
   {
-    key: ROUTER.FM_TASKS,
+    key: ROUTER.FM_TASK_CATALOGS,
     icon: <CheckCircleOutlined className="text-lg" />,
     label: 'Danh mục công việc',
   },
   {
-    key: ROUTER.FM_BATCHES,
+    key: ROUTER.FM_HARVEST_BATCHES,
     icon: <InboxOutlined className="text-lg" />,
     label: 'Quản lý lô thu hoạch',
   },
@@ -88,8 +88,8 @@ export const farmManagerItem = () => [
     icon: <ShopOutlined className="text-lg" />,
     label: 'Quản lý vật tư',
     children: [
-      { key: ROUTER.FM_VIEW_FERTILIZERS, label: 'Phân bón' },
-      { key: ROUTER.FM_VIEW_CROP_PROTECTIONS, label: 'Nông dược' },
+      { key: ROUTER.FM_FERTILIZERS, label: 'Phân bón' },
+      { key: ROUTER.FM_PESTICIDES, label: 'Nông dược' },
       { key: ROUTER.FM_INVENTORY_IMPORT_HISTORY, label: 'Lịch sử nhập kho' },
     ],
   },
@@ -107,17 +107,17 @@ export const farmManagerItem = () => [
 // ─── FARM SUPERVISOR MENU ─────────────────────────────────────────────────────
 export const farmSupervisorItem = () => [
   {
-    key: ROUTER.FS_PLANS,
+    key: ROUTER.FS_CULTIVATION_LOGBOOKS,
     icon: <ContainerOutlined className="text-lg" />,
     label: 'Kế hoạch & Nhật ký',
   },
   {
-    key: ROUTER.LM_FARMERS,
+    key: ROUTER.FS_FARMERS,
     icon: <TeamOutlined className="text-lg" />,
     label: 'Quản lý nông dân',
   },
   {
-    key: ROUTER.LM_LANDS,
+    key: ROUTER.FS_LANDS,
     icon: <EnvironmentOutlined className="text-lg" />,
     label: 'Quản lý vùng trồng',
   },

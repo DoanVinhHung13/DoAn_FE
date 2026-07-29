@@ -25,7 +25,7 @@ import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
 import CropManagementService from 'src/services/CropManagementService';
-import CropService from 'src/services/CropService';
+import CropCatalogService from 'src/services/CropCatalogService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
@@ -68,7 +68,7 @@ const CropEdit = () => {
     queryKey: ['crop-catalogs-dropdown'],
     queryFn: async () => {
       try {
-        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE' });
+        const response = await CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE' });
         const payload = response?.data ?? response ?? {};
         const data = payload?.data ?? payload;
         const items = Array.isArray(data)

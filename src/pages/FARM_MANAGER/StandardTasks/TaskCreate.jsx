@@ -20,12 +20,12 @@ const TaskCreate = () => {
         description: values.description?.trim() || null,
       }
 
-      const res = await TaskCatalogService.create(body)
+      const res = await TaskCatalogService.createTaskCatalog(body)
 
       if (res?.success === false) return
 
-      navigate(ROUTER.FM_TASKS)
-    } catch (err) {
+      navigate(ROUTER.FM_TASK_CATALOGS)
+    } catch {
       // axios interceptor handles error notification
     } finally {
       setLoading(false)
@@ -37,7 +37,7 @@ const TaskCreate = () => {
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_TASKS)}>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_TASK_CATALOGS)}>
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
@@ -62,7 +62,7 @@ const TaskCreate = () => {
           {/* Footer actions */}
           <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
             <Button
-              onClick={() => navigate(ROUTER.FM_TASKS)}
+              onClick={() => navigate(ROUTER.FM_TASK_CATALOGS)}
               className="h-10 px-6 rounded-xl"
               disabled={loading}
             >

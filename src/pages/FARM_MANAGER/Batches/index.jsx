@@ -13,7 +13,7 @@ import CustomTable from "src/components/Table/CustomTable"
 import TitleCustom from "src/components/TitleCustom"
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from "src/constants/pageSizeOptions"
 import ROUTER from "src/router/ROUTER"
-import BatchService from "src/services/BatchService"
+import HarvestBatchService from "src/services/HarvestBatchService"
 import { invalidCharsRegex } from "src/utils/helpers"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import { SYSTEM_KEY } from "src/constants/systemKey"
@@ -90,7 +90,7 @@ const Batches = () => {
   } = useQuery({
     queryKey: ["batches", page, pageSize, search, statusFilter],
     queryFn: async () => {
-      const response = await BatchService.getBatches({
+      const response = await HarvestBatchService.getHarvestBatches({
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
@@ -129,7 +129,7 @@ const Batches = () => {
 
   const goToQrManagement = batch => {
     navigate(
-      `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
+      `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
     )
   }
 
@@ -353,7 +353,7 @@ const Batches = () => {
           onRow={record => ({
             onClick: event => {
               if (event.target.closest("button")) return
-              navigate(ROUTER.FM_BATCH_DETAIL.replace(":id", record.id))
+              navigate(ROUTER.FM_HARVEST_BATCH_DETAIL.replace(":id", record.id))
             },
           })}
           textEmpty="Không có lô thu hoạch nào"

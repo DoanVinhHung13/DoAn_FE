@@ -114,7 +114,7 @@ const getPlanId = notification =>
 const addFinalizationTab = actionUrl => {
   try {
     const url = new URL(actionUrl, 'http://localhost')
-    if (!url.pathname.startsWith('/farm-supervisor/plans/')) return actionUrl
+    if (!url.pathname.startsWith('/farm-supervisor/cultivation-logbooks/')) return actionUrl
     url.searchParams.set('tab', 'finalization')
     return `${url.pathname}${url.search}${url.hash}`
   } catch {
@@ -139,7 +139,7 @@ export const getNotificationActionUrl = notification => {
 
   const planId = getPlanId(notification)
   if (shouldOpenFinalization && planId) {
-    return `${ROUTER.FS_PLAN_DETAIL.replace(':planId', planId)}?tab=finalization`
+    return `${ROUTER.FS_CULTIVATION_LOGBOOK_DETAIL.replace(':planId', planId)}?tab=finalization`
   }
 
   return ''

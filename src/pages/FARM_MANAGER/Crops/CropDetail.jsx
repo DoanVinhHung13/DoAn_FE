@@ -23,7 +23,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
-import CropService from 'src/services/CropService';
+import CropCatalogService from 'src/services/CropCatalogService';
 import CropManagementService from 'src/services/CropManagementService';
 import CropVarietiesModal from './CropVarietiesModal';
 import ROUTER from 'src/router/ROUTER';
@@ -89,7 +89,7 @@ const CropDetail = () => {
     queryKey: ['crop-catalogs-dropdown'],
     queryFn: async () => {
       try {
-        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
+        const response = await CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100 });
         const payload = response?.data ?? response ?? {};
         const data = payload?.data ?? payload;
         const items = Array.isArray(data)

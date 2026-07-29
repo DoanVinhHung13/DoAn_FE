@@ -20,12 +20,12 @@ const FertilizerEdit = () => {
         setInitialLoading(true)
         const res = await FertilizerService.getFertilizerById(id)
         if (res?.success === false) {
-          navigate(ROUTER.FM_VIEW_FERTILIZERS)
+          navigate(ROUTER.FM_FERTILIZERS)
           return
         }
         setEditingItem(res?.data)
-      } catch (err) {
-        navigate(ROUTER.FM_VIEW_FERTILIZERS)
+      } catch {
+        navigate(ROUTER.FM_FERTILIZERS)
       } finally {
         setInitialLoading(false)
       }
@@ -37,7 +37,7 @@ const FertilizerEdit = () => {
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_VIEW_FERTILIZERS)}>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_FERTILIZERS)}>
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">

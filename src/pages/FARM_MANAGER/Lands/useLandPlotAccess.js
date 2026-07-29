@@ -16,9 +16,9 @@ export const getLandPlotRoutes = (role) => {
   }
 
   return {
-    list: ROUTER.LM_LANDS,
+    list: ROUTER.FS_LANDS,
     create: null,
-    detail: (id) => ROUTER.LM_LAND_DETAIL.replace(':id', id),
+    detail: (id) => ROUTER.FS_LAND_DETAIL.replace(':id', id),
     edit: null,
   }
 }

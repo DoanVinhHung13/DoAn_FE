@@ -28,7 +28,7 @@ import { formatDate } from 'src/utils/dateFormatters';
 import TitleCustom from 'src/components/TitleCustom';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import { useSystemKey } from 'src/hooks/useSystemKey';
-import BatchService from 'src/services/BatchService';
+import HarvestBatchService from 'src/services/HarvestBatchService';
 import ROUTER from 'src/router/ROUTER';
 
 const { Text, Paragraph } = Typography;
@@ -75,7 +75,7 @@ const BatchDetail = () => {
   const { data: batch, isLoading } = useQuery({
     queryKey: ['harvest-batch-detail-page', id],
     queryFn: async () => {
-      const response = await BatchService.getBatchById(id);
+      const response = await HarvestBatchService.getHarvestBatchById(id);
       return response?.data?.data || response?.data || response;
     },
     enabled: !!id,
@@ -92,7 +92,7 @@ const BatchDetail = () => {
   if (!batch) {
     return (
       <div className="p-6">
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_BATCHES)}>
+        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_HARVEST_BATCHES)}>
           Quay lại
         </Button>
         <div className="mt-8 text-center text-gray-500">Không tìm thấy thông tin lô thu hoạch.</div>
@@ -116,7 +116,7 @@ const BatchDetail = () => {
         <div className="flex items-center gap-4">
           <Button
             icon={<ArrowLeftOutlined />}
-            onClick={() => navigate(ROUTER.FM_BATCHES)}
+            onClick={() => navigate(ROUTER.FM_HARVEST_BATCHES)}
             className="h-10"
           >
             Quay lại
@@ -133,7 +133,7 @@ const BatchDetail = () => {
                 aria-label="Quản lý mã QR"
                 onClick={() =>
                   navigate(
-                    `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                    `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
                   )
                 }
                 className="bg-green-600 hover:bg-green-700 h-10 px-3 rounded-lg font-semibold"
@@ -151,7 +151,7 @@ const BatchDetail = () => {
                 aria-label="Quản lý mã QR"
                 onClick={() =>
                   navigate(
-                    `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                    `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
                   )
                 }
                 className="bg-blue-500 hover:bg-blue-600 h-10 px-3 rounded-lg font-semibold"
@@ -296,7 +296,7 @@ const BatchDetail = () => {
                       aria-label="Quản lý mã QR"
                       onClick={() =>
                         navigate(
-                          `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                          `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
                         )
                       }
                       className="h-12 rounded-lg bg-green-600 hover:bg-green-700 font-semibold"
@@ -316,7 +316,7 @@ const BatchDetail = () => {
                       aria-label="Quản lý mã QR"
                       onClick={() =>
                         navigate(
-                          `${ROUTER.FM_QR_MANAGEMENT}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+                          `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
                         )
                       }
                       className="h-12 rounded-lg bg-blue-500 hover:bg-blue-600 font-semibold"
@@ -342,7 +342,7 @@ const BatchDetail = () => {
                   size="large"
                   block
                   icon={<ArrowLeftOutlined />}
-                  onClick={() => navigate(ROUTER.FM_BATCHES)}
+                  onClick={() => navigate(ROUTER.FM_HARVEST_BATCHES)}
                   className="h-11 rounded-lg"
                 >
                   Quay lại danh sách

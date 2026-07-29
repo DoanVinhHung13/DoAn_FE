@@ -74,7 +74,7 @@ const ViewCropProtections = () => {
         SearchKeyword: search || undefined,
         Status: statusFilter === 'all' ? undefined : statusFilter,
       }
-      const res = await PesticideService.getAll(params)
+      const res = await PesticideService.getPesticides(params)
       if (res?.success === false) return
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || res?.data?.items?.length || 0)
@@ -109,7 +109,7 @@ const ViewCropProtections = () => {
       setTimeout(() => setInUseAlert(false), 5000)
       return
     }
-    navigate(ROUTER.FM_VIEW_CROP_PROTECTION_EDIT.replace(':id', record.id))
+    navigate(ROUTER.FM_PESTICIDE_EDIT.replace(':id', record.id))
   }
 
   const handleSwitchClick = (record) => {
@@ -126,7 +126,7 @@ const ViewCropProtections = () => {
     const { item } = statusModal
     try {
       setStatusLoading(true)
-      const res = await PesticideService.toggleStatus(item.id, {
+      const res = await PesticideService.togglePesticideStatus(item.id, {
         isActive: !item.isActive,
       })
       if (res?.success === false) return
@@ -317,7 +317,7 @@ const ViewCropProtections = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => navigate(ROUTER.FM_VIEW_CROP_PROTECTION_CREATE)}
+          onClick={() => navigate(ROUTER.FM_PESTICIDE_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
           Thêm mới
@@ -386,7 +386,7 @@ const ViewCropProtections = () => {
           loading={loading}
           scroll={{ x: 1000 }}
           onRow={(record) => ({
-            onClick: () => navigate(ROUTER.FM_VIEW_CROP_PROTECTION_DETAIL.replace(':id', record.id)),
+            onClick: () => navigate(ROUTER.FM_PESTICIDE_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
           locale={{ emptyText: 'Không có dữ liệu nông dược.' }}

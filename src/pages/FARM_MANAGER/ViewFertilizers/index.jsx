@@ -1,6 +1,6 @@
 /**
  * ViewFertilizers — Quản lý phân bón (Farm Manager)
- * Route: /farm-manager/view-fertilizers  (ROUTER.FM_VIEW_FERTILIZERS)
+ * Route: /farm-manager/fertilizers  (ROUTER.FM_FERTILIZERS)
  *
  * Architecture mirrors /farm-manager/users:
  *   - TitleCustom header + action button
@@ -144,7 +144,7 @@ const ViewFertilizers = () => {
       setTimeout(() => setInUseAlert(false), 5000)
       return
     }
-    navigate(ROUTER.FM_VIEW_FERTILIZER_EDIT.replace(':id', record.id))
+    navigate(ROUTER.FM_FERTILIZER_EDIT.replace(':id', record.id))
   }
 
   // Kiểm tra BR_FER_02 trước khi mở confirm toggle
@@ -361,7 +361,7 @@ const ViewFertilizers = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => navigate(ROUTER.FM_VIEW_FERTILIZER_CREATE)}
+          onClick={() => navigate(ROUTER.FM_FERTILIZER_CREATE)}
           className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
         >
           Thêm mới
@@ -441,7 +441,7 @@ const ViewFertilizers = () => {
           loading={loading}
           scroll={{ x: 1000 }}
           onRow={(record) => ({
-            onClick: () => navigate(ROUTER.FM_VIEW_FERTILIZER_DETAIL.replace(':id', record.id)),
+            onClick: () => navigate(ROUTER.FM_FERTILIZER_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
           locale={{ emptyText: 'Không có dữ liệu phân bón.' }}

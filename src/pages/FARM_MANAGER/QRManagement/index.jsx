@@ -36,9 +36,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QRCodeSVG } from 'qrcode.react';
 
 import TitleCustom from 'src/components/TitleCustom';
-import QRService from 'src/services/QRService';
+import QrCodeService from 'src/services/QrCodeService';
 import { formatDate, parseDate } from 'src/utils/dateFormatters';
-import BatchService from 'src/services/BatchService';
+import HarvestBatchService from 'src/services/HarvestBatchService';
 import ROUTER from 'src/router/ROUTER';
 
 const { Text, Paragraph } = Typography;
@@ -67,7 +67,7 @@ const QRManagement = () => {
   const { data: harvestBatches = [] } = useQuery({
     queryKey: ['harvest-batches-select'],
     queryFn: async () => {
-      const response = await BatchService.getBatches();
+      const response = await HarvestBatchService.getHarvestBatches();
       const list = response?.data?.data?.items || response?.data?.data || response?.data?.items || response?.data || [];
       return Array.isArray(list) ? list : [];
     },
@@ -92,7 +92,7 @@ const QRManagement = () => {
     queryKey: ['harvest-batch-detail', selectedBatchId],
     queryFn: async () => {
       if (!selectedBatchId) return null;
-      const response = await BatchService.getBatchById(selectedBatchId);
+      const response = await HarvestBatchService.getHarvestBatchById(selectedBatchId);
       return response?.data?.data || response?.data || response;
     },
     enabled: !!selectedBatchId,
@@ -115,7 +115,7 @@ const QRManagement = () => {
     queryKey: ['existing-qr', selectedBatchId],
     queryFn: async () => {
       try {
-        const response = await QRService.getQRCodes({ BatchId: selectedBatchId, PageSize: 1 });
+        const response = await QrCodeService.getQrCodes({ BatchId: selectedBatchId, PageSize: 1 });
         const list = response?.data?.items || response?.data?.data?.items || [];
         return list[0] || null;
       } catch {
@@ -256,7 +256,7 @@ const QRManagement = () => {
 
   // 3. Preview QR mutation: POST /api/qr-codes/preview
   const previewQRMutation = useMutation({
-    mutationFn: (payload) => QRService.previewQRCode(payload),
+    mutationFn: (payload) => QrCodeService.previewQrCode(payload),
     onSuccess: (response) => {
       const data = response?.data?.data || response?.data;
       const result = {
@@ -281,7 +281,7 @@ const QRManagement = () => {
 
   // 4. Create QR mutation
   const createQRMutation = useMutation({
-    mutationFn: (payload) => QRService.createQRCode(payload),
+    mutationFn: (payload) => QrCodeService.createQrCode(payload),
     onSuccess: (response, variables) => {
       const data = response?.data?.data || response?.data;
       const result = {
@@ -415,7 +415,7 @@ const QRManagement = () => {
           <div className="flex items-center gap-4">
             <Button
               icon={<ArrowLeftOutlined />}
-              onClick={() => navigate(ROUTER.FM_BATCHES)}
+              onClick={() => navigate(ROUTER.FM_HARVEST_BATCHES)}
               className="h-10 rounded-xl"
             >
               Quay lại

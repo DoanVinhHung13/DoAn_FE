@@ -23,8 +23,8 @@ import { useNavigate, useParams } from "react-router-dom"
 import TitleCustom from "src/components/TitleCustom"
 import ROUTER from "src/router/ROUTER"
 import CropManagementService from "src/services/CropManagementService"
-import CropService from "src/services/CropService"
-import PlanTemplateService from "src/services/PlanTemplateService"
+import CropCatalogService from "src/services/CropCatalogService"
+import ProcessTemplateService from "src/services/ProcessTemplateService"
 import ProcessStepService from "src/services/ProcessStepService"
 import { isActiveCropCatalog } from "src/utils/cropCatalog"
 
@@ -139,7 +139,7 @@ const PlanTemplateCreate = () => {
       try {
         setLoadingOptions(true)
         const [catalogResponse, cropResponse] = await Promise.all([
-          CropService.getCrops({ PageIndex: 1, PageSize: 1000, Status: true }),
+          CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 1000, Status: true }),
           CropManagementService.getCrops({
             PageIndex: 1,
             PageSize: 1000,
@@ -167,7 +167,7 @@ const PlanTemplateCreate = () => {
       try {
         setLoadingDetail(true)
         const [templateResponse, stepsResponse] = await Promise.all([
-          PlanTemplateService.getById(id),
+          ProcessTemplateService.getProcessTemplateById(id),
           ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
         ])
         if (!mounted) return
@@ -332,10 +332,10 @@ const PlanTemplateCreate = () => {
     try {
       setSubmitting(true)
       const response = isEdit
-        ? await PlanTemplateService.update(id, templatePayload, {
+        ? await ProcessTemplateService.updateProcessTemplate(id, templatePayload, {
             skipNotice: true,
           })
-        : await PlanTemplateService.create(templatePayload, {
+        : await ProcessTemplateService.createProcessTemplate(templatePayload, {
             skipNotice: true,
           })
       if (response?.success === false) return
@@ -348,7 +348,7 @@ const PlanTemplateCreate = () => {
       }
 
       await syncSteps(processTemplateId, normalizedSteps)
-      navigate(ROUTER.FM_PLAN_TEMPLATES)
+      navigate(ROUTER.FM_PROCESS_TEMPLATES)
     } catch (error) {
       console.error("Process template submit failed:", {
         id,
@@ -367,7 +367,7 @@ const PlanTemplateCreate = () => {
       <div className="flex items-center gap-4">
         <Button
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(ROUTER.FM_PLAN_TEMPLATES)}
+          onClick={() => navigate(ROUTER.FM_PROCESS_TEMPLATES)}
         >
           Quay lại
         </Button>
@@ -504,7 +504,7 @@ const PlanTemplateCreate = () => {
             </Button>
 
             <div className="flex justify-end gap-3 pt-5 mt-5 border-t">
-              <Button onClick={() => navigate(ROUTER.FM_PLAN_TEMPLATES)}>
+              <Button onClick={() => navigate(ROUTER.FM_PROCESS_TEMPLATES)}>
                 Hủy
               </Button>
               <Button

@@ -1,6 +1,6 @@
 /**
  * Farm Leader hub — Công việc của tôi
- * Route: /farm-leader/tasks  (ROUTER.FL_TASKS)
+ * Route: /farm-leader/cultivation-tasks  (ROUTER.FL_TASKS)
  *
  * Data source:
  * - Left tree panel: GET /api/cultivation-tasks/my-logbook-summaries
