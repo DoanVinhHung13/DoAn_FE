@@ -74,13 +74,20 @@ const { TextArea } = Input
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
+const getMaterialUnit = item =>
+  getQuantityUnit(
+    item?.usageUnit ||
+      item?.unit ||
+      item?.quantityUnit ||
+      item?.unitName ||
+      item?.materialUnit,
+    "",
+  )
+
 // usageUnit takes priority for both fertilizers and pesticides
 const toFertilizerOptions = list =>
   (list || []).map(item => {
-    const unit = getQuantityUnit(
-      item.usageUnit || item.unit || item.quantityUnit || item.unitName || item.materialUnit,
-      MEASUREMENT_UNITS.KILOGRAM,
-    )
+    const unit = getMaterialUnit(item)
     return {
       value: item.id,
       label: unit ? `${item.name} (${unit})` : item.name,
@@ -95,10 +102,7 @@ const toFertilizerOptions = list =>
 const toPesticideOptions = list =>
   (list || []).map(item => {
     // API returns: unit (kho) and usageUnit (su dung) - use usageUnit
-    const unit = getQuantityUnit(
-      item.usageUnit || item.unit || item.quantityUnit || item.unitName || item.materialUnit,
-      MEASUREMENT_UNITS.LITER,
-    )
+    const unit = getMaterialUnit(item)
     return {
       value: item.id,
       label: unit ? `${item.name} (${unit})` : item.name,
@@ -139,7 +143,7 @@ const DailyLog = () => {
       // --- fertilizers ---
       for (const f of log.fertilizers || []) {
         const id = f.fertilizerId || f.id || f.materialId
-        const unit = getQuantityUnit(f.unit || f.quantityUnit, MEASUREMENT_UNITS.KILOGRAM)
+        const unit = getQuantityUnit(f.unit || f.quantityUnit, "")
         const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
         const key = `${id}|${unit}`
         const opt = fertilizerOptions.find(o => o.value === id)
@@ -163,7 +167,7 @@ const DailyLog = () => {
       // --- pesticides ---
       for (const p of log.pesticides || []) {
         const id = p.pesticideId || p.id || p.materialId
-        const unit = getQuantityUnit(p.unit || p.quantityUnit, MEASUREMENT_UNITS.LITER)
+        const unit = getQuantityUnit(p.unit || p.quantityUnit, "")
         const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
         const key = `${id}|${unit}`
         const opt = pesticideOptions.find(o => o.value === id)
@@ -252,8 +256,8 @@ const DailyLog = () => {
       fertilizerId: row.fertilizerId,
       materialId: row.materialId || row.fertilizerId,
       quantity: Number(row.quantity || 0),
-      unit: getQuantityUnit(row.quantityUnit || row.unit, MEASUREMENT_UNITS.KILOGRAM),
-      quantityUnit: getQuantityUnit(row.quantityUnit || row.unit, MEASUREMENT_UNITS.KILOGRAM),
+      unit: getQuantityUnit(row.quantityUnit || row.unit, ""),
+      quantityUnit: getQuantityUnit(row.quantityUnit || row.unit, ""),
       area: Number(row.area || 0),
       areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
     }))
@@ -263,8 +267,8 @@ const DailyLog = () => {
       pesticideId: row.pesticideId,
       materialId: row.materialId || row.pesticideId,
       quantity: Number(row.quantity || 0),
-      unit: getQuantityUnit(row.quantityUnit || row.unit, MEASUREMENT_UNITS.LITER),
-      quantityUnit: getQuantityUnit(row.quantityUnit || row.unit, MEASUREMENT_UNITS.LITER),
+      unit: getQuantityUnit(row.quantityUnit || row.unit, ""),
+      quantityUnit: getQuantityUnit(row.quantityUnit || row.unit, ""),
       area: Number(row.area || 0),
       areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
     }))
@@ -661,24 +665,15 @@ const DailyLog = () => {
                                     fertilizerOptions.find(
                                       o => o.value === value,
                                     )
-                                  const unitFromApi = getQuantityUnit(
-                                    opt?.unit || opt?.raw?.unit || opt?.raw?.usageUnit,
-                                    MEASUREMENT_UNITS.KILOGRAM,
-                                  )
+                                  const unitFromApi = getMaterialUnit(opt?.raw || opt)
                                   form.setFieldValue(
                                     ["fertilizers", field.name, "materialId"],
                                     opt?.materialId || value,
                                   )
-                                  if (unitFromApi) {
-                                    form.setFieldValue(
-                                      [
-                                        "fertilizers",
-                                        field.name,
-                                        "quantityUnit",
-                                      ],
-                                      unitFromApi,
-                                    )
-                                  }
+                                  form.setFieldValue(
+                                    ["fertilizers", field.name, "quantityUnit"],
+                                    unitFromApi,
+                                  )
                                   if (
                                     !form.getFieldValue([
                                       "fertilizers",
@@ -719,12 +714,26 @@ const DailyLog = () => {
                             <Form.Item {...field} name={[field.name, "quantityUnit"]} hidden>
                               <Input />
                             </Form.Item>
-                            <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
-                              {getQuantityUnit(
-                                form.getFieldValue(["fertilizers", field.name, "quantityUnit"]),
-                                MEASUREMENT_UNITS.KILOGRAM,
+                            <Form.Item
+                              noStyle
+                              shouldUpdate={(previousValues, currentValues) =>
+                                previousValues?.fertilizers?.[field.name]?.quantityUnit !==
+                                currentValues?.fertilizers?.[field.name]?.quantityUnit
+                              }
+                            >
+                              {({ getFieldValue }) => (
+                                <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                                  {getQuantityUnit(
+                                    getFieldValue([
+                                      "fertilizers",
+                                      field.name,
+                                      "quantityUnit",
+                                    ]),
+                                    "",
+                                  )}
+                                </span>
                               )}
-                            </span>
+                            </Form.Item>
                           </Col>
                           <Col xs={12} md={5}>
                             <Form.Item {...field} name={[field.name, "area"]}>
@@ -751,7 +760,7 @@ const DailyLog = () => {
                       <Button
                         type="dashed"
                         onClick={() => add({
-                          quantityUnit: MEASUREMENT_UNITS.KILOGRAM,
+                          quantityUnit: "",
                           areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
                         })}
                         icon={<PlusOutlined />}
@@ -817,24 +826,15 @@ const DailyLog = () => {
                                       o => o.value === value,
                                     )
                                   // usageUnit takes priority for pesticides
-                                  const unitFromApi = getQuantityUnit(
-                                    opt?.usageUnit || opt?.raw?.usageUnit || opt?.unit || opt?.raw?.unit,
-                                    MEASUREMENT_UNITS.LITER,
-                                  )
+                                  const unitFromApi = getMaterialUnit(opt?.raw || opt)
                                   form.setFieldValue(
                                     ["pesticides", field.name, "materialId"],
                                     opt?.materialId || value,
                                   )
-                                  if (unitFromApi) {
-                                    form.setFieldValue(
-                                      [
-                                        "pesticides",
-                                        field.name,
-                                        "quantityUnit",
-                                      ],
-                                      unitFromApi,
-                                    )
-                                  }
+                                  form.setFieldValue(
+                                    ["pesticides", field.name, "quantityUnit"],
+                                    unitFromApi,
+                                  )
                                   if (
                                     !form.getFieldValue([
                                       "pesticides",
@@ -875,12 +875,26 @@ const DailyLog = () => {
                             <Form.Item {...field} name={[field.name, "quantityUnit"]} hidden>
                               <Input />
                             </Form.Item>
-                            <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
-                              {getQuantityUnit(
-                                form.getFieldValue(["pesticides", field.name, "quantityUnit"]),
-                                MEASUREMENT_UNITS.LITER,
+                            <Form.Item
+                              noStyle
+                              shouldUpdate={(previousValues, currentValues) =>
+                                previousValues?.pesticides?.[field.name]?.quantityUnit !==
+                                currentValues?.pesticides?.[field.name]?.quantityUnit
+                              }
+                            >
+                              {({ getFieldValue }) => (
+                                <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                                  {getQuantityUnit(
+                                    getFieldValue([
+                                      "pesticides",
+                                      field.name,
+                                      "quantityUnit",
+                                    ]),
+                                    "",
+                                  )}
+                                </span>
                               )}
-                            </span>
+                            </Form.Item>
                           </Col>
                           <Col xs={12} md={5}>
                             <Form.Item {...field} name={[field.name, "area"]}>
@@ -907,7 +921,7 @@ const DailyLog = () => {
                       <Button
                         type="dashed"
                         onClick={() => add({
-                          quantityUnit: MEASUREMENT_UNITS.LITER,
+                          quantityUnit: "",
                           areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
                         })}
                         icon={<PlusOutlined />}
@@ -1016,7 +1030,7 @@ const DailyLog = () => {
                                 const name =
                                   f.name || f.materialName || "Phân bón"
                                 const qty = f.quantity
-                                const unit = getQuantityUnit(f.quantityUnit || f.unit, MEASUREMENT_UNITS.KILOGRAM)
+                                const unit = getQuantityUnit(f.quantityUnit || f.unit, "")
                                 const area = f.area
                                 const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
 
@@ -1057,7 +1071,7 @@ const DailyLog = () => {
                                 const name =
                                   p.name || p.materialName || "Nông dược"
                                 const qty = p.quantity
-                                const unit = getQuantityUnit(p.quantityUnit || p.unit, MEASUREMENT_UNITS.LITER)
+                                const unit = getQuantityUnit(p.quantityUnit || p.unit, "")
                                 const area = p.area
                                 const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
 
