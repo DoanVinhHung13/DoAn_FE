@@ -218,7 +218,7 @@ const Batches = () => {
       key: "area",
       width: 120,
       render: area => (
-        <Text className="text-sm font-semibold">{area ? `${area} ha` : "-"}</Text>
+        <Text className="text-sm font-semibold">{area ? `${area} m2` : "-"}</Text>
       ),
     },
     {

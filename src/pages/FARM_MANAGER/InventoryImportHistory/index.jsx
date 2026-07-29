@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
+import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import InventoryService from 'src/services/InventoryService'
 import { formatDate as formatConfiguredDate } from 'src/utils/dateFormatters'
@@ -80,13 +81,18 @@ const getQuantity = record =>
   record.stockQuantity ??
   record.changeQuantity
 
-const getUnit = record =>
-  record.unit ||
-  record.quantityUnit ||
-  record.inventoryUnit ||
-  record.material?.unit ||
-  record.inventory?.unit ||
-  ''
+const getUnit = record => {
+  const rawUnit =
+    record.unit ||
+    record.quantityUnit ||
+    record.inventoryUnit ||
+    record.material?.unit ||
+    record.inventory?.unit
+  const fallback = getMaterialType(record).key === 'pesticide'
+    ? MEASUREMENT_UNITS.LITER
+    : MEASUREMENT_UNITS.KILOGRAM
+  return getQuantityUnit(rawUnit, fallback)
+}
 
 const getTransactionDate = record =>
   record.importDate ||

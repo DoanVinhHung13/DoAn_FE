@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { Col, Form, Input, InputNumber, Row, Select } from 'antd'
-import { AREA_UNIT_OPTIONS } from './landPlotUtils'
+import { Col, Form, Input, InputNumber, Row } from 'antd'
+import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 /**
  * Form fields tái sử dụng cho LandPlotCreate và LandPlotEdit.
@@ -58,15 +58,13 @@ const LandPlotFormFields = ({
         </Form.Item>
       </Col>
       <Col span={10}>
-        <Form.Item
-          label="Đơn vị"
-          name="areaUnit"
-          rules={[{ required: true, message: 'Chọn đơn vị diện tích' }]}
-        >
-          <Select
-            options={AREA_UNIT_OPTIONS.filter(o => o.value === 'ha')}
-            placeholder="Hecta (ha)"
-          />
+        <Form.Item name="areaUnit" hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item label="Đơn vị">
+          <span className="inline-flex h-10 items-center rounded-lg bg-gray-50 px-3 font-semibold text-gray-700">
+            {MEASUREMENT_UNITS.SQUARE_METER}
+          </span>
         </Form.Item>
       </Col>
     </Row>

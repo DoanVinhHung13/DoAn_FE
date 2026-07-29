@@ -30,7 +30,6 @@ import {
   Input,
   InputNumber,
   Modal,
-  Select,
   Spin,
   Tag,
   Timeline,
@@ -47,8 +46,7 @@ import CultivationLogbookService from "src/services/CultivationLogbookService"
 import CultivationLogService from "src/services/CultivationLogService"
 import CultivationStageService from "src/services/CultivationStageService"
 import AuditLogService from "src/services/AuditLogService"
-import { useSystemKey } from "src/hooks/useSystemKey"
-import { SYSTEM_KEY } from "src/constants/systemKey"
+import { getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import { canApproveClosing } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
 import { getLandPlotNamesDisplay } from "src/utils/helpers"
@@ -392,7 +390,6 @@ const StageSectionHeader = ({ stage, index, stageLogs }) => {
 
 const LogbookReview = () => {
   const { getLogbookStatus, getReviewStatus } = useCultivationStatus()
-  const { getCombo } = useSystemKey()
   const { id } = useParams()
   const navigate = useNavigate()
   const [logbook, setLogbook] = useState(null)
@@ -407,10 +404,10 @@ const LogbookReview = () => {
   const [approveModal, setApproveModal] = useState(false)
   const [approveForm] = Form.useForm()
 
-  const unitOptions = (getCombo(SYSTEM_KEY.FERTILIZER_UNIT) || []).map(opt => ({
-    value: opt.codeValue ?? opt.CodeValue ?? opt.value ?? opt.name,
-    label: opt.description ?? opt.Description ?? opt.label ?? opt.name ?? opt.codeValue,
-  }))
+  const harvestUnit = getQuantityUnit(
+    logbook?.product?.unit || logbook?.productUnit || logbook?.unit,
+    MEASUREMENT_UNITS.KILOGRAM,
+  )
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -480,7 +477,7 @@ const LogbookReview = () => {
       setApproving(true)
       await CultivationLogbookService.approveCompletion(id, {
         quantity: values.quantity,
-        unit: values.unit.trim(),
+        unit: harvestUnit,
       })
       setApproveModal(false)
       approveForm.resetFields()
@@ -807,20 +804,13 @@ const LogbookReview = () => {
               placeholder="Nhập sản lượng..."
             />
           </Form.Item>
-          <Form.Item
-            name="unit"
-            label="Đơn vị"
-            rules={[
-              { required: true, message: "Vui lòng chọn đơn vị" },
-            ]}
-          >
-            <Select
-              placeholder="Chọn đơn vị (tấn, kg, tạ...)"
-              options={unitOptions}
-              showSearch
-              optionFilterProp="label"
-              allowClear
-            />
+          <Form.Item name="unit" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item label="Đơn vị">
+            <span className="inline-flex h-10 items-center rounded-lg bg-gray-50 px-3 font-semibold text-gray-700">
+              {harvestUnit}
+            </span>
           </Form.Item>
         </Form>
       </Modal>

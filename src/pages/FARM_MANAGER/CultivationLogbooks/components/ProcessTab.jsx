@@ -133,7 +133,7 @@ const DailyLogCard = ({ log, index }) => {
                       {fert.area && (
                         <>
                           <span className="text-gray-300">/</span>
-                          <span className="text-gray-500">{fert.area} {fert.areaUnit || 'm²'}</span>
+                          <span className="text-gray-500">{fert.area} {fert.areaUnit || 'm2'}</span>
                         </>
                       )}
                     </div>
@@ -155,7 +155,7 @@ const DailyLogCard = ({ log, index }) => {
                       {pest.area && (
                         <>
                           <span className="text-gray-300">/</span>
-                          <span className="text-gray-500">{pest.area} {pest.areaUnit || 'm²'}</span>
+                          <span className="text-gray-500">{pest.area} {pest.areaUnit || 'm2'}</span>
                         </>
                       )}
                     </div>

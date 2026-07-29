@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { areaToHectares } from 'src/utils/geoJsonUtils'
+import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 // ── Giới hạn upload ảnh ──────────────────────────────────────────────────────
 
@@ -8,11 +8,9 @@ import { areaToHectares } from 'src/utils/geoJsonUtils'
  * Bao gồm: polygon change, upload ảnh, preview ảnh.
  *
  * @param {Object}   form         - Instance Ant Design Form
- * @param {Object}   [options]
- * @param {string}   [options.defaultAreaUnit='ha'] - Đơn vị diện tích mặc định
  * @returns {Object} State & handlers cho form
  */
-export const useLandPlotForm = (form, { defaultAreaUnit = 'ha' } = {}) => {
+export const useLandPlotForm = (form) => {
   // ── Polygon state ──────────────────────────────────────────────────────────
   const [polygonData, setPolygonData] = useState(null)
   const [mapError, setMapError] = useState('')
@@ -36,15 +34,13 @@ export const useLandPlotForm = (form, { defaultAreaUnit = 'ha' } = {}) => {
       setMapError('')
       setPolygonData(data)
       if (data?.areaM2) {
-        const currentUnit = form.getFieldValue('areaUnit') || defaultAreaUnit
-        const area =
-          currentUnit === 'm2'
-            ? Number(data.areaM2.toFixed(2))
-            : areaToHectares(data.areaM2)
-        form.setFieldsValue({ area })
+        form.setFieldsValue({
+          area: Number(data.areaM2.toFixed(2)),
+          areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+        })
       }
     },
-    [form, defaultAreaUnit],
+    [form],
   )
 
   // ── Upload handlers ────────────────────────────────────────────────────────

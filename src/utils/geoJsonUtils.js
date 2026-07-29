@@ -38,11 +38,8 @@ export function calculatePolygonArea(geoJSONCoords) {
   return Math.abs((area * R * R) / 2)
 }
 
-export function formatArea(areaM2, unit = 'm2') {
-  if (unit === 'ha' || areaM2 >= 10000) {
-    return `${(areaM2 / 10000).toFixed(2)} ha`
-  }
-  return `${Math.round(areaM2).toLocaleString('vi-VN')} m²`
+export function formatArea(areaM2) {
+  return `${Math.round(areaM2).toLocaleString('vi-VN')} m2`
 }
 
 export function geoJSONToLeafletPositions(coordinates) {
@@ -78,10 +75,6 @@ export function getPolygonCenter(geoJSON) {
     latitude: sumLat / points.length,
     longitude: sumLng / points.length,
   }
-}
-
-export function areaToHectares(areaM2) {
-  return Number((areaM2 / 10000).toFixed(4))
 }
 
 export function toTurfPolygon(geoJSON) {

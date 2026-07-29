@@ -91,7 +91,7 @@ const dosageColumns = [
     key: 'areaUnit',
     align: 'center',
     width: 140,
-    render: (v) => <Text>{v || 'ha'}</Text>,
+    render: (v) => <Text>{v || 'm2'}</Text>,
   },
   {
     title: 'Đối tượng',

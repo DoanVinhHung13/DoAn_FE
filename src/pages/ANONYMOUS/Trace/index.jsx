@@ -188,7 +188,7 @@ const Trace = () => {
       farmName: payload?.farmName || b.farmName || b.landPlotName || '—',
       harvestDate: payload?.harvestDate || b.harvestDate || null,
       startDate: b.startDate,
-      area: payload?.area ? `${payload.area} ${payload.areaUnit || 'ha'}` : '—',
+      area: payload?.area ? `${payload.area} m2` : '—',
       yield: b.quantity != null ? `${b.quantity} ${b.unit || ''}`.trim() : '—',
       dailyLogs: b.dailyLogs,
       certifications: b.certifications,

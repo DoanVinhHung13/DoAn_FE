@@ -245,7 +245,7 @@ const BatchDetail = () => {
 
               {batch.area && (
                 <Descriptions.Item label="Diện tích" span={1}>
-                  <Text strong>{batch.area} ha</Text>
+                  <Text strong>{batch.area} m2</Text>
                 </Descriptions.Item>
               )}
 

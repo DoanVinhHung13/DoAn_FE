@@ -111,7 +111,7 @@ const mapMaterialRows = (items = [], nameFallback) =>
     totalQuantity: item.totalQuantity ?? item.quantity ?? 0,
     unit: item.unit ?? item.quantityUnit ?? "",
     totalArea: item.totalArea ?? item.area ?? 0,
-    areaUnit: item.areaUnit ?? "ha",
+    areaUnit: item.areaUnit ?? "m2",
     days: item.days ?? "—",
   }))
 
@@ -1102,7 +1102,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                                         </span>
                                         <span className="font-bold text-purple-700">
                                           {p.quantity || p.totalQuantity}{" "}
-                                          {p.unit || p.quantityUnit || "ml"}
+                                          {p.unit || p.quantityUnit || "lít"}
                                         </span>
                                       </div>
                                     ))}

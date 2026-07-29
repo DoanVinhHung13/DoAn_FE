@@ -164,7 +164,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                                   const qty = f.quantity
                                   const unit = f.quantityUnit || f.unit || 'kg'
                                   const area = f.area
-                                  const areaUnit = f.areaUnit || 'ha'
+                                  const areaUnit = f.areaUnit || 'm2'
 
                                   return (
                                     <div
@@ -196,9 +196,9 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                                 {log.pesticides.map((p, i) => {
                                   const name = p.name || p.materialName || 'Nông dược'
                                   const qty = p.quantity
-                                  const unit = p.quantityUnit || p.unit || 'ml'
+                                  const unit = p.quantityUnit || p.unit || 'lít'
                                   const area = p.area
-                                  const areaUnit = p.areaUnit || 'ha'
+                                  const areaUnit = p.areaUnit || 'm2'
 
                                   return (
                                     <div

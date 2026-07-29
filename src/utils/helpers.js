@@ -67,11 +67,8 @@ export const invalidCharsRegex = /[^\p{L}\d\s_@.-]/u;
  * @returns {string} - Diện tích đã format
  */
 export const formatArea = (area) => {
-  if (!area) return '0 m²';
-  if (area >= 10000) {
-    return `${(area / 10000).toFixed(2)} ha`;
-  }
-  return `${area.toLocaleString()} m²`;
+  if (!area) return '0 m2';
+  return `${area.toLocaleString()} m2`;
 };
 
 /**

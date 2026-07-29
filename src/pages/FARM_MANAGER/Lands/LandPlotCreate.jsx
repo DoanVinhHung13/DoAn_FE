@@ -16,6 +16,7 @@ import {
 import { useLandPlotAccess } from './useLandPlotAccess'
 import { useLandPlotForm } from './useLandPlotForm'
 import LandPlotFormFields from './LandPlotFormFields'
+import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -36,6 +37,10 @@ const LandPlotCreate = () => {
 
   // ── State riêng: vùng trồng hiện có (kiểm tra chồng lấn) ─────────────────
   const [existingPlots, setExistingPlots] = useState([])
+
+  useEffect(() => {
+    form.setFieldValue('areaUnit', MEASUREMENT_UNITS.SQUARE_METER)
+  }, [form])
 
   // Nếu không có quyền thì về trang danh sách
   useEffect(() => {

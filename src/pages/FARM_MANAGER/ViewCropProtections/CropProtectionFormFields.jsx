@@ -10,8 +10,7 @@ import {
 } from "antd"
 import React from "react"
 import { useNavigate } from "react-router-dom"
-import { SYSTEM_KEY } from "src/constants/systemKey"
-import { useSystemKey } from "src/hooks/useSystemKey"
+import { getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import ROUTER from "src/router/ROUTER"
 import PesticideService from "src/services/PesticideService"
 
@@ -24,27 +23,25 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
   const [loading, setLoading] = React.useState(false)
   const { cropOptions, isCropsLoading } = useCropOptions()
 
-  const { getCombo } = useSystemKey()
-  const UNIT_OPTIONS = getCombo(SYSTEM_KEY.FERTILIZER_UNIT).map(opt => ({
-    value: opt.codeValue || opt.value,
-    label: opt.label || opt.description,
-  }))
-  const AREA_UNIT_OPTIONS = getCombo(SYSTEM_KEY.AREA_UNIT).map(opt => ({
-    value: opt.codeValue || opt.value,
-    label: opt.label || opt.description,
-  }))
+  const UNIT_OPTIONS = [
+    { value: MEASUREMENT_UNITS.LITER, label: MEASUREMENT_UNITS.LITER },
+    { value: MEASUREMENT_UNITS.KILOGRAM, label: MEASUREMENT_UNITS.KILOGRAM },
+  ]
+  const [quantityUnit, setQuantityUnit] = React.useState(MEASUREMENT_UNITS.LITER)
 
   React.useEffect(() => {
     if (isEdit) {
+      const selectedUnit = getQuantityUnit(editingItem.unit, MEASUREMENT_UNITS.LITER)
+      setQuantityUnit(selectedUnit)
       form.setFieldsValue({
         name: editingItem.name || "",
         manufacturer: editingItem.manufacturer || "",
         supplier: editingItem.supplier || "",
         minimumStock: editingItem.minInventory ?? editingItem.minimumStock ?? 0,
         inventoryQuantity: editingItem.inventoryQuantity ?? 0,
-        inventoryUnit: editingItem.inventoryUnit || editingItem.unit || undefined,
-        unit: editingItem.unit || undefined, // Đơn vị tính (kho)
-        usageUnit: editingItem.usageUnit || undefined, // Đơn vị sử dụng
+        inventoryUnit: selectedUnit,
+        unit: selectedUnit, // Đơn vị tính (kho)
+        usageUnit: selectedUnit, // Đơn vị sử dụng
         description: editingItem.description || "",
         usages:
           editingItem.usages && editingItem.usages.length > 0
@@ -61,23 +58,27 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                   chemicalRatio: u.concentration
                     ? Number(u.concentration)
                     : null,
-                  chemicalUnit: u.concentrationUnit || undefined,
+                  chemicalUnit: u.concentrationUnit || "%",
                   waterRatio: u.dilutionVolume
                     ? Number(u.dilutionVolume)
                     : null,
-                  waterUnit: u.dilutionUnit || undefined,
+                  waterUnit: u.dilutionUnit || MEASUREMENT_UNITS.LITER,
                   dosage: u.dosage,
-                  dosageUnit: u.dosageUnit || undefined,
+                  dosageUnit: selectedUnit,
                   area: u.area,
-                  areaUnit: u.areaUnit || undefined,
+                  areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
                   isolationDays: u.quarantineDays ?? u.isolationDays,
                 }
               })
             : [{}],
       })
     } else {
+      setQuantityUnit(MEASUREMENT_UNITS.LITER)
       form.resetFields()
       form.setFieldsValue({
+        unit: MEASUREMENT_UNITS.LITER,
+        usageUnit: MEASUREMENT_UNITS.LITER,
+        inventoryUnit: MEASUREMENT_UNITS.LITER,
         usages: [{}],
       })
     }
@@ -94,8 +95,8 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         minInventory: values.minimumStock || 0,
         inventoryQuantity: values.inventoryQuantity ?? 0,
         inventoryUnit: values.inventoryUnit || values.unit || "",
-        unit: values.unit || "", // Đơn vị tính (kho)
-        usageUnit: values.usageUnit || "", // Đơn vị sử dụng
+        unit: values.unit || quantityUnit, // Đơn vị tính (kho)
+        usageUnit: values.unit || quantityUnit, // Đơn vị sử dụng cố định theo vật tư
         description: values.description?.trim() || "",
         isActive: isEdit ? editingItem.isActive : true,
         usages: (values.usages || []).map(u => {
@@ -106,13 +107,13 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
             targetPest: u.targetPest || "",
             concentration:
               u.chemicalRatio != null ? String(u.chemicalRatio) : "",
-            concentrationUnit: u.chemicalUnit || "",
+            concentrationUnit: u.chemicalUnit || "%",
             dilutionVolume: u.waterRatio != null ? String(u.waterRatio) : "",
-            dilutionUnit: u.waterUnit || "",
+            dilutionUnit: u.waterUnit || MEASUREMENT_UNITS.LITER,
             dosage: u.dosage || 0,
-            dosageUnit: u.dosageUnit || "",
+            dosageUnit: quantityUnit,
             area: u.area || 0,
-            areaUnit: u.areaUnit || "",
+            areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
             quarantineDays: u.isolationDays || 0,
           }
           if (isEdit && u.id) usageObj.id = u.id
@@ -207,37 +208,42 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
           </Form.Item>
         </Col>
         <Col xs={24} md={8}>
-          <Form.Item
-            name="unit"
-            label={
-              <span className="font-semibold text-gray-700">
-                Đơn vị tính (Kho)
-              </span>
-            }
-          >
-            <Select
-              options={UNIT_OPTIONS}
-              placeholder="Chọn..."
-              className="h-10 rounded-xl"
-              allowClear
-            />
-          </Form.Item>
+          {isEdit ? (
+            <>
+              <Form.Item name="unit" hidden><Input /></Form.Item>
+              <Form.Item label="Đơn vị tính (Kho)">
+                <span className="inline-flex h-10 items-center rounded-xl bg-gray-50 px-3 font-semibold text-gray-700">
+                  {quantityUnit}
+                </span>
+              </Form.Item>
+            </>
+          ) : (
+            <Form.Item name="unit" label="Đơn vị tính (Kho)" rules={[{ required: true, message: "Bắt buộc" }]}>
+              <Select
+                options={UNIT_OPTIONS}
+                placeholder="Chọn..."
+                className="h-10 rounded-xl"
+                onChange={(value) => {
+                  setQuantityUnit(value)
+                  form.setFieldValue("usageUnit", value)
+                  form.setFieldValue("inventoryUnit", value)
+                  const usages = form.getFieldValue("usages") || []
+                  form.setFieldValue("usages", usages.map(u => ({
+                    ...u,
+                    dosageUnit: value,
+                    areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                  })))
+                }}
+              />
+            </Form.Item>
+          )}
         </Col>
         <Col xs={24} md={8}>
-          <Form.Item
-            name="usageUnit"
-            label={
-              <span className="font-semibold text-gray-700">
-                Đơn vị sử dụng
-              </span>
-            }
-          >
-            <Select
-              options={UNIT_OPTIONS}
-              placeholder="Chọn..."
-              className="h-10 rounded-xl"
-              allowClear
-            />
+          <Form.Item name="usageUnit" hidden><Input /></Form.Item>
+          <Form.Item label="Đơn vị sử dụng">
+            <span className="inline-flex h-10 items-center rounded-xl bg-gray-50 px-3 font-semibold text-gray-700">
+              {quantityUnit}
+            </span>
           </Form.Item>
         </Col>
 
@@ -330,18 +336,12 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                                 className="w-full text-sm rounded-lg h-9"
                               />
                             </Form.Item>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "chemicalUnit"]}
-                              className="mb-0 w-[90px]"
-                            >
-                              <Select
-                                options={UNIT_OPTIONS}
-                                placeholder="Đơn vị"
-                                className="text-sm rounded-lg h-9"
-                                allowClear
-                              />
+                            <Form.Item {...restField} name={[name, "chemicalUnit"]} hidden>
+                              <Input />
                             </Form.Item>
+                            <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
+                              %
+                            </span>
                           </div>
 
                           {/* Dấu hai chấm */}
@@ -362,18 +362,12 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                                 className="w-full text-sm rounded-lg h-9"
                               />
                             </Form.Item>
-                            <Form.Item
-                              {...restField}
-                              name={[name, "waterUnit"]}
-                              className="mb-0 w-[90px]"
-                            >
-                              <Select
-                                options={UNIT_OPTIONS}
-                                placeholder="ĐV"
-                                className="text-sm rounded-lg h-9"
-                                allowClear
-                              />
+                            <Form.Item {...restField} name={[name, "waterUnit"]} hidden>
+                              <Input />
                             </Form.Item>
+                            <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
+                              {MEASUREMENT_UNITS.LITER}
+                            </span>
                           </div>
                         </div>
                       </Form.Item>
@@ -392,18 +386,12 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                               className="w-full text-sm rounded-lg h-9"
                             />
                           </Form.Item>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "dosageUnit"]}
-                            className="mb-0 w-[90px]"
-                          >
-                            <Select
-                              options={UNIT_OPTIONS}
-                              placeholder="Chọn"
-                              className="text-sm rounded-lg h-9"
-                              allowClear
-                            />
+                          <Form.Item {...restField} name={[name, "dosageUnit"]} hidden>
+                            <Input />
                           </Form.Item>
+                          <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
+                            {quantityUnit}
+                          </span>
                         </div>
                       </Form.Item>
                     </Col>
@@ -421,18 +409,12 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                               className="w-full text-sm rounded-lg h-9"
                             />
                           </Form.Item>
-                          <Form.Item
-                            {...restField}
-                            name={[name, "areaUnit"]}
-                            className="mb-0 w-[90px]"
-                          >
-                            <Select
-                              options={AREA_UNIT_OPTIONS}
-                              placeholder="Chọn"
-                              className="text-sm rounded-lg h-9"
-                              allowClear
-                            />
+                          <Form.Item {...restField} name={[name, "areaUnit"]} hidden>
+                            <Input />
                           </Form.Item>
+                          <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
+                            {MEASUREMENT_UNITS.SQUARE_METER}
+                          </span>
                         </div>
                       </Form.Item>
                     </Col>
@@ -458,7 +440,12 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
             <Button
               type="dashed"
               icon={<PlusOutlined />}
-              onClick={() => add()}
+              onClick={() => add({
+                chemicalUnit: "%",
+                waterUnit: MEASUREMENT_UNITS.LITER,
+                dosageUnit: quantityUnit,
+                areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+              })}
               className="w-full mb-5 text-green-700 border-green-400 rounded-lg hover:border-green-500"
             >
               Thêm Cách sử dụng

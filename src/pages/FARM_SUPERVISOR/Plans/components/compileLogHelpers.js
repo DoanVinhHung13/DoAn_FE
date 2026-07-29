@@ -14,7 +14,7 @@ export const buildDataSentence = (summary) => {
       const qty = m.quantity ?? m.totalQuantity ?? 0
       const unit = m.unit ?? m.quantityUnit ?? ''
       const typeStr = m.type ? ` (${m.type})` : ''
-      const areaStr = (m.totalArea != null && m.totalArea > 0) ? ` cho ${m.totalArea} ${m.areaUnit || 'ha'}` : ''
+      const areaStr = (m.totalArea != null && m.totalArea > 0) ? ` cho ${m.totalArea} ${m.areaUnit || 'm2'}` : ''
       parts.push(`Đã dùng ${qty} ${unit} ${m.name}${typeStr}${areaStr}`.trim())
     })
   } else {
@@ -76,4 +76,3 @@ export const saveCompiledDescription = async (stageId, taskId, description) => {
   }
   return await CultivationStageService.createOfficialLogs(targetStageId, payload)
 }
-

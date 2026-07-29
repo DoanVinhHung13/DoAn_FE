@@ -1,25 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import { Modal, Form, Input, InputNumber, Select, message } from 'antd'
+import { Modal, Form, Input, InputNumber, message } from 'antd'
 import { InboxOutlined } from '@ant-design/icons'
 import InventoryService from 'src/services/InventoryService'
-import { useSystemKey } from 'src/hooks/useSystemKey'
-import { SYSTEM_KEY } from 'src/constants/systemKey'
+import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 const InventoryImportModal = ({ open, onCancel, onSuccess, item }) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
-  const { getCombo } = useSystemKey()
-
-  const unitOptions = getCombo(SYSTEM_KEY.FERTILIZER_UNIT).map(opt => ({
-    value: opt.codeValue || opt.value,
-    label: opt.label || opt.description,
-  }))
-
   useEffect(() => {
     if (open && item) {
+      const unit = getQuantityUnit(item.inventoryUnit || item.unit, MEASUREMENT_UNITS.KILOGRAM)
       form.setFieldsValue({
         quantity: undefined,
-        unit: item.inventoryUnit || item.unit || undefined,
+        unit,
         note: '',
       })
     } else {
@@ -107,18 +100,11 @@ const InventoryImportModal = ({ open, onCancel, onSuccess, item }) => {
           />
         </Form.Item>
 
-        <Form.Item
-          name="unit"
-          label={<span className="font-semibold text-gray-700">Đơn vị nhập</span>}
-          rules={[{ required: true, message: 'Chọn đơn vị nhập' }]}
-        >
-          <Select
-            options={unitOptions}
-            placeholder="Chọn đơn vị tính..."
-            className="h-10 rounded-xl"
-            showSearch
-            optionFilterProp="label"
-          />
+        <Form.Item name="unit" hidden><Input /></Form.Item>
+        <Form.Item label={<span className="font-semibold text-gray-700">Đơn vị nhập</span>}>
+          <span className="inline-flex h-10 items-center rounded-xl bg-gray-50 px-3 font-semibold text-gray-700">
+            {getQuantityUnit(item.inventoryUnit || item.unit, MEASUREMENT_UNITS.KILOGRAM)}
+          </span>
         </Form.Item>
 
         <Form.Item

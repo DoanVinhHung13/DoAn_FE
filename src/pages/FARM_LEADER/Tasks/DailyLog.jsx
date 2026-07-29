@@ -64,6 +64,7 @@ import CultivationTaskService from "src/services/CultivationTaskService"
 import FertilizerService from "src/services/FertilizerService"
 import PesticideService from "src/services/PesticideService"
 import UploadService from "src/services/UploadService"
+import { getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
 import { getUserDisplayName } from "src/utils/userDisplayName"
@@ -71,51 +72,15 @@ import { getUserDisplayName } from "src/utils/userDisplayName"
 const { Text } = Typography
 const { TextArea } = Input
 
-const FERTILIZER_QUANTITY_UNITS = [
-  "kg",
-  "g",
-  "tấn",
-  "lít",
-  "ml",
-  "bao",
-  "can",
-  "gói",
-  "chai",
-  "bình",
-  "viên",
-  "hộp",
-  "túi",
-  "lọ",
-]
-const PESTICIDE_QUANTITY_UNITS = [
-  "ml",
-  "lít",
-  "g",
-  "kg",
-  "chai",
-  "gói",
-  "can",
-  "bình",
-  "viên",
-  "hộp",
-  "túi",
-  "lọ",
-]
-
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
 // usageUnit takes priority for both fertilizers and pesticides
 const toFertilizerOptions = list =>
   (list || []).map(item => {
-    const unit =
-      item.usageUnit ||
-      item.unit ||
-      item.quantityUnit ||
-      item.unitName ||
-      item.materialUnit ||
-      item.defaultUnit ||
-      item.measurementUnit ||
-      ""
+    const unit = getQuantityUnit(
+      item.usageUnit || item.unit || item.quantityUnit || item.unitName || item.materialUnit,
+      MEASUREMENT_UNITS.KILOGRAM,
+    )
     return {
       value: item.id,
       label: unit ? `${item.name} (${unit})` : item.name,
@@ -130,15 +95,10 @@ const toFertilizerOptions = list =>
 const toPesticideOptions = list =>
   (list || []).map(item => {
     // API returns: unit (kho) and usageUnit (su dung) - use usageUnit
-    const unit =
-      item.usageUnit ||
-      item.unit ||
-      item.quantityUnit ||
-      item.unitName ||
-      item.materialUnit ||
-      item.defaultUnit ||
-      item.measurementUnit ||
-      ""
+    const unit = getQuantityUnit(
+      item.usageUnit || item.unit || item.quantityUnit || item.unitName || item.materialUnit,
+      MEASUREMENT_UNITS.LITER,
+    )
     return {
       value: item.id,
       label: unit ? `${item.name} (${unit})` : item.name,
@@ -149,14 +109,6 @@ const toPesticideOptions = list =>
       raw: item,
     }
   })
-
-const getUnitSelectOptions = (baseUnits, currentUnit) => {
-  const list = [...baseUnits]
-  if (currentUnit && !list.includes(currentUnit)) {
-    list.unshift(currentUnit)
-  }
-  return list.map(u => ({ value: u, label: u }))
-}
 
 const DailyLog = () => {
   const { getTaskStatus } = useCultivationStatus()
@@ -187,8 +139,8 @@ const DailyLog = () => {
       // --- fertilizers ---
       for (const f of log.fertilizers || []) {
         const id = f.fertilizerId || f.id || f.materialId
-        const unit = f.unit || f.quantityUnit || "kg"
-        const areaUnit = f.areaUnit || "ha"
+        const unit = getQuantityUnit(f.unit || f.quantityUnit, MEASUREMENT_UNITS.KILOGRAM)
+        const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
         const key = `${id}|${unit}`
         const opt = fertilizerOptions.find(o => o.value === id)
         const name = f.name || opt?.name || f.materialName || id || "Phân bón"
@@ -211,8 +163,8 @@ const DailyLog = () => {
       // --- pesticides ---
       for (const p of log.pesticides || []) {
         const id = p.pesticideId || p.id || p.materialId
-        const unit = p.unit || p.quantityUnit || "ml"
-        const areaUnit = p.areaUnit || "ha"
+        const unit = getQuantityUnit(p.unit || p.quantityUnit, MEASUREMENT_UNITS.LITER)
+        const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
         const key = `${id}|${unit}`
         const opt = pesticideOptions.find(o => o.value === id)
         const name = p.name || opt?.name || p.materialName || id || "Nông dược"
@@ -300,10 +252,10 @@ const DailyLog = () => {
       fertilizerId: row.fertilizerId,
       materialId: row.materialId || row.fertilizerId,
       quantity: Number(row.quantity || 0),
-      unit: row.quantityUnit || "kg",
-      quantityUnit: row.quantityUnit || "kg",
+      unit: getQuantityUnit(row.quantityUnit || row.unit, MEASUREMENT_UNITS.KILOGRAM),
+      quantityUnit: getQuantityUnit(row.quantityUnit || row.unit, MEASUREMENT_UNITS.KILOGRAM),
       area: Number(row.area || 0),
-      areaUnit: row.areaUnit || "ha",
+      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
     }))
 
   const mapPesticides = (rows = []) =>
@@ -311,10 +263,10 @@ const DailyLog = () => {
       pesticideId: row.pesticideId,
       materialId: row.materialId || row.pesticideId,
       quantity: Number(row.quantity || 0),
-      unit: row.quantityUnit || "ml",
-      quantityUnit: row.quantityUnit || "ml",
+      unit: getQuantityUnit(row.quantityUnit || row.unit, MEASUREMENT_UNITS.LITER),
+      quantityUnit: getQuantityUnit(row.quantityUnit || row.unit, MEASUREMENT_UNITS.LITER),
       area: Number(row.area || 0),
-      areaUnit: row.areaUnit || "ha",
+      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
     }))
 
   const handleSave = async () => {
@@ -709,10 +661,10 @@ const DailyLog = () => {
                                     fertilizerOptions.find(
                                       o => o.value === value,
                                     )
-                                  const unitFromApi =
-                                    opt?.unit ||
-                                    opt?.raw?.unit ||
-                                    opt?.raw?.usageUnit
+                                  const unitFromApi = getQuantityUnit(
+                                    opt?.unit || opt?.raw?.unit || opt?.raw?.usageUnit,
+                                    MEASUREMENT_UNITS.KILOGRAM,
+                                  )
                                   form.setFieldValue(
                                     ["fertilizers", field.name, "materialId"],
                                     opt?.materialId || value,
@@ -736,7 +688,7 @@ const DailyLog = () => {
                                   ) {
                                     form.setFieldValue(
                                       ["fertilizers", field.name, "areaUnit"],
-                                      "ha",
+                                      MEASUREMENT_UNITS.SQUARE_METER,
                                     )
                                   }
                                 }}
@@ -764,41 +716,15 @@ const DailyLog = () => {
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={3}>
-                            <Form.Item
-                              noStyle
-                              shouldUpdate={(prev, cur) =>
-                                prev.fertilizers?.[field.name]?.fertilizerId !==
-                                cur.fertilizers?.[field.name]?.fertilizerId
-                              }
-                            >
-                              {({ getFieldValue }) => {
-                                const hasFertilizer = !!getFieldValue([
-                                  "fertilizers",
-                                  field.name,
-                                  "fertilizerId",
-                                ])
-                                const currentUnit = getFieldValue([
-                                  "fertilizers",
-                                  field.name,
-                                  "quantityUnit",
-                                ])
-                                return (
-                                  <Form.Item
-                                    {...field}
-                                    name={[field.name, "quantityUnit"]}
-                                    initialValue="kg"
-                                  >
-                                    <Select
-                                      options={getUnitSelectOptions(
-                                        FERTILIZER_QUANTITY_UNITS,
-                                        currentUnit,
-                                      )}
-                                      disabled={isViewOnly || hasFertilizer}
-                                    />
-                                  </Form.Item>
-                                )
-                              }}
+                            <Form.Item {...field} name={[field.name, "quantityUnit"]} hidden>
+                              <Input />
                             </Form.Item>
+                            <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                              {getQuantityUnit(
+                                form.getFieldValue(["fertilizers", field.name, "quantityUnit"]),
+                                MEASUREMENT_UNITS.KILOGRAM,
+                              )}
+                            </span>
                           </Col>
                           <Col xs={12} md={5}>
                             <Form.Item {...field} name={[field.name, "area"]}>
@@ -811,17 +737,12 @@ const DailyLog = () => {
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={3}>
-                            <Form.Item
-                              {...field}
-                              name={[field.name, "areaUnit"]}
-                              initialValue="ha"
-                            >
-                              <Select
-                                options={[{ value: "ha", label: "ha" }]}
-                                disabled
-                                className="[&_.ant-select-selector]:bg-slate-50 [&_.ant-select-selector]:!cursor-default"
-                              />
+                            <Form.Item {...field} name={[field.name, "areaUnit"]} hidden>
+                              <Input />
                             </Form.Item>
+                            <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                              {MEASUREMENT_UNITS.SQUARE_METER}
+                            </span>
                           </Col>
                         </Row>
                       </div>
@@ -829,7 +750,10 @@ const DailyLog = () => {
                     {!isViewOnly && (
                       <Button
                         type="dashed"
-                        onClick={() => add({ areaUnit: "ha" })}
+                        onClick={() => add({
+                          quantityUnit: MEASUREMENT_UNITS.KILOGRAM,
+                          areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                        })}
                         icon={<PlusOutlined />}
                         className="w-full text-green-700 border-green-300"
                       >
@@ -893,11 +817,10 @@ const DailyLog = () => {
                                       o => o.value === value,
                                     )
                                   // usageUnit takes priority for pesticides
-                                  const unitFromApi =
-                                    opt?.usageUnit ||
-                                    opt?.raw?.usageUnit ||
-                                    opt?.unit ||
-                                    opt?.raw?.unit
+                                  const unitFromApi = getQuantityUnit(
+                                    opt?.usageUnit || opt?.raw?.usageUnit || opt?.unit || opt?.raw?.unit,
+                                    MEASUREMENT_UNITS.LITER,
+                                  )
                                   form.setFieldValue(
                                     ["pesticides", field.name, "materialId"],
                                     opt?.materialId || value,
@@ -921,7 +844,7 @@ const DailyLog = () => {
                                   ) {
                                     form.setFieldValue(
                                       ["pesticides", field.name, "areaUnit"],
-                                      "ha",
+                                      MEASUREMENT_UNITS.SQUARE_METER,
                                     )
                                   }
                                 }}
@@ -949,41 +872,15 @@ const DailyLog = () => {
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={3}>
-                            <Form.Item
-                              noStyle
-                              shouldUpdate={(prev, cur) =>
-                                prev.pesticides?.[field.name]?.pesticideId !==
-                                cur.pesticides?.[field.name]?.pesticideId
-                              }
-                            >
-                              {({ getFieldValue }) => {
-                                const hasPesticide = !!getFieldValue([
-                                  "pesticides",
-                                  field.name,
-                                  "pesticideId",
-                                ])
-                                const currentUnit = getFieldValue([
-                                  "pesticides",
-                                  field.name,
-                                  "quantityUnit",
-                                ])
-                                return (
-                                  <Form.Item
-                                    {...field}
-                                    name={[field.name, "quantityUnit"]}
-                                    initialValue="ml"
-                                  >
-                                    <Select
-                                      options={getUnitSelectOptions(
-                                        PESTICIDE_QUANTITY_UNITS,
-                                        currentUnit,
-                                      )}
-                                      disabled={isViewOnly || hasPesticide}
-                                    />
-                                  </Form.Item>
-                                )
-                              }}
+                            <Form.Item {...field} name={[field.name, "quantityUnit"]} hidden>
+                              <Input />
                             </Form.Item>
+                            <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                              {getQuantityUnit(
+                                form.getFieldValue(["pesticides", field.name, "quantityUnit"]),
+                                MEASUREMENT_UNITS.LITER,
+                              )}
+                            </span>
                           </Col>
                           <Col xs={12} md={5}>
                             <Form.Item {...field} name={[field.name, "area"]}>
@@ -996,17 +893,12 @@ const DailyLog = () => {
                             </Form.Item>
                           </Col>
                           <Col xs={12} md={3}>
-                            <Form.Item
-                              {...field}
-                              name={[field.name, "areaUnit"]}
-                              initialValue="ha"
-                            >
-                              <Select
-                                options={[{ value: "ha", label: "ha" }]}
-                                disabled
-                                className="[&_.ant-select-selector]:bg-slate-50 [&_.ant-select-selector]:!cursor-default"
-                              />
+                            <Form.Item {...field} name={[field.name, "areaUnit"]} hidden>
+                              <Input />
                             </Form.Item>
+                            <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                              {MEASUREMENT_UNITS.SQUARE_METER}
+                            </span>
                           </Col>
                         </Row>
                       </div>
@@ -1014,7 +906,10 @@ const DailyLog = () => {
                     {!isViewOnly && (
                       <Button
                         type="dashed"
-                        onClick={() => add({ areaUnit: "ha" })}
+                        onClick={() => add({
+                          quantityUnit: MEASUREMENT_UNITS.LITER,
+                          areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                        })}
                         icon={<PlusOutlined />}
                         className="w-full text-green-700 border-green-300"
                       >
@@ -1121,9 +1016,9 @@ const DailyLog = () => {
                                 const name =
                                   f.name || f.materialName || "Phân bón"
                                 const qty = f.quantity
-                                const unit = f.quantityUnit || f.unit || "kg"
+                                const unit = getQuantityUnit(f.quantityUnit || f.unit, MEASUREMENT_UNITS.KILOGRAM)
                                 const area = f.area
-                                const areaUnit = f.areaUnit || "ha"
+                                const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
 
                                 return (
                                   <div
@@ -1162,9 +1057,9 @@ const DailyLog = () => {
                                 const name =
                                   p.name || p.materialName || "Nông dược"
                                 const qty = p.quantity
-                                const unit = p.quantityUnit || p.unit || "ml"
+                                const unit = getQuantityUnit(p.quantityUnit || p.unit, MEASUREMENT_UNITS.LITER)
                                 const area = p.area
-                                const areaUnit = p.areaUnit || "ha"
+                                const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
 
                                 return (
                                   <div
@@ -1349,7 +1244,7 @@ const DailyLog = () => {
                       totalQuantity: f.totalQuantity ?? f.quantity ?? 0,
                       unit: f.unit ?? "",
                       totalArea: f.totalArea ?? f.area ?? 0,
-                      areaUnit: f.areaUnit ?? "ha",
+                      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
                       days: f.days ?? "—",
                     }))
                   : aggregateFromLogs.fertilizers.map((f, i) => ({
@@ -1445,7 +1340,7 @@ const DailyLog = () => {
                       totalQuantity: p.totalQuantity ?? p.quantity ?? 0,
                       unit: p.unit ?? "",
                       totalArea: p.totalArea ?? p.area ?? 0,
-                      areaUnit: p.areaUnit ?? "ha",
+                      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
                       days: p.days ?? "—",
                     }))
                   : aggregateFromLogs.pesticides.map((p, i) => ({

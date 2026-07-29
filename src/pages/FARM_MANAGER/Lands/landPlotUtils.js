@@ -1,4 +1,4 @@
-import { areaToHectares } from 'src/utils/geoJsonUtils'
+import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 // ── Constants: Messages ──────────────────────────────────────────────────────
 
@@ -19,11 +19,6 @@ export const STATUS_OPTIONS = [
   { value: 'all', label: 'Tất cả trạng thái' },
   { value: 'Active', label: 'Hoạt động' },
   { value: 'Inactive', label: 'Ngừng hoạt động' },
-]
-
-export const AREA_UNIT_OPTIONS = [
-  { value: 'ha', label: 'Hecta (ha)' },
-  { value: 'm2', label: 'Mét vuông (m²)' },
 ]
 
 // ── API Response Normalizers ─────────────────────────────────────────────────
@@ -72,11 +67,11 @@ export const getStatusLabel = (item) =>
 export const displayValue = (value) => value || 'Chưa cập nhật'
 
 /** Format diện tích để hiển thị (VD: "1.5 ha" hoặc "500 m²") */
-export const formatLandArea = (area, unit = 'ha') => {
+export const formatLandArea = (area, unit = MEASUREMENT_UNITS.SQUARE_METER) => {
   if (area == null || area === '') return 'Chưa cập nhật'
   const numeric = Number(area)
   if (Number.isNaN(numeric)) return displayValue(area)
-  return unit === 'm2' ? `${numeric.toLocaleString('vi-VN')} m²` : `${numeric} ha`
+  return `${numeric.toLocaleString('vi-VN')} ${unit === MEASUREMENT_UNITS.SQUARE_METER ? 'm2' : MEASUREMENT_UNITS.SQUARE_METER}`
 }
 
 // ── Boundary Helpers ─────────────────────────────────────────────────────────
@@ -115,10 +110,7 @@ export const isOverlapApiError = (msgOrError) => {
  */
 export const buildLandPlotPayload = (values, polygonData) => {
   const areaM2 = polygonData?.areaM2 || 0
-  const area =
-    values.areaUnit === 'm2'
-      ? Number((areaM2 || values.area || 0).toFixed(2))
-      : Number((values.area ?? areaToHectares(areaM2)).toFixed(4))
+  const area = Number((areaM2 || values.area || 0).toFixed(2))
 
   // Tính tọa độ trung tâm từ geoJSON
   const center = polygonData?.geoJSON || null
@@ -142,7 +134,7 @@ export const buildLandPlotPayload = (values, polygonData) => {
     name: values.name?.trim(),
     code: values.code?.trim(),
     area: area || 0.0001,
-    areaUnit: values.areaUnit,
+    areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
     address: values.address?.trim() || null,
     soilTypeId: values.soilTypeId || null,
     latitude: latitude ?? null,

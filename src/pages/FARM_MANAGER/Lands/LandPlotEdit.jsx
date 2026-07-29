@@ -18,6 +18,7 @@ import {
 import { useLandPlotAccess } from './useLandPlotAccess'
 import { useLandPlotForm } from './useLandPlotForm'
 import LandPlotFormFields from './LandPlotFormFields'
+import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ const LandPlotEdit = () => {
       name: plot.name,
       code: plot.code,
       area: plot.area,
-      areaUnit: plot.areaUnit || 'ha',
+      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
       address: plot.address,
       description: plot.description,
     })

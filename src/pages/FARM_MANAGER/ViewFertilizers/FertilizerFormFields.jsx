@@ -43,6 +43,7 @@ import ROUTER from 'src/router/ROUTER'
 import FertilizerService from 'src/services/FertilizerService'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
+import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 const { Text } = Typography
 
@@ -57,7 +58,12 @@ const NPK_OPTION = [
 /** Số lượng thành phần mặc định (N, P, K) — không cho xóa, không cho sửa tên */
 const DEFAULT_NPK_OPTION = NPK_OPTION.length
 
-const DEFAULT_DOSAGE = { amount: '', unit: 'kg', areaUnit: 'ha', target: '' }
+const DEFAULT_DOSAGE = {
+  amount: '',
+  unit: MEASUREMENT_UNITS.KILOGRAM,
+  areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+  target: '',
+}
 
 // ── Section header helper ─────────────────────────────────────────────────────
 import SectionTitle from 'src/components/Common/SectionTitle'
@@ -75,36 +81,29 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
     label: opt.label || opt.description,
   }))
 
-  const UNIT_OPTIONS = getCombo(SYSTEM_KEY.FERTILIZER_UNIT).map(opt => ({
-    value: opt.codeValue || opt.value,
-    label: opt.label || opt.description,
-  }))
-
-  const COMPONENT_UNIT_OPTIONS = getCombo(SYSTEM_KEY.COMPONENT_UNIT).map(opt => ({
-    value: opt.codeValue || opt.value,
-    label: opt.label || opt.description,
-  }))
-
-  const AREA_UNIT_OPTIONS = getCombo(SYSTEM_KEY.AREA_UNIT).map(opt => ({
-    value: opt.codeValue || opt.value,
-    label: opt.label || opt.description,
-  }))
+  const UNIT_OPTIONS = [
+    { value: MEASUREMENT_UNITS.LITER, label: MEASUREMENT_UNITS.LITER },
+    { value: MEASUREMENT_UNITS.KILOGRAM, label: MEASUREMENT_UNITS.KILOGRAM },
+  ]
   const [loading, setLoading] = React.useState(false)
+  const [quantityUnit, setQuantityUnit] = React.useState(MEASUREMENT_UNITS.KILOGRAM)
   const [components, setComponents] = React.useState(NPK_OPTION)
   const [dosages, setDosages] = React.useState([DEFAULT_DOSAGE])
 
   // ── Populate form on open ──────────────────────────────────────────────────
   React.useEffect(() => {
     if (isEdit) {
+      const selectedUnit = getQuantityUnit(editingItem.unit, MEASUREMENT_UNITS.KILOGRAM)
+      setQuantityUnit(selectedUnit)
       form.setFieldsValue({
-        usageUnit: editingItem.usageUnit || undefined,
+        usageUnit: selectedUnit,
         name: editingItem.name || '',
         manufacturer: editingItem.manufacturer || '',
         supplier: editingItem.supplier || '',
         minimumStock: editingItem.minimumStock ?? 0,
         inventoryQuantity: editingItem.inventoryQuantity ?? 0,
-        inventoryUnit: editingItem.inventoryUnit || editingItem.unit || undefined,
-        unit: editingItem.unit || undefined,
+        inventoryUnit: selectedUnit,
+        unit: selectedUnit,
         type: editingItem.type || editingItem.fertilizerType || editingItem.category || undefined,
         description: editingItem.description || '',
       })
@@ -148,12 +147,24 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       }
       // Liều lượng
       setDosages(
-        editingItem.dosages?.length ? editingItem.dosages : [DEFAULT_DOSAGE],
+        editingItem.dosages?.length
+          ? editingItem.dosages.map(d => ({
+              ...d,
+              unit: selectedUnit,
+              areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+            }))
+          : [{ ...DEFAULT_DOSAGE, unit: selectedUnit }],
       )
     } else {
+      setQuantityUnit(MEASUREMENT_UNITS.KILOGRAM)
       form.resetFields()
+      form.setFieldsValue({
+        unit: MEASUREMENT_UNITS.KILOGRAM,
+        usageUnit: MEASUREMENT_UNITS.KILOGRAM,
+        inventoryUnit: MEASUREMENT_UNITS.KILOGRAM,
+      })
       setComponents(NPK_OPTION)
-      setDosages([DEFAULT_DOSAGE])
+      setDosages([{ ...DEFAULT_DOSAGE }])
     }
   }, [editingItem, isEdit, form])
 
@@ -256,8 +267,8 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           .map((d) => {
             const dos = {
               amount: d.amount.toString(),
-              unit: d.unit,
-              areaUnit: d.areaUnit,
+              unit: quantityUnit,
+              areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
               target: Array.isArray(d.target) ? d.target.join(', ') : (d.target || '')
             }
             if (isEdit && d.id) dos.id = d.id;
@@ -303,7 +314,15 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
     setDosages(updated)
   }
 
-  const handleAddDosage = () => setDosages([...dosages, { ...DEFAULT_DOSAGE }])
+  const handleAddDosage = () =>
+    setDosages([
+      ...dosages,
+      {
+        ...DEFAULT_DOSAGE,
+        unit: quantityUnit,
+        areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+      },
+    ])
 
   const handleRemoveDosage = (index) =>
     setDosages(dosages.filter((_, i) => i !== index))
@@ -397,25 +416,40 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           </Form.Item>
         </Col>
 
-        {/* Đơn Vị tính */}
+        {/* Đơn Vị tính — chỉ chọn khi tạo mới, sau đó cố định theo vật tư */}
         <Col xs={24} sm={6}>
-          <Form.Item
-            name="unit"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Đơn vị tính
-              </span>
-            }
-            rules={[{ required: true, message: 'Vui lòng chọn đơn vị tính.' }]}
-          >
-            <Select
-              placeholder="Chọn đơn vị"
-              className="h-10"
-              options={UNIT_OPTIONS}
-              showSearch
-              optionFilterProp="label"
-            />
-          </Form.Item>
+          {isEdit ? (
+            <>
+              <Form.Item name="unit" hidden><Input /></Form.Item>
+              <Form.Item label="Đơn vị tính">
+                <Text className="inline-flex h-10 items-center rounded-lg bg-gray-50 px-3 font-semibold text-gray-700">
+                  {quantityUnit}
+                </Text>
+              </Form.Item>
+            </>
+          ) : (
+            <Form.Item
+              name="unit"
+              label="Đơn vị tính"
+              rules={[{ required: true, message: 'Vui lòng chọn đơn vị tính.' }]}
+            >
+              <Select
+                placeholder="Chọn đơn vị"
+                className="h-10"
+                options={UNIT_OPTIONS}
+                onChange={(value) => {
+                  setQuantityUnit(value)
+                  form.setFieldValue('usageUnit', value)
+                  form.setFieldValue('inventoryUnit', value)
+                  setDosages(current => current.map(d => ({
+                    ...d,
+                    unit: value,
+                    areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                  })))
+                }}
+              />
+            </Form.Item>
+          )}
         </Col>
 
         {/* Loại Phân Bón */}
@@ -438,24 +472,13 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           </Form.Item>
         </Col>
 
-        {/* Đơn Vị sử dụng */}
+        {/* UsageUnit luôn đồng nhất với Unit, không cho chọn riêng */}
         <Col xs={24} sm={8}>
-          <Form.Item
-            name="usageUnit"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Đơn vị sử dụng
-              </span>
-            }
-            rules={[{ required: true, message: 'Vui lòng chọn đơn vị sử dụng.' }]}
-          >
-            <Select
-              placeholder="Chọn đơn vị sử dụng"
-              className="h-10"
-              options={UNIT_OPTIONS}
-              showSearch
-              optionFilterProp="label"
-            />
+          <Form.Item name="usageUnit" hidden><Input /></Form.Item>
+          <Form.Item label="Đơn vị sử dụng">
+            <Text className="inline-flex h-10 items-center rounded-lg bg-gray-50 px-3 font-semibold text-gray-700">
+              {quantityUnit}
+            </Text>
           </Form.Item>
         </Col>
 
@@ -559,13 +582,9 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 )}
               </div>
               <div style={{ flex: '1 1 120px' }}>
-                <Select
-                  value={comp.unit}
-                  onChange={(val) => handleComponentChange(index, 'unit', val)}
-                  options={COMPONENT_UNIT_OPTIONS}
-                  className="w-full h-9"
-                  disabled={isFixed}
-                />
+                <Text className="inline-flex h-9 w-full items-center rounded-lg bg-white px-3 text-gray-700">
+                  {comp.unit || '%'}
+                </Text>
               </div>
               {isFixed ? (
                 // Giữ khoảng trống cho alignment nhưng không hiện nút xóa
@@ -618,22 +637,16 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             {/* Đơn vị Tính */}
             <div style={{ flex: '1 1 100px' }}>
               <Text type="secondary" className="block mb-1 text-xs">Đơn vị Tính (Kg/ Lit) </Text>
-              <Select
-                value={dosage.unit}
-                onChange={(val) => handleDosageChange(index, 'unit', val)}
-                options={UNIT_OPTIONS}
-                className="w-full h-9"
-              />
+              <Text className="inline-flex h-9 w-full items-center rounded-lg bg-white px-3 text-gray-700">
+                {quantityUnit}
+              </Text>
             </div>
             {/* Đơn Vị diện tích */}
             <div style={{ flex: '1 1 100px' }}>
               <Text type="secondary" className="block mb-1 text-xs">Đơn Vị diện tích </Text>
-              <Select
-                value={dosage.areaUnit}
-                onChange={(val) => handleDosageChange(index, 'areaUnit', val)}
-                options={AREA_UNIT_OPTIONS}
-                className="w-full h-9"
-              />
+              <Text className="inline-flex h-9 w-full items-center rounded-lg bg-white px-3 text-gray-700">
+                {MEASUREMENT_UNITS.SQUARE_METER}
+              </Text>
             </div>
             {/* Đối tượng */}
             <div style={{ flex: '2 1 140px' }}>

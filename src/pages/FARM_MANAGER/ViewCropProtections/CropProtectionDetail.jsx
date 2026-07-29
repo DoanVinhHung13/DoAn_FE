@@ -12,6 +12,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import PesticideService from 'src/services/PesticideService'
+import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import { formatDateTime } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
@@ -37,9 +38,9 @@ const usageColumns = [
     align: 'center',
     render: (v, record) => {
       const chemicalAmount = record.concentration || '';
-      const chemicalUnit = record.concentrationUnit || '';
+      const chemicalUnit = record.concentrationUnit || '%';
       const waterAmount = record.dilutionVolume || '';
-      const waterUnit = record.dilutionUnit || '';
+      const waterUnit = record.dilutionUnit || MEASUREMENT_UNITS.LITER;
 
       if (!chemicalAmount && !waterAmount) return <Text>—</Text>;
 
@@ -53,9 +54,9 @@ const usageColumns = [
     align: 'center',
     render: (v, record) => {
       const dosage = v != null ? v : '';
-      const dUnit = record.dosageUnit || '';
+      const dUnit = getQuantityUnit(record.dosageUnit, MEASUREMENT_UNITS.LITER);
       const aVal = record.area != null ? record.area : '';
-      const aUnit = record.areaUnit || '';
+      const aUnit = MEASUREMENT_UNITS.SQUARE_METER;
 
       if (dosage === '' && aVal === '') return <Text>—</Text>;
 
@@ -225,7 +226,7 @@ const CropProtectionDetail = () => {
             >
               <span className="font-semibold text-blue-600">
                 {item.inventoryQuantity != null
-                  ? `${Number(item.inventoryQuantity).toLocaleString('vi-VN')} ${item.inventoryUnit || item.unit || ''}`
+                  ? `${Number(item.inventoryQuantity).toLocaleString('vi-VN')} ${getQuantityUnit(item.inventoryUnit || item.unit, MEASUREMENT_UNITS.LITER)}`
                   : '—'}
               </span>
             </Descriptions.Item>
@@ -239,7 +240,7 @@ const CropProtectionDetail = () => {
             >
               <span className="font-semibold text-emerald-600">
                 {item.minInventory != null || item.minimumStock != null
-                  ? `${Number(item.minInventory ?? item.minimumStock).toLocaleString('vi-VN')} ${item.unitId || item.unit || ''}`
+                  ? `${Number(item.minInventory ?? item.minimumStock).toLocaleString('vi-VN')} ${getQuantityUnit(item.unitId || item.unit, MEASUREMENT_UNITS.LITER)}`
                   : '—'}
               </span>
             </Descriptions.Item>
@@ -247,7 +248,7 @@ const CropProtectionDetail = () => {
             <Descriptions.Item label="Đơn vị tính">
               {item.unitId || item.unit ? (
                 <Tag color="blue" className="font-medium rounded-full">
-                  {item.unitId || item.unit}
+                  {getQuantityUnit(item.unitId || item.unit, MEASUREMENT_UNITS.LITER)}
                 </Tag>
               ) : (
                 <span className="text-gray-400">—</span>
