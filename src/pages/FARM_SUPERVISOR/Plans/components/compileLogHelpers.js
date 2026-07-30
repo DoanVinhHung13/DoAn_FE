@@ -2,6 +2,7 @@
  * Shared helpers for Supervisor biên soạn nhật ký từ leader-summary.
  */
 import CultivationTaskService from 'src/services/CultivationTaskService'
+import { formatAreaUnit } from 'src/constants/measurementUnits'
 
 export const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 
@@ -14,20 +15,20 @@ export const buildDataSentence = (summary) => {
       const qty = m.quantity ?? m.totalQuantity ?? 0
       const unit = m.unit ?? m.quantityUnit ?? ''
       const typeStr = m.type ? ` (${m.type})` : ''
-      const areaStr = (m.totalArea != null && m.totalArea > 0) ? ` cho ${m.totalArea} ${m.areaUnit || 'm2'}` : ''
+      const areaStr = (m.totalArea != null && m.totalArea > 0) ? ` cho ${m.totalArea} ${formatAreaUnit(m.areaUnit)}` : ''
       parts.push(`Đã dùng ${qty} ${unit} ${m.name}${typeStr}${areaStr}`.trim())
     })
   } else {
     ;(summary.fertilizers || []).forEach((f) => {
       parts.push(
         `Đã bón ${f.totalQuantity ?? f.quantity} ${f.quantityUnit ?? f.unit} ${f.name}` +
-          (f.totalArea != null ? ` cho ${f.totalArea} ${f.areaUnit}` : '')
+          (f.totalArea != null ? ` cho ${f.totalArea} ${formatAreaUnit(f.areaUnit)}` : '')
       )
     })
     ;(summary.pesticides || []).forEach((p) => {
       parts.push(
         `Đã phun ${p.totalQuantity ?? p.quantity} ${p.quantityUnit ?? p.unit} ${p.name}` +
-          (p.totalArea != null ? ` cho ${p.totalArea} ${p.areaUnit}` : '')
+          (p.totalArea != null ? ` cho ${p.totalArea} ${formatAreaUnit(p.areaUnit)}` : '')
       )
     })
   }

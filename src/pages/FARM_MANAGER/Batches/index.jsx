@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom"
 
 import CustomTable from "src/components/Table/CustomTable"
 import TitleCustom from "src/components/TitleCustom"
+import { formatAreaUnit } from "src/constants/measurementUnits"
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from "src/constants/pageSizeOptions"
 import ROUTER from "src/router/ROUTER"
 import HarvestBatchService from "src/services/HarvestBatchService"
@@ -218,7 +219,7 @@ const Batches = () => {
       key: "area",
       width: 120,
       render: area => (
-        <Text className="text-sm font-semibold">{area ? `${area} m2` : "-"}</Text>
+        <Text className="text-sm font-semibold">{area ? `${area} ${formatAreaUnit()}` : "-"}</Text>
       ),
     },
     {

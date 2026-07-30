@@ -12,7 +12,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import PesticideService from 'src/services/PesticideService'
-import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
+import { formatAreaUnit, getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import { formatDateTime } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
@@ -34,7 +34,7 @@ const usageColumns = [
       const area = v != null ? v : '';
       const areaUnit =
         record.areaUnitId || record.areaUnit || MEASUREMENT_UNITS.SQUARE_METER;
-      return area !== '' ? <Text>{`${area} ${areaUnit}`}</Text> : <Text>—</Text>;
+      return area !== '' ? <Text>{`${area} ${formatAreaUnit(areaUnit)}`}</Text> : <Text>—</Text>;
     },
   },
   {

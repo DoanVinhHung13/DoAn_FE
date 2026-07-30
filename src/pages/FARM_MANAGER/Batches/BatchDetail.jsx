@@ -26,6 +26,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatDate } from 'src/utils/dateFormatters';
 
 import TitleCustom from 'src/components/TitleCustom';
+import { formatAreaUnit } from 'src/constants/measurementUnits';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import HarvestBatchService from 'src/services/HarvestBatchService';
@@ -245,7 +246,7 @@ const BatchDetail = () => {
 
               {batch.area && (
                 <Descriptions.Item label="Diện tích" span={1}>
-                  <Text strong>{batch.area} m2</Text>
+                  <Text strong>{batch.area} {formatAreaUnit()}</Text>
                 </Descriptions.Item>
               )}
 

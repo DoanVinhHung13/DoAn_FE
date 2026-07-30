@@ -21,6 +21,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import FertilizerService from 'src/services/FertilizerService'
+import { formatAreaUnit } from 'src/constants/measurementUnits'
 import { formatDateTime } from 'src/utils/dateFormatters'
 
 const { Text } = Typography
@@ -91,7 +92,7 @@ const dosageColumns = [
     key: 'areaUnit',
     align: 'center',
     width: 140,
-    render: (v) => <Text>{v || 'm2'}</Text>,
+    render: (v) => <Text>{formatAreaUnit(v)}</Text>,
   },
   {
     title: 'Đối tượng',

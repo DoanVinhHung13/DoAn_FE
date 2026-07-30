@@ -34,6 +34,7 @@ import {
   message,
 } from "antd"
 import { useEffect, useMemo, useState } from "react"
+import { formatAreaUnit } from "src/constants/measurementUnits"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import CultivationLogService from "src/services/CultivationLogService"
 import CultivationStageService from "src/services/CultivationStageService"
@@ -115,7 +116,7 @@ const mapMaterialRows = (items = [], nameFallback) =>
     totalQuantity: item.totalQuantity ?? item.quantity ?? 0,
     unit: item.unit ?? item.quantityUnit ?? "",
     totalArea: item.totalArea ?? item.area ?? 0,
-    areaUnit: item.areaUnit ?? "m2",
+    areaUnit: formatAreaUnit(item.areaUnit),
     recommendationText: item.recommendationText,
     days: item.days ?? "—",
   }))
@@ -154,7 +155,7 @@ const fertColumns = [
     render: (_, r) =>
       r.totalArea > 0 ? (
         <span>
-          {r.totalArea} <span className="text-gray-500">{r.areaUnit}</span>
+          {r.totalArea} <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
         </span>
       ) : (
         <span className="text-gray-300">—</span>
@@ -196,7 +197,7 @@ const pestColumns = [
     render: (_, r) =>
       r.totalArea > 0 ? (
         <span>
-          {r.totalArea} <span className="text-gray-500">{r.areaUnit}</span>
+          {r.totalArea} <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
         </span>
       ) : (
         <span className="text-gray-300">—</span>

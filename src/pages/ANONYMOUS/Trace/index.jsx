@@ -18,6 +18,7 @@ import {
   CalendarOutlined,
   ExperimentOutlined,
 } from '@ant-design/icons';
+import { formatAreaUnit } from 'src/constants/measurementUnits';
 import { Sprout, Wheat } from 'lucide-react';
 import http from 'src/services/01_axios';
 import { formatDate, parseDate } from 'src/utils/dateFormatters';
@@ -39,12 +40,20 @@ const formatDateRange = (startDate, endDate) => {
   return `${formattedStart} – ${formattedEnd}`;
 };
 
+const formatAreaValue = (value) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return value;
+
+  const roundedValue = Number(numericValue.toFixed(2));
+  return Object.is(roundedValue, -0) ? 0 : roundedValue;
+};
+
 const formatMaterialDetail = (material) => {
   const name = material?.materialName || material?.name || 'Vật tư';
   const quantity = material?.quantity ?? material?.totalQuantity;
   const unit = material?.unit || '';
   const area = material?.area != null
-    ? `, diện tích ${material.area} ${material.areaUnit || ''}`.trim()
+    ? `, diện tích ${formatAreaValue(material.area)} ${formatAreaUnit(material.areaUnit)}`.trim()
     : '';
 
   return quantity == null ? `${name}${area}` : `${name}: ${quantity} ${unit}${area}`.trim();
@@ -234,7 +243,7 @@ const Trace = () => {
       : null;
     const journalAreaUnit = journalAreas.find((entry) => entry.areaUnit)?.areaUnit || '';
     const areaValue = journalArea ?? payload?.area;
-    const areaUnit = journalAreaUnit || payload?.areaUnit || '';
+    const areaUnit = formatAreaUnit(journalAreaUnit || payload?.areaUnit);
     return {
       qrCode: payload?.traceCode || qrCode || '—',
       batchCode: b.batchCode || '—',
@@ -242,7 +251,7 @@ const Trace = () => {
       farmName: payload?.farmName || b.farmName || b.landPlotName || '—',
       harvestDate: payload?.harvestDate || b.harvestDate || null,
       startDate: b.startDate,
-      area: areaValue != null ? [areaValue, areaUnit].filter(Boolean).join(' ') : '—',
+      area: areaValue != null ? [formatAreaValue(areaValue), areaUnit].filter(Boolean).join(' ') : '—',
       yield: b.quantity != null ? `${b.quantity} ${b.unit || ''}`.trim() : '—',
       dailyLogs: b.dailyLogs,
       certifications: b.certifications,

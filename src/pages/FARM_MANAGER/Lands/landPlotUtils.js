@@ -1,4 +1,4 @@
-import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
+import { formatAreaUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 // ── Constants: Messages ──────────────────────────────────────────────────────
 
@@ -110,7 +110,7 @@ export const formatLandArea = (area, unit = MEASUREMENT_UNITS.SQUARE_METER) => {
   if (area == null || area === '') return 'Chưa cập nhật'
   const numeric = Number(area)
   if (Number.isNaN(numeric)) return displayValue(area)
-  return `${numeric.toLocaleString('vi-VN')} ${unit === MEASUREMENT_UNITS.SQUARE_METER ? 'm2' : MEASUREMENT_UNITS.SQUARE_METER}`
+  return `${numeric.toLocaleString('vi-VN')} ${formatAreaUnit(unit)}`
 }
 
 // ── Boundary Helpers ─────────────────────────────────────────────────────────

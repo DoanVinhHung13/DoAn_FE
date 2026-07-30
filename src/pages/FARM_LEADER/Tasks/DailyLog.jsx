@@ -64,7 +64,7 @@ import CultivationTaskService from "src/services/CultivationTaskService"
 import FertilizerService from "src/services/FertilizerService"
 import PesticideService from "src/services/PesticideService"
 import UploadService from "src/services/UploadService"
-import { getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
+import { formatAreaUnit, getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
 import { formatMeasurementValue } from "src/utils/materialRecommendations"
@@ -904,7 +904,7 @@ const DailyLog = () => {
                                     </span>
                                     <span className="font-bold">
                                       {remainingArea
-                                        ? `${formatMeasurementValue(remainingArea.remainingArea)} ${remainingArea.areaUnit}`
+                                        ? `${formatMeasurementValue(remainingArea.remainingArea)} ${formatAreaUnit(remainingArea.areaUnit)}`
                                         : "—"}
                                     </span>
                                   </div>
@@ -1229,7 +1229,7 @@ const DailyLog = () => {
                                 </span>
                                 <span className="font-bold">
                                   {remainingArea
-                                    ? `${formatMeasurementValue(remainingArea.remainingArea)} ${remainingArea.areaUnit}`
+                                    ? `${formatMeasurementValue(remainingArea.remainingArea)} ${formatAreaUnit(remainingArea.areaUnit)}`
                                     : "—"}
                                 </span>
                               </div>
@@ -1367,7 +1367,7 @@ const DailyLog = () => {
                                 const qty = f.quantity
                                 const unit = getQuantityUnit(f.quantityUnit || f.unit, "")
                                 const area = f.area
-                                const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
+                                const areaUnit = formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)
 
                                 return (
                                   <div
@@ -1408,7 +1408,7 @@ const DailyLog = () => {
                                 const qty = p.quantity
                                 const unit = getQuantityUnit(p.quantityUnit || p.unit, "")
                                 const area = p.area
-                                const areaUnit = MEASUREMENT_UNITS.SQUARE_METER
+                                const areaUnit = formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)
 
                                 return (
                                   <div
@@ -1660,7 +1660,7 @@ const DailyLog = () => {
                     r.totalArea > 0 ? (
                       <span>
                         {r.totalArea}{" "}
-                        <span className="text-gray-500">{r.areaUnit}</span>
+                        <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
                       </span>
                     ) : (
                       <span className="text-gray-300">—</span>
@@ -1777,7 +1777,7 @@ const DailyLog = () => {
                     r.totalArea > 0 ? (
                       <span>
                         {r.totalArea}{" "}
-                        <span className="text-gray-500">{r.areaUnit}</span>
+                        <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
                       </span>
                     ) : (
                       <span className="text-gray-300">—</span>

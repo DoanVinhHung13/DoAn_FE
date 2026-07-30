@@ -33,6 +33,7 @@ import {
   ExperimentOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { formatAreaUnit } from 'src/constants/measurementUnits';
 import { QRCodeSVG } from 'qrcode.react';
 
 import TitleCustom from 'src/components/TitleCustom';
@@ -194,7 +195,7 @@ const QRManagement = () => {
         date: activeBatch?.harvestDate || '2024-05-20',
         stage: 'Thu hoạch',
         activity: `Thu hoạch ${activeBatch?.cropName || 'nông sản'} đạt tiêu chuẩn`,
-        notes: `Chất lượng đạt yêu cầu, năng suất tốt trên diện tích ${activeBatch?.area || 'N/A'} m2`,
+        notes: `Chất lượng đạt yêu cầu, năng suất tốt trên diện tích ${activeBatch?.area || 'N/A'} ${formatAreaUnit()}`,
       },
     ],
     materials: previewData?.traceability?.materials || activeBatch?.materials || activeBatch?.inputs || [
@@ -931,7 +932,7 @@ const QRManagement = () => {
                 </Descriptions.Item>
                 {previewBatchData?.area && (
                   <Descriptions.Item label="Diện tích" span={1}>
-                    {previewBatchData.area} m2
+                    {previewBatchData.area} {formatAreaUnit()}
                   </Descriptions.Item>
                 )}
               </Descriptions>

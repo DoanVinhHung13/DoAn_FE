@@ -4,6 +4,10 @@ export const MEASUREMENT_UNITS = Object.freeze({
   SQUARE_METER: 'm2',
 })
 
+export const formatAreaUnit = () => {
+  return 'm²'
+}
+
 export const getQuantityUnit = (unit, fallback = MEASUREMENT_UNITS.KILOGRAM) => {
   const normalizedUnit = typeof unit === 'string' ? unit.trim() : ''
 

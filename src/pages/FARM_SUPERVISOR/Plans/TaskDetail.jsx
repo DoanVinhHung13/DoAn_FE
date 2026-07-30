@@ -48,7 +48,7 @@ import { formatDate } from 'src/utils/dateFormatters'
 import { getUserDisplayName } from 'src/utils/userDisplayName'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { ROLES } from 'src/constants/roles'
-import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
+import { formatAreaUnit, getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 
 const { TextArea } = Input
@@ -400,10 +400,10 @@ const FarmSupervisorTaskDetail = () => {
                           <div key={f.name} className="rounded-lg bg-green-50 p-2 text-sm">
                             <div className="font-semibold">{f.name}</div>
                             <div>
-                              Tổng: {f.totalQuantity} {getQuantityUnit(f.quantityUnit || f.unit, MEASUREMENT_UNITS.KILOGRAM)} / {f.totalArea} {MEASUREMENT_UNITS.SQUARE_METER}
+                              Tổng: {f.totalQuantity} {getQuantityUnit(f.quantityUnit || f.unit, MEASUREMENT_UNITS.KILOGRAM)} / {f.totalArea} {formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
-                              {f.dailyBreakdown?.map((d) => `${formatDate(d.date)}: ${d.quantity} ${getQuantityUnit(f.quantityUnit || f.unit, MEASUREMENT_UNITS.KILOGRAM)}/${d.area} ${MEASUREMENT_UNITS.SQUARE_METER}`).join(' · ')}
+                              {f.dailyBreakdown?.map((d) => `${formatDate(d.date)}: ${d.quantity} ${getQuantityUnit(f.quantityUnit || f.unit, MEASUREMENT_UNITS.KILOGRAM)}/${d.area} ${formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}`).join(' · ')}
                             </div>
                           </div>
                         ))}
@@ -419,7 +419,7 @@ const FarmSupervisorTaskDetail = () => {
                           <div key={p.name} className="rounded-lg bg-orange-50 p-2 text-sm">
                             <div className="font-semibold">{p.name}</div>
                             <div>
-                              Tổng: {p.totalQuantity} {getQuantityUnit(p.quantityUnit || p.unit, MEASUREMENT_UNITS.LITER)} / {p.totalArea} {MEASUREMENT_UNITS.SQUARE_METER}
+                              Tổng: {p.totalQuantity} {getQuantityUnit(p.quantityUnit || p.unit, MEASUREMENT_UNITS.LITER)} / {p.totalArea} {formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}
                             </div>
                           </div>
                         ))}

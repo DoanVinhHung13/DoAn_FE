@@ -7,6 +7,7 @@ import {
 import { Card, Empty, Image, Tag, Spin, List, Avatar, Typography, Alert, Divider, Badge } from 'antd'
 import { useEffect, useState } from 'react'
 import { formatDate } from 'src/utils/dateFormatters'
+import { formatAreaUnit } from 'src/constants/measurementUnits'
 import CultivationLogService from 'src/services/CultivationLogService'
 import SectionTitle from 'src/components/Common/SectionTitle'
 import { getUserDisplayName } from 'src/utils/userDisplayName'
@@ -134,7 +135,7 @@ const DailyLogCard = ({ log, index }) => {
                       {fert.area && (
                         <>
                           <span className="text-gray-300">/</span>
-                          <span className="text-gray-500">{fert.area} {fert.areaUnit || 'm2'}</span>
+                          <span className="text-gray-500">{fert.area} {formatAreaUnit(fert.areaUnit)}</span>
                         </>
                       )}
                     </div>
@@ -156,7 +157,7 @@ const DailyLogCard = ({ log, index }) => {
                       {pest.area && (
                         <>
                           <span className="text-gray-300">/</span>
-                          <span className="text-gray-500">{pest.area} {pest.areaUnit || 'm2'}</span>
+                          <span className="text-gray-500">{pest.area} {formatAreaUnit(pest.areaUnit)}</span>
                         </>
                       )}
                     </div>

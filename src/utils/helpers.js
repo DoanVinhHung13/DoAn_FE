@@ -1,3 +1,5 @@
+import { formatAreaUnit } from 'src/constants/measurementUnits';
+
 // Helper functions
 
 // Base URL of the backend server (no trailing slash, no /api)
@@ -67,8 +69,8 @@ export const invalidCharsRegex = /[^\p{L}\d\s_@.-]/u;
  * @returns {string} - Diện tích đã format
  */
 export const formatArea = (area) => {
-  if (!area) return '0 m2';
-  return `${area.toLocaleString()} m2`;
+  if (!area) return `0 ${formatAreaUnit()}`;
+  return `${area.toLocaleString()} ${formatAreaUnit()}`;
 };
 
 /**

@@ -8,6 +8,7 @@ import {
 import { Alert, Card, Col, Empty, Image, Row, Spin, Tag, Tree, Typography } from 'antd'
 import { useState } from 'react'
 import CultivationLogService from 'src/services/CultivationLogService'
+import { formatAreaUnit } from 'src/constants/measurementUnits'
 import { formatDate } from 'src/utils/dateFormatters'
 import { getUserDisplayName } from 'src/utils/userDisplayName'
 import { orderTasks } from 'src/utils/cultivationOrdering'
@@ -165,7 +166,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                                   const qty = f.quantity
                                   const unit = f.quantityUnit || f.unit || 'kg'
                                   const area = f.area
-                                  const areaUnit = f.areaUnit || 'm2'
+                                  const areaUnit = formatAreaUnit(f.areaUnit)
 
                                   return (
                                     <div
@@ -199,7 +200,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                                   const qty = p.quantity
                                   const unit = p.quantityUnit || p.unit || 'lít'
                                   const area = p.area
-                                  const areaUnit = p.areaUnit || 'm2'
+                                  const areaUnit = formatAreaUnit(p.areaUnit)
 
                                   return (
                                     <div

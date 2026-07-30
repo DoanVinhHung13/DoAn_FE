@@ -25,6 +25,7 @@ import {
 } from '@ant-design/icons'
 
 import TitleCustom from 'src/components/TitleCustom'
+import { formatAreaUnit } from 'src/constants/measurementUnits'
 import { useCropOptions } from 'src/hooks/useCropOptions'
 import ReportService from 'src/services/ReportService'
 import { getLocalNow, formatDateForApi } from 'src/utils/dateFormatters'
@@ -150,10 +151,10 @@ const normalizeAreaReport = (response, selectedCropLabel) => {
     key: `area-${index}`,
     cropName: readField(row, ['CropName', 'cropName', 'Crop', 'crop', 'Name', 'name']) || selectedCropLabel || 'Chưa phân loại',
     value: getRowNumber(row, valueKeys) ?? 0,
-    unit: readField(row, ['AreaUnit', 'areaUnit', 'Unit', 'unit']) || 'm²',
+    unit: formatAreaUnit(readField(row, ['AreaUnit', 'areaUnit', 'Unit', 'unit'])),
   }))
   const payloadTotal = toNumber(readField(payload, valueKeys))
-  const unit = readField(payload, ['AreaUnit', 'areaUnit', 'Unit', 'unit']) || rows[0]?.unit || 'm²'
+  const unit = formatAreaUnit(readField(payload, ['AreaUnit', 'areaUnit', 'Unit', 'unit']) || rows[0]?.unit)
   const total = payloadTotal ?? sumValues(rows, ['value'])
 
   if (!rows.length && payloadTotal !== null) {
