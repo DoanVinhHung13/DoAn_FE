@@ -17,6 +17,7 @@ import {
   EnvironmentOutlined,
   CalendarOutlined,
   ExperimentOutlined,
+  FileImageOutlined,
 } from '@ant-design/icons';
 import { formatAreaUnit } from 'src/constants/measurementUnits';
 import { Sprout, Wheat } from 'lucide-react';
@@ -449,26 +450,26 @@ const Trace = () => {
             </div>
 
             {timelineGroups.length > 0 ? (
-              <div className="space-y-8 px-1 sm:px-2">
+              <div className="space-y-9 px-1 sm:px-2">
                 {timelineGroups.map((group) => (
                   <section key={`${group.stage}-${group.stageOrder ?? 'unknown'}`}>
-                    <div className="mb-5">
-                      <Text strong className="block text-slate-800 text-sm sm:text-base">{group.stage}</Text>
-                      <Text className="block mt-1 text-emerald-600 text-xs sm:text-sm">
+                    <div className="mb-6">
+                      <Text strong className="block text-base font-bold leading-6 text-slate-800 sm:text-lg">{group.stage}</Text>
+                      <Text className="mt-1 block text-xs text-emerald-600 sm:text-sm">
                         <CalendarOutlined className="mr-1" />
                         <span className="font-medium">Thực tế:</span> {formatDateRange(group.startDate, group.endDate)}
                       </Text>
                     </div>
 
-                    <div className="relative ml-1 border-l-2 border-emerald-300 pl-6 sm:pl-7">
+                    <div className="relative ml-2 border-l-2 border-emerald-300 pl-5 sm:pl-6">
                       {group.entries.map((entry, index) => (
-                        <article key={`${entry.taskName}-${entry.startDate}-${index}`} className="relative pb-7 last:pb-0">
-                          <span className="absolute -left-[31px] sm:-left-[34px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
-                          <Text strong className="block text-slate-800 text-sm sm:text-base">{entry.taskName}</Text>
-                          <Text strong className="block mt-1 text-slate-800 text-xs sm:text-sm">
+                        <article key={`${entry.taskName}-${entry.startDate}-${index}`} className="relative pb-8 last:pb-0">
+                          <span className="absolute -left-[27px] sm:-left-[29px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
+                          <Text strong className="block text-sm font-bold leading-6 text-slate-800 sm:text-base">{entry.taskName}</Text>
+                          <Text strong className="mt-1 block text-sm leading-6 text-slate-800">
                             {formatDateRange(entry.startDate, entry.endDate)}
                           </Text>
-                          <Text className="block mt-2 text-slate-500 text-xs sm:text-sm">
+                          <Text className="mt-1.5 block text-xs leading-5 text-slate-500 sm:text-sm">
                             Cập nhật bởi {entry.updatedBy}
                           </Text>
                           {entry.description && (
@@ -488,18 +489,23 @@ const Trace = () => {
                           )}
                           {traceData.displayOptions.showPhotos && entry.images.length > 0 && (
                             <Image.PreviewGroup items={entry.images}>
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {entry.images.map((src, imageIndex) => (
-                                  <Image
-                                    key={`${src}-${imageIndex}`}
-                                    src={src}
-                                    alt={`${entry.taskName} - ảnh ${imageIndex + 1}`}
-                                    width={64}
-                                    height={64}
-                                    className="rounded-lg border border-slate-200 object-cover"
-                                    preview={{ src }}
-                                  />
-                                ))}
+                              <div className="mt-3">
+                                <Text className="mb-1.5 flex items-center gap-1 text-xs font-semibold text-slate-600">
+                                  <FileImageOutlined /> Ảnh minh chứng ({entry.images.length})
+                                </Text>
+                                <div className="flex flex-wrap gap-2">
+                                  {entry.images.map((src, imageIndex) => (
+                                    <Image
+                                      key={`${src}-${imageIndex}`}
+                                      src={src}
+                                      alt={`${entry.taskName} - ảnh ${imageIndex + 1}`}
+                                      width={64}
+                                      height={64}
+                                      className="rounded-lg border border-slate-200 object-cover"
+                                      preview={{ src }}
+                                    />
+                                  ))}
+                                </div>
                               </div>
                             </Image.PreviewGroup>
                           )}
@@ -544,11 +550,6 @@ const Trace = () => {
                       <Text className="block text-[11px] font-medium text-emerald-700">Số lượng đã dùng</Text>
                       <Text strong className="text-base text-emerald-800">{formatMaterialQuantity(material)}</Text>
                     </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                    {material.usedAt && <span>Ngày sử dụng: {formatDate(material.usedAt)}</span>}
-                    {material.taskName && <span>Công việc: {material.taskName}</span>}
-                    <span>Nhà cung cấp: {material.supplier || 'Chưa cập nhật'}</span>
                   </div>
                 </div>
               ))}
