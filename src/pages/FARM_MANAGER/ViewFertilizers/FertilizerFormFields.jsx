@@ -227,6 +227,15 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
 
 
+      const selectedTargets = dosages
+        .map(dosage => dosage.target)
+        .filter(target => target != null && target !== '')
+        .map(target => String(target))
+      if (new Set(selectedTargets).size !== selectedTargets.length) {
+        message.error('Mỗi cây chỉ được khai báo một liều lượng.')
+        return
+      }
+
       setLoading(true)
 
       const body = {
@@ -313,6 +322,22 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
     const updated = [...dosages]
     updated[index] = { ...updated[index], [field]: value }
     setDosages(updated)
+  }
+
+  const getDosageOptions = (index) => {
+    const currentTarget = dosages[index]?.target
+    const targetsInOtherRows = new Set(
+      dosages
+        .filter((_, dosageIndex) => dosageIndex !== index)
+        .map(dosage => dosage.target)
+        .filter(target => target != null && target !== '')
+        .map(target => String(target)),
+    )
+
+    return cropOptions.filter(option =>
+      String(option.value) === String(currentTarget) ||
+      !targetsInOtherRows.has(String(option.value)),
+    )
   }
 
   const handleAddDosage = () =>
@@ -656,7 +681,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 value={dosage.target || undefined}
                 onChange={(val) => handleDosageChange(index, 'target', val)}
                 placeholder="Chọn đối tượng..."
-                options={cropOptions}
+                options={getDosageOptions(index)}
                 loading={isCropsLoading}
                 className="w-full h-9"
                 allowClear
