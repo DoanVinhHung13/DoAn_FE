@@ -492,12 +492,12 @@ const SummaryCompilePanel = ({
             />
             {fertilizerRecommendations.length > 0 && (
               <Alert
-                type="info"
+                type="warning"
                 showIcon
-                className="mt-3 rounded-xl"
+                className="mt-2 rounded-lg px-3 py-2 [&_.ant-alert-message]:text-sm [&_.ant-alert-description]:text-xs"
                 message="Khuyến nghị lượng sử dụng phân bón"
                 description={(
-                  <div className="space-y-1">
+                  <div className="space-y-0.5 leading-5">
                     {fertilizerRecommendations.map(item => (
                       <div key={item.key}>
                         {item.name}: nên dùng {item.recommendation}
