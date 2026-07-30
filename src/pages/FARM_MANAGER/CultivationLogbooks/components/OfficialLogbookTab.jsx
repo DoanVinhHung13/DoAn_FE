@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { formatDate } from 'src/utils/dateFormatters'
 import CultivationStageService from 'src/services/CultivationStageService'
 import { getUserDisplayName } from 'src/utils/userDisplayName'
+import { getOrderedStageLogs } from 'src/utils/cultivationOrdering'
 
 const { Text, Paragraph } = Typography
 
@@ -102,7 +103,10 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
   const selectedIndex = stages.findIndex((s, idx) => (s.id ?? idx) === selectedStageId)
   const selectedStage = selectedIndex >= 0 ? stages[selectedIndex] : null
 
-  const stageLogs = officialLogs || []
+  const stageLogs = getOrderedStageLogs(
+    officialLogs,
+    selectedStage?.tasks || selectedStage?.cultivationTasks || [],
+  )
 
   return (
     <div className="space-y-6">

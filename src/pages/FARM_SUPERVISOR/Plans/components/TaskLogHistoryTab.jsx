@@ -10,6 +10,7 @@ import { useState } from 'react'
 import CultivationLogService from 'src/services/CultivationLogService'
 import { formatDate } from 'src/utils/dateFormatters'
 import { getUserDisplayName } from 'src/utils/userDisplayName'
+import { orderTasks } from 'src/utils/cultivationOrdering'
 
 const { Text, Title } = Typography
 
@@ -22,7 +23,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
     title: <Text strong>{stage.stageName || stage.name || `Giai đoạn ${index + 1}`}</Text>,
     key: stage.id,
     selectable: false,
-    children: (tasks[stage.id] || []).map((task) => ({
+    children: orderTasks(tasks[stage.id] || []).map((task) => ({
       title: task.name || task.taskName,
       key: task.id,
       isLeaf: true,

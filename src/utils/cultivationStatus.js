@@ -150,6 +150,21 @@ export const canApproveClosing = (logbook) => {
   return review === 'WAITING_APPROVAL' || review === 'PENDING_REVIEW'
 }
 
+/** Only stages that have not started may change their task order. */
+export const canReorderStageTasks = (stage, logbook) => {
+  if (!stage) return false
+  if (['COMPLETED', 'WAITING_APPROVAL', 'APPROVED'].includes(logbook?.status)) return false
+  if (['WAITING_APPROVAL', 'APPROVED'].includes(logbook?.reviewStatus)) return false
+  return stage.status === 'PLANNED' || stage.status === 'PENDING'
+}
+
+/** A task that is already assigned/started/completed is immutable in the order. */
+export const canReorderTask = (task) =>
+  !task?.status || task.status === 'PENDING'
+
+export const canReorderTaskList = (tasks) =>
+  Array.isArray(tasks) && tasks.every(canReorderTask)
+
 /** Closing list filter: match status or reviewStatus */
 export const matchesClosingFilter = (logbook, filter) => {
   if (filter === 'all') return true

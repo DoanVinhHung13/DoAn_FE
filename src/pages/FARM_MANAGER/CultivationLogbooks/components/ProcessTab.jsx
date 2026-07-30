@@ -10,6 +10,7 @@ import { formatDate } from 'src/utils/dateFormatters'
 import CultivationLogService from 'src/services/CultivationLogService'
 import SectionTitle from 'src/components/Common/SectionTitle'
 import { getUserDisplayName } from 'src/utils/userDisplayName'
+import { getOrderedStageLogs } from 'src/utils/cultivationOrdering'
 
 const { Text } = Typography
 
@@ -244,7 +245,10 @@ const ProcessTab = ({ item }) => {
   const selectedIndex = stages.findIndex((s, idx) => (s.id ?? idx) === selectedStageId)
   const selectedStage = selectedIndex >= 0 ? stages[selectedIndex] : null
 
-  const stageLogs = dailyLogs || []
+  const stageLogs = getOrderedStageLogs(
+    dailyLogs,
+    selectedStage?.tasks || selectedStage?.cultivationTasks || [],
+  )
 
   return (
     <div className="space-y-6">

@@ -51,6 +51,7 @@ import { canApproveClosing } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
 import { getLandPlotNamesDisplay } from "src/utils/helpers"
 import { getUserDisplayName } from "src/utils/userDisplayName"
+import { getOrderedStageLogs } from "src/utils/cultivationOrdering"
 
 const { Paragraph } = Typography
 
@@ -434,7 +435,13 @@ const LogbookReview = () => {
             const stageLogsRes = await CultivationStageService.getStageLogs(stageId, {
               cultivationLogbookId: id,
             })
-            return { stage, logs: extractList(stageLogsRes) }
+            return {
+              stage,
+              logs: getOrderedStageLogs(
+                extractList(stageLogsRes),
+                stage.tasks || stage.cultivationTasks || [],
+              ),
+            }
           } catch (error) {
             console.error(`Không thể tải nhật ký của giai đoạn ${stageId}`, error)
             return { stage, logs: [] }
@@ -445,7 +452,13 @@ const LogbookReview = () => {
       const fallbackStageGroups = stages.length
         ? stages.map((stage, index) => ({
             stage,
-            logs: index === 0 ? fallbackLogs : [],
+            logs:
+              index === 0
+                ? getOrderedStageLogs(
+                    fallbackLogs,
+                    stage.tasks || stage.cultivationTasks || [],
+                  )
+                : [],
           }))
         : fallbackLogs.length
           ? [{ stage: null, logs: fallbackLogs }]

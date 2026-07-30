@@ -36,6 +36,12 @@ import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import TaskCatalogService from "src/services/TaskCatalogService"
 import UserService from "src/services/UserService"
+import {
+  canReorderStageTasks,
+  canReorderTaskList,
+  canReorderTask,
+} from "src/utils/cultivationStatus"
+import { getTaskOrder, orderTasks } from "src/utils/cultivationOrdering"
 import { formatDate } from "src/utils/dateFormatters"
 import { getUserDisplayName } from "src/utils/userDisplayName"
 import AssignTaskModal from "./AssignTaskModal"
@@ -54,11 +60,6 @@ const taskStatusIcon = s =>
   ) : (
     <ClockCircleOutlined />
   )
-
-const taskOrderValue = (task, fallback = 0) => {
-  const order = Number(task?.taskOrder)
-  return Number.isFinite(order) && order > 0 ? order : fallback
-}
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
 const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
@@ -243,13 +244,11 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
   const selectedStage = stages.find(s => s.id === selectedId) ?? null
   const selectedTasks = selectedId ? tasks[selectedId] || [] : []
-  const orderedSelectedTasks = [...selectedTasks].sort(
-    (a, b) =>
-      taskOrderValue(a, Number.MAX_SAFE_INTEGER) -
-        taskOrderValue(b, Number.MAX_SAFE_INTEGER) ||
-      String(a.id).localeCompare(String(b.id)),
-  )
+  const orderedSelectedTasks = orderTasks(selectedTasks)
   const selectedIdx = stages.findIndex(s => s.id === selectedId)
+  const canReorderSelectedStage =
+    canReorderStageTasks(selectedStage, plan) &&
+    canReorderTaskList(orderedSelectedTasks)
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const openAddTask = () => {
@@ -326,6 +325,12 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   }
 
   const handleMoveTask = async (taskId, direction) => {
+    const task = orderedSelectedTasks.find(item => item.id === taskId)
+    if (!canReorderSelectedStage || !canReorderTask(task)) {
+      message.warning("Chỉ có thể đổi thứ tự công việc ở giai đoạn chưa bắt đầu.")
+      return
+    }
+
     const currentIndex = orderedSelectedTasks.findIndex(task => task.id === taskId)
     const targetIndex = currentIndex + direction
 
@@ -339,11 +344,19 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
     try {
       setSavingOrder(true)
-      await CultivationTaskService.reorder({
-        cultivationLogbookId: planId,
-        cultivationStageId: selectedId,
-        taskIds: nextTasks.map(task => task.id),
-      })
+      await CultivationTaskService.reorder(
+        {
+          cultivationLogbookId: planId,
+          cultivationStageId: selectedId,
+          taskIds: nextTasks.map(task => task.id),
+        },
+        {
+          stage: selectedStage,
+          logbook: plan,
+          task,
+          tasks: orderedSelectedTasks,
+        },
+      )
       await loadData()
     } catch (error) {
       console.error(error)
@@ -513,7 +526,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                 <div className="flex items-center gap-3">
                                   <div className="flex flex-col items-center gap-1 flex-shrink-0">
                                     <Text className="text-xs font-bold text-green-700">
-                                      {taskOrderValue(task, taskIndex + 1)}
+                                      {getTaskOrder(task, taskIndex + 1)}
                                     </Text>
                                     <div className="flex gap-1">
                                       <Button
@@ -521,8 +534,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         size="small"
                                         icon={<ArrowUpOutlined />}
                                         aria-label="Đưa công việc lên trước"
+                                        title={
+                                          canReorderSelectedStage && canReorderTask(task)
+                                            ? "Đưa công việc lên trước"
+                                            : "Thứ tự đã được khóa"
+                                        }
                                         disabled={
-                                          savingOrder || taskIndex === 0
+                                          savingOrder ||
+                                          taskIndex === 0 ||
+                                          !canReorderSelectedStage ||
+                                          !canReorderTask(task)
                                         }
                                         onClick={e => {
                                           e.stopPropagation()
@@ -534,9 +555,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         size="small"
                                         icon={<ArrowDownOutlined />}
                                         aria-label="Đưa công việc xuống sau"
+                                        title={
+                                          canReorderSelectedStage && canReorderTask(task)
+                                            ? "Đưa công việc xuống sau"
+                                            : "Thứ tự đã được khóa"
+                                        }
                                         disabled={
                                           savingOrder ||
-                                          taskIndex === orderedSelectedTasks.length - 1
+                                          taskIndex === orderedSelectedTasks.length - 1 ||
+                                          !canReorderSelectedStage ||
+                                          !canReorderTask(task)
                                         }
                                         onClick={e => {
                                           e.stopPropagation()
