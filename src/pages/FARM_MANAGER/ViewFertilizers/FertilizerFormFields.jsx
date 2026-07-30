@@ -65,6 +65,23 @@ const DEFAULT_DOSAGE = {
   target: '',
 }
 
+const normalizeTarget = (value) => String(value ?? '').trim().toLowerCase()
+
+const getCropOptionKeys = (option) => [option.value, option.label]
+  .map(normalizeTarget)
+  .filter(Boolean)
+
+const getCropTargetKey = (target, options) => {
+  const normalizedTarget = normalizeTarget(target)
+  if (!normalizedTarget) return ''
+
+  const matchingOption = options.find(option =>
+    getCropOptionKeys(option).includes(normalizedTarget),
+  )
+
+  return normalizeTarget(matchingOption?.value ?? target)
+}
+
 // ── Section header helper ─────────────────────────────────────────────────────
 import SectionTitle from 'src/components/Common/SectionTitle'
 import { useCropOptions } from 'src/hooks/useCropOptions'
@@ -228,9 +245,8 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
 
       const selectedTargets = dosages
-        .map(dosage => dosage.target)
-        .filter(target => target != null && target !== '')
-        .map(target => String(target))
+        .map(dosage => getCropTargetKey(dosage.target, cropOptions))
+        .filter(Boolean)
       if (new Set(selectedTargets).size !== selectedTargets.length) {
         message.error('Mỗi cây chỉ được khai báo một liều lượng.')
         return
@@ -326,18 +342,19 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
   const getDosageOptions = (index) => {
     const currentTarget = dosages[index]?.target
+    const currentTargetKey = getCropTargetKey(currentTarget, cropOptions)
     const targetsInOtherRows = new Set(
       dosages
         .filter((_, dosageIndex) => dosageIndex !== index)
-        .map(dosage => dosage.target)
-        .filter(target => target != null && target !== '')
-        .map(target => String(target)),
+        .map(dosage => getCropTargetKey(dosage.target, cropOptions))
+        .filter(Boolean),
     )
 
-    return cropOptions.filter(option =>
-      String(option.value) === String(currentTarget) ||
-      !targetsInOtherRows.has(String(option.value)),
-    )
+    return cropOptions.filter(option => {
+      const optionKeys = getCropOptionKeys(option)
+      return optionKeys.includes(currentTargetKey) ||
+        !optionKeys.some(optionKey => targetsInOtherRows.has(optionKey))
+    })
   }
 
   const handleAddDosage = () =>
