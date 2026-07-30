@@ -17,7 +17,6 @@ import {
   Card,
   Empty,
   Input,
-  Pagination,
   Select,
   Skeleton,
   Tag,
@@ -26,6 +25,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import CustomTable from 'src/components/Table/CustomTable'
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
@@ -110,8 +110,8 @@ const FarmSupervisorPlans = () => {
       render: (value) => <span className="font-medium text-gray-900">{value || '—'}</span>,
     },
     {
-      title: 'Cây trồng', dataIndex: 'cropName', key: 'cropName', width: 140,
-      render: (value) => value || '—',
+      title: 'Cây trồng', dataIndex: 'cropName', key: 'cropName', width: 190,
+      render: (value) => <span className="whitespace-nowrap">{value || '—'}</span>,
     },
     {
       title: 'Thời gian', key: 'time', width: 190,
@@ -146,10 +146,14 @@ const FarmSupervisorPlans = () => {
         Kế hoạch canh tác được giao
       </TitleCustom>
 
-      <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: 0 }}>
+      <Card
+        bordered={false}
+        className="admin-filter-card rounded-2xl shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
         {/* Toolbar */}
-        <div className="flex flex-col gap-3 p-4 border-b border-gray-100">
-          <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap">
+        <div className="admin-toolbar flex flex-wrap items-center gap-2 p-6 border-b border-gray-100">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -166,7 +170,7 @@ const FarmSupervisorPlans = () => {
               className="h-10 min-w-44 rounded-xl"
               options={logbookFilterOptions}
             />
-            <div className="flex gap-2 lg:ml-auto">
+            <div className="flex gap-2">
               <Button onClick={handleSearch} icon={<SearchOutlined />} className="h-10 px-4 rounded-xl bg-gray-50">
                 Tìm kiếm
               </Button>
@@ -175,7 +179,7 @@ const FarmSupervisorPlans = () => {
           </div>
 
           {/* View toggle */}
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex shrink-0 items-center gap-2">
             <div className="inline-flex overflow-hidden border border-gray-200 rounded-lg">
               {[
                 { mode: 'table', icon: <UnorderedListOutlined />, label: 'Bảng' },
@@ -195,7 +199,10 @@ const FarmSupervisorPlans = () => {
           </div>
         </div>
 
-        {/* Content */}
+      </Card>
+
+      {/* Content */}
+      <Card bordered={false} className="admin-data-card overflow-hidden rounded-2xl shadow-sm" styles={{ body: { padding: 0 } }}>
         {loading ? (
           <div className="p-5"><Skeleton active paragraph={{ rows: 6 }} /></div>
         ) : viewMode === 'table' ? (
@@ -203,15 +210,11 @@ const FarmSupervisorPlans = () => {
             rowKey="id"
             columns={columns}
             dataSource={visiblePlans}
-            scroll={{ x: 900 }}
+            scroll={{ x: 950 }}
             onRow={(plan) => ({ onClick: () => openDetail(plan.id), className: 'cursor-pointer' })}
             rowClassName="hover:bg-green-50/30 transition-colors"
             locale={{ emptyText: 'Không có kế hoạch phù hợp.' }}
-            pagination={{
-              current: page, pageSize, total: totalPlans,
-              showSizeChanger: true, pageSizeOptions: PAGE_SIZE,
-              onChange: (p, ps) => { setPage(p); setPageSize(ps) },
-            }}
+            pagination={false}
           />
         ) : visiblePlans.length ? (
           <div className="p-5">
@@ -260,13 +263,6 @@ const FarmSupervisorPlans = () => {
                 )
               })}
             </div>
-            <div className="flex justify-end mt-4">
-              <Pagination
-                current={page} pageSize={pageSize} total={totalPlans}
-                showSizeChanger pageSizeOptions={PAGE_SIZE}
-                onChange={(p, ps) => { setPage(p); setPageSize(ps) }}
-              />
-            </div>
           </div>
         ) : (
           <div className="p-8">
@@ -274,6 +270,19 @@ const FarmSupervisorPlans = () => {
           </div>
         )}
       </Card>
+
+      {viewMode === 'table' || (viewMode === 'card' && visiblePlans.length) ? (
+        <AdminPaginationCard
+          pagination={{
+            current: page,
+            pageSize,
+            total: totalPlans,
+            showSizeChanger: true,
+            pageSizeOptions: PAGE_SIZE,
+            onChange: (p, ps) => { setPage(p); setPageSize(ps) },
+          }}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ConfigProvider, App as AntdApp } from 'antd';
 import { themeTokens } from './themeTokens';
+import designTokens from './designTokens';
 
 const ThemeConfigAntd = ({ children }) => {
   return (
@@ -9,13 +10,13 @@ const ThemeConfigAntd = ({ children }) => {
         token: themeTokens,
         components: {
           Button: {
-            controlHeight: 40,
+            controlHeight: designTokens.controlHeight.md,
             fontWeight: 600,
           },
           Menu: {
-            itemHeight: 50,
-            itemSelectedBg: '#f0fdf4',
-            itemSelectedColor: '#15803d',
+            itemHeight: 40,
+            itemSelectedBg: designTokens.colors.primarySoft,
+            itemSelectedColor: designTokens.colors.primary,
           },
         },
       }}

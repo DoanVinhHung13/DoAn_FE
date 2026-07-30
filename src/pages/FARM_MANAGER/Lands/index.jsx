@@ -22,6 +22,7 @@ import { MapPinned } from 'lucide-react'
 
 import TitleCustom from 'src/components/TitleCustom'
 import CustomTable from 'src/components/Table/CustomTable'
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import LandPlotService from 'src/services/LandPlotService'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import { invalidCharsRegex } from 'src/utils/helpers'
@@ -213,7 +214,8 @@ const LandsManagement = () => {
     },
     {
       title: 'Trạng thái canh tác',
-      width: 170,
+      width: 200,
+      align: 'center',
       render: (_, record) => <LandPlotCultivationStatus plot={record} />,
     },
     ...(canManage
@@ -315,10 +317,10 @@ const LandsManagement = () => {
       )}
 
       {/* Bảng danh sách + thanh công cụ */}
-      <Card bordered={false} className="rounded-2xl shadow-sm" bodyStyle={{ padding: 0 }}>
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
 
         {/* Thanh tìm kiếm & lọc */}
-        <div className="flex flex-col gap-3 border-b border-gray-100 p-5 sm:flex-row">
+        <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -354,6 +356,13 @@ const LandsManagement = () => {
           </div>
         </div>
 
+      </Card>
+
+      <Card
+        variant="borderless"
+        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
         {/* Bảng dữ liệu */}
         <CustomTable
           rowKey={(record) => getItemId(record)}
@@ -366,17 +375,7 @@ const LandsManagement = () => {
             className: 'cursor-pointer',
           })}
           rowClassName="hover:bg-green-50/30 transition-colors"
-          pagination={{
-            current: page,
-            pageSize,
-            total: totalRecords,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE,
-            onChange: (nextPage, nextSize) => {
-              setPage(nextPage)
-              setPageSize(nextSize)
-            },
-          }}
+          pagination={false}
           textEmpty={
             <div className="py-8 text-center">
               <p className="mb-4 text-slate-500">{EMPTY_LAND_MESSAGE}</p>
@@ -393,6 +392,20 @@ const LandsManagement = () => {
           }
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: page,
+          pageSize,
+          total: totalRecords,
+          showSizeChanger: true,
+          pageSizeOptions: PAGE_SIZE,
+          onChange: (nextPage, nextSize) => {
+            setPage(nextPage)
+            setPageSize(nextSize)
+          },
+        }}
+      />
 
       {/* Modal xác nhận đổi trạng thái */}
       {canManage && (

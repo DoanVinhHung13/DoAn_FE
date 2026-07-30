@@ -28,6 +28,7 @@ import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
 import CustomTable from "src/components/Table/CustomTable"
+import AdminPaginationCard from "src/components/Table/AdminPaginationCard"
 import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
 import { PAGE_SIZE } from "src/constants/pageSizeOptions"
 import { ROLES } from "src/constants/roles"
@@ -86,6 +87,7 @@ const UsersManagement = () => {
   const isFarmManager = currentRoles.includes(ROLES.FARM_MANAGER)
   const isFarmSupervisor = currentRoles.includes(ROLES.FARM_SUPERVISOR)
   const canManageUsers = isFarmManager || isFarmSupervisor
+  const userDetailRoute = isFarmManager ? ROUTER.FM_USER_DETAIL : ROUTER.FS_USER_DETAIL
 
   const { getOptions, getDescription } = useSystemKey()
 
@@ -395,13 +397,9 @@ const UsersManagement = () => {
       </div>
 
       {/* ── Table card ── */}
-      <Card
-        bordered={false}
-        className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: 0 }}
-      >
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
         {/* Toolbar */}
-        <div className="flex flex-col gap-3 p-5 border-b border-gray-100 sm:flex-row">
+        <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
@@ -459,6 +457,13 @@ const UsersManagement = () => {
           </div>
         </div>
 
+      </Card>
+
+      <Card
+        variant="borderless"
+        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
         {/* Table */}
         <CustomTable
           dataSource={listData}
@@ -468,31 +473,35 @@ const UsersManagement = () => {
           onRow={record => {
             return {
               onClick: () => {
-                navigate(ROUTER.FM_USER_DETAIL.replace(":id", record.id))
+                navigate(userDetailRoute.replace(":id", record.id))
               },
               className: "cursor-pointer",
             }
           }}
           locale={{ emptyText: "No data available" }}
-          pagination={{
-            current: page,
-            pageSize: pageSize,
-            total: totalRecords,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE,
-            showTotal: (total, range) => (
-              <span className="text-xs text-gray-500">
-                {range[0]}–{range[1]} / <strong>{total}</strong>
-              </span>
-            ),
-            onChange: (p, ps) => {
-              setPage(p)
-              setPageSize(ps)
-            },
-          }}
+          pagination={false}
           rowClassName="hover:bg-green-50/30 transition-colors"
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: page,
+          pageSize: pageSize,
+          total: totalRecords,
+          showSizeChanger: true,
+          pageSizeOptions: PAGE_SIZE,
+          showTotal: (total, range) => (
+            <span className="text-xs text-gray-500">
+              {range[0]}–{range[1]} / <strong>{total}</strong>
+            </span>
+          ),
+          onChange: (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        }}
+      />
 
       {/* ── Modals ── */}
       <UserFormModal

@@ -73,6 +73,7 @@ const ROUTER = {
   FS_CULTIVATION_LOGBOOKS: '/farm-supervisor/cultivation-logbooks',
   FS_CULTIVATION_LOGBOOK_DETAIL: '/farm-supervisor/cultivation-logbooks/:planId',
   FS_FARMERS: '/farm-supervisor/farmers',
+  FS_USER_DETAIL: '/farm-supervisor/farmers/:id',
   FS_LANDS: '/farm-supervisor/land-plots',
   FS_LAND_DETAIL: '/farm-supervisor/land-plots/:id',
 

@@ -23,6 +23,7 @@ import ROUTER from 'src/router/ROUTER'
 
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
 import InventoryImportModal from 'src/components/Inventory/InventoryImportModal'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
@@ -175,7 +176,7 @@ const ViewCropProtections = () => {
       title: 'Tồn kho thực tế',
       dataIndex: 'inventoryQuantity',
       key: 'inventoryQuantity',
-      width: 140,
+      width: 165,
       align: 'right',
       render: (v, record) => (
         <span className="text-sm font-semibold text-blue-600">
@@ -188,7 +189,7 @@ const ViewCropProtections = () => {
     {
       title: 'Tồn kho tối thiểu',
       key: 'minInventory',
-      width: 140,
+      width: 165,
       align: 'right',
       render: (_, record) => {
         const qty = record.minInventory ?? record.minimumStock ?? 0
@@ -200,7 +201,7 @@ const ViewCropProtections = () => {
       title: 'Trạng thái',
       dataIndex: 'isActive',
       key: 'isActive',
-      width: 150,
+      width: 165,
       render: (isActive) => {
         const active = isActive !== false
         const sysVal = active ? 'ACTIVE' : 'INACTIVE'
@@ -229,7 +230,7 @@ const ViewCropProtections = () => {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 140,
+      width: 150,
       align: 'center',
       render: (_, record) => {
         const locked = record.isInActiveUse
@@ -305,7 +306,7 @@ const ViewCropProtections = () => {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+    <div className="admin-compact-list space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       {/* ── Header ── */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -337,12 +338,8 @@ const ViewCropProtections = () => {
       )}
 
       {/* ── Table card ── */}
-      <Card
-        bordered={false}
-        className="shadow-sm rounded-2xl"
-        styles={{ body: { padding: 0 } }}
-      >
-        <div className="flex flex-col gap-3 p-5 border-b border-gray-100 sm:flex-row sm:flex-wrap">
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+        <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -379,37 +376,48 @@ const ViewCropProtections = () => {
           </div>
         </div>
 
+      </Card>
+
+      <Card
+        variant="borderless"
+        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
         <CustomTable
           dataSource={listData}
           columns={columns}
           rowKey="id"
           loading={loading}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 1120 }}
           onRow={(record) => ({
             onClick: () => navigate(ROUTER.FM_PESTICIDE_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
           locale={{ emptyText: 'Không có dữ liệu nông dược.' }}
-          pagination={{
-            current: page,
-            pageSize,
-            total: totalRecords,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE,
-            showTotal: (total, range) => (
-              <span className="text-xs text-gray-500">
-                {range[0]}–{range[1]} /{' '}
-                <strong>{total}</strong>
-              </span>
-            ),
-            onChange: (p, ps) => {
-              setPage(p)
-              setPageSize(ps)
-            },
-          }}
+          pagination={false}
           rowClassName="hover:bg-green-50/30 transition-colors"
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: page,
+          pageSize,
+          total: totalRecords,
+          showSizeChanger: true,
+          pageSizeOptions: PAGE_SIZE,
+          showTotal: (total, range) => (
+            <span className="text-xs text-gray-500">
+              {range[0]}–{range[1]} /{' '}
+              <strong>{total}</strong>
+            </span>
+          ),
+          onChange: (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        }}
+      />
 
       {/* Status confirm */}
       <CustomModal

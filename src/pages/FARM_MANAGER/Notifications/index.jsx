@@ -308,7 +308,7 @@ const FarmManagerNotifications = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="admin-compact-list space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2">
           <BellOutlined className="text-green-600" />
@@ -365,18 +365,18 @@ const FarmManagerNotifications = () => {
         className="bg-white rounded-lg shadow-sm px-6"
       />
 
-      <Card variant="borderless" className="rounded-lg shadow-sm">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_200px_200px]">
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+        <div className="admin-toolbar grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1fr)_200px_200px]">
           <Input
             allowClear
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             prefix={<SearchOutlined className="text-gray-400" />}
             placeholder="Tìm theo tiêu đề hoặc nội dung"
-            className="h-11 rounded-lg"
+            className="h-10 rounded-lg"
           />
-          <Select value={status} onChange={setStatus} options={STATUS_OPTIONS} className="h-11" />
-          <Select value={category} onChange={setCategory} options={categoryOptions} className="h-11" />
+          <Select value={status} onChange={setStatus} options={STATUS_OPTIONS} className="h-10" />
+          <Select value={category} onChange={setCategory} options={categoryOptions} className="h-10" />
         </div>
       </Card>
 

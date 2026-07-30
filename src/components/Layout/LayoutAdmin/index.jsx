@@ -9,11 +9,11 @@ import { clearAuthStorage } from 'src/redux/storage'
 import AuthService from 'src/services/AuthService'
 import NotificationBell from '../../NotificationBell'
 import {
+  DownOutlined,
   MenuOutlined,
   LogoutOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { ChevronDown } from 'lucide-react'
 import { getMenuByRole } from 'src/router/MenuItem'
 import ROUTER from 'src/router/ROUTER'
 import logoImg from 'src/assets/images/logo/logo-eapls.jpg'
@@ -93,23 +93,26 @@ const LayoutAdmin = () => {
   }
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white">
+    <div className="admin-sidebar flex flex-col h-full bg-white">
       {/* Logo/Branding Section */}
       <div
-        className="h-24 flex flex-col items-center justify-center border-b border-gray-50 px-4 shrink-0 transition-all duration-300 cursor-pointer hover:bg-gray-50/50"
+        className="admin-brand h-20 flex flex-col items-center justify-center border-b border-gray-100 px-2 shrink-0 cursor-pointer"
+        role="button"
+        tabIndex={0}
+        aria-label="Về trang chủ"
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') navigate(ROUTER.HOME)
+        }}
         onClick={() => navigate(ROUTER.HOME)}
       >
         {collapsed && !isMobile ? (
           <div className="w-10 h-10 flex items-center justify-center">
-            <img src={logoImg} alt="Logo" className="max-w-full max-h-full object-contain mix-blend-multiply" />
+            <img src={logoImg} alt="EAPLS" className="max-w-full max-h-full object-contain mix-blend-multiply" />
           </div>
         ) : (
-          <div className="flex items-center gap-4 w-full justify-center">
-            <img src={logoImg} alt="EAPLS Logo" className="w-[65px] h-[65px] object-contain mix-blend-multiply" />
-            <div className="flex flex-col text-center">
-              <span className="text-green-600 font-bold text-[15px] leading-[1.2]">NHẬT KÝ SẢN XUẤT</span>
-              <span className="text-green-600 font-bold text-[15px] leading-[1.2]">ĐIỆN TỬ</span>
-            </div>
+          <div className="flex w-full items-center justify-center gap-2">
+            <img src={logoImg} alt="EAPLS" className="h-9 w-9 shrink-0 object-contain mix-blend-multiply" />
+            <span className="admin-brand-title text-green-600">NHẬT KÝ SẢN XUẤT ĐIỆN TỬ</span>
           </div>
         )}
       </div>
@@ -122,9 +125,9 @@ const LayoutAdmin = () => {
           defaultOpenKeys={[]}
           items={menuItems}
           onClick={handleNavItemClick}
-          className="border-r-0 px-3 py-4"
-          expandIcon={({ isOpen }) => (
-            <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          className="admin-navigation border-r-0 px-3 py-4"
+          expandIcon={collapsed ? null : ({ isOpen }) => (
+            <DownOutlined className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
           )}
         />
       </div>
@@ -156,7 +159,8 @@ const LayoutAdmin = () => {
           collapsed={collapsed}
           theme="light"
           width={280}
-          className="shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-50 flex flex-col h-screen sticky top-0"
+          collapsedWidth={72}
+          className="admin-sider border-r border-gray-100 flex flex-col h-screen sticky top-0"
         >
           {sidebarContent}
         </Sider>
@@ -176,15 +180,16 @@ const LayoutAdmin = () => {
 
       <Layout>
         <Header
-          className={`bg-white/80 backdrop-blur-md p-0 flex justify-between items-center z-10 sticky top-0 shadow-[0_1px_2px_rgba(0,0,0,0.03)] border-b border-gray-50 ${
+          className={`admin-header bg-white p-0 flex justify-between items-center z-10 sticky top-0 border-b border-gray-100 ${
             isMobile ? 'px-4 h-16' : 'px-8 h-20'
           }`}
         >
           <Button
             type="text"
             icon={<MenuOutlined className="text-green-600 text-xl" />}
+            aria-label={isMobile ? 'Mở menu điều hướng' : collapsed ? 'Mở rộng menu điều hướng' : 'Thu gọn menu điều hướng'}
             onClick={() => (isMobile ? setMobileMenuOpen(true) : setCollapsed(!collapsed))}
-            className="w-10 h-10 flex items-center justify-center hover:bg-green-50 rounded-xl transition-all"
+            className="w-10 h-10 flex items-center justify-center hover:bg-green-50 rounded-lg"
           />
 
           <div className="flex items-center gap-2 md:gap-6">
@@ -201,7 +206,11 @@ const LayoutAdmin = () => {
               arrow={{ pointAtCenter: true }}
               classNames={{ root: 'premium-auth-dropdown' }}
             >
-              <div className="flex items-center gap-2 md:gap-3 cursor-pointer group hover:bg-green-50/50 p-1.5 md:pr-3 rounded-2xl transition-all border border-transparent hover:border-green-100">
+              <button
+                type="button"
+                aria-label="Mở menu tài khoản"
+                className="admin-account-trigger flex items-center gap-2 md:gap-3 cursor-pointer group hover:bg-green-50/50 p-1.5 md:pr-3 rounded-2xl transition-all hover:border-green-100"
+              >
                 <Avatar
                   size={isMobile ? 32 : 44}
                   src={getAvatarUrl(user?.avatarUrl)}
@@ -219,14 +228,16 @@ const LayoutAdmin = () => {
                     </Text>
                   </div>
                 )}
-                <ChevronDown className="w-3 h-3 md:w-4 md:h-4 text-gray-400 group-hover:text-green-600 transition-colors" />
-              </div>
+                <DownOutlined className="text-xs text-gray-400 transition-colors group-hover:text-green-600 md:text-sm" />
+              </button>
             </Dropdown>
           </div>
         </Header>
 
-        <Content className={`${isMobile ? 'p-4' : 'p-8'} bg-[#f8fafc] min-h-[calc(100vh-80px)]`}>
-          <Outlet />
+        <Content className={`admin-content ${isMobile ? 'p-4' : 'p-8'} min-h-[calc(100vh-80px)]`}>
+          <div className="admin-page-shell">
+            <Outlet />
+          </div>
         </Content>
       </Layout>
     </Layout>

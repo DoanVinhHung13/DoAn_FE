@@ -107,7 +107,6 @@ const CultivationLogbookDetail = () => {
           Nhật ký chính thức
         </span>
       ),
-      children: activeTab === 'official' && <OfficialLogbookTab item={item} stages={stages} />,
     },
     {
       key: 'process',
@@ -117,7 +116,6 @@ const CultivationLogbookDetail = () => {
           Lịch sử ghi Log
         </span>
       ),
-      children: activeTab === 'process' && <TaskLogHistoryTab stages={stages} tasks={tasksMap} />,
     },
   ]
 
@@ -241,7 +239,7 @@ const CultivationLogbookDetail = () => {
         </div>
       </Card>
 
-      {/* Tabs Content */}
+      {/* Tab navigation */}
       <Card bordered={false} className="shadow-sm rounded-2xl">
         <Tabs
           activeKey={activeTab}
@@ -251,6 +249,13 @@ const CultivationLogbookDetail = () => {
           className="farm-manager-tabs"
         />
       </Card>
+
+      {/* Tab content */}
+      {activeTab === 'official' ? (
+        <OfficialLogbookTab item={item} stages={stages} />
+      ) : (
+        <TaskLogHistoryTab stages={stages} tasks={tasksMap} />
+      )}
     </div>
   )
 }

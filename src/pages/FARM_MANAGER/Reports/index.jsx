@@ -306,8 +306,13 @@ const ReportStatistics = () => {
         </Button>
       </div>
 
-      <Card bordered={false} className="rounded-2xl shadow-sm">
+      <Card
+        bordered={false}
+        className="admin-data-card overflow-hidden rounded-2xl shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
         <Tabs
+          className="px-6"
           activeKey={activeReport}
           onChange={(key) => {
             setActiveReport(key)
@@ -318,8 +323,13 @@ const ReportStatistics = () => {
             label: <span className="flex items-center gap-2">{meta.icon}{meta.label}</span>,
           }))}
         />
+      </Card>
 
-        <div className="mt-5 rounded-xl bg-slate-50 p-4">
+      <Card
+        bordered={false}
+        className="admin-filter-card rounded-2xl shadow-sm"
+      >
+        <div className="rounded-xl bg-slate-50 p-4">
           <div className="mb-3 flex items-center gap-2">
             <FieldTimeOutlined className="text-green-700" />
             <Text strong>{currentMeta.label}</Text>

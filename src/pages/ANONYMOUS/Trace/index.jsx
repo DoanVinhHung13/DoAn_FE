@@ -379,49 +379,49 @@ const Trace = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/80 pb-12">
+    <div className="min-h-screen bg-[#f3f9f5] pb-12 text-slate-800">
       {/* ── Mobile & Desktop Header Banner ── */}
-      <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-teal-700 text-white shadow-md">
-        <div className="max-w-2xl mx-auto px-4 py-6 sm:py-10">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 flex items-center justify-center flex-shrink-0 shadow-inner">
-              <Wheat className="w-10 h-10 sm:w-12 sm:h-12 text-amber-300" />
+      <div className="border-b border-emerald-100 bg-[#f3f9f5]">
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:text-left">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 sm:mt-6 bg-white rounded-2xl border border-emerald-100 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <Wheat className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full text-xs font-medium text-emerald-100 mb-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 mb-2">
                 <CheckCircleOutlined className="text-emerald-300" /> Hệ thống truy xuất nguồn gốc nông sản
               </div>
-              <Title level={2} className="!text-white !mb-1 text-xl sm:text-2xl font-bold tracking-tight">
-                {traceData.cropName}
+              <Title level={2} className="!text-emerald-800 !mb-1 text-xl sm:text-2xl font-bold tracking-tight">
+                Truy xuất nguồn gốc
               </Title>
-              <Text className="text-emerald-100 text-xs sm:text-sm font-mono block">
+              <Text className="text-slate-500 text-xs sm:text-sm font-mono block">
                 Mã QR: <strong className="text-white bg-black/20 px-2 py-0.5 rounded">{traceData.qrCode}</strong>
               </Text>
             </div>
           </div>
 
-          <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/15 text-xs sm:text-sm text-emerald-50 flex items-center gap-3">
-            <CheckCircleOutlined className="text-lg text-amber-300 flex-shrink-0" />
+          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-100 bg-white p-4 text-xs shadow-sm sm:text-sm">
+            <CheckCircleOutlined className="mt-0.5 shrink-0 text-lg text-amber-300" />
             <span>Sản phẩm được theo dõi và xác thực 100% dữ liệu điện tử từ quy trình gieo trồng đến thu hoạch.</span>
           </div>
         </div>
       </div>
 
       {/* ── Main Container ── */}
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6 space-y-5">
+      <div className="mx-auto max-w-3xl space-y-5 px-4 pt-5 sm:px-6 sm:pt-6">
 
         {/* ── 1. Thông tin cơ bản ── */}
-        <Card className="rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <Card className="trace-card overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+              <div className="trace-section-icon w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
               <Sprout className="w-5 h-5" />
             </div>
-            <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
+            <Title level={4} className="!mt-0 !mb-0 !text-base sm:!text-lg font-bold text-slate-800">
               Thông tin sản phẩm & Vùng trồng
             </Title>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+          <div className="grid grid-cols-1 gap-4 text-xs sm:grid-cols-2 sm:text-sm">
             <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 flex flex-col justify-between">
               <Text className="text-slate-500 text-xs font-semibold block mb-1">Mã lô sản xuất</Text>
               <div>
@@ -476,9 +476,9 @@ const Trace = () => {
 
         {/* ── 2. Nhật ký canh tác hàng ngày ── */}
         {traceData.displayOptions.showDailyLog && (
-          <Card className="rounded-2xl shadow-sm border border-slate-200/80">
+          <Card className="trace-card rounded-2xl border border-slate-200/80 shadow-sm">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+              <div className="trace-section-icon w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
                 📝
               </div>
               <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
@@ -562,9 +562,9 @@ const Trace = () => {
 
         {/* ── 3. Thông tin vật tư sử dụng ── */}
         {(traceData.displayOptions.showMaterials ?? traceData.displayOptions.showAutomation) && traceData.materials.length > 0 && (
-          <Card className="rounded-2xl border-0 shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+          <Card className="trace-card rounded-2xl border border-slate-200/80 shadow-sm">
             <div className="mb-4 flex items-start gap-3 border-b border-slate-100 pb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+              <div className="trace-section-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
                 <ExperimentOutlined className="text-lg" />
               </div>
               <div>
@@ -575,7 +575,34 @@ const Trace = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
+            <div className="trace-material-table overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full min-w-[560px] border-collapse text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Loại vật tư</th>
+                    <th className="px-4 py-3 font-semibold">Tên vật tư</th>
+                    <th className="px-4 py-3 text-right font-semibold">Số lượng đã dùng</th>
+                    <th className="px-4 py-3 font-semibold">Ngày sử dụng</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {traceData.materials.map((material, index) => (
+                    <tr key={`table-${material.id || `${material.name}-${material.usedAt || index}`}`}>
+                      <td className="px-4 py-3">
+                        <Tag color={material.type === 'Nông dược' ? 'orange' : 'green'} className="m-0 rounded-md text-xs font-semibold">
+                          {material.type}
+                        </Tag>
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{material.name}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-emerald-700">{formatMaterialQuantity(material)}</td>
+                      <td className="px-4 py-3 text-slate-500">{material.usedAt ? formatDate(material.usedAt) : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="trace-material-legacy grid grid-cols-1 gap-3">
               {traceData.materials.map((material, index) => (
                 <div key={material.id || `${material.name}-${material.usedAt || index}`} className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5 sm:p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -598,9 +625,9 @@ const Trace = () => {
 
         {/* ── 4. Hình ảnh thực địa ── */}
         {traceData.displayOptions.showPhotos && (
-          <Card className="rounded-2xl shadow-sm border border-slate-200/80">
+          <Card className="trace-card rounded-2xl border border-slate-200/80 shadow-sm">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-              <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 font-bold">
+              <div className="trace-section-icon w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-700 font-bold">
                 📷
               </div>
               <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
@@ -636,7 +663,7 @@ const Trace = () => {
 
         {/* ── 5. Giấy chứng nhận ── */}
         {(traceData.displayOptions.showCertificates ?? traceData.displayOptions.showCertificate) && (
-          <Card className="rounded-2xl shadow-sm border border-slate-200/80">
+          <Card className="trace-card rounded-2xl border border-slate-200/80 shadow-sm">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700">
                 <SafetyCertificateOutlined className="text-lg" />

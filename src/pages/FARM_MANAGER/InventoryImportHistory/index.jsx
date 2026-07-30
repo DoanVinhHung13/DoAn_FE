@@ -8,6 +8,7 @@ import { Button, Card, DatePicker, Input, Select, Tag, message } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import CustomTable from 'src/components/Table/CustomTable'
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
@@ -219,7 +220,7 @@ const InventoryImportHistory = () => {
   ], [page, pageSize])
 
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+    <div className="admin-compact-list space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2" role="heading" aria-level={1}>
           <InboxOutlined aria-hidden="true" className="text-green-600" />
@@ -231,8 +232,8 @@ const InventoryImportHistory = () => {
         </div>
       </div>
 
-      <Card bordered={false} className="shadow-sm rounded-2xl" styles={{ body: { padding: 0 } }}>
-        <div className="flex flex-col gap-3 p-5 border-b border-gray-100 xl:flex-row xl:items-center xl:flex-wrap">
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+        <div className="admin-toolbar flex flex-col gap-3 xl:flex-row xl:items-center xl:flex-wrap">
           <Input
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
@@ -281,6 +282,13 @@ const InventoryImportHistory = () => {
           </div>
         </div>
 
+      </Card>
+
+      <Card
+        variant="borderless"
+        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
         <CustomTable
           dataSource={rows}
           columns={columns}
@@ -288,25 +296,29 @@ const InventoryImportHistory = () => {
           loading={loading}
           scroll={{ x: 1050 }}
           locale={{ emptyText: 'Chưa có lịch sử nhập vật tư.' }}
-          pagination={{
-            current: page,
-            pageSize,
-            total,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE,
-            showTotal: (value, range) => (
-              <span className="text-xs text-gray-500">
-                {range[0]}–{range[1]} / <strong>{value}</strong>
-              </span>
-            ),
-            onChange: (nextPage, nextPageSize) => {
-              setPage(nextPage)
-              setPageSize(nextPageSize)
-            },
-          }}
+          pagination={false}
           rowClassName="hover:bg-green-50/30 transition-colors"
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: page,
+          pageSize,
+          total,
+          showSizeChanger: true,
+          pageSizeOptions: PAGE_SIZE,
+          showTotal: (value, range) => (
+            <span className="text-xs text-gray-500">
+              {range[0]}–{range[1]} / <strong>{value}</strong>
+            </span>
+          ),
+          onChange: (nextPage, nextPageSize) => {
+            setPage(nextPage)
+            setPageSize(nextPageSize)
+          },
+        }}
+      />
     </div>
   )
 }

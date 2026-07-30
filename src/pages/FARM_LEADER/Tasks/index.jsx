@@ -104,17 +104,19 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
     <Card
       bordered={false}
       className="flex flex-col justify-between h-full overflow-hidden transition-all duration-300 bg-white border shadow-xs border-slate-200/80 hover:border-emerald-400 hover:shadow-md rounded-2xl group"
-      bodyStyle={{
-        padding: 0,
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
+      styles={{
+        body: {
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        },
       }}
     >
       {/* Top Banner Header */}
-      <div className="p-4 transition-colors border-b border-slate-100 bg-gradient-to-r from-slate-50/80 via-emerald-50/15 to-white group-hover:from-emerald-50/30">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div className="flex items-start min-w-0 gap-2">
+      <div className="px-4 py-3 transition-colors border-b border-slate-100 bg-gradient-to-r from-slate-50/80 via-emerald-50/15 to-white group-hover:from-emerald-50/30">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center min-w-0 gap-2">
             <span
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-sm font-bold text-emerald-700"
               aria-label={`Số thứ tự ${taskNumber}`}
@@ -152,7 +154,7 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
       </div>
 
       {/* Main Body */}
-      <div className="p-4 space-y-3.5 flex-1 flex flex-col justify-between">
+      <div className="flex flex-1 flex-col justify-between space-y-3.5 p-4 pt-3">
         <div className="space-y-3">
           {/* Schedule / Dates */}
           <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100/80 text-xs">
@@ -354,7 +356,7 @@ const FarmLeaderTasks = () => {
                 >
                   {name}
                 </span>
-                <span className="text-[10px] text-slate-400 truncate">
+                <span className="text-[10px] text-slate-700 truncate">
                   {summary.cropName || summary.cropCategoryName || ""}
                 </span>
               </div>
@@ -544,7 +546,7 @@ const FarmLeaderTasks = () => {
           <Col xs={24} lg={8} xl={7}>
             <Card
               bordered={false}
-              className="sticky border shadow-xs rounded-2xl border-slate-200/80 top-4"
+              className="leader-plan-tree sticky border shadow-xs rounded-2xl border-slate-200/80 top-4"
               bodyStyle={{ padding: "16px" }}
             >
               <div className="space-y-3.5">

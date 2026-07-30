@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Table, Input, Typography, Tag, Card, Button, Breadcrumb } from 'antd';
 import { SearchOutlined, BookOutlined, InfoCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import api from 'src/services/01_axios';
 import { useNavigate } from 'react-router-dom';
 import ROUTER from 'src/router/ROUTER';
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard';
 
 const { Title, Text, Paragraph } = Typography;
 
 const TCVNReference = () => {
     const navigate = useNavigate();
     const [searchText, setSearchText] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     const { data: tcvns = [], isLoading } = useQuery({
         queryKey: ['tcvns', searchText],
@@ -19,6 +22,16 @@ const TCVNReference = () => {
             return data.data;
         }
     });
+
+    const visiblePage = Math.min(
+        currentPage,
+        Math.max(1, Math.ceil(tcvns.length / pageSize)),
+    );
+
+    const paginatedTcvns = useMemo(
+        () => tcvns.slice((visiblePage - 1) * pageSize, visiblePage * pageSize),
+        [pageSize, tcvns, visiblePage],
+    );
 
     const columns = [
         {
@@ -97,15 +110,10 @@ const TCVNReference = () => {
             <Card className="shadow-lg border-gray-100 rounded-3xl overflow-hidden p-0" bodyStyle={{ padding: 0 }}>
                 <Table
                     columns={columns}
-                    dataSource={tcvns}
+                    dataSource={paginatedTcvns}
                     rowKey="_id"
                     loading={isLoading}
-                    pagination={{
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showTotal: (total) => <span className="font-bold text-gray-500">Tổng cộng {total} tiêu chuẩn</span>,
-                        className: "pr-8 pb-6"
-                    }}
+                    pagination={false}
                     expandable={{
                         expandedRowRender: (record) => (
                             <div className="bg-gray-50/50 p-8 rounded-2xl border border-gray-100 m-2 space-y-6">
@@ -134,6 +142,20 @@ const TCVNReference = () => {
                     className="custom-tcvn-table"
                 />
             </Card>
+
+            <AdminPaginationCard
+                pagination={{
+                    current: visiblePage,
+                    pageSize,
+                    total: tcvns.length,
+                    showSizeChanger: true,
+                    showTotal: (total) => <span className="font-bold text-gray-500">Tổng cộng {total} tiêu chuẩn</span>,
+                    onChange: (page, size) => {
+                        setCurrentPage(page);
+                        setPageSize(size);
+                    },
+                }}
+            />
 
             {/* Footer Tip */}
             <div className="bg-green-600/5 border border-green-100 p-6 rounded-2xl flex items-center gap-6">

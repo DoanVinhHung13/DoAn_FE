@@ -32,6 +32,7 @@ import CropCatalogService from 'src/services/CropCatalogService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard';
 
 const { Text } = Typography;
 
@@ -65,7 +66,7 @@ const StatusBadge = ({ record }) => {
   const active = isCatalogActive(record);
   return (
     <span
-      className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+      className={`crop-catalog-status-badge inline-flex items-center justify-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${
         active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
       }`}
     >
@@ -85,6 +86,8 @@ const CropCatalogs = () => {
   const [selectedCatalogId, setSelectedCatalogId] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
   const [inlineError, setInlineError] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // SystemKey hook
   const { getCombo, refetchSystemKey } = useSystemKey();
@@ -246,6 +249,16 @@ const CropCatalogs = () => {
     });
   }, [data?.items, keyword, status]);
 
+  const visiblePage = Math.min(
+    page,
+    Math.max(1, Math.ceil(filteredCatalogs.length / pageSize)),
+  );
+
+  const paginatedCatalogs = useMemo(
+    () => filteredCatalogs.slice((visiblePage - 1) * pageSize, visiblePage * pageSize),
+    [filteredCatalogs, pageSize, visiblePage],
+  );
+
   const columns = [
     {
       title: 'STT',
@@ -253,16 +266,16 @@ const CropCatalogs = () => {
       width: 70,
       align: 'center',
       render: (_, __, index) => (
-        <Text className="font-medium text-gray-400">{index + 1}</Text>
+        <Text className="font-medium text-gray-400">{(visiblePage - 1) * pageSize + index + 1}</Text>
       ),
     },
     {
       title: 'Tên loại cây trồng',
       key: 'name',
       dataIndex: 'name',
-      width: 220,
+      width: 250,
       render: (value, record) => (
-        <Text strong className="block truncate text-gray-900">
+        <Text strong className="block whitespace-nowrap text-gray-900">
           {displayValue(value || record.cropCatalogName)}
         </Text>
       ),
@@ -281,7 +294,7 @@ const CropCatalogs = () => {
     {
       title: 'Trạng thái',
       key: 'status',
-      width: 160,
+      width: 170,
       align: 'center',
       render: (_, record) => <StatusBadge record={record} />,
     },
@@ -335,7 +348,7 @@ const CropCatalogs = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="admin-compact-list space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2">
           <FileTextOutlined className="h-6 w-6" />
@@ -375,8 +388,8 @@ const CropCatalogs = () => {
         />
       )}
 
-      <Card variant="borderless" className="rounded-lg shadow-sm">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px]">
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+        <div className="admin-toolbar grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px]">
           <Input
             allowClear
             value={keyword}
@@ -396,21 +409,17 @@ const CropCatalogs = () => {
 
       <Card
         variant="borderless"
-        className="overflow-hidden rounded-lg shadow-sm"
+        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
         styles={{ body: { padding: 0 } }}
       >
         <Table
           bordered
           rowKey={(record) => getItemId(record) || record.name}
           loading={isLoading}
-          dataSource={filteredCatalogs}
+          dataSource={paginatedCatalogs}
           columns={columns}
           tableLayout="fixed"
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            pageSizeOptions: [10, 20, 50],
-          }}
+          pagination={false}
           locale={{
             emptyText: (
               <Empty
@@ -421,6 +430,20 @@ const CropCatalogs = () => {
           }}
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: visiblePage,
+          pageSize,
+          total: filteredCatalogs.length,
+          showSizeChanger: true,
+          pageSizeOptions: [10, 20, 50],
+          onChange: (nextPage, nextPageSize) => {
+            setPage(nextPage);
+            setPageSize(nextPageSize);
+          },
+        }}
+      />
 
       <Modal
         open={!!editingCatalog}

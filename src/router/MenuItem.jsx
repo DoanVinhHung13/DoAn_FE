@@ -16,8 +16,8 @@ import {
   ContainerOutlined,
   ProfileOutlined,
   BarChartOutlined,
+  ExperimentOutlined,
 } from '@ant-design/icons'
-import { Sprout } from 'lucide-react'
 import ROUTER from './ROUTER'
 import { ROLES } from 'src/constants/roles'
 
@@ -45,7 +45,7 @@ export const farmManagerItem = () => [
   },
   {
     key: ROUTER.FM_CROPS,
-    icon: <Sprout className="w-5 h-5" />,
+    icon: <ExperimentOutlined className="text-lg" />,
     label: 'Cây trồng',
   },
   {

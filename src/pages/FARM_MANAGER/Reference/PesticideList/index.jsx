@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Badge, Breadcrumb, Card, Input, Select, Table, Tag, Typography } from 'antd'
 import { FilterOutlined, SafetyCertificateOutlined, SearchOutlined } from '@ant-design/icons'
 import CatalogService from 'src/services/CatalogService'
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 
 const { Title, Text } = Typography
 
@@ -98,6 +99,11 @@ const PesticideList = () => {
     [pesticideData, selectedCategory],
   )
 
+  const paginatedData = useMemo(
+    () => filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [currentPage, filteredData, pageSize],
+  )
+
   const columns = [
     {
       title: 'STT',
@@ -152,7 +158,7 @@ const PesticideList = () => {
   ]
 
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+    <div className="admin-compact-list space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <div className="space-y-3">
         <Breadcrumb
           items={[
@@ -181,8 +187,8 @@ const PesticideList = () => {
         </div>
       </div>
 
-      <Card className="shadow-sm border-gray-100 rounded-2xl" bodyStyle={{ padding: '16px 20px' }}>
-        <div className="flex flex-col sm:flex-row gap-3">
+      <Card className="admin-filter-card shadow-sm border-gray-100 rounded-2xl" bodyStyle={{ padding: '16px 20px' }}>
+        <div className="admin-toolbar flex flex-col sm:flex-row gap-3">
           <Input
             value={searchText}
             placeholder="Tìm theo tên hoặc mã nông dược…"
@@ -194,7 +200,7 @@ const PesticideList = () => {
               setSelectedCategory('all')
               setCurrentPage(1)
             }}
-            className="rounded-xl h-11 border-gray-200"
+            className="rounded-xl h-10 border-gray-200"
           />
           <Select
             value={selectedCategory}
@@ -204,7 +210,7 @@ const PesticideList = () => {
             }}
             options={categoryOptions}
             size="large"
-            className="rounded-xl min-w-[220px] h-11"
+            className="rounded-xl min-w-[220px] h-10"
             suffixIcon={<FilterOutlined className="text-gray-400" />}
           />
         </div>
@@ -219,34 +225,38 @@ const PesticideList = () => {
         />
       )}
 
-      <Card className="shadow-lg border-gray-100 rounded-3xl overflow-hidden" bodyStyle={{ padding: 0 }}>
+      <Card className="admin-data-card shadow-lg border-gray-100 rounded-3xl overflow-hidden" bodyStyle={{ padding: 0 }}>
         <Table
           columns={columns}
-          dataSource={filteredData}
+          dataSource={paginatedData}
           loading={isLoading}
           rowKey="id"
           scroll={{ x: 1000 }}
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50', '100'],
-            showTotal: (total, range) => (
-              <span className="text-xs text-gray-500">
-                {range[0]}-{range[1]} / <strong>{total.toLocaleString()}</strong> nông dược
-              </span>
-            ),
-            onChange: (page, size) => {
-              setCurrentPage(page)
-              setPageSize(size)
-            },
-            className: 'px-6 pb-4',
-          }}
+          pagination={false}
           rowClassName="hover:bg-green-50/30 transition-colors"
           className="custom-tcvn-table"
           locale={{ emptyText: 'Không tìm thấy nông dược phù hợp.' }}
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: currentPage,
+          pageSize,
+          total: filteredData.length,
+          showSizeChanger: true,
+          pageSizeOptions: ['10', '20', '50', '100'],
+          showTotal: (total, range) => (
+            <span className="text-xs text-gray-500">
+              {range[0]}-{range[1]} / <strong>{total.toLocaleString()}</strong> nông dược
+            </span>
+          ),
+          onChange: (page, size) => {
+            setCurrentPage(page)
+            setPageSize(size)
+          },
+        }}
+      />
 
       <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl flex items-start gap-4">
         <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-600 shrink-0 mt-0.5">

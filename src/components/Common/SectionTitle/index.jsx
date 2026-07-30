@@ -1,11 +1,12 @@
 const SectionTitle = ({ children, extra, className = '' }) => (
   <div
-    className={`mb-4 px-4 py-2 rounded-lg font-semibold text-green-800 flex items-center justify-between ${className}`}
-    style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 14 }}
+    className={`section-title mb-4 px-3 py-2 flex items-center justify-between ${className}`}
   >
     <span>{children}</span>
     {extra}
   </div>
 )
+
+// Styling is centralized in the global design system so form sections share one rhythm.
 
 export default SectionTitle

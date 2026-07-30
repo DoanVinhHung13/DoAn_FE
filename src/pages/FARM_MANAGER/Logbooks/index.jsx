@@ -80,30 +80,33 @@ const FarmManagerLogbooks = () => {
   }, [logbooks])
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
+    <div className="admin-compact-list space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <TitleCustom className="!mb-0 flex items-center gap-2">
           <FileTextOutlined className="text-green-600" />
           Duyệt nhật ký canh tác
         </TitleCustom>
+        <Text type="secondary" className="text-xs">
+          Tìm thấy <strong>{visible.length}</strong> nhật ký
+        </Text>
       </div>
 
-      <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: 0 }}>
-        <div className="flex flex-col gap-3 p-4 border-b border-gray-100">
-          <div className="flex flex-wrap gap-2">
-            <Input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onPressEnter={() => setSearch(searchInput.trim())}
-              onClear={() => {
-                setSearchInput('')
-                setSearch('')
-              }}
-              placeholder="Tìm kiếm nhật ký..."
-              prefix={<SearchOutlined className="text-gray-300" />}
-              className="h-10 flex-1 min-w-48 rounded-xl"
-              allowClear
-            />
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+        <div className="admin-toolbar flex flex-wrap items-center gap-2">
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onPressEnter={() => setSearch(searchInput.trim())}
+            onClear={() => {
+              setSearchInput('')
+              setSearch('')
+            }}
+            placeholder="Tìm kiếm nhật ký..."
+            prefix={<SearchOutlined className="text-gray-300" />}
+            className="h-10 min-w-48 flex-1 rounded-xl"
+            allowClear
+          />
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             <Tag color="gold" className="m-0 flex h-10 items-center rounded-xl px-3">
               Chờ duyệt
             </Tag>
@@ -114,10 +117,14 @@ const FarmManagerLogbooks = () => {
               className="h-10 px-3 rounded-xl bg-gray-50"
             />
           </div>
-          <Text type="secondary" className="text-xs">
-            Tìm thấy <strong>{visible.length}</strong> nhật ký
-          </Text>
         </div>
+      </Card>
+
+      <Card
+        variant="borderless"
+        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
 
         {loading ? (
           <div className="p-5">

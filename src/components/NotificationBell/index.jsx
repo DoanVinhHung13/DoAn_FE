@@ -201,11 +201,11 @@ const NotificationBell = () => {
       placement="bottomRight"
       contentStyle={{ padding: 0 }}
     >
-      <div className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl hover:bg-gray-50">
+      <button type="button" aria-label="Mở thông báo" className="admin-icon-button relative">
         <Badge count={data?.unreadCount || 0} size="small" offset={[-2, 2]}>
           <BellOutlined className="text-lg text-gray-400" />
         </Badge>
-      </div>
+      </button>
     </Popover>
   );
 };

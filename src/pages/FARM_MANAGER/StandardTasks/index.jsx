@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import CustomTable from 'src/components/Table/CustomTable'
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
@@ -149,37 +150,39 @@ const TasksManagement = () => {
       title: 'Tên công việc',
       dataIndex: 'name',
       key: 'name',
+      width: 330,
       render: (v) => (
-        <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
+        <span className="text-sm font-medium text-gray-800">{v || '—'}</span>
       ),
     },
     {
       title: 'Mô tả',
       dataIndex: 'description',
       key: 'description',
+      width: 500,
       render: (v) => (
-        <span className="text-sm font-semibold text-gray-800">{v || '—'}</span>
+        <span className="text-sm text-gray-600">{v || '—'}</span>
       ),
     },
     {
       title: 'Danh mục cây trồng',
       dataIndex: 'cropCatalogName',
       key: 'cropCatalogName',
-      width: 180,
+      width: 220,
       render: (v) => <span className="text-sm text-gray-600">{v || '—'}</span>,
     },
     {
       title: 'Cây trồng',
       dataIndex: 'cropName',
       key: 'cropName',
-      width: 160,
+      width: 200,
       render: (v) => <span className="text-sm font-semibold text-gray-700">{v || '—'}</span>,
     },
     {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 100,
+      width: 120,
       align: 'center',
       render: (_, record) => {
         return (
@@ -224,7 +227,7 @@ const TasksManagement = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+    <div className="admin-compact-list space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       {/* ── Header ── */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -242,13 +245,9 @@ const TasksManagement = () => {
           Thêm mới
         </Button>
       </div>
-      <Card
-        bordered={false}
-        className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: 0 }}
-      >
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
         {/* Toolbar */}
-        <div className="flex flex-col gap-3 p-5 border-b border-gray-100 sm:flex-row sm:flex-wrap">
+        <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -296,38 +295,49 @@ const TasksManagement = () => {
           </div>
         </div>
 
+      </Card>
+
+      <Card
+        variant="borderless"
+        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
         {/* Table */}
         <CustomTable
           dataSource={listData}
           columns={columns}
           rowKey="id"
           loading={loading}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 1420 }}
           onRow={(record) => ({
             onClick: () => navigate(ROUTER.FM_TASK_CATALOG_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
           locale={{ emptyText: 'Không có dữ liệu công việc.' }}
-          pagination={{
-            current: page,
-            pageSize,
-            total: totalRecords,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE,
-            showTotal: (total, range) => (
-              <span className="text-xs text-gray-500">
-                {range[0]}–{range[1]} /{' '}
-                <strong>{total}</strong>
-              </span>
-            ),
-            onChange: (p, ps) => {
-              setPage(p)
-              setPageSize(ps)
-            },
-          }}
+          pagination={false}
           rowClassName="hover:bg-blue-50/30 transition-colors"
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: page,
+          pageSize,
+          total: totalRecords,
+          showSizeChanger: true,
+          pageSizeOptions: PAGE_SIZE,
+          showTotal: (total, range) => (
+            <span className="text-xs text-gray-500">
+              {range[0]}–{range[1]} /{' '}
+              <strong>{total}</strong>
+            </span>
+          ),
+          onChange: (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        }}
+      />
     </div>
   )
 }

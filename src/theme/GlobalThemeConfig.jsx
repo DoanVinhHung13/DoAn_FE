@@ -1,9 +1,7 @@
-﻿import { ConfigProvider, theme as antdTheme } from "antd"
-import { useContext } from "react"
-import { StoreContext } from "src/contexts"
-
-// Màu primary của EAPLS (xanh lá nông nghiệp)
-export const ColorPrimary = "#22c55e"
+import { ConfigProvider, theme as antdTheme } from 'antd'
+import { useContext } from 'react'
+import { StoreContext } from 'src/contexts'
+import designTokens from './designTokens'
 
 function GlobalThemeConfig({ children }) {
   const { themeStore } = useContext(StoreContext)
@@ -12,42 +10,78 @@ function GlobalThemeConfig({ children }) {
   return (
     <ConfigProvider
       theme={{
-        algorithm: isDarkMode
-          ? antdTheme.darkAlgorithm
-          : antdTheme.defaultAlgorithm,
+        algorithm: isDarkMode ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary:  ColorPrimary,
-          colorInfo:     ColorPrimary,
-          colorSuccess:  "#16a34a",
-          colorLink:     "#15803d",
-          colorLinkHover: ColorPrimary,
-          fontSize:      16,
-          fontFamily:    `"Inter", "Roboto", Helvetica, sans-serif`,
-          borderRadius:  12,
-          colorBgBase:   isDarkMode ? "#1a1a1a" : "#ffffff",
-          colorIcon:     isDarkMode ? "#ffffff" : "#000000",
+          colorPrimary: designTokens.colors.primary,
+          colorPrimaryHover: designTokens.colors.primaryHover,
+          colorPrimaryActive: designTokens.colors.primaryActive,
+          colorInfo: designTokens.colors.info,
+          colorSuccess: designTokens.colors.success,
+          colorWarning: designTokens.colors.warning,
+          colorError: designTokens.colors.error,
+          colorLink: designTokens.colors.primary,
+          colorLinkHover: designTokens.colors.primaryHover,
+          colorTextBase: designTokens.colors.textPrimary,
+          colorBgBase: isDarkMode ? '#101815' : designTokens.colors.surface,
+          colorBgLayout: isDarkMode ? '#0f1714' : designTokens.colors.background,
+          colorBgContainer: isDarkMode ? '#17221d' : designTokens.colors.surface,
+          colorBorder: isDarkMode ? '#30443a' : designTokens.colors.border,
+          colorText: isDarkMode ? '#edf7f1' : designTokens.colors.textPrimary,
+          colorTextSecondary: isDarkMode ? '#b4c7bc' : designTokens.colors.textSecondary,
+          colorTextTertiary: isDarkMode ? '#8fa69a' : designTokens.colors.textMuted,
+          fontSize: designTokens.typography.body,
+          fontFamily: designTokens.typography.fontFamily,
+          borderRadius: designTokens.radius.md,
+          controlHeight: designTokens.controlHeight.md,
+          controlHeightSM: designTokens.controlHeight.sm,
+          controlHeightLG: designTokens.controlHeight.lg,
         },
         components: {
           Button: {
-            controlHeight:  40,
-            fontWeight:     600,
-            borderRadius:   8,
-            borderRadiusLG: 8,
-            lineWidth:      2,
+            controlHeight: designTokens.controlHeight.md,
+            controlHeightSM: designTokens.controlHeight.sm,
+            controlHeightLG: designTokens.controlHeight.lg,
+            fontWeight: 600,
+            borderRadius: designTokens.radius.md,
+            borderRadiusLG: designTokens.radius.md,
+            lineWidth: 1,
+          },
+          Input: {
+            controlHeight: designTokens.controlHeight.md,
+            controlHeightSM: designTokens.controlHeight.sm,
+            controlHeightLG: designTokens.controlHeight.lg,
+            activeShadow: `0 0 0 3px ${designTokens.colors.primarySoft}`,
+          },
+          Select: {
+            controlHeight: designTokens.controlHeight.md,
+            controlHeightSM: designTokens.controlHeight.sm,
+            controlHeightLG: designTokens.controlHeight.lg,
+          },
+          DatePicker: {
+            controlHeight: designTokens.controlHeight.md,
+            controlHeightSM: designTokens.controlHeight.sm,
+            controlHeightLG: designTokens.controlHeight.lg,
           },
           Menu: {
-            itemHeight:        50,
-            itemSelectedBg:    "#f0fdf4",
-            itemSelectedColor: "#15803d",
+            itemHeight: 40,
+            itemBorderRadius: designTokens.radius.md,
+            itemSelectedBg: designTokens.colors.primarySoft,
+            itemSelectedColor: designTokens.colors.primary,
+            itemHoverBg: designTokens.colors.surfaceMuted,
+          },
+          Card: {
+            borderRadiusLG: designTokens.radius.lg,
           },
           Table: {
-            headerColor:        "#ffffff",
-            headerBg:           ColorPrimary,
-            cellPaddingInline:  12,
-            cellPaddingBlock:   8,
-            headerBorderRadius: 8,
-            borderRadius:       8,
-            fontSize:           14,
+            headerBg: designTokens.colors.surfaceMuted,
+            headerColor: designTokens.colors.textSecondary,
+            cellPaddingInline: designTokens.spacing.lg,
+            cellPaddingBlock: 12,
+            borderRadius: designTokens.radius.lg,
+            fontSize: designTokens.typography.body,
+          },
+          Modal: {
+            borderRadiusLG: designTokens.radius.xl,
           },
         },
       }}

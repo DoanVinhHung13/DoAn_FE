@@ -67,7 +67,7 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
   return (
     <List.Item
       onClick={onClick}
-      className="px-3 py-2 mb-2 transition-colors cursor-pointer rounded-xl"
+      className="supervisor-stage-item px-4 py-2 mb-2 transition-colors cursor-pointer rounded-xl"
       style={{
         border: isActive ? "1px solid #22c55e" : "1px solid #e5e7eb",
         background: isActive ? "#f0fdf4" : "#fff",
@@ -95,7 +95,7 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
         }
         description={
           <div className="flex flex-col mt-1 ">
-            <Tag color={cfg.color} style={{ margin: 0, fontSize: 10 }}>
+            <Tag color={cfg.color} className="supervisor-stage-status" style={{ margin: 0, fontSize: 10 }}>
               {cfg.label}
             </Tag>
           </div>
@@ -375,8 +375,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           {/* Cột trái: Danh sách giai đoạn dạng timeline */}
           <Col
             xs={24}
-            lg={8}
-            xl={6}
+            lg={9}
+            xl={7}
             className="pb-6 border-b border-gray-100 lg:border-b-0 lg:border-r lg:pr-6 lg:pb-0"
           >
             <p className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">
@@ -412,7 +412,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           </Col>
 
           {/* Cột phải: Chi tiết giai đoạn */}
-          <Col xs={24} lg={16} xl={18}>
+          <Col xs={24} lg={15} xl={17}>
             {!selectedStage ? (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}

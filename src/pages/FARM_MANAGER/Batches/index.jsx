@@ -10,6 +10,7 @@ import { useCallback, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 import CustomTable from "src/components/Table/CustomTable"
+import AdminPaginationCard from "src/components/Table/AdminPaginationCard"
 import TitleCustom from "src/components/TitleCustom"
 import { formatAreaUnit } from "src/constants/measurementUnits"
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from "src/constants/pageSizeOptions"
@@ -304,12 +305,8 @@ const Batches = () => {
         <TitleCustom className="!mb-0">Quản lý Lô thu hoạch</TitleCustom>
       </div>
 
-      <Card
-        bordered={false}
-        className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: 0 }}
-      >
-        <div className="flex flex-col gap-3 p-5 border-b border-gray-100 sm:flex-row sm:flex-wrap">
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+        <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
             onChange={event => setSearchInput(event.target.value)}
@@ -346,6 +343,13 @@ const Batches = () => {
           </div>
         </div>
 
+      </Card>
+
+      <Card
+        variant="borderless"
+        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
         <CustomTable
           dataSource={batches}
           columns={columns}
@@ -358,25 +362,29 @@ const Batches = () => {
             },
           })}
           textEmpty="Không có lô thu hoạch nào"
-          pagination={{
-            current: page,
-            pageSize,
-            total: totalRecords,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE,
-            showTotal: (total, range) => (
-              <span className="text-xs text-gray-500">
-                {range[0]}–{range[1]} / <strong>{total}</strong>
-              </span>
-            ),
-            onChange: (nextPage, nextPageSize) => {
-              setPage(nextPage)
-              setPageSize(nextPageSize)
-            },
-          }}
+          pagination={false}
           rowClassName="hover:bg-green-50/50 transition-colors cursor-pointer"
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: page,
+          pageSize,
+          total: totalRecords,
+          showSizeChanger: true,
+          pageSizeOptions: PAGE_SIZE,
+          showTotal: (total, range) => (
+            <span className="text-xs text-gray-500">
+              {range[0]}–{range[1]} / <strong>{total}</strong>
+            </span>
+          ),
+          onChange: (nextPage, nextPageSize) => {
+            setPage(nextPage)
+            setPageSize(nextPageSize)
+          },
+        }}
+      />
     </div>
   )
 }

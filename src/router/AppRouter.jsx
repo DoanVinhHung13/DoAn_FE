@@ -33,6 +33,7 @@ const Trace = React.lazy(() => import('../pages/ANONYMOUS/Trace'))
 const FarmManagerDashboard = React.lazy(() => import('../pages/FARM_MANAGER/Dashboard'))
 const FarmManagerUsers = React.lazy(() => import('../pages/FARM_MANAGER/Users'))
 const FarmManagerUserDetail = React.lazy(() => import('../pages/FARM_MANAGER/Users/UserDetail'))
+const FarmSupervisorUserDetail = React.lazy(() => import('../pages/FARM_MANAGER/Users/UserDetail'))
 const FarmManagerLands = React.lazy(() => import('../pages/FARM_MANAGER/Lands'))
 const FarmManagerLandPlotCreate = React.lazy(() => import('../pages/FARM_MANAGER/Lands/LandPlotCreate'))
 const FarmManagerLandPlotDetail = React.lazy(() => import('../pages/FARM_MANAGER/Lands/LandPlotDetail'))
@@ -241,6 +242,7 @@ const routes = [
 
               // Farmers
               { path: ROUTER.FS_FARMERS, element: <Lazy><FarmSupervisorFarmers /></Lazy> },
+              { path: ROUTER.FS_USER_DETAIL, element: <Lazy><FarmSupervisorUserDetail /></Lazy> },
 
               // Lands
               { path: ROUTER.FS_LANDS, element: <Lazy><FarmSupervisorLands /></Lazy> },

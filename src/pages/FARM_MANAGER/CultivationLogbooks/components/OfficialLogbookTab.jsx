@@ -22,43 +22,38 @@ const SectionTitle = ({ children }) => (
 const StageListItem = ({ stage, index, isActive, onClick }) => (
   <List.Item
     onClick={onClick}
-    className="mb-2 cursor-pointer rounded-xl px-3 py-2 transition-colors"
+    className="mb-2 cursor-pointer rounded-xl px-4 py-2 transition-colors"
     style={{
       border: isActive ? '1px solid #22c55e' : '1px solid #e5e7eb',
       background: isActive ? '#f0fdf4' : '#fff',
     }}
   >
-    <List.Item.Meta
-      avatar={
-        <Avatar
-          size={32}
-          style={{
-            backgroundColor: isActive ? '#16a34a' : '#f3f4f6',
-            color: isActive ? '#fff' : '#6b7280',
-            fontWeight: 700,
-          }}
-        >
-          {index + 1}
-        </Avatar>
-      }
-      title={
-        <Text strong style={{ color: isActive ? '#15803d' : '#1f2937', whiteSpace: 'normal' }}>
+    <div className="flex w-full min-w-0 items-start gap-3">
+      <Avatar
+        size={32}
+        className="shrink-0"
+        style={{
+          backgroundColor: isActive ? '#16a34a' : '#f3f4f6',
+          color: isActive ? '#fff' : '#6b7280',
+          fontWeight: 700,
+        }}
+      >
+        {index + 1}
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <Text strong className="block" style={{ color: isActive ? '#15803d' : '#1f2937', whiteSpace: 'normal' }}>
           {stage.stageName || stage.name || `Giai đoạn ${index + 1}`}
         </Text>
-      }
-      description={
         <div className="flex flex-col gap-0.5">
           <Text type="secondary" style={{ fontSize: 11 }}>
-            Kế hoạch: {stage.startDate ? formatDate(stage.startDate) : 'Chưa xác định'}{' — '}
-            {stage.endDate ? formatDate(stage.endDate) : 'Chưa xác định'}
+            Kế hoạch: {stage.startDate ? formatDate(stage.startDate) : 'Chưa xác định'} — {stage.endDate ? formatDate(stage.endDate) : 'Chưa xác định'}
           </Text>
           <Text style={{ fontSize: 11, color: stage.actualStartDate ? '#16a34a' : '#9ca3af' }}>
-            Thực tế: {stage.actualStartDate ? formatDate(stage.actualStartDate) : 'Chưa bắt đầu'}{' — '}
-            {stage.actualEndDate ? formatDate(stage.actualEndDate) : 'Đang thực hiện'}
+            Thực tế: {stage.actualStartDate ? formatDate(stage.actualStartDate) : 'Chưa bắt đầu'} — {stage.actualEndDate ? formatDate(stage.actualEndDate) : 'Đang thực hiện'}
           </Text>
         </div>
-      }
-    />
+      </div>
+    </div>
   </List.Item>
 )
 
@@ -111,7 +106,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
   return (
     <div className="space-y-6">
       <Card bordered={false} className="shadow-sm rounded-2xl">
-        <SectionTitle>Nhật ký chính thức (Đã biên tập bởi Supervisor)</SectionTitle>
+        <SectionTitle>Nhật ký chính thức</SectionTitle>
 
         {stages.length ? (
           <div className="flex flex-col gap-6 lg:flex-row">
@@ -121,6 +116,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                 Giai đoạn canh tác
               </p>
               <List
+                className="official-stage-list"
                 itemLayout="horizontal"
                 split={false}
                 dataSource={stages}

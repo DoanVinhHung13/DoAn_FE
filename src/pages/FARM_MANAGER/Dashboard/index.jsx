@@ -217,21 +217,21 @@ const Dashboard = () => {
   const weatherSectionLoading = plotsLoading || (featuredPlots.length > 0 && weatherLoading)
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-700">
-      <div className="mb-2 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
-        <div className="space-y-1">
-          <Title level={4} className="!mb-0 !text-xs !font-medium uppercase tracking-widest !text-gray-400">
+    <div className="admin-dashboard-screen w-full space-y-8 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-700">
+      <div className="admin-page-header">
+        <div className="min-w-0">
+          <Title level={4} className="admin-page-eyebrow !mb-1 !text-xs !font-semibold uppercase tracking-widest">
             {user?.role?.toUpperCase() === 'FARM_MANAGER' ? 'Tổng quan hệ thống' : 'Tổng quan nông trại'}
           </Title>
-          <Title level={2} className="!mb-0">
+          <Title level={2} className="admin-page-title !mb-1">
             Chào bạn,{' '}
             <span className="text-green-600">{user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}</span>! 👋
           </Title>
-          <Text className="whitespace-nowrap font-medium text-gray-500">
+          <Text className="admin-page-subtitle whitespace-nowrap font-medium">
             Hôm nay là {formatCurrentDate()}
           </Text>
         </div>
-        <Button icon={<CompassOutlined />} className="rounded-xl border-gray-200 font-bold text-gray-600 hover:text-green-600">
+        <Button icon={<CompassOutlined />} className="admin-secondary-action shrink-0">
           Khám phá module
         </Button>
       </div>
@@ -318,10 +318,7 @@ const Dashboard = () => {
                   to={item.path}
                   className="group flex cursor-pointer flex-col items-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
                 >
-                  <div
-                    className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl shadow-sm transition-[transform,box-shadow] duration-300 group-hover:-translate-y-1 group-hover:shadow-lg"
-                    style={{ backgroundColor: `${item.color}15`, color: item.color }}
-                  >
+                  <div className="dashboard-quick-icon mb-4 flex h-16 w-16 items-center justify-center rounded-2xl shadow-sm transition-[transform,box-shadow] duration-300 group-hover:-translate-y-1 group-hover:shadow-lg">
                     <span aria-hidden="true">{item.icon}</span>
                   </div>
                   <span className="text-[13px] font-bold leading-tight text-gray-700 transition-colors group-hover:text-green-600">

@@ -45,6 +45,7 @@ import ROUTER from 'src/router/ROUTER'
 
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
 import InventoryImportModal from 'src/components/Inventory/InventoryImportModal'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
@@ -200,7 +201,7 @@ const ViewFertilizers = () => {
       title: 'Loại Phân Bón',
       dataIndex: 'type',
       key: 'type',
-      width: 140,
+      width: 170,
       render: (v, record) => {
         const typeVal = v || record.category
         return typeVal ? (
@@ -216,7 +217,7 @@ const ViewFertilizers = () => {
       title: 'Tồn kho thực tế',
       dataIndex: 'inventoryQuantity',
       key: 'inventoryQuantity',
-      width: 140,
+      width: 165,
       align: 'right',
       render: (v, record) => (
         <span className="text-sm font-semibold text-blue-600">
@@ -230,7 +231,7 @@ const ViewFertilizers = () => {
       title: 'Tồn kho tối thiểu',
       dataIndex: 'minimumStock',
       key: 'minimumStock',
-      width: 140,
+      width: 165,
       align: 'right',
       render: (v, record) => (
         <span className="text-sm font-semibold text-gray-700">
@@ -244,7 +245,7 @@ const ViewFertilizers = () => {
       title: 'Trạng thái',
       dataIndex: 'isActive',
       key: 'isActive',
-      width: 150,
+      width: 165,
       render: (isActive) => {
         const active = isActive !== false
         const sysVal = active ? 'ACTIVE' : 'INACTIVE'
@@ -273,7 +274,7 @@ const ViewFertilizers = () => {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 140,
+      width: 150,
       align: 'center',
       render: (_, record) => {
         const locked = record.isInActiveUse
@@ -349,7 +350,7 @@ const ViewFertilizers = () => {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+    <div className="admin-compact-list space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       {/* ── Header ── */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -381,13 +382,9 @@ const ViewFertilizers = () => {
       )}
 
       {/* ── Table card ── */}
-      <Card
-        bordered={false}
-        className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: 0 }}
-      >
+      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
         {/* Toolbar */}
-        <div className="flex flex-col gap-3 p-5 border-b border-gray-100 sm:flex-row sm:flex-wrap">
+        <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -433,38 +430,49 @@ const ViewFertilizers = () => {
           </div>
         </div>
 
+      </Card>
+
+      <Card
+        variant="borderless"
+        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
+        styles={{ body: { padding: 0 } }}
+      >
         {/* Table */}
         <CustomTable
           dataSource={listData}
           columns={columns}
           rowKey="id"
           loading={loading}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 1120 }}
           onRow={(record) => ({
             onClick: () => navigate(ROUTER.FM_FERTILIZER_DETAIL.replace(':id', record.id)),
             className: 'cursor-pointer',
           })}
           locale={{ emptyText: 'Không có dữ liệu phân bón.' }}
-          pagination={{
-            current: page,
-            pageSize,
-            total: totalRecords,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE,
-            showTotal: (total, range) => (
-              <span className="text-xs text-gray-500">
-                {range[0]}–{range[1]} /{' '}
-                <strong>{total}</strong>
-              </span>
-            ),
-            onChange: (p, ps) => {
-              setPage(p)
-              setPageSize(ps)
-            },
-          }}
+          pagination={false}
           rowClassName="hover:bg-green-50/30 transition-colors"
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: page,
+          pageSize,
+          total: totalRecords,
+          showSizeChanger: true,
+          pageSizeOptions: PAGE_SIZE,
+          showTotal: (total, range) => (
+            <span className="text-xs text-gray-500">
+              {range[0]}–{range[1]} /{' '}
+              <strong>{total}</strong>
+            </span>
+          ),
+          onChange: (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        }}
+      />
 
       {/* ── Modals ── */}
 

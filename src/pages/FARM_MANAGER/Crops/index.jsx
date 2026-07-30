@@ -16,13 +16,13 @@ import {
 } from 'antd';
 import {
   CheckCircleOutlined,
+  ExperimentOutlined,
   EditOutlined,
   EyeOutlined,
   SearchOutlined,
   StopOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
 import CropManagementService from 'src/services/CropManagementService';
@@ -31,6 +31,7 @@ import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import TableCustom from 'src/components/Table/CustomTable';
+import AdminPaginationCard from 'src/components/Table/AdminPaginationCard';
 
 const { Text } = Typography;
 
@@ -107,6 +108,8 @@ const Crops = () => {
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name-asc');
   const [statusTarget, setStatusTarget] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const { getCombo } = useSystemKey();
   const cropStatusOptions = getCombo(SYSTEM_KEY.CROP_STATUS);
@@ -235,6 +238,16 @@ const Crops = () => {
     });
   }, [category, data?.items, keyword, sortBy, status]);
 
+  const visiblePage = Math.min(
+    page,
+    Math.max(1, Math.ceil(filteredCrops.length / pageSize)),
+  );
+
+  const paginatedCrops = useMemo(
+    () => filteredCrops.slice((visiblePage - 1) * pageSize, visiblePage * pageSize),
+    [filteredCrops, pageSize, visiblePage],
+  );
+
   const categoryOptions = useMemo(() => {
     const categories = [
       ...new Set((data?.items || []).map((item) => item.cropCatalogId).filter(Boolean)),
@@ -257,14 +270,14 @@ const Crops = () => {
       width: 50,
       align: 'center',
       render: (_, __, index) => (
-        <Text className="font-medium text-gray-400">{index + 1}</Text>
+        <Text className="font-medium text-gray-400">{(visiblePage - 1) * pageSize + index + 1}</Text>
       ),
     },
     {
       title: 'Tên cây trồng',
       dataIndex: 'name',
       key: 'name',
-      width: 220,
+      width: 360,
       render: (value, record) => {
         const imgUrl = record.imageUrl || record.image || record.thumbnail || record.thumbnailUrl || record.photo || record.picture;
         return (
@@ -273,11 +286,11 @@ const Crops = () => {
               <img
                 src={imgUrl}
                 alt={displayValue(value)}
-                className="h-12 w-12 shrink-0 rounded-lg border border-gray-200 object-cover"
+                className="h-10 w-10 shrink-0 rounded-lg border border-gray-200 object-cover"
               />
             ) : (
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
-                <Sprout className="h-5 w-5" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
+                <ExperimentOutlined className="text-lg" />
               </div>
             )}
             <Text strong className="block truncate text-gray-900">
@@ -291,7 +304,7 @@ const Crops = () => {
       title: 'Danh mục',
       dataIndex: 'cropCatalogId',
       key: 'cropCatalogId',
-      width: 150,
+      width: 280,
       align: 'center',
       render: (value) => {
         const catalog = cropCatalogsData?.find(c => c.id === value || c.cropCatalogId === value);
@@ -309,7 +322,7 @@ const Crops = () => {
     {
       title: 'Trạng thái',
       key: 'status',
-      width: 150,
+      width: 240,
       align: 'center',
       render: (_, record) => {
         const isActive = isCropActive(record);
@@ -330,7 +343,7 @@ const Crops = () => {
     {
       title: 'Hành động',
       key: 'action',
-      width: 120,
+      width: 180,
       align: 'center',
       fixed: 'right',
       render: (_, record) => (
@@ -377,15 +390,15 @@ const Crops = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="admin-compact-list crops-screen space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <Sprout className="h-6 w-6" />
+          <ExperimentOutlined />
           Cây trồng
         </TitleCustom>
         <Button
           type="primary"
-          icon={<Sprout />}
+          icon={<ExperimentOutlined />}
           onClick={() => navigate(ROUTER.FM_CROP_CREATE)}
           className="h-10 rounded-lg bg-green-600 px-5 font-medium hover:bg-green-700"
         >
@@ -407,53 +420,50 @@ const Crops = () => {
         />
       )}
 
-      <Card variant="borderless" className="rounded-lg shadow-sm">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_200px_200px_260px]">
+      <Card variant="borderless" className="admin-filter-card crops-filter-card rounded-lg shadow-sm">
+        <div className="admin-toolbar grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1fr)_180px_180px_220px]">
           <Input
             allowClear
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             prefix={<SearchOutlined className="text-gray-400" />}
             placeholder="Tìm theo tên, mô tả..."
-            className="h-11 rounded-lg"
+            className="h-10 rounded-lg"
           />
           <Select
             value={status}
             onChange={setStatus}
             options={statusFilterOptions}
-            className="h-11"
+            className="h-10"
           />
           <Select
             value={category}
             onChange={setCategory}
             options={categoryOptions}
-            className="h-11"
+            className="h-10"
           />
           <Select
             value={sortBy}
             onChange={setSortBy}
             options={SORT_OPTIONS}
-            className="h-11"
+            className="h-10"
           />
         </div>
       </Card>
 
       <Card
         variant="borderless"
-        className="overflow-hidden rounded-lg shadow-sm"
+        className="crops-table-card overflow-hidden rounded-lg shadow-sm"
         styles={{ body: { padding: 0 } }}
       >
         <TableCustom
           rowKey={(record) => getItemId(record) || record.cropCode || record.name}
           loading={isLoading}
-          dataSource={filteredCrops}
+          dataSource={paginatedCrops}
           columns={columns}
-          scroll={{ x: 'max-content' }}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            pageSizeOptions: [10, 20, 50],
-          }}
+          scroll={{ x: 1120 }}
+          tableLayout="fixed"
+          pagination={false}
           locale={{
             emptyText: (
               <Empty
@@ -464,6 +474,20 @@ const Crops = () => {
           }}
         />
       </Card>
+
+      <AdminPaginationCard
+        pagination={{
+          current: visiblePage,
+          pageSize,
+          total: filteredCrops.length,
+          showSizeChanger: true,
+          pageSizeOptions: [10, 20, 50],
+          onChange: (nextPage, nextPageSize) => {
+            setPage(nextPage);
+            setPageSize(nextPageSize);
+          },
+        }}
+      />
 
       <Modal
         open={!!statusTarget}

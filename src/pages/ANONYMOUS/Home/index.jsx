@@ -8,8 +8,6 @@ import {
   BenefitsSection,
   TechSection,
   SupplyChainSection,
-  ProductShowcaseSection,
-  SuccessStoriesSection,
   ConsultationSection,
 } from './components'
 
@@ -27,8 +25,6 @@ const LandingPage = () => {
       <BenefitsSection />
       <TechSection />
       <SupplyChainSection />
-      <ProductShowcaseSection />
-      <SuccessStoriesSection />
       {/* <AboutSection /> */}
       <ConsultationSection />
       {/* <FooterSection /> */}
