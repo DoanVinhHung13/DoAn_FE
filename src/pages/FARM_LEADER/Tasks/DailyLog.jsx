@@ -151,17 +151,25 @@ const getPesticideUsageQuarantineDays = (pesticide, option, task) => {
     .filter(value => value !== null && value !== undefined && value !== "")
     .map(value => String(value).trim().toLowerCase())
 
-  const matchingUsage = usages.find(usage => {
+  const matchingUsages = usages.filter(usage => {
     const target = usage?.targetCrop ?? usage?.target ?? usage?.crop
     const targetKeys = (Array.isArray(target) ? target : [target])
       .filter(value => value !== null && value !== undefined && value !== "")
-      .map(value => String(value?.id || value?.name || value).trim().toLowerCase())
+      .flatMap(value =>
+        String(value?.id || value?.name || value)
+          .split(",")
+          .map(item => item.trim().toLowerCase())
+          .filter(Boolean),
+      )
 
     return !cropKeys.length || !targetKeys.length || targetKeys.some(key => cropKeys.includes(key))
   })
-  const usage = matchingUsage || usages[0]
+  const applicableUsages = matchingUsages.length > 0 ? matchingUsages : usages
 
-  return toFiniteNumber(usage?.quarantineDays ?? usage?.isolationDays) ?? null
+  return applicableUsages.reduce((maxDays, usage) => {
+    const days = toFiniteNumber(usage?.quarantineDays ?? usage?.isolationDays)
+    return days !== null ? Math.max(maxDays, days) : maxDays
+  }, 0) || null
 }
 
 const getIsolationWarnings = (dailyLogs, pesticideOptions, task, summaryDate) => {
@@ -173,7 +181,9 @@ const getIsolationWarnings = (dailyLogs, pesticideOptions, task, summaryDate) =>
 
     for (const pesticide of log.pesticides || []) {
       const pesticideId = pesticide.pesticideId || pesticide.id || pesticide.materialId
-      const option = pesticideOptions.find(item => String(item.value) === String(pesticideId))
+      const option = pesticideOptions.find(item =>
+        [item.value, item.materialId].some(id => String(id) === String(pesticideId)),
+      )
       const quarantineDays = getPesticideUsageQuarantineDays(pesticide, option, task)
       if (quarantineDays === null || quarantineDays <= 0) continue
 
@@ -280,9 +290,10 @@ const DailyLog = () => {
         ],
       })
       const result = unwrap(response)
+      const recommendations = result?.recommendations || result?.Recommendations || []
       setEntryRecommendations(previous => ({
         ...previous,
-        [key]: result?.recommendations?.[0] || null,
+        [key]: recommendations[0] || null,
       }))
     } catch (error) {
       console.error(error)
@@ -982,34 +993,20 @@ const DailyLog = () => {
                             </span>
                           </Col>
                         </Row>
-                        <Form.Item
-                          noStyle
-                          shouldUpdate={(previousValues, currentValues) =>
-                            previousValues?.fertilizers?.[field.name]
-                              ?.fertilizerId !==
-                              currentValues?.fertilizers?.[field.name]
-                                ?.fertilizerId ||
-                            previousValues?.fertilizers?.[field.name]?.area !==
-                              currentValues?.fertilizers?.[field.name]?.area
-                          }
-                        >
-                          {() => {
-                            const recommendation =
-                              entryRecommendations[`FERTILIZER-${field.name}`]
+                        {entryRecommendations[`FERTILIZER-${field.name}`] && (() => {
+                          const recommendation =
+                            entryRecommendations[`FERTILIZER-${field.name}`]
 
-                            if (!recommendation) return null
-
-                            return (
+                          return (
                               <Alert
-                                type="info"
+                                type="warning"
                                 showIcon
-                                className="mt-2 rounded-lg"
+                                className="mt-1 rounded-lg [&_.ant-alert-message]:text-[11px] [&_.ant-alert-description]:text-[11px] [&_.ant-alert-description]:leading-4"
                                 message={`Khuyến nghị lượng phân bón: ${recommendation.recommendationText}`}
                                 description="Tính theo liều lượng đã khai báo trong chi tiết phân bón."
                               />
                             )
-                          }}
-                        </Form.Item>
+                        })()}
                       </div>
                     ))}
                     {!isViewOnly && (
@@ -1239,32 +1236,20 @@ const DailyLog = () => {
                             )
                           }}
                         </Form.Item>
-                        <Form.Item
-                          noStyle
-                          shouldUpdate={(previousValues, currentValues) =>
-                            previousValues?.pesticides?.[field.name]?.pesticideId !==
-                              currentValues?.pesticides?.[field.name]?.pesticideId ||
-                            previousValues?.pesticides?.[field.name]?.area !==
-                              currentValues?.pesticides?.[field.name]?.area
-                          }
-                        >
-                          {() => {
-                            const recommendation =
-                              entryRecommendations[`PESTICIDE-${field.name}`]
+                        {entryRecommendations[`PESTICIDE-${field.name}`] && (() => {
+                          const recommendation =
+                            entryRecommendations[`PESTICIDE-${field.name}`]
 
-                            if (!recommendation) return null
-
-                            return (
+                          return (
                               <Alert
-                                type="info"
+                                type="warning"
                                 showIcon
-                                className="mt-2 rounded-lg"
+                                className="mt-1 rounded-lg [&_.ant-alert-message]:text-[11px] [&_.ant-alert-description]:text-[11px] [&_.ant-alert-description]:leading-4"
                                 message={`Khuyến nghị lượng nông dược: ${recommendation.recommendationText}`}
                                 description="Tính theo liều lượng đã khai báo trong chi tiết nông dược."
                               />
                             )
-                          }}
-                        </Form.Item>
+                        })()}
                       </div>
                     ))}
                     {!isViewOnly && (
@@ -1537,12 +1522,12 @@ const DailyLog = () => {
           <div className="py-1 space-y-5 text-sm">
             {task.status !== "WAITING_APPROVAL" && isolationWarnings.length > 0 && (
               <Alert
-                type="warning"
+                type="error"
                 showIcon
-                className="rounded-xl"
-                message="Chưa đủ thời gian cách ly"
+                className="rounded-xl border-red-300 bg-red-50"
+                message={<span className="text-red-600">Chưa đủ thời gian cách ly</span>}
                 description={
-                  <div className="space-y-1">
+                  <div className="space-y-1 text-red-600">
                     <div>
                       Ngày gửi Summary: {getLocalNow().format("DD/MM/YYYY")}. Vui lòng chờ đủ số ngày cách ly trước khi gửi.
                     </div>
@@ -1712,7 +1697,7 @@ const DailyLog = () => {
                   />
                   {rows.some(row => row.recommendation) && (
                     <Alert
-                      type="info"
+                      type="warning"
                       showIcon
                       className="mt-3 rounded-xl"
                       message="Khuyến nghị lượng sử dụng phân bón"
@@ -1829,7 +1814,7 @@ const DailyLog = () => {
                   />
                   {rows.some(row => row.recommendation) && (
                     <Alert
-                      type="info"
+                      type="warning"
                       showIcon
                       className="mt-3 rounded-xl"
                       message="Khuyến nghị lượng sử dụng nông dược"
