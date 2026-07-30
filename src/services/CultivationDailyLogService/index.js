@@ -4,6 +4,7 @@ import {
   apiGetDailyLogsByTask,
   apiGetDailyLogsByStage,
   apiGetDailyLogTaskSummary,
+  apiGetMaterialRecommendations,
 } from './urls'
 
 const silentConfig = { skipNotice: true }
@@ -19,11 +20,15 @@ const getByStage = (stageId) =>
 const getTaskSummary = (taskId) =>
   http.get(apiGetDailyLogTaskSummary(taskId), silentConfig)
 
+const getRecommendations = (body) =>
+  http.post(apiGetMaterialRecommendations, body, silentConfig)
+
 const CultivationDailyLogService = {
   create,
   getByTask,
   getByStage,
   getTaskSummary,
+  getRecommendations,
 }
 
 export default CultivationDailyLogService

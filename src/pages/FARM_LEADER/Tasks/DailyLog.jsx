@@ -67,6 +67,7 @@ import UploadService from "src/services/UploadService"
 import { getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
+import { formatMeasurementValue } from "src/utils/materialRecommendations"
 import { getUserDisplayName } from "src/utils/userDisplayName"
 
 const { Text } = Typography
@@ -83,6 +84,59 @@ const getMaterialUnit = item =>
       item?.materialUnit,
     "",
   )
+
+const toFiniteNumber = value => {
+  if (value === null || value === undefined || value === "") return null
+
+  const normalizedValue =
+    typeof value === "string" ? value.replace(",", ".").trim() : value
+  const number = Number(normalizedValue)
+
+  return Number.isFinite(number) ? number : null
+}
+
+const getRemainingArea = item => {
+  if (!item) return null
+
+  const explicitAreaFields = [
+    "remainingArea",
+    "availableArea",
+    "areaRemaining",
+    "remainingAreaUnits",
+    "availableAreaUnits",
+  ]
+
+  for (const field of explicitAreaFields) {
+    const area = toFiniteNumber(item[field])
+    if (area !== null) {
+      return {
+        value: Math.max(area, 0),
+        unit: item.areaUnit || MEASUREMENT_UNITS.SQUARE_METER,
+      }
+    }
+  }
+
+  const inventoryQuantity = [
+    item.remainingQuantity,
+    item.availableQuantity,
+    item.currentInventoryQuantity,
+    item.inventoryQuantity,
+    item.stockQuantity,
+  ]
+    .map(toFiniteNumber)
+    .find(value => value !== null)
+  const dosage = Array.isArray(item.dosages) ? item.dosages[0] : item.dosage
+  const dosageAmount = toFiniteNumber(dosage?.amount)
+
+  if (inventoryQuantity !== undefined && dosageAmount > 0) {
+    return {
+      value: Math.max(inventoryQuantity / dosageAmount, 0),
+      unit: dosage.areaUnit || MEASUREMENT_UNITS.SQUARE_METER,
+    }
+  }
+
+  return null
+}
 
 // usageUnit takes priority for both fertilizers and pesticides
 const toFertilizerOptions = list =>
@@ -114,6 +168,29 @@ const toPesticideOptions = list =>
     }
   })
 
+const getMaterialId = item =>
+  item?.fertilizerId || item?.pesticideId || item?.materialId || item?.id
+
+const loadMaterialDetails = async (items, getById, currentDetails) => {
+  const ids = [
+    ...new Set((items || []).map(getMaterialId).filter(Boolean)),
+  ].filter(id => !currentDetails[id])
+
+  const entries = await Promise.all(
+    ids.map(async id => {
+      try {
+        const detail = unwrap(await getById(id))
+        return detail ? [id, detail] : null
+      } catch (error) {
+        console.error(error)
+        return null
+      }
+    }),
+  )
+
+  return Object.fromEntries(entries.filter(Boolean))
+}
+
 const DailyLog = () => {
   const { getTaskStatus } = useCultivationStatus()
   const { taskId } = useParams()
@@ -129,9 +206,49 @@ const DailyLog = () => {
   const [refreshKey, setRefreshKey] = useState(0)
   const [fileList, setFileList] = useState([])
   const [fertilizerOptions, setFertilizerOptions] = useState([])
+  const [fertilizerDetails, setFertilizerDetails] = useState({})
   const [pesticideOptions, setPesticideOptions] = useState([])
+  const [pesticideDetails, setPesticideDetails] = useState({})
   const [leaderSummary, setLeaderSummary] = useState(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
+  const [entryRecommendations, setEntryRecommendations] = useState({})
+
+  const loadEntryRecommendation = async (
+    materialType,
+    rowIndex,
+    materialId,
+    selectedId,
+    area,
+  ) => {
+    const key = `${materialType}-${rowIndex}`
+    if (!materialId || Number(area) <= 0) {
+      setEntryRecommendations(previous => ({ ...previous, [key]: null }))
+      return
+    }
+
+    try {
+      const response = await CultivationDailyLogService.getRecommendations({
+        taskId,
+        materials: [
+          {
+            materialId,
+            fertilizerId: materialType === "FERTILIZER" ? selectedId : undefined,
+            pesticideId: materialType === "PESTICIDE" ? selectedId : undefined,
+            materialType,
+            area: Number(area),
+          },
+        ],
+      })
+      const result = unwrap(response)
+      setEntryRecommendations(previous => ({
+        ...previous,
+        [key]: result?.recommendations?.[0] || null,
+      }))
+    } catch (error) {
+      console.error(error)
+      setEntryRecommendations(previous => ({ ...previous, [key]: null }))
+    }
+  }
 
   // ── Tính tổng hợp tạm từ dailyLogs đã load ──
   // Được dùng khi API leader-summary chưa trả data
@@ -229,11 +346,13 @@ const DailyLog = () => {
             Array.isArray(fertData) ? fertData : fertData?.items || [],
           ),
         )
+        setFertilizerDetails({})
         setPesticideOptions(
           toPesticideOptions(
             Array.isArray(pestData) ? pestData : pestData?.items || [],
           ),
         )
+        setPesticideDetails({})
 
         form.setFieldsValue({
           date: getLocalNow(),
@@ -320,6 +439,24 @@ const DailyLog = () => {
       if (taskSumRes.status === "fulfilled") {
         const summary = unwrap(taskSumRes.value)
         setLeaderSummary(summary)
+        const [fertilizerData, pesticideData] = await Promise.all([
+          loadMaterialDetails(
+            summary?.fertilizers || summary?.totalFertilizers,
+            FertilizerService.getFertilizerById,
+            fertilizerDetails,
+          ),
+          loadMaterialDetails(
+            summary?.pesticides || summary?.totalPesticides,
+            PesticideService.getPesticideById,
+            pesticideDetails,
+          ),
+        ])
+        if (Object.keys(fertilizerData).length > 0) {
+          setFertilizerDetails(previous => ({ ...previous, ...fertilizerData }))
+        }
+        if (Object.keys(pesticideData).length > 0) {
+          setPesticideDetails(previous => ({ ...previous, ...pesticideData }))
+        }
         // Set description đã gửi vào form để hiển thị
         if (summary?.description) {
           summaryForm.setFieldsValue({
@@ -665,6 +802,7 @@ const DailyLog = () => {
                                     fertilizerOptions.find(
                                       o => o.value === value,
                                     )
+                                  const selectedMaterial = opt?.raw || opt
                                   const unitFromApi = getMaterialUnit(opt?.raw || opt)
                                   form.setFieldValue(
                                     ["fertilizers", field.name, "materialId"],
@@ -686,8 +824,83 @@ const DailyLog = () => {
                                       MEASUREMENT_UNITS.SQUARE_METER,
                                     )
                                   }
+
+                                  loadEntryRecommendation(
+                                    "FERTILIZER",
+                                    field.name,
+                                    opt?.materialId || value,
+                                    value,
+                                    form.getFieldValue([
+                                      "fertilizers",
+                                      field.name,
+                                      "area",
+                                    ]),
+                                  )
+
+                                  if (
+                                    value &&
+                                    !getRemainingArea(selectedMaterial) &&
+                                    !fertilizerDetails[value]
+                                  ) {
+                                    FertilizerService.getFertilizerById(value)
+                                      .then(response => {
+                                        const detail = unwrap(response)
+                                        if (detail) {
+                                          setFertilizerDetails(previous => ({
+                                            ...previous,
+                                            [value]: detail,
+                                          }))
+                                        }
+                                      })
+                                      .catch(error => {
+                                        console.error(error)
+                                      })
+                                  }
                                 }}
                               />
+                            </Form.Item>
+                            <Form.Item
+                              noStyle
+                              shouldUpdate={(previousValues, currentValues) =>
+                                previousValues?.fertilizers?.[field.name]
+                                  ?.fertilizerId !==
+                                currentValues?.fertilizers?.[field.name]
+                                  ?.fertilizerId
+                              }
+                            >
+                              {({ getFieldValue }) => {
+                                const selectedId = getFieldValue([
+                                  "fertilizers",
+                                  field.name,
+                                  "fertilizerId",
+                                ])
+                                const selectedOption = fertilizerOptions.find(
+                                  option =>
+                                    String(option.value) === String(selectedId),
+                                )
+                                const selectedMaterial =
+                                  fertilizerDetails[selectedId] ||
+                                  selectedOption?.raw ||
+                                  selectedOption
+                                const remainingArea = getRemainingArea(
+                                  selectedMaterial,
+                                )
+
+                                if (!selectedId) return null
+
+                                return (
+                                  <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-700">
+                                    <span className="font-medium">
+                                      Diện tích còn lại:
+                                    </span>
+                                    <span className="font-bold">
+                                      {remainingArea
+                                        ? `${formatMeasurementValue(remainingArea.value)} ${remainingArea.unit}`
+                                        : "—"}
+                                    </span>
+                                  </div>
+                                )
+                              }}
                             </Form.Item>
                             <Form.Item
                               {...field}
@@ -742,6 +955,23 @@ const DailyLog = () => {
                                 className="w-full"
                                 placeholder="Diện tích"
                                 disabled={isViewOnly}
+                                onChange={value =>
+                                  loadEntryRecommendation(
+                                    "FERTILIZER",
+                                    field.name,
+                                    form.getFieldValue([
+                                      "fertilizers",
+                                      field.name,
+                                      "materialId",
+                                    ]),
+                                    form.getFieldValue([
+                                      "fertilizers",
+                                      field.name,
+                                      "fertilizerId",
+                                    ]),
+                                    value,
+                                  )
+                                }
                               />
                             </Form.Item>
                           </Col>
@@ -754,6 +984,34 @@ const DailyLog = () => {
                             </span>
                           </Col>
                         </Row>
+                        <Form.Item
+                          noStyle
+                          shouldUpdate={(previousValues, currentValues) =>
+                            previousValues?.fertilizers?.[field.name]
+                              ?.fertilizerId !==
+                              currentValues?.fertilizers?.[field.name]
+                                ?.fertilizerId ||
+                            previousValues?.fertilizers?.[field.name]?.area !==
+                              currentValues?.fertilizers?.[field.name]?.area
+                          }
+                        >
+                          {() => {
+                            const recommendation =
+                              entryRecommendations[`FERTILIZER-${field.name}`]
+
+                            if (!recommendation) return null
+
+                            return (
+                              <Alert
+                                type="info"
+                                showIcon
+                                className="mt-2 rounded-lg"
+                                message={`Khuyến nghị lượng phân bón: ${recommendation.recommendationText}`}
+                                description="Tính theo liều lượng đã khai báo trong chi tiết phân bón."
+                              />
+                            )
+                          }}
+                        </Form.Item>
                       </div>
                     ))}
                     {!isViewOnly && (
@@ -825,8 +1083,9 @@ const DailyLog = () => {
                                     pesticideOptions.find(
                                       o => o.value === value,
                                     )
+                                  const selectedMaterial = opt?.raw || opt
                                   // usageUnit takes priority for pesticides
-                                  const unitFromApi = getMaterialUnit(opt?.raw || opt)
+                                  const unitFromApi = getMaterialUnit(selectedMaterial)
                                   form.setFieldValue(
                                     ["pesticides", field.name, "materialId"],
                                     opt?.materialId || value,
@@ -846,6 +1105,38 @@ const DailyLog = () => {
                                       ["pesticides", field.name, "areaUnit"],
                                       MEASUREMENT_UNITS.SQUARE_METER,
                                     )
+                                  }
+
+                                  loadEntryRecommendation(
+                                    "PESTICIDE",
+                                    field.name,
+                                    opt?.materialId || value,
+                                    value,
+                                    form.getFieldValue([
+                                      "pesticides",
+                                      field.name,
+                                      "area",
+                                    ]),
+                                  )
+
+                                  if (
+                                    value &&
+                                    !selectedMaterial?.usages?.length &&
+                                    !pesticideDetails[value]
+                                  ) {
+                                    PesticideService.getPesticideById(value)
+                                      .then(response => {
+                                        const detail = unwrap(response)
+                                        if (detail) {
+                                          setPesticideDetails(previous => ({
+                                            ...previous,
+                                            [value]: detail,
+                                          }))
+                                        }
+                                      })
+                                      .catch(error => {
+                                        console.error(error)
+                                      })
                                   }
                                 }}
                               />
@@ -903,6 +1194,23 @@ const DailyLog = () => {
                                 className="w-full"
                                 placeholder="Diện tích"
                                 disabled={isViewOnly}
+                                onChange={value =>
+                                  loadEntryRecommendation(
+                                    "PESTICIDE",
+                                    field.name,
+                                    form.getFieldValue([
+                                      "pesticides",
+                                      field.name,
+                                      "materialId",
+                                    ]),
+                                    form.getFieldValue([
+                                      "pesticides",
+                                      field.name,
+                                      "pesticideId",
+                                    ]),
+                                    value,
+                                  )
+                                }
                               />
                             </Form.Item>
                           </Col>
@@ -915,6 +1223,32 @@ const DailyLog = () => {
                             </span>
                           </Col>
                         </Row>
+                        <Form.Item
+                          noStyle
+                          shouldUpdate={(previousValues, currentValues) =>
+                            previousValues?.pesticides?.[field.name]?.pesticideId !==
+                              currentValues?.pesticides?.[field.name]?.pesticideId ||
+                            previousValues?.pesticides?.[field.name]?.area !==
+                              currentValues?.pesticides?.[field.name]?.area
+                          }
+                        >
+                          {() => {
+                            const recommendation =
+                              entryRecommendations[`PESTICIDE-${field.name}`]
+
+                            if (!recommendation) return null
+
+                            return (
+                              <Alert
+                                type="info"
+                                showIcon
+                                className="mt-2 rounded-lg"
+                                message={`Khuyến nghị lượng nông dược: ${recommendation.recommendationText}`}
+                                description="Tính theo liều lượng đã khai báo trong chi tiết nông dược."
+                              />
+                            )
+                          }}
+                        </Form.Item>
                       </div>
                     ))}
                     {!isViewOnly && (
@@ -1259,6 +1593,7 @@ const DailyLog = () => {
                       unit: f.unit ?? "",
                       totalArea: f.totalArea ?? f.area ?? 0,
                       areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                      recommendation: f.recommendationText,
                       days: f.days ?? "—",
                     }))
                   : aggregateFromLogs.fertilizers.map((f, i) => ({
@@ -1268,6 +1603,7 @@ const DailyLog = () => {
                       unit: f.unit,
                       totalArea: f.totalArea,
                       areaUnit: f.areaUnit,
+                      recommendation: f.recommendationText,
                       days: f.days,
                     }))
 
@@ -1336,6 +1672,25 @@ const DailyLog = () => {
                     className="overflow-hidden border border-blue-100 rounded-xl"
                     rowClassName="hover:bg-blue-50/50"
                   />
+                  {rows.some(row => row.recommendation) && (
+                    <Alert
+                      type="info"
+                      showIcon
+                      className="mt-3 rounded-xl"
+                      message="Khuyến nghị lượng sử dụng phân bón"
+                      description={
+                        <div className="space-y-1">
+                          {rows
+                            .filter(row => row.recommendation)
+                            .map(row => (
+                              <div key={row.key}>
+                                {row.name}: nên dùng {row.recommendation}
+                              </div>
+                            ))}
+                        </div>
+                      }
+                    />
+                  )}
                 </div>
               )
             })()}
@@ -1355,6 +1710,7 @@ const DailyLog = () => {
                       unit: p.unit ?? "",
                       totalArea: p.totalArea ?? p.area ?? 0,
                       areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                      recommendation: p.recommendationText,
                       days: p.days ?? "—",
                     }))
                   : aggregateFromLogs.pesticides.map((p, i) => ({
@@ -1364,6 +1720,7 @@ const DailyLog = () => {
                       unit: p.unit,
                       totalArea: p.totalArea,
                       areaUnit: p.areaUnit,
+                      recommendation: p.recommendationText,
                       days: p.days,
                     }))
 
@@ -1432,6 +1789,25 @@ const DailyLog = () => {
                     className="overflow-hidden border border-purple-100 rounded-xl"
                     rowClassName="hover:bg-purple-50/50"
                   />
+                  {rows.some(row => row.recommendation) && (
+                    <Alert
+                      type="info"
+                      showIcon
+                      className="mt-3 rounded-xl"
+                      message="Khuyến nghị lượng sử dụng nông dược"
+                      description={
+                        <div className="space-y-1">
+                          {rows
+                            .filter(row => row.recommendation)
+                            .map(row => (
+                              <div key={row.key}>
+                                {row.name}: nên dùng {row.recommendation}
+                              </div>
+                            ))}
+                        </div>
+                      }
+                    />
+                  )}
                 </div>
               )
             })()}

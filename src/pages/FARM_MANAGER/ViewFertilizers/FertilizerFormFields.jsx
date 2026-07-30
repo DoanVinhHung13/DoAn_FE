@@ -152,6 +152,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               ...d,
               unit: selectedUnit,
               areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+              target: Array.isArray(d.target) ? d.target.join(', ') : (d.target || ''),
             }))
           : [{ ...DEFAULT_DOSAGE, unit: selectedUnit }],
       )
@@ -269,7 +270,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               amount: d.amount.toString(),
               unit: quantityUnit,
               areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-              target: Array.isArray(d.target) ? d.target.join(', ') : (d.target || '')
+              target: Array.isArray(d.target) ? d.target.join(', ') : (d.target || ''),
             }
             if (isEdit && d.id) dos.id = d.id;
             return dos;

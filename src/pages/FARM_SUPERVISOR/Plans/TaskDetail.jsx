@@ -67,6 +67,9 @@ const buildDataSentence = (summary) => {
   return parts.length ? parts.join('. ') : 'Không có số liệu phân bón/nông dược'
 }
 
+const getMaterialId = item =>
+  item?.fertilizerId || item?.pesticideId || item?.materialId || item?.id
+
 // ── Component ─────────────────────────────────────────────────────────────────
 const FarmSupervisorTaskDetail = () => {
   const { getTaskStatus } = useCultivationStatus()
@@ -226,6 +229,22 @@ const FarmSupervisorTaskDetail = () => {
 
   const cfg = getTaskStatus(task.status)
   const dataSentence = buildDataSentence(task.leaderSummary)
+  const fertilizerRows = task.leaderSummary?.totalFertilizers || task.leaderSummary?.fertilizers || []
+  const pesticideRows = task.leaderSummary?.totalPesticides || task.leaderSummary?.pesticides || []
+  const fertilizerRecommendations = fertilizerRows
+    .map((fertilizer, index) => ({
+      key: getMaterialId(fertilizer) || index,
+      name: fertilizer.name || fertilizer.fertilizerName || fertilizer.materialName || `Phân ${index + 1}`,
+      recommendation: fertilizer.recommendationText,
+    }))
+    .filter(item => item.recommendation)
+  const pesticideRecommendations = pesticideRows
+    .map((pesticide, index) => ({
+      key: getMaterialId(pesticide) || index,
+      name: pesticide.name || pesticide.pesticideName || pesticide.materialName || `Nông dược ${index + 1}`,
+      recommendation: pesticide.recommendationText,
+    }))
+    .filter(item => item.recommendation)
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -374,10 +393,10 @@ const FarmSupervisorTaskDetail = () => {
                   </Collapse.Panel>
 
                   {/* Chi tiết phân bón */}
-                  {task.leaderSummary.totalFertilizers?.length > 0 && (
+                  {fertilizerRows.length > 0 && (
                     <Collapse.Panel header="🌱 Chi tiết Phân bón" key="fertilizers">
                       <div className="space-y-2">
-                        {task.leaderSummary.totalFertilizers.map((f) => (
+                        {fertilizerRows.map((f) => (
                           <div key={f.name} className="rounded-lg bg-green-50 p-2 text-sm">
                             <div className="font-semibold">{f.name}</div>
                             <div>
@@ -393,10 +412,10 @@ const FarmSupervisorTaskDetail = () => {
                   )}
 
                   {/* Chi tiết nông dược */}
-                  {task.leaderSummary.totalPesticides?.length > 0 && (
+                  {pesticideRows.length > 0 && (
                     <Collapse.Panel header="🔬 Chi tiết nông dược" key="pesticides">
                       <div className="space-y-2">
-                        {task.leaderSummary.totalPesticides.map((p) => (
+                        {pesticideRows.map((p) => (
                           <div key={p.name} className="rounded-lg bg-orange-50 p-2 text-sm">
                             <div className="font-semibold">{p.name}</div>
                             <div>
@@ -428,6 +447,29 @@ const FarmSupervisorTaskDetail = () => {
                     </div>
                   </Collapse.Panel>
                 </Collapse>
+
+                {(fertilizerRecommendations.length > 0 || pesticideRecommendations.length > 0) && (
+                  <Alert
+                    type="info"
+                    showIcon
+                    className="mt-4 rounded-xl"
+                    message="Khuyến nghị lượng sử dụng"
+                    description={(
+                      <div className="space-y-1">
+                        {fertilizerRecommendations.map(item => (
+                          <div key={`fertilizer-${item.key}`}>
+                            {item.name}: nên dùng {item.recommendation}
+                          </div>
+                        ))}
+                        {pesticideRecommendations.map(item => (
+                          <div key={`pesticide-${item.key}`}>
+                            {item.name}: nên dùng {item.recommendation}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  />
+                )}
 
                 {/* Biên soạn nhật ký chính thức */}
                 {!task.officialLog ? (
@@ -515,6 +557,24 @@ const FarmSupervisorTaskDetail = () => {
               {dataSentence}
             </div>
           </div>
+
+          {(fertilizerRecommendations.length > 0 || pesticideRecommendations.length > 0) && (
+            <Alert
+              type="info"
+              showIcon
+              className="rounded-xl"
+              message="Khuyến nghị lượng sử dụng"
+              description={(
+                <div className="space-y-1">
+                  {[...fertilizerRecommendations, ...pesticideRecommendations].map(item => (
+                    <div key={`${item.key}-${item.name}`}>
+                      {item.name}: nên dùng {item.recommendation}
+                    </div>
+                  ))}
+                </div>
+              )}
+            />
+          )}
 
           {task.leaderSummary?.images?.length > 0 && (
             <div>

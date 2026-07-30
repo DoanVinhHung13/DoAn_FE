@@ -20,6 +20,18 @@ const { Text } = Typography
 // ── Sub-tables column definitions ────────────────────────────────────────────
 const usageColumns = [
   {
+    title: 'Diện tích',
+    dataIndex: 'area',
+    key: 'area',
+    align: 'center',
+    render: (v, record) => {
+      const area = v != null ? v : '';
+      const areaUnit =
+        record.areaUnitId || record.areaUnit || MEASUREMENT_UNITS.SQUARE_METER;
+      return area !== '' ? <Text>{`${area} ${areaUnit}`}</Text> : <Text>—</Text>;
+    },
+  },
+  {
     title: 'Đối tượng sử dụng',
     dataIndex: 'targetCrop',
     key: 'targetCrop',
@@ -54,15 +66,17 @@ const usageColumns = [
     align: 'center',
     render: (v, record) => {
       const dosage = v != null ? v : '';
-      const dUnit = getQuantityUnit(record.dosageUnit, MEASUREMENT_UNITS.LITER);
+      const dUnit = getQuantityUnit(
+        record.dosageUnitId || record.dosageUnit,
+        MEASUREMENT_UNITS.LITER,
+      );
       const aVal = record.area != null ? record.area : '';
-      const aUnit = MEASUREMENT_UNITS.SQUARE_METER;
 
       if (dosage === '' && aVal === '') return <Text>—</Text>;
 
       return (
         <Text>
-          {`${dosage} ${dUnit} / ${aVal} ${aUnit}`.trim()}
+          {`${dosage} ${dUnit}`.trim()}
         </Text>
       )
     },
@@ -294,7 +308,9 @@ const CropProtectionDetail = () => {
             <Table
               rowKey={(_, i) => i}
               dataSource={usages}
-              columns={usageColumns}
+              columns={['dosage', 'area', 'quarantineDays']
+                .map(key => usageColumns.find(column => column.key === key))
+                .filter(Boolean)}
               pagination={false}
               size="small"
               bordered

@@ -48,21 +48,6 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
             ? editingItem.usages.map(u => {
                 return {
                   ...u,
-                  targetCrop:
-                    typeof u.targetCrop === "string"
-                      ? u.targetCrop
-                          .split(",")
-                          .map(s => s.trim())
-                          .filter(Boolean)
-                      : u.targetCrop,
-                  chemicalRatio: u.concentration
-                    ? Number(u.concentration)
-                    : null,
-                  chemicalUnit: u.concentrationUnit || "%",
-                  waterRatio: u.dilutionVolume
-                    ? Number(u.dilutionVolume)
-                    : null,
-                  waterUnit: u.dilutionUnit || MEASUREMENT_UNITS.LITER,
                   dosage: u.dosage,
                   dosageUnit: selectedUnit,
                   area: u.area,
@@ -101,19 +86,10 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         isActive: isEdit ? editingItem.isActive : true,
         usages: (values.usages || []).map(u => {
           const usageObj = {
-            targetCrop: Array.isArray(u.targetCrop)
-              ? u.targetCrop.join(", ")
-              : u.targetCrop || "",
-            targetPest: u.targetPest || "",
-            concentration:
-              u.chemicalRatio != null ? String(u.chemicalRatio) : "",
-            concentrationUnit: u.chemicalUnit || "%",
-            dilutionVolume: u.waterRatio != null ? String(u.waterRatio) : "",
-            dilutionUnit: u.waterUnit || MEASUREMENT_UNITS.LITER,
             dosage: u.dosage || 0,
-            dosageUnit: quantityUnit,
+            dosageUnitId: quantityUnit,
             area: u.area || 0,
-            areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+            areaUnitId: MEASUREMENT_UNITS.SQUARE_METER,
             quarantineDays: u.isolationDays || 0,
           }
           if (isEdit && u.id) usageObj.id = u.id
@@ -285,6 +261,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                     className="absolute top-1 right-1 !h-8 !w-8 rounded-lg"
                   />
                   <Row gutter={12}>
+                    <div className="hidden">
                     <Col xs={24} sm={12} md={6}>
                       <Form.Item
                         {...restField}
@@ -372,6 +349,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                         </div>
                       </Form.Item>
                     </Col>
+                    </div>
                     <Col xs={24} sm={12} md={8}>
                       <Form.Item label={<>Liều lượng </>} className="mb-0">
                         <div className="flex items-center gap-2">

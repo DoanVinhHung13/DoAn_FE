@@ -49,6 +49,9 @@ import { getOrderedStageLogs, getStageTaskName } from "./logbookOrdering"
 const { Text, Title } = Typography
 const { TextArea } = Input
 
+const getMaterialId = item =>
+  item?.fertilizerId || item?.pesticideId || item?.materialId || item?.id
+
 const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
   const cfg = getStageStatus(stage.status)
   return (
@@ -101,6 +104,7 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
 const mapMaterialRows = (items = [], nameFallback) =>
   (Array.isArray(items) ? items : []).map((item, i) => ({
     key: item.id || item.taskId || String(i),
+    materialId: getMaterialId(item),
     name:
       item.name ||
       item.fertilizerName ||
@@ -112,6 +116,7 @@ const mapMaterialRows = (items = [], nameFallback) =>
     unit: item.unit ?? item.quantityUnit ?? "",
     totalArea: item.totalArea ?? item.area ?? 0,
     areaUnit: item.areaUnit ?? "m2",
+    recommendationText: item.recommendationText,
     days: item.days ?? "—",
   }))
 
@@ -229,7 +234,12 @@ const otherColumns = [
 ]
 
 /** Expand: thông tin Summary (ảnh, phân, thuốc, mô tả) + textarea Supervisor */
-const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
+const SummaryCompilePanel = ({
+  task,
+  stageId,
+  onSaved,
+  readOnly = false,
+}) => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [leaderSummary, setLeaderSummary] = useState(null)
@@ -322,6 +332,30 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
     }
     return mapMaterialRows(leaderSummary?.pesticides, "Nông dược")
   }, [allMaterials, leaderSummary])
+
+  const fertilizerRecommendations = useMemo(
+    () =>
+      fertRows
+        .map((row, index) => ({
+          key: row.materialId || row.key || index,
+          name: row.name,
+          recommendation: row.recommendationText,
+        }))
+        .filter(item => item.recommendation),
+    [fertRows],
+  )
+
+  const pesticideRecommendations = useMemo(
+    () =>
+      pestRows
+        .map((row, index) => ({
+          key: row.materialId || row.key || index,
+          name: row.name,
+          recommendation: row.recommendationText,
+        }))
+        .filter(item => item.recommendation),
+    [pestRows],
+  )
 
   const otherRows = useMemo(() => {
     if (allMaterials) {
@@ -456,6 +490,23 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
               locale={{ emptyText: "Chưa ghi nhận phân bón" }}
               className="overflow-hidden border border-blue-100 rounded-xl"
             />
+            {fertilizerRecommendations.length > 0 && (
+              <Alert
+                type="info"
+                showIcon
+                className="mt-3 rounded-xl"
+                message="Khuyến nghị lượng sử dụng phân bón"
+                description={(
+                  <div className="space-y-1">
+                    {fertilizerRecommendations.map(item => (
+                      <div key={item.key}>
+                        {item.name}: nên dùng {item.recommendation}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              />
+            )}
           </div>
         )}
 
@@ -472,6 +523,23 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
               locale={{ emptyText: "Chưa ghi nhận nông dược" }}
               className="overflow-hidden border border-purple-100 rounded-xl"
             />
+            {pesticideRecommendations.length > 0 && (
+              <Alert
+                type="info"
+                showIcon
+                className="mt-3 rounded-xl"
+                message="Khuyến nghị lượng sử dụng nông dược"
+                description={(
+                  <div className="space-y-1">
+                    {pesticideRecommendations.map(item => (
+                      <div key={item.key}>
+                        {item.name}: nên dùng {item.recommendation}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              />
+            )}
           </div>
         )}
 
