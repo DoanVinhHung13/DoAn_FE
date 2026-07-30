@@ -35,6 +35,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
+import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
 import ProcessTemplateService from 'src/services/ProcessTemplateService'
 import ProcessStepService from 'src/services/ProcessStepService'
@@ -60,6 +61,7 @@ const PlanTemplateList = () => {
   // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [cropCatalogId, setCropCatalogId] = useState(undefined)
   const [cropId, setCropId] = useState(undefined)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
@@ -68,7 +70,9 @@ const PlanTemplateList = () => {
   const [listData, setListData] = useState([])
   const [totalRecords, setTotalRecords] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [cropCatalogOptions, setCropCatalogOptions] = useState([])
   const [cropOptions, setCropOptions] = useState([])
+  const [loadingCropCatalogs, setLoadingCropCatalogs] = useState(false)
   const [loadingCrops, setLoadingCrops] = useState(false)
 
   // ── State: modals ───────────────────────────────────────────────────────────
@@ -83,6 +87,7 @@ const PlanTemplateList = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
+        CropCatalogId: cropCatalogId || undefined,
         CropId: cropId || undefined,
       }
       const [templateResponse, stepResponse] = await Promise.all([
@@ -115,7 +120,7 @@ const PlanTemplateList = () => {
     } finally {
       setLoading(false)
     }
-  }, [cropId, page, pageSize, search])
+  }, [cropCatalogId, cropId, page, pageSize, search])
 
   useEffect(() => {
     getList()
@@ -127,14 +132,22 @@ const PlanTemplateList = () => {
     const getCropOptions = async () => {
       try {
         setLoadingCrops(true)
-        const response = await CropManagementService.getCrops({
-          PageIndex: 1,
-          PageSize: 1000,
-          Status: true,
-        })
+        setLoadingCropCatalogs(true)
+        const [cropResponse, catalogResponse] = await Promise.all([
+          CropManagementService.getCrops({
+            PageIndex: 1,
+            PageSize: 1000,
+            Status: true,
+          }),
+          CropCatalogService.getCropCatalogs({
+            PageIndex: 1,
+            PageSize: 1000,
+            Status: true,
+          }),
+        ])
         if (!mounted) return
 
-        const options = normalizeItems(response)
+        const options = normalizeItems(cropResponse)
           .filter((crop) => crop.isActive !== false)
           .map((crop) => ({
             value: crop.id || crop._id || crop.cropId,
@@ -143,8 +156,20 @@ const PlanTemplateList = () => {
           .filter((option) => option.value && option.label)
 
         setCropOptions(options)
+        setCropCatalogOptions(
+          normalizeItems(catalogResponse)
+            .filter((catalog) => catalog.isActive !== false)
+            .map((catalog) => ({
+              value: catalog.id || catalog._id || catalog.cropCatalogId,
+              label: catalog.name || catalog.catalogName,
+            }))
+            .filter((option) => option.value && option.label)
+        )
       } finally {
-        if (mounted) setLoadingCrops(false)
+        if (mounted) {
+          setLoadingCrops(false)
+          setLoadingCropCatalogs(false)
+        }
       }
     }
 
@@ -328,6 +353,22 @@ const PlanTemplateList = () => {
             onClear={handleClearSearch}
           />
           <Select
+            value={cropCatalogId}
+            options={cropCatalogOptions}
+            loading={loadingCropCatalogs}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            onChange={(value) => {
+              setCropCatalogId(value)
+              setCropId(value ? cropId : undefined)
+              setPage(1)
+            }}
+            placeholder="Lọc theo danh mục cây trồng"
+            className="w-64 h-10"
+            aria-label="Lọc mẫu theo danh mục cây trồng"
+          />
+          <Select
             value={cropId}
             options={cropOptions}
             loading={loadingCrops}
@@ -340,6 +381,7 @@ const PlanTemplateList = () => {
             }}
             placeholder="Lọc theo cây trồng"
             className="w-64 h-10"
+            aria-label="Lọc mẫu theo cây trồng"
           />
           <div className="flex gap-2 ml-auto">
             <Button

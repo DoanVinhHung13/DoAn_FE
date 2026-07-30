@@ -452,10 +452,10 @@ const CultivationLogbookCreate = () => {
   // ── Template modal handlers ──────────────────────────────────────
   const openTemplateModal = () => {
     setTemplateCropFilter(selectedCropId)
-    setTemplateCatalogFilter(undefined)
+    setTemplateCatalogFilter(selectedCatalogId)
     setTemplateModal(true)
     setTemplateSearch('')
-    loadTemplates('', selectedCropId, undefined)
+    loadTemplates('', selectedCropId, selectedCatalogId)
   }
 
   const loadTemplates = async (search = '', cropId = null, cropCatalogId = null) => {
@@ -868,6 +868,24 @@ const CultivationLogbookCreate = () => {
               aria-label="Tìm kiếm mẫu nhật ký canh tác"
             />
             <Select
+              value={templateCatalogFilter}
+              options={templateCatalogOptions}
+              loading={isCatalogsLoading}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              onChange={(value) => {
+                setTemplateCatalogFilter(value)
+                const nextCropFilter = value ? templateCropFilter : undefined
+                setTemplateCropFilter(nextCropFilter)
+                loadTemplates(templateSearch, nextCropFilter, value)
+              }}
+              placeholder="Tất cả danh mục"
+              className="w-full md:w-64"
+              size="large"
+              aria-label="Lọc mẫu theo danh mục cây trồng"
+            />
+            <Select
               value={templateCropFilter}
               options={templateCropOptions}
               loading={isCropsLoading}
@@ -883,26 +901,10 @@ const CultivationLogbookCreate = () => {
               size="large"
               aria-label="Lọc mẫu theo cây trồng"
             />
-            <Select
-              value={templateCatalogFilter}
-              options={templateCatalogOptions}
-              loading={isCatalogsLoading}
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              onChange={(value) => {
-                setTemplateCatalogFilter(value)
-                loadTemplates(templateSearch, templateCropFilter, value)
-              }}
-              placeholder="Tất cả danh mục"
-              className="w-full md:w-64"
-              size="large"
-              aria-label="Lọc mẫu theo danh mục cây trồng"
-            />
           </div>
           {(templateCropFilter || templateCatalogFilter) && (
             <Text type="secondary" className="block -mt-2 text-sm">
-              Đang lọc mẫu theo: {[selectedCropOption?.label, selectedCatalogOption?.label]
+              Đang lọc mẫu theo: {[selectedCatalogOption?.label, selectedCropOption?.label]
                 .filter(Boolean)
                 .join(' · ')}. Xóa các bộ lọc để xem tất cả mẫu.
             </Text>
