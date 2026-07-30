@@ -24,6 +24,7 @@ import {
   message,
   Tag,
   Tooltip,
+  Select,
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -34,6 +35,7 @@ import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
+import CropManagementService from 'src/services/CropManagementService'
 import ProcessTemplateService from 'src/services/ProcessTemplateService'
 import ProcessStepService from 'src/services/ProcessStepService'
 import { invalidCharsRegex } from 'src/utils/helpers'
@@ -43,7 +45,12 @@ const normalizeItems = (response) => {
   const data = payload?.data ?? payload
   return Array.isArray(data)
     ? data
-    : data?.items || data?.results || data?.processSteps || []
+    : data?.items ||
+      data?.results ||
+      data?.processSteps ||
+      data?.crops ||
+      data?.cropCatalogs ||
+      []
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -53,6 +60,7 @@ const PlanTemplateList = () => {
   // ── State: filters ──────────────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [cropId, setCropId] = useState(undefined)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
@@ -60,6 +68,8 @@ const PlanTemplateList = () => {
   const [listData, setListData] = useState([])
   const [totalRecords, setTotalRecords] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [cropOptions, setCropOptions] = useState([])
+  const [loadingCrops, setLoadingCrops] = useState(false)
 
   // ── State: modals ───────────────────────────────────────────────────────────
   const [deleteModal, setDeleteModal] = useState({ open: false, item: null })
@@ -73,6 +83,7 @@ const PlanTemplateList = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
+        CropId: cropId || undefined,
       }
       const [templateResponse, stepResponse] = await Promise.all([
         ProcessTemplateService.getProcessTemplates(params),
@@ -104,11 +115,44 @@ const PlanTemplateList = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search])
+  }, [cropId, page, pageSize, search])
 
   useEffect(() => {
     getList()
   }, [getList])
+
+  useEffect(() => {
+    let mounted = true
+
+    const getCropOptions = async () => {
+      try {
+        setLoadingCrops(true)
+        const response = await CropManagementService.getCrops({
+          PageIndex: 1,
+          PageSize: 1000,
+          Status: true,
+        })
+        if (!mounted) return
+
+        const options = normalizeItems(response)
+          .filter((crop) => crop.isActive !== false)
+          .map((crop) => ({
+            value: crop.id || crop._id || crop.cropId,
+            label: crop.name || crop.cropName,
+          }))
+          .filter((option) => option.value && option.label)
+
+        setCropOptions(options)
+      } finally {
+        if (mounted) setLoadingCrops(false)
+      }
+    }
+
+    getCropOptions()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   const handleSearch = useCallback(() => {
@@ -282,6 +326,20 @@ const PlanTemplateList = () => {
             className="w-64 h-10 rounded-xl"
             allowClear
             onClear={handleClearSearch}
+          />
+          <Select
+            value={cropId}
+            options={cropOptions}
+            loading={loadingCrops}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            onChange={(value) => {
+              setCropId(value)
+              setPage(1)
+            }}
+            placeholder="Lọc theo cây trồng"
+            className="w-64 h-10"
           />
           <div className="flex gap-2 ml-auto">
             <Button
