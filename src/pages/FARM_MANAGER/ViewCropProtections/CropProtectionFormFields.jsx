@@ -5,6 +5,7 @@ import {
   Form,
   Input,
   InputNumber,
+  message,
   Row,
   Select,
 } from "antd"
@@ -31,11 +32,25 @@ const resolveCropValue = (target, cropOptions) => {
   return option?.value || rawTarget
 }
 
+const normalizeCropTarget = value => String(value ?? "").trim().toLowerCase()
+
+const getCropTargetKey = (target, cropOptions) => {
+  const normalizedTarget = normalizeCropTarget(target)
+  if (!normalizedTarget) return ""
+
+  const option = cropOptions.find(item =>
+    [item.value, item.label].some(value => normalizeCropTarget(value) === normalizedTarget),
+  )
+
+  return normalizeCropTarget(option?.value ?? target)
+}
+
 const CropProtectionFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
   const { cropOptions, isCropsLoading } = useCropOptions()
+  const usages = Form.useWatch("usages", form) || []
 
   const UNIT_OPTIONS = [
     { value: MEASUREMENT_UNITS.LITER, label: MEASUREMENT_UNITS.LITER },
@@ -86,6 +101,14 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
 
   const handleSubmit = async values => {
     try {
+      const selectedTargets = (values.usages || [])
+        .map(usage => getCropTargetKey(usage.targetCrop, cropOptions))
+        .filter(Boolean)
+      if (new Set(selectedTargets).size !== selectedTargets.length) {
+        message.error("Mỗi cây chỉ được khai báo một liều lượng.")
+        return
+      }
+
       setLoading(true)
 
       const body = {
@@ -137,6 +160,22 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const getUsageCropOptions = index => {
+    const currentTargetKey = getCropTargetKey(usages[index]?.targetCrop, cropOptions)
+    const targetsInOtherRows = new Set(
+      usages
+        .filter((_, usageIndex) => usageIndex !== index)
+        .map(usage => getCropTargetKey(usage?.targetCrop, cropOptions))
+        .filter(Boolean),
+    )
+
+    return cropOptions.filter(option => {
+      const optionKeys = [option.value, option.label].map(normalizeCropTarget).filter(Boolean)
+      return optionKeys.includes(currentTargetKey) ||
+        !optionKeys.some(optionKey => targetsInOtherRows.has(optionKey))
+    })
   }
 
   return (
@@ -288,7 +327,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                         className="mb-3"
                       >
                         <Select
-                          options={cropOptions}
+                          options={getUsageCropOptions(index)}
                           loading={isCropsLoading}
                           placeholder="Chọn cây trồng..."
                           className="w-full text-sm"
