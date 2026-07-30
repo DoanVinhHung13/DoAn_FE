@@ -76,6 +76,7 @@ const CultivationLogbookCreate = () => {
   const templateIdFromQuery = searchParams.get('templateId')
   const [form] = Form.useForm()
   const selectedCatalogId = Form.useWatch('category', form)
+  const selectedCropId = Form.useWatch('cropId', form)
 
   // ── Stages state ──
   const [stages, setStages] = useState([createEmptyStage(1)])
@@ -112,6 +113,7 @@ const CultivationLogbookCreate = () => {
   const [templates, setTemplates] = useState([])
   const [templatesLoading, setTemplatesLoading] = useState(false)
   const [templateSearch, setTemplateSearch] = useState('')
+  const [templateCropFilter, setTemplateCropFilter] = useState(undefined)
 
   // ── Load dropdown options ────────────────────────────────────────
   React.useEffect(() => {
@@ -448,19 +450,20 @@ const CultivationLogbookCreate = () => {
 
   // ── Template modal handlers ──────────────────────────────────────
   const openTemplateModal = () => {
+    setTemplateCropFilter(selectedCropId)
     setTemplateModal(true)
     setTemplateSearch('')
-    loadTemplates()
+    loadTemplates('', selectedCropId)
   }
 
-  const loadTemplates = async (search = '') => {
+  const loadTemplates = async (search = '', cropId = templateCropFilter) => {
     try {
       setTemplatesLoading(true)
-        const response = await ProcessTemplateService.getProcessTemplates({
+      const response = await ProcessTemplateService.getProcessTemplates({
         PageIndex: 1,
         PageSize: 1000,
-        Name: search || undefined,
-        Status: true,
+        SearchKeyword: search || undefined,
+        CropId: cropId || undefined,
       })
       setTemplates(normalizeResponse(response))
     } catch (error) {
@@ -470,6 +473,29 @@ const CultivationLogbookCreate = () => {
       setTemplatesLoading(false)
     }
   }
+
+  const templateCropOptions = (cropsData || [])
+    .map((crop) => ({
+      value: crop.id || crop._id || crop.cropId,
+      label: crop.name || crop.cropName,
+    }))
+    .filter((option) => option.value && option.label)
+
+  if (
+    selectedCropId &&
+    !templateCropOptions.some(
+      (option) => String(option.value) === String(selectedCropId)
+    )
+  ) {
+    templateCropOptions.unshift({
+      value: selectedCropId,
+      label: 'Cây trồng đang chọn',
+    })
+  }
+
+  const selectedCropOption = templateCropOptions.find(
+    (option) => String(option.value) === String(selectedCropId)
+  )
 
   const applyTemplate = async (template) => {
     try {
@@ -813,18 +839,42 @@ const CultivationLogbookCreate = () => {
         centered
         className="template-modal"
         styles={{
-          body: { padding: '24px' },
+          body: { padding: '24px', overscrollBehavior: 'contain' },
         }}
       >
         <div className="space-y-5">
-          <Input.Search
+          <div className="flex flex-col gap-3 md:flex-row">
+            <Input.Search
             placeholder="Tìm kiếm mẫu kế hoạch..."
             value={templateSearch}
             onChange={(e) => setTemplateSearch(e.target.value)}
-            onSearch={(value) => loadTemplates(value)}
+            onSearch={(value) => loadTemplates(value, templateCropFilter)}
             size="large"
-            className="rounded-xl"
-          />
+              className="flex-1 rounded-xl"
+              aria-label="Tìm kiếm mẫu nhật ký canh tác"
+            />
+            <Select
+              value={templateCropFilter}
+              options={templateCropOptions}
+              loading={isCropsLoading}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              onChange={(value) => {
+                setTemplateCropFilter(value)
+                loadTemplates(templateSearch, value)
+              }}
+              placeholder="Tất cả cây trồng"
+              className="w-full md:w-64"
+              size="large"
+              aria-label="Lọc mẫu theo cây trồng"
+            />
+          </div>
+          {templateCropFilter && (
+            <Text type="secondary" className="block -mt-2 text-sm">
+              Đang lọc mẫu cho: {selectedCropOption?.label || 'Cây trồng đã chọn'}. Bấm dấu x để xem tất cả mẫu.
+            </Text>
+          )}
           {templatesLoading ? (
             <div className="flex items-center justify-center py-12">
               <Spin size="large" tip="Đang tải mẫu kế hoạch..." />
