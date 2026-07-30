@@ -95,47 +95,30 @@ const toFiniteNumber = value => {
   return Number.isFinite(number) ? number : null
 }
 
-const getRemainingArea = item => {
-  if (!item) return null
+const getRemainingAreaByValidationRule = (materialId, task, dailyLogs) => {
+  const totalPlanArea = toFiniteNumber(task?.totalPlanArea)
+  if (!materialId || totalPlanArea === null || totalPlanArea <= 0) return null
 
-  const explicitAreaFields = [
-    "remainingArea",
-    "availableArea",
-    "areaRemaining",
-    "remainingAreaUnits",
-    "availableAreaUnits",
-  ]
+  const usedArea = (dailyLogs || [])
+    .flatMap(log => [...(log.fertilizers || []), ...(log.pesticides || [])])
+    .filter(material => {
+      const logMaterialId =
+        material.materialId ||
+        material.fertilizerId ||
+        material.pesticideId
+      const areaUnit = String(material.areaUnit || "").trim().toLowerCase()
+      return (
+        String(logMaterialId) === String(materialId) &&
+        toFiniteNumber(material.area) !== null &&
+        areaUnit === MEASUREMENT_UNITS.SQUARE_METER
+      )
+    })
+    .reduce((total, material) => total + toFiniteNumber(material.area), 0)
 
-  for (const field of explicitAreaFields) {
-    const area = toFiniteNumber(item[field])
-    if (area !== null) {
-      return {
-        value: Math.max(area, 0),
-        unit: item.areaUnit || MEASUREMENT_UNITS.SQUARE_METER,
-      }
-    }
+  return {
+    value: Math.max(0, totalPlanArea - usedArea),
+    unit: MEASUREMENT_UNITS.SQUARE_METER,
   }
-
-  const inventoryQuantity = [
-    item.remainingQuantity,
-    item.availableQuantity,
-    item.currentInventoryQuantity,
-    item.inventoryQuantity,
-    item.stockQuantity,
-  ]
-    .map(toFiniteNumber)
-    .find(value => value !== null)
-  const dosage = Array.isArray(item.dosages) ? item.dosages[0] : item.dosage
-  const dosageAmount = toFiniteNumber(dosage?.amount)
-
-  if (inventoryQuantity !== undefined && dosageAmount > 0) {
-    return {
-      value: Math.max(inventoryQuantity / dosageAmount, 0),
-      unit: dosage.areaUnit || MEASUREMENT_UNITS.SQUARE_METER,
-    }
-  }
-
-  return null
 }
 
 // usageUnit takes priority for both fertilizers and pesticides
@@ -168,29 +151,6 @@ const toPesticideOptions = list =>
     }
   })
 
-const getMaterialId = item =>
-  item?.fertilizerId || item?.pesticideId || item?.materialId || item?.id
-
-const loadMaterialDetails = async (items, getById, currentDetails) => {
-  const ids = [
-    ...new Set((items || []).map(getMaterialId).filter(Boolean)),
-  ].filter(id => !currentDetails[id])
-
-  const entries = await Promise.all(
-    ids.map(async id => {
-      try {
-        const detail = unwrap(await getById(id))
-        return detail ? [id, detail] : null
-      } catch (error) {
-        console.error(error)
-        return null
-      }
-    }),
-  )
-
-  return Object.fromEntries(entries.filter(Boolean))
-}
-
 const DailyLog = () => {
   const { getTaskStatus } = useCultivationStatus()
   const { taskId } = useParams()
@@ -206,9 +166,7 @@ const DailyLog = () => {
   const [refreshKey, setRefreshKey] = useState(0)
   const [fileList, setFileList] = useState([])
   const [fertilizerOptions, setFertilizerOptions] = useState([])
-  const [fertilizerDetails, setFertilizerDetails] = useState({})
   const [pesticideOptions, setPesticideOptions] = useState([])
-  const [pesticideDetails, setPesticideDetails] = useState({})
   const [leaderSummary, setLeaderSummary] = useState(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [entryRecommendations, setEntryRecommendations] = useState({})
@@ -221,7 +179,8 @@ const DailyLog = () => {
     area,
   ) => {
     const key = `${materialType}-${rowIndex}`
-    if (!materialId || Number(area) <= 0) {
+    const areaValue = toFiniteNumber(area)
+    if (!materialId || areaValue === null || areaValue <= 0) {
       setEntryRecommendations(previous => ({ ...previous, [key]: null }))
       return
     }
@@ -235,7 +194,7 @@ const DailyLog = () => {
             fertilizerId: materialType === "FERTILIZER" ? selectedId : undefined,
             pesticideId: materialType === "PESTICIDE" ? selectedId : undefined,
             materialType,
-            area: Number(area),
+            area: areaValue,
           },
         ],
       })
@@ -346,13 +305,11 @@ const DailyLog = () => {
             Array.isArray(fertData) ? fertData : fertData?.items || [],
           ),
         )
-        setFertilizerDetails({})
         setPesticideOptions(
           toPesticideOptions(
             Array.isArray(pestData) ? pestData : pestData?.items || [],
           ),
         )
-        setPesticideDetails({})
 
         form.setFieldsValue({
           date: getLocalNow(),
@@ -439,24 +396,6 @@ const DailyLog = () => {
       if (taskSumRes.status === "fulfilled") {
         const summary = unwrap(taskSumRes.value)
         setLeaderSummary(summary)
-        const [fertilizerData, pesticideData] = await Promise.all([
-          loadMaterialDetails(
-            summary?.fertilizers || summary?.totalFertilizers,
-            FertilizerService.getFertilizerById,
-            fertilizerDetails,
-          ),
-          loadMaterialDetails(
-            summary?.pesticides || summary?.totalPesticides,
-            PesticideService.getPesticideById,
-            pesticideDetails,
-          ),
-        ])
-        if (Object.keys(fertilizerData).length > 0) {
-          setFertilizerDetails(previous => ({ ...previous, ...fertilizerData }))
-        }
-        if (Object.keys(pesticideData).length > 0) {
-          setPesticideDetails(previous => ({ ...previous, ...pesticideData }))
-        }
         // Set description đã gửi vào form để hiển thị
         if (summary?.description) {
           summaryForm.setFieldsValue({
@@ -803,7 +742,7 @@ const DailyLog = () => {
                                       o => o.value === value,
                                     )
                                   const selectedMaterial = opt?.raw || opt
-                                  const unitFromApi = getMaterialUnit(opt?.raw || opt)
+                                  const unitFromApi = getMaterialUnit(selectedMaterial)
                                   form.setFieldValue(
                                     ["fertilizers", field.name, "materialId"],
                                     opt?.materialId || value,
@@ -837,25 +776,6 @@ const DailyLog = () => {
                                     ]),
                                   )
 
-                                  if (
-                                    value &&
-                                    !getRemainingArea(selectedMaterial) &&
-                                    !fertilizerDetails[value]
-                                  ) {
-                                    FertilizerService.getFertilizerById(value)
-                                      .then(response => {
-                                        const detail = unwrap(response)
-                                        if (detail) {
-                                          setFertilizerDetails(previous => ({
-                                            ...previous,
-                                            [value]: detail,
-                                          }))
-                                        }
-                                      })
-                                      .catch(error => {
-                                        console.error(error)
-                                      })
-                                  }
                                 }}
                               />
                             </Form.Item>
@@ -878,13 +798,12 @@ const DailyLog = () => {
                                   option =>
                                     String(option.value) === String(selectedId),
                                 )
-                                const selectedMaterial =
-                                  fertilizerDetails[selectedId] ||
-                                  selectedOption?.raw ||
-                                  selectedOption
-                                const remainingArea = getRemainingArea(
-                                  selectedMaterial,
-                                )
+                                const remainingArea =
+                                  getRemainingAreaByValidationRule(
+                                    selectedOption?.materialId || selectedId,
+                                    task,
+                                    dailyLogs,
+                                  )
 
                                 if (!selectedId) return null
 
@@ -1119,25 +1038,6 @@ const DailyLog = () => {
                                     ]),
                                   )
 
-                                  if (
-                                    value &&
-                                    !selectedMaterial?.usages?.length &&
-                                    !pesticideDetails[value]
-                                  ) {
-                                    PesticideService.getPesticideById(value)
-                                      .then(response => {
-                                        const detail = unwrap(response)
-                                        if (detail) {
-                                          setPesticideDetails(previous => ({
-                                            ...previous,
-                                            [value]: detail,
-                                          }))
-                                        }
-                                      })
-                                      .catch(error => {
-                                        console.error(error)
-                                      })
-                                  }
                                 }}
                               />
                             </Form.Item>
