@@ -104,7 +104,7 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
   )
 }
 
-const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
+const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const { getStageStatus, getTaskStatus } = useCultivationStatus()
   const getTaskCfg = s => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
   const [selectedId, setSelectedId] = useState(null)
@@ -131,6 +131,8 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
         const res = await TaskCatalogService.getTaskCatalogs({
           PageIndex: 1,
           PageSize: 200,
+          CropCatalogId: plan?.cropCatalogId,
+          CropId: plan?.cropId,
         })
         const data = unwrap(res)
         const items = Array.isArray(data) ? data : data?.items || []
@@ -147,7 +149,7 @@ const StageTaskManagementTab = ({ planId, stages, tasks, loadData }) => {
       }
     }
     loadCatalogs()
-  }, [])
+  }, [plan?.cropCatalogId, plan?.cropId])
 
   useEffect(() => {
     let isMounted = true

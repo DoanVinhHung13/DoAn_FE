@@ -6,9 +6,8 @@ import {
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
-  UserOutlined,
 } from '@ant-design/icons'
-import { Button, Card, Input, message, Popconfirm, Tooltip } from 'antd'
+import { Button, Card, Input, message, Popconfirm, Select, Tooltip } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -19,8 +18,14 @@ import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 
 import TaskCatalogService from 'src/services/TaskCatalogService'
+import CropCatalogService from 'src/services/CropCatalogService'
+import CropManagementService from 'src/services/CropManagementService'
 import { invalidCharsRegex } from 'src/utils/helpers'
-import { getUserDisplayName } from 'src/utils/userDisplayName'
+
+const unwrapItems = (response) => {
+  const payload = response?.data?.data ?? response?.data ?? response ?? {}
+  return Array.isArray(payload) ? payload : payload.items || []
+}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const TasksManagement = () => {
@@ -30,6 +35,10 @@ const TasksManagement = () => {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [cropCatalogId, setCropCatalogId] = useState()
+  const [cropId, setCropId] = useState()
+  const [cropCatalogOptions, setCropCatalogOptions] = useState([])
+  const [cropOptions, setCropOptions] = useState([])
 
   // ── State: data ─────────────────────────────────────────────────────────────
   const [listData, setListData] = useState([])
@@ -44,6 +53,8 @@ const TasksManagement = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
+        CropCatalogId: cropCatalogId || undefined,
+        CropId: cropId || undefined,
       }
       const res = await TaskCatalogService.getTaskCatalogs(params)
       if (res?.success === false) return
@@ -52,7 +63,23 @@ const TasksManagement = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search])
+  }, [page, pageSize, search, cropCatalogId, cropId])
+
+  useEffect(() => {
+    const loadCropOptions = async () => {
+      const [catalogResponse, cropResponse] = await Promise.all([
+        CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 1000, Status: 'ACTIVE' }),
+        CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000, Status: 'ACTIVE' }),
+      ])
+      setCropCatalogOptions(unwrapItems(catalogResponse).filter(item => item.isActive !== false))
+      setCropOptions(unwrapItems(cropResponse).filter(item => item.isActive !== false))
+    }
+
+    loadCropOptions().catch(() => {
+      setCropCatalogOptions([])
+      setCropOptions([])
+    })
+  }, [])
 
   useEffect(() => {
     getList()
@@ -73,6 +100,21 @@ const TasksManagement = () => {
     setSearch('')
     setPage(1)
   }
+
+  const handleCatalogChange = (value) => {
+    setCropCatalogId(value)
+    if (value && cropId) {
+      const selectedCrop = cropOptions.find(item => item.id === cropId)
+      if (selectedCrop && String(selectedCrop.cropCatalogId) !== String(value)) {
+        setCropId(undefined)
+      }
+    }
+    setPage(1)
+  }
+
+  const filteredCropOptions = cropOptions.filter(item =>
+    !cropCatalogId || String(item.cropCatalogId || item.cropCatalog?.id) === String(cropCatalogId),
+  )
 
   const handleOpenEdit = (record) => {
     navigate(ROUTER.FM_TASK_CATALOG_EDIT.replace(':id', record.id))
@@ -120,22 +162,18 @@ const TasksManagement = () => {
       ),
     },
     {
-      title: 'Cập nhật bởi',
-      key: 'updatedBy',
+      title: 'Danh mục cây trồng',
+      dataIndex: 'cropCatalogName',
+      key: 'cropCatalogName',
       width: 180,
-      render: (_, record) => (
-        <span className="inline-flex items-center gap-1 text-sm text-gray-600">
-          <UserOutlined className="text-gray-400" />
-          {getUserDisplayName(
-            record.updatedByName,
-            record.updatedBy,
-            record.editedByName,
-            record.editedBy,
-            record.createdByName,
-            record.createdBy,
-          )}
-        </span>
-      ),
+      render: (v) => <span className="text-sm text-gray-600">{v || '—'}</span>,
+    },
+    {
+      title: 'Cây trồng',
+      dataIndex: 'cropName',
+      key: 'cropName',
+      width: 160,
+      render: (v) => <span className="text-sm font-semibold text-gray-700">{v || '—'}</span>,
     },
     {
       title: 'Hành động',
@@ -220,6 +258,26 @@ const TasksManagement = () => {
             className="flex-1 min-w-[200px] h-10 rounded-xl"
             allowClear
             onClear={handleClearSearch}
+          />
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            value={cropCatalogId}
+            onChange={handleCatalogChange}
+            options={cropCatalogOptions.map(item => ({ value: item.id, label: item.name }))}
+            placeholder="Lọc theo danh mục"
+            className="min-w-[190px] h-10"
+          />
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            value={cropId}
+            onChange={(value) => { setCropId(value); setPage(1) }}
+            options={filteredCropOptions.map(item => ({ value: item.id, label: item.name }))}
+            placeholder="Lọc theo cây trồng"
+            className="min-w-[180px] h-10"
           />
           <div className="flex gap-2 ml-auto">
             <Button

@@ -29,6 +29,8 @@ const TaskEdit = () => {
         const data = unwrap(res) || {}
 
         form.setFieldsValue({
+          cropCatalogId: data.cropCatalogId,
+          cropId: data.cropId,
           name: data.name,
           description: data.description,
         })
@@ -46,6 +48,8 @@ const TaskEdit = () => {
       setLoading(true)
 
       const body = {
+        cropCatalogId: values.cropCatalogId,
+        cropId: values.cropId,
         name: values.name?.trim(),
         description: values.description?.trim() || null,
       }
@@ -81,7 +85,7 @@ const TaskEdit = () => {
           <Skeleton active paragraph={{ rows: 6 }} />
         ) : (
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
-            <TaskFormFields isEdit={true} />
+            <TaskFormFields form={form} isEdit={true} />
 
             <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
               <Button onClick={() => navigate(ROUTER.FM_TASK_CATALOGS)} className="h-10 px-6 rounded-xl" disabled={loading}>

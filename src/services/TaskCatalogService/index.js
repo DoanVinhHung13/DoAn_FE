@@ -2,7 +2,7 @@
  * TaskCatalogService — danh mục công việc
  * Swagger: /api/task-catalogs
  *
- * CreateTaskCatalogRequest: { name (req), description? }
+ * CreateTaskCatalogRequest: { cropCatalogId (req), cropId (req), name (req), description? }
  */
 import http from '../01_axios'
 import {

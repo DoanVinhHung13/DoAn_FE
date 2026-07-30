@@ -16,6 +16,8 @@ const TaskCreate = () => {
     try {
       setLoading(true)
       const body = {
+        cropCatalogId: values.cropCatalogId,
+        cropId: values.cropId,
         name: values.name?.trim(),
         description: values.description?.trim() || null,
       }
@@ -57,7 +59,7 @@ const TaskCreate = () => {
           layout="vertical"
           onFinish={handleSubmit}
         >
-          <TaskFormFields isEdit={false} />
+          <TaskFormFields form={form} isEdit={false} />
 
           {/* Footer actions */}
           <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">

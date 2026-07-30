@@ -1,10 +1,89 @@
 import { CheckSquareOutlined, FileTextOutlined } from '@ant-design/icons'
-import { Col, Form, Input, Row } from 'antd'
-import React from 'react'
+import { Col, Form, Input, Row, Select } from 'antd'
+import React, { useEffect, useMemo, useState } from 'react'
+import CropCatalogService from 'src/services/CropCatalogService'
+import CropManagementService from 'src/services/CropManagementService'
 
-const TaskFormFields = ({ readOnly = false }) => {
+const unwrapItems = (response) => {
+  const payload = response?.data?.data ?? response?.data ?? response ?? {}
+  return Array.isArray(payload) ? payload : payload.items || []
+}
+
+const getCropCatalogId = (crop) => crop.cropCatalogId || crop.cropCatalog?.id
+
+const TaskFormFields = ({ form, readOnly = false }) => {
+  const [catalogs, setCatalogs] = useState([])
+  const [crops, setCrops] = useState([])
+  const [loading, setLoading] = useState(false)
+  const selectedCatalogId = Form.useWatch('cropCatalogId', form)
+
+  useEffect(() => {
+    const loadOptions = async () => {
+      try {
+        setLoading(true)
+        const [catalogResponse, cropResponse] = await Promise.all([
+          CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 1000, Status: 'ACTIVE' }),
+          CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000, Status: 'ACTIVE' }),
+        ])
+        setCatalogs(unwrapItems(catalogResponse).filter(item => item.isActive !== false))
+        setCrops(unwrapItems(cropResponse).filter(item => item.isActive !== false))
+      } catch {
+        setCatalogs([])
+        setCrops([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadOptions()
+  }, [])
+
+  const catalogOptions = useMemo(
+    () => catalogs.map(item => ({ value: item.id, label: item.name })),
+    [catalogs],
+  )
+  const cropOptions = useMemo(
+    () => crops
+      .filter(item => !selectedCatalogId || String(getCropCatalogId(item)) === String(selectedCatalogId))
+      .map(item => ({ value: item.id, label: item.name })),
+    [crops, selectedCatalogId],
+  )
+
   return (
     <Row gutter={16}>
+      <Col xs={24} md={12}>
+        <Form.Item
+          name="cropCatalogId"
+          label="Danh mục cây trồng"
+          rules={!readOnly ? [{ required: true, message: 'Vui lòng chọn danh mục cây trồng.' }] : []}
+        >
+          <Select
+            showSearch
+            optionFilterProp="label"
+            loading={loading}
+            disabled={readOnly}
+            options={catalogOptions}
+            placeholder="Chọn danh mục cây trồng"
+            onChange={() => form?.setFieldValue('cropId', undefined)}
+          />
+        </Form.Item>
+      </Col>
+      <Col xs={24} md={12}>
+        <Form.Item
+          name="cropId"
+          label="Cây trồng"
+          rules={!readOnly ? [{ required: true, message: 'Vui lòng chọn cây trồng.' }] : []}
+        >
+          <Select
+            showSearch
+            optionFilterProp="label"
+            loading={loading}
+            disabled={readOnly || !selectedCatalogId}
+            options={cropOptions}
+            placeholder={selectedCatalogId ? 'Chọn cây trồng' : 'Chọn danh mục trước'}
+          />
+        </Form.Item>
+      </Col>
       <Col xs={24} md={24}>
         <Form.Item
           name="name"
