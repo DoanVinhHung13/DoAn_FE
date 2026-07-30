@@ -48,7 +48,7 @@ class SignalRService {
       .build()
 
     connection.onreconnecting(error => {
-      if (import.meta.env.DEV) console.warn('[SignalR] reconnecting', error)
+    if (import.meta.env.DEV) console.warn('[SignalR] reconnecting', error)
     })
 
     connection.onreconnected(connectionId => {
