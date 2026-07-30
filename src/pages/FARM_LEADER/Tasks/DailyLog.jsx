@@ -146,8 +146,8 @@ const DailyLog = () => {
   const [entryRecommendations, setEntryRecommendations] = useState({})
   const [remainingAreas, setRemainingAreas] = useState({})
 
-  const loadRemainingArea = async (rowIndex, materialId) => {
-    const key = String(rowIndex)
+  const loadRemainingArea = async (materialType, rowIndex, materialId) => {
+    const key = `${materialType}-${rowIndex}`
     if (!materialId) {
       setRemainingAreas(previous => ({ ...previous, [key]: null }))
       return
@@ -775,6 +775,7 @@ const DailyLog = () => {
                                     ]),
                                   )
                                   loadRemainingArea(
+                                    "FERTILIZER",
                                     field.name,
                                     opt?.materialId || value,
                                   )
@@ -798,7 +799,7 @@ const DailyLog = () => {
                                   "fertilizerId",
                                 ])
                                 const remainingArea =
-                                  remainingAreas[String(field.name)]
+                                  remainingAreas[`FERTILIZER-${field.name}`]
 
                                 if (!selectedId) return null
 
@@ -1032,6 +1033,11 @@ const DailyLog = () => {
                                       "area",
                                     ]),
                                   )
+                                  loadRemainingArea(
+                                    "PESTICIDE",
+                                    field.name,
+                                    opt?.materialId || value,
+                                  )
 
                                 }}
                               />
@@ -1118,6 +1124,38 @@ const DailyLog = () => {
                             </span>
                           </Col>
                         </Row>
+                        <Form.Item
+                          noStyle
+                          shouldUpdate={(previousValues, currentValues) =>
+                            previousValues?.pesticides?.[field.name]?.pesticideId !==
+                              currentValues?.pesticides?.[field.name]?.pesticideId
+                          }
+                        >
+                          {() => {
+                            const selectedId = form.getFieldValue([
+                              "pesticides",
+                              field.name,
+                              "pesticideId",
+                            ])
+                            const remainingArea =
+                              remainingAreas[`PESTICIDE-${field.name}`]
+
+                            if (!selectedId) return null
+
+                            return (
+                              <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-700">
+                                <span className="font-medium">
+                                  Diện tích còn lại:
+                                </span>
+                                <span className="font-bold">
+                                  {remainingArea
+                                    ? `${formatMeasurementValue(remainingArea.remainingArea)} ${remainingArea.areaUnit}`
+                                    : "—"}
+                                </span>
+                              </div>
+                            )
+                          }}
+                        </Form.Item>
                         <Form.Item
                           noStyle
                           shouldUpdate={(previousValues, currentValues) =>
