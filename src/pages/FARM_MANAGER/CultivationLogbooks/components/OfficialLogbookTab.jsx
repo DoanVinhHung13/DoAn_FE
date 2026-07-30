@@ -170,7 +170,16 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                       const summary = task.summary || task.officialLog || {}
                       const taskName = task.taskName || task.name || task.title || `Công việc ${logIndex + 1}`
                       const displayTaskName = task.cultivationTaskName || taskName
-                      const description = summary.description || task.summaryDescription || task.finalDescription || ''
+                      const description =
+                        summary.supervisorDescription ||
+                        task.supervisorDescription ||
+                        summary.descriptionSummary ||
+                        task.descriptionSummary ||
+                        summary.description ||
+                        task.description ||
+                        task.summaryDescription ||
+                        task.finalDescription ||
+                        ''
                       const materialsText = summary.materialsText || task.materialsText || ''
                       const workStartDate = task.workStartDate || summary.workStartDate || task.startDate
                       const workEndDate = task.workEndDate || summary.workEndDate || task.endDate

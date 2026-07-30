@@ -86,6 +86,43 @@ const formatMaterialQuantity = (material) => {
   return `${quantity}${getMaterialUnit(material) ? ` ${getMaterialUnit(material)}` : ''}`;
 };
 
+const getMaterialColorClass = (material) => {
+  const type = String(getMaterialType(material, '')).trim().toUpperCase();
+  if (type.includes('FERTILIZER') || type.includes('PHÂN BÓN')) return 'text-blue-700';
+  if (type.includes('PESTICIDE') || type.includes('CROP_PROTECTION') || type.includes('NÔNG DƯỢC')) {
+    return 'text-purple-700';
+  }
+  return 'text-slate-700';
+};
+
+const formatMaterialLine = (material) => {
+  const area = material?.area ?? material?.totalArea;
+  const areaUnit = material?.areaUnit || material?.totalAreaUnit || 'ha';
+  const areaText = area == null || area === ''
+    ? ''
+    : `, diện tích ${formatAreaValue(area)} ${areaUnit}`;
+
+  return `${getMaterialName(material)}: ${formatMaterialQuantity(material)}${areaText}`;
+};
+
+const getMaterialLines = (entry) => {
+  const textLines = entry.materialsText
+    .split(/[;\n]+/)
+    .map((text) => text.trim())
+    .filter(Boolean)
+    .map((text) => ({
+      text: text.replace(/^(?:Phân bón|Nông dược)\s*:?\s*/i, ''),
+      colorClass: getMaterialColorClass({ type: text }),
+    }));
+
+  if (textLines.length > 0) return textLines;
+
+  return entry.materials.map((material) => ({
+    text: formatMaterialLine(material),
+    colorClass: getMaterialColorClass(material),
+  }));
+};
+
 const getImageUrl = (image) => {
   if (typeof image === 'string') return image;
   return image?.url || image?.imageUrl || image?.filePath || image?.path || image?.src || image?.fileUrl || null;
@@ -477,14 +514,16 @@ const Trace = () => {
                               {entry.description}
                             </Paragraph>
                           )}
-                          {entry.materialsText && (
-                            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2.5">
-                              <Text className="block text-[11px] font-bold uppercase tracking-[0.08em] text-amber-700">
-                                Vật tư đã sử dụng
-                              </Text>
-                              <Paragraph className="!mb-0 !mt-1 text-sm font-medium leading-relaxed text-amber-950 whitespace-pre-wrap">
-                                {entry.materialsText}
-                              </Paragraph>
+                          {(entry.materials.length > 0 || entry.materialsText) && (
+                            <div className="mt-2 space-y-1">
+                              {getMaterialLines(entry).map((material, materialIndex) => (
+                                <div
+                                  key={`${material.text}-${materialIndex}`}
+                                  className={`text-sm font-medium leading-relaxed ${material.colorClass}`}
+                                >
+                                  {material.text}
+                                </div>
+                              ))}
                             </div>
                           )}
                           {traceData.displayOptions.showPhotos && entry.images.length > 0 && (

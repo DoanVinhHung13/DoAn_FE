@@ -175,11 +175,12 @@ const LogEntry = ({ log }) => {
     summary.taskName ||
     summary.name
   const description =
-    summary.description ||
     summary.supervisorDescription ||
     log.supervisorDescription ||
-    log.description ||
+    summary.descriptionSummary ||
     log.descriptionSummary ||
+    summary.description ||
+    log.description ||
     log.summaryDescription ||
     log.finalDescription
   const materialsText = summary.materialsText || log.materialsText
