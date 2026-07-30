@@ -26,6 +26,65 @@ import { getUserDisplayName } from 'src/utils/userDisplayName';
 
 const { Title, Paragraph, Text } = Typography;
 
+const MATERIAL_TYPE_LABELS = {
+  FERTILIZER: 'Phân bón',
+  PESTICIDE: 'Nông dược',
+  CROP_PROTECTION: 'Nông dược',
+  SEED: 'Giống cây trồng',
+  OTHER: 'Vật tư khác',
+};
+
+const getMaterialType = (material, fallback = 'OTHER') => (
+  material?.materialType || material?.type || material?.category || fallback
+);
+
+const getMaterialTypeLabel = (material, fallback = 'OTHER') => {
+  const type = getMaterialType(material, fallback);
+  const normalizedType = String(type).trim().toUpperCase();
+  return MATERIAL_TYPE_LABELS[normalizedType] || type || MATERIAL_TYPE_LABELS.OTHER;
+};
+
+const getMaterialName = (material) => (
+  material?.materialName || material?.name || material?.fertilizerName || material?.pesticideName || 'Vật tư'
+);
+
+const getMaterialQuantity = (material) => (
+  material?.quantity ?? material?.totalQuantity ?? material?.quantityUsed
+);
+
+const getMaterialUnit = (material, fallback = '') => {
+  const explicitUnit = material?.unit || material?.quantityUnit || material?.measurementUnit;
+  if (explicitUnit) return explicitUnit;
+
+  const type = String(getMaterialType(material, '')).trim().toUpperCase();
+  return fallback || (type === 'FERTILIZER' ? 'kg' : type === 'PESTICIDE' || type === 'CROP_PROTECTION' ? 'lít' : '');
+};
+
+const normalizeMaterial = (material, fallbackType, usedAt, taskName) => ({
+  ...material,
+  type: getMaterialTypeLabel(material, fallbackType),
+  name: getMaterialName(material),
+  quantity: getMaterialQuantity(material),
+  unit: getMaterialUnit(material),
+  supplier: material?.supplier || material?.supplierName,
+  usedAt: material?.usedAt || usedAt,
+  taskName: material?.taskName || taskName,
+});
+
+const formatMaterialText = (text) => String(text || '')
+  .replace(/\bFERTILIZER\b/gi, 'Phân bón')
+  .replace(/\bPESTICIDE\b/gi, 'Nông dược')
+  .replace(/\bCROP_PROTECTION\b/gi, 'Nông dược')
+  .replace(/\bOTHER\b/gi, 'Vật tư khác');
+
+const formatMaterialQuantity = (material) => {
+  const quantity = getMaterialQuantity(material);
+  if (quantity == null || quantity === '') return 'Chưa cập nhật';
+  if (typeof quantity === 'string' && /[a-zA-ZÀ-ỹ]/.test(quantity)) return quantity;
+
+  return `${quantity}${getMaterialUnit(material) ? ` ${getMaterialUnit(material)}` : ''}`;
+};
+
 const getImageUrl = (image) => {
   if (typeof image === 'string') return image;
   return image?.url || image?.imageUrl || image?.filePath || image?.path || image?.src || image?.fileUrl || null;
@@ -48,17 +107,6 @@ const formatAreaValue = (value) => {
   return Object.is(roundedValue, -0) ? 0 : roundedValue;
 };
 
-const formatMaterialDetail = (material) => {
-  const name = material?.materialName || material?.name || 'Vật tư';
-  const quantity = material?.quantity ?? material?.totalQuantity;
-  const unit = material?.unit || '';
-  const area = material?.area != null
-    ? `, diện tích ${formatAreaValue(material.area)} ${formatAreaUnit(material.areaUnit)}`.trim()
-    : '';
-
-  return quantity == null ? `${name}${area}` : `${name}: ${quantity} ${unit}${area}`.trim();
-};
-
 const buildTimelineGroups = (traceData) => {
   if (!traceData) return [];
 
@@ -72,9 +120,9 @@ const buildTimelineGroups = (traceData) => {
         const materials = Array.isArray(log.materials) ? log.materials : [];
         const materialsText = log.materialsText || materials
           .map((material) => {
-            const name = material.materialName || material.name || 'Vật tư';
-            const quantity = material.quantity ?? material.totalQuantity;
-            const unit = material.unit || '';
+            const name = getMaterialName(material);
+            const quantity = getMaterialQuantity(material);
+            const unit = getMaterialUnit(material);
             return quantity == null ? name : `${name}: ${quantity} ${unit}`.trim();
           })
           .join('; ');
@@ -82,7 +130,7 @@ const buildTimelineGroups = (traceData) => {
         return {
           stage: log.cultivationStageName || dailyLog?.stage || log.stage || 'Giai đoạn canh tác',
           stageOrder: log.stageOrder ?? dailyLog?.stageOrder,
-          taskName: log.cultivationTaskName || log.taskName || dailyLog?.activity || `Công việc ${index + 1}`,
+          taskName: log.cultivationTaskName || log.taskName || dailyLog?.activity || 'Hoạt động canh tác',
           taskOrder: log.taskOrder ?? dailyLog?.taskOrder,
           startDate: log.workStartDate || log.activityDate || dailyLog?.date,
           endDate: log.workEndDate || log.activityDate || dailyLog?.date,
@@ -99,15 +147,15 @@ const buildTimelineGroups = (traceData) => {
             log.performedByName,
             log.performedBy,
           ),
-          materialsText,
-          materials,
+          materialsText: formatMaterialText(materialsText),
+          materials: materials.map((material) => normalizeMaterial(material, undefined, log.activityDate, log.cultivationTaskName || log.taskName)),
           images: (Array.isArray(log.images) ? log.images : []).map(getImageUrl).filter(Boolean),
         };
       })
-    : dailyLogs.map((log, index) => ({
+    : dailyLogs.map((log) => ({
         stage: log.stage || 'Giai đoạn canh tác',
         stageOrder: log.stageOrder,
-        taskName: log.taskName || log.activity || `Công việc ${index + 1}`,
+        taskName: log.taskName || log.activity || 'Hoạt động canh tác',
         taskOrder: log.taskOrder,
         startDate: log.date,
         endDate: log.date,
@@ -209,17 +257,26 @@ const Trace = () => {
       certifications: toArray(payload?.certifications ?? source.certifications),
     };
     const cultivationLogs = toArray(payload?.cultivationLogs ?? source.cultivationLogs);
-    const logMaterials = cultivationLogs.flatMap((log) => (
-      Array.isArray(log?.materials) ? log.materials.map((material) => ({
-        type: material.materialType || material.type || 'OTHER',
-        name: material.materialName || material.name || 'Vật tư',
-        quantity: material.quantity ?? material.totalQuantity,
-        unit: material.unit || '',
-        supplier: material.supplier,
-        usedAt: log.activityDate,
-        notes: material.note,
-      })) : []
-    ));
+    const logMaterials = cultivationLogs.flatMap((log) => {
+      const directMaterials = toArray(log?.materials);
+      if (directMaterials.length) {
+        return directMaterials.map((material) => normalizeMaterial(
+          material,
+          undefined,
+          log.activityDate,
+          log.cultivationTaskName || log.taskName,
+        ));
+      }
+
+      const fertilizerMaterials = toArray(log?.totalFertilizers || log?.fertilizers)
+        .map((material) => normalizeMaterial(material, 'FERTILIZER', log.activityDate, log.cultivationTaskName || log.taskName));
+      const pesticideMaterials = toArray(log?.totalPesticides || log?.pesticides)
+        .map((material) => normalizeMaterial(material, 'PESTICIDE', log.activityDate, log.cultivationTaskName || log.taskName));
+
+      return [...fertilizerMaterials, ...pesticideMaterials];
+    });
+    const journalMaterials = (logMaterials.length ? logMaterials : b.materials)
+      .map((material) => normalizeMaterial(material));
     const logPhotos = cultivationLogs.flatMap((log) => (
       Array.isArray(log?.images) ? log.images.map((image) => ({
         url: getImageUrl(image),
@@ -258,7 +315,7 @@ const Trace = () => {
 
       displayOptions,
 
-      materials: b.materials.length ? b.materials : logMaterials,
+      materials: journalMaterials,
 
       photos: b.photos.length ? b.photos : logPhotos,
       cultivationLogs,
@@ -270,7 +327,7 @@ const Trace = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Spin size="large" tip="Đang tải thông tin truy xuất..." />
+        <Spin size="large" description="Đang tải thông tin truy xuất..." />
       </div>
     );
   }
@@ -408,16 +465,6 @@ const Trace = () => {
                         <article key={`${entry.taskName}-${entry.startDate}-${index}`} className="relative pb-7 last:pb-0">
                           <span className="absolute -left-[31px] sm:-left-[34px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
                           <Text strong className="block text-slate-800 text-sm sm:text-base">{entry.taskName}</Text>
-                          {(entry.stageOrder != null || entry.taskOrder != null) && (
-                            <div className="mt-1 flex flex-wrap gap-1">
-                              {entry.stageOrder != null && (
-                                <Tag color="green" className="m-0 text-xs">Giai đoạn {entry.stageOrder}</Tag>
-                              )}
-                              {entry.taskOrder != null && (
-                                <Tag color="blue" className="m-0 text-xs">Thứ tự công việc {entry.taskOrder}</Tag>
-                              )}
-                            </div>
-                          )}
                           <Text strong className="block mt-1 text-slate-800 text-xs sm:text-sm">
                             {formatDateRange(entry.startDate, entry.endDate)}
                           </Text>
@@ -430,24 +477,13 @@ const Trace = () => {
                             </Paragraph>
                           )}
                           {entry.materialsText && (
-                            <Paragraph className="!mb-1 !mt-1 text-slate-700 text-xs sm:text-sm whitespace-pre-wrap">
-                              {entry.materialsText}
-                            </Paragraph>
-                          )}
-                          {entry.materials.length > 0 && (
-                            <div className="mt-2 rounded-lg border border-orange-100 bg-orange-50/60 p-2.5">
-                              <Text className="block text-xs font-semibold text-orange-800">Chi tiết vật tư</Text>
-                              <div className="mt-1 space-y-1">
-                                {entry.materials.map((material, materialIndex) => (
-                                  <div key={material.id || `${entry.taskName}-material-${materialIndex}`} className="flex flex-wrap items-center gap-1.5 text-xs text-slate-700">
-                                    <Tag color="orange" className="m-0 text-[11px]">
-                                      {material.materialType || material.type || 'OTHER'}
-                                    </Tag>
-                                    <span>{formatMaterialDetail(material)}</span>
-                                    {material.note && <span className="text-slate-500">({material.note})</span>}
-                                  </div>
-                                ))}
-                              </div>
+                            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2.5">
+                              <Text className="block text-[11px] font-bold uppercase tracking-[0.08em] text-amber-700">
+                                Vật tư đã sử dụng
+                              </Text>
+                              <Paragraph className="!mb-0 !mt-1 text-sm font-medium leading-relaxed text-amber-950 whitespace-pre-wrap">
+                                {entry.materialsText}
+                              </Paragraph>
                             </div>
                           )}
                           {traceData.displayOptions.showPhotos && entry.images.length > 0 && (
@@ -480,30 +516,39 @@ const Trace = () => {
         )}
 
         {/* ── 3. Thông tin vật tư sử dụng ── */}
-        {(traceData.displayOptions.showMaterials ?? traceData.displayOptions.showAutomation) && (
-          <Card className="rounded-2xl shadow-sm border border-slate-200/80">
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-              <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-700">
+        {(traceData.displayOptions.showMaterials ?? traceData.displayOptions.showAutomation) && traceData.materials.length > 0 && (
+          <Card className="rounded-2xl border-0 shadow-[0_12px_32px_rgba(15,23,42,0.07)]">
+            <div className="mb-4 flex items-start gap-3 border-b border-slate-100 pb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
                 <ExperimentOutlined className="text-lg" />
               </div>
-              <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
-                Vật tư & Chế phẩm nông nghiệp
-              </Title>
+              <div>
+                <Title level={4} className="!mb-0.5 !text-base sm:!text-lg font-bold text-slate-900">
+                  Phân bón và nông dược
+                </Title>
+                <Text className="text-xs text-slate-500">Các loại đã sử dụng trong nhật ký này</Text>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3">
               {traceData.materials.map((material, index) => (
-                <div key={index} className="p-3 sm:p-4 bg-slate-50/90 rounded-xl border border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm">
-                  <div className="space-y-0.5">
+                <div key={material.id || `${material.name}-${material.usedAt || index}`} className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5 sm:p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-center gap-2">
-                      <Tag color="orange" className="rounded-md font-medium text-xs m-0">{material.type}</Tag>
-                      <Text strong className="text-slate-900">{material.name}</Text>
+                      <Tag color={material.type === 'Nông dược' ? 'orange' : 'green'} className="m-0 rounded-md text-xs font-semibold">
+                        {material.type}
+                      </Tag>
+                      <Text strong className="text-sm text-slate-900 sm:text-base">{material.name}</Text>
                     </div>
-                    <Text className="text-slate-500 text-xs block">Nhà cung cấp: {material.supplier || '—'}</Text>
+                    <div className="shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 sm:text-right">
+                      <Text className="block text-[11px] font-medium text-emerald-700">Số lượng đã dùng</Text>
+                      <Text strong className="text-base text-emerald-800">{formatMaterialQuantity(material)}</Text>
+                    </div>
                   </div>
-                  <div className="text-left sm:text-right flex-shrink-0">
-                    <Text className="text-slate-400 text-xs block sm:inline mr-1">Liều lượng:</Text>
-                    <Text strong className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block">{material.quantity}</Text>
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                    {material.usedAt && <span>Ngày sử dụng: {formatDate(material.usedAt)}</span>}
+                    {material.taskName && <span>Công việc: {material.taskName}</span>}
+                    <span>Nhà cung cấp: {material.supplier || 'Chưa cập nhật'}</span>
                   </div>
                 </div>
               ))}
