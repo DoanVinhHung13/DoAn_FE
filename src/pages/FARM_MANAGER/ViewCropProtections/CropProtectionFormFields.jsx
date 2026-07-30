@@ -17,6 +17,20 @@ import PesticideService from "src/services/PesticideService"
 import SectionTitle from "src/components/Common/SectionTitle"
 import { useCropOptions } from "src/hooks/useCropOptions"
 
+const resolveCropValue = (target, cropOptions) => {
+  if (target === null || target === undefined || target === "") return undefined
+
+  const rawTarget = Array.isArray(target) ? target[0] : target
+  const normalizedTarget = String(rawTarget).trim().toLowerCase()
+  const option = cropOptions.find(item =>
+    [item.value, item.label].some(value =>
+      String(value).trim().toLowerCase() === normalizedTarget,
+    ),
+  )
+
+  return option?.value || rawTarget
+}
+
 const CropProtectionFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
@@ -48,6 +62,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
             ? editingItem.usages.map(u => {
                 return {
                   ...u,
+                  targetCrop: resolveCropValue(u.targetCrop ?? u.target, cropOptions),
                   dosage: u.dosage,
                   dosageUnit: selectedUnit,
                   area: u.area,
@@ -67,7 +82,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         usages: [{}],
       })
     }
-  }, [editingItem, isEdit, form])
+  }, [cropOptions, editingItem, isEdit, form])
 
   const handleSubmit = async values => {
     try {
@@ -90,6 +105,9 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
             dosageUnitId: quantityUnit,
             area: u.area || 0,
             areaUnitId: MEASUREMENT_UNITS.SQUARE_METER,
+            targetCrop: Array.isArray(u.targetCrop)
+              ? u.targetCrop.join(", ")
+              : (u.targetCrop || u.target || ""),
             quarantineDays: u.isolationDays || 0,
           }
           if (isEdit && u.id) usageObj.id = u.id
@@ -239,7 +257,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
       </Row>
 
       {/* ── Usages (Cách sử dụng) ── */}
-      <SectionTitle>Cách Sử Dụng</SectionTitle>
+      <SectionTitle>Liều Lượng</SectionTitle>
       <Form.List name="usages">
         {(fields, { add, remove }) => (
           <>
@@ -250,7 +268,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                   className="relative p-5 border border-gray-200 shadow-sm py-9 bg-gray-50 rounded-2xl"
                 >
                   <div className="absolute px-3 py-1 text-xs font-bold border rounded-full shadow-sm -top-1 left-4 bg-emerald-100 text-emerald-700 border-emerald-200 shadow-emerald-50">
-                    Cách sử dụng {index + 1}
+                    Liều lượng {index + 1}
                   </div>
                   <Button
                     type="text"
@@ -261,11 +279,30 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                     className="absolute top-1 right-1 !h-8 !w-8 rounded-lg"
                   />
                   <Row gutter={12}>
-                    <div className="hidden">
                     <Col xs={24} sm={12} md={6}>
                       <Form.Item
                         {...restField}
                         name={[name, "targetCrop"]}
+                        label={<>Cây trồng</>}
+                        rules={[{ required: true, message: "Vui lòng chọn cây trồng" }]}
+                        className="mb-3"
+                      >
+                        <Select
+                          options={cropOptions}
+                          loading={isCropsLoading}
+                          placeholder="Chọn cây trồng..."
+                          className="w-full text-sm"
+                          allowClear
+                          showSearch
+                          optionFilterProp="label"
+                        />
+                      </Form.Item>
+                    </Col>
+                    <div className="hidden">
+                    <Col xs={24} sm={12} md={6}>
+                      <Form.Item
+                        {...restField}
+                        name={[name, "legacyTargetCrop"]}
                         label={<>Đối tượng SD </>}
                         className="mb-3"
                       >
@@ -350,13 +387,14 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                       </Form.Item>
                     </Col>
                     </div>
-                    <Col xs={24} sm={12} md={8}>
+                    <Col xs={24} sm={12} md={6}>
                       <Form.Item label={<>Liều lượng </>} className="mb-0">
                         <div className="flex items-center gap-2">
                           <Form.Item
                             {...restField}
                             name={[name, "dosage"]}
                             className="flex-1 mb-0"
+                            rules={[{ required: true, message: "Vui lòng nhập liều lượng" }]}
                           >
                             <InputNumber
                               min={0}
@@ -373,13 +411,14 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                         </div>
                       </Form.Item>
                     </Col>
-                    <Col xs={24} sm={12} md={8}>
+                    <Col xs={24} sm={12} md={6}>
                       <Form.Item label={<>Diện tích </>} className="mb-0">
                         <div className="flex items-center gap-2">
                           <Form.Item
                             {...restField}
                             name={[name, "area"]}
                             className="flex-1 mb-0"
+                            rules={[{ required: true, message: "Vui lòng nhập diện tích" }]}
                           >
                             <InputNumber
                               min={0}
@@ -396,12 +435,13 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                         </div>
                       </Form.Item>
                     </Col>
-                    <Col xs={24} sm={12} md={8}>
+                    <Col xs={24} sm={12} md={6}>
                       <Form.Item
                         {...restField}
                         name={[name, "isolationDays"]}
                         label={<>Cách ly (Ngày) </>}
                         className="mb-0"
+                        rules={[{ required: true, message: "Vui lòng nhập số ngày cách ly" }]}
                       >
                         <InputNumber
                           min={0}
@@ -426,7 +466,7 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
               })}
               className="w-full mb-5 text-green-700 border-green-400 rounded-lg hover:border-green-500"
             >
-              Thêm Cách sử dụng
+              Thêm Liều lượng
             </Button>
           </>
         )}

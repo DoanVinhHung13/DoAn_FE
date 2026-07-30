@@ -125,6 +125,84 @@ const toPesticideOptions = list =>
     }
   })
 
+const getPesticideUsageQuarantineDays = (pesticide, option, task) => {
+  const explicitDays = [
+    pesticide?.quarantineDays,
+    pesticide?.isolationDays,
+    pesticide?.usage?.quarantineDays,
+    pesticide?.pesticideUsage?.quarantineDays,
+  ]
+    .map(toFiniteNumber)
+    .find(value => value !== null)
+
+  if (explicitDays !== undefined) return explicitDays
+
+  const raw = option?.raw || option || {}
+  const usages = [raw.usages, raw.dosages, raw.pesticideUsages]
+    .find(Array.isArray) || []
+  const cropKeys = [
+    task?.cropId,
+    task?.crop?.id,
+    task?.cropName,
+    task?.crop?.name,
+    task?.cropCatalogId,
+    task?.cropCatalogName,
+  ]
+    .filter(value => value !== null && value !== undefined && value !== "")
+    .map(value => String(value).trim().toLowerCase())
+
+  const matchingUsage = usages.find(usage => {
+    const target = usage?.targetCrop ?? usage?.target ?? usage?.crop
+    const targetKeys = (Array.isArray(target) ? target : [target])
+      .filter(value => value !== null && value !== undefined && value !== "")
+      .map(value => String(value?.id || value?.name || value).trim().toLowerCase())
+
+    return !cropKeys.length || !targetKeys.length || targetKeys.some(key => cropKeys.includes(key))
+  })
+  const usage = matchingUsage || usages[0]
+
+  return toFiniteNumber(usage?.quarantineDays ?? usage?.isolationDays) ?? null
+}
+
+const getIsolationWarnings = (dailyLogs, pesticideOptions, task, summaryDate) => {
+  const warningMap = new Map()
+
+  for (const log of dailyLogs || []) {
+    const appliedDate = parseDate(log.date || log.workDate || log.createdAt)
+    if (!appliedDate?.isValid?.()) continue
+
+    for (const pesticide of log.pesticides || []) {
+      const pesticideId = pesticide.pesticideId || pesticide.id || pesticide.materialId
+      const option = pesticideOptions.find(item => String(item.value) === String(pesticideId))
+      const quarantineDays = getPesticideUsageQuarantineDays(pesticide, option, task)
+      if (quarantineDays === null || quarantineDays <= 0) continue
+
+      const eligibleDate = appliedDate.startOf("day").add(quarantineDays, "day")
+      const key = `${pesticideId || pesticide.name || "pesticide"}|${pesticide.unit || pesticide.quantityUnit || ""}`
+      const previous = warningMap.get(key)
+      const applicationDate = appliedDate.startOf("day")
+      const isMoreRecentApplication =
+        !previous || applicationDate.isAfter(previous.lastApplicationDate)
+      const isSameDayWithLongerQuarantine =
+        previous &&
+        applicationDate.isSame(previous.lastApplicationDate, "day") &&
+        quarantineDays > previous.quarantineDays
+
+      if (isMoreRecentApplication || isSameDayWithLongerQuarantine) {
+        warningMap.set(key, {
+          key,
+          name: pesticide.name || option?.name || pesticide.materialName || "Nông dược",
+          lastApplicationDate: applicationDate,
+          quarantineDays,
+          eligibleDate,
+        })
+      }
+    }
+  }
+
+  return [...warningMap.values()].filter(item => summaryDate.isBefore(item.eligibleDate))
+}
+
 const DailyLog = () => {
   const { getTaskStatus } = useCultivationStatus()
   const { taskId } = useParams()
@@ -145,6 +223,11 @@ const DailyLog = () => {
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [entryRecommendations, setEntryRecommendations] = useState({})
   const [remainingAreas, setRemainingAreas] = useState({})
+
+  const isolationWarnings = useMemo(
+    () => getIsolationWarnings(dailyLogs, pesticideOptions, task, getLocalNow().startOf("day")),
+    [dailyLogs, pesticideOptions, task],
+  )
 
   const loadRemainingArea = async (materialType, rowIndex, materialId) => {
     const key = `${materialType}-${rowIndex}`
@@ -1441,16 +1524,38 @@ const DailyLog = () => {
         cancelText="Hủy"
         confirmLoading={submitting}
         okButtonProps={{
-          className:
-            task.status === "WAITING_APPROVAL"
-              ? ""
-              : "bg-green-600 border-green-600",
-          disabled: summaryLoading,
+            className:
+              task.status === "WAITING_APPROVAL"
+                ? ""
+                : "bg-green-600 border-green-600",
+            disabled:
+              summaryLoading,
         }}
         width={780}
       >
         <Spin spinning={summaryLoading} tip="Đang tải tổng hợp...">
           <div className="py-1 space-y-5 text-sm">
+            {task.status !== "WAITING_APPROVAL" && isolationWarnings.length > 0 && (
+              <Alert
+                type="warning"
+                showIcon
+                className="rounded-xl"
+                message="Chưa đủ thời gian cách ly"
+                description={
+                  <div className="space-y-1">
+                    <div>
+                      Ngày gửi Summary: {getLocalNow().format("DD/MM/YYYY")}. Vui lòng chờ đủ số ngày cách ly trước khi gửi.
+                    </div>
+                    {isolationWarnings.map(warning => (
+                      <div key={warning.key}>
+                        {warning.name}: bón lần cuối {warning.lastApplicationDate.format("DD/MM/YYYY")}, cách ly {warning.quarantineDays} ngày, đủ từ {warning.eligibleDate.format("DD/MM/YYYY")}.
+                      </div>
+                    ))}
+                  </div>
+                }
+              />
+            )}
+
             {/* ── Thống kê thời gian thực tế ── */}
             {(() => {
               // Lấy ngày bắt đầu thực tế

@@ -20,6 +20,12 @@ const { Text } = Typography
 // ── Sub-tables column definitions ────────────────────────────────────────────
 const usageColumns = [
   {
+    title: 'Cây trồng',
+    dataIndex: 'targetCrop',
+    key: 'targetCrop',
+    render: (v, record) => <Text strong>{v || record.target || '—'}</Text>,
+  },
+  {
     title: 'Diện tích',
     dataIndex: 'area',
     key: 'area',
@@ -295,20 +301,20 @@ const CropProtectionDetail = () => {
           )}
         </div>
 
-        {/* Section 2 – Cách Sử Dụng */}
+        {/* Section 2 – Liều Lượng */}
         <div>
           <div
             className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
             style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
           >
-            Cách Sử Dụng
+            Liều Lượng
           </div>
 
           {usages.length > 0 ? (
             <Table
               rowKey={(_, i) => i}
               dataSource={usages}
-              columns={['dosage', 'area', 'quarantineDays']
+              columns={['targetCrop', 'dosage', 'area', 'quarantineDays']
                 .map(key => usageColumns.find(column => column.key === key))
                 .filter(Boolean)}
               pagination={false}
@@ -319,7 +325,7 @@ const CropProtectionDetail = () => {
           ) : (
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Chưa có thông tin cách sử dụng"
+              description="Chưa có thông tin liều lượng"
               className="py-4"
             />
           )}
