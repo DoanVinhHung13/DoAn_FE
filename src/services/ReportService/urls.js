@@ -1,5 +1,5 @@
 export const apiGetDashboardOverview = '/dashboard/overview'
-export const apiGetProductionReport = '/reports/production'
+export const apiGetCultivatedAreaReport = '/reports/cultivated-area'
 export const apiGetMaterialUsageReport = '/reports/material-usage'
 export const apiGetTaskProgressReport = '/reports/task-progress'
 export const apiGetLaborReport = '/reports/labor'

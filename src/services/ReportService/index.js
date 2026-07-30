@@ -1,7 +1,7 @@
 import http from '../01_axios'
 import {
   apiGetDashboardOverview,
-  apiGetProductionReport,
+  apiGetCultivatedAreaReport,
   apiGetMaterialUsageReport,
   apiGetTaskProgressReport,
   apiGetLaborReport,
@@ -14,8 +14,8 @@ import {
 const getDashboardOverview = (params) =>
   http.get(apiGetDashboardOverview, { params })
 
-const getProductionReport = (params) =>
-  http.get(apiGetProductionReport, { params })
+const getCultivatedAreaReport = (params) =>
+  http.get(apiGetCultivatedAreaReport, { params })
 
 const getMaterialUsageReport = (params) =>
   http.get(apiGetMaterialUsageReport, { params })
@@ -40,7 +40,7 @@ const exportReportPdf = (params) =>
 
 const ReportService = {
   getDashboardOverview,
-  getProductionReport,
+  getCultivatedAreaReport,
   getMaterialUsageReport,
   getTaskProgressReport,
   getLaborReport,
