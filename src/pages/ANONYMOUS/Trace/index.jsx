@@ -39,6 +39,17 @@ const formatDateRange = (startDate, endDate) => {
   return `${formattedStart} – ${formattedEnd}`;
 };
 
+const formatMaterialDetail = (material) => {
+  const name = material?.materialName || material?.name || 'Vật tư';
+  const quantity = material?.quantity ?? material?.totalQuantity;
+  const unit = material?.unit || '';
+  const area = material?.area != null
+    ? `, diện tích ${material.area} ${material.areaUnit || ''}`.trim()
+    : '';
+
+  return quantity == null ? `${name}${area}` : `${name}: ${quantity} ${unit}${area}`.trim();
+};
+
 const buildTimelineGroups = (traceData) => {
   if (!traceData) return [];
 
@@ -46,9 +57,9 @@ const buildTimelineGroups = (traceData) => {
   const dailyLogs = Array.isArray(traceData.dailyLogs) ? traceData.dailyLogs : [];
   const rawEntries = officialLogs.length
     ? officialLogs.map((log, index) => {
-        const dailyLog = dailyLogs[index] || dailyLogs.find((item) => (
+        const dailyLog = dailyLogs.find((item) => (
           item?.date && log?.activityDate && parseDate(item.date).isSame(parseDate(log.activityDate), 'day')
-        ));
+        )) || dailyLogs[index];
         const materials = Array.isArray(log.materials) ? log.materials : [];
         const materialsText = log.materialsText || materials
           .map((material) => {
@@ -60,8 +71,10 @@ const buildTimelineGroups = (traceData) => {
           .join('; ');
 
         return {
-          stage: dailyLog?.stage || log.stage || 'Giai đoạn canh tác',
+          stage: log.cultivationStageName || dailyLog?.stage || log.stage || 'Giai đoạn canh tác',
+          stageOrder: log.stageOrder ?? dailyLog?.stageOrder,
           taskName: log.cultivationTaskName || log.taskName || dailyLog?.activity || `Công việc ${index + 1}`,
+          taskOrder: log.taskOrder ?? dailyLog?.taskOrder,
           startDate: log.workStartDate || log.activityDate || dailyLog?.date,
           endDate: log.workEndDate || log.activityDate || dailyLog?.date,
           description: log.description || dailyLog?.activity || '',
@@ -78,12 +91,15 @@ const buildTimelineGroups = (traceData) => {
             log.performedBy,
           ),
           materialsText,
+          materials,
           images: (Array.isArray(log.images) ? log.images : []).map(getImageUrl).filter(Boolean),
         };
       })
     : dailyLogs.map((log, index) => ({
         stage: log.stage || 'Giai đoạn canh tác',
+        stageOrder: log.stageOrder,
         taskName: log.taskName || log.activity || `Công việc ${index + 1}`,
+        taskOrder: log.taskOrder,
         startDate: log.date,
         endDate: log.date,
         description: log.activity || log.notes || '',
@@ -100,14 +116,16 @@ const buildTimelineGroups = (traceData) => {
           log.performedBy,
         ),
         materialsText: '',
+        materials: [],
         images: [],
       }));
 
   return rawEntries.reduce((groups, entry) => {
-    let group = groups.find((item) => item.stage === entry.stage);
+    let group = groups.find((item) => item.stage === entry.stage && item.stageOrder === entry.stageOrder);
     if (!group) {
       group = {
         stage: entry.stage,
+        stageOrder: entry.stageOrder,
         startDate: entry.startDate,
         endDate: entry.endDate,
         entries: [],
@@ -181,6 +199,42 @@ const Trace = () => {
       photos: toArray(payload?.photos ?? source.photos),
       certifications: toArray(payload?.certifications ?? source.certifications),
     };
+    const cultivationLogs = toArray(payload?.cultivationLogs ?? source.cultivationLogs);
+    const logMaterials = cultivationLogs.flatMap((log) => (
+      Array.isArray(log?.materials) ? log.materials.map((material) => ({
+        type: material.materialType || material.type || 'OTHER',
+        name: material.materialName || material.name || 'Vật tư',
+        quantity: material.quantity ?? material.totalQuantity,
+        unit: material.unit || '',
+        supplier: material.supplier,
+        usedAt: log.activityDate,
+        notes: material.note,
+      })) : []
+    ));
+    const logPhotos = cultivationLogs.flatMap((log) => (
+      Array.isArray(log?.images) ? log.images.map((image) => ({
+        url: getImageUrl(image),
+        caption: image?.description || log.cultivationTaskName || log.description || '',
+        date: log.activityDate,
+      })) : []
+    )).filter((photo) => photo.url);
+    const journalAreas = cultivationLogs.map((log) => {
+      const materials = Array.isArray(log?.materials) ? log.materials : [];
+      const materialAreas = materials
+        .map((material) => Number(material?.area))
+        .filter((area) => Number.isFinite(area) && area > 0);
+      const executedArea = Number(log?.executedArea);
+      return {
+        area: executedArea > 0 ? executedArea : (materialAreas.length ? Math.max(...materialAreas) : 0),
+        areaUnit: materials.find((material) => material?.areaUnit)?.areaUnit || log?.areaUnit || '',
+      };
+    }).filter((entry) => entry.area > 0);
+    const journalArea = journalAreas.length
+      ? journalAreas.reduce((total, entry) => total + entry.area, 0)
+      : null;
+    const journalAreaUnit = journalAreas.find((entry) => entry.areaUnit)?.areaUnit || '';
+    const areaValue = journalArea ?? payload?.area;
+    const areaUnit = journalAreaUnit || payload?.areaUnit || '';
     return {
       qrCode: payload?.traceCode || qrCode || '—',
       batchCode: b.batchCode || '—',
@@ -188,17 +242,17 @@ const Trace = () => {
       farmName: payload?.farmName || b.farmName || b.landPlotName || '—',
       harvestDate: payload?.harvestDate || b.harvestDate || null,
       startDate: b.startDate,
-      area: payload?.area ? `${payload.area} m2` : '—',
+      area: areaValue != null ? [areaValue, areaUnit].filter(Boolean).join(' ') : '—',
       yield: b.quantity != null ? `${b.quantity} ${b.unit || ''}`.trim() : '—',
       dailyLogs: b.dailyLogs,
       certifications: b.certifications,
 
       displayOptions,
 
-      materials: b.materials,
+      materials: b.materials.length ? b.materials : logMaterials,
 
-      photos: b.photos,
-      cultivationLogs: toArray(payload?.cultivationLogs ?? source.cultivationLogs),
+      photos: b.photos.length ? b.photos : logPhotos,
+      cultivationLogs,
     };
   }, [traceability, qrCode, displayOptions]);
 
@@ -331,7 +385,7 @@ const Trace = () => {
             {timelineGroups.length > 0 ? (
               <div className="space-y-8 px-1 sm:px-2">
                 {timelineGroups.map((group) => (
-                  <section key={group.stage}>
+                  <section key={`${group.stage}-${group.stageOrder ?? 'unknown'}`}>
                     <div className="mb-5">
                       <Text strong className="block text-slate-800 text-sm sm:text-base">{group.stage}</Text>
                       <Text className="block mt-1 text-emerald-600 text-xs sm:text-sm">
@@ -345,6 +399,16 @@ const Trace = () => {
                         <article key={`${entry.taskName}-${entry.startDate}-${index}`} className="relative pb-7 last:pb-0">
                           <span className="absolute -left-[31px] sm:-left-[34px] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow-sm" />
                           <Text strong className="block text-slate-800 text-sm sm:text-base">{entry.taskName}</Text>
+                          {(entry.stageOrder != null || entry.taskOrder != null) && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {entry.stageOrder != null && (
+                                <Tag color="green" className="m-0 text-xs">Giai đoạn {entry.stageOrder}</Tag>
+                              )}
+                              {entry.taskOrder != null && (
+                                <Tag color="blue" className="m-0 text-xs">Thứ tự công việc {entry.taskOrder}</Tag>
+                              )}
+                            </div>
+                          )}
                           <Text strong className="block mt-1 text-slate-800 text-xs sm:text-sm">
                             {formatDateRange(entry.startDate, entry.endDate)}
                           </Text>
@@ -360,6 +424,22 @@ const Trace = () => {
                             <Paragraph className="!mb-1 !mt-1 text-slate-700 text-xs sm:text-sm whitespace-pre-wrap">
                               {entry.materialsText}
                             </Paragraph>
+                          )}
+                          {entry.materials.length > 0 && (
+                            <div className="mt-2 rounded-lg border border-orange-100 bg-orange-50/60 p-2.5">
+                              <Text className="block text-xs font-semibold text-orange-800">Chi tiết vật tư</Text>
+                              <div className="mt-1 space-y-1">
+                                {entry.materials.map((material, materialIndex) => (
+                                  <div key={material.id || `${entry.taskName}-material-${materialIndex}`} className="flex flex-wrap items-center gap-1.5 text-xs text-slate-700">
+                                    <Tag color="orange" className="m-0 text-[11px]">
+                                      {material.materialType || material.type || 'OTHER'}
+                                    </Tag>
+                                    <span>{formatMaterialDetail(material)}</span>
+                                    {material.note && <span className="text-slate-500">({material.note})</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           )}
                           {traceData.displayOptions.showPhotos && entry.images.length > 0 && (
                             <Image.PreviewGroup items={entry.images}>
@@ -410,7 +490,7 @@ const Trace = () => {
                       <Tag color="orange" className="rounded-md font-medium text-xs m-0">{material.type}</Tag>
                       <Text strong className="text-slate-900">{material.name}</Text>
                     </div>
-                    <Text className="text-slate-500 text-xs block">Nhà cung cấp: {material.supplier}</Text>
+                    <Text className="text-slate-500 text-xs block">Nhà cung cấp: {material.supplier || '—'}</Text>
                   </div>
                   <div className="text-left sm:text-right flex-shrink-0">
                     <Text className="text-slate-400 text-xs block sm:inline mr-1">Liều lượng:</Text>
