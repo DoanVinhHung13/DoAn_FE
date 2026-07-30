@@ -95,32 +95,6 @@ const toFiniteNumber = value => {
   return Number.isFinite(number) ? number : null
 }
 
-const getRemainingAreaByValidationRule = (materialId, task, dailyLogs) => {
-  const totalPlanArea = toFiniteNumber(task?.totalPlanArea)
-  if (!materialId || totalPlanArea === null || totalPlanArea <= 0) return null
-
-  const usedArea = (dailyLogs || [])
-    .flatMap(log => [...(log.fertilizers || []), ...(log.pesticides || [])])
-    .filter(material => {
-      const logMaterialId =
-        material.materialId ||
-        material.fertilizerId ||
-        material.pesticideId
-      const areaUnit = String(material.areaUnit || "").trim().toLowerCase()
-      return (
-        String(logMaterialId) === String(materialId) &&
-        toFiniteNumber(material.area) !== null &&
-        areaUnit === MEASUREMENT_UNITS.SQUARE_METER
-      )
-    })
-    .reduce((total, material) => total + toFiniteNumber(material.area), 0)
-
-  return {
-    value: Math.max(0, totalPlanArea - usedArea),
-    unit: MEASUREMENT_UNITS.SQUARE_METER,
-  }
-}
-
 // usageUnit takes priority for both fertilizers and pesticides
 const toFertilizerOptions = list =>
   (list || []).map(item => {
@@ -170,6 +144,30 @@ const DailyLog = () => {
   const [leaderSummary, setLeaderSummary] = useState(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [entryRecommendations, setEntryRecommendations] = useState({})
+  const [remainingAreas, setRemainingAreas] = useState({})
+
+  const loadRemainingArea = async (rowIndex, materialId) => {
+    const key = String(rowIndex)
+    if (!materialId) {
+      setRemainingAreas(previous => ({ ...previous, [key]: null }))
+      return
+    }
+
+    try {
+      const response = await CultivationDailyLogService.getRemainingArea(
+        taskId,
+        materialId,
+      )
+      const result = unwrap(response)
+      setRemainingAreas(previous => ({
+        ...previous,
+        [key]: result || null,
+      }))
+    } catch (error) {
+      console.error(error)
+      setRemainingAreas(previous => ({ ...previous, [key]: null }))
+    }
+  }
 
   const loadEntryRecommendation = async (
     materialType,
@@ -310,6 +308,7 @@ const DailyLog = () => {
             Array.isArray(pestData) ? pestData : pestData?.items || [],
           ),
         )
+        setRemainingAreas({})
 
         form.setFieldsValue({
           date: getLocalNow(),
@@ -775,6 +774,10 @@ const DailyLog = () => {
                                       "area",
                                     ]),
                                   )
+                                  loadRemainingArea(
+                                    field.name,
+                                    opt?.materialId || value,
+                                  )
 
                                 }}
                               />
@@ -794,16 +797,8 @@ const DailyLog = () => {
                                   field.name,
                                   "fertilizerId",
                                 ])
-                                const selectedOption = fertilizerOptions.find(
-                                  option =>
-                                    String(option.value) === String(selectedId),
-                                )
                                 const remainingArea =
-                                  getRemainingAreaByValidationRule(
-                                    selectedOption?.materialId || selectedId,
-                                    task,
-                                    dailyLogs,
-                                  )
+                                  remainingAreas[String(field.name)]
 
                                 if (!selectedId) return null
 
@@ -814,7 +809,7 @@ const DailyLog = () => {
                                     </span>
                                     <span className="font-bold">
                                       {remainingArea
-                                        ? `${formatMeasurementValue(remainingArea.value)} ${remainingArea.unit}`
+                                        ? `${formatMeasurementValue(remainingArea.remainingArea)} ${remainingArea.areaUnit}`
                                         : "—"}
                                     </span>
                                   </div>

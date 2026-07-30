@@ -2,6 +2,7 @@ import http from '../01_axios'
 import {
   apiCreateCultivationDailyLog,
   apiGetDailyLogsByTask,
+  apiGetMaterialRemainingArea,
   apiGetDailyLogsByStage,
   apiGetDailyLogTaskSummary,
   apiGetMaterialRecommendations,
@@ -13,6 +14,9 @@ const create = (body) => http.post(apiCreateCultivationDailyLog, body)
 
 const getByTask = (taskId) =>
   http.get(apiGetDailyLogsByTask(taskId), silentConfig)
+
+const getRemainingArea = (taskId, materialId) =>
+  http.get(apiGetMaterialRemainingArea(taskId, materialId), silentConfig)
 
 const getByStage = (stageId) =>
   http.get(apiGetDailyLogsByStage(stageId), silentConfig)
@@ -26,6 +30,7 @@ const getRecommendations = (body) =>
 const CultivationDailyLogService = {
   create,
   getByTask,
+  getRemainingArea,
   getByStage,
   getTaskSummary,
   getRecommendations,
