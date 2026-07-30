@@ -114,6 +114,7 @@ const CultivationLogbookCreate = () => {
   const [templatesLoading, setTemplatesLoading] = useState(false)
   const [templateSearch, setTemplateSearch] = useState('')
   const [templateCropFilter, setTemplateCropFilter] = useState(undefined)
+  const [templateCatalogFilter, setTemplateCatalogFilter] = useState(undefined)
 
   // ── Load dropdown options ────────────────────────────────────────
   React.useEffect(() => {
@@ -451,12 +452,13 @@ const CultivationLogbookCreate = () => {
   // ── Template modal handlers ──────────────────────────────────────
   const openTemplateModal = () => {
     setTemplateCropFilter(selectedCropId)
+    setTemplateCatalogFilter(undefined)
     setTemplateModal(true)
     setTemplateSearch('')
-    loadTemplates('', selectedCropId)
+    loadTemplates('', selectedCropId, undefined)
   }
 
-  const loadTemplates = async (search = '', cropId = templateCropFilter) => {
+  const loadTemplates = async (search = '', cropId = null, cropCatalogId = null) => {
     try {
       setTemplatesLoading(true)
       const response = await ProcessTemplateService.getProcessTemplates({
@@ -464,6 +466,7 @@ const CultivationLogbookCreate = () => {
         PageSize: 1000,
         SearchKeyword: search || undefined,
         CropId: cropId || undefined,
+        CropCatalogId: cropCatalogId || undefined,
       })
       setTemplates(normalizeResponse(response))
     } catch (error) {
@@ -495,6 +498,17 @@ const CultivationLogbookCreate = () => {
 
   const selectedCropOption = templateCropOptions.find(
     (option) => String(option.value) === String(selectedCropId)
+  )
+
+  const templateCatalogOptions = (catalogsData || [])
+    .map((catalog) => ({
+      value: catalog.id || catalog._id || catalog.cropCatalogId,
+      label: catalog.name || catalog.catalogName,
+    }))
+    .filter((option) => option.value && option.label)
+
+  const selectedCatalogOption = templateCatalogOptions.find(
+    (option) => String(option.value) === String(templateCatalogFilter)
   )
 
   const applyTemplate = async (template) => {
@@ -848,7 +862,7 @@ const CultivationLogbookCreate = () => {
             placeholder="Tìm kiếm mẫu kế hoạch..."
             value={templateSearch}
             onChange={(e) => setTemplateSearch(e.target.value)}
-            onSearch={(value) => loadTemplates(value, templateCropFilter)}
+            onSearch={(value) => loadTemplates(value, templateCropFilter, templateCatalogFilter)}
             size="large"
               className="flex-1 rounded-xl"
               aria-label="Tìm kiếm mẫu nhật ký canh tác"
@@ -862,17 +876,35 @@ const CultivationLogbookCreate = () => {
               optionFilterProp="label"
               onChange={(value) => {
                 setTemplateCropFilter(value)
-                loadTemplates(templateSearch, value)
+                loadTemplates(templateSearch, value, templateCatalogFilter)
               }}
               placeholder="Tất cả cây trồng"
               className="w-full md:w-64"
               size="large"
               aria-label="Lọc mẫu theo cây trồng"
             />
+            <Select
+              value={templateCatalogFilter}
+              options={templateCatalogOptions}
+              loading={isCatalogsLoading}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              onChange={(value) => {
+                setTemplateCatalogFilter(value)
+                loadTemplates(templateSearch, templateCropFilter, value)
+              }}
+              placeholder="Tất cả danh mục"
+              className="w-full md:w-64"
+              size="large"
+              aria-label="Lọc mẫu theo danh mục cây trồng"
+            />
           </div>
-          {templateCropFilter && (
+          {(templateCropFilter || templateCatalogFilter) && (
             <Text type="secondary" className="block -mt-2 text-sm">
-              Đang lọc mẫu cho: {selectedCropOption?.label || 'Cây trồng đã chọn'}. Bấm dấu x để xem tất cả mẫu.
+              Đang lọc mẫu theo: {[selectedCropOption?.label, selectedCatalogOption?.label]
+                .filter(Boolean)
+                .join(' · ')}. Xóa các bộ lọc để xem tất cả mẫu.
             </Text>
           )}
           {templatesLoading ? (
