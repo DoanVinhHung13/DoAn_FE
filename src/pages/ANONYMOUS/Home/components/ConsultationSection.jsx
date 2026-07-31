@@ -2,6 +2,7 @@
 import { Row, Col, Card, Form, Input, Button, Typography, Select } from 'antd'
 import { PhoneOutlined, MailOutlined, UserOutlined, ShopOutlined } from '@ant-design/icons'
 import ConsultationService from 'src/services/ConsultationService'
+import { normalizeApiError } from 'src/services/core/apiError'
 import { message, Modal } from 'antd'
 import { SafetyCertificateFilled } from '@ant-design/icons'
 
@@ -48,7 +49,13 @@ const ConsultationSection = () => {
         form.resetFields()
       }
     } catch (error) {
-      console.error('Consultation submit error:', error)
+      const normalizedError = normalizeApiError(error)
+      console.error('Consultation submit error:', {
+        kind: normalizedError.kind,
+        code: normalizedError.code,
+        status: normalizedError.status,
+        traceId: normalizedError.traceId,
+      })
     } finally {
       setLoading(false)
     }

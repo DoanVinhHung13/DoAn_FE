@@ -44,14 +44,14 @@ const getFertilizerById = (id) => http.get(apiGetFertilizerById(id))
  * body: { name, code, unit, supplier?, manufacturer?, materialId?, price?,
  *         description?, minimumStock?, type?, compositions?, dosages? }
  */
-const createFertilizer = (body) => http.post(apiCreateFertilizer, body)
+const createFertilizer = (body, config) => http.post(apiCreateFertilizer, body, config)
 
 /**
  * PUT /api/fertilizers/:id
  * body: { name, code, unit, supplier?, manufacturer?, materialId?, price?,
  *         description?, minimumStock?, type?, compositions?, dosages? }
  */
-const updateFertilizer = (id, body) => http.put(apiUpdateFertilizer(id), body)
+const updateFertilizer = (id, body, config) => http.put(apiUpdateFertilizer(id), body, config)
 
 /**
  * DELETE /api/fertilizers/:id — xóa mềm

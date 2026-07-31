@@ -15,7 +15,7 @@ import {
 
 const silentConfig = { skipNotice: true }
 
-const getTaskCatalogs = (params) => http.get(apiGetTaskCatalogs, { params, ...silentConfig })
+const getTaskCatalogs = (params, config = {}) => http.get(apiGetTaskCatalogs, { params, ...silentConfig, ...config })
 
 const getTaskCatalogById = (id) => http.get(apiGetTaskCatalogById(id), silentConfig)
 

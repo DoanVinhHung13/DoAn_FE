@@ -3,6 +3,7 @@ import { Card, Form, Input, Button, Typography } from 'antd'
 import { QrcodeOutlined, SearchOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import api from 'src/services/01_axios'
+import { normalizeApiError } from 'src/services/core/apiError'
 import { message } from 'antd'
 
 const { Text } = Typography
@@ -25,16 +26,15 @@ const QrLookupSection = () => {
         skipNotice: true,
         skipAuthRedirect: true,
       })
-      const payload = response?.data?.data ?? response?.data
-      if (payload && (payload.harvestBatch || payload.batchCode || payload.id || payload.success)) {
-        navigate(`/trace/${encodeURIComponent(qrCode)}`)
-      } else {
-        // Fallback: navigate directly to trace page to let it handle display
+
+      if (response?.success || response?.data?.success || response?.data) {
         navigate(`/trace/${encodeURIComponent(qrCode)}`)
       }
     } catch (error) {
-      // Direct navigation to trace page anyway so user sees clean trace error state
-      navigate(`/trace/${encodeURIComponent(qrCode)}`)
+      const normalizedError = normalizeApiError(error)
+      if (normalizedError.code === 'NOT_FOUND' || normalizedError.message) {
+        message.error(normalizedError.message)
+      }
     } finally {
       setQrSearching(false)
     }

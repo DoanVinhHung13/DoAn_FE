@@ -10,7 +10,7 @@ import {
 
 const silentConfig = { skipNotice: true }
 
-const create = (body) => http.post(apiCreateCultivationDailyLog, body)
+const create = (body, config = {}) => http.post(apiCreateCultivationDailyLog, body, config)
 
 const getByTask = (taskId) =>
   http.get(apiGetDailyLogsByTask(taskId), silentConfig)

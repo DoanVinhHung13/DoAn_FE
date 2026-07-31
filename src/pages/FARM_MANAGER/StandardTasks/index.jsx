@@ -19,6 +19,7 @@ import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 
 import TaskCatalogService from 'src/services/TaskCatalogService'
+import { normalizeApiError } from 'src/services/core/apiError'
 import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
 import { invalidCharsRegex } from 'src/utils/helpers'
@@ -57,9 +58,17 @@ const TasksManagement = () => {
         CropCatalogId: cropCatalogId || undefined,
         CropId: cropId || undefined,
       }
-      const res = await TaskCatalogService.getTaskCatalogs(params)
+      const res = await TaskCatalogService.getTaskCatalogs(params, { skipNotice: false })
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
+    } catch (error) {
+      const normalizedError = normalizeApiError(error)
+      console.error('Task catalog list error:', {
+        kind: normalizedError.kind,
+        code: normalizedError.code,
+        status: normalizedError.status,
+        traceId: normalizedError.traceId,
+      })
     } finally {
       setLoading(false)
     }
@@ -125,7 +134,13 @@ const TasksManagement = () => {
       await TaskCatalogService.deleteTaskCatalog(record.id)
       getList()
     } catch (error) {
-      console.error(error)
+      const normalizedError = normalizeApiError(error)
+      console.error('Task catalog delete error:', {
+        kind: normalizedError.kind,
+        code: normalizedError.code,
+        status: normalizedError.status,
+        traceId: normalizedError.traceId,
+      })
     }
   }
 

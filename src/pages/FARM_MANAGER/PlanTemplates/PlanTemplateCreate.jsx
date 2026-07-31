@@ -28,8 +28,17 @@ import ProcessTemplateService from "src/services/ProcessTemplateService"
 import ProcessStepService from "src/services/ProcessStepService"
 import { isActiveCropCatalog } from "src/utils/cropCatalog"
 import { logDevDiagnostic } from "src/utils/safeDiagnostic"
+import { applyApiFieldErrors } from "src/services/core/apiError"
 
 const { Text } = Typography
+
+const PLAN_TEMPLATE_FIELD_MAPPING = {
+  CropCatalogId: "cropCatalogId", cropCatalogId: "cropCatalogId",
+  CropId: "cropId", cropId: "cropId",
+  Name: "name", name: "name",
+  Description: "description", description: "description",
+  EstimatedDurationDays: "estimatedDurationDays", estimatedDurationDays: "estimatedDurationDays",
+}
 
 const normalizeItems = response => {
   const payload = response?.data ?? response ?? {}
@@ -349,8 +358,11 @@ const PlanTemplateCreate = () => {
       await syncSteps(processTemplateId, normalizedSteps)
       navigate(ROUTER.FM_PROCESS_TEMPLATES)
     } catch (error) {
+      const mappedFields = applyApiFieldErrors(form, error, PLAN_TEMPLATE_FIELD_MAPPING)
+      if (mappedFields === 0 && error?.message) {
+        message.error(error.message)
+      }
       logDevDiagnostic("process-template-submit", error)
-      // axios interceptor handles error notification
     } finally {
       setSubmitting(false)
     }
