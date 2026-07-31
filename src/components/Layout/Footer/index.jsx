@@ -24,7 +24,7 @@ const PublicFooter = () => {
     };
 
     const handleDashboardClick = () => {
-      navigate(ROUTER.FM_DASHBOARD);
+        navigate(ROUTER.FM_DASHBOARD);
     };
 
     return (
@@ -43,9 +43,9 @@ const PublicFooter = () => {
                             </div>
                         </div>
                         <Paragraph className="text-gray-400 max-w-sm leading-relaxed">
-                            Nền tảng truy xuất nguồn gốc chuẩn quốc gia. Minh bạch - Đồng bộ - Tin cậy - Phù hợp tiêu chuẩn Việt Nam & Quốc tế.
+                            Hệ thống số hóa nhật ký canh tác & truy xuất nguồn gốc nông sản. Giúp trang trại và hợp tác xã quản lý toàn bộ quy trình sản xuất minh bạch và hiệu quả.
                         </Paragraph>
-                        
+
                         <div className="space-y-3 pt-4">
                             <div className="flex items-center gap-3 text-gray-400 hover:text-green-400 transition-colors">
                                 <SafetyCertificateOutlined className="text-lg" />
@@ -61,7 +61,7 @@ const PublicFooter = () => {
                     {/* Office Locations */}
                     <Col xs={24} md={8} className="space-y-6">
                         <Text strong className="text-white block uppercase tracking-widest text-xs mb-4">Văn phòng</Text>
-                        
+
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <Text strong className="text-green-400 block text-sm">Địa chỉ đăng ký</Text>
@@ -91,9 +91,6 @@ const PublicFooter = () => {
                             <div className="space-y-4">
                                 <Text strong className="text-white block uppercase tracking-widest text-xs">Liên kết nhanh</Text>
                                 <Space direction="vertical" className="text-gray-200">
-                                    <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={() => navigate(ROUTER.TCVN)}>
-                                        Tra cứu TCVN
-                                    </Text>
                                     {isLoggedIn ? (
                                         <Text className="text-gray-200 hover:text-green-400 cursor-pointer transition-colors" onClick={handleDashboardClick}>
                                             Vào bảng điều khiển
@@ -142,13 +139,9 @@ const PublicFooter = () => {
                             © 2026 EAPLS. Tất cả quyền được bảo lưu.
                         </Text>
                         <Text className="text-gray-500 text-xs block">
-                            Minh bạch - Đồng bộ - Tin cậy - Phù hợp tiêu chuẩn Việt Nam & Quốc tế
+                            Minh bạch - Chuẩn hóa - Tin cậy - Nhật ký sản xuất điện tử
                         </Text>
                     </div>
-                    <Space className="text-gray-400 text-xl" size="large">
-                        <GlobalOutlined className="hover:text-green-400 cursor-pointer transition-colors" />
-                        <ThunderboltFilled className="hover:text-green-400 cursor-pointer transition-colors" />
-                    </Space>
                 </div>
             </div>
         </footer>

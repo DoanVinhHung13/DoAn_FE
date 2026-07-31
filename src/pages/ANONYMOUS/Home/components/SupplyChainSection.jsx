@@ -1,110 +1,196 @@
 import React from 'react'
-import { Card, Typography, Tag } from 'antd'
+import { Typography, Tag } from 'antd'
+import { CheckCircleFilled, ClockCircleOutlined } from '@ant-design/icons'
 
-const { Title, Text, Paragraph } = Typography
+const { Text, Title } = Typography
+
+const steps = [
+  {
+    step: '01',
+    title: 'Canh Tác & Sản Xuất',
+    items: ['Quản lý vùng trồng', 'Ghi nhật ký phân bón/BVTV', 'Phân công & Duyệt nhật ký'],
+    icon: '🌾',
+    borderColor: '#2e7d32',
+    active: true,
+  },
+  {
+    step: '02',
+    title: 'Thu Hoạch & Tạo Lô',
+    items: ['Tạo lô thu hoạch', 'Ngày trồng & Thu hoạch', 'Ghi nhận lịch sử thu hoạch'],
+    icon: '📦',
+    borderColor: '#2e7d32',
+    active: true,
+  },
+  {
+    step: '03',
+    title: 'Cấp Tem QR & Truy Xuất',
+    items: ['Sinh mã & Cấp tem QR', 'Cấu hình quyền hiển thị', 'Quét QR tra cứu công khai'],
+    icon: '🔍',
+    borderColor: '#2e7d32',
+    active: true,
+  },
+  {
+    step: '04',
+    title: 'Lưu Kho & Vận Chuyển',
+    items: ['Quản lý kho phân phối', 'Nhật ký vận chuyển', 'Giao nhận đại lý'],
+    icon: '🚚',
+    borderColor: '#bdbdbd',
+    active: false,
+  },
+  {
+    step: '05',
+    title: 'Phân Phối & Bán Lẻ',
+    items: ['Bày bán siêu thị/điểm bán', 'Xác thực tem chống giả', 'Phản hồi người tiêu dùng'],
+    icon: '🛒',
+    borderColor: '#bdbdbd',
+    active: false,
+  },
+]
 
 const SupplyChainSection = () => {
   return (
-    <section id="process" className="relative px-6 py-16 overflow-hidden bg-white md:py-20">
-      <div
-        className="absolute inset-0 opacity-[0.02] pointer-events-none"
-        style={{
-          backgroundImage: 'radial-gradient(#22c55e 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      ></div>
-
-      <div className="relative z-10 mx-auto max-w-7xl">
-        <div className="max-w-3xl mx-auto mb-16 space-y-4 text-center scroll-reveal">
-          <div className="inline-flex items-center gap-2 px-4 py-2 mb-2 border border-green-100 rounded-full bg-green-50">
-            <span className="text-green-600">✓</span>
-            <Text className="text-green-700 font-bold text-[10px] uppercase tracking-widest">Chuỗi giá trị</Text>
-          </div>
-          <Title level={2} className="!text-gray-900 !mb-0 md:!text-5xl font-black gradient-text">
-            Quy Trình Truy Xuất Toàn Diện
-          </Title>
-          <Paragraph className="text-lg text-gray-500">
-            Mô hình hóa toàn bộ chuỗi cung ứng, đảm bảo tính minh bạch và xác thực dữ liệu tại từng điểm chạm.
-          </Paragraph>
-        </div>
-
-        {/* Supply Chain Visual */}
-        <div className="scroll-reveal max-w-4xl mx-auto mb-16 rounded-[40px] overflow-hidden shadow-2xl hover-lift border-[8px] border-white/50 relative">
-          <img src="/images/supply.png" alt="Agricultural Supply Chain" className="w-full h-auto bg-white" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-          <div className="absolute bottom-6 left-8">
-            <Tag color="green" className="px-4 py-1 text-xs font-bold rounded-full shadow-lg">
-              Từ nông trại đến bàn ăn
-            </Tag>
+    <section id="process" className="py-16 px-6" style={{ background: '#f5f5f5' }}>
+      <div className="mx-auto max-w-6xl">
+        {/* Tiêu đề */}
+        <div className="text-center mb-4">
+          <h2
+            style={{
+              fontSize: 'clamp(1.4rem, 3vw, 2rem)',
+              fontWeight: 700,
+              color: '#1a1a1a',
+              marginBottom: 8,
+            }}
+          >
+            Quy trình truy xuất toàn diện
+          </h2>
+          <p style={{ color: '#616161', fontSize: '0.95rem', maxWidth: 520, margin: '0 auto 12px' }}>
+            Mô hình hóa toàn bộ chuỗi cung ứng từ sản xuất đến người tiêu dùng cuối
+          </p>
+          {/* Trạng thái hiện tại */}
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded"
+            style={{
+              background: '#e8f5e9',
+              border: '1px solid #c8e6c9',
+            }}
+          >
+            <CheckCircleFilled style={{ color: '#2e7d32', fontSize: 13 }} />
+            <Text style={{ fontSize: '0.8rem', color: '#2e7d32', fontWeight: 600 }}>
+              Hệ thống hỗ trợ chính thức Bước 01 – 03 (Canh tác, Thu hoạch & Cấp tem QR)
+            </Text>
           </div>
         </div>
 
-        {/* 5-Step Supply Chain Flow */}
-        <div className="relative grid grid-cols-1 gap-4 mb-20 md:grid-cols-5 scroll-reveal">
-          {[
-            { step: '01', title: 'Sản Xuất Ban Đầu', items: ['Thu hoạch', 'Ghi nhận dữ liệu', 'Mã số lô'], icon: '🏠', color: 'from-blue-600 to-blue-400', shadow: 'shadow-blue-100', bg: 'bg-blue-50/50' },
-            { step: '02', title: 'Thu Gom & Vận Chuyển', items: ['Gom hàng', 'Kiểm tra chất lượng', 'Đóng gói sơ bộ'], icon: '🚚', color: 'from-cyan-600 to-cyan-400', shadow: 'shadow-cyan-100', bg: 'bg-cyan-50/50' },
-            { step: '03', title: 'Chế Biến & Sản Xuất', items: ['Xử lý nguyên liệu', 'Quy trình sản xuất', 'Gán nhãn & QR'], icon: '🏭', color: 'from-green-600 to-green-400', shadow: 'shadow-green-100', bg: 'bg-green-50/50' },
-            { step: '04', title: 'Lưu Kho & Phân Phối', items: ['Nhập kho', 'Quản lý tồn kho', 'Đại lý phân phối'], icon: '🏪', color: 'from-orange-600 to-orange-400', shadow: 'shadow-orange-100', bg: 'bg-orange-50/50' },
-            { step: '05', title: 'Bán Lẻ & Tiêu Dùng', items: ['Bày bán sản phẩm', 'Khách hàng quét mã', 'Truy cập thông tin'], icon: '✓', color: 'from-red-600 to-red-400', shadow: 'shadow-red-100', bg: 'bg-red-50/50' },
-          ].map((item, index) => (
-            <div key={index} className="relative group hover-lift">
-              <Card className={`rounded-[32px] border-0 shadow-xl ${item.shadow} ${item.bg} h-full overflow-hidden`}>
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center text-white text-2xl mb-6 shadow-lg`}>
-                  <span>{item.icon}</span>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-4xl italic font-black opacity-10">{item.step}</span>
-                  </div>
-                  <Title level={4} className="!text-gray-800 !mb-2 !text-base font-black leading-tight h-12 flex items-center">
-                    {item.title}
-                  </Title>
-                  <ul className="p-0 m-0 space-y-2 list-none">
-                    {item.items.map((point, pIdx) => (
-                      <li key={pIdx} className="flex items-center gap-2 text-xs font-medium text-gray-500">
-                        <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${item.color}`}></div>
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Card>
+        {/* Steps */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-5 mt-10">
+          {steps.map((item, index) => (
+            <div
+              key={index}
+              style={{
+                background: item.active ? '#fff' : '#fafafa',
+                border: `1px solid ${item.active ? '#c8e6c9' : '#e0e0e0'}`,
+                borderTop: `3px solid ${item.borderColor}`,
+                borderRadius: 8,
+                padding: '20px 16px',
+                opacity: item.active ? 1 : 0.55,
+                position: 'relative',
+              }}
+            >
+              {/* Badge trạng thái */}
+              {item.active ? (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    background: '#e8f5e9',
+                    color: '#2e7d32',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    padding: '2px 7px',
+                    borderRadius: 4,
+                  }}
+                >
+                  <CheckCircleFilled style={{ fontSize: 10 }} /> Đang dùng
+                </span>
+              ) : (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3,
+                    background: '#f5f5f5',
+                    color: '#9e9e9e',
+                    fontSize: '0.65rem',
+                    fontWeight: 600,
+                    padding: '2px 7px',
+                    borderRadius: 4,
+                  }}
+                >
+                  <ClockCircleOutlined style={{ fontSize: 10 }} /> Sắp có
+                </span>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 20 }}>{item.icon}</span>
+                <span
+                  style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    color: item.active ? '#2e7d32' : '#bdbdbd',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  BƯỚC {item.step}
+                </span>
+              </div>
+
+              <Title
+                level={5}
+                style={{
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                  color: item.active ? '#212121' : '#9e9e9e',
+                  marginBottom: 10,
+                }}
+              >
+                {item.title}
+              </Title>
+
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                {item.items.map((point, pIdx) => (
+                  <li
+                    key={pIdx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: '0.8rem',
+                      color: item.active ? '#616161' : '#bdbdbd',
+                      marginBottom: 4,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: '50%',
+                        background: item.active ? '#2e7d32' : '#bdbdbd',
+                        flexShrink: 0,
+                      }}
+                    />
+                    {point}
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
-        </div>
-
-        {/* Data Management Layer */}
-        <div className="bg-slate-50 rounded-[40px] p-8 md:p-12 border border-gray-100 scroll-reveal">
-          <div className="flex flex-col items-center gap-8 md:flex-row">
-            <div className="pb-8 space-y-4 text-center border-b border-gray-200 md:w-1/3 md:text-left md:border-b-0 md:border-r md:pb-0 md:pr-8">
-              <Title level={3} className="!font-black !text-gray-800 !mb-0">
-                Hệ Thống Quản Lý & Truy Xuất Dữ Liệu
-              </Title>
-              <Text className="block text-gray-500">
-                Nền tảng hợp nhất giúp lưu trữ và xác thực thông tin xuyên suốt chuỗi giá trị.
-              </Text>
-            </div>
-
-            <div className="grid w-full grid-cols-2 gap-8 md:w-2/3 md:grid-cols-4">
-              {[
-                { icon: '📋', label: 'Ghi nhận', desc: 'Dữ liệu thực địa' },
-                { icon: '☁️', label: 'Lưu trữ', desc: 'Database/Cloud' },
-                { icon: '🔗', label: 'Chia sẻ', desc: 'Đa nền tảng' },
-                { icon: '🔒', label: 'Kiểm chứng', desc: 'Xác thực QR' },
-              ].map((step, i) => (
-                <div key={i} className="space-y-3 text-center">
-                  <div className="flex items-center justify-center w-16 h-16 mx-auto text-2xl bg-white border shadow-sm rounded-2xl border-gray-50">
-                    {step.icon}
-                  </div>
-                  <div>
-                    <Text className="block text-sm font-black text-gray-800">{step.label}</Text>
-                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{step.desc}</Text>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </section>

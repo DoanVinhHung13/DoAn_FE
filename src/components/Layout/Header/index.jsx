@@ -90,54 +90,7 @@ const PublicNavbar = () => {
           </div>
         </div>
 
-        {/* Center: Desktop Menu */}
-        <div className="items-center justify-center hidden lg:flex">
-          <Space size="large">
-            <Button
-              type="text"
-              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => navigate(ROUTER.HOME)}
-            >
-              Trang chủ
-            </Button>
-            <Button
-              type="text"
-              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => navigate(ROUTER.TCVN)}
-            >
-              Tra cứu TCVN
-            </Button>
-            <Button
-              type="text"
-              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => navigate(ROUTER.NEWS)}
-            >
-              Tin tức
-            </Button>
-            <Button
-              type="text"
-              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => {
-                if (window.location.pathname === ROUTER.HOME) {
-                  document
-                    .getElementById("about-us")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                } else {
-                  navigate(ROUTER.HOME);
-                  setTimeout(
-                    () =>
-                      document
-                        .getElementById("about-us")
-                        ?.scrollIntoView({ behavior: "smooth" }),
-                    300,
-                  );
-                }
-              }}
-            >
-              Về chúng tôi
-            </Button>
-          </Space>
-        </div>
+        {/* Center: Desktop Menu (Emptied per user request) */}
 
         {/* Right Side: Auth & Mobile Menu */}
         <div className="flex items-center justify-end flex-1">
@@ -230,59 +183,7 @@ const PublicNavbar = () => {
           width={280}
         >
           <div className="flex flex-col gap-4">
-            <Button
-              type="text"
-              className="font-bold text-left text-gray-600"
-              onClick={() => {
-                navigate(ROUTER.HOME);
-                setMobileMenuOpen(false);
-              }}
-            >
-              Trang chủ
-            </Button>
-            <Button
-              type="text"
-              className="font-bold text-left text-gray-600"
-              onClick={() => {
-                navigate(ROUTER.TCVN);
-                setMobileMenuOpen(false);
-              }}
-            >
-              Tra cứu TCVN
-            </Button>
-            <Button
-              type="text"
-              className="font-bold text-left text-gray-600"
-              onClick={() => {
-                navigate(ROUTER.NEWS);
-                setMobileMenuOpen(false);
-              }}
-            >
-              Tin tức
-            </Button>
-            <Button
-              type="text"
-              className="font-bold text-left text-gray-600"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (window.location.pathname === ROUTER.HOME) {
-                  document
-                    .getElementById("about-us")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                } else {
-                  navigate(ROUTER.HOME);
-                  setTimeout(
-                    () =>
-                      document
-                        .getElementById("about-us")
-                        ?.scrollIntoView({ behavior: "smooth" }),
-                    300,
-                  );
-                }
-              }}
-            >
-              Về chúng tôi
-            </Button>
+            {/* Nav links removed per user request */}
 
             <AntdDivider className="my-2" />
 

@@ -1,106 +1,167 @@
-﻿import React from 'react'
-import { Row, Col, Card, Typography, Tag } from 'antd'
-import {
-  EditOutlined,
-  ThunderboltFilled,
-  QrcodeOutlined,
-  LineChartOutlined,
-  CloudServerOutlined,
-  RocketOutlined,
-} from '@ant-design/icons'
+import React from 'react'
+import { Card, Typography, Button } from 'antd'
+import { ArrowRightOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import ROUTER from 'src/router/ROUTER'
 
-const { Title, Paragraph } = Typography
+const { Title, Paragraph, Text } = Typography
 
-const features = [
+const modules = [
   {
-    title: 'Quản lý quy trình sản xuất chi tiết',
-    desc: 'Ghi chép đầy đủ các hoạt động: gieo trồng, bón phân, tưới tiêu, thu hoạch. Tích hợp sổ tay điện tử thông minh cho từng loại cây trồng, vật nuôi.',
-    icon: <EditOutlined />,
-    color: '#10b981',
-    bgImage: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+    id: 'txng',
+    tag: 'Dành cho người dùng & người tiêu dùng',
+    title: 'Cổng Tra cứu & Truy xuất QR',
+    desc: 'Nền tảng tra cứu minh bạch phục vụ người tiêu dùng. Quét mã QR trên tem nông sản để xem toàn bộ thông tin nguồn gốc, lô thu hoạch, nhật ký canh tác thực địa và chứng nhận an toàn.',
+    btnLabel: 'Tra cứu thông tin',
+    bgColor: '#2e7d32',
+    image:
+      'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&q=70',
+    action: 'trace',
   },
   {
-    title: 'Tự động hóa & Đồng bộ dữ liệu',
-    desc: 'Đồng bộ dữ liệu thời gian thực từ mọi thiết bị: Cảm biến IoT, Drone, Mobile, Tablet.',
-    icon: <ThunderboltFilled />,
-    color: '#3b82f6',
-    bgImage: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-  },
-  {
-    title: 'Tem QR Truy xuất & Chống giả',
-    desc: 'Cung cấp mã QR định danh độc bản cho từng lô sản phẩm. Giúp người tiêu dùng dễ dàng kiểm chứng hàng thật.',
-    icon: <QrcodeOutlined />,
-    color: '#059669',
-    bgImage: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-  },
-  {
-    title: 'Phân tích và dự báo AI',
-    desc: 'Sử dụng AI phân tích dữ liệu để dự báo năng suất, chi phí và rủi ro.',
-    icon: <LineChartOutlined />,
-    color: '#8b5cf6',
-    bgImage: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-  },
-  {
-    title: 'Bảo mật và lưu trữ đám mây',
-    desc: 'Lưu trữ dữ liệu trên nền tảng Cloud bảo mật tuyệt đối.',
-    icon: <CloudServerOutlined />,
-    color: '#06b6d4',
-    bgImage: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
+    id: 'mgmt',
+    tag: 'Dành cho trang trại, HTX & doanh nghiệp',
+    title: 'Hệ thống Quản trị & Nhật ký Điện tử',
+    desc: 'Phần mềm chuyển đổi số nông nghiệp toàn diện. Hỗ trợ chủ trang trại và nhân sự quản lý vùng trồng, lập quy trình canh tác, số hóa ghi chép bón phân/nông dược và cấp phát tem QR.',
+    btnLabel: 'Truy cập Quản trị',
+    bgColor: '#01579b',
+    image:
+      'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=70',
+    action: 'login',
   },
 ]
 
 const FeaturesSection = () => {
+  const navigate = useNavigate()
+  const user = useSelector((state) => state.appGlobal.userInfo)
+
+  const handleAction = (action) => {
+    if (action === 'login') {
+      navigate(user ? ROUTER.FM_DASHBOARD : ROUTER.LOGIN)
+    } else {
+      // Scroll to QR lookup section or navigate
+      const element = document.getElementById('qr-lookup-section')
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+  }
+
   return (
-    <section className="px-6 py-24 bg-slate-50 md:py-32">
-      <div className="mx-auto space-y-20 max-w-7xl">
-        <div className="max-w-3xl mx-auto space-y-4 text-center scroll-reveal">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-green-50">
-              <RocketOutlined className="text-2xl text-green-600" />
-            </div>
-            <Tag color="green" className="px-4 py-1 text-xs font-black tracking-widest uppercase rounded-full pulse-badge">
-              Đặc điểm nổi bật
-            </Tag>
-          </div>
-          <Title level={2} className="!text-gray-900 !mb-0 md:!text-5xl font-black">
-            Nhật ký sản xuất điện tử EAPLS
-          </Title>
-          <Paragraph className="text-lg text-gray-500">
-            Giải pháp chuyển đổi số toàn diện cho nông nghiệp hiện đại, minh bạch và hiệu quả.
-          </Paragraph>
+    <section className="py-16 px-6 bg-white">
+      <div className="mx-auto max-w-6xl">
+        {/* Tiêu đề */}
+        <div className="text-center mb-12">
+          <h2
+            style={{
+              fontSize: 'clamp(1.4rem, 3vw, 2rem)',
+              fontWeight: 700,
+              color: '#1a1a1a',
+              marginBottom: 8,
+            }}
+          >
+            Các hợp phần chính của hệ thống
+          </h2>
+          <p style={{ color: '#616161', fontSize: '0.95rem', maxWidth: 540, margin: '0 auto' }}>
+            Hai giải pháp cốt lõi phục vụ minh bạch nguồn gốc cho người tiêu dùng và số hóa quản lý cho trang trại
+          </p>
         </div>
 
-        <div className="scroll-reveal w-full max-w-5xl mx-auto rounded-[40px] overflow-hidden shadow-2xl border-[8px] border-white/50 bg-white hover-lift relative group">
-          <div className="absolute inset-0 transition-opacity opacity-0 bg-gradient-to-t from-black/20 to-transparent group-hover:opacity-100"></div>
-          <img src="/images/smart_farming.png" alt="EAPLS Dashboard" className="w-full h-auto" />
-        </div>
-
-        <Row gutter={[20, 20]} className="mt-12">
-          {features.map((item, idx) => (
-            <Col xs={24} md={idx < 3 ? 8 : 12} key={idx}>
-              <Card
-                variant="borderless"
-                className="h-full rounded-[32px] p-8 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border-gray-100 group hover-lift scroll-reveal"
+        {/* 2 Module Cards */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {modules.map((mod) => (
+            <Card
+              key={mod.id}
+              style={{
+                borderRadius: 8,
+                border: '1px solid #e0e0e0',
+                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              }}
+              styles={{ body: { padding: 0 } }}
+              className="hover-lift"
+            >
+              {/* Header màu */}
+              <div
+                style={{
+                  background: mod.bgColor,
+                  padding: '28px 28px 20px',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
               >
+                {/* Ảnh nền mờ */}
                 <div
-                  className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-2xl"
-                  style={{ background: item.bgImage }}
-                ></div>
-
-                <div
-                  className="relative z-10 flex items-center justify-center w-16 h-16 mb-8 transition-transform transform shadow-xl rounded-2xl group-hover:rotate-12 rotate-hover"
-                  style={{ background: `${item.color}15`, color: item.color }}
-                >
-                  <span className="text-3xl">{item.icon}</span>
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundImage: `url(${mod.image})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    opacity: 0.12,
+                  }}
+                />
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      background: 'rgba(255,255,255,0.2)',
+                      color: 'rgba(255,255,255,0.9)',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.06em',
+                      textTransform: 'uppercase',
+                      padding: '2px 10px',
+                      borderRadius: 4,
+                      marginBottom: 12,
+                    }}
+                  >
+                    {mod.tag}
+                  </span>
+                  <Title
+                    level={3}
+                    style={{
+                      color: '#fff',
+                      margin: 0,
+                      fontSize: '1.25rem',
+                      fontWeight: 700,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {mod.title}
+                  </Title>
                 </div>
-                <Title level={4} className="!mb-4 !text-gray-900 leading-tight">
-                  {item.title}
-                </Title>
-                <Paragraph className="text-sm leading-relaxed text-gray-500">{item.desc}</Paragraph>
-              </Card>
-            </Col>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: '20px 28px 24px' }}>
+                <Paragraph
+                  style={{
+                    color: '#616161',
+                    fontSize: '0.9rem',
+                    lineHeight: 1.7,
+                    marginBottom: 20,
+                  }}
+                >
+                  {mod.desc}
+                </Paragraph>
+                <Button
+                  onClick={() => handleAction(mod.action)}
+                  style={{
+                    borderColor: mod.bgColor,
+                    color: mod.bgColor,
+                    fontWeight: 600,
+                    borderRadius: 6,
+                    fontSize: '0.88rem',
+                  }}
+                >
+                  {mod.btnLabel} <ArrowRightOutlined />
+                </Button>
+              </div>
+            </Card>
           ))}
-        </Row>
+        </div>
       </div>
     </section>
   )

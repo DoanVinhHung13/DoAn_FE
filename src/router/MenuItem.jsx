@@ -153,11 +153,7 @@ export const getMenuByRole = (role) => {
 }
 
 // ─── PUBLIC MENU (landing navigation) ────────────────────────────────────────
-export const publicMenu = () => [
-  { key: ROUTER.HOME, label: 'Trang chủ' },
-  { key: ROUTER.NEWS, label: 'Tin tức' },
-  { key: ROUTER.TCVN, label: 'Tra cứu TCVN' },
-]
+export const publicMenu = () => []
 
 export default {
   farmManagerItem,
