@@ -20,7 +20,7 @@ import {
 
 const getInventory = (params) => http.get(apiGetInventory, { params })
 const createInventory = (body) => http.post(apiCreateInventory, body)
-const addStock = (body) => http.post(apiAddInventory, body)
+const addStock = (body, config = {}) => http.post(apiAddInventory, body, config)
 const consumeStock = (body) => http.post(apiConsumeInventory, body)
 const distributeStock = (body) => http.post(apiDistributeInventory, body)
 const createTransaction = (body) => http.post(apiCreateTransaction, body)

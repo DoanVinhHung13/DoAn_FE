@@ -64,6 +64,7 @@ import CultivationTaskService from "src/services/CultivationTaskService"
 import FertilizerService from "src/services/FertilizerService"
 import PesticideService from "src/services/PesticideService"
 import UploadService from "src/services/UploadService"
+import { applyApiFieldErrors, normalizeApiError } from "src/services/core/apiError"
 import { formatAreaUnit, getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
@@ -72,6 +73,13 @@ import { getUserDisplayName } from "src/utils/userDisplayName"
 
 const { Text } = Typography
 const { TextArea } = Input
+
+const DAILY_LOG_FIELD_MAPPING = {
+  Date: "date",
+  date: "date",
+  Description: "description",
+  description: "description",
+}
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
@@ -459,15 +467,28 @@ const DailyLog = () => {
         images: imageUrls.map(url => ({ url })),
       }
 
-      await CultivationDailyLogService.create(payload)
+      await CultivationDailyLogService.create(payload, {
+        errorHandling: "form",
+        form,
+        fieldErrorMapping: DAILY_LOG_FIELD_MAPPING,
+      })
 
       // Reload current page to see the new log
       setRefreshKey(k => k + 1)
       form.resetFields()
       setFileList([])
     } catch (error) {
-      if (error.errorFields) {
+      if (error?.errorFields) {
         message.warning("Vui lòng kiểm tra lại các trường nhập.")
+      } else {
+        const normalizedError = normalizeApiError(error)
+        applyApiFieldErrors(form, normalizedError, DAILY_LOG_FIELD_MAPPING)
+        console.error("DailyLog save error:", {
+          kind: normalizedError.kind,
+          code: normalizedError.code,
+          status: normalizedError.status,
+          traceId: normalizedError.traceId,
+        })
       }
     } finally {
       setSaving(false)
@@ -491,6 +512,15 @@ const DailyLog = () => {
             descriptionSummary: summary.description,
           })
         }
+      } else {
+        const normalizedError = normalizeApiError(taskSumRes.reason)
+        message.error(normalizedError.message)
+        console.error("DailyLog summary load error:", {
+          kind: normalizedError.kind,
+          code: normalizedError.code,
+          status: normalizedError.status,
+          traceId: normalizedError.traceId,
+        })
       }
     } catch {
       // Summary loading is best-effort.
@@ -512,8 +542,16 @@ const DailyLog = () => {
       setSubmitModal(false)
       setRefreshKey(k => k + 1)
     } catch (error) {
-      if (error.errorFields) {
+      if (error?.errorFields) {
         message.warning("Vui lòng nhập mô tả tổng kết trước khi gửi.")
+      } else {
+        const normalizedError = normalizeApiError(error)
+        console.error("DailyLog summary submit error:", {
+          kind: normalizedError.kind,
+          code: normalizedError.code,
+          status: normalizedError.status,
+          traceId: normalizedError.traceId,
+        })
       }
     } finally {
       setSubmitting(false)
@@ -545,7 +583,14 @@ const DailyLog = () => {
       ])
     } catch (err) {
       onError?.(err)
-      message.error(`${file.name} tải lên thất bại.`)
+      const normalizedError = normalizeApiError(err)
+      message.error(normalizedError.message)
+      console.error("DailyLog upload error:", {
+        kind: normalizedError.kind,
+        code: normalizedError.code,
+        status: normalizedError.status,
+        traceId: normalizedError.traceId,
+      })
     }
   }
 

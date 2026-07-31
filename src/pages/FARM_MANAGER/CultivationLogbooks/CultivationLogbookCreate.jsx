@@ -40,6 +40,7 @@ import LandPlotService from 'src/services/LandPlotService'
 import { parseDate } from 'src/utils/dateFormatters'
 import UserService from 'src/services/UserService'
 import { ROLES } from 'src/constants/roles'
+import { applyApiFieldErrors } from 'src/services/core/apiError'
 
 import SectionTitle from 'src/components/Common/SectionTitle'
 import { isActiveCropCatalog } from 'src/utils/cropCatalog'
@@ -57,6 +58,17 @@ const formatApiDate = (date) =>
 
 const getCreatedPlanId = (response) =>
   response?.data?.data?.id || response?.data?.id || response?.id || null
+
+const CULTIVATION_LOGBOOK_FIELD_MAPPING = {
+  LogbookName: 'logbookName', logbookName: 'logbookName',
+  CropId: 'cropId', cropId: 'cropId',
+  LandPlotIds: 'landPlotIds', landPlotIds: 'landPlotIds',
+  LandPlotId: 'landPlotIds', landPlotId: 'landPlotIds',
+  StartDate: 'expectedStartDate', startDate: 'expectedStartDate',
+  ExpectedEndDate: 'expectedEndDate', expectedEndDate: 'expectedEndDate',
+  AssignedFarmSupervisorId: 'assignedFarmSupervisorId', assignedFarmSupervisorId: 'assignedFarmSupervisorId',
+  Description: 'description', description: 'description',
+}
 
 // ── Stage helpers ────────────────────────────────────────────────────────
 const createEmptyStage = (order) => ({
@@ -587,17 +599,23 @@ const CultivationLogbookCreate = () => {
 
       let response
       if (isEdit) {
-        response = await CultivationLogbookService.update(id, payload)
+        response = await CultivationLogbookService.update(id, payload, {
+          errorHandling: 'form',
+          fieldErrorMapping: CULTIVATION_LOGBOOK_FIELD_MAPPING,
+        })
       } else {
-        response = await CultivationLogbookService.create(payload)
+        response = await CultivationLogbookService.create(payload, {
+          errorHandling: 'form',
+          fieldErrorMapping: CULTIVATION_LOGBOOK_FIELD_MAPPING,
+        })
       }
 
       const createdPlanId = getCreatedPlanId(response)
       if (createdPlanId) {
         navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', createdPlanId))
       }
-    } catch {
-      // Existing template data is optional.
+    } catch (error) {
+      applyApiFieldErrors(form, error, CULTIVATION_LOGBOOK_FIELD_MAPPING)
     } finally {
       setSubmitting(false)
     }

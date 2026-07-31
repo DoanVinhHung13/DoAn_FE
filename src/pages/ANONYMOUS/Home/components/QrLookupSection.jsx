@@ -3,6 +3,7 @@ import { Card, Form, Input, Button, Typography } from 'antd'
 import { QrcodeOutlined, SearchOutlined, ArrowRightOutlined, CameraOutlined, CheckOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import api from 'src/services/01_axios'
+import { normalizeApiError } from 'src/services/core/apiError'
 import { message } from 'antd'
 
 const { Text } = Typography
@@ -21,15 +22,16 @@ const QrLookupSection = () => {
 
     setQrSearching(true)
     try {
-      const { data } = await api.get(`/journals/qr/${qrCode}`)
+      const response = await api.get(`/journals/qr/${qrCode}`)
 
-      if (data.success) {
+      if (response?.success) {
         navigate(`/trace/${qrCode}`)
-      } else {
-        message.error('Không tìm thấy sản phẩm với mã này. Vui lòng kiểm tra lại!')
       }
     } catch (error) {
-      console.error('QR search error:', error)
+      const normalizedError = normalizeApiError(error)
+      if (normalizedError.code === 'NOT_FOUND' || normalizedError.message) {
+        message.error(normalizedError.message)
+      }
     } finally {
       setQrSearching(false)
     }

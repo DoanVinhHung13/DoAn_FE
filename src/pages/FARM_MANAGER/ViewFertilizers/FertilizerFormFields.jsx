@@ -41,11 +41,26 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import FertilizerService from 'src/services/FertilizerService'
+import { applyApiFieldErrors } from 'src/services/core/apiError'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 
 const { Text } = Typography
+
+const FERTILIZER_FIELD_MAPPING = {
+  Name: 'name', name: 'name',
+  UsageUnit: 'usageUnit', usageUnit: 'usageUnit',
+  Supplier: 'supplier', supplier: 'supplier',
+  MaterialId: 'materialId', materialId: 'materialId',
+  Unit: 'unit', unit: 'unit',
+  InventoryQuantity: 'inventoryQuantity', inventoryQuantity: 'inventoryQuantity',
+  InventoryUnit: 'inventoryUnit', inventoryUnit: 'inventoryUnit',
+  Description: 'description', description: 'description',
+  MinimumStock: 'minimumStock', minimumStock: 'minimumStock',
+  Type: 'type', type: 'type',
+  Manufacturer: 'manufacturer', manufacturer: 'manufacturer',
+}
 
 // ── Options ──────────────────────────────────────────────────────────────────
 
@@ -303,12 +318,20 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       }
 
       if (isEdit) {
-        await FertilizerService.updateFertilizer(editingItem.id, body)
+        await FertilizerService.updateFertilizer(editingItem.id, body, {
+          errorHandling: 'form',
+          fieldErrorMapping: FERTILIZER_FIELD_MAPPING,
+        })
       } else {
-        await FertilizerService.createFertilizer(body)
+        await FertilizerService.createFertilizer(body, {
+          errorHandling: 'form',
+          fieldErrorMapping: FERTILIZER_FIELD_MAPPING,
+        })
       }
 
       navigate(ROUTER.FM_FERTILIZERS)
+    } catch (error) {
+      applyApiFieldErrors(form, error, FERTILIZER_FIELD_MAPPING)
     } finally {
       setLoading(false)
     }

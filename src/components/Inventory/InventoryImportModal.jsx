@@ -2,7 +2,17 @@ import React, { useEffect, useState } from 'react'
 import { Modal, Form, Input, InputNumber } from 'antd'
 import { InboxOutlined } from '@ant-design/icons'
 import InventoryService from 'src/services/InventoryService'
+import { applyApiFieldErrors, normalizeApiError } from 'src/services/core/apiError'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
+
+const INVENTORY_IMPORT_FIELD_MAPPING = {
+  Quantity: 'quantity',
+  quantity: 'quantity',
+  Unit: 'unit',
+  unit: 'unit',
+  Note: 'note',
+  note: 'note',
+}
 
 const InventoryImportModal = ({ open, onCancel, onSuccess, item }) => {
   const [form] = Form.useForm()
@@ -32,12 +42,23 @@ const InventoryImportModal = ({ open, onCancel, onSuccess, item }) => {
         note: values.note?.trim() || 'Nhập vật tư bổ sung vào kho',
       }
 
-      await InventoryService.addStock(payload)
+      await InventoryService.addStock(payload, {
+        errorHandling: 'form',
+        form,
+        fieldErrorMapping: INVENTORY_IMPORT_FIELD_MAPPING,
+      })
       onSuccess?.()
       onCancel?.()
     } catch (err) {
       if (!err?.errorFields) {
-        console.error(err)
+        const normalizedError = normalizeApiError(err)
+        applyApiFieldErrors(form, normalizedError, INVENTORY_IMPORT_FIELD_MAPPING)
+        console.error('Inventory import error:', {
+          kind: normalizedError.kind,
+          code: normalizedError.code,
+          status: normalizedError.status,
+          traceId: normalizedError.traceId,
+        })
       }
     } finally {
       setLoading(false)

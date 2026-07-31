@@ -14,6 +14,7 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import InventoryService from 'src/services/InventoryService'
+import { normalizeApiError } from 'src/services/core/apiError'
 import { formatDate as formatConfiguredDate } from 'src/utils/dateFormatters'
 
 const { RangePicker } = DatePicker
@@ -140,9 +141,13 @@ const InventoryImportHistory = () => {
       setRows(items)
       setTotal(getTotal(data, items))
     } catch (error) {
-      console.error(error)
-      setRows([])
-      setTotal(0)
+      const normalizedError = normalizeApiError(error)
+      console.error('Inventory import history load error:', {
+        kind: normalizedError.kind,
+        code: normalizedError.code,
+        status: normalizedError.status,
+        traceId: normalizedError.traceId,
+      })
     } finally {
       setLoading(false)
     }

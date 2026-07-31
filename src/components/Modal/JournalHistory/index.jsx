@@ -2,21 +2,31 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { Modal, Timeline, Tag, Empty, Spin, Descriptions, Alert, Tabs } from 'antd';
 import { ClockCircleOutlined, UserOutlined, EditOutlined, FileAddOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import api from 'src/services/01_axios';
+import { normalizeApiError } from 'src/services/core/apiError';
 import { formatDateTime } from 'src/utils/dateFormatters';
 
 const JournalHistoryModal = ({ visible, onClose, journalId }) => {
   const [loading, setLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [historyError, setHistoryError] = useState(null);
+  const [summaryError, setSummaryError] = useState(null);
   const [activeTab, setActiveTab] = useState('timeline');
 
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/journals/${journalId}/history`);
+      setHistoryError(null);
+      const response = await api.get(`/journals/${journalId}/history`, { skipNotice: true });
       setHistory(response.data.data.history);
     } catch (error) {
-      console.error('Error fetching history:', error);
+      const normalizedError = normalizeApiError(error);
+      setHistoryError(normalizedError.message);
+      console.error('Error fetching history:', {
+        code: normalizedError.code,
+        traceId: normalizedError.traceId,
+      });
     } finally {
       setLoading(false);
     }
@@ -24,10 +34,19 @@ const JournalHistoryModal = ({ visible, onClose, journalId }) => {
 
   const fetchSummary = useCallback(async () => {
     try {
-      const response = await api.get(`/journals/${journalId}/history/summary`);
+      setSummaryLoading(true);
+      setSummaryError(null);
+      const response = await api.get(`/journals/${journalId}/history/summary`, { skipNotice: true });
       setSummary(response.data.data);
     } catch (error) {
-      console.error('Error fetching summary:', error);
+      const normalizedError = normalizeApiError(error);
+      setSummaryError(normalizedError.message);
+      console.error('Error fetching summary:', {
+        code: normalizedError.code,
+        traceId: normalizedError.traceId,
+      });
+    } finally {
+      setSummaryLoading(false);
     }
   }, [journalId]);
 
@@ -234,16 +253,30 @@ const JournalHistoryModal = ({ visible, onClose, journalId }) => {
               <div className="flex justify-center items-center py-20">
                 <Spin size="large" />
               </div>
-            ) : history.length > 0 ? (
-              renderTimeline()
             ) : (
+              <>
+                {historyError && <Alert className="mt-4" message={historyError} type="error" showIcon />}
+                {history.length > 0 ? renderTimeline() : (
               <Empty description="Chưa có lịch sử chỉnh sửa" />
+                )}
+              </>
             )
           },
           {
             key: 'summary',
             label: 'Tóm tắt',
-            children: summary ? renderSummary() : (
+            children: summaryLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <Spin size="large" />
+              </div>
+            ) : summary ? (
+              <>
+                {summaryError && <Alert className="mb-4" message={summaryError} type="error" showIcon />}
+                {renderSummary()}
+              </>
+            ) : summaryError ? (
+              <Alert message={summaryError} type="error" showIcon />
+            ) : (
               <div className="flex justify-center items-center py-20">
                 <Spin size="large" />
               </div>
