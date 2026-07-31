@@ -35,6 +35,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { formatAreaUnit } from 'src/constants/measurementUnits';
 import { QRCodeSVG } from 'qrcode.react';
+import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
 import QrCodeService from 'src/services/QrCodeService';
@@ -886,7 +887,7 @@ const QRManagement = () => {
             <div className="max-w-full">
               <div className="flex items-center gap-4 mb-3">
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl">🌾</span>
+                  <Sprout className="h-7 w-7 text-green-600" />
                 </div>
                 <div>
                   <Typography.Title level={3} className="!text-white !mb-1">Truy xuất nguồn gốc</Typography.Title>
@@ -903,7 +904,7 @@ const QRManagement = () => {
             {/* Thông tin cơ bản — luôn hiển thị */}
             <Card className="shadow-sm rounded-xl">
               <Typography.Title level={5} className="flex items-center gap-2 !mb-3">
-                <span>🌱</span> Thông tin sản phẩm
+                <Sprout className="h-5 w-5 text-green-600" /> Thông tin sản phẩm
               </Typography.Title>
               <Descriptions bordered column={2} size="small">
                 <Descriptions.Item label="Mã lô" span={1}>

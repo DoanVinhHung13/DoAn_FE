@@ -20,7 +20,7 @@ import {
   FileImageOutlined,
 } from '@ant-design/icons';
 import { formatAreaUnit } from 'src/constants/measurementUnits';
-import { Sprout, Wheat } from 'lucide-react';
+import { Sprout } from 'lucide-react';
 import http from 'src/services/01_axios';
 import { formatDate, parseDate } from 'src/utils/dateFormatters';
 import { getUserDisplayName } from 'src/utils/userDisplayName';
@@ -385,7 +385,7 @@ const Trace = () => {
         <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
           <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:text-left">
             <div className="w-16 h-16 sm:w-20 sm:h-20 sm:mt-6 bg-white rounded-2xl border border-emerald-100 flex items-center justify-center flex-shrink-0 shadow-sm">
-              <Wheat className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600" />
+              <Sprout className="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 mb-2">

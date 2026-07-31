@@ -5,7 +5,7 @@ import {
 } from "@ant-design/icons"
 import { useQuery } from "@tanstack/react-query"
 import { Button, Card, Input, Select, Tag, Tooltip, Typography } from "antd"
-import { Coffee, Sprout, Wheat } from "lucide-react"
+import { Sprout } from "lucide-react"
 import { useCallback, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
@@ -135,16 +135,7 @@ const Batches = () => {
     )
   }
 
-  const getCropIcon = cropType => {
-    const type = cropType?.toLowerCase() || ""
-    if (type.includes("gạo") || type.includes("lúa")) {
-      return <Wheat className="w-8 h-8 text-amber-600" />
-    }
-    if (type.includes("cà phê") || type.includes("coffee")) {
-      return <Coffee className="w-8 h-8 text-amber-800" />
-    }
-    return <Sprout className="w-8 h-8 text-green-600" />
-  }
+  const getCropIcon = () => <Sprout className="w-8 h-8 text-green-600" />
 
   const getStatusConfig = batch => {
     const status = getQrStatus(batch)

@@ -21,7 +21,7 @@ import {
   FileTextOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
-import { Coffee, Wheat, Sprout } from 'lucide-react';
+import { Sprout } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { formatDate } from 'src/utils/dateFormatters';
 
@@ -60,12 +60,7 @@ const getQrStatus = (batch) => {
   return batch?.hasActiveQrCode === true ? 'CREATED' : 'NOT_CREATED';
 };
 
-const getCropIcon = (cropName) => {
-  const type = (cropName || '').toLowerCase();
-  if (type.includes('gạo') || type.includes('lúa')) return <Wheat className="w-10 h-10 text-amber-600" />;
-  if (type.includes('cà phê') || type.includes('coffee')) return <Coffee className="w-10 h-10 text-amber-800" />;
-  return <Sprout className="w-10 h-10 text-green-600" />;
-};
+const getCropIcon = () => <Sprout className="w-10 h-10 text-green-600" />;
 
 const BatchDetail = () => {
   const navigate = useNavigate();
