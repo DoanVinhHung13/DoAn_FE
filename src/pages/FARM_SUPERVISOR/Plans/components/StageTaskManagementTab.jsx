@@ -144,8 +144,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             description: item.description,
           })),
         )
-      } catch (err) {
-        console.error(err)
+      } catch {
         setTaskCatalogOptions([])
       }
     }
@@ -190,8 +189,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             label: u.fullName || u.name,
           })),
         )
-      } catch (err) {
-        console.error(err)
+      } catch {
+        // User options are optional for this form.
       } finally {
         if (isMounted) setLoadingUsers(false)
       }
@@ -223,8 +222,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           await CultivationTaskService.remove(task.id)
           message.success("Đã xóa công việc.")
           await loadData()
-        } catch (err) {
-          console.error(err)
+        } catch {
           // axios interceptor handles error notification
         }
       },
@@ -316,8 +314,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       setEditingTaskId(null)
       taskForm.resetFields()
       loadData()
-    } catch (error) {
-      console.error(error)
+    } catch {
       // axios interceptor handles error notification
     } finally {
       setSavingTask(false)
@@ -358,8 +355,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         },
       )
       await loadData()
-    } catch (error) {
-      console.error(error)
+    } catch {
+      // Reordering failures are handled by the shared interceptor.
     } finally {
       setSavingOrder(false)
     }

@@ -25,6 +25,7 @@ import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
 import CropManagementService from 'src/services/CropManagementService';
+import { applyApiFieldErrors, isNotFoundError } from 'src/services/core/apiError';
 import CropCatalogService from 'src/services/CropCatalogService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
@@ -33,6 +34,10 @@ import { SYSTEM_KEY } from 'src/constants/systemKey';
 import { isActiveCropCatalog } from 'src/utils/cropCatalog';
 
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
+const CROP_FIELD_MAPPING = {
+  Name: 'name', name: 'name', CropCatalogId: 'cropCatalogId', cropCatalogId: 'cropCatalogId',
+  Description: 'description', description: 'description', ImageUrl: 'imageUrl', imageUrl: 'imageUrl',
+};
 
 const CropEdit = () => {
   const navigate = useNavigate();
@@ -55,7 +60,7 @@ const CropEdit = () => {
   } = useQuery({
     queryKey: ['crop-detail', id],
     queryFn: async () => {
-      const response = await CropManagementService.getCropById(id);
+      const response = await CropManagementService.getCropById(id, { errorHandling: 'component' });
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
     },
@@ -154,7 +159,10 @@ const CropEdit = () => {
         isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
       };
       
-      return CropManagementService.updateCrop(id, payload);
+      return CropManagementService.updateCrop(id, payload, {
+        errorHandling: 'form',
+        fieldErrorMapping: CROP_FIELD_MAPPING,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crops'] });
@@ -162,11 +170,11 @@ const CropEdit = () => {
       navigate(ROUTER.FM_CROPS);
     },
     onError: (error) => {
-      if (error?.response?.status === 404) {
+      if (isNotFoundError(error)) {
         navigate(ROUTER.FM_CROPS);
         return;
       }
-      // axios interceptor handles error notification
+      applyApiFieldErrors(form, error, CROP_FIELD_MAPPING);
     },
   });
 

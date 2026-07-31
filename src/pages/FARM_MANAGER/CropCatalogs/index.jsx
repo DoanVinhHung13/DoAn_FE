@@ -33,6 +33,9 @@ import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import AdminPaginationCard from 'src/components/Table/AdminPaginationCard';
+import { applyApiFieldErrors, isNotFoundError } from 'src/services/core/apiError';
+import { getListPresentationState } from 'src/utils/listPresentation';
+import { logDevDiagnostic } from 'src/utils/safeDiagnostic';
 
 const { Text } = Typography;
 
@@ -43,6 +46,9 @@ const STATUS_OPTIONS = [
 ];
 
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin danh mục cây trồng.';
+const CROP_CATALOG_FIELD_MAPPING = {
+  Name: 'name', name: 'name', Description: 'description', description: 'description',
+};
 
 const getItemId = (item) => item?.id;
 
@@ -114,18 +120,17 @@ const CropCatalogs = () => {
     ];
   }, [catalogStatusOptions]);
 
-  const { data, isLoading, isError, refetch, error } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch, error } = useQuery({
     queryKey: ['crop-catalogs'],
     queryFn: async () => {
       try {
         const response = await CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 200 });
-        console.log('Crop Catalogs API Response:', response);
         return normalizeResponse(response);
       } catch (err) {
-        console.error('Crop Catalogs API Error:', err);
+        logDevDiagnostic('crop-catalog-list', err)
         // Return mock data if API not ready
-        if (err?.response?.status === 405) {
-          console.warn('API not ready, using mock data');
+        if (!err?.code && err?.status === 405) {
+          logDevDiagnostic('crop-catalog-list-mock-fallback', err)
           return {
             items: [
               { id: '1', code: 'CAY-RAU', name: 'Cây rau', description: 'Các loại rau ăn lá', isActive: true },
@@ -147,7 +152,10 @@ const CropCatalogs = () => {
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         isActive: typeof editingCatalog?.isActive === 'boolean' ? editingCatalog.isActive : true,
       };
-      return CropCatalogService.updateCropCatalog(id, payload);
+      return CropCatalogService.updateCropCatalog(id, payload, {
+        errorHandling: 'form',
+        fieldErrorMapping: CROP_CATALOG_FIELD_MAPPING,
+      });
     },
     onSuccess: async () => {
       setInlineError('');
@@ -159,7 +167,7 @@ const CropCatalogs = () => {
       await refetchSystemKey();
     },
     onError: (error) => {
-      if (error?.response?.status === 404) {
+      if (isNotFoundError(error)) {
         setInlineError(EMPTY_MESSAGE);
         setEditingCatalog(null);
         form.resetFields();
@@ -167,7 +175,7 @@ const CropCatalogs = () => {
         queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
         return;
       }
-      // axios interceptor handles error notification
+      applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING);
     },
   });
 
@@ -177,6 +185,7 @@ const CropCatalogs = () => {
         ? CropCatalogService.activateCropCatalog(id)
         : CropCatalogService.deactivateCropCatalog(id),
     onSuccess: async () => {
+      setStatusTarget(null);
       setInlineError('');
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
@@ -184,9 +193,9 @@ const CropCatalogs = () => {
       await refetchSystemKey();
     },
     onError: (error) => {
-      const statusCode = error?.response?.status;
-      if (statusCode === 404) {
+      if (isNotFoundError(error)) {
         setInlineError(EMPTY_MESSAGE);
+        setStatusTarget(null);
         setSelectedCatalogId(null);
         queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
         queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
@@ -203,7 +212,7 @@ const CropCatalogs = () => {
   } = useQuery({
     queryKey: ['crop-catalog-detail', selectedCatalogId],
     queryFn: async () => {
-      const response = await CropCatalogService.getCropCatalogById(selectedCatalogId);
+      const response = await CropCatalogService.getCropCatalogById(selectedCatalogId, { errorHandling: 'component' });
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
     },
@@ -212,21 +221,16 @@ const CropCatalogs = () => {
   });
 
   const handleConfirmStatusChange = () => {
-    console.log('🔔 handleConfirmStatusChange called, statusTarget:', statusTarget);
     if (!statusTarget) {
-      console.warn('⚠️ statusTarget is null, aborting');
       return;
     }
     
     const id = getItemId(statusTarget);
     const nextActive = !isCatalogActive(statusTarget);
-    console.log('📝 Mutating status:', { id, nextActive });
-    
     statusMutation.mutate({
       id,
       nextActive,
     });
-    setStatusTarget(null);
   };
 
   const filteredCatalogs = useMemo(() => {
@@ -258,6 +262,19 @@ const CropCatalogs = () => {
     () => filteredCatalogs.slice((visiblePage - 1) * pageSize, visiblePage * pageSize),
     [filteredCatalogs, pageSize, visiblePage],
   );
+
+  const hasActiveFilters = Boolean(keyword.trim()) || status !== 'all';
+  const listPresentation = getListPresentationState({
+    hasActiveFilters,
+    isLoading: isLoading || isFetching,
+    isError,
+    items: data?.items || [],
+    visibleItems: paginatedCatalogs,
+  });
+  const emptyDescription =
+    listPresentation === 'filtered-empty'
+      ? 'Không có danh mục phù hợp với điều kiện tìm kiếm.'
+      : EMPTY_MESSAGE;
 
   const columns = [
     {
@@ -369,7 +386,7 @@ const CropCatalogs = () => {
           showIcon
           type="error"
           message="Không thể tải danh sách danh mục cây trồng."
-          description={error?.message || error?.response?.data?.message || 'Vui lòng kiểm tra console để biết thêm chi tiết.'}
+          description={error?.message || 'Vui lòng thử lại sau ít phút.'}
           action={
             <Button size="small" onClick={() => refetch()}>
               Thử lại
@@ -393,14 +410,20 @@ const CropCatalogs = () => {
           <Input
             allowClear
             value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
+            onChange={(event) => {
+              setKeyword(event.target.value);
+              setPage(1);
+            }}
             prefix={<SearchOutlined className="text-gray-400" />}
             placeholder="Tìm theo tên loại cây trồng, mô tả..."
             className="h-11 rounded-lg"
           />
           <Select
             value={status}
-            onChange={setStatus}
+            onChange={(value) => {
+              setStatus(value);
+              setPage(1);
+            }}
             options={statusFilterOptions}
             className="h-11"
           />
@@ -415,16 +438,16 @@ const CropCatalogs = () => {
         <Table
           bordered
           rowKey={(record) => getItemId(record) || record.name}
-          loading={isLoading}
+          loading={isLoading || isFetching}
           dataSource={paginatedCatalogs}
           columns={columns}
           tableLayout="fixed"
           pagination={false}
           locale={{
-            emptyText: (
+            emptyText: ['system-empty', 'filtered-empty'].includes(listPresentation) && (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={EMPTY_MESSAGE}
+                description={emptyDescription}
               />
             ),
           }}
@@ -439,7 +462,7 @@ const CropCatalogs = () => {
           showSizeChanger: true,
           pageSizeOptions: [10, 20, 50],
           onChange: (nextPage, nextPageSize) => {
-            setPage(nextPage);
+            setPage(nextPageSize !== pageSize ? 1 : nextPage);
             setPageSize(nextPageSize);
           },
         }}
@@ -448,9 +471,13 @@ const CropCatalogs = () => {
       <Modal
         open={!!editingCatalog}
         onCancel={() => {
-          setEditingCatalog(null);
-          form.resetFields();
+          if (!updateMutation.isPending) {
+            setEditingCatalog(null);
+            form.resetFields();
+          }
         }}
+        closable={!updateMutation.isPending}
+        maskClosable={!updateMutation.isPending}
         footer={null}
         centered
         width={560}
@@ -497,6 +524,7 @@ const CropCatalogs = () => {
 
           <div className="flex justify-end gap-3 pt-2">
             <Button
+              disabled={updateMutation.isPending}
               onClick={() => {
                 setEditingCatalog(null);
                 form.resetFields();
@@ -557,7 +585,11 @@ const CropCatalogs = () => {
 
       <Modal
         open={!!statusTarget}
-        onCancel={() => setStatusTarget(null)}
+        onCancel={() => {
+          if (!statusMutation.isPending) setStatusTarget(null);
+        }}
+        closable={!statusMutation.isPending}
+        maskClosable={!statusMutation.isPending}
         footer={null}
         centered
         width={460}
@@ -592,6 +624,7 @@ const CropCatalogs = () => {
           </div>
           <div className="flex justify-end gap-3">
             <Button
+              disabled={statusMutation.isPending}
               onClick={() => setStatusTarget(null)}
               className="h-10 min-w-[80px] rounded-lg font-semibold"
             >

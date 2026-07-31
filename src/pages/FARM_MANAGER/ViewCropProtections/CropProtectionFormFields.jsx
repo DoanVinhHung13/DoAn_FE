@@ -14,9 +14,17 @@ import { useNavigate } from "react-router-dom"
 import { getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import ROUTER from "src/router/ROUTER"
 import PesticideService from "src/services/PesticideService"
+import { applyApiFieldErrors } from "src/services/core/apiError"
 
 import SectionTitle from "src/components/Common/SectionTitle"
 import { useCropOptions } from "src/hooks/useCropOptions"
+
+const CROP_PROTECTION_FIELD_MAPPING = {
+  Name: "name",
+  MinInventory: "minimumStock",
+  Unit: "unit",
+  UsageUnit: "unit",
+}
 
 const resolveCropValue = (target, cropOptions) => {
   if (target === null || target === undefined || target === "") return undefined
@@ -138,25 +146,21 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
         }),
       }
 
-      let res
       if (isEdit) {
-        res = await PesticideService.updatePesticide(editingItem.id, body)
+        await PesticideService.updatePesticide(editingItem.id, body, {
+          errorHandling: "form",
+          fieldErrorMapping: CROP_PROTECTION_FIELD_MAPPING,
+        })
       } else {
-        res = await PesticideService.createPesticide(body)
-      }
-
-      if (res?.success === false) {
-        const errMsg = (res.message || "").toLowerCase()
-        if (errMsg.includes("code") || errMsg.includes("mã")) {
-          form.setFields([{ name: "code", errors: ["Mã nông dược đã tồn tại."] }])
-        }
-        // axios interceptor handles error notification
-        return
+        await PesticideService.createPesticide(body, {
+          errorHandling: "form",
+          fieldErrorMapping: CROP_PROTECTION_FIELD_MAPPING,
+        })
       }
 
       navigate(ROUTER.FM_PESTICIDES)
-    } catch {
-      // axios interceptor handles error notification
+    } catch (error) {
+      applyApiFieldErrors(form, error, CROP_PROTECTION_FIELD_MAPPING)
     } finally {
       setLoading(false)
     }

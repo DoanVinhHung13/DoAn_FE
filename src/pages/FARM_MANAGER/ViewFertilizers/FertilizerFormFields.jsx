@@ -302,14 +302,11 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           }),
       }
 
-      let res
       if (isEdit) {
-        res = await FertilizerService.updateFertilizer(editingItem.id, body)
+        await FertilizerService.updateFertilizer(editingItem.id, body)
       } else {
-        res = await FertilizerService.createFertilizer(body)
+        await FertilizerService.createFertilizer(body)
       }
-
-      if (res?.success === false) return
 
       navigate(ROUTER.FM_FERTILIZERS)
     } finally {

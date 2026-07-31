@@ -3,7 +3,6 @@ import { Form, Select, Button, Typography } from 'antd'
 import { SafetyCertificateOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import CustomModal from 'src/components/Modal/CustomModal'
 import UserService from 'src/services/UserService'
-import Notice from 'src/components/Notice'
 import { ROLE_CONFIG } from './roleConfig'
 
 const { Text } = Typography
@@ -27,9 +26,7 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
-      const res = await UserService.assignRoles(user.id, { roles: [values.role] })
-      if (res?.success === false) return
-      Notice({ msg: 'Phân quyền thành công!', isSuccess: true })
+      await UserService.assignRoles(user.id, { roles: [values.role] })
       onClose()
       onSuccess?.()
     } finally {

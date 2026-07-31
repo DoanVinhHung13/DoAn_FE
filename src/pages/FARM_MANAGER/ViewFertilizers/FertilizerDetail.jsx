@@ -115,10 +115,6 @@ const FertilizerDetail = () => {
       try {
         setInitialLoading(true)
         const res = await FertilizerService.getFertilizerById(id)
-        if (res?.success === false) {
-          navigate(ROUTER.FM_FERTILIZERS)
-          return
-        }
         setItem(res?.data)
       } catch {
         navigate(ROUTER.FM_FERTILIZERS)

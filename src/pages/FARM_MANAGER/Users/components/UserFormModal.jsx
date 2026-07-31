@@ -33,6 +33,7 @@ import { useSystemKey } from "src/hooks/useSystemKey"
 import ROUTER from "src/router/ROUTER"
 import UploadService from "src/services/UploadService"
 import UserService from "src/services/UserService"
+import { applyApiFieldErrors } from "src/services/core/apiError"
 import {
   CONTACT_REQUIRED_RULE,
   EMAIL_RULES,
@@ -42,6 +43,14 @@ import {
 } from "src/utils/helpers"
 
 const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
+
+const USER_FIELD_MAPPING = {
+  FullName: "fullName",
+  Email: "email",
+  PhoneNumber: "phoneNumber",
+  DateOfBirth: "dateOfBirth",
+  Gender: "gender",
+}
 
 const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   const [form] = Form.useForm()
@@ -125,7 +134,6 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           payload ||
           uploadedUrl
       }
-      let res
       if (isEdit) {
         // Cập nhật thông tin cơ bản
         await UserService.updateUser(editingUser.id, {
@@ -137,6 +145,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             : null,
           avatarUrl: uploadedUrl || null,
           isActive: editingUser.isActive,
+        }, {
+          errorHandling: "form",
+          fieldErrorMapping: USER_FIELD_MAPPING,
         })
 
         // Cập nhật vai trò (gọi API assignRoles)
@@ -145,10 +156,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             roles: [values.roles],
           })
         }
-        res = { success: true }
       } else {
         // Thêm người dùng mới
-        res = await UserService.createUser({
+        await UserService.createUser({
           fullName: values.fullName,
           email: values.email?.trim() || null,
           phoneNumber: values.phoneNumber || null,
@@ -158,23 +168,10 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             : null,
           avatarUrl: uploadedUrl || null,
           roles: [ROLES.FARMER],
+        }, {
+          errorHandling: "form",
+          fieldErrorMapping: USER_FIELD_MAPPING,
         })
-      }
-
-      if (res?.success === false) {
-        const errMsg = res.message || (res.errors && res.errors[0]) || ""
-        const lowerMsg = errMsg.toLowerCase()
-        if (lowerMsg.includes("email")) {
-          form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }])
-        } else if (
-          lowerMsg.includes("phone") ||
-          lowerMsg.includes("điện thoại")
-        ) {
-          form.setFields([
-            { name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] },
-          ])
-        }
-        return
       }
 
       onClose()
@@ -184,18 +181,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         navigate(ROUTER.FM_USER_DETAIL.replace(":id", editingUser.id))
       }
     } catch (error) {
-      const errMsg = error.response?.data?.message || error.message || ""
-      const lowerMsg = errMsg.toLowerCase()
-      if (lowerMsg.includes("email")) {
-        form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }])
-      } else if (
-        lowerMsg.includes("phone") ||
-        lowerMsg.includes("điện thoại")
-      ) {
-        form.setFields([
-          { name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] },
-        ])
-      }
+      applyApiFieldErrors(form, error, USER_FIELD_MAPPING)
     } finally {
       setLoading(false)
     }

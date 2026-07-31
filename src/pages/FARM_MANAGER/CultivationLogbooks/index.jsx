@@ -14,6 +14,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons'
 import {
+  Alert,
   Button,
   Card,
   Input,
@@ -63,21 +64,28 @@ const CultivationLogbookList = () => {
 
   const [listData, setListData] = useState([])
   const [totalRecords, setTotalRecords] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   const getList = useCallback(async () => {
     try {
       setLoading(true)
+      setLoadError(false)
       const params = {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
         Status: statusFilter === 'all' ? undefined : statusFilter,
       }
-      const res = await CultivationLogbookService.getAll(params)
-      if (res?.success === false) return
+      const res = await CultivationLogbookService.getAll(params, {
+        errorHandling: 'component',
+      })
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
+    } catch {
+      setListData([])
+      setTotalRecords(0)
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -108,10 +116,9 @@ const CultivationLogbookList = () => {
       content: `Nhật ký “${record.logbookName || 'này'}” sẽ được xóa khỏi danh sách.`,
       okText: 'Xóa',
       cancelText: 'Hủy',
-      okButtonProps: { danger: true },
+        okButtonProps: { danger: true },
       onOk: async () => {
         await CultivationLogbookService.deleteById(record.id)
-        message.success('Đã xóa nhật ký canh tác.')
         if (listData.length === 1 && page > 1) {
           setPage(page - 1)
         } else {
@@ -306,20 +313,32 @@ const CultivationLogbookList = () => {
         className="admin-data-card overflow-hidden rounded-lg shadow-sm"
         styles={{ body: { padding: 0 } }}
       >
-        <CustomTable
-          dataSource={listData}
-          columns={columns}
-          rowKey="id"
-          loading={loading}
-          scroll={{ x: 1000 }}
-          onRow={(record) => ({
-            onClick: () => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', record.id)),
-            className: 'cursor-pointer',
-          })}
-          locale={{ emptyText: 'Chưa có nhật ký canh tác nào.' }}
-          pagination={false}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-        />
+        {loadError ? (
+          <div className="p-5">
+            <Alert
+              type="error"
+              showIcon
+              message="Không thể tải danh sách nhật ký canh tác."
+              action={<Button size="small" onClick={getList}>Thử lại</Button>}
+              className="rounded-xl"
+            />
+          </div>
+        ) : (
+          <CustomTable
+            dataSource={listData}
+            columns={columns}
+            rowKey="id"
+            loading={loading}
+            scroll={{ x: 1000 }}
+            onRow={(record) => ({
+              onClick: () => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', record.id)),
+              className: 'cursor-pointer',
+            })}
+            locale={{ emptyText: 'Chưa có nhật ký canh tác nào.' }}
+            pagination={false}
+            rowClassName="hover:bg-green-50/30 transition-colors"
+          />
+        )}
       </Card>
 
       <AdminPaginationCard

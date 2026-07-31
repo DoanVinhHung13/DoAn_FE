@@ -38,8 +38,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
       const res = await CultivationLogService.getDailyLogsByTask(taskId)
       const data = res?.data?.data || res?.data || []
       setLogs(Array.isArray(data) ? data : [])
-    } catch (error) {
-      console.error(error)
+    } catch {
       setLogs([])
     } finally {
       setLoading(false)

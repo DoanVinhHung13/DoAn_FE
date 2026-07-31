@@ -443,8 +443,7 @@ const LogbookReview = () => {
                 stage.tasks || stage.cultivationTasks || [],
               ),
             }
-          } catch (error) {
-            console.error(`Không thể tải nhật ký của giai đoạn ${stageId}`, error)
+          } catch {
             return { stage, logs: [] }
           }
         }),
@@ -473,8 +472,7 @@ const LogbookReview = () => {
       setStageGroups(displayStageGroups)
       setLogs(displayStageGroups.flatMap(group => group.logs))
       setAuditLogs(normalizeAuditLogs(extractList(auditRes)))
-    } catch (error) {
-      console.error(error)
+    } catch {
       setLogbook(null)
     } finally {
       setLoading(false)
@@ -498,7 +496,6 @@ const LogbookReview = () => {
       await loadData()
     } catch (error) {
       if (error?.errorFields) return // form validation
-      console.error(error)
     } finally {
       setApproving(false)
     }
@@ -515,8 +512,8 @@ const LogbookReview = () => {
         reason: rejectReason.trim(),
       })
       navigate(ROUTER.FM_LOGBOOKS)
-    } catch (error) {
-      console.error(error)
+    } catch {
+      // Rejection failure is already handled by the shared interceptor.
     } finally {
       setRejecting(false)
       setRejectModal(false)

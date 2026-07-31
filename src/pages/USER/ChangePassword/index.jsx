@@ -11,6 +11,13 @@ import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import TitleCustom from 'src/components/TitleCustom';
+import { applyApiFieldErrors } from 'src/services/core/apiError'
+
+const CHANGE_PASSWORD_FIELD_MAPPING = {
+    CurrentPassword: 'currentPassword',
+    NewPassword: 'newPassword',
+    ConfirmNewPassword: 'confirmPassword',
+};
 
 const ChangePassword = () => {
     const [form] = Form.useForm();
@@ -27,10 +34,10 @@ const ChangePassword = () => {
                 currentPassword: values.currentPassword,
                 newPassword: values.newPassword,
                 confirmNewPassword: values.confirmPassword,
+            }, {
+                errorHandling: 'form',
+                fieldErrorMapping: CHANGE_PASSWORD_FIELD_MAPPING,
             });
-            if (!res?.success) {
-                throw new Error(res?.message || res?.errors?.[0] || 'Đổi mật khẩu thất bại');
-            }
             return res;
         },
         onSuccess: () => {
@@ -38,6 +45,9 @@ const ChangePassword = () => {
             authSession.clearSession();
             dispatch(setUserInfo({}));
             navigate(ROUTER.LOGIN);
+        },
+        onError: (error) => {
+            applyApiFieldErrors(form, error, CHANGE_PASSWORD_FIELD_MAPPING);
         },
     });
 

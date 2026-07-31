@@ -21,11 +21,6 @@ const TaskEdit = () => {
       try {
         setInitialLoading(true)
         const res = await TaskCatalogService.getTaskCatalogById(id)
-        if (res?.success === false) {
-          navigate(ROUTER.FM_TASK_CATALOGS)
-          return
-        }
-
         const data = unwrap(res) || {}
 
         form.setFieldsValue({
@@ -54,9 +49,7 @@ const TaskEdit = () => {
         description: values.description?.trim() || null,
       }
 
-      const res = await TaskCatalogService.updateTaskCatalog(id, body)
-
-      if (res?.success === false) return
+      await TaskCatalogService.updateTaskCatalog(id, body)
 
       navigate(ROUTER.FM_TASK_CATALOGS)
     } catch {

@@ -12,7 +12,6 @@ import {
   Tag,
   Tooltip,
   Typography,
-  message,
 } from 'antd';
 import {
   CheckCircleOutlined,
@@ -26,12 +25,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
 import CropManagementService from 'src/services/CropManagementService';
+import { isNotFoundError } from 'src/services/core/apiError';
 import CropCatalogService from 'src/services/CropCatalogService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import TableCustom from 'src/components/Table/CustomTable';
 import AdminPaginationCard from 'src/components/Table/AdminPaginationCard';
+import { getListPresentationState } from 'src/utils/listPresentation';
 
 const { Text } = Typography;
 
@@ -134,7 +135,7 @@ const Crops = () => {
     ];
   }, [cropStatusOptions]);
 
-  const { data, isLoading, isError, refetch, error } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch, error } = useQuery({
     queryKey: ['crops'],
     queryFn: async () => {
       const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 200 });
@@ -161,26 +162,15 @@ const Crops = () => {
       nextActive
         ? CropManagementService.activateCrop(id)
         : CropManagementService.deactivateCrop(id),
-    onSuccess: (response) => {
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
+    onSuccess: () => {
+      setStatusTarget(null);
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
     },
     onError: (error) => {
-      const statusCode = error?.response?.status;
-      const apiMessage = error?.response?.data?.message || error?.message || '';
-
-      if (statusCode === 404) {
+      if (isNotFoundError(error)) {
         setStatusTarget(null);
         queryClient.invalidateQueries({ queryKey: ['crops'] });
-        return;
-      }
-
-      if (apiMessage) {
-        message.error(apiMessage);
       }
     },
   });
@@ -191,7 +181,6 @@ const Crops = () => {
         id: getItemId(statusTarget),
         nextActive: !isCropActive(statusTarget),
       });
-      setStatusTarget(null);
     }
   };
 
@@ -248,6 +237,19 @@ const Crops = () => {
     [filteredCrops, pageSize, visiblePage],
   );
 
+  const hasActiveFilters = Boolean(keyword.trim()) || status !== 'all' || category !== 'all' || sortBy !== 'name-asc';
+  const listPresentation = getListPresentationState({
+    hasActiveFilters,
+    isLoading: isLoading || isFetching,
+    isError,
+    items: data?.items || [],
+    visibleItems: paginatedCrops,
+  });
+  const emptyDescription =
+    listPresentation === 'filtered-empty'
+      ? 'Không có cây trồng phù hợp với điều kiện tìm kiếm.'
+      : EMPTY_MESSAGE;
+
   const categoryOptions = useMemo(() => {
     const categories = [
       ...new Set((data?.items || []).map((item) => item.cropCatalogId).filter(Boolean)),
@@ -281,7 +283,7 @@ const Crops = () => {
       render: (value, record) => {
         const imgUrl = record.imageUrl || record.image || record.thumbnail || record.thumbnailUrl || record.photo || record.picture;
         return (
-          <div className="flex min-w-0 items-center gap-3" title={JSON.stringify(record)}>
+          <div className="flex min-w-0 items-center gap-3" title={displayValue(value)}>
             {imgUrl ? (
               <img
                 src={imgUrl}
@@ -411,7 +413,7 @@ const Crops = () => {
           showIcon
           type="error"
           message="Không thể tải danh sách cây trồng."
-          description={error?.message || error?.response?.data?.message || 'Vui lòng kiểm tra console để biết thêm chi tiết.'}
+          description={error?.message || 'Vui lòng thử lại sau ít phút.'}
           action={
             <Button size="small" onClick={() => refetch()}>
               Thử lại
@@ -425,26 +427,38 @@ const Crops = () => {
           <Input
             allowClear
             value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
+            onChange={(event) => {
+              setKeyword(event.target.value);
+              setPage(1);
+            }}
             prefix={<SearchOutlined className="text-gray-400" />}
             placeholder="Tìm theo tên, mô tả..."
             className="h-10 rounded-lg"
           />
           <Select
             value={status}
-            onChange={setStatus}
+            onChange={(value) => {
+              setStatus(value);
+              setPage(1);
+            }}
             options={statusFilterOptions}
             className="h-10"
           />
           <Select
             value={category}
-            onChange={setCategory}
+            onChange={(value) => {
+              setCategory(value);
+              setPage(1);
+            }}
             options={categoryOptions}
             className="h-10"
           />
           <Select
             value={sortBy}
-            onChange={setSortBy}
+            onChange={(value) => {
+              setSortBy(value);
+              setPage(1);
+            }}
             options={SORT_OPTIONS}
             className="h-10"
           />
@@ -458,17 +472,17 @@ const Crops = () => {
       >
         <TableCustom
           rowKey={(record) => getItemId(record) || record.cropCode || record.name}
-          loading={isLoading}
+          loading={isLoading || isFetching}
           dataSource={paginatedCrops}
           columns={columns}
           scroll={{ x: 1120 }}
           tableLayout="fixed"
           pagination={false}
           locale={{
-            emptyText: (
+            emptyText: ['system-empty', 'filtered-empty'].includes(listPresentation) && (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={EMPTY_MESSAGE}
+                description={emptyDescription}
               />
             ),
           }}
@@ -483,7 +497,7 @@ const Crops = () => {
           showSizeChanger: true,
           pageSizeOptions: [10, 20, 50],
           onChange: (nextPage, nextPageSize) => {
-            setPage(nextPage);
+            setPage(nextPageSize !== pageSize ? 1 : nextPage);
             setPageSize(nextPageSize);
           },
         }}
@@ -491,7 +505,11 @@ const Crops = () => {
 
       <Modal
         open={!!statusTarget}
-        onCancel={() => setStatusTarget(null)}
+        onCancel={() => {
+          if (!statusMutation.isPending) setStatusTarget(null);
+        }}
+        closable={!statusMutation.isPending}
+        maskClosable={!statusMutation.isPending}
         footer={null}
         centered
         width={400}
@@ -506,6 +524,7 @@ const Crops = () => {
           </p>
           <div className="flex justify-end gap-3">
             <Button
+              disabled={statusMutation.isPending}
               onClick={() => setStatusTarget(null)}
               className="h-10 min-w-[80px] rounded-lg font-semibold"
             >

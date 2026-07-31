@@ -100,9 +100,8 @@ const NotificationDetail = () => {
         const payload = res?.data ?? res ?? {};
         const item = payload?.data ?? payload;
         if (item && (item.id || item._id)) return item;
-      } catch (e) {
+      } catch {
         // API /notifications/:id chưa có hoặc lỗi, fallback sang tìm trong danh sách
-        console.warn('getNotificationById failed, fallback to list:', e);
       }
       // Fallback: tìm trong danh sách
       const items = normalizeItems(await getNotifications());
@@ -162,25 +161,6 @@ const NotificationDetail = () => {
     notification.date ||
     notification.time;
 
-  // Debug: Log toàn bộ notification để kiểm tra cấu trúc
-  console.log('📧 Notification Detail Data:', notification);
-  console.log('👤 Sender Info:', {
-    sender: notification.sender,
-    createdBy: notification.createdBy,
-    from: notification.from,
-    author: notification.author,
-    senderName: notification.senderName,
-    senderFullName: notification.senderFullName,
-  });
-  console.log('⏰ Time Info:', {
-    sentAt: notification.sentAt,
-    sentTime: notification.sentTime,
-    createdAt: notification.createdAt,
-    timestamp: notification.timestamp,
-    date: notification.date,
-    time: notification.time,
-    rawTime: sentTime,
-  });
   const category = getNotificationTypeLabel(notification);
   const context = getNotificationContext(notification);
 
@@ -288,13 +268,7 @@ const NotificationDetail = () => {
           if (!Array.isArray(attachs)) attachs = [attachs];
           attachs = attachs.filter(Boolean);
 
-          if (attachs.length === 0) {
-             return (
-               <div style={{ display: 'none' }}>
-                 DEBUG DATA: {JSON.stringify(notification)}
-               </div>
-             );
-          }
+          if (attachs.length === 0) return null;
 
           return (
             <div className="border-t border-gray-100 py-6">

@@ -19,9 +19,9 @@ const getPesticides = (params) => http.get(apiGetPesticides, { params, ...silent
 
 const getPesticideById = (id) => http.get(apiGetPesticideById(id), silentConfig)
 
-const createPesticide = (body) => http.post(apiCreatePesticide, body)
+const createPesticide = (body, config) => http.post(apiCreatePesticide, body, config)
 
-const updatePesticide = (id, body) => http.put(apiUpdatePesticide(id), body)
+const updatePesticide = (id, body, config) => http.put(apiUpdatePesticide(id), body, config)
 
 const deletePesticide = (id) => http.delete(apiDeletePesticide(id))
 

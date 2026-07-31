@@ -77,12 +77,8 @@ const LandPlotCreate = () => {
       setIsSubmitting(true)
       try {
         const payload = buildLandPlotPayload(values, polygonData)
-        const res = await LandPlotService.createLandPlot(payload)
+        await LandPlotService.createLandPlot(payload)
 
-        if (res?.success === false) {
-          if (isOverlapApiError(res?.message || res?.errors?.[0])) setMapError(MSG_LM_25)
-          return
-        }
         navigate(routes.list)
       } finally {
         setIsSubmitting(false)

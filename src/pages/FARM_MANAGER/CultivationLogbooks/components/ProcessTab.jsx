@@ -224,8 +224,7 @@ const ProcessTab = ({ item }) => {
           const logs = Array.isArray(response.data) ? response.data : response.data.data || response.data.items || []
           setDailyLogs(logs)
         }
-      } catch (error) {
-        console.error('Lỗi khi lấy nhật ký hàng ngày:', error)
+      } catch {
         setDailyLogs([])
       } finally {
         setLoading(false)

@@ -5,57 +5,39 @@ import { refreshAccessToken } from "src/services/tokenRefresh"
 import { getMsgClient } from "src/utils/stringsUtils"
 import { trimData } from "src/utils/helpers"
 import ROUTER from "src/router/ROUTER"
+import {
+  getApiMessage,
+  isApiError,
+  isGenericApiMessage,
+  normalizeApiError,
+  shouldShowGlobalApiError,
+} from "src/services/core/apiError"
 
 // const baseURL = import.meta.env.VITE_VITE_BACKEND_URL!
-/**
- *
- * parse error response
- */
-function parseError(messages) {
-  // error
-  if (messages) {
-    if (messages instanceof Array) {
-      return Promise.reject({ messages })
-    }
-    return Promise.reject({ messages: [messages] })
-  }
-  return Promise.reject({ messages: ["Server quá tải"] })
-}
-
-const GENERIC_SUCCESS_MESSAGES = new Set(['Success', 'success', 'OK', 'ok'])
-
-const getEaplsMessage = (resData) => {
-  if (Array.isArray(resData?.errors) && resData.errors.length > 0) {
-    return resData.errors.join(", ")
-  }
-
-  const topLevel = resData?.message || null
-
-  if (topLevel && !GENERIC_SUCCESS_MESSAGES.has(topLevel)) {
-    return topLevel
-  }
-
-  if (typeof resData?.data === 'string' && resData.data.trim()) {
-    return resData.data.trim()
-  }
-
-  return topLevel
-}
+const getEaplsMessage = getApiMessage
 
 /** Xử lý notice cho format EAPLS { success, message, data, errors } */
-const handleEaplsBody = (resData, config) => {
+const handleEaplsBody = (resData, config, status) => {
   if (typeof resData?.success !== "boolean") return resData
 
   const method = (config?.method || "get").toLowerCase()
-  const skipNotice = config?.skipNotice
   const msg = getEaplsMessage(resData)
 
   if (resData.success === false) {
-    if (!skipNotice && msg) notice({ msg, isSuccess: false })
-    return resData
+    const shouldShowNotice = shouldShowGlobalApiError({
+      kind: "api",
+      code: resData.code,
+      fieldErrors: resData.fieldErrors,
+    }, config) && Boolean(msg)
+    const apiError = normalizeApiError({
+      response: { data: resData, status },
+      config,
+    }, { noticeShown: shouldShowNotice })
+    if (apiError.noticeShown) notice({ msg, isSuccess: false })
+    return Promise.reject(apiError)
   }
 
-  if (!skipNotice && msg && method !== "get" && !GENERIC_SUCCESS_MESSAGES.has(msg)) {
+  if (!config?.skipNotice && msg && method !== "get" && !isGenericApiMessage(msg)) {
     notice({ msg, isSuccess: true })
   }
 
@@ -71,21 +53,21 @@ const isPublicAuthUrl = (url = "") =>
 export function parseBody(response) {
   const resData = response.data
   if (+response?.status >= 500) {
-    notice({
-      msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-      isSuccess: false,
-    })
+    return Promise.reject(normalizeApiError({
+      response,
+      config: response.config,
+    }))
   }
   if (+response?.status >= 400 && +response?.status < 500) {
-    return notice({
-      msg: `Hệ thống xảy ra lỗi. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ (SC${response?.status})`,
-      isSuccess: false,
-    })
+    return Promise.reject(normalizeApiError({
+      response,
+      config: response.config,
+    }))
   }
 
   if (+response?.status >= 200 && +response?.status < 300) {
     if (typeof resData?.success === "boolean") {
-      return handleEaplsBody(resData, response.config)
+      return handleEaplsBody(resData, response.config, response.status)
     }
 
     if (resData?.StatusCode === 401) {
@@ -110,7 +92,10 @@ export function parseBody(response) {
     }
     return resData
   }
-  return parseError(resData?.messages)
+  return Promise.reject(normalizeApiError({
+    response,
+    config: response?.config,
+  }))
 }
 
 /**
@@ -165,41 +150,28 @@ instance.interceptors.request.use(
   },
   error => Promise.reject(error),
 )
-const noticeError500 = message => {
-  if (!message)
-    notice({
-      msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-      isSuccess: false,
-    })
-  else {
-    notice({
-      msg: message,
-      isSuccess: false,
-    })
+const showApiError = error => {
+  if (!error.noticeShown && shouldShowGlobalApiError(error, error.config)) {
+    notice({ msg: error.message, isSuccess: false })
   }
+  return error
 }
 
 // response parse
 instance.interceptors.response.use(
   response => parseBody(response),
   async error => {
+    if (isApiError(error)) {
+      return Promise.reject(showApiError(error))
+    }
+
     const originalRequest = error.config
     const errorData = error.response?.data
     const requestUrl = String(originalRequest?.url || "")
 
     // BE trả 4xx + body EAPLS (vd: login sai → 401 + success:false)
     if (errorData && typeof errorData.success === "boolean" && errorData.success === false) {
-      const msg = getEaplsMessage(errorData)
-      if (!originalRequest?.skipNotice && msg) {
-        notice({ msg, isSuccess: false })
-      }
-      const apiError = new Error(msg || "Yêu cầu thất bại")
-      apiError.status = error.response?.status
-      apiError.responseData = errorData
-      apiError.requestUrl = requestUrl
-      apiError.requestMethod = originalRequest?.method
-      apiError.requestData = originalRequest?.data
-      return Promise.reject(apiError)
+      return Promise.reject(showApiError(normalizeApiError(error)))
     }
 
     const isPublicUrl = requestUrl.includes('/traceability') || requestUrl.includes('/trace') || isPublicAuthUrl(requestUrl)
@@ -229,55 +201,7 @@ instance.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // can not connect API
-    if (error.code === "ECONNABORTED") {
-      notice({
-        msg: "Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ ",
-        isSuccess: false,
-      })
-    } else if (+error?.response?.status >= 500) {
-      //Nếu response là loại blob(thường dùng lúc xuất excel)
-      //Thì phải convert về json rồi check nếu có message (ở đây là thuộc tính Object) thì thông báo mess đấy lên
-      //Nếu không có message thì thông báo hệ thống gián đoạn
-      const dataReceived = error?.response?.data
-      if (dataReceived instanceof Blob) {
-        const reader = new FileReader()
-        reader.readAsText(dataReceived)
-        reader.onload = function () {
-          const dataRespone = JSON.parse(reader.result)
-          noticeError500(dataRespone?.Object)
-        }
-      } else noticeError500(dataReceived?.Object)
-    } else if (
-      +error?.response?.status < 500 &&
-      +error?.response?.status !== 200
-    ) {
-      const fallbackMsg = getEaplsMessage(errorData)
-      notice({
-        msg:
-          fallbackMsg ||
-          `Hệ thống xảy ra lỗi. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ (SC${error?.response?.status})`,
-        isSuccess: false,
-      })
-    } else if (error.code === "ERR_NETWORK") {
-      notice({
-        msg: `Hệ thống đang bị gián đoạn, vui lòng kiểm tra lại đường truyền!`,
-        isSuccess: false,
-      })
-    } else if (typeof error.response === "undefined") {
-      notice({ msg: "Không xác định", isSuccess: false })
-    } else if (error.response) {
-      notice({
-        msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-        isSuccess: false,
-      })
-      return parseError(error.response.data)
-    } else
-      notice({
-        msg: `Hệ thống đang tạm thời gián đoạn. Xin vui lòng trở lại sau hoặc thông báo với ban quản trị để được hỗ trợ `,
-        isSuccess: false,
-      })
-    return Promise.reject(error)
+    return Promise.reject(showApiError(normalizeApiError(error)))
   },
 )
 

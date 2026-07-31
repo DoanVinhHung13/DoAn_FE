@@ -37,7 +37,7 @@ const refreshToken   = (body) => http.post(AUTH_URLS.refreshToken, body)
 const verifyOTP      = (body) => http.post(AUTH_URLS.verifyOTP, body)
 const forgotPassword = (body) => http.post(AUTH_URLS.forgotPassword, body)
 const resetPassword  = (body) => http.post(AUTH_URLS.resetPassword, body)
-const changePassword = (body) => http.post(AUTH_URLS.changePassword, body)
+const changePassword = (body, config) => http.post(AUTH_URLS.changePassword, body, config)
 
 /** GET /auth/me — thông tin user đang đăng nhập */
 const getProfile = () => http.get(AUTH_URLS.me)

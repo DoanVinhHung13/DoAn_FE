@@ -32,6 +32,7 @@ import { useAppDispatch } from "src/redux/hooks";
 import authSession from "src/redux/authSession";
 import { setUserInfo } from "src/redux/slices/appGlobalSlice";
 import UserService from "src/services/UserService";
+import { applyApiFieldErrors, getApiMessage } from "src/services/core/apiError";
 import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers";
 import {
   formatDate,
@@ -41,6 +42,14 @@ import {
 } from "src/utils/dateFormatters";
 
 const { Text, Title } = Typography;
+
+const PROFILE_FIELD_MAPPING = {
+  FullName: "fullName",
+  PhoneNumber: "phoneNumber",
+  DateOfBirth: "dateOfBirth",
+  Gender: "gender",
+  Address: "address",
+};
 
 const displayValue = (value) => value || "Chưa cập nhật";
 
@@ -89,7 +98,10 @@ const AccountInfo = () => {
         gender: values.gender || null,
         address: values.address?.trim().replace(/\s+/g, " ") || null,
       };
-      return await UserService.updateMyProfile(payload);
+      return await UserService.updateMyProfile(payload, {
+        errorHandling: "form",
+        fieldErrorMapping: PROFILE_FIELD_MAPPING,
+      });
     },
     onSuccess: (response, values) => {
       const updated = response?.data || {};
@@ -107,19 +119,7 @@ const AccountInfo = () => {
       setEditing(false);
     },
     onError: (error) => {
-      const apiMessage = error?.message || error?.response?.data?.message || "";
-      const duplicatePhone =
-        /phone|điện thoại|số điện thoại/i.test(apiMessage) &&
-        /exist|duplicate|đăng ký|tồn tại|trùng/i.test(apiMessage);
-
-      if (duplicatePhone) {
-        form.setFields([
-          {
-            name: "phoneNumber",
-            errors: ["Số điện thoại này đã được đăng ký. Vui lòng thử số khác."],
-          },
-        ]);
-      }
+      applyApiFieldErrors(form, error, PROFILE_FIELD_MAPPING)
     },
   });
 
@@ -144,7 +144,7 @@ const AccountInfo = () => {
       authSession.updateUser(nextUser);
       onSuccess(response);
     } catch (error) {
-      const errorMsg = error?.response?.data?.message || error?.message;
+      const errorMsg = getApiMessage(error?.responseData || error);
       if (errorMsg) {
         setUploadError(errorMsg);
       }

@@ -6,8 +6,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
 import CropCatalogService from 'src/services/CropCatalogService';
+import { applyApiFieldErrors } from 'src/services/core/apiError';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
+
+const CROP_CATALOG_FIELD_MAPPING = {
+  Name: 'name', name: 'name', Description: 'description', description: 'description',
+  IsActive: 'isActive', isActive: 'isActive',
+};
 
 const CatalogCreate = () => {
   const queryClient = useQueryClient();
@@ -22,7 +28,10 @@ const CatalogCreate = () => {
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         isActive: values.isActive ?? true,
       };
-      return CropCatalogService.createCropCatalog(payload);
+      return CropCatalogService.createCropCatalog(payload, {
+        errorHandling: 'form',
+        fieldErrorMapping: CROP_CATALOG_FIELD_MAPPING,
+      });
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
@@ -30,9 +39,7 @@ const CatalogCreate = () => {
       await refetchSystemKey();
       navigate(ROUTER.FM_CROP_CATALOGS);
     },
-    onError: () => {
-      // axios interceptor handles error notification
-    },
+    onError: (error) => applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING),
   });
 
   return (

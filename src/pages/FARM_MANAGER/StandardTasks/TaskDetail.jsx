@@ -20,11 +20,6 @@ const TaskDetail = () => {
       try {
         setInitialLoading(true)
         const res = await TaskCatalogService.getTaskCatalogById(id)
-        if (res?.success === false) {
-          navigate(ROUTER.FM_TASK_CATALOGS)
-          return
-        }
-
         const data = unwrap(res) || {}
         form.setFieldsValue({
           cropCatalogId: data.cropCatalogId,

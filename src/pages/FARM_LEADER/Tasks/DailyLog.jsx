@@ -256,8 +256,7 @@ const DailyLog = () => {
         ...previous,
         [key]: result || null,
       }))
-    } catch (error) {
-      console.error(error)
+    } catch {
       setRemainingAreas(previous => ({ ...previous, [key]: null }))
     }
   }
@@ -295,8 +294,7 @@ const DailyLog = () => {
         ...previous,
         [key]: recommendations[0] || null,
       }))
-    } catch (error) {
-      console.error(error)
+    } catch {
       setEntryRecommendations(previous => ({ ...previous, [key]: null }))
     }
   }
@@ -409,8 +407,7 @@ const DailyLog = () => {
           fertilizers: [],
           pesticides: [],
         })
-      } catch (error) {
-        console.error(error)
+      } catch {
         message.error("Không thể tải dữ liệu công việc.")
         navigate(ROUTER.FL_TASKS)
       } finally {
@@ -469,7 +466,6 @@ const DailyLog = () => {
       form.resetFields()
       setFileList([])
     } catch (error) {
-      console.error(error)
       if (error.errorFields) {
         message.warning("Vui lòng kiểm tra lại các trường nhập.")
       }
@@ -496,8 +492,8 @@ const DailyLog = () => {
           })
         }
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // Summary loading is best-effort.
     } finally {
       setSummaryLoading(false)
     }
@@ -516,11 +512,8 @@ const DailyLog = () => {
       setSubmitModal(false)
       setRefreshKey(k => k + 1)
     } catch (error) {
-      console.error(error)
       if (error.errorFields) {
         message.warning("Vui lòng nhập mô tả tổng kết trước khi gửi.")
-      } else {
-        message.error(error.message || "Gửi báo cáo thất bại.")
       }
     } finally {
       setSubmitting(false)
@@ -533,6 +526,7 @@ const DailyLog = () => {
       formData.append("file", file)
       const res = await UploadService.uploadImage(formData, {
         params: { folder: "eapls/daily-logs" },
+        errorHandling: "component",
       })
       const data = unwrap(res)
       const url = data?.url || data?.fileUrl || data
@@ -550,7 +544,6 @@ const DailyLog = () => {
         },
       ])
     } catch (err) {
-      console.error(err)
       onError?.(err)
       message.error(`${file.name} tải lên thất bại.`)
     }

@@ -6,10 +6,17 @@ import { ROLES } from "src/constants/roles"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import UserService from "src/services/UserService"
-import Notice from "src/components/Notice"
+import { applyApiFieldErrors } from "src/services/core/apiError"
 import { EMAIL_RULES, PASSWORD_RULES, PHONE_RULES } from "src/utils/helpers"
 
 const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
+
+const CREATE_ACCOUNT_FIELD_MAPPING = {
+  Email: "email",
+  PhoneNumber: "phoneNumber",
+  Password: "password",
+  Roles: "role",
+}
 
 const getUserId = user => user?.id || user?._id || user?.userId
 
@@ -68,18 +75,20 @@ const CreateAccountModal = ({
 
     try {
       setLoading(true)
-      const res = await UserService.createAccount(values.userId, {
+      await UserService.createAccount(values.userId, {
         password: values.password,
         roles: [values.role],
         email: values.email?.trim() || null,
         phoneNumber: values.phoneNumber?.trim() || null,
+      }, {
+        errorHandling: "form",
+        fieldErrorMapping: CREATE_ACCOUNT_FIELD_MAPPING,
       })
 
-      if (res?.success === false) return
-
-      Notice({ msg: "Tạo tài khoản thành công!", isSuccess: true })
       onClose()
       onSuccess?.()
+    } catch (error) {
+      applyApiFieldErrors(form, error, CREATE_ACCOUNT_FIELD_MAPPING)
     } finally {
       setLoading(false)
     }

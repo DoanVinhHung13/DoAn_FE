@@ -5,6 +5,7 @@ import {
 } from '@microsoft/signalr'
 import STORAGE, { getStorage } from 'src/redux/storage'
 import { refreshAccessToken } from 'src/services/tokenRefresh'
+import { logDevDiagnostic } from 'src/utils/safeDiagnostic'
 
 const getHubUrl = () => {
   const apiRoot =
@@ -48,17 +49,16 @@ class SignalRService {
       .build()
 
     connection.onreconnecting(error => {
-      if (import.meta.env.DEV) console.warn('[SignalR] reconnecting', error)
+      logDevDiagnostic('signalr-reconnecting', error)
     })
 
-    connection.onreconnected(connectionId => {
-      if (import.meta.env.DEV) console.info('[SignalR] reconnected', connectionId)
+    connection.onreconnected(() => {
       this.reconnectListeners.forEach(listener => listener())
     })
 
     connection.onclose(error => {
       if (this.connection === connection) this.connection = null
-      if (import.meta.env.DEV && error) console.warn('[SignalR] closed', error)
+      if (error) logDevDiagnostic('signalr-closed', error)
       this.closeListeners.forEach(listener => listener(error))
     })
 

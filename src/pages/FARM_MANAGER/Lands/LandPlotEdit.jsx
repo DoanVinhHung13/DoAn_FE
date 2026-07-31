@@ -125,12 +125,8 @@ const LandPlotEdit = () => {
           values,
           polygonData || { boundaryJson: boundary },
         )
-        const res = await LandPlotService.updateLandPlot(id, payload)
+        await LandPlotService.updateLandPlot(id, payload)
 
-        if (res?.success === false) {
-          if (isOverlapApiError(res?.message || res?.errors?.[0])) setMapError(MSG_LM_25)
-          return
-        }
         navigate(routes.detail(id))
       } finally {
         setIsSubmitting(false)

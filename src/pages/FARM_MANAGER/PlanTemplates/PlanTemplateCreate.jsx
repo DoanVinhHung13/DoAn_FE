@@ -27,6 +27,7 @@ import CropCatalogService from "src/services/CropCatalogService"
 import ProcessTemplateService from "src/services/ProcessTemplateService"
 import ProcessStepService from "src/services/ProcessStepService"
 import { isActiveCropCatalog } from "src/utils/cropCatalog"
+import { logDevDiagnostic } from "src/utils/safeDiagnostic"
 
 const { Text } = Typography
 
@@ -338,8 +339,6 @@ const PlanTemplateCreate = () => {
         : await ProcessTemplateService.createProcessTemplate(templatePayload, {
             skipNotice: true,
           })
-      if (response?.success === false) return
-
       const processTemplateId = isEdit ? id : getCreatedId(response)
       if (!processTemplateId) {
         throw new Error(
@@ -350,12 +349,7 @@ const PlanTemplateCreate = () => {
       await syncSteps(processTemplateId, normalizedSteps)
       navigate(ROUTER.FM_PROCESS_TEMPLATES)
     } catch (error) {
-      console.error("Process template submit failed:", {
-        id,
-        templatePayload,
-        responseData: error.responseData,
-        error,
-      })
+      logDevDiagnostic("process-template-submit", error)
       // axios interceptor handles error notification
     } finally {
       setSubmitting(false)

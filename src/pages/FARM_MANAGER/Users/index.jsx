@@ -131,7 +131,6 @@ const UsersManagement = () => {
         role: roleFilter || undefined,
         status: statusFilter === "all" ? undefined : statusFilter,
       })
-      if (res?.success === false) return
       const { items, totalItems } = getUserListData(res)
       setListData(items)
       setTotalRecords(totalItems)
@@ -171,8 +170,7 @@ const UsersManagement = () => {
   const handleStatusChange = async (id, isActive) => {
     try {
       setStatusLoading(true)
-      const res = await UserService.changeUserStatus(id, { isActive })
-      if (res?.success === false) return
+      await UserService.changeUserStatus(id, { isActive })
       getList()
       setStatusModal({ open: false, user: null })
     } finally {

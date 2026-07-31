@@ -3,7 +3,6 @@ import { Form, Input, Button } from 'antd'
 import { KeyOutlined, LockOutlined } from '@ant-design/icons'
 import CustomModal from 'src/components/Modal/CustomModal'
 import UserService from 'src/services/UserService'
-import Notice from 'src/components/Notice'
 
 const ResetPasswordModal = ({ open, onClose, user }) => {
   const [form] = Form.useForm()
@@ -17,12 +16,10 @@ const ResetPasswordModal = ({ open, onClose, user }) => {
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
-      const res = await UserService.changeUserPassword(user.id, {
+      await UserService.changeUserPassword(user.id, {
         newPassword:        values.newPassword,
         confirmNewPassword: values.confirmNewPassword,
       })
-      if (res?.success === false) return
-      Notice({ msg: 'Đặt lại mật khẩu thành công!', isSuccess: true })
       onClose()
     } finally {
       setLoading(false)

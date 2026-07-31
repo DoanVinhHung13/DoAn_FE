@@ -46,8 +46,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
         form.setFieldsValue({
           supervisorDescription: leaderSubmittedDescription || summary?.descriptionSummary || summary?.description || '',
         })
-      } catch (err) {
-        console.error(err)
+      } catch {
         setLeaderSummary(null)
         form.setFieldsValue({
           supervisorDescription: '',
@@ -77,10 +76,8 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
       await saveCompiledDescription(targetStageId, taskId, values.supervisorDescription)
 
       onSuccess?.()
-    } catch (err) {
-      if (!err?.errorFields) {
-        console.error(err)
-      }
+    } catch {
+      // Submission failures are handled by the shared interceptor.
     } finally {
       setSaving(false)
     }

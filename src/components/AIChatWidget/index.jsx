@@ -30,10 +30,18 @@ const AIChatWidget = () => {
     const [, setChatInfo] = useState(null);
     const [, setShowUpgradeAlert] = useState(false);
     const messagesEndRef = useRef(null);
+    const chatInfoControllerRef = useRef(null);
+    const chatControllerRef = useRef(null);
+    const localReplyTimerRef = useRef(null);
+    const isMountedRef = useRef(true);
 
     // Lấy thông tin user từ localStorage (key đồng nhất với STORAGE.TOKEN)
     const token = localStorage.getItem('token-eapls') || sessionStorage.getItem('token-eapls');
     const fetchChatInfo = useCallback(async () => {
+        chatInfoControllerRef.current?.abort();
+        const controller = new AbortController();
+        chatInfoControllerRef.current = controller;
+
         try {
             const headers = {
                 'Content-Type': 'application/json'
@@ -44,17 +52,30 @@ const AIChatWidget = () => {
             }
 
             const response = await fetch(`${API_URL}/chat/my-info`, {
-                headers
+                headers,
+                signal: controller.signal,
             });
 
+            if (!response.ok) return;
             const data = await response.json();
-            if (data.success) {
+            if (isMountedRef.current && !controller.signal.aborted && data?.success) {
                 setChatInfo(data.data);
             }
-        } catch (error) {
-            console.error('Failed to fetch chat info:', error);
+        } catch {
+            // Chat account details are optional.
+        } finally {
+            if (chatInfoControllerRef.current === controller) {
+                chatInfoControllerRef.current = null;
+            }
         }
     }, [token]);
+
+    useEffect(() => () => {
+        isMountedRef.current = false;
+        chatInfoControllerRef.current?.abort();
+        chatControllerRef.current?.abort();
+        if (localReplyTimerRef.current) clearTimeout(localReplyTimerRef.current);
+    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -125,7 +146,7 @@ const AIChatWidget = () => {
     };
 
     const handleSendMessage = async () => {
-        if (!inputValue.trim()) return;
+        if (!inputValue.trim() || isTyping) return;
 
         const userMessage = {
             id: messages.length + 1,
@@ -142,7 +163,8 @@ const AIChatWidget = () => {
         // 1. Check local predefined responses first for instant reply
         const localResponse = getBotResponse(inputValue);
         if (localResponse) {
-            setTimeout(() => {
+            localReplyTimerRef.current = setTimeout(() => {
+                if (!isMountedRef.current) return;
                 const botMessage = {
                     id: messages.length + 2,
                     type: 'bot',
@@ -156,6 +178,8 @@ const AIChatWidget = () => {
         }
 
         // 2. Call AI API for complex queries
+        const controller = new AbortController();
+        chatControllerRef.current = controller;
         try {
             const headers = {
                 'Content-Type': 'application/json'
@@ -172,10 +196,14 @@ const AIChatWidget = () => {
                 body: JSON.stringify({
                     message: inputValue,
                     conversationHistory: messages.slice(-10) // Send last 10 messages for context
-                })
+                }),
+                signal: controller.signal,
             });
 
+            if (!response.ok) throw new Error('AI chat request failed');
             const data = await response.json();
+
+            if (!isMountedRef.current || controller.signal.aborted) return;
 
             let botResponseText;
             if (data.success && data.data && data.data.response) {
@@ -214,9 +242,8 @@ const AIChatWidget = () => {
             setMessages(prev => [...prev, botMessage]);
             setIsTyping(false);
 
-        } catch (error) {
-            console.error('Chat error:', error);
-
+        } catch {
+            if (!isMountedRef.current || controller.signal.aborted) return;
             // Fallback to local response if API fails
             const botMessage = {
                 id: messages.length + 2,
@@ -227,6 +254,10 @@ const AIChatWidget = () => {
 
             setMessages(prev => [...prev, botMessage]);
             setIsTyping(false);
+        } finally {
+            if (chatControllerRef.current === controller) {
+                chatControllerRef.current = null;
+            }
         }
     };
 
@@ -418,13 +449,14 @@ const AIChatWidget = () => {
                                 }}
                                 placeholder="Nhập tin nhắn..."
                                 autoSize={{ minRows: 1, maxRows: 3 }}
+                                disabled={isTyping}
                                 className="ai-chat-textarea"
                             />
                             <Button
                                 type="primary"
                                 icon={<SendOutlined />}
                                 onClick={handleSendMessage}
-                                disabled={!inputValue.trim()}
+                                disabled={!inputValue.trim() || isTyping}
                                 className="ai-chat-send-btn"
                             />
                         </div>

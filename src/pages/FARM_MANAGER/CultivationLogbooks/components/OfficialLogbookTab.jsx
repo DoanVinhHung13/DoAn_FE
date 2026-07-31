@@ -84,8 +84,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
           const logs = Array.isArray(response.data) ? response.data : response.data.data || response.data.items || []
           setOfficialLogs(logs)
         }
-      } catch (error) {
-        console.error('Lỗi khi lấy nhật ký chính thức:', error)
+      } catch {
         setOfficialLogs([])
       } finally {
         setLoading(false)

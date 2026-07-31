@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Badge, Popover, List, Typography, Button, Empty, Spin, message, Tag } from 'antd';
+import { Badge, Popover, List, Typography, Button, Empty, Spin, Tag } from 'antd';
 import { BellOutlined, CheckOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -58,7 +58,6 @@ const NotificationBell = () => {
     mutationFn: markAllNotificationsAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      message.success('Đã đánh dấu tất cả là đã đọc');
     },
   });
 

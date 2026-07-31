@@ -144,8 +144,7 @@ const FarmSupervisorTaskDetail = () => {
         const farmersList = farmersRes?.data?.items || farmersRes?.data?.data || farmersRes?.data || []
         setFarmers(Array.isArray(farmersList) ? farmersList.filter(u => u.isActive !== false) : [])
 
-      } catch (error) {
-        console.error(error)
+      } catch {
         // axios interceptor handles error notification
       } finally {
         setLoading(false)
@@ -174,8 +173,8 @@ const FarmSupervisorTaskDetail = () => {
         assignedLeaderName: leader?.fullName || leader?.name || '',
         assignments: farmersList.map((f) => ({ userId: f.id, fullName: f.fullName || f.name })),
       }))
-    } catch (error) {
-      console.error(error)
+    } catch {
+      // Assignment failures are handled by the shared interceptor.
     } finally {
       setSavingAssign(false)
     }

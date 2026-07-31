@@ -13,6 +13,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import {
+  Alert,
   Button,
   Card,
   Empty,
@@ -37,6 +38,7 @@ const FarmSupervisorPlans = () => {
   const navigate = useNavigate()
   const { getLogbookStatus, logbookFilterOptions } = useCultivationStatus()
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [plans, setPlans] = useState([])
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -58,17 +60,16 @@ const FarmSupervisorPlans = () => {
     const load = async () => {
       try {
         setLoading(true)
+        setLoadError(false)
         const res = await CultivationLogbookService.getAll({
           PageIndex: page,
           PageSize: pageSize,
           SearchKeyword: search || undefined,
           Status: statusFilter === 'all' ? undefined : statusFilter,
+        }, {
+          errorHandling: 'component',
         })
         if (!mounted) return
-        if (res?.success === false) {
-          setPlans([])
-          return
-        }
         // Axios interceptor trả body EAPLS: { success, data: { items } | items[] }
         const data = res?.data
         const items = Array.isArray(data)
@@ -76,11 +77,11 @@ const FarmSupervisorPlans = () => {
           : data?.items || data?.Items || []
         setPlans(Array.isArray(items) ? items : [])
         setTotalPlans(Array.isArray(data) ? items.length : (data?.totalItems || data?.TotalItems || 0))
-      } catch (error) {
+      } catch {
         if (mounted) {
-          console.error(error)
-          // axios interceptor handles error notification
+          setLoadError(true)
           setPlans([])
+          setTotalPlans(0)
         }
       } finally {
         if (mounted) setLoading(false)
@@ -205,6 +206,16 @@ const FarmSupervisorPlans = () => {
       <Card bordered={false} className="admin-data-card overflow-hidden rounded-2xl shadow-sm" styles={{ body: { padding: 0 } }}>
         {loading ? (
           <div className="p-5"><Skeleton active paragraph={{ rows: 6 }} /></div>
+        ) : loadError ? (
+          <div className="p-5">
+            <Alert
+              type="error"
+              showIcon
+              message="Không thể tải danh sách kế hoạch."
+              action={<Button size="small" onClick={() => setReloadKey((v) => v + 1)}>Thử lại</Button>}
+              className="rounded-xl"
+            />
+          </div>
         ) : viewMode === 'table' ? (
           <CustomTable
             rowKey="id"

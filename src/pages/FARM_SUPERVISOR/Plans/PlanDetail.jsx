@@ -32,6 +32,7 @@ import { formatDate } from 'src/utils/dateFormatters'
 import { getLandPlotsFromLogbook } from 'src/utils/helpers'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import { isNotFoundError } from 'src/services/core/apiError'
 
 import StageTaskManagementTab from './components/StageTaskManagementTab'
 import LogbookFinalizationTab from './components/LogbookFinalizationTab'
@@ -58,6 +59,7 @@ const FarmSupervisorPlanDetail = () => {
   const [stages, setStages] = useState([])
   const [tasks, setTasks] = useState({})
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [submitModal, setSubmitModal] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -88,11 +90,10 @@ const FarmSupervisorPlanDetail = () => {
       setLoading(true)
     }
     try {
-      const planRes = await CultivationLogbookService.getById(planId)
-      if (planRes?.success === false) {
-        navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)
-        return
-      }
+      setLoadError(false)
+      const planRes = await CultivationLogbookService.getById(planId, {
+        errorHandling: 'component',
+      })
       // Interceptor trả body: { success, data: plan }
       const planData = planRes?.data ?? planRes
       if (!planData) {
@@ -112,9 +113,14 @@ const FarmSupervisorPlanDetail = () => {
       setStages(stageData)
       setTasks(tasksMap)
     } catch (error) {
-      console.error(error)
-      // axios interceptor handles error notification
-      navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)
+      if (isNotFoundError(error)) {
+        navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)
+        return
+      }
+      setPlan(null)
+      setStages([])
+      setTasks({})
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -154,6 +160,21 @@ const FarmSupervisorPlanDetail = () => {
         <Card bordered={false} className="shadow-sm rounded-2xl">
           <Skeleton active paragraph={{ rows: 10 }} />
         </Card>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="space-y-4">
+        <Alert
+          type="error"
+          showIcon
+          message="Không thể tải chi tiết kế hoạch."
+          action={<Button size="small" onClick={() => loadData(true)}>Thử lại</Button>}
+          className="rounded-xl"
+        />
+        <Button onClick={() => navigate(ROUTER.FS_CULTIVATION_LOGBOOKS)}>Quay lại</Button>
       </div>
     )
   }

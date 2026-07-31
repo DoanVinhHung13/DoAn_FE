@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Modal, Form, Input, InputNumber, message } from 'antd'
+import { Modal, Form, Input, InputNumber } from 'antd'
 import { InboxOutlined } from '@ant-design/icons'
 import InventoryService from 'src/services/InventoryService'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
@@ -32,18 +32,12 @@ const InventoryImportModal = ({ open, onCancel, onSuccess, item }) => {
         note: values.note?.trim() || 'Nhập vật tư bổ sung vào kho',
       }
 
-      const res = await InventoryService.addStock(payload)
-      if (res?.success === false) {
-        message.error(res?.message || 'Nhập vật tư thất bại.')
-        return
-      }
-
+      await InventoryService.addStock(payload)
       onSuccess?.()
       onCancel?.()
     } catch (err) {
       if (!err?.errorFields) {
         console.error(err)
-        message.error(err?.response?.data?.message || err?.message || 'Nhập kho thất bại.')
       }
     } finally {
       setLoading(false)

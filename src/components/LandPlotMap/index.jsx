@@ -13,7 +13,7 @@ import {
   parseBoundaryJson,
 } from 'src/utils/geoJsonUtils'
 import { MSG_LM_25 } from 'src/pages/FARM_MANAGER/Lands/landPlotUtils'
-import { searchAddress } from 'src/utils/geocodingUtils'
+import { isExternalAbortError, searchAddress } from 'src/utils/geocodingUtils'
 import './styles.css'
 
 const DEFAULT_CENTER = [21.0285, 105.8542]
@@ -45,6 +45,8 @@ const LandPlotMap = ({
   const onPolygonChangeRef = useRef(onPolygonChange)
   const onAddressSelectRef = useRef(onAddressSelect)
   const onOverlapErrorRef = useRef(onOverlapError)
+  const searchControllerRef = useRef(null)
+  const searchRequestIdRef = useRef(0)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -72,6 +74,10 @@ const LandPlotMap = ({
   useEffect(() => {
     onAddressSelectRef.current = onAddressSelect
   }, [onAddressSelect])
+
+  useEffect(() => () => {
+    searchControllerRef.current?.abort()
+  }, [])
 
   const emitPolygonChange = useCallback((geoJSON) => {
     const areaM2 = calculatePolygonArea(geoJSON.coordinates)
@@ -360,21 +366,33 @@ const LandPlotMap = ({
       return
     }
 
+    searchControllerRef.current?.abort()
+    const controller = new AbortController()
+    const requestId = searchRequestIdRef.current + 1
+    searchRequestIdRef.current = requestId
+    searchControllerRef.current = controller
+
     setSearchLoading(true)
     setSearchError('')
     setShowResults(true)
 
     try {
-      const results = await searchAddress(keyword)
+      const results = await searchAddress(keyword, { signal: controller.signal })
+      if (requestId !== searchRequestIdRef.current) return
       setSearchResults(results)
       if (!results.length) {
         setSearchError('Không tìm thấy địa chỉ phù hợp. Hãy thử từ khóa khác.')
       }
     } catch (error) {
+      if (isExternalAbortError(error) || requestId !== searchRequestIdRef.current) return
       setSearchResults([])
-      setSearchError(error.message || 'Không thể tìm kiếm địa chỉ.')
+      setSearchError('Không thể tìm kiếm vị trí lúc này. Vui lòng thử lại.')
+      return
     } finally {
-      setSearchLoading(false)
+      if (requestId === searchRequestIdRef.current) {
+        searchControllerRef.current = null
+        setSearchLoading(false)
+      }
     }
   }
 

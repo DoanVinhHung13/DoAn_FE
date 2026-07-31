@@ -22,9 +22,7 @@ const TaskCreate = () => {
         description: values.description?.trim() || null,
       }
 
-      const res = await TaskCatalogService.createTaskCatalog(body)
-
-      if (res?.success === false) return
+      await TaskCatalogService.createTaskCatalog(body)
 
       navigate(ROUTER.FM_TASK_CATALOGS)
     } catch {

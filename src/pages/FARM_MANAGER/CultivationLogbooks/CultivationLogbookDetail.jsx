@@ -8,11 +8,11 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons'
 import {
+  Alert,
   Button,
   Card,
   Skeleton,
   Tag,
-  message,
   Tabs,
 } from 'antd'
 import { useEffect, useState } from 'react'
@@ -21,6 +21,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
+import { isNotFoundError } from 'src/services/core/apiError'
 import { getLandPlotsFromLogbook } from 'src/utils/helpers'
 
 
@@ -37,6 +38,8 @@ const CultivationLogbookDetail = () => {
   const { getLogbookStatus } = useCultivationStatus()
 
   const [initialLoading, setInitialLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
   const [item, setItem] = useState(null)
   const [stages, setStages] = useState([])
   const [activeTab, setActiveTab] = useState('official')
@@ -47,10 +50,12 @@ const CultivationLogbookDetail = () => {
     const fetchDetail = async () => {
       try {
         setInitialLoading(true)
+        setLoadError(false)
 
-        const response = await CultivationLogbookService.getById(id)
-        if (response?.success === false || !response?.data) {
-          message.error('Không tìm thấy nhật ký canh tác')
+        const response = await CultivationLogbookService.getById(id, {
+          errorHandling: 'component',
+        })
+        if (!response?.data) {
           navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)
           return
         }
@@ -63,9 +68,16 @@ const CultivationLogbookDetail = () => {
         setItem({ ...plan, tasks: planTasks })
         setStages(planStages)
 
-      } catch {
-        message.error('Lấy thông tin nhật ký canh tác thất bại')
-        navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)
+      } catch (error) {
+        if (isNotFoundError(error)) {
+          navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)
+          return
+        }
+        if (isMounted) {
+          setItem(null)
+          setStages([])
+          setLoadError(true)
+        }
       } finally {
         if (isMounted) setInitialLoading(false)
       }
@@ -75,7 +87,7 @@ const CultivationLogbookDetail = () => {
     return () => {
       isMounted = false
     }
-  }, [id, navigate])
+  }, [id, navigate, reloadKey])
 
   if (initialLoading) {
     return (
@@ -87,6 +99,21 @@ const CultivationLogbookDetail = () => {
         <Card bordered={false} className="shadow-sm rounded-2xl">
           <Skeleton active paragraph={{ rows: 10 }} />
         </Card>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="space-y-4">
+        <Alert
+          type="error"
+          showIcon
+          message="Không thể tải chi tiết nhật ký canh tác."
+          action={<Button size="small" onClick={() => setReloadKey((key) => key + 1)}>Thử lại</Button>}
+          className="rounded-xl"
+        />
+        <Button onClick={() => navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)}>Quay lại</Button>
       </div>
     )
   }

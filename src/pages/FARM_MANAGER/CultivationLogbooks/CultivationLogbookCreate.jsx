@@ -138,8 +138,7 @@ const CultivationLogbookCreate = () => {
           value: user.id || user._id || user.userId,
           label: user.fullName || user.name || user.email,
         })).filter((option) => option.value))
-      } catch (error) {
-        console.error(error)
+      } catch {
         if (isMounted) setSupervisorOptions([])
       } finally {
         if (isMounted) setIsSupervisorsLoading(false)
@@ -163,8 +162,7 @@ const CultivationLogbookCreate = () => {
         })
         if (!isMounted) return
         setCatalogsData(normalizeResponse(response).filter(isActiveCropCatalog))
-      } catch (error) {
-        console.error(error)
+      } catch {
         if (isMounted) setCatalogsData([])
       } finally {
         if (isMounted) setIsCatalogsLoading(false)
@@ -199,8 +197,7 @@ const CultivationLogbookCreate = () => {
           return String(cropCatalogId || '').toLowerCase() === String(selectedCatalogId || '').toLowerCase()
         })
         setCropsData(filteredCrops)
-      } catch (error) {
-        console.error(error)
+      } catch {
         if (isMounted) setCropsData([])
       } finally {
         if (isMounted) setIsCropsLoading(false)
@@ -225,8 +222,7 @@ const CultivationLogbookCreate = () => {
         if (!isMounted) return
         const lands = normalizeResponse(response)
         setLandsData(lands)
-      } catch (error) {
-        console.error(error)
+      } catch {
         if (isMounted) setLandsData([])
       } finally {
         if (isMounted) setIsLandsLoading(false)
@@ -320,8 +316,7 @@ const CultivationLogbookCreate = () => {
         }))
 
         setStages(normalizedStages.length ? normalizedStages : [createEmptyStage(1)])
-      } catch (error) {
-        console.error(error)
+      } catch {
         message.error('Không thể tải kế hoạch.')
       }
     }
@@ -379,8 +374,8 @@ const CultivationLogbookCreate = () => {
         if (foundCrop) {
           targetCatalogId = foundCrop.cropCatalogId || foundCrop.categoryId || foundCrop.cropCatalog?.id
         }
-      } catch (err) {
-        console.error('Error resolving crop catalog from cropId:', err)
+      } catch {
+        // Crop catalog resolution is best-effort.
       }
     }
 
@@ -439,8 +434,7 @@ const CultivationLogbookCreate = () => {
         if (isMounted) {
           message.info('Đã tải mẫu kế hoạch thành công.')
         }
-      } catch (error) {
-        console.error(error)
+      } catch {
         if (isMounted) message.error('Không thể tải mẫu kế hoạch.')
       }
     }
@@ -469,8 +463,7 @@ const CultivationLogbookCreate = () => {
         CropCatalogId: cropCatalogId || undefined,
       })
       setTemplates(normalizeResponse(response))
-    } catch (error) {
-      console.error(error)
+    } catch {
       setTemplates([])
     } finally {
       setTemplatesLoading(false)
@@ -530,8 +523,7 @@ const CultivationLogbookCreate = () => {
       await applyTemplateFields(templateData, template)
       setTemplateModal(false)
       message.success(`Đã áp dụng mẫu "${template.templateName || template.name}" thành công.`)
-    } catch (error) {
-      console.error(error)
+    } catch {
       message.error('Không thể áp dụng mẫu kế hoạch.')
     }
   }
@@ -604,8 +596,8 @@ const CultivationLogbookCreate = () => {
       if (createdPlanId) {
         navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', createdPlanId))
       }
-    } catch (error) {
-      console.error(error)
+    } catch {
+      // Existing template data is optional.
     } finally {
       setSubmitting(false)
     }

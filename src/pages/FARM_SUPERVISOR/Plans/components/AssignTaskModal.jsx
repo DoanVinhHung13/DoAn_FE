@@ -82,8 +82,7 @@ const AssignTaskModal = ({
           ? farmersList.filter(u => u.isActive !== false)
           : [],
       )
-    } catch (err) {
-      console.error(err)
+    } catch {
       // axios interceptor handles error notification
     } finally {
       setLoading(false)

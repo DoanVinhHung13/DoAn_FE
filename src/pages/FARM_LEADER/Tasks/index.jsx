@@ -21,6 +21,7 @@ import {
   TeamOutlined,
 } from "@ant-design/icons"
 import {
+  Alert,
   Avatar,
   Button,
   Card,
@@ -262,18 +263,22 @@ const FarmLeaderTasks = () => {
 
   const [loadingSummaries, setLoadingSummaries] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const [summariesError, setSummariesError] = useState(false)
+  const [detailError, setDetailError] = useState(false)
 
   // ── Load left tree panel: logbook summaries ────────────────────────────────
   const loadLogbookSummaries = useCallback(async () => {
     try {
       setLoadingSummaries(true)
-      const res = await CultivationTaskService.getMyLogbookSummaries()
+      setSummariesError(false)
+      const res = await CultivationTaskService.getMyLogbookSummaries(undefined, {
+        errorHandling: "component",
+      })
       const data = unwrap(res)
       const list = Array.isArray(data) ? data : data?.items || []
       setLogbookSummaries(list)
-    } catch (error) {
-      console.error(error)
-      message.error("Không thể tải danh sách kế hoạch.")
+    } catch {
+      setSummariesError(true)
       setLogbookSummaries([])
     } finally {
       setLoadingSummaries(false)
@@ -298,6 +303,7 @@ const FarmLeaderTasks = () => {
     if (!selectedLogbookId) return
     try {
       setLoadingDetail(true)
+      setDetailError(false)
       const params = {}
       if (statusFilter !== "all") {
         params.statuses = statusFilter
@@ -305,6 +311,7 @@ const FarmLeaderTasks = () => {
       const res = await CultivationTaskService.getLogbookById(
         selectedLogbookId,
         params,
+        { errorHandling: "component" },
       )
       const data = unwrap(res)
       // New API shape: { plan: {...}, stages: [{ stageId, stageName, tasks: [...] }] }
@@ -315,9 +322,8 @@ const FarmLeaderTasks = () => {
       setLogbookDetail(plan)
       setStages(stagesArr)
       setTasks(flatTasks)
-    } catch (error) {
-      console.error(error)
-      message.error("Không thể tải chi tiết kế hoạch.")
+    } catch {
+      setDetailError(true)
       setLogbookDetail(null)
       setStages([])
       setTasks([])
@@ -535,7 +541,15 @@ const FarmLeaderTasks = () => {
         </div>
       </div>
 
-      {logbookSummaries.length === 0 ? (
+      {summariesError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="Không thể tải danh sách kế hoạch."
+          action={<Button size="small" onClick={loadLogbookSummaries}>Thử lại</Button>}
+          className="rounded-xl"
+        />
+      ) : logbookSummaries.length === 0 ? (
         <Card className="p-12 text-center border-0 shadow-xs rounded-2xl">
           <Empty description="Bạn chưa được phân công công việc nào." />
         </Card>
@@ -602,6 +616,14 @@ const FarmLeaderTasks = () => {
           <Col xs={24} lg={16} xl={17}>
             {isDetailLoading ? (
               <Skeleton active paragraph={{ rows: 10 }} />
+            ) : detailError ? (
+              <Alert
+                type="error"
+                showIcon
+                message="Không thể tải chi tiết kế hoạch."
+                action={<Button size="small" onClick={loadLogbookDetail}>Thử lại</Button>}
+                className="rounded-xl"
+              />
             ) : logbookDetail ? (
               <div className="space-y-5">
                 {/* ── SELECTED PLAN HERO BANNER ────────────────────────────────── */}

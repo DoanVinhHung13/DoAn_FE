@@ -14,12 +14,12 @@ import {
   apiGetClosingReviews,
 } from './urls'
 
-const getAll = (params) => {
-  return http.get(apiGetCultivationLogbooks, { params })
+const getAll = (params, config = {}) => {
+  return http.get(apiGetCultivationLogbooks, { ...config, params })
 }
 
-const getById = (id) => {
-  return http.get(apiGetCultivationLogbookById(id))
+const getById = (id, config = {}) => {
+  return http.get(apiGetCultivationLogbookById(id), config)
 }
 
 const create = (body, config) => {

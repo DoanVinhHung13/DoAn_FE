@@ -17,8 +17,8 @@ const ConsultationSection = () => {
     try {
       const response = await ConsultationService.createConsultation(values)
 
-      if (response.data.success) {
-        if (response.data.data?.aiResponse) {
+      if (response?.success) {
+        if (response.data?.aiResponse) {
           message.success({
             content: 'Gửi yêu cầu thành công! Vui lòng kiểm tra email để xem gợi ý sơ bộ từ AI EAPLS.',
             duration: 5,
@@ -35,7 +35,7 @@ const ConsultationSection = () => {
                   <Text strong className="text-blue-700">Trợ lý AI</Text>
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-full">Llama 3.1</span>
                 </div>
-                <Paragraph className="italic text-gray-700">"{response.data.data.aiResponse}"</Paragraph>
+                <Paragraph className="italic text-gray-700">"{response.data.aiResponse}"</Paragraph>
                 <div className="border-t border-blue-100 pt-3 mt-3">
                   <Text type="secondary" className="text-xs">* Đây là phản hồi tự động. Chuyên gia của chúng tôi sẽ liên hệ trực tiếp trong 24h.</Text>
                 </div>
@@ -44,14 +44,11 @@ const ConsultationSection = () => {
             width: 600,
             okText: 'Tôi đã hiểu',
           })
-        } else {
-          message.success(response.data.message || 'Đăng ký thành công! Chúng tôi sẽ liên hệ với bạn trong 24h.')
         }
         form.resetFields()
       }
     } catch (error) {
       console.error('Consultation submit error:', error)
-      message.error(error.response?.data?.message || 'Không thể kết nối đến server. Vui lòng thử lại sau!')
     } finally {
       setLoading(false)
     }

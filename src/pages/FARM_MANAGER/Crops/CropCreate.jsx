@@ -11,6 +11,12 @@ import CropCatalogService from 'src/services/CropCatalogService';
 import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
 import { isActiveCropCatalog } from 'src/utils/cropCatalog';
+import { applyApiFieldErrors } from 'src/services/core/apiError';
+
+const CROP_FIELD_MAPPING = {
+  Name: 'name', name: 'name', CropCatalogId: 'cropCatalogId', cropCatalogId: 'cropCatalogId',
+  Description: 'description', description: 'description', ImageUrl: 'imageUrl', imageUrl: 'imageUrl',
+};
 
 const normalizeCropResponse = (response) => {
   const payload = response?.data ?? response ?? {};
@@ -46,7 +52,7 @@ const CropCreate = () => {
         const items = normalizeCropResponse(response).items;
         return items.filter(isActiveCropCatalog);
       } catch (err) {
-        if (err?.response?.status === 405) {
+        if (!err?.code && err?.status === 405) {
           return [
             { id: '1', name: 'Cây rau', description: 'Các loại rau ăn lá', isActive: true },
             { id: '2', name: 'Cây củ', description: 'Các loại củ quả', isActive: true },
@@ -129,26 +135,16 @@ const CropCreate = () => {
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         imageUrl: values.imageUrl || null,
       };
-      return CropManagementService.createCrop(payload);
+      return CropManagementService.createCrop(payload, {
+        errorHandling: 'form',
+        fieldErrorMapping: CROP_FIELD_MAPPING,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       navigate(ROUTER.FM_CROPS);
     },
-    onError: (error) => {
-      const errorMessage = error?.response?.data?.message || error?.response?.data?.title || error?.message;
-
-      if (errorMessage?.includes('Mã danh mục cây trồng đã tồn tại') || 
-          errorMessage?.toLowerCase().includes('already exists')) {
-        form.setFields([
-          {
-            name: 'name',
-            errors: ['Tên cây trồng đã tồn tại trong hệ thống.'],
-          },
-        ]);
-      }
-      // axios interceptor handles error notification
-    },
+    onError: (error) => applyApiFieldErrors(form, error, CROP_FIELD_MAPPING),
   });
 
   return (

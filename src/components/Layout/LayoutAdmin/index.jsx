@@ -17,6 +17,7 @@ import {
 import { getMenuByRole } from 'src/router/MenuItem'
 import ROUTER from 'src/router/ROUTER'
 import logoImg from 'src/assets/images/logo/logo-eapls.jpg'
+import { logDevDiagnostic } from 'src/utils/safeDiagnostic'
 
 const { Header, Sider, Content } = Layout
 const { Text } = Typography
@@ -42,7 +43,7 @@ const LayoutAdmin = () => {
     try {
       await AuthService.logout()
     } catch (error) {
-      console.error('Logout error:', error)
+      logDevDiagnostic('logout', error)
     } finally {
       logout()
       navigate('/login')

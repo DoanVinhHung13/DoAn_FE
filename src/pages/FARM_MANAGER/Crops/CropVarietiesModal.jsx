@@ -13,7 +13,6 @@ import {
   Tooltip,
   Typography,
   Upload,
-  message,
 } from 'antd';
 import {
   DeleteOutlined,
@@ -40,9 +39,7 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
   const { data, isLoading } = useQuery({
     queryKey: ['crop-varieties', cropId],
     queryFn: async () => {
-      console.log('🔍 Fetching crop varieties for cropId:', cropId);
       const response = await CropVarietyService.getCropVarieties({ cropId });
-      console.log('📦 API Response:', response);
       const payload = response?.data ?? response ?? {};
       const items = Array.isArray(payload?.data)
         ? payload.data
@@ -54,8 +51,6 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
         return item.cropId === cropId || item.cropId === Number(cropId);
       });
       
-      console.log('✅ All items:', items.length);
-      console.log('✅ Filtered items for cropId', cropId, ':', filteredItems.length);
       return filteredItems;
     },
     enabled: !!cropId && open,
@@ -73,20 +68,10 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
       };
       return CropVarietyService.createCropVariety(payload);
     },
-    onSuccess: (response) => {
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crop-varieties', cropId] });
       setIsCreating(false);
       form.resetFields();
-    },
-    onError: (error) => {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) {
-        message.error(errorMsg);
-      }
     },
   });
 
@@ -101,37 +86,17 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
       };
       return CropVarietyService.updateCropVariety(id, payload);
     },
-    onSuccess: (response) => {
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crop-varieties', cropId] });
       setEditingVariety(null);
       form.resetFields();
-    },
-    onError: (error) => {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) {
-        message.error(errorMsg);
-      }
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => CropVarietyService.deleteCropVariety(id),
-    onSuccess: (response) => {
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crop-varieties', cropId] });
-    },
-    onError: (error) => {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) {
-        message.error(errorMsg);
-      }
     },
   });
 
@@ -155,16 +120,8 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
       }
 
       form.setFieldsValue({ imageUrl });
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
       onSuccess(response);
     } catch (error) {
-      const errorMsg = error?.response?.data?.message || error?.message;
-      if (errorMsg) {
-        message.error(errorMsg);
-      }
       onError(error);
     } finally {
       setUploading(false);

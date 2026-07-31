@@ -61,13 +61,13 @@ const getUserById = id => http.get(USER_URLS.detail(id))
  * POST /users — tạo tài khoản nội bộ (Farm Manager only)
  * Body: { fullName, email, password, roles? }
  */
-const createUser = body => http.post(USER_URLS.list, body)
+const createUser = (body, config) => http.post(USER_URLS.list, body, config)
 
 /**
  * PUT /users/:id — cập nhật hồ sơ người dùng khác (Farm Manager)
  * Body: { fullName, phoneNumber?, avatarUrl?, isActive }
  */
-const updateUser = (id, body) => http.put(USER_URLS.byId(id), body)
+const updateUser = (id, body, config) => http.put(USER_URLS.byId(id), body, config)
 
 /** DELETE /users/:id — xóa mềm, thu hồi refresh token (Farm Manager) */
 const deleteUser = id => http.delete(USER_URLS.byId(id))
@@ -86,7 +86,7 @@ const changeUserStatus = (id, body) => http.put(USER_URLS.status(id), body)
 const assignRoles = (id, body) => http.put(USER_URLS.roles(id), body)
 
 /** POST /users/:id/account — cấp mật khẩu và vai trò cho nhân viên đã tồn tại */
-const createAccount = (id, body) => http.post(USER_URLS.createAccount(id), body)
+const createAccount = (id, body, config) => http.post(USER_URLS.createAccount(id), body, config)
 
 /** PUT /users/:id/password — đổi mật khẩu người dùng khác (Farm Manager) */
 const changeUserPassword = (id, body) => http.put(USER_URLS.password(id), body)
@@ -98,7 +98,7 @@ const changeUserPassword = (id, body) => http.put(USER_URLS.password(id), body)
  * Body: { fullName: string (required), phoneNumber?, dateOfBirth?, gender?, address? }
  * Response: UserDto đã cập nhật
  */
-const updateMyProfile = body => http.put(USER_URLS.myProfile, body)
+const updateMyProfile = (body, config) => http.put(USER_URLS.myProfile, body, config)
 
 /**
  * POST /users/me/avatar — upload avatar lên Cloudinary

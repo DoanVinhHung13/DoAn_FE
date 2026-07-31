@@ -19,10 +19,6 @@ const CropProtectionEdit = () => {
       try {
         setInitialLoading(true)
         const res = await PesticideService.getPesticideById(id)
-        if (res?.success === false) {
-          navigate(ROUTER.FM_PESTICIDES)
-          return
-        }
         setEditingItem(res?.data)
       } catch {
         navigate(ROUTER.FM_PESTICIDES)

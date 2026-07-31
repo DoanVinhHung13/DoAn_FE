@@ -95,8 +95,6 @@ const PlanTemplateList = () => {
         ProcessTemplateService.getProcessTemplates(params),
         ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
       ])
-      if (templateResponse?.success === false) return
-
       const stepCountByTemplate = normalizeItems(stepResponse).reduce(
         (counts, step) => {
           const processTemplateId =
@@ -200,8 +198,7 @@ const PlanTemplateList = () => {
     if (!deleteModal.item) return
     try {
       setDeleteLoading(true)
-      const res = await ProcessTemplateService.deleteProcessTemplate(deleteModal.item.id)
-      if (res?.success === false) return
+      await ProcessTemplateService.deleteProcessTemplate(deleteModal.item.id)
       setDeleteModal({ open: false, item: null })
       getList()
     } finally {

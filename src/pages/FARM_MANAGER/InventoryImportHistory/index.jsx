@@ -4,7 +4,7 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
-import { Button, Card, DatePicker, Input, Select, Tag, message } from 'antd'
+import { Button, Card, DatePicker, Input, Select, Tag } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import CustomTable from 'src/components/Table/CustomTable'
@@ -135,15 +135,12 @@ const InventoryImportHistory = () => {
         ToDate: dateRange[1]?.format('YYYY-MM-DD'),
       }
       const res = await InventoryService.getImportHistory(params)
-      if (res?.success === false) return
-
       const data = res?.data ?? res
       const items = asArray(data)
       setRows(items)
       setTotal(getTotal(data, items))
     } catch (error) {
       console.error(error)
-      message.error('Không thể tải lịch sử nhập vật tư.')
       setRows([])
       setTotal(0)
     } finally {

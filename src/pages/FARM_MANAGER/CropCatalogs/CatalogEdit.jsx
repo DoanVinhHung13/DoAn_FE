@@ -17,9 +17,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
 import CropCatalogService from 'src/services/CropCatalogService';
+import { applyApiFieldErrors, isNotFoundError } from 'src/services/core/apiError';
 import ROUTER from 'src/router/ROUTER';
 
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin danh mục cây trồng.';
+const CROP_CATALOG_FIELD_MAPPING = {
+  Name: 'name', name: 'name', Description: 'description', description: 'description',
+};
 
 const CatalogEdit = () => {
   const navigate = useNavigate();
@@ -35,7 +39,7 @@ const CatalogEdit = () => {
   } = useQuery({
     queryKey: ['crop-catalog-detail', id],
     queryFn: async () => {
-      const response = await CropCatalogService.getCropCatalogById(id);
+      const response = await CropCatalogService.getCropCatalogById(id, { errorHandling: 'component' });
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
     },
@@ -59,7 +63,10 @@ const CatalogEdit = () => {
         description: values.description?.trim().replace(/\s+/g, ' ') || null,
         isActive: typeof catalogDetail?.isActive === 'boolean' ? catalogDetail.isActive : true,
       };
-      return CropCatalogService.updateCropCatalog(id, payload);
+      return CropCatalogService.updateCropCatalog(id, payload, {
+        errorHandling: 'form',
+        fieldErrorMapping: CROP_CATALOG_FIELD_MAPPING,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
@@ -69,11 +76,11 @@ const CatalogEdit = () => {
       navigate(ROUTER.FM_CROP_CATALOGS);
     },
     onError: (error) => {
-      if (error?.response?.status === 404) {
+      if (isNotFoundError(error)) {
         navigate(ROUTER.FM_CROP_CATALOGS);
         return;
       }
-      // axios interceptor handles error notification
+      applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING);
     },
   });
 

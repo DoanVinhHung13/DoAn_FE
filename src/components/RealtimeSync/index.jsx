@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useSelector } from 'react-redux'
 import STORAGE, { getStorage } from 'src/redux/storage'
 import signalRService from 'src/components/SocketWrapper'
+import { logDevDiagnostic } from 'src/utils/safeDiagnostic'
 
 const INVALIDATION_DELAY_MS = 150
 const RECONNECT_DELAY_MS = [0, 2000, 5000, 10000, 30000]
@@ -102,7 +103,7 @@ const RealtimeSync = () => {
         refreshGroupsNow()
         invalidateActiveQueries()
       } catch (error) {
-        if (import.meta.env.DEV) console.warn('[RealtimeSync] connection failed', error)
+        logDevDiagnostic('realtime-connect', error)
         scheduleConnect()
       }
     }

@@ -76,7 +76,6 @@ const ViewCropProtections = () => {
         Status: statusFilter === 'all' ? undefined : statusFilter,
       }
       const res = await PesticideService.getPesticides(params)
-      if (res?.success === false) return
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || res?.data?.items?.length || 0)
     } finally {
@@ -127,10 +126,9 @@ const ViewCropProtections = () => {
     const { item } = statusModal
     try {
       setStatusLoading(true)
-      const res = await PesticideService.togglePesticideStatus(item.id, {
+      await PesticideService.togglePesticideStatus(item.id, {
         isActive: !item.isActive,
       })
-      if (res?.success === false) return
       setStatusModal({ open: false, item: null })
       getList()
     } finally {

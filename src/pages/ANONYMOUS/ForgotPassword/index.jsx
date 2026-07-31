@@ -44,10 +44,9 @@ const ForgotPassword = () => {
   const handleSendOtp = async values => {
     try {
       setLoading(true)
-      const res = await AuthService.forgotPassword({
+      await AuthService.forgotPassword({
         identifier: values.identifier.trim(),
       })
-      if (res?.success === false) return
       setIdentifier(values.identifier.trim())
       setOtp("")
       setCountdown(OTP_EXPIRE_SECONDS)
@@ -63,8 +62,7 @@ const ForgotPassword = () => {
     if (countdown > 0) return
     try {
       setLoading(true)
-      const res = await AuthService.forgotPassword({ identifier })
-      if (res?.success === false) return
+      await AuthService.forgotPassword({ identifier })
       setOtp("")
       setCountdown(OTP_EXPIRE_SECONDS)
     } catch {
@@ -78,8 +76,7 @@ const ForgotPassword = () => {
     if (!otp || otp.length !== OTP_LENGTH) return
     try {
       setLoading(true)
-      const res = await AuthService.verifyOTP({ identifier, otp })
-      if (res?.success === false) return
+      await AuthService.verifyOTP({ identifier, otp })
       setCurrentStep(STEPS.PASSWORD)
     } catch {
       setLoading(false)
@@ -91,13 +88,12 @@ const ForgotPassword = () => {
   const handleResetPassword = async values => {
     try {
       setLoading(true)
-      const res = await AuthService.resetPassword({
+      await AuthService.resetPassword({
         identifier,
         otp,
         newPassword: values.newPassword,
         confirmNewPassword: values.confirmNewPassword,
       })
-      if (res?.success === false) return
       setCurrentStep(STEPS.SUCCESS)
     } catch {
       setLoading(false)

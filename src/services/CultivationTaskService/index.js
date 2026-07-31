@@ -72,12 +72,12 @@ const submitSummary = (id, body) =>
   http.post(apiSubmitTaskSummary(id), body)
 
 // Farm Leader: left tree panel - logbook list with task counts
-const getMyLogbookSummaries = (params) =>
-  http.get(apiGetMyLogbookSummaries, { params, skipNotice: true })
+const getMyLogbookSummaries = (params, config = {}) =>
+  http.get(apiGetMyLogbookSummaries, { ...config, params })
 
 // Farm Leader: right panel - logbook detail + tasks (optional stageId, statuses)
-const getLogbookById = (logbookId, params) =>
-  http.get(apiGetLogbookById(logbookId), { params, skipNotice: true })
+const getLogbookById = (logbookId, params, config = {}) =>
+  http.get(apiGetLogbookById(logbookId), { ...config, params })
 
 const CultivationTaskService = {
   getAll,

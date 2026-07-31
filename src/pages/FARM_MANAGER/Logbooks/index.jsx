@@ -59,8 +59,7 @@ const FarmManagerLogbooks = () => {
         const data = unwrap(res)
         const items = Array.isArray(data) ? data : data?.items || []
         if (mounted) setLogbooks(items)
-      } catch (err) {
-        console.error(err)
+      } catch {
         if (mounted) {
           setLogbooks([])
           // axios interceptor handles error notification

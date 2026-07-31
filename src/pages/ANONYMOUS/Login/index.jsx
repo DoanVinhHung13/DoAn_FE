@@ -18,6 +18,7 @@ import { getDashboardPathByRole } from "src/router/roleRedirects"
 import logo from "src/assets/images/logo/logo-eapls.jpg"
 import AuthService from "../../../services/AuthService"
 import { LOGIN_IDENTIFIER_RULES, PASSWORD_RULES } from "src/utils/helpers"
+import { logDevDiagnostic } from "src/utils/safeDiagnostic"
 
 
 const Login = () => {
@@ -48,14 +49,6 @@ const Login = () => {
         password: values.password,
       })
 
-      if (!loginRes?.success) {
-        throw new Error(
-          loginRes?.message ||
-          loginRes?.errors?.[0] ||
-          "Đăng nhập thất bại."
-        )
-      }
-
       if (values.remember) {
         localStorage.setItem(STORAGE.REMEMBERED_IDENTIFIER, values.identifier.trim())
       } else {
@@ -68,14 +61,6 @@ const Login = () => {
       }
 
       const meRes = await AuthService.getProfile()
-      if (!meRes?.success) {
-        throw new Error(
-          meRes?.message ||
-          meRes?.errors?.[0] ||
-          "Không thể lấy thông tin tài khoản sau khi đăng nhập."
-        )
-      }
-
       const meData = meRes.data
       const finalId =
         meData?.id || meData?.userId || loginData?.userId || loginData?.id
@@ -104,7 +89,7 @@ const Login = () => {
       dispatch(setUserInfo(userData))
       navigate(getDashboardPathByRole(userRole))
     } catch (error) {
-      console.error(error)
+      logDevDiagnostic('login', error)
       // Lỗi API: axios đã hiện notice — không toast trùng
     } finally {
       setLoading(false)

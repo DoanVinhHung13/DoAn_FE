@@ -58,7 +58,6 @@ const TasksManagement = () => {
         CropId: cropId || undefined,
       }
       const res = await TaskCatalogService.getTaskCatalogs(params)
-      if (res?.success === false) return
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
     } finally {
@@ -123,10 +122,7 @@ const TasksManagement = () => {
 
   const handleDelete = async (record) => {
     try {
-      const res = await TaskCatalogService.deleteTaskCatalog(record.id)
-      if (res?.success === false) {
-        return
-      }
+      await TaskCatalogService.deleteTaskCatalog(record.id)
       getList()
     } catch (error) {
       console.error(error)

@@ -77,7 +77,7 @@ const CropDetail = () => {
   } = useQuery({
     queryKey: ['crop-detail', id],
     queryFn: async () => {
-      const response = await CropManagementService.getCropById(id);
+      const response = await CropManagementService.getCropById(id, { errorHandling: 'component' });
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
     },

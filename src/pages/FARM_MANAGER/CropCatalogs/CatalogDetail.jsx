@@ -52,7 +52,7 @@ const CatalogDetail = () => {
   } = useQuery({
     queryKey: ['crop-catalog-detail', id],
     queryFn: async () => {
-      const response = await CropCatalogService.getCropCatalogById(id);
+      const response = await CropCatalogService.getCropCatalogById(id, { errorHandling: 'component' });
       const payload = response?.data ?? {};
       return payload?.data ?? payload;
     },

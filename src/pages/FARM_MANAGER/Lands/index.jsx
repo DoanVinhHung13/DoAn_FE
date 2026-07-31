@@ -129,11 +129,12 @@ const LandsManagement = () => {
 
     setStatusLoading(true)
     try {
-      const res = activate
-        ? await LandPlotService.activateLandPlot(id)
-        : await LandPlotService.deactivateLandPlot(id)
+      if (activate) {
+        await LandPlotService.activateLandPlot(id)
+      } else {
+        await LandPlotService.deactivateLandPlot(id)
+      }
 
-      if (res?.success === false) return
       setStatusTarget(null)
       fetchLandPlots() // tải lại danh sách sau khi đổi trạng thái
     } catch {

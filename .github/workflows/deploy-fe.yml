@@ -44,7 +44,6 @@ jobs:
           cat > .env.production <<'EOF'
           VITE_API_URL=https://api.eapls.io.vn
           VITE_API_ROOT=https://api.eapls.io.vn/api
-          VITE_REACT_APP_API_ROOT=https://api.eapls.io.vn/api
           VITE_GOOGLE_CLIENT_ID=147676468818-86oa6l06us45c8as6272v1mbc6egenf5.apps.googleusercontent.com
           EOF
 

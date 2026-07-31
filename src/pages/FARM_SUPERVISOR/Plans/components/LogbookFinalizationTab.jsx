@@ -294,8 +294,7 @@ const SummaryCompilePanel = ({
         setLeaderSummary(summaryObj)
 
         setDescription(leaderDesc || summaryObj?.description || "")
-      } catch (err) {
-        console.error(err)
+      } catch {
         if (!cancelled) {
           setLeaderSummary(task)
           setDescription(task?.description || "")
@@ -389,8 +388,7 @@ const SummaryCompilePanel = ({
 
       await saveCompiledDescription(targetStageId, taskId, description.trim())
       onSaved?.()
-    } catch (err) {
-      console.error(err)
+    } catch {
       // axios interceptor handles error notification
     } finally {
       setSaving(false)
@@ -685,8 +683,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
           []
         setStageLogs(Array.isArray(logs) ? logs : [])
       }
-    } catch (err) {
-      console.error(err)
+    } catch {
       // axios interceptor handles error notification
     } finally {
       setSavingEdit(false)
@@ -746,8 +743,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
           summaryData?.logs ||
           []
         setStageLogs(Array.isArray(logs) ? logs : [])
-      } catch (err) {
-        console.error(err)
+      } catch {
         setStageSummary(null)
         setStageLogs([])
       } finally {
@@ -762,8 +758,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
       setSubmitting(true)
       await CultivationStageService.complete(selectedId)
       await loadData?.()
-    } catch (error) {
-      console.error(error)
+    } catch {
       // axios interceptor handles error notification
     } finally {
       setSubmitting(false)
@@ -796,8 +791,8 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
           summaryData?.logs ||
           []
         setStageLogs(Array.isArray(logs) ? logs : [])
-      } catch (err) {
-        console.error(err)
+      } catch {
+        // Stage summary refresh is best-effort.
       }
     }
   }

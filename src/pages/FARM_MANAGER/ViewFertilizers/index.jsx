@@ -110,7 +110,6 @@ const ViewFertilizers = () => {
         Status: statusFilter === 'all' ? undefined : statusFilter,
       }
       const res = await FertilizerService.getFertilizers(params)
-      if (res?.success === false) return
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
     } finally {
@@ -164,10 +163,9 @@ const ViewFertilizers = () => {
     const { item } = statusModal
     try {
       setStatusLoading(true)
-      const res = await FertilizerService.toggleFertilizerStatus(item.id, {
+      await FertilizerService.toggleFertilizerStatus(item.id, {
         isActive: !item.isActive,
       })
-      if (res?.success === false) return
       setStatusModal({ open: false, item: null })
       getList()
     } finally {
