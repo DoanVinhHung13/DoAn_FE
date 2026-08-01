@@ -41,6 +41,7 @@ import { useLandPlotAccess } from './useLandPlotAccess'
 import LandPlotWeather from './LandPlotWeather'
 import { normalizeWeather } from './landPlotWeatherUtils'
 import LandPlotCultivationStatus from './LandPlotCultivationStatus'
+import { LandManagementIcon } from 'src/assets/icon/menu/MenuIcons'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -221,62 +222,61 @@ const LandsManagement = () => {
     },
     ...(canManage
       ? [
-          {
-            title: 'Hành động',
-            key: 'actions',
-            width: 120,
-            fixed: 'right',
-            align: 'center',
-            render: (_, record) => {
-              const id = getItemId(record)
-              const active = isLandPlotActive(record)
-              const cultivationLocked = isLandPlotCultivationLocked(record)
-              return (
-                <div className="flex items-center justify-center gap-2">
-                  {routes.edit && (
-                    <Tooltip
-                      title={cultivationLocked
-                        ? 'Không thể chỉnh sửa khi vùng trồng đang có nhật ký kế hoạch hoặc đang trồng'
-                        : 'Chỉnh sửa'}
-                    >
-                      <Button
-                        type="text"
-                        disabled={cultivationLocked}
-                        aria-label={cultivationLocked ? 'Không thể chỉnh sửa' : 'Chỉnh sửa'}
-                        icon={<EditOutlined className="text-lg text-green-500" />}
-                        className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          navigate(routes.edit(id))
-                        }}
-                      />
-                    </Tooltip>
-                  )}
-                  <Tooltip title={active ? 'Vô hiệu hóa' : 'Kích hoạt'}>
+        {
+          title: 'Hành động',
+          key: 'actions',
+          width: 120,
+          fixed: 'right',
+          align: 'center',
+          render: (_, record) => {
+            const id = getItemId(record)
+            const active = isLandPlotActive(record)
+            const cultivationLocked = isLandPlotCultivationLocked(record)
+            return (
+              <div className="flex items-center justify-center gap-2">
+                {routes.edit && (
+                  <Tooltip
+                    title={cultivationLocked
+                      ? 'Không thể chỉnh sửa khi vùng trồng đang có nhật ký kế hoạch hoặc đang trồng'
+                      : 'Chỉnh sửa'}
+                  >
                     <Button
                       type="text"
-                      aria-label={active ? 'Vô hiệu hóa' : 'Kích hoạt'}
-                      icon={
-                        active ? (
-                          <StopOutlined className="text-lg text-red-500" />
-                        ) : (
-                          <CheckCircleOutlined className="text-lg text-green-500" />
-                        )
-                      }
-                      className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                        active ? 'hover:bg-red-50' : 'hover:bg-green-50'
-                      }`}
+                      disabled={cultivationLocked}
+                      aria-label={cultivationLocked ? 'Không thể chỉnh sửa' : 'Chỉnh sửa'}
+                      icon={<EditOutlined className="text-lg text-green-500" />}
+                      className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
                       onClick={(e) => {
                         e.stopPropagation()
-                        setStatusTarget(record)
+                        navigate(routes.edit(id))
                       }}
                     />
                   </Tooltip>
-                </div>
-              )
-            },
+                )}
+                <Tooltip title={active ? 'Vô hiệu hóa' : 'Kích hoạt'}>
+                  <Button
+                    type="text"
+                    aria-label={active ? 'Vô hiệu hóa' : 'Kích hoạt'}
+                    icon={
+                      active ? (
+                        <StopOutlined className="text-lg text-red-500" />
+                      ) : (
+                        <CheckCircleOutlined className="text-lg text-green-500" />
+                      )
+                    }
+                    className={`flex items-center justify-center w-8 h-8 rounded-lg ${active ? 'hover:bg-red-50' : 'hover:bg-green-50'
+                      }`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setStatusTarget(record)
+                    }}
+                  />
+                </Tooltip>
+              </div>
+            )
           },
-        ]
+        },
+      ]
       : []),
   ]
 
@@ -286,8 +286,8 @@ const LandsManagement = () => {
 
       {/* Tiêu đề trang + nút tạo mới */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <TitleCustom className="!mb-0 flex items-center gap-2">
-          <MapPinned className="text-green-600" />
+        <TitleCustom className="!mb-0 flex items-center gap-2" >
+          <LandManagementIcon style={{ fontSize: '24px', color: '#15803d' }} />
           Quản lý vùng trồng
         </TitleCustom>
 

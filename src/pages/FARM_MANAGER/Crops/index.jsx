@@ -15,12 +15,12 @@ import {
 } from 'antd';
 import {
   CheckCircleOutlined,
-  ExperimentOutlined,
   EditOutlined,
   EyeOutlined,
   SearchOutlined,
   StopOutlined,
 } from '@ant-design/icons';
+import { CropIcon } from 'src/assets/icon/menu/MenuIcons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
@@ -379,7 +379,7 @@ const Crops = () => {
     <div className="admin-compact-list crops-screen space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <ExperimentOutlined />
+          <CropIcon style={{ fontSize: '24px', color: '#15803d' }} />
           Cây trồng
         </TitleCustom>
         <Button

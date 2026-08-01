@@ -28,6 +28,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
+import { PlanLogbookIcon } from 'src/assets/icon/menu/MenuIcons'
 import { formatDate } from 'src/utils/dateFormatters'
 import { getLandPlotsFromLogbook } from 'src/utils/helpers'
 import ROUTER from 'src/router/ROUTER'
@@ -198,7 +199,7 @@ const FarmSupervisorPlanDetail = () => {
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <FileTextOutlined className="text-green-600" />
+            <PlanLogbookIcon style={{ fontSize: '24px', color: '#15803d' }} />
             Chi tiết Kế hoạch
           </TitleCustom>
         </div>

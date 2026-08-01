@@ -26,6 +26,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
+import { ApprovalLogbookIcon } from 'src/assets/icon/menu/MenuIcons'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { canApproveClosing } from 'src/utils/cultivationStatus'
@@ -82,7 +83,7 @@ const FarmManagerLogbooks = () => {
     <div className="admin-compact-list space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <FileTextOutlined className="text-green-600" />
+          <ApprovalLogbookIcon style={{ fontSize: '24px', color: '#15803d' }} />
           Duyệt nhật ký canh tác
         </TitleCustom>
         <Text type="secondary" className="text-xs">

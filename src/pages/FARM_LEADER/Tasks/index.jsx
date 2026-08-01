@@ -41,6 +41,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 import TitleCustom from "src/components/TitleCustom"
+import { MyTaskIcon } from 'src/assets/icon/menu/MenuIcons'
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import ROUTER from "src/router/ROUTER"
 import CultivationTaskService from "src/services/CultivationTaskService"
@@ -484,7 +485,7 @@ const FarmLeaderTasks = () => {
       <div className="flex flex-col justify-between gap-4 p-5 bg-white border shadow-xs lg:flex-row lg:items-center rounded-2xl border-slate-200/80">
         <div>
           <TitleCustom className="!mb-1 text-xl md:text-2xl flex items-center gap-2">
-            <ContainerOutlined className="text-emerald-600" /> Công việc của tôi
+            <MyTaskIcon style={{ fontSize: '24px', color: '#15803d' }} /> Công việc của tôi
           </TitleCustom>
         </div>
 

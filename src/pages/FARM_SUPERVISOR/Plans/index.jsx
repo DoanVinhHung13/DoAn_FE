@@ -28,6 +28,7 @@ import { useNavigate } from 'react-router-dom'
 import CustomTable from 'src/components/Table/CustomTable'
 import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
+import { PlanLogbookIcon } from 'src/assets/icon/menu/MenuIcons'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
@@ -143,7 +144,7 @@ const FarmSupervisorPlans = () => {
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <TitleCustom className="!mb-0 flex items-center gap-2">
-        <FileTextOutlined className="text-green-600" />
+        <PlanLogbookIcon style={{ fontSize: '24px', color: '#15803d' }} />
         Kế hoạch canh tác được giao
       </TitleCustom>
 

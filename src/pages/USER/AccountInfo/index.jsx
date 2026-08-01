@@ -189,7 +189,7 @@ const AccountInfo = () => {
   return (
     <div className="mx-auto max-w-[1180px] space-y-6">
       <TitleCustom className="!mb-0 flex items-center gap-2">
-        <UserOutlined className="text-green-600" />
+        <UserOutlined style={{ fontSize: '24px', color: '#15803d' }} />
         Thông tin cá nhân
       </TitleCustom>
 

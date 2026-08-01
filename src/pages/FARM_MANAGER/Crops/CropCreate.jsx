@@ -6,6 +6,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Sprout } from 'lucide-react';
 
 import TitleCustom from 'src/components/TitleCustom';
+import { CropIcon } from 'src/assets/icon/menu/MenuIcons';
 import CropManagementService from 'src/services/CropManagementService';
 import CropCatalogService from 'src/services/CropCatalogService';
 import UploadService from 'src/services/UploadService';
@@ -159,7 +160,7 @@ const CropCreate = () => {
           Quay lại
         </Button>
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <Sprout className="h-6 w-6" />
+          <CropIcon style={{ fontSize: '24px', color: '#15803d' }} />
           Thêm cây trồng
         </TitleCustom>
       </div>

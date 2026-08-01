@@ -20,10 +20,10 @@ import {
   CheckCircleOutlined,
   EditOutlined,
   EyeOutlined,
-  FileTextOutlined,
   SearchOutlined,
   StopOutlined,
 } from '@ant-design/icons';
+import { CropCatalogIcon } from 'src/assets/icon/menu/MenuIcons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
@@ -366,12 +366,12 @@ const CropCatalogs = () => {
     <div className="admin-compact-list space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <FileTextOutlined className="h-6 w-6" />
+          <CropCatalogIcon style={{ fontSize: '24px', color: '#15803d' }} />
           Danh mục cây trồng
         </TitleCustom>
         <Button
           type="primary"
-          icon={<FileTextOutlined />}
+          icon={<CropCatalogIcon style={{ fontSize: '16px' }} />}
           onClick={() => navigate(ROUTER.FM_CROP_CATALOG_CREATE)}
           className="h-10 bg-green-600 px-5 font-medium hover:bg-green-700"
         >

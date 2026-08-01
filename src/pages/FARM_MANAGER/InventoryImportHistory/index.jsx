@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
+import { ImportHistoryIcon } from 'src/assets/icon/menu/MenuIcons'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
@@ -224,7 +225,7 @@ const InventoryImportHistory = () => {
     <div className="admin-compact-list space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2" role="heading" aria-level={1}>
-          <InboxOutlined aria-hidden="true" className="text-green-600" />
+          <ImportHistoryIcon aria-hidden="true" style={{ fontSize: '24px', color: '#15803d' }} />
           Lịch sử nhập vật tư
         </TitleCustom>
         <div className="flex items-center gap-2 text-sm text-gray-500">

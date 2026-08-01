@@ -46,6 +46,7 @@ import ROUTER from 'src/router/ROUTER'
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
+import { FertilizerIcon } from 'src/assets/icon/menu/MenuIcons'
 import InventoryImportModal from 'src/components/Inventory/InventoryImportModal'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
@@ -352,7 +353,7 @@ const ViewFertilizers = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <ExperimentOutlined className="text-green-600" />
+            <FertilizerIcon style={{ fontSize: '24px', color: '#15803d' }} />
             Quản lý phân bón
           </TitleCustom>
         </div>

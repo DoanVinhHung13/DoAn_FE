@@ -25,6 +25,7 @@ import {
 } from '@ant-design/icons'
 
 import TitleCustom from 'src/components/TitleCustom'
+import { ReportIcon } from 'src/assets/icon/menu/MenuIcons'
 import { formatAreaUnit } from 'src/constants/measurementUnits'
 import { useCropOptions } from 'src/hooks/useCropOptions'
 import ReportService from 'src/services/ReportService'
@@ -296,7 +297,7 @@ const ReportStatistics = () => {
       <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
           <TitleCustom className="!mb-1 flex items-center gap-2">
-            <BarChartOutlined className="text-green-600" />
+            <ReportIcon style={{ fontSize: '24px', color: '#15803d' }} />
             Báo cáo thống kê
           </TitleCustom>
           <Text className="text-gray-500">Theo dõi nhanh sản lượng, diện tích và vật tư của hoạt động canh tác.</Text>

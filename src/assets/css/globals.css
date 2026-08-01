@@ -154,15 +154,22 @@ a,
   padding-inline: 12px !important;
 }
 
+.admin-navigation .ant-menu-item,
+.admin-navigation .ant-menu-submenu-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
 .admin-navigation .ant-menu-item-icon,
 .admin-navigation .ant-menu-submenu-title .ant-menu-item-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  min-width: 18px;
-  margin-inline-end: 12px !important;
-  font-size: 18px;
+  width: 20px;
+  min-width: 20px;
+  margin-inline-end: 0 !important;
+  font-size: 20px;
 }
 
 .admin-navigation .ant-menu-item-icon svg,

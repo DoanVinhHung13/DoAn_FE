@@ -4,6 +4,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
 import TitleCustom from 'src/components/TitleCustom'
+import { PesticideIcon } from 'src/assets/icon/menu/MenuIcons'
 
 import CropProtectionFormFields from './CropProtectionFormFields'
 
@@ -18,7 +19,7 @@ const CropProtectionCreate = () => {
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <BugOutlined className="text-emerald-600" />
+            <PesticideIcon style={{ fontSize: '24px', color: '#15803d' }} />
             Thêm mới nông dược
           </TitleCustom>
         </div>

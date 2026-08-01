@@ -3,6 +3,7 @@ import { Button, Card, Skeleton } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
+import { PesticideIcon } from 'src/assets/icon/menu/MenuIcons'
 import ROUTER from 'src/router/ROUTER'
 import PesticideService from 'src/services/PesticideService'
 
@@ -37,7 +38,7 @@ const CropProtectionEdit = () => {
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <BugOutlined className="text-emerald-600" />
+            <PesticideIcon style={{ fontSize: '24px', color: '#15803d' }} />
             Chỉnh sửa nông dược
           </TitleCustom>
         </div>

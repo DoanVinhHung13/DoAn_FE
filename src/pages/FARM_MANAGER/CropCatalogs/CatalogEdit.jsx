@@ -16,6 +16,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import TitleCustom from 'src/components/TitleCustom';
+import { CropCatalogIcon } from 'src/assets/icon/menu/MenuIcons';
 import CropCatalogService from 'src/services/CropCatalogService';
 import { applyApiFieldErrors, isNotFoundError } from 'src/services/core/apiError';
 import ROUTER from 'src/router/ROUTER';
@@ -151,7 +152,7 @@ const CatalogEdit = () => {
           Quay lại
         </Button>
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <FileTextOutlined className="h-6 w-6" />
+          <CropCatalogIcon style={{ fontSize: '24px', color: '#15803d' }} />
           Chỉnh sửa danh mục cây trồng
         </TitleCustom>
       </div>

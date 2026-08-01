@@ -29,6 +29,7 @@ import { useNavigate } from 'react-router-dom'
 
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
+import { LogbookIcon } from 'src/assets/icon/menu/MenuIcons'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
@@ -253,7 +254,7 @@ const CultivationLogbookList = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <CalendarOutlined className="text-green-600" />
+            <LogbookIcon style={{ fontSize: '24px', color: '#15803d' }} />
             Nhật ký canh tác
           </TitleCustom>
         </div>

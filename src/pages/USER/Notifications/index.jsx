@@ -21,6 +21,7 @@ import {
   markAllNotificationsAsRead,
 } from 'src/services/NotificationService';
 import TitleCustom from 'src/components/TitleCustom';
+import { NotificationIcon } from 'src/assets/icon/menu/MenuIcons';
 import ROUTER from 'src/router/ROUTER';
 import {
   getNotificationTypeLabel,
@@ -153,7 +154,7 @@ const Notifications = () => {
     <div className="admin-compact-list space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <BellOutlined className="text-green-600" />
+          <NotificationIcon style={{ fontSize: '24px', color: '#15803d' }} />
           Thông báo
         </TitleCustom>
 

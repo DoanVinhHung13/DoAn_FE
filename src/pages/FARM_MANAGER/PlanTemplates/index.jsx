@@ -32,6 +32,7 @@ import { useNavigate } from 'react-router-dom'
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
+import { TemplateLibraryIcon } from 'src/assets/icon/menu/MenuIcons'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
@@ -317,7 +318,7 @@ const PlanTemplateList = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <ProfileOutlined className="text-green-600" />
+            <TemplateLibraryIcon style={{ fontSize: '24px', color: '#15803d' }} />
             Thư viện mẫu quy trình
           </TitleCustom>
         </div>

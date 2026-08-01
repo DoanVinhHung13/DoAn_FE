@@ -364,9 +364,8 @@ const UsersManagement = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <UserManagementIcon style={{ fontSize: '24px', color: '#16a34a' }} />
+            <UserManagementIcon style={{ fontSize: '24px', color: '#15803d' }} />
             Quản lý người dùng
- 
           </TitleCustom>
         </div>
         {canManageUsers && (
