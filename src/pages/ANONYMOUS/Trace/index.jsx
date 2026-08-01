@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -13,7 +13,6 @@ import {
 } from 'antd';
 import {
   CheckCircleOutlined,
-  SafetyCertificateOutlined,
   EnvironmentOutlined,
   CalendarOutlined,
   ExperimentOutlined,
@@ -244,21 +243,19 @@ const buildTimelineGroups = (traceData) => {
 const Trace = () => {
   const { qrCode } = useParams();
   const [searchParams] = useSearchParams();
+  const recordedScanCodes = useRef(new Set());
 
   // Parse display options from URL query parameters (e.g. ?log=1&mat=1&pic=1&cert=0)
   const displayOptions = useMemo(() => {
     const hasLog = searchParams.get('log');
     const hasMat = searchParams.get('mat');
     const hasPic = searchParams.get('pic');
-    const hasCert = searchParams.get('cert');
 
     return {
       showDailyLog: hasLog !== null ? hasLog === '1' : true,
       showMaterials: hasMat !== null ? hasMat === '1' : true,
       showAutomation: hasMat !== null ? hasMat === '1' : true,
       showPhotos: hasPic !== null ? hasPic === '1' : true,
-      showCertificates: hasCert !== null ? hasCert === '1' : false,
-      showCertificate: hasCert !== null ? hasCert === '1' : false,
     };
   }, [searchParams]);
 
@@ -278,6 +275,19 @@ const Trace = () => {
     retry: false,
   });
 
+  useEffect(() => {
+    const payload = traceability?.data ?? traceability;
+    if (!qrCode || !payload?.isValid || recordedScanCodes.current.has(qrCode)) return;
+
+    recordedScanCodes.current.add(qrCode);
+    void http.post(`/traceability/${encodeURIComponent(qrCode)}/scan`, null, {
+      skipNotice: true,
+      skipAuthRedirect: true,
+    }).catch(() => {
+      recordedScanCodes.current.delete(qrCode);
+    });
+  }, [traceability, qrCode]);
+
   // Construct dynamic trace data
   const traceData = useMemo(() => {
     // The API returns { success, data: { ...traceability } }.
@@ -292,7 +302,6 @@ const Trace = () => {
       dailyLogs: toArray(payload?.dailyLogs ?? source.dailyLogs),
       materials: toArray(payload?.materials ?? source.materials),
       photos: toArray(payload?.photos ?? source.photos),
-      certifications: toArray(payload?.certifications ?? source.certifications),
     };
     const cultivationLogs = toArray(payload?.cultivationLogs ?? source.cultivationLogs);
     const logMaterials = cultivationLogs.flatMap((log) => {
@@ -349,7 +358,6 @@ const Trace = () => {
       area: areaValue != null ? [formatAreaValue(areaValue), areaUnit].filter(Boolean).join(' ') : '—',
       yield: b.quantity != null ? `${b.quantity} ${b.unit || ''}`.trim() : '—',
       dailyLogs: b.dailyLogs,
-      certifications: b.certifications,
 
       displayOptions,
 
@@ -461,16 +469,6 @@ const Trace = () => {
               </Text>
             </div>
 
-            <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 sm:col-span-2">
-              <Text className="text-slate-500 text-xs font-semibold block mb-1.5">Tiêu chuẩn & Chứng nhận</Text>
-              <div className="flex flex-wrap gap-1.5">
-                {traceData.certifications.map((cert) => (
-                  <Tag key={cert} color="green" icon={<SafetyCertificateOutlined />} className="text-xs rounded-md m-0">
-                    {cert}
-                  </Tag>
-                ))}
-              </div>
-            </div>
           </div>
         </Card>
 
@@ -658,40 +656,6 @@ const Trace = () => {
                 ))}
               </Row>
             </Image.PreviewGroup>
-          </Card>
-        )}
-
-        {/* ── 5. Giấy chứng nhận ── */}
-        {(traceData.displayOptions.showCertificates ?? traceData.displayOptions.showCertificate) && (
-          <Card className="trace-card rounded-2xl border border-slate-200/80 shadow-sm">
-            <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-              <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center text-teal-700">
-                <SafetyCertificateOutlined className="text-lg" />
-              </div>
-              <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
-                Giấy chứng nhận & Tiêu chuẩn
-              </Title>
-            </div>
-
-            <div className="flex items-center gap-3 p-3.5 sm:p-4 bg-teal-50/80 rounded-xl border border-teal-200/70 text-xs sm:text-sm">
-              <SafetyCertificateOutlined className="text-2xl sm:text-3xl text-teal-600 flex-shrink-0" />
-              <div>
-                {traceData.certifications.length ? traceData.certifications.map((cert, index) => (
-                  <div key={cert?.id || cert?.code || index}>
-                    <Text strong className="block text-slate-900 font-bold sm:text-base">
-                      {typeof cert === 'string' ? cert : cert?.name || cert?.certificateName || '—'}
-                    </Text>
-                    {(cert?.expiryDate || cert?.issuedBy) && (
-                      <Text className="text-slate-600 text-xs block mt-0.5">
-                        {cert?.expiryDate ? `Hiệu lực đến: ${cert.expiryDate}` : ''}
-                        {cert?.expiryDate && cert?.issuedBy ? ' • ' : ''}
-                        {cert?.issuedBy ? `Cấp bởi ${cert.issuedBy}` : ''}
-                      </Text>
-                    )}
-                  </div>
-                )) : <Text className="text-slate-600 text-xs">Chưa có chứng nhận từ hệ thống.</Text>}
-              </div>
-            </div>
           </Card>
         )}
 

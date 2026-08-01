@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { Button, Avatar, Typography, Tag, Card, Row, Col, Spin, Divider } from 'antd'
 import {
   UserOutlined, CheckCircleOutlined, StopOutlined, ArrowLeftOutlined,
-  MailOutlined, PhoneOutlined, CalendarOutlined,
+  MailOutlined, PhoneOutlined, CalendarOutlined, ClockCircleOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons'
 import { useParams, useNavigate } from 'react-router-dom'
 import UserService from 'src/services/UserService'
-import { formatDate } from 'src/utils/dateFormatters'
+import { formatDate, formatDateTime } from 'src/utils/dateFormatters'
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers'
 import { ROLE_CONFIG } from '../components/roleConfig'
 import TitleCustom from 'src/components/TitleCustom'
@@ -174,13 +174,13 @@ const UserDetail = () => {
                 <div className="text-base font-medium text-gray-800">{formatDate(user.createdAt)}</div>
               </div>
 
-              {/* <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
+              <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <ClockCircleOutlined className="text-gray-400" />
                   <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Đăng nhập lần cuối</Text>
                 </div>
                 <div className="text-base font-medium text-gray-800">{formatDateTime(user.lastLoginAt)}</div>
-              </div> */}
+              </div>
             </div>
           </Card>
         </Col>

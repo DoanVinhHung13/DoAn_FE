@@ -50,9 +50,6 @@ const { Text } = Typography
 
 const FERTILIZER_FIELD_MAPPING = {
   Name: 'name', name: 'name',
-  UsageUnit: 'usageUnit', usageUnit: 'usageUnit',
-  Supplier: 'supplier', supplier: 'supplier',
-  MaterialId: 'materialId', materialId: 'materialId',
   Unit: 'unit', unit: 'unit',
   InventoryQuantity: 'inventoryQuantity', inventoryQuantity: 'inventoryQuantity',
   InventoryUnit: 'inventoryUnit', inventoryUnit: 'inventoryUnit',
@@ -128,10 +125,8 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       const selectedUnit = getQuantityUnit(editingItem.unit, MEASUREMENT_UNITS.KILOGRAM)
       setQuantityUnit(selectedUnit)
       form.setFieldsValue({
-        usageUnit: selectedUnit,
         name: editingItem.name || '',
         manufacturer: editingItem.manufacturer || '',
-        supplier: editingItem.supplier || '',
         minimumStock: editingItem.minimumStock ?? 0,
         inventoryQuantity: editingItem.inventoryQuantity ?? 0,
         inventoryUnit: selectedUnit,
@@ -193,7 +188,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       form.resetFields()
       form.setFieldsValue({
         unit: MEASUREMENT_UNITS.KILOGRAM,
-        usageUnit: MEASUREMENT_UNITS.KILOGRAM,
         inventoryUnit: MEASUREMENT_UNITS.KILOGRAM,
       })
       setComponents(NPK_OPTION)
@@ -271,12 +265,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
       const body = {
         name: values.name?.trim(),
-        usageUnit: values.usageUnit,
-        supplier: values.supplier?.trim() || '',
-        materialId: isEdit ? (editingItem.materialId || null) : null,
         unit: values.unit,
-        inventoryQuantity: values.inventoryQuantity ?? 0,
-        inventoryUnit: values.inventoryUnit || values.unit || '',
         description: values.description?.trim() || '',
         minimumStock: values.minimumStock ?? 0,
         type: values.type ?? '',
@@ -441,20 +430,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           </Form.Item>
         </Col>
 
-        {/* Nhà Cung Cấp */}
-        <Col xs={24} md={12}>
-          <Form.Item
-            name="supplier"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Nhà Cung Cấp
-              </span>
-            }
-          >
-            <Input placeholder="Nhà Cung Cấp" className="h-10 rounded-lg" />
-          </Form.Item>
-        </Col>
-
         {/* Tồn Kho tối thiểu */}
         <Col xs={24} sm={6}>
           <Form.Item
@@ -502,8 +477,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 options={UNIT_OPTIONS}
                 onChange={(value) => {
                   setQuantityUnit(value)
-                  form.setFieldValue('usageUnit', value)
-                  form.setFieldValue('inventoryUnit', value)
                   setDosages(current => current.map(d => ({
                     ...d,
                     unit: value,
@@ -534,20 +507,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             />
           </Form.Item>
         </Col>
-
-        {/* UsageUnit luôn đồng nhất với Unit, không cho chọn riêng */}
-        <Col xs={24} sm={8}>
-          <Form.Item name="usageUnit" hidden><Input /></Form.Item>
-          <Form.Item label="Đơn vị sử dụng">
-            <Text className="inline-flex h-10 items-center rounded-lg bg-gray-50 px-3 font-semibold text-gray-700">
-              {quantityUnit}
-            </Text>
-          </Form.Item>
-        </Col>
-
-
-
-
 
         {/* Mô Tả */}
         <Col xs={24}>

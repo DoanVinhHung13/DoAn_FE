@@ -72,10 +72,10 @@ const FarmManagerViewFertilizers = React.lazy(() => import('../pages/FARM_MANAGE
 const FarmManagerFertilizerCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers/FertilizerCreate'))
 const FarmManagerFertilizerDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers/FertilizerDetail'))
 const FarmManagerFertilizerEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewFertilizers/FertilizerEdit'))
-const FarmManagerViewCropProtections = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections'))
-const FarmManagerCropProtectionCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionCreate'))
-const FarmManagerCropProtectionDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionDetail'))
-const FarmManagerCropProtectionEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewCropProtections/CropProtectionEdit'))
+const FarmManagerViewPesticides = React.lazy(() => import('../pages/FARM_MANAGER/ViewPesticides'))
+const FarmManagerPesticideCreate = React.lazy(() => import('../pages/FARM_MANAGER/ViewPesticides/PesticideCreate'))
+const FarmManagerPesticideDetail = React.lazy(() => import('../pages/FARM_MANAGER/ViewPesticides/PesticideDetail'))
+const FarmManagerPesticideEdit = React.lazy(() => import('../pages/FARM_MANAGER/ViewPesticides/PesticideEdit'))
 const FarmManagerInventoryImportHistory = React.lazy(() => import('../pages/FARM_MANAGER/InventoryImportHistory'))
 const FarmManagerReferenceFertilizers = React.lazy(() => import('../pages/FARM_MANAGER/Reference/FertilizerList'))
 const FarmManagerReferencePesticides = React.lazy(() => import('../pages/FARM_MANAGER/Reference/PesticideList'))
@@ -214,11 +214,11 @@ const routes = [
               { path: ROUTER.FM_FERTILIZER_DETAIL, element: <Lazy><FarmManagerFertilizerDetail /></Lazy> },
               { path: ROUTER.FM_FERTILIZER_EDIT, element: <Lazy><FarmManagerFertilizerEdit /></Lazy> },
 
-              // Crop Protection Management
-              { path: ROUTER.FM_PESTICIDES, element: <Lazy><FarmManagerViewCropProtections /></Lazy> },
-              { path: ROUTER.FM_PESTICIDE_CREATE, element: <Lazy><FarmManagerCropProtectionCreate /></Lazy> },
-              { path: ROUTER.FM_PESTICIDE_DETAIL, element: <Lazy><FarmManagerCropProtectionDetail /></Lazy> },
-              { path: ROUTER.FM_PESTICIDE_EDIT, element: <Lazy><FarmManagerCropProtectionEdit /></Lazy> },
+              // Pesticide Management
+              { path: ROUTER.FM_PESTICIDES, element: <Lazy><FarmManagerViewPesticides /></Lazy> },
+              { path: ROUTER.FM_PESTICIDE_CREATE, element: <Lazy><FarmManagerPesticideCreate /></Lazy> },
+              { path: ROUTER.FM_PESTICIDE_DETAIL, element: <Lazy><FarmManagerPesticideDetail /></Lazy> },
+              { path: ROUTER.FM_PESTICIDE_EDIT, element: <Lazy><FarmManagerPesticideEdit /></Lazy> },
               { path: ROUTER.FM_INVENTORY_IMPORT_HISTORY, element: <Lazy><FarmManagerInventoryImportHistory /></Lazy> },
 
               // Reference Management

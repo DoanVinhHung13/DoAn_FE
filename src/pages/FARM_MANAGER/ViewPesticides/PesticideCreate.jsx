@@ -6,9 +6,9 @@ import ROUTER from 'src/router/ROUTER'
 import TitleCustom from 'src/components/TitleCustom'
 import { PesticideIcon } from 'src/assets/icon/menu/MenuIcons'
 
-import CropProtectionFormFields from './CropProtectionFormFields'
+import PesticideFormFields from './PesticideFormFields'
 
-const CropProtectionCreate = () => {
+const PesticideCreate = () => {
   const navigate = useNavigate()
 
   return (
@@ -29,10 +29,10 @@ const CropProtectionCreate = () => {
         className="shadow-sm rounded-2xl"
         bodyStyle={{ padding: '24px' }}
       >
-        <CropProtectionFormFields isEdit={false} />
+        <PesticideFormFields isEdit={false} />
       </Card>
     </div>
   )
 }
 
-export default CropProtectionCreate
+export default PesticideCreate

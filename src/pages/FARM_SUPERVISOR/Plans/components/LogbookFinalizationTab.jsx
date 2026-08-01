@@ -874,15 +874,6 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                     {selectedStage.stageName}
                   </Title>
                 </div>
-                {stageSummary?.reviewStatus && (
-                  <Tag
-                    color={getReviewStatus(stageSummary.reviewStatus).color}
-                    className="rounded-full px-3 py-0.5 text-xs font-semibold"
-                  >
-                    Trạng thái:{" "}
-                    {getReviewStatus(stageSummary.reviewStatus).label}
-                  </Tag>
-                )}
               </div>
 
               <Card

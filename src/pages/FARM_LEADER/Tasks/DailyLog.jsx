@@ -85,8 +85,7 @@ const unwrap = res => res?.data?.data ?? res?.data ?? res
 
 const getMaterialUnit = item =>
   getQuantityUnit(
-    item?.usageUnit ||
-      item?.unit ||
+    item?.unit ||
       item?.quantityUnit ||
       item?.unitName ||
       item?.materialUnit,
@@ -103,7 +102,6 @@ const toFiniteNumber = value => {
   return Number.isFinite(number) ? number : null
 }
 
-// usageUnit takes priority for both fertilizers and pesticides
 const toFertilizerOptions = list =>
   (list || []).map(item => {
     const unit = getMaterialUnit(item)
@@ -117,10 +115,8 @@ const toFertilizerOptions = list =>
     }
   })
 
-// usageUnit takes priority for pesticides
 const toPesticideOptions = list =>
   (list || []).map(item => {
-    // API returns: unit (kho) and usageUnit (su dung) - use usageUnit
     const unit = getMaterialUnit(item)
     return {
       value: item.id,
@@ -128,7 +124,6 @@ const toPesticideOptions = list =>
       materialId: item.materialId || item.id,
       name: item.name,
       unit: unit,
-      usageUnit: item.usageUnit,
       raw: item,
     }
   })

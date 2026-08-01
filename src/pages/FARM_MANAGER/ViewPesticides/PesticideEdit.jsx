@@ -7,9 +7,9 @@ import { PesticideIcon } from 'src/assets/icon/menu/MenuIcons'
 import ROUTER from 'src/router/ROUTER'
 import PesticideService from 'src/services/PesticideService'
 
-import CropProtectionFormFields from './CropProtectionFormFields'
+import PesticideFormFields from './PesticideFormFields'
 
-const CropProtectionEdit = () => {
+const PesticideEdit = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [initialLoading, setInitialLoading] = useState(true)
@@ -51,11 +51,11 @@ const CropProtectionEdit = () => {
         {initialLoading ? (
           <Skeleton active paragraph={{ rows: 6 }} />
         ) : (
-          <CropProtectionFormFields isEdit={true} editingItem={editingItem} />
+          <PesticideFormFields isEdit={true} editingItem={editingItem} />
         )}
       </Card>
     </div>
   )
 }
 
-export default CropProtectionEdit
+export default PesticideEdit

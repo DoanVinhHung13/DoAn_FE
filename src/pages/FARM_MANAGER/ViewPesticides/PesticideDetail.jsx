@@ -26,15 +26,16 @@ const usageColumns = [
     render: (v, record) => <Text strong>{v || record.target || '—'}</Text>,
   },
   {
-    title: 'Diện tích',
-    dataIndex: 'area',
-    key: 'area',
+    title: 'Đơn vị tính / diện tích',
+    key: 'unitPerArea',
     align: 'center',
-    render: (v, record) => {
-      const area = v != null ? v : '';
-      const areaUnit =
-        record.areaUnitId || record.areaUnit || MEASUREMENT_UNITS.SQUARE_METER;
-      return area !== '' ? <Text>{`${area} ${formatAreaUnit(areaUnit)}`}</Text> : <Text>—</Text>;
+    render: (_, record) => {
+      const quantityUnit = getQuantityUnit(
+        record.productUnit || record.unit || record.dosageUnitId || record.dosageUnit,
+        MEASUREMENT_UNITS.LITER,
+      );
+      const areaUnit = record.areaUnitId || record.areaUnit || MEASUREMENT_UNITS.SQUARE_METER;
+      return <Text>{`${quantityUnit}/${formatAreaUnit(areaUnit)}`}</Text>;
     },
   },
   {
@@ -72,10 +73,7 @@ const usageColumns = [
     align: 'center',
     render: (v, record) => {
       const dosage = v != null ? v : '';
-      const dUnit = getQuantityUnit(
-        record.dosageUnitId || record.dosageUnit,
-        MEASUREMENT_UNITS.LITER,
-      );
+      const dUnit = getQuantityUnit(record.productUnit || record.unit || record.dosageUnitId || record.dosageUnit, MEASUREMENT_UNITS.LITER);
       const aVal = record.area != null ? record.area : '';
 
       if (dosage === '' && aVal === '') return <Text>—</Text>;
@@ -101,7 +99,7 @@ const usageColumns = [
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-const CropProtectionDetail = () => {
+const PesticideDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [initialLoading, setInitialLoading] = useState(true)
@@ -228,9 +226,6 @@ const CropProtectionDetail = () => {
               {item.manufacturer || <span className="text-gray-400">—</span>}
             </Descriptions.Item>
 
-            <Descriptions.Item label="Nhà Cung Cấp">
-              {item.supplier || item.supplierId || <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
 
             {/* Tồn kho thực tế */}
             <Descriptions.Item
@@ -309,8 +304,8 @@ const CropProtectionDetail = () => {
           {usages.length > 0 ? (
             <Table
               rowKey={(_, i) => i}
-              dataSource={usages}
-              columns={['targetCrop', 'dosage', 'area', 'quarantineDays']
+              dataSource={usages.map((usage) => ({ ...usage, productUnit: item.unit || usage.productUnit }))}
+              columns={['targetCrop', 'dosage', 'unitPerArea', 'quarantineDays']
                 .map(key => usageColumns.find(column => column.key === key))
                 .filter(Boolean)}
               pagination={false}
@@ -342,4 +337,4 @@ const CropProtectionDetail = () => {
   )
 }
 
-export default CropProtectionDetail
+export default PesticideDetail

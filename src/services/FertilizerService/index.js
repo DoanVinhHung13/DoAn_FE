@@ -11,8 +11,7 @@
  *
  * CreateFertilizerRequest / UpdateFertilizerRequest schema:
  *   { name: string (req), code: string (req), unit: string (req),
- *     supplier?: string, manufacturer?: string, materialId?: uuid,
- *     price?: number, description?: string, minimumStock?: number,
+ *     manufacturer?: string, description?: string, minimumStock?: number,
  *     type?: string,
  *     compositions?: Array<{ name: string, value: string, unit: string }>,
  *     dosages?: Array<{ amount: string, unit: string, areaUnit: string, target: string }> }
@@ -41,14 +40,14 @@ const getFertilizerById = (id) => http.get(apiGetFertilizerById(id))
 
 /**
  * POST /api/fertilizers
- * body: { name, code, unit, supplier?, manufacturer?, materialId?, price?,
+ * body: { name, unit, manufacturer?,
  *         description?, minimumStock?, type?, compositions?, dosages? }
  */
 const createFertilizer = (body, config) => http.post(apiCreateFertilizer, body, config)
 
 /**
  * PUT /api/fertilizers/:id
- * body: { name, code, unit, supplier?, manufacturer?, materialId?, price?,
+ * body: { name, unit, manufacturer?,
  *         description?, minimumStock?, type?, compositions?, dosages? }
  */
 const updateFertilizer = (id, body, config) => http.put(apiUpdateFertilizer(id), body, config)

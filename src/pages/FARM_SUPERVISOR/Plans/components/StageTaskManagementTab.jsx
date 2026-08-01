@@ -596,7 +596,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         {task.description}
                                       </Text>
                                     )}
-                                    {/* Ngày bắt đầu và hạn chót của task */}
+                                    {/* Ngày bắt đầu và hoàn thành của task */}
                                     <div className="flex flex-wrap mt-1 gap-x-3">
                                       {task.startDate && (
                                         <Text
@@ -605,15 +605,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         >
                                           <CalendarOutlined className="mr-1" />
                                           Bắt đầu: {formatDate(task.startDate)}
-                                        </Text>
-                                      )}
-                                      {task.dueDate && (
-                                        <Text
-                                          type="secondary"
-                                          className="text-xs"
-                                        >
-                                          <ClockCircleOutlined className="mr-1" />
-                                          Hạn: {formatDate(task.dueDate)}
                                         </Text>
                                       )}
                                       {task.completedDate && (

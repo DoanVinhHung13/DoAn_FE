@@ -10,9 +10,6 @@ import {
   apiGetCultivationStageSummary,
   apiCreateOfficialLogs,
   apiCompleteCultivationStage,
-  apiSubmitStageReview,
-  apiApproveStageReview,
-  apiRejectStageReview,
 } from './urls'
 
 const getAll = (params) => {
@@ -52,15 +49,6 @@ const createOfficialLogs = (id, body) =>
 const complete = (id) =>
   http.post(apiCompleteCultivationStage(id))
 
-const submitReview = (id, body) =>
-  http.post(apiSubmitStageReview(id), body)
-
-const approveReview = (id, body) =>
-  http.post(apiApproveStageReview(id), body)
-
-const rejectReview = (id, body) =>
-  http.post(apiRejectStageReview(id), body)
-
 const CultivationStageService = {
   getAll,
   getById,
@@ -69,9 +57,6 @@ const CultivationStageService = {
   getSummary,
   createOfficialLogs,
   complete,
-  submitReview,
-  approveReview,
-  rejectReview,
   create,
   update,
   deleteById,

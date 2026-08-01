@@ -11,6 +11,9 @@ import { getOrderedStageLogs } from 'src/utils/cultivationOrdering'
 
 const { Text, Paragraph } = Typography
 
+const formatKnownDateRange = (startDate, endDate) =>
+  [startDate, endDate].filter(Boolean).map(formatDate).join(' — ')
+
 const SectionTitle = ({ children }) => (
   <div className="flex items-center gap-3 mb-5">
     <span className="w-1 h-6 bg-green-500 rounded-full" />
@@ -19,8 +22,12 @@ const SectionTitle = ({ children }) => (
 )
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
-const StageListItem = ({ stage, index, isActive, onClick }) => (
-  <List.Item
+const StageListItem = ({ stage, index, isActive, onClick }) => {
+  const plannedPeriod = formatKnownDateRange(stage.startDate, stage.endDate)
+  const actualPeriod = formatKnownDateRange(stage.actualStartDate, stage.actualEndDate)
+
+  return (
+    <List.Item
     onClick={onClick}
     className="mb-2 cursor-pointer rounded-xl px-4 py-2 transition-colors"
     style={{
@@ -44,18 +51,25 @@ const StageListItem = ({ stage, index, isActive, onClick }) => (
         <Text strong className="block" style={{ color: isActive ? '#15803d' : '#1f2937', whiteSpace: 'normal' }}>
           {stage.stageName || stage.name || `Giai đoạn ${index + 1}`}
         </Text>
-        <div className="flex flex-col gap-0.5">
-          <Text type="secondary" style={{ fontSize: 11 }}>
-            Kế hoạch: {stage.startDate ? formatDate(stage.startDate) : 'Chưa xác định'} — {stage.endDate ? formatDate(stage.endDate) : 'Chưa xác định'}
-          </Text>
-          <Text style={{ fontSize: 11, color: stage.actualStartDate ? '#16a34a' : '#9ca3af' }}>
-            Thực tế: {stage.actualStartDate ? formatDate(stage.actualStartDate) : 'Chưa bắt đầu'} — {stage.actualEndDate ? formatDate(stage.actualEndDate) : 'Đang thực hiện'}
-          </Text>
-        </div>
+        {(plannedPeriod || actualPeriod) && (
+          <div className="flex flex-col gap-0.5">
+            {plannedPeriod && (
+              <Text type="secondary" style={{ fontSize: 11 }}>
+                Kế hoạch: {plannedPeriod}
+              </Text>
+            )}
+            {actualPeriod && (
+              <Text style={{ fontSize: 11, color: '#16a34a' }}>
+                Thực tế: {actualPeriod}
+              </Text>
+            )}
+          </div>
+        )}
       </div>
     </div>
-  </List.Item>
-)
+    </List.Item>
+  )
+}
 
 const OfficialLogbookTab = ({ item, stages = [] }) => {
   const [officialLogs, setOfficialLogs] = useState([])
@@ -146,14 +160,16 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                           const firstLog = stageLogs[0]
                           const lastLog = stageLogs[stageLogs.length - 1]
                           const wsd = firstLog.workStartDate || firstLog.startDate
-                          const wed = lastLog.workEndDate || lastLog.endDate || wsd
+                          const wed = lastLog.workEndDate || lastLog.endDate
+                          const actualPeriod = formatKnownDateRange(wsd, wed)
                           return (
-                            <Text style={{ fontSize: 12, color: '#16a34a' }}>
-                              <CalendarOutlined className="mr-1" />
-                              <span className="font-medium">Thực tế:</span>{' '}
-                              {wsd ? formatDate(wsd) : 'Chưa xác định'}{' — '}
-                              {wed ? formatDate(wed) : '—'}
-                            </Text>
+                            actualPeriod && (
+                              <Text style={{ fontSize: 12, color: '#16a34a' }}>
+                                <CalendarOutlined className="mr-1" />
+                                <span className="font-medium">Thực tế:</span>{' '}
+                                {actualPeriod}
+                              </Text>
+                            )
                           )
                         })()}
                       </div>
