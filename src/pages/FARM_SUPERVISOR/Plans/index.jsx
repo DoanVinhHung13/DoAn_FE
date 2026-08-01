@@ -149,7 +149,7 @@ const FarmSupervisorPlans = () => {
 
       <div className="admin-filter-card rounded-2xl shadow-sm">
         {/* Toolbar */}
-        <div className="admin-toolbar flex flex-wrap items-center gap-2 p-6 border-b border-gray-100">
+        <div className="admin-toolbar flex flex-wrap items-center gap-2  border-b border-gray-100">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <Input
               value={searchInput}
