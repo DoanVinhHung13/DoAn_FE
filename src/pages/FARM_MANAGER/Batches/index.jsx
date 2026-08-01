@@ -1,4 +1,5 @@
 import {
+  InboxOutlined,
   QrcodeOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -293,7 +294,10 @@ const Batches = () => {
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <div>
-        <TitleCustom className="!mb-0">Quản lý Lô thu hoạch</TitleCustom>
+        <TitleCustom className="!mb-0" icon={<Sprout className="w-6 h-6" />}>
+          <InboxOutlined />
+          Quản lý Lô thu hoạch
+        </TitleCustom>
       </div>
 
       <div className="admin-filter-card rounded-lg shadow-sm">

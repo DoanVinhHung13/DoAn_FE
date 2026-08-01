@@ -34,7 +34,7 @@ export const TitleCustomWrapper = styled.div`
 
   .title-main::after {
     content: '';
-    width: 36px;
+    width: 60px;
     height: 3px;
     position: absolute;
     left: 0;
