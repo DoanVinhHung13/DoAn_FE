@@ -10,7 +10,7 @@
   --color-primary-active: #14532d;
   --color-primary-soft: #f0fdf4;
   --color-primary-border: #bbf7d0;
-  --color-background: #f6f8f7;
+  --color-background: #ffffff;
   --color-surface: #ffffff;
   --color-surface-muted: #f8faf9;
   --color-border: #dbe4df;
@@ -654,7 +654,6 @@ a,
 }
 
 .ant-card {
-  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-sm) !important;
 }

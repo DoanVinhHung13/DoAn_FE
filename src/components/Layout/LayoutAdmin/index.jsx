@@ -151,7 +151,7 @@ const LayoutAdmin = () => {
   )
 
   return (
-    <Layout className="min-h-screen bg-[#f8fafc]">
+    <Layout className="min-h-screen bg-white">
       {/* Sider for Desktop */}
       {!isMobile && (
         <Sider
