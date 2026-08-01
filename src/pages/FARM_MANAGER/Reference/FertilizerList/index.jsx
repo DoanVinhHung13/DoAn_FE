@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Badge, Breadcrumb, Input, Select, Tabs, Tag, Typography } from 'antd'
+import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from 'antd'
 import { BookOutlined, SearchOutlined } from '@ant-design/icons'
 import CatalogService from 'src/services/CatalogService'
 import TableCustom from 'src/components/Table/CustomTable'
@@ -54,7 +54,6 @@ const normalizeFertilizer = (item, index) => ({
 })
 
 const FertilizerList = () => {
-  const [activeTab, setActiveTab] = useState('all')
   const [searchText, setSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -72,22 +71,12 @@ const FertilizerList = () => {
     [fertilizerResponse],
   )
 
-  const tabs = useMemo(() => {
-    const categories = [...new Set(fertilizerData.map(item => item.category).filter(Boolean))]
-
-    return [
-      { key: 'all', label: 'Tất cả' },
-      ...categories.map(category => ({ key: category, label: category })),
-    ]
-  }, [fertilizerData])
-
   const filteredData = useMemo(
     () => fertilizerData.filter(item =>
-      (activeTab === 'all' || item.category === activeTab) &&
       (selectedType === 'all' || normalizeFertilizerType(item.category) === selectedType) &&
       (selectedUnit === 'all' || normalizeFertilizerType(item.unit) === selectedUnit),
     ),
-    [activeTab, fertilizerData, selectedType, selectedUnit],
+    [fertilizerData, selectedType, selectedUnit],
   )
 
   const paginatedData = useMemo(
@@ -189,14 +178,13 @@ const FertilizerList = () => {
             allowClear
             onChange={(e) => {
               setSearchText(e.target.value)
-              setActiveTab('all')
               setCurrentPage(1)
             }}
             className="rounded-xl h-10 border-gray-200 flex-1"
           />
           <Select
             value={selectedType}
-            onChange={(value) => { setSelectedType(value); setActiveTab('all'); setCurrentPage(1) }}
+            onChange={(value) => { setSelectedType(value); setCurrentPage(1) }}
             options={[{ value: 'all', label: 'Tất cả loại phân bón' }, ...FERTILIZER_TYPE_OPTIONS.map(option => ({ ...option, value: normalizeFertilizerType(option.value) }))]}
             size="large"
             className="rounded-xl min-w-[240px] h-10"
@@ -220,17 +208,6 @@ const FertilizerList = () => {
         />
       )}
 
-      <div className="px-6 pt-4 border-b border-gray-100 bg-white rounded-t-2xl">
-        <Tabs
-          activeKey={activeTab}
-          onChange={(key) => {
-            setActiveTab(key)
-            setCurrentPage(1)
-          }}
-          items={tabs}
-          tabBarStyle={{ marginBottom: 0 }}
-        />
-      </div>
       <TableCustom
         columns={columns}
         dataSource={paginatedData}

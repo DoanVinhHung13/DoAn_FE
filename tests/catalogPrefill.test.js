@@ -6,7 +6,6 @@ import {
   mapCatalogCompositionsToRows,
   normalizeFertilizerCatalogCompositions,
 } from '../src/services/CatalogSuggestionService/compositions.js'
-import { extractPesticideActiveIngredient, extractPesticideTarget } from '../src/utils/pesticideCatalogDisplay.js'
 
 test('unwraps ApiResponse data to a fertilizer prefill object', () => {
   const prefill = { name: 'AC-Amino Bo', compositions: [{ name: 'N', value: 3, unit: '%' }] }
@@ -53,10 +52,4 @@ test('maps catalog compositions to keyed rows without placeholders', () => {
     { name: 'K2O', value: 6, unit: '%' },
   ])
   assert.equal(createFertilizerComponentRow().value, null)
-})
-
-test('extracts pesticide active ingredient and target from the catalog description', () => {
-  const description = 'Amani 70WP là thuốc trừ ốc, chứa hoạt chất Niclosamide-olamine (min 98%). Sản phẩm được đăng ký cho các đối tượng phòng trừ/cây trồng sau: ốc bươu vàng/ lúa. Đơn vị đề nghị đăng ký trong dữ liệu nguồn: Công ty.'
-  assert.equal(extractPesticideActiveIngredient(description), 'Niclosamide-olamine (min 98%)')
-  assert.equal(extractPesticideTarget(description), 'ốc bươu vàng/ lúa')
 })

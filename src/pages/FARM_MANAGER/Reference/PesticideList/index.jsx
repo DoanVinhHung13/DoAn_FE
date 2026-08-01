@@ -4,7 +4,6 @@ import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from 'antd'
 import { FilterOutlined, SafetyCertificateOutlined, SearchOutlined } from '@ant-design/icons'
 import CatalogService from 'src/services/CatalogService'
 import TableCustom from 'src/components/Table/CustomTable'
-import { extractPesticideActiveIngredient, extractPesticideTarget } from 'src/utils/pesticideCatalogDisplay'
 
 const { Title, Text } = Typography
 
@@ -37,21 +36,7 @@ const normalizePesticide = (item, index) => ({
   id: item.id || item._id || item.code || `pesticide-${index}`,
   code: textValue(item.code),
   tradeName: textValue(item.tradeName, item.name, item.pesticideName, item.productName),
-  activeIngredient: textValue(
-    item.activeIngredient,
-    item.activeIngredients,
-    item.ingredient,
-    item.ingredients,
-    extractPesticideActiveIngredient(item.description),
-  ),
   category: textValue(item.category, item.type, item.pesticideType, item.group),
-  target: textValue(
-    item.target,
-    item.targetOrganism,
-    item.preventionTarget,
-    item.usage,
-    extractPesticideTarget(item.description),
-  ),
   applicant: textValue(
     item.applicant,
     item.registrant,
@@ -109,21 +94,14 @@ const PesticideList = () => {
       ),
     },
     {
-      title: 'Tên thương phẩm',
+      title: 'Tên',
       dataIndex: 'tradeName',
       key: 'tradeName',
       width: 200,
       render: (text) => <Text className="font-bold text-gray-800">{text || '—'}</Text>,
     },
     {
-      title: 'Hoạt chất',
-      dataIndex: 'activeIngredient',
-      key: 'activeIngredient',
-      width: 200,
-      render: (text) => <Text className="text-gray-600 text-sm">{text || '—'}</Text>,
-    },
-    {
-      title: 'Nhóm nông dược',
+      title: 'Loại nông dược',
       dataIndex: 'category',
       key: 'category',
       width: 160,
@@ -137,13 +115,13 @@ const PesticideList = () => {
       ),
     },
     {
-      title: 'Đối tượng phòng trừ',
-      dataIndex: 'target',
-      key: 'target',
-      render: (text) => <Text className="text-gray-700 text-sm">{text || '—'}</Text>,
+      title: 'Mô tả',
+      dataIndex: 'description',
+      key: 'description',
+      render: (text) => <Text className="text-gray-600 text-sm">{text || '—'}</Text>,
     },
     {
-      title: 'Tổ chức đề nghị đăng ký',
+      title: 'Nhà sản xuất',
       dataIndex: 'applicant',
       key: 'applicant',
       width: 220,
