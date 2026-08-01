@@ -6,6 +6,7 @@ import {
   Input,
   InputNumber,
   message,
+  Modal,
   Row,
   Select,
 } from "antd"
@@ -15,6 +16,8 @@ import { getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUni
 import ROUTER from "src/router/ROUTER"
 import PesticideService from "src/services/PesticideService"
 import { applyApiFieldErrors } from "src/services/core/apiError"
+import AgriculturalInputCatalogAutocomplete from "src/components/AgriculturalInputCatalogAutocomplete"
+import CatalogSuggestionService, { getApiData } from "src/services/CatalogSuggestionService"
 
 import SectionTitle from "src/components/Common/SectionTitle"
 import { useCropOptions } from "src/hooks/useCropOptions"
@@ -64,6 +67,19 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
     { value: MEASUREMENT_UNITS.KILOGRAM, label: MEASUREMENT_UNITS.KILOGRAM },
   ]
   const [quantityUnit, setQuantityUnit] = React.useState(MEASUREMENT_UNITS.LITER)
+  const applyCatalog = async catalog => {
+    const current = form.getFieldsValue(['manufacturer', 'description', 'unit', 'type'])
+    const hasExistingData = Boolean(current.manufacturer?.trim() || current.description?.trim() || current.type?.trim() || (current.unit && current.unit !== MEASUREMENT_UNITS.LITER))
+    const apply = async () => {
+      try {
+      const item = getApiData(await CatalogSuggestionService.pesticidePrefill({ id: catalog.id }))
+      form.setFieldsValue({ name: item.name, manufacturer: item.manufacturer || undefined, description: item.description || undefined, unit: item.unit || undefined, type: item.type || undefined })
+      if (item.unit) setQuantityUnit(item.unit)
+      } catch { /* manual entry remains available */ }
+    }
+    if (hasExistingData) Modal.confirm({ title: 'Áp dụng dữ liệu từ danh mục?', content: 'Thông tin danh mục sẽ thay thế nhà sản xuất, mô tả, đơn vị và loại nông dược hiện tại.', okText: 'Áp dụng', cancelText: 'Hủy', onOk: apply })
+    else await apply()
+  }
 
   React.useEffect(() => {
     if (isEdit) {
@@ -191,7 +207,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             }
             rules={[{ required: true, message: "Bắt buộc" }]}
           >
-            <Input placeholder="Nhập tên..." className="h-10 rounded-xl" />
+            <AgriculturalInputCatalogAutocomplete catalogType="PESTICIDE" value={Form.useWatch("name", form)} onChange={value => form.setFieldValue("name", value)} onSelectCatalog={applyCatalog} placeholder="Nhập tên..." />
           </Form.Item>
         </Col>
 

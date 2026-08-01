@@ -22,7 +22,6 @@
  */
 import {
   EditOutlined,
-  ExperimentOutlined,
   MinusCircleOutlined,
   PlusOutlined,
 } from '@ant-design/icons'
@@ -33,6 +32,7 @@ import {
   Input,
   InputNumber,
   message,
+  Modal,
   Row,
   Select,
   Typography,
@@ -45,6 +45,8 @@ import { applyApiFieldErrors } from 'src/services/core/apiError'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
+import AgriculturalInputCatalogAutocomplete from 'src/components/AgriculturalInputCatalogAutocomplete'
+import CatalogSuggestionService, { getApiData } from 'src/services/CatalogSuggestionService'
 
 const { Text } = Typography
 
@@ -60,15 +62,6 @@ const FERTILIZER_FIELD_MAPPING = {
 }
 
 // ── Options ──────────────────────────────────────────────────────────────────
-
-const NPK_OPTION = [
-  { name: 'N', value: '', unit: '%' },
-  { name: 'P₂O₅', value: '', unit: '%' },
-  { name: 'K₂O', value: '', unit: '%' },
-]
-
-/** Số lượng thành phần mặc định (N, P, K) — không cho xóa, không cho sửa tên */
-const DEFAULT_NPK_OPTION = NPK_OPTION.length
 
 const DEFAULT_DOSAGE = {
   amount: '',
@@ -116,8 +109,22 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   ]
   const [loading, setLoading] = React.useState(false)
   const [quantityUnit, setQuantityUnit] = React.useState(MEASUREMENT_UNITS.KILOGRAM)
-  const [components, setComponents] = React.useState(NPK_OPTION)
+  const [components, setComponents] = React.useState([])
   const [dosages, setDosages] = React.useState([DEFAULT_DOSAGE])
+  const applyCatalog = async catalog => {
+    const current = form.getFieldsValue(['manufacturer', 'description', 'unit'])
+    const hasExistingData = Boolean(current.manufacturer?.trim() || current.description?.trim() || components.some(c => c.name?.trim() && c.value !== '' && c.value != null))
+    const apply = async () => {
+      try {
+      const item = getApiData(await CatalogSuggestionService.fertilizerPrefill({ id: catalog.id }))
+      form.setFieldsValue({ name: item.name, manufacturer: item.manufacturer || undefined, description: item.description || undefined, unit: item.unit || undefined, type: item.type || undefined })
+      if (item.unit) setQuantityUnit(item.unit)
+      if (item.compositions?.length) setComponents(item.compositions)
+      } catch { /* manual entry remains available */ }
+    }
+    if (hasExistingData) Modal.confirm({ title: 'Áp dụng dữ liệu từ danh mục?', content: 'Thông tin danh mục sẽ thay thế nhà sản xuất, mô tả, đơn vị và thành phần hiện tại.', okText: 'Áp dụng', cancelText: 'Hủy', onOk: apply })
+    else await apply()
+  }
 
   // ── Populate form on open ──────────────────────────────────────────────────
   React.useEffect(() => {
@@ -155,22 +162,9 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           return c;
         };
 
-        // Find existing standard components
-        const compN = incomingComps.find(c => c.name === 'N');
-        const compP = incomingComps.find(c => c.name === 'P₂O₅');
-        const compK = incomingComps.find(c => c.name === 'K₂O');
-
-        // Other components
-        const others = incomingComps.filter(c => !['N', 'P₂O₅', 'K₂O'].includes(c.name));
-
-        setComponents([
-          { ...(mapToDisplay(compN) || { value: '' }), name: 'N', unit: '%' },
-          { ...(mapToDisplay(compP) || { value: '' }), name: 'P₂O₅', unit: '%' },
-          { ...(mapToDisplay(compK) || { value: '' }), name: 'K₂O', unit: '%' },
-          ...others.map(mapToDisplay)
-        ]);
+        setComponents(incomingComps.map(mapToDisplay));
       } else {
-        setComponents(NPK_OPTION);
+        setComponents([]);
       }
       // Liều lượng
       setDosages(
@@ -190,7 +184,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         unit: MEASUREMENT_UNITS.KILOGRAM,
         inventoryUnit: MEASUREMENT_UNITS.KILOGRAM,
       })
-      setComponents(NPK_OPTION)
+      setComponents([])
       setDosages([{ ...DEFAULT_DOSAGE }])
     }
   }, [editingItem, isEdit, form])
@@ -199,15 +193,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const handleSubmit = async (values) => {
     try {
       // Custom validations
-      const missingNPK = components.slice(0, 3).some(c => {
-        if (c.unit === 'CFU/g') return c.base == null || c.base === '' || c.exponent == null || c.exponent === '';
-        return c.value == null || c.value === '' || !c.unit;
-      });
-      if (missingNPK) {
-        message.error('Thành phần N, P₂O₅, K₂O bắt buộc phải có Giá trị và Đơn vị.');
-        return;
-      }
-
       // Unit-specific validations
       let totalPercentage = 0;
       for (const comp of components) {
@@ -337,8 +322,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
     setComponents([...components, { name: '', value: '', unit: '%' }])
 
   const handleRemoveComponent = (index) => {
-    // Không cho xóa 3 thành phần mặc định (N, P₂O₅, K₂O)
-    if (index < DEFAULT_NPK_OPTION) return
     setComponents(components.filter((_, i) => i !== index))
   }
 
@@ -408,11 +391,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               { max: 100, message: 'Tên phân bón tối đa 100 ký tự.' },
             ]}
           >
-            <Input
-              prefix={<ExperimentOutlined className="text-gray-300" />}
-              placeholder="Tên phân bón"
-              className="h-10 rounded-lg"
-            />
+            <AgriculturalInputCatalogAutocomplete catalogType="FERTILIZER" value={Form.useWatch('name', form)} onChange={value => form.setFieldValue('name', value)} onSelectCatalog={applyCatalog} placeholder="Tên phân bón" />
           </Form.Item>
         </Col>
 
@@ -549,9 +528,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
       <div className="space-y-2 mb-3">
         {components.map((comp, index) => {
-          // 3 thành phần đầu (N, P₂O₅, K₂O) là cố định: không xóa, không sửa tên
-          const isFixed = index < DEFAULT_NPK_OPTION
-
           return (
             <div
               key={index}
@@ -563,7 +539,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                   onChange={(e) => handleComponentChange(index, 'name', e.target.value)}
                   placeholder="Tên thành phần"
                   className="h-9 rounded-lg"
-                  disabled={isFixed}
                 />
               </div>
               <div style={{ flex: '1 1 100px' }}>
@@ -608,18 +583,13 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                   {comp.unit || '%'}
                 </Text>
               </div>
-              {isFixed ? (
-                // Giữ khoảng trống cho alignment nhưng không hiện nút xóa
-                <div className="!h-9 !w-9 shrink-0" />
-              ) : (
-                <Button
-                  type="text"
-                  danger
-                  icon={<MinusCircleOutlined />}
-                  onClick={() => handleRemoveComponent(index)}
-                  className="!h-9 !w-9 shrink-0 rounded-lg"
-                />
-              )}
+              <Button
+                type="text"
+                danger
+                icon={<MinusCircleOutlined />}
+                onClick={() => handleRemoveComponent(index)}
+                className="!h-9 !w-9 shrink-0 rounded-lg"
+              />
             </div>
           )
         })}
