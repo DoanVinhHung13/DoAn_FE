@@ -19,11 +19,10 @@ import { applyApiFieldErrors } from "src/services/core/apiError"
 import SectionTitle from "src/components/Common/SectionTitle"
 import { useCropOptions } from "src/hooks/useCropOptions"
 
-const CROP_PROTECTION_FIELD_MAPPING = {
+const PESTICIDE_FIELD_MAPPING = {
   Name: "name",
   MinInventory: "minimumStock",
   Unit: "unit",
-  UsageUnit: "unit",
 }
 
 const resolveCropValue = (target, cropOptions) => {
@@ -53,7 +52,7 @@ const getCropTargetKey = (target, cropOptions) => {
   return normalizeCropTarget(option?.value ?? target)
 }
 
-const CropProtectionFormFields = ({ isEdit, editingItem }) => {
+const PesticideFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
@@ -73,12 +72,10 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
       form.setFieldsValue({
         name: editingItem.name || "",
         manufacturer: editingItem.manufacturer || "",
-        supplier: editingItem.supplier || "",
         minimumStock: editingItem.minInventory ?? editingItem.minimumStock ?? 0,
         inventoryQuantity: editingItem.inventoryQuantity ?? 0,
         inventoryUnit: selectedUnit,
         unit: selectedUnit, // Đơn vị tính (kho)
-        usageUnit: selectedUnit, // Đơn vị sử dụng
         description: editingItem.description || "",
         usages:
           editingItem.usages && editingItem.usages.length > 0
@@ -100,7 +97,6 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
       form.resetFields()
       form.setFieldsValue({
         unit: MEASUREMENT_UNITS.LITER,
-        usageUnit: MEASUREMENT_UNITS.LITER,
         inventoryUnit: MEASUREMENT_UNITS.LITER,
         usages: [{}],
       })
@@ -122,12 +118,10 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
       const body = {
         name: values.name?.trim(),
         manufacturer: values.manufacturer?.trim() || "",
-        supplier: values.supplier?.trim() || "",
         minInventory: values.minimumStock || 0,
         inventoryQuantity: values.inventoryQuantity ?? 0,
         inventoryUnit: values.inventoryUnit || values.unit || "",
         unit: values.unit || quantityUnit, // Đơn vị tính (kho)
-        usageUnit: values.unit || quantityUnit, // Đơn vị sử dụng cố định theo vật tư
         description: values.description?.trim() || "",
         isActive: isEdit ? editingItem.isActive : true,
         usages: (values.usages || []).map(u => {
@@ -149,18 +143,18 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
       if (isEdit) {
         await PesticideService.updatePesticide(editingItem.id, body, {
           errorHandling: "form",
-          fieldErrorMapping: CROP_PROTECTION_FIELD_MAPPING,
+          fieldErrorMapping: PESTICIDE_FIELD_MAPPING,
         })
       } else {
         await PesticideService.createPesticide(body, {
           errorHandling: "form",
-          fieldErrorMapping: CROP_PROTECTION_FIELD_MAPPING,
+          fieldErrorMapping: PESTICIDE_FIELD_MAPPING,
         })
       }
 
       navigate(ROUTER.FM_PESTICIDES)
     } catch (error) {
-      applyApiFieldErrors(form, error, CROP_PROTECTION_FIELD_MAPPING)
+      applyApiFieldErrors(form, error, PESTICIDE_FIELD_MAPPING)
     } finally {
       setLoading(false)
     }
@@ -214,20 +208,6 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
             />
           </Form.Item>
         </Col>
-        <Col xs={24} md={12}>
-          <Form.Item
-            name="supplier"
-            label={
-              <span className="font-semibold text-gray-700">Nhà Cung Cấp</span>
-            }
-          >
-            <Input
-              placeholder="Nhập nhà cung cấp..."
-              className="h-10 rounded-xl"
-            />
-          </Form.Item>
-        </Col>
-
         <Col xs={24} md={8}>
           <Form.Item
             name="minimumStock"
@@ -262,7 +242,6 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
                 className="h-10 rounded-xl"
                 onChange={(value) => {
                   setQuantityUnit(value)
-                  form.setFieldValue("usageUnit", value)
                   form.setFieldValue("inventoryUnit", value)
                   const usages = form.getFieldValue("usages") || []
                   form.setFieldValue("usages", usages.map(u => ({
@@ -275,15 +254,6 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
             </Form.Item>
           )}
         </Col>
-        <Col xs={24} md={8}>
-          <Form.Item name="usageUnit" hidden><Input /></Form.Item>
-          <Form.Item label="Đơn vị sử dụng">
-            <span className="inline-flex h-10 items-center rounded-xl bg-gray-50 px-3 font-semibold text-gray-700">
-              {quantityUnit}
-            </span>
-          </Form.Item>
-        </Col>
-
         <Col xs={24}>
           <Form.Item
             name="description"
@@ -538,4 +508,4 @@ const CropProtectionFormFields = ({ isEdit, editingItem }) => {
   )
 }
 
-export default CropProtectionFormFields
+export default PesticideFormFields

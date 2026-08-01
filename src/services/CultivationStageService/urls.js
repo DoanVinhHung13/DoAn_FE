@@ -16,12 +16,7 @@ export const apiGetCultivationStageLogs = (stageId) => `/cultivation-stages/${st
 
 // Swagger: GET  /api/cultivation-stages/{id}/summary
 //          POST /api/cultivation-stages/{id}/official-logs
-//          POST /api/cultivation-stages/{id}/submit-review
-//          POST /api/cultivation-stages/{id}/approve-review
-//          POST /api/cultivation-stages/{id}/reject-review
+//          POST /api/cultivation-stages/{id}/complete
 export const apiGetCultivationStageSummary = (id) => `/cultivation-stages/${id}/summary`
 export const apiCreateOfficialLogs = (id) => `/cultivation-stages/${id}/official-logs`
 export const apiCompleteCultivationStage = (id) => `/cultivation-stages/${id}/complete`
-export const apiSubmitStageReview = (id) => `/cultivation-stages/${id}/submit-review`
-export const apiApproveStageReview = (id) => `/cultivation-stages/${id}/approve-review`
-export const apiRejectStageReview = (id) => `/cultivation-stages/${id}/reject-review`

@@ -33,7 +33,7 @@ import { invalidCharsRegex } from 'src/utils/helpers'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 
-const ViewCropProtections = () => {
+const ViewPesticides = () => {
   const navigate = useNavigate()
   const { getCombo, getDescription } = useSystemKey()
   
@@ -455,4 +455,4 @@ const ViewCropProtections = () => {
   )
 }
 
-export default ViewCropProtections
+export default ViewPesticides

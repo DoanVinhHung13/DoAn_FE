@@ -79,20 +79,13 @@ const dosageColumns = [
     render: (v) => <Text strong>{v != null && v !== '' ? v : '—'}</Text>,
   },
   {
-    title: 'Đơn vị Tính (Kg/Lit)',
-    dataIndex: 'unit',
-    key: 'unit',
+    title: 'Đơn vị tính / diện tích',
+    key: 'unitPerArea',
     align: 'center',
-    width: 140,
-    render: (v) => <Text>{v || 'kg'}</Text>,
-  },
-  {
-    title: 'Đơn Vị diện tích',
-    dataIndex: 'areaUnit',
-    key: 'areaUnit',
-    align: 'center',
-    width: 140,
-    render: (v) => <Text>{formatAreaUnit(v)}</Text>,
+    width: 180,
+    render: (_, record) => (
+      <Text>{`${record.unit || 'kg'}/${formatAreaUnit(record.areaUnit)}`}</Text>
+    ),
   },
   {
     title: 'Đối tượng',
@@ -236,11 +229,6 @@ const FertilizerDetail = () => {
                 {item.manufacturer || <span className="text-gray-400">—</span>}
               </Descriptions.Item>
 
-              {/* Nhà Cung Cấp */}
-              <Descriptions.Item label="Nhà Cung Cấp">
-                {item.supplier || <span className="text-gray-400">—</span>}
-              </Descriptions.Item>
-
               {/* Tồn kho thực tế */}
               <Descriptions.Item
                 label={
@@ -269,13 +257,6 @@ const FertilizerDetail = () => {
                     ? `${Number(item.minimumStock).toLocaleString('vi-VN')} ${item.unit || ''}`
                     : '—'}
                 </span>
-              </Descriptions.Item>
-
-              {/* Đơn vị sử dụng */}
-              <Descriptions.Item label="Đơn vị sử dụng">
-                {item.usageUnit
-                  ? <Tag color="blue" className="font-medium rounded-full">{item.usageUnit}</Tag>
-                  : <span className="text-gray-400">—</span>}
               </Descriptions.Item>
 
               {/* Đơn vị tính */}
@@ -359,7 +340,7 @@ const FertilizerDetail = () => {
             {dosages.length > 0 ? (
               <Table
                 rowKey={(_, i) => i}
-                dataSource={dosages}
+                dataSource={dosages.map((dosage) => ({ ...dosage, unit: item.unit || dosage.unit }))}
                 columns={dosageColumns}
                 pagination={false}
                 size="small"
