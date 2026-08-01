@@ -63,7 +63,7 @@ const orderTasks = tasks =>
     .sort(
       (a, b) =>
         taskOrderValue(a.task, Number.MAX_SAFE_INTEGER) -
-          taskOrderValue(b.task, Number.MAX_SAFE_INTEGER) ||
+        taskOrderValue(b.task, Number.MAX_SAFE_INTEGER) ||
         a.index - b.index,
     )
     .map(({ task }) => task)
@@ -352,12 +352,11 @@ const FarmLeaderTasks = () => {
         return {
           key: id,
           title: (
-            <div className="flex items-center justify-between w-full gap-2 py-1 pr-1">
+            <div className="flex items-center justify-between w-full gap-2 pt-3 pb-1 pr-1">
               <div className="flex flex-col min-w-0">
                 <span
-                  className={`text-xs font-semibold truncate ${
-                    isSelected ? "text-emerald-700" : "text-slate-800"
-                  }`}
+                  className={`text-xs font-semibold truncate ${isSelected ? "text-emerald-700" : "text-slate-800"
+                    }`}
                   title={name}
                 >
                   {name}

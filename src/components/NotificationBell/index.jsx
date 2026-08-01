@@ -108,7 +108,7 @@ const NotificationBell = () => {
         )}
       </div>
 
-      <div className="custom-sidebar-scroll flex-1 overflow-y-auto bg-[#f8fafc]">
+      <div className="custom-sidebar-scroll flex-1 overflow-y-auto bg-[#ffffff]">
         {isLoading ? (
           <div className="p-12 text-center">
             <Spin indicator={<LoadingOutlined spin />} />
@@ -121,46 +121,45 @@ const NotificationBell = () => {
 
               return (
                 <List.Item
-                className={`cursor-pointer border-b border-gray-100 px-4 py-3 hover:bg-white ${
-                  item.isRead ? 'bg-white/50' : 'bg-green-50/50'
-                }`}
-                onClick={() => handleNotificationClick(item)}
-              >
-                <div className="w-full">
-                  <div className="mb-1 flex items-start justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Tag className="!m-0">{getNotificationTypeLabel(item)}</Tag>
-                      <Text strong={!item.isRead} className="text-[13px]">
-                        {item.title || 'Thông báo'}
+                  className={`cursor-pointer border-b border-gray-100 px-4 py-3 hover:bg-white ${item.isRead ? 'bg-white/50' : 'bg-green-50/50'
+                    }`}
+                  onClick={() => handleNotificationClick(item)}
+                >
+                  <div className="w-full">
+                    <div className="mb-1 flex items-start justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Tag className="!m-0">{getNotificationTypeLabel(item)}</Tag>
+                        <Text strong={!item.isRead} className="text-[13px]">
+                          {item.title || 'Thông báo'}
+                        </Text>
+                      </div>
+                      <Text type="secondary" className="whitespace-nowrap text-[10px]">
+                        {timeAgo(item.createdAt)}
                       </Text>
                     </div>
-                    <Text type="secondary" className="whitespace-nowrap text-[10px]">
-                      {timeAgo(item.createdAt)}
-                    </Text>
-                  </div>
-                  <div className="flex items-end justify-between gap-3">
-                    <Text type="secondary" className="line-clamp-2 flex-1 text-xs">
-                      {item.message || item.content}
-                    </Text>
-                    {!item.isRead && (
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<CheckOutlined className="text-green-500" />}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          markReadMutation.mutate(item._id || item.id);
-                        }}
-                      />
+                    <div className="flex items-end justify-between gap-3">
+                      <Text type="secondary" className="line-clamp-2 flex-1 text-xs">
+                        {item.message || item.content}
+                      </Text>
+                      {!item.isRead && (
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<CheckOutlined className="text-green-500" />}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            markReadMutation.mutate(item._id || item.id);
+                          }}
+                        />
                       )}
-                  </div>
-                  {(context.logbookName || context.stageName) && (
-                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                      {context.logbookName && <span>Nhật ký: {context.logbookName}</span>}
-                      {context.stageName && <span>Giai đoạn: {context.stageName}</span>}
                     </div>
-                  )}
-                </div>
+                    {(context.logbookName || context.stageName) && (
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                        {context.logbookName && <span>Nhật ký: {context.logbookName}</span>}
+                        {context.stageName && <span>Giai đoạn: {context.stageName}</span>}
+                      </div>
+                    )}
+                  </div>
                 </List.Item>
               )
             }}

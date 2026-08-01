@@ -30,11 +30,11 @@ const LayoutUser = () => {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: isDarkMode ? "#0f172a" : "#f8fafc",
+        backgroundColor: isDarkMode ? "#0f172a" : "#ffffff",
       }}
     >
       <GlobalHeader role="user" />
-      
+
       <Layout style={{ flex: 1, display: "flex", backgroundColor: "transparent" }}>
         <Sider
           collapsible
@@ -71,7 +71,7 @@ const LayoutUser = () => {
             }}
           />
         </Sider>
-        
+
         <Content
           style={{
             padding: "24px",

@@ -6,7 +6,7 @@ export const designTokens = {
     primarySoft: '#f0fdf4',
     primaryBorder: '#bbf7d0',
     secondary: '#365b4d',
-    background: '#f6f8f7',
+    background: '#ffffff',
     surface: '#ffffff',
     surfaceMuted: '#f8faf9',
     border: '#dbe4df',

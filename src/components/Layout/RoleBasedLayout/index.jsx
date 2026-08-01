@@ -8,7 +8,7 @@ import ROUTER from 'src/router/ROUTER'
 import LayoutAdmin from 'src/components/Layout/LayoutAdmin'
 
 const LoadingScreen = () => (
-  <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+  <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff' }}>
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
       <div className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin" />
       <span style={{ color: '#9ca3af', fontSize: 13, fontWeight: 600 }}>Đang tải hệ thống...</span>

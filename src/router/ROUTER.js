@@ -8,6 +8,7 @@ const ROUTER = {
   FORGOT_PASSWORD: '/forgot-password',
   NOT_FOUND: '/404',
   FORBIDDEN: '/403',
+  SVG: '/SVG',
 
   // ── Shared Authenticated Routes ───────────────────────────────────────────
   ACCOUNT_INFO: '/account-info',

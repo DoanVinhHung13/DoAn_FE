@@ -74,11 +74,11 @@ const normalizeCropResponse = (response) => {
   const items = Array.isArray(data)
     ? data
     : data?.items ||
-      data?.results ||
-      data?.crops ||
-      payload?.items ||
-      payload?.results ||
-      [];
+    data?.results ||
+    data?.crops ||
+    payload?.items ||
+    payload?.results ||
+    [];
 
   return {
     items,
@@ -116,7 +116,7 @@ const Crops = () => {
 
   const statusFilterOptions = useMemo(() => {
     const baseOptions = [{ value: 'all', label: 'Tất cả trạng thái' }];
-    
+
     if (cropStatusOptions && cropStatusOptions.length > 0) {
       return [
         ...baseOptions,
@@ -126,7 +126,7 @@ const Crops = () => {
         }))
       ];
     }
-    
+
     return [
       ...baseOptions,
       { value: 'active', label: 'Đang hoạt động' },
@@ -280,24 +280,10 @@ const Crops = () => {
       key: 'name',
       width: 360,
       render: (value, record) => {
-        const imgUrl = record.imageUrl || record.image || record.thumbnail || record.thumbnailUrl || record.photo || record.picture;
         return (
-          <div className="flex min-w-0 items-center gap-3" title={displayValue(value)}>
-            {imgUrl ? (
-              <img
-                src={imgUrl}
-                alt={displayValue(value)}
-                className="h-10 w-10 shrink-0 rounded-lg border border-gray-200 object-cover"
-              />
-            ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
-                <ExperimentOutlined className="text-lg" />
-              </div>
-            )}
-            <Text strong className="block truncate text-gray-900">
-              {displayValue(value)}
-            </Text>
-          </div>
+          <Text strong className="block truncate text-gray-900">
+            {displayValue(value)}
+          </Text>
         );
       },
     },
@@ -329,11 +315,10 @@ const Crops = () => {
         const isActive = isCropActive(record);
         return (
           <div
-            className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${
-              isActive 
-                ? 'bg-green-50 text-green-700' 
-                : 'bg-red-50 text-red-600'
-            }`}
+            className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${isActive
+              ? 'bg-green-50 text-green-700'
+              : 'bg-red-50 text-red-600'
+              }`}
           >
             {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
             {getStatusLabel(record)}
@@ -399,7 +384,6 @@ const Crops = () => {
         </TitleCustom>
         <Button
           type="primary"
-          icon={<ExperimentOutlined />}
           onClick={() => navigate(ROUTER.FM_CROP_CREATE)}
           className="h-10 rounded-lg bg-green-600 px-5 font-medium hover:bg-green-700"
         >

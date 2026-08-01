@@ -21,6 +21,7 @@ const Forbidden = React.lazy(() => import('../pages/ANONYMOUS/Forbidden'))
 const NewsListAll = React.lazy(() => import('../pages/ANONYMOUS/News/NewsListAll'))
 const NewsDetail = React.lazy(() => import('../pages/ANONYMOUS/News/NewsDetail'))
 const TCVNReference = React.lazy(() => import('../pages/ANONYMOUS/Reference/TCVNReference'))
+const SVG = React.lazy(() => import('../assets/icon/svg'))
 
 // Shared pages (accessible by all roles)
 const AccountInfo = React.lazy(() => import('../pages/USER/AccountInfo'))
@@ -114,6 +115,7 @@ const routes = [
       { path: ROUTER.NEWS, element: <Lazy><NewsListAll /></Lazy> },
       { path: ROUTER.NEWS_DETAIL, element: <Lazy><NewsDetail /></Lazy> },
       { path: ROUTER.TCVN, element: <Lazy><TCVNReference /></Lazy> },
+      { path: ROUTER.SVG, element: <Lazy><SVG /></Lazy> },
     ],
   },
 

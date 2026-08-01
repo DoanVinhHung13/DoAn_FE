@@ -18,7 +18,7 @@ const AdminPaginationCard = ({ pagination, className = '' }) => {
       variant="borderless"
       bordered={false}
       className={`admin-pagination-card rounded-lg shadow-none ${className}`.trim()}
-      styles={{ body: { padding: '10px 16px' } }}
+      styles={{ body: { padding: '0px' } }}
       style={{ border: 'none' }}
     >
       <Pagination {...normalizedPaginationProps} className={paginationClassName} />
