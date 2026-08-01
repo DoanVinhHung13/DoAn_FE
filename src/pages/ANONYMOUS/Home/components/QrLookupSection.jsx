@@ -31,10 +31,7 @@ const QrLookupSection = () => {
         navigate(`/trace/${encodeURIComponent(qrCode)}`)
       }
     } catch (error) {
-      const normalizedError = normalizeApiError(error)
-      if (normalizedError.code === 'NOT_FOUND' || normalizedError.message) {
-        message.error(normalizedError.message)
-      }
+      // API error handled by axios interceptor
     } finally {
       setQrSearching(false)
     }

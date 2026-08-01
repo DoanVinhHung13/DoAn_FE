@@ -329,7 +329,7 @@ const CultivationLogbookCreate = () => {
 
         setStages(normalizedStages.length ? normalizedStages : [createEmptyStage(1)])
       } catch {
-        message.error('Không thể tải kế hoạch.')
+        // API error handled by axios interceptor
       }
     }
 
@@ -447,7 +447,7 @@ const CultivationLogbookCreate = () => {
           message.info('Đã tải mẫu kế hoạch thành công.')
         }
       } catch {
-        if (isMounted) message.error('Không thể tải mẫu kế hoạch.')
+        // API error handled by axios interceptor
       }
     }
 
@@ -536,7 +536,7 @@ const CultivationLogbookCreate = () => {
       setTemplateModal(false)
       message.success(`Đã áp dụng mẫu "${template.templateName || template.name}" thành công.`)
     } catch {
-      message.error('Không thể áp dụng mẫu kế hoạch.')
+      // API error handled by axios interceptor
     }
   }
 
