@@ -18,10 +18,7 @@ import {
   SearchOutlined,
   StopOutlined,
 } from '@ant-design/icons'
-import { MapPinned } from 'lucide-react'
-
 import TitleCustom from 'src/components/TitleCustom'
-
 import CustomTable from 'src/components/Table/CustomTable'
 import LandPlotService from 'src/services/LandPlotService'
 import { useSystemKey } from 'src/hooks/useSystemKey'

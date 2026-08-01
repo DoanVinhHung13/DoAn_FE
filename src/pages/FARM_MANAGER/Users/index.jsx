@@ -1,7 +1,3 @@
-/**
- * Users Management — Farm Manager / Land Manager
- * Route: /farm-manager/users OR /land-manager/farmers
- */
 import {
   CheckCircleOutlined,
   EditOutlined,
@@ -28,6 +24,8 @@ import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
 import CustomTable from "src/components/Table/CustomTable"
+import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
+import { PAGE_SIZE } from "src/constants/pageSizeOptions"
 import { ROLES } from "src/constants/roles"
 import UserService from "src/services/UserService"
 
@@ -35,11 +33,9 @@ import CustomModal from "src/components/Modal/CustomModal"
 import TitleCustom from "src/components/TitleCustom"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
-import { usePagination } from "src/hooks/usePagination"
-import { useSearchInput } from "src/hooks/useSearchInput"
 import ROUTER from "src/router/ROUTER"
 import { formatDate } from "src/utils/dateFormatters"
-import { getAvatarUrl } from "src/utils/helpers"
+import { getAvatarUrl, invalidCharsRegex } from "src/utils/helpers"
 import AssignRolesModal from "./components/AssignRolesModal"
 import CreateAccountModal from "./components/CreateAccountModal"
 import ResetPasswordModal from "./components/ResetPasswordModal"
@@ -100,10 +96,12 @@ const UsersManagement = () => {
   ]
 
   // ── State ──────────────────────────────────────────────────
-  const pagination = usePagination()
-  const search = useSearchInput(() => pagination.reset())
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState(undefined)
   const [statusFilter, setStatusFilter] = useState("all")
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   const [formModal, setFormModal] = useState({ open: false, user: null })
   const [createAccountModalOpen, setCreateAccountModalOpen] = useState(false)
@@ -115,25 +113,26 @@ const UsersManagement = () => {
 
   // ── Data fetching ──────────────────────────────────────────
   const [listData, setListData] = useState([])
+  const [totalRecords, setTotalRecords] = useState(0)
   const [loading, setLoading] = useState(false)
 
   const getList = useCallback(async () => {
     try {
       setLoading(true)
       const res = await UserService.getUsers({
-        pageIndex: pagination.page,
-        pageSize: pagination.pageSize,
-        searchKeyword: search.search || undefined,
+        pageIndex: page,
+        pageSize: pageSize,
+        searchKeyword: search || undefined,
         role: roleFilter || undefined,
         status: statusFilter === "all" ? undefined : statusFilter,
       })
       const { items, totalItems } = getUserListData(res)
       setListData(items)
-      pagination.setTotal(totalItems)
+      setTotalRecords(totalItems)
     } finally {
       setLoading(false)
     }
-  }, [pagination.page, pagination.pageSize, roleFilter, search.search, statusFilter, pagination])
+  }, [page, pageSize, roleFilter, search, statusFilter])
 
   const getAccountCandidates = useCallback(async () => {
     if (!canManageUsers) return
@@ -175,8 +174,13 @@ const UsersManagement = () => {
   }
 
   const handleSearch = useCallback(() => {
-    pagination.reset()
-  }, [pagination])
+    if (invalidCharsRegex.test(searchInput)) {
+      message.error("Ký tự tìm kiếm không hợp lệ")
+      return
+    }
+    setSearch(searchInput.trim())
+    setPage(1)
+  }, [searchInput])
 
   // ── Table columns ──────────────────────────────────────────
   const columns = [
@@ -187,7 +191,7 @@ const UsersManagement = () => {
       align: "center",
       render: (_, __, index) => (
         <span className="text-sm font-medium text-gray-400">
-          {(pagination.page - 1) * pagination.pageSize + index + 1}
+          {(page - 1) * pageSize + index + 1}
         </span>
       ),
     },
@@ -304,28 +308,6 @@ const UsersManagement = () => {
                 }}
               />
             </Tooltip>
-            {/* <Tooltip title="Phân quyền">
-              <Button
-                type="text"
-                icon={<SafetyCertificateOutlined className="text-lg text-purple-500" />}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-purple-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setRolesModal({ open: true, user: record });
-                }}
-              />
-            </Tooltip>
-            <Tooltip title="Đặt lại mật khẩu">
-              <Button
-                type="text"
-                icon={<KeyOutlined className="text-lg text-orange-500" />}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-orange-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPwdModal({ open: true, user: record });
-                }}
-              />
-            </Tooltip> */}
             <Tooltip title={record.isActive ? "Vô hiệu hóa" : "Kích hoạt"}>
               <Button
                 type="text"
@@ -389,14 +371,18 @@ const UsersManagement = () => {
         {/* Toolbar */}
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
-            value={search.input}
-            onChange={e => search.setInput(e.target.value)}
-            onPressEnter={search.handleSearch}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            onPressEnter={handleSearch}
             placeholder="Tìm theo tên, email..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="w-64 h-10 rounded-xl"
             allowClear
-            onClear={search.clear}
+            onClear={() => {
+              setSearchInput("")
+              setSearch("")
+              setPage(1)
+            }}
           />
           <Select
             placeholder="Tất cả vai trò"
@@ -405,7 +391,7 @@ const UsersManagement = () => {
             value={roleFilter}
             onChange={val => {
               setRoleFilter(val)
-              pagination.reset()
+              setPage(1)
             }}
             options={roleOptions.map(opt => ({
               value: opt.codeValue || opt.value,
@@ -419,13 +405,13 @@ const UsersManagement = () => {
             value={statusFilter}
             onChange={value => {
               setStatusFilter(value)
-              pagination.reset()
+              setPage(1)
             }}
             options={selectStatusOptions}
           />
           <div className="flex gap-2 ml-auto">
             <Button
-              onClick={search.handleSearch}
+              onClick={handleSearch}
               icon={<SearchOutlined />}
               className="h-10 px-4 font-semibold rounded-xl bg-gray-50"
             >
@@ -458,7 +444,17 @@ const UsersManagement = () => {
           }
         }}
         locale={{ emptyText: "No data available" }}
-        pagination={pagination.config}
+        pagination={{
+          current: page,
+          pageSize: pageSize,
+          total: totalRecords,
+          showSizeChanger: true,
+          pageSizeOptions: PAGE_SIZE,
+          onChange: (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        }}
         rowClassName="hover:bg-green-50/30 transition-colors"
       />
 

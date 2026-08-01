@@ -22,7 +22,6 @@ import {
 } from '@ant-design/icons';
 import { CropIcon } from 'src/assets/icon/menu/MenuIcons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
 import TitleCustom from 'src/components/TitleCustom';
 import CropManagementService from 'src/services/CropManagementService';
 import { isNotFoundError } from 'src/services/core/apiError';
