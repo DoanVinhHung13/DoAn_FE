@@ -147,11 +147,7 @@ const FarmSupervisorPlans = () => {
         Kế hoạch canh tác được giao
       </TitleCustom>
 
-      <Card
-        bordered={false}
-        className="admin-filter-card rounded-2xl shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
+      <div className="admin-filter-card rounded-2xl shadow-sm">
         {/* Toolbar */}
         <div className="admin-toolbar flex flex-wrap items-center gap-2 p-6 border-b border-gray-100">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
@@ -200,90 +196,30 @@ const FarmSupervisorPlans = () => {
           </div>
         </div>
 
-      </Card>
+      </div>
 
       {/* Content */}
-      <Card bordered={false} className="admin-data-card overflow-hidden rounded-2xl shadow-sm" styles={{ body: { padding: 0 } }}>
-        {loading ? (
-          <div className="p-5"><Skeleton active paragraph={{ rows: 6 }} /></div>
-        ) : loadError ? (
-          <div className="p-5">
-            <Alert
-              type="error"
-              showIcon
-              message="Không thể tải danh sách kế hoạch."
-              action={<Button size="small" onClick={() => setReloadKey((v) => v + 1)}>Thử lại</Button>}
-              className="rounded-xl"
-            />
-          </div>
-        ) : viewMode === 'table' ? (
-          <CustomTable
-            rowKey="id"
-            columns={columns}
-            dataSource={visiblePlans}
-            scroll={{ x: 950 }}
-            onRow={(plan) => ({ onClick: () => openDetail(plan.id), className: 'cursor-pointer' })}
-            rowClassName="hover:bg-green-50/30 transition-colors"
-            locale={{ emptyText: 'Không có kế hoạch phù hợp.' }}
-            pagination={false}
+      {loading ? (
+        <div className="p-5 bg-white rounded-2xl"><Skeleton active paragraph={{ rows: 6 }} /></div>
+      ) : loadError ? (
+        <div className="p-5 bg-white rounded-2xl">
+          <Alert
+            type="error"
+            showIcon
+            message="Không thể tải danh sách kế hoạch."
+            action={<Button size="small" onClick={() => setReloadKey((v) => v + 1)}>Thử lại</Button>}
+            className="rounded-xl"
           />
-        ) : visiblePlans.length ? (
-          <div className="p-5">
-            <div className="grid gap-4 xl:grid-cols-2">
-              {pagedCards.map((plan) => {
-                const status = getLogbookStatus(plan.status)
-                return (
-                  <Card
-                    key={plan.id}
-                    bordered={false}
-                    className="overflow-hidden transition border border-gray-100 shadow-sm rounded-2xl hover:border-green-300 hover:shadow-md cursor-pointer"
-                    bodyStyle={{ padding: 0 }}
-                    onClick={() => openDetail(plan.id)}
-                  >
-                    <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-white">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <Tag color={status.color} className="rounded-full m-0">{status.label}</Tag>
-                      </div>
-                      <h3 className="m-0 text-base font-bold text-gray-900">
-                        {plan.logbookName}
-                      </h3>
-                      <p className="mt-0.5 mb-0 text-sm text-gray-500">{plan.cropName || 'Chưa có cây trồng'}</p>
-                    </div>
-                    <div className="p-4">
-                      <div className="flex flex-col gap-1.5 text-sm">
-                        <div className="flex items-center gap-1.5 text-gray-600">
-                          <UserOutlined className="flex-shrink-0 text-green-500" />
-                          <span>{plan.supervisorName || '—'}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-gray-600">
-                          <CalendarOutlined className="flex-shrink-0 text-green-500" />
-                          <span>
-                            {plan.startDate ? formatDate(plan.startDate) : '—'} – {plan.expectedEndDate ? formatDate(plan.expectedEndDate) : 'Chưa kết thúc'}
-                          </span>
-                        </div>
-                      </div>
-                      <Button
-                        type="primary" icon={<EyeOutlined />}
-                        onClick={() => openDetail(plan.id)}
-                        className="w-full h-9 mt-4 font-semibold bg-green-600 rounded-lg border-0"
-                      >
-                        Xem chi tiết
-                      </Button>
-                    </div>
-                  </Card>
-                )
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="p-8">
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có kế hoạch phù hợp." />
-          </div>
-        )}
-      </Card>
-
-      {viewMode === 'table' || (viewMode === 'card' && visiblePlans.length) ? (
-        <AdminPaginationCard
+        </div>
+      ) : viewMode === 'table' ? (
+        <CustomTable
+          rowKey="id"
+          columns={columns}
+          dataSource={visiblePlans}
+          scroll={{ x: 950 }}
+          onRow={(plan) => ({ onClick: () => openDetail(plan.id), className: 'cursor-pointer' })}
+          rowClassName="hover:bg-green-50/30 transition-colors"
+          locale={{ emptyText: 'Không có kế hoạch phù hợp.' }}
           pagination={{
             current: page,
             pageSize,
@@ -293,7 +229,76 @@ const FarmSupervisorPlans = () => {
             onChange: (p, ps) => { setPage(p); setPageSize(ps) },
           }}
         />
-      ) : null}
+      ) : (
+        <>
+          {visiblePlans.length ? (
+            <div className="p-5 bg-white rounded-2xl">
+              <div className="grid gap-4 xl:grid-cols-2">
+                {pagedCards.map((plan) => {
+                  const status = getLogbookStatus(plan.status)
+                  return (
+                    <Card
+                      key={plan.id}
+                      bordered={false}
+                      className="overflow-hidden transition border border-gray-100 shadow-sm rounded-2xl hover:border-green-300 hover:shadow-md cursor-pointer"
+                      bodyStyle={{ padding: 0 }}
+                      onClick={() => openDetail(plan.id)}
+                    >
+                      <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-white">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <Tag color={status.color} className="rounded-full m-0">{status.label}</Tag>
+                        </div>
+                        <h3 className="m-0 text-base font-bold text-gray-900">
+                          {plan.logbookName}
+                        </h3>
+                        <p className="mt-0.5 mb-0 text-sm text-gray-500">{plan.cropName || 'Chưa có cây trồng'}</p>
+                      </div>
+                      <div className="p-4">
+                        <div className="flex flex-col gap-1.5 text-sm">
+                          <div className="flex items-center gap-1.5 text-gray-600">
+                            <UserOutlined className="flex-shrink-0 text-green-500" />
+                            <span>{plan.supervisorName || '—'}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-gray-600">
+                            <CalendarOutlined className="flex-shrink-0 text-green-500" />
+                            <span>
+                              {plan.startDate ? formatDate(plan.startDate) : '—'} – {plan.expectedEndDate ? formatDate(plan.expectedEndDate) : 'Chưa kết thúc'}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          type="primary" icon={<EyeOutlined />}
+                          onClick={() => openDetail(plan.id)}
+                          className="w-full h-9 mt-4 font-semibold bg-green-600 rounded-lg border-0"
+                        >
+                          Xem chi tiết
+                        </Button>
+                      </div>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 bg-white rounded-2xl">
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có kế hoạch phù hợp." />
+            </div>
+          )}
+
+          {visiblePlans.length ? (
+            <AdminPaginationCard
+              pagination={{
+                current: page,
+                pageSize,
+                total: totalPlans,
+                showSizeChanger: true,
+                pageSizeOptions: PAGE_SIZE,
+                onChange: (p, ps) => { setPage(p); setPageSize(ps) },
+              }}
+            />
+          ) : null}
+        </>
+      )}
     </div>
   )
 }

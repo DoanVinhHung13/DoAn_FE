@@ -8,7 +8,6 @@ import { Button, Card, DatePicker, Input, Select, Tag } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import CustomTable from 'src/components/Table/CustomTable'
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
@@ -234,7 +233,7 @@ const InventoryImportHistory = () => {
         </div>
       </div>
 
-      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card rounded-lg shadow-sm">
         <div className="admin-toolbar flex flex-col gap-3 xl:flex-row xl:items-center xl:flex-wrap">
           <Input
             value={searchInput}
@@ -284,42 +283,27 @@ const InventoryImportHistory = () => {
           </div>
         </div>
 
-      </Card>
+      </div>
 
-      <Card
-        variant="borderless"
-        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
-        <CustomTable
-          dataSource={rows}
-          columns={columns}
-          rowKey={record => record.id || record.transactionId || `${getTransactionDate(record)}-${getMaterialName(record)}`}
-          loading={loading}
-          scroll={{ x: 1050 }}
-          locale={{ emptyText: 'Chưa có lịch sử nhập vật tư.' }}
-          pagination={false}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-        />
-      </Card>
-
-      <AdminPaginationCard
+      <CustomTable
+        dataSource={rows}
+        columns={columns}
+        rowKey={record => record.id || record.transactionId || `${getTransactionDate(record)}-${getMaterialName(record)}`}
+        loading={loading}
+        scroll={{ x: 1050 }}
+        locale={{ emptyText: 'Chưa có lịch sử nhập vật tư.' }}
         pagination={{
           current: page,
           pageSize,
           total,
           showSizeChanger: true,
           pageSizeOptions: PAGE_SIZE,
-          showTotal: (value, range) => (
-            <span className="text-xs text-gray-500">
-              {range[0]}–{range[1]} / <strong>{value}</strong>
-            </span>
-          ),
           onChange: (nextPage, nextPageSize) => {
             setPage(nextPage)
             setPageSize(nextPageSize)
           },
         }}
+        rowClassName="hover:bg-green-50/30 transition-colors"
       />
     </div>
   )

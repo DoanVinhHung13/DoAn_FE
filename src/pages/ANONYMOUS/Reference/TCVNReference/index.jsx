@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from 'src/services/01_axios';
 import { useNavigate } from 'react-router-dom';
 import ROUTER from 'src/router/ROUTER';
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard';
+import TableCustom from 'src/components/Table/CustomTable';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -107,49 +107,42 @@ const TCVNReference = () => {
             </Card>
 
             {/* Standards Table */}
-            <Card className="shadow-lg border-gray-100 rounded-3xl overflow-hidden p-0" bodyStyle={{ padding: 0 }}>
-                <Table
-                    columns={columns}
-                    dataSource={paginatedTcvns}
-                    rowKey="_id"
-                    loading={isLoading}
-                    pagination={false}
-                    expandable={{
-                        expandedRowRender: (record) => (
-                            <div className="bg-gray-50/50 p-8 rounded-2xl border border-gray-100 m-2 space-y-6">
-                                <div className="space-y-3">
-                                    <Title level={5} className="flex items-center gap-2 !mb-0 !text-blue-600 uppercase text-xs tracking-widest font-bold">
-                                        <InfoCircleOutlined /> Phạm vi áp dụng
-                                    </Title>
-                                    <div className="prose prose-sm max-w-none">
-                                        {record.scope.split('\n').map((line, i) => (
-                                            <Paragraph key={i} className="text-gray-700 leading-relaxed text-[15px] !mb-3">
-                                                {line}
-                                            </Paragraph>
-                                        ))}
-                                    </div>
+            <TableCustom
+                columns={columns}
+                dataSource={paginatedTcvns}
+                rowKey="_id"
+                loading={isLoading}
+                expandable={{
+                    expandedRowRender: (record) => (
+                        <div className="bg-gray-50/50 p-8 rounded-2xl border border-gray-100 m-2 space-y-6">
+                            <div className="space-y-3">
+                                <Title level={5} className="flex items-center gap-2 !mb-0 !text-blue-600 uppercase text-xs tracking-widest font-bold">
+                                    <InfoCircleOutlined /> Phạm vi áp dụng
+                                </Title>
+                                <div className="prose prose-sm max-w-none">
+                                    {record.scope.split('\n').map((line, i) => (
+                                        <Paragraph key={i} className="text-gray-700 leading-relaxed text-[15px] !mb-3">
+                                            {line}
+                                        </Paragraph>
+                                    ))}
                                 </div>
-                                {record.notes && (
-                                    <div className="pt-4 border-t border-gray-100 flex items-start gap-4 italic text-gray-500 text-sm bg-white/50 p-4 rounded-xl border border-dashed">
-                                        <Tag color="gold" className="uppercase font-bold text-[10px] m-0">Ghi chú</Tag>
-                                        {record.notes}
-                                    </div>
-                                )}
                             </div>
-                        ),
-                        expandRowByClick: true
-                    }}
-                    className="custom-tcvn-table"
-                />
-            </Card>
-
-            <AdminPaginationCard
+                            {record.notes && (
+                                <div className="pt-4 border-t border-gray-100 flex items-start gap-4 italic text-gray-500 text-sm bg-white/50 p-4 rounded-xl border border-dashed">
+                                    <Tag color="gold" className="uppercase font-bold text-[10px] m-0">Ghi chú</Tag>
+                                    {record.notes}
+                                </div>
+                            )}
+                        </div>
+                    ),
+                    expandRowByClick: true
+                }}
+                className="custom-tcvn-table"
                 pagination={{
                     current: visiblePage,
                     pageSize,
                     total: tcvns.length,
                     showSizeChanger: true,
-                    showTotal: (total) => <span className="font-bold text-gray-500">Tổng cộng {total} tiêu chuẩn</span>,
                     onChange: (page, size) => {
                         setCurrentPage(page);
                         setPageSize(size);

@@ -13,12 +13,11 @@ export const TitleCustomWrapper = styled.div`
     min-height: 40px;
     color: ${({ theme }) => theme.colors.textPrimary};
     font-family: ${({ theme }) => theme.fonts.family};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
     position: relative;
     font-size: ${({ theme }) => theme.fonts.sizeXl}px;
     font-weight: 700;
     line-height: 1.25;
-    padding: 0 0 12px;
+    padding: 0 0 8px;
     margin-bottom: 16px;
     letter-spacing: -0.02em;
   }
@@ -39,7 +38,7 @@ export const TitleCustomWrapper = styled.div`
     height: 3px;
     position: absolute;
     left: 0;
-    bottom: -2px;
+    bottom: 0;
     background: ${({ theme }) => theme.colors.primary};
     border-radius: ${({ theme }) => theme.radius.full}px;
   }

@@ -32,10 +32,10 @@ import CropCatalogService from 'src/services/CropCatalogService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard';
 import { applyApiFieldErrors, isNotFoundError } from 'src/services/core/apiError';
 import { getListPresentationState } from 'src/utils/listPresentation';
 import { logDevDiagnostic } from 'src/utils/safeDiagnostic';
+import TableCustom from 'src/components/Table/CustomTable';
 
 const { Text } = Typography;
 
@@ -72,9 +72,8 @@ const StatusBadge = ({ record }) => {
   const active = isCatalogActive(record);
   return (
     <span
-      className={`crop-catalog-status-badge inline-flex items-center justify-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${
-        active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
-      }`}
+      className={`crop-catalog-status-badge inline-flex items-center justify-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+        }`}
     >
       {active ? <CheckCircleOutlined /> : <StopOutlined />}
       {getStatusLabel(record)}
@@ -102,7 +101,7 @@ const CropCatalogs = () => {
   // Status filter options với SystemKey
   const statusFilterOptions = useMemo(() => {
     const baseOptions = STATUS_OPTIONS.slice(0, 1);
-    
+
     if (catalogStatusOptions && catalogStatusOptions.length > 0) {
       return [
         ...baseOptions,
@@ -112,7 +111,7 @@ const CropCatalogs = () => {
         }))
       ];
     }
-    
+
     return [
       ...baseOptions,
       { value: 'active', label: 'Hoạt động' },
@@ -224,7 +223,7 @@ const CropCatalogs = () => {
     if (!statusTarget) {
       return;
     }
-    
+
     const id = getItemId(statusTarget);
     const nextActive = !isCatalogActive(statusTarget);
     statusMutation.mutate({
@@ -405,7 +404,7 @@ const CropCatalogs = () => {
         />
       )}
 
-      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card rounded-lg shadow-sm">
         <div className="admin-toolbar grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px]">
           <Input
             allowClear
@@ -428,33 +427,15 @@ const CropCatalogs = () => {
             className="h-11"
           />
         </div>
-      </Card>
+      </div>
 
-      <Card
-        variant="borderless"
-        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
-        <Table
-          bordered
-          rowKey={(record) => getItemId(record) || record.name}
-          loading={isLoading || isFetching}
-          dataSource={paginatedCatalogs}
-          columns={columns}
-          tableLayout="fixed"
-          pagination={false}
-          locale={{
-            emptyText: ['system-empty', 'filtered-empty'].includes(listPresentation) && (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={emptyDescription}
-              />
-            ),
-          }}
-        />
-      </Card>
-
-      <AdminPaginationCard
+      <TableCustom
+        bordered
+        rowKey={(record) => getItemId(record) || record.name}
+        loading={isLoading || isFetching}
+        dataSource={paginatedCatalogs}
+        columns={columns}
+        tableLayout="fixed"
         pagination={{
           current: visiblePage,
           pageSize,
@@ -465,6 +446,14 @@ const CropCatalogs = () => {
             setPage(nextPageSize !== pageSize ? 1 : nextPage);
             setPageSize(nextPageSize);
           },
+        }}
+        locale={{
+          emptyText: ['system-empty', 'filtered-empty'].includes(listPresentation) && (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={emptyDescription}
+            />
+          ),
         }}
       />
 
@@ -495,7 +484,7 @@ const CropCatalogs = () => {
           onFinish={(values) =>
             updateMutation.mutate({ id: getItemId(editingCatalog), values })
           }
-          onFinishFailed={() => {}}
+          onFinishFailed={() => { }}
           scrollToFirstError
         >
           <Form.Item
@@ -544,44 +533,6 @@ const CropCatalogs = () => {
           </div>
         </Form>
       </Modal>
-
-      <Drawer
-        title="Chi tiết danh mục cây trồng"
-        width={520}
-        open={!!selectedCatalogId}
-        onClose={() => setSelectedCatalogId(null)}
-      >
-        {isDetailLoading && (
-          <div className="space-y-3">
-            <div className="h-10 animate-pulse rounded bg-gray-100" />
-            <div className="h-10 animate-pulse rounded bg-gray-100" />
-            <div className="h-24 animate-pulse rounded bg-gray-100" />
-          </div>
-        )}
-
-        {isDetailError && (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={EMPTY_MESSAGE}
-          />
-        )}
-
-        {!isDetailLoading && !isDetailError && catalogDetail && (
-          <Descriptions column={1} bordered size="middle">
-            <Descriptions.Item label="Tên loại cây trồng">
-              {displayValue(catalogDetail.name || catalogDetail.cropCatalogName)}
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              <Tag color={isCatalogActive(catalogDetail) ? 'success' : 'error'}>
-                {getStatusLabel(catalogDetail)}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Mô tả">
-              {displayValue(catalogDetail.description)}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-      </Drawer>
 
       <Modal
         open={!!statusTarget}
@@ -635,11 +586,10 @@ const CropCatalogs = () => {
               danger={isCatalogActive(statusTarget)}
               loading={statusMutation.isPending}
               onClick={handleConfirmStatusChange}
-              className={`h-10 min-w-[104px] rounded-lg font-semibold shadow-lg ${
-                isCatalogActive(statusTarget)
-                  ? 'bg-red-500 shadow-red-100'
-                  : 'bg-green-500 shadow-green-100'
-              }`}
+              className={`h-10 min-w-[104px] rounded-lg font-semibold shadow-lg ${isCatalogActive(statusTarget)
+                ? 'bg-red-500 shadow-red-100'
+                : 'bg-green-500 shadow-green-100'
+                }`}
             >
               Xác nhận
             </Button>

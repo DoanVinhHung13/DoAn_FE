@@ -365,7 +365,7 @@ const FarmManagerNotifications = () => {
         className="bg-white rounded-lg shadow-sm px-6"
       />
 
-      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card rounded-lg shadow-sm">
         <div className="admin-toolbar grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1fr)_200px_200px]">
           <Input
             allowClear
@@ -378,7 +378,7 @@ const FarmManagerNotifications = () => {
           <Select value={status} onChange={setStatus} options={STATUS_OPTIONS} className="h-10" />
           <Select value={category} onChange={setCategory} options={categoryOptions} className="h-10" />
         </div>
-      </Card>
+      </div>
 
       <Card variant="borderless" className="overflow-hidden rounded-lg shadow-sm" styles={{ body: { padding: 0 } }}>
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">

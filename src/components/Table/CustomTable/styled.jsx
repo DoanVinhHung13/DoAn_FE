@@ -103,11 +103,14 @@ export const TableCustomStyled = styled.div`
 
   .ant-table-thead {
     .ant-table-cell {
+      background: ${({ theme }) => theme.colors.primary} !important;
+      color: #ffffff !important;
       font-size: 13px;
-      .anticon,
+      font-weight: 700;
       .anticon {
+        color: #ffffff !important;
         svg path {
-          fill: ${({ theme }) => theme.colors.textMuted};
+          fill: #ffffff !important;
         }
       }
     }

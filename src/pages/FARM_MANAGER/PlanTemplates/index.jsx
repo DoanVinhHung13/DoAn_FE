@@ -31,7 +31,6 @@ import { useNavigate } from 'react-router-dom'
 
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
@@ -48,11 +47,11 @@ const normalizeItems = (response) => {
   return Array.isArray(data)
     ? data
     : data?.items ||
-      data?.results ||
-      data?.processSteps ||
-      data?.crops ||
-      data?.cropCatalogs ||
-      []
+    data?.results ||
+    data?.processSteps ||
+    data?.crops ||
+    data?.cropCatalogs ||
+    []
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -333,7 +332,7 @@ const PlanTemplateList = () => {
       </div>
 
       {/* ── Table card ── */}
-      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card rounded-lg shadow-sm">
         {/* Toolbar */}
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
@@ -394,48 +393,32 @@ const PlanTemplateList = () => {
           </div>
         </div>
 
-      </Card>
+      </div>
 
-      <Card
-        variant="borderless"
-        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
-        {/* Table */}
-        <CustomTable
-          dataSource={listData}
-          columns={columns}
-          rowKey="id"
-          loading={loading}
-          scroll={{ x: 900 }}
-          onRow={(record) => ({
-            onClick: () => navigate(ROUTER.FM_PROCESS_TEMPLATE_DETAIL.replace(':id', record.id)),
-            className: 'cursor-pointer',
-          })}
-          locale={{ emptyText: 'Chưa có mẫu quy trình nào.' }}
-          pagination={false}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-        />
-      </Card>
-
-      <AdminPaginationCard
+      {/* Table */}
+      <CustomTable
+        dataSource={listData}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        scroll={{ x: 900 }}
+        onRow={(record) => ({
+          onClick: () => navigate(ROUTER.FM_PROCESS_TEMPLATE_DETAIL.replace(':id', record.id)),
+          className: 'cursor-pointer',
+        })}
+        locale={{ emptyText: 'Chưa có mẫu quy trình nào.' }}
         pagination={{
           current: page,
           pageSize,
           total: totalRecords,
           showSizeChanger: true,
           pageSizeOptions: PAGE_SIZE,
-          showTotal: (total, range) => (
-            <span className="text-xs text-gray-500">
-              {range[0]}–{range[1]} /{' '}
-              <strong>{total}</strong>
-            </span>
-          ),
           onChange: (p, ps) => {
             setPage(p)
             setPageSize(ps)
           },
         }}
+        rowClassName="hover:bg-green-50/30 transition-colors"
       />
 
       {/* ── Delete Confirm Modal ── */}

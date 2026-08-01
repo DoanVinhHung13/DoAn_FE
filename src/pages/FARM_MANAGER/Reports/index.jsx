@@ -325,10 +325,7 @@ const ReportStatistics = () => {
         />
       </Card>
 
-      <Card
-        bordered={false}
-        className="admin-filter-card rounded-2xl shadow-sm"
-      >
+      <div className="admin-filter-card rounded-2xl shadow-sm">
         <div className="rounded-xl bg-slate-50 p-4">
           <div className="mb-3 flex items-center gap-2">
             <FieldTimeOutlined className="text-green-700" />
@@ -361,7 +358,7 @@ const ReportStatistics = () => {
             </Button>
           </div>
         </div>
-      </Card>
+      </div>
 
       {reportError && (
         <Alert

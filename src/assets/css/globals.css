@@ -690,13 +690,23 @@ a,
 }
 
 .ant-table-thead > tr > th {
-  background: var(--color-surface-muted) !important;
-  color: var(--color-text-secondary) !important;
+  background: var(--color-primary, #15803d) !important;
+  color: #ffffff !important;
   font-size: 12.5px !important;
   font-weight: 700 !important;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   white-space: nowrap;
+  border-bottom: 1px solid #166534 !important;
+}
+
+.ant-table-thead > tr > th .ant-table-column-sorter,
+.ant-table-thead > tr > th .ant-table-column-title {
+  color: #ffffff !important;
+}
+
+.ant-table-thead > tr > th .anticon svg path {
+  fill: #ffffff !important;
 }
 
 .admin-page-shell .ant-table-thead > tr > th:first-child,

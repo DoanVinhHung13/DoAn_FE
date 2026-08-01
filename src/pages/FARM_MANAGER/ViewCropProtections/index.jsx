@@ -23,7 +23,6 @@ import ROUTER from 'src/router/ROUTER'
 
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
 import InventoryImportModal from 'src/components/Inventory/InventoryImportModal'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
@@ -336,7 +335,7 @@ const ViewCropProtections = () => {
       )}
 
       {/* ── Table card ── */}
-      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card rounded-lg shadow-sm">
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
@@ -374,47 +373,31 @@ const ViewCropProtections = () => {
           </div>
         </div>
 
-      </Card>
+      </div>
 
-      <Card
-        variant="borderless"
-        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
-        <CustomTable
-          dataSource={listData}
-          columns={columns}
-          rowKey="id"
-          loading={loading}
-          scroll={{ x: 1120 }}
-          onRow={(record) => ({
-            onClick: () => navigate(ROUTER.FM_PESTICIDE_DETAIL.replace(':id', record.id)),
-            className: 'cursor-pointer',
-          })}
-          locale={{ emptyText: 'Không có dữ liệu nông dược.' }}
-          pagination={false}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-        />
-      </Card>
-
-      <AdminPaginationCard
+      <CustomTable
+        dataSource={listData}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        scroll={{ x: 1120 }}
+        onRow={(record) => ({
+          onClick: () => navigate(ROUTER.FM_PESTICIDE_DETAIL.replace(':id', record.id)),
+          className: 'cursor-pointer',
+        })}
+        locale={{ emptyText: 'Không có dữ liệu nông dược.' }}
         pagination={{
           current: page,
           pageSize,
           total: totalRecords,
           showSizeChanger: true,
           pageSizeOptions: PAGE_SIZE,
-          showTotal: (total, range) => (
-            <span className="text-xs text-gray-500">
-              {range[0]}–{range[1]} /{' '}
-              <strong>{total}</strong>
-            </span>
-          ),
           onChange: (p, ps) => {
             setPage(p)
             setPageSize(ps)
           },
         }}
+        rowClassName="hover:bg-green-50/30 transition-colors"
       />
 
       {/* Status confirm */}

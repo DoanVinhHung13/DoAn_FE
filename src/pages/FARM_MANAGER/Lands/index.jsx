@@ -21,8 +21,8 @@ import {
 import { MapPinned } from 'lucide-react'
 
 import TitleCustom from 'src/components/TitleCustom'
+
 import CustomTable from 'src/components/Table/CustomTable'
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import LandPlotService from 'src/services/LandPlotService'
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import { invalidCharsRegex } from 'src/utils/helpers'
@@ -318,7 +318,7 @@ const LandsManagement = () => {
       )}
 
       {/* Bảng danh sách + thanh công cụ */}
-      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card rounded-lg shadow-sm">
 
         {/* Thanh tìm kiếm & lọc */}
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -357,44 +357,20 @@ const LandsManagement = () => {
           </div>
         </div>
 
-      </Card>
+      </div>
 
-      <Card
-        variant="borderless"
-        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
-        {/* Bảng dữ liệu */}
-        <CustomTable
-          rowKey={(record) => getItemId(record)}
-          loading={listLoading}
-          columns={columns}
-          dataSource={listData}
-          scroll={{ x: 1180 }}
-          onRow={(record) => ({
-            onClick: () => navigate(routes.detail(getItemId(record))),
-            className: 'cursor-pointer',
-          })}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-          pagination={false}
-          textEmpty={
-            <div className="py-8 text-center">
-              <p className="mb-4 text-slate-500">{EMPTY_LAND_MESSAGE}</p>
-              {canManage && routes.create && (
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => navigate(routes.create)}
-                >
-                  Tạo mới vùng đất
-                </Button>
-              )}
-            </div>
-          }
-        />
-      </Card>
-
-      <AdminPaginationCard
+      {/* Bảng dữ liệu */}
+      <CustomTable
+        rowKey={(record) => getItemId(record)}
+        loading={listLoading}
+        columns={columns}
+        dataSource={listData}
+        scroll={{ x: 1180 }}
+        onRow={(record) => ({
+          onClick: () => navigate(routes.detail(getItemId(record))),
+          className: 'cursor-pointer',
+        })}
+        rowClassName="hover:bg-green-50/30 transition-colors"
         pagination={{
           current: page,
           pageSize,
@@ -406,6 +382,20 @@ const LandsManagement = () => {
             setPageSize(nextSize)
           },
         }}
+        textEmpty={
+          <div className="py-8 text-center">
+            <p className="mb-4 text-slate-500">{EMPTY_LAND_MESSAGE}</p>
+            {canManage && routes.create && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => navigate(routes.create)}
+              >
+                Tạo mới vùng đất
+              </Button>
+            )}
+          </div>
+        }
       />
 
       {/* Modal xác nhận đổi trạng thái */}

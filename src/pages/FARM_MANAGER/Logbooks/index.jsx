@@ -90,7 +90,7 @@ const FarmManagerLogbooks = () => {
         </Text>
       </div>
 
-      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card rounded-lg shadow-sm">
         <div className="admin-toolbar flex flex-wrap items-center gap-2">
           <Input
             value={searchInput}
@@ -117,7 +117,7 @@ const FarmManagerLogbooks = () => {
             />
           </div>
         </div>
-      </Card>
+      </div>
 
       <Card
         variant="borderless"

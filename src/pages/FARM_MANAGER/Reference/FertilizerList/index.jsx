@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Badge, Breadcrumb, Card, Input, Table, Tabs, Tag, Typography } from 'antd'
 import { BookOutlined, SearchOutlined } from '@ant-design/icons'
 import CatalogService from 'src/services/CatalogService'
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
+import TableCustom from 'src/components/Table/CustomTable'
 
 const { Title, Text } = Typography
 
@@ -171,7 +171,7 @@ const FertilizerList = () => {
         </div>
       </div>
 
-      <Card className="admin-filter-card shadow-sm border-gray-100 rounded-2xl" bodyStyle={{ padding: '16px 20px' }}>
+      <div className="admin-filter-card shadow-sm border-gray-100 rounded-2xl p-4 bg-white">
         <Input
           value={searchText}
           placeholder="Tìm kiếm theo tên hoặc mã phân bón..."
@@ -185,7 +185,7 @@ const FertilizerList = () => {
           }}
           className="rounded-xl h-10 border-gray-200"
         />
-      </Card>
+      </div>
 
       {isError && (
         <Alert
@@ -196,43 +196,32 @@ const FertilizerList = () => {
         />
       )}
 
-      <Card className="admin-data-card shadow-lg border-gray-100 rounded-3xl overflow-hidden" bodyStyle={{ padding: 0 }}>
-        <div className="px-6 pt-4 border-b border-gray-100 bg-gray-50/50">
-          <Tabs
-            activeKey={activeTab}
-            onChange={(key) => {
-              setActiveTab(key)
-              setCurrentPage(1)
-            }}
-            items={tabs}
-            tabBarStyle={{ marginBottom: 0 }}
-          />
-        </div>
-        <Table
-          columns={columns}
-          dataSource={paginatedData}
-          loading={isLoading}
-          rowKey="id"
-          scroll={{ x: 1000 }}
-          pagination={false}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-          className="custom-tcvn-table"
-          locale={{ emptyText: 'Không tìm thấy phân bón phù hợp.' }}
+      <div className="px-6 pt-4 border-b border-gray-100 bg-white rounded-t-2xl">
+        <Tabs
+          activeKey={activeTab}
+          onChange={(key) => {
+            setActiveTab(key)
+            setCurrentPage(1)
+          }}
+          items={tabs}
+          tabBarStyle={{ marginBottom: 0 }}
         />
-      </Card>
-
-      <AdminPaginationCard
+      </div>
+      <TableCustom
+        columns={columns}
+        dataSource={paginatedData}
+        loading={isLoading}
+        rowKey="id"
+        scroll={{ x: 1000 }}
+        rowClassName="hover:bg-green-50/30 transition-colors"
+        className="custom-tcvn-table"
+        locale={{ emptyText: 'Không tìm thấy phân bón phù hợp.' }}
         pagination={{
           current: currentPage,
           pageSize,
           total: filteredData.length,
           showSizeChanger: true,
           pageSizeOptions: ['10', '20', '50', '100'],
-          showTotal: (total, range) => (
-            <span className="text-xs text-gray-500">
-              {range[0]}-{range[1]} / <strong>{total.toLocaleString()}</strong> phân bón
-            </span>
-          ),
           onChange: (page, size) => {
             setCurrentPage(page)
             setPageSize(size)

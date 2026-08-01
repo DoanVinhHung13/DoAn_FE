@@ -31,7 +31,6 @@ import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import TableCustom from 'src/components/Table/CustomTable';
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard';
 import { getListPresentationState } from 'src/utils/listPresentation';
 
 const { Text } = Typography;
@@ -422,7 +421,7 @@ const Crops = () => {
         />
       )}
 
-      <Card variant="borderless" className="admin-filter-card crops-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card crops-filter-card rounded-lg shadow-sm">
         <div className="admin-toolbar grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1fr)_180px_180px_220px]">
           <Input
             allowClear
@@ -463,33 +462,15 @@ const Crops = () => {
             className="h-10"
           />
         </div>
-      </Card>
+      </div>
 
-      <Card
-        variant="borderless"
-        className="crops-table-card overflow-hidden rounded-lg shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
-        <TableCustom
-          rowKey={(record) => getItemId(record) || record.cropCode || record.name}
-          loading={isLoading || isFetching}
-          dataSource={paginatedCrops}
-          columns={columns}
-          scroll={{ x: 1120 }}
-          tableLayout="fixed"
-          pagination={false}
-          locale={{
-            emptyText: ['system-empty', 'filtered-empty'].includes(listPresentation) && (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={emptyDescription}
-              />
-            ),
-          }}
-        />
-      </Card>
-
-      <AdminPaginationCard
+      <TableCustom
+        rowKey={(record) => getItemId(record) || record.cropCode || record.name}
+        loading={isLoading || isFetching}
+        dataSource={paginatedCrops}
+        columns={columns}
+        scroll={{ x: 1120 }}
+        tableLayout="fixed"
         pagination={{
           current: visiblePage,
           pageSize,
@@ -500,6 +481,14 @@ const Crops = () => {
             setPage(nextPageSize !== pageSize ? 1 : nextPage);
             setPageSize(nextPageSize);
           },
+        }}
+        locale={{
+          emptyText: ['system-empty', 'filtered-empty'].includes(listPresentation) && (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={emptyDescription}
+            />
+          ),
         }}
       />
 

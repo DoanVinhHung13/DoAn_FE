@@ -28,7 +28,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import CustomTable from 'src/components/Table/CustomTable'
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
 import TitleCustom from 'src/components/TitleCustom'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
@@ -268,7 +267,7 @@ const CultivationLogbookList = () => {
         </Button>
       </div>
 
-      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card rounded-lg shadow-sm">
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
@@ -306,60 +305,44 @@ const CultivationLogbookList = () => {
           </div>
         </div>
 
-      </Card>
+      </div>
 
-      <Card
-        variant="borderless"
-        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
-        {loadError ? (
-          <div className="p-5">
-            <Alert
-              type="error"
-              showIcon
-              message="Không thể tải danh sách nhật ký canh tác."
-              action={<Button size="small" onClick={getList}>Thử lại</Button>}
-              className="rounded-xl"
-            />
-          </div>
-        ) : (
-          <CustomTable
-            dataSource={listData}
-            columns={columns}
-            rowKey="id"
-            loading={loading}
-            scroll={{ x: 1000 }}
-            onRow={(record) => ({
-              onClick: () => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', record.id)),
-              className: 'cursor-pointer',
-            })}
-            locale={{ emptyText: 'Chưa có nhật ký canh tác nào.' }}
-            pagination={false}
-            rowClassName="hover:bg-green-50/30 transition-colors"
+      {loadError ? (
+        <div className="p-5">
+          <Alert
+            type="error"
+            showIcon
+            message="Không thể tải danh sách nhật ký canh tác."
+            action={<Button size="small" onClick={getList}>Thử lại</Button>}
+            className="rounded-xl"
           />
-        )}
-      </Card>
-
-      <AdminPaginationCard
-        pagination={{
-          current: page,
-          pageSize,
-          total: totalRecords,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          showTotal: (total, range) => (
-            <span className="text-xs text-gray-500">
-              {range[0]}–{range[1]} /{' '}
-              <strong>{total}</strong>
-            </span>
-          ),
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-          },
-        }}
-      />
+        </div>
+      ) : (
+        <CustomTable
+          dataSource={listData}
+          columns={columns}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 1000 }}
+          onRow={(record) => ({
+            onClick: () => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', record.id)),
+            className: 'cursor-pointer',
+          })}
+          locale={{ emptyText: 'Chưa có nhật ký canh tác nào.' }}
+          pagination={{
+            current: page,
+            pageSize,
+            total: totalRecords,
+            showSizeChanger: true,
+            pageSizeOptions: PAGE_SIZE,
+            onChange: (p, ps) => {
+              setPage(p)
+              setPageSize(ps)
+            },
+          }}
+          rowClassName="hover:bg-green-50/30 transition-colors"
+        />
+      )}
     </div>
   )
 }

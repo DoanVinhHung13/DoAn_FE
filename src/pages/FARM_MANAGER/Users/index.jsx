@@ -28,7 +28,6 @@ import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
 import CustomTable from "src/components/Table/CustomTable"
-import AdminPaginationCard from "src/components/Table/AdminPaginationCard"
 import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
 import { PAGE_SIZE } from "src/constants/pageSizeOptions"
 import { ROLES } from "src/constants/roles"
@@ -395,7 +394,7 @@ const UsersManagement = () => {
       </div>
 
       {/* ── Table card ── */}
-      <Card variant="borderless" className="admin-filter-card rounded-lg shadow-sm">
+      <div className="admin-filter-card rounded-lg shadow-sm">
         {/* Toolbar */}
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
@@ -455,50 +454,35 @@ const UsersManagement = () => {
           </div>
         </div>
 
-      </Card>
+      </div>
 
-      <Card
-        variant="borderless"
-        className="admin-data-card overflow-hidden rounded-lg shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
-        {/* Table */}
-        <CustomTable
-          dataSource={listData}
-          columns={columns}
-          rowKey="id"
-          loading={loading}
-          onRow={record => {
-            return {
-              onClick: () => {
-                navigate(userDetailRoute.replace(":id", record.id))
-              },
-              className: "cursor-pointer",
-            }
-          }}
-          locale={{ emptyText: "No data available" }}
-          pagination={false}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-        />
-      </Card>
-
-      <AdminPaginationCard
+      {/* Table */}
+      <CustomTable
+        dataSource={listData}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        onRow={record => {
+          return {
+            onClick: () => {
+              navigate(userDetailRoute.replace(":id", record.id))
+            },
+            className: "cursor-pointer",
+          }
+        }}
+        locale={{ emptyText: "No data available" }}
         pagination={{
           current: page,
           pageSize: pageSize,
           total: totalRecords,
           showSizeChanger: true,
           pageSizeOptions: PAGE_SIZE,
-          showTotal: (total, range) => (
-            <span className="text-xs text-gray-500">
-              {range[0]}–{range[1]} / <strong>{total}</strong>
-            </span>
-          ),
           onChange: (p, ps) => {
             setPage(p)
             setPageSize(ps)
           },
         }}
+        rowClassName="hover:bg-green-50/30 transition-colors"
       />
 
       {/* ── Modals ── */}

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Alert, Badge, Breadcrumb, Card, Input, Select, Table, Tag, Typography } from 'antd'
 import { FilterOutlined, SafetyCertificateOutlined, SearchOutlined } from '@ant-design/icons'
 import CatalogService from 'src/services/CatalogService'
-import AdminPaginationCard from 'src/components/Table/AdminPaginationCard'
+import TableCustom from 'src/components/Table/CustomTable'
 
 const { Title, Text } = Typography
 
@@ -187,7 +187,7 @@ const PesticideList = () => {
         </div>
       </div>
 
-      <Card className="admin-filter-card shadow-sm border-gray-100 rounded-2xl" bodyStyle={{ padding: '16px 20px' }}>
+      <div className="admin-filter-card shadow-sm border-gray-100 rounded-2xl p-4 bg-white">
         <div className="admin-toolbar flex flex-col sm:flex-row gap-3">
           <Input
             value={searchText}
@@ -214,7 +214,7 @@ const PesticideList = () => {
             suffixIcon={<FilterOutlined className="text-gray-400" />}
           />
         </div>
-      </Card>
+      </div>
 
       {isError && (
         <Alert
@@ -225,32 +225,21 @@ const PesticideList = () => {
         />
       )}
 
-      <Card className="admin-data-card shadow-lg border-gray-100 rounded-3xl overflow-hidden" bodyStyle={{ padding: 0 }}>
-        <Table
-          columns={columns}
-          dataSource={paginatedData}
-          loading={isLoading}
-          rowKey="id"
-          scroll={{ x: 1000 }}
-          pagination={false}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-          className="custom-tcvn-table"
-          locale={{ emptyText: 'Không tìm thấy nông dược phù hợp.' }}
-        />
-      </Card>
-
-      <AdminPaginationCard
+      <TableCustom
+        columns={columns}
+        dataSource={paginatedData}
+        loading={isLoading}
+        rowKey="id"
+        scroll={{ x: 1000 }}
+        rowClassName="hover:bg-green-50/30 transition-colors"
+        className="custom-tcvn-table"
+        locale={{ emptyText: 'Không tìm thấy nông dược phù hợp.' }}
         pagination={{
           current: currentPage,
           pageSize,
           total: filteredData.length,
           showSizeChanger: true,
           pageSizeOptions: ['10', '20', '50', '100'],
-          showTotal: (total, range) => (
-            <span className="text-xs text-gray-500">
-              {range[0]}-{range[1]} / <strong>{total.toLocaleString()}</strong> nông dược
-            </span>
-          ),
           onChange: (page, size) => {
             setCurrentPage(page)
             setPageSize(size)
