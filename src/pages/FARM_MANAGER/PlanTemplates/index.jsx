@@ -32,15 +32,17 @@ import { useNavigate } from 'react-router-dom'
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
+import { createSTTColumn } from 'src/components/Table/columns.jsx'
+import { createPaginationConfig } from 'src/utils/tableUtils'
 import { TemplateLibraryIcon } from 'src/assets/icon/menu/MenuIcons'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
 import ProcessTemplateService from 'src/services/ProcessTemplateService'
 import ProcessStepService from 'src/services/ProcessStepService'
 import { invalidCharsRegex } from 'src/utils/helpers'
+import { useListManagement } from 'src/hooks/useListManagement'
 
 const normalizeItems = (response) => {
   const payload = response?.data ?? response ?? {}
@@ -59,18 +61,22 @@ const normalizeItems = (response) => {
 const PlanTemplateList = () => {
   const navigate = useNavigate()
 
-  // ── State: filters ──────────────────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
-  const [cropCatalogId, setCropCatalogId] = useState(undefined)
-  const [cropId, setCropId] = useState(undefined)
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  // ── Use List Management Hook ────────────────────────────────────────────────
+  const {
+    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
+    page, setPage, pageSize, setPageSize,
+    filters, updateFilter,
+    listData, setListData, totalRecords, setTotalRecords,
+    loading, setLoading
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { cropCatalogId: undefined, cropId: undefined }
+  })
 
-  // ── State: data ─────────────────────────────────────────────────────────────
-  const [listData, setListData] = useState([])
-  const [totalRecords, setTotalRecords] = useState(0)
-  const [loading, setLoading] = useState(false)
+  const cropCatalogId = filters.cropCatalogId
+  const cropId = filters.cropId
+
+  // ── State: options ──────────────────────────────────────────────────────────
   const [cropCatalogOptions, setCropCatalogOptions] = useState([])
   const [cropOptions, setCropOptions] = useState([])
   const [loadingCropCatalogs, setLoadingCropCatalogs] = useState(false)
@@ -119,7 +125,7 @@ const PlanTemplateList = () => {
     } finally {
       setLoading(false)
     }
-  }, [cropCatalogId, cropId, page, pageSize, search])
+  }, [cropCatalogId, cropId, page, pageSize, search, setListData, setTotalRecords, setLoading])
 
   useEffect(() => {
     getList()
@@ -179,20 +185,6 @@ const PlanTemplateList = () => {
   }, [])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      message.error('Ký tự tìm kiếm không hợp lệ')
-      return
-    }
-    setSearch(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
-
-  const handleClearSearch = () => {
-    setSearchInput('')
-    setSearch('')
-    setPage(1)
-  }
 
   const handleDelete = async () => {
     if (!deleteModal.item) return
@@ -208,17 +200,7 @@ const PlanTemplateList = () => {
 
   // ── Table columns ────────────────────────────────────────────────────────────
   const columns = [
-    {
-      title: 'STT',
-      key: 'stt',
-      width: 56,
-      align: 'center',
-      render: (_, __, index) => (
-        <span className="text-sm font-medium text-gray-400">
-          {(page - 1) * pageSize + index + 1}
-        </span>
-      ),
-    },
+    createSTTColumn(page, pageSize),
     {
       title: 'Tên mẫu quy trình',
       dataIndex: 'name',
@@ -354,9 +336,8 @@ const PlanTemplateList = () => {
             showSearch
             optionFilterProp="label"
             onChange={(value) => {
-              setCropCatalogId(value)
-              setCropId(value ? cropId : undefined)
-              setPage(1)
+              updateFilter('cropCatalogId', value)
+              if (!value) updateFilter('cropId', undefined)
             }}
             placeholder="Lọc theo danh mục cây trồng"
             className="w-64 h-10"
@@ -369,10 +350,7 @@ const PlanTemplateList = () => {
             allowClear
             showSearch
             optionFilterProp="label"
-            onChange={(value) => {
-              setCropId(value)
-              setPage(1)
-            }}
+            onChange={(value) => updateFilter('cropId', value)}
             placeholder="Lọc theo cây trồng"
             className="w-64 h-10"
             aria-label="Lọc mẫu theo cây trồng"
@@ -408,17 +386,10 @@ const PlanTemplateList = () => {
           className: 'cursor-pointer',
         })}
         locale={{ emptyText: 'Chưa có mẫu quy trình nào.' }}
-        pagination={{
-          current: page,
-          pageSize,
-          total: totalRecords,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-          },
-        }}
+        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
+          setPage(p)
+          setPageSize(ps)
+        })}
         rowClassName="hover:bg-green-50/30 transition-colors"
       />
 

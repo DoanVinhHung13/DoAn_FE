@@ -26,15 +26,14 @@ import {
   InboxOutlined,
   PlusOutlined,
   ReloadOutlined,
-  SearchOutlined,
   StopOutlined,
+  SearchOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
   Button,
   Card,
   Input,
-  message,
   Select,
   Tag,
   Tooltip,
@@ -46,21 +45,44 @@ import ROUTER from 'src/router/ROUTER'
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
+import { createSTTColumn, createStatusColumn } from 'src/components/Table/columns.jsx'
+import { createPaginationConfig } from 'src/utils/tableUtils'
 import { FertilizerIcon } from 'src/assets/icon/menu/MenuIcons'
 import InventoryImportModal from 'src/components/Inventory/InventoryImportModal'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
 import FertilizerService from 'src/services/FertilizerService'
-import { invalidCharsRegex } from 'src/utils/helpers'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
+import { useListManagement } from 'src/hooks/useListManagement'
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const ViewFertilizers = () => {
   const navigate = useNavigate()
   const { getCombo, getDescription } = useSystemKey()
 
+  // ── Use List Management Hook ────────────────────────────────────────────────
+  const {
+    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
+    page, setPage, pageSize, setPageSize,
+    filters, updateFilter,
+    listData, setListData, totalRecords, setTotalRecords,
+    loading, setLoading
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { category: 'all', status: 'all' }
+  })
+
+  const categoryFilter = filters.category
+  const statusFilter = filters.status
+
+  // ── State: modals ───────────────────────────────────────────────────────────
+  const [statusLoading, setStatusLoading] = useState(false)
+  const [statusModal, setStatusModal] = useState({ open: false, item: null })
+  const [importModal, setImportModal] = useState({ open: false, item: null })
+  const [inUseAlert, setInUseAlert] = useState(false)
+
+  // ── Options ─────────────────────────────────────────────────────────────────
   const statusOptions = getCombo(SYSTEM_KEY.STATUS)
   const selectStatusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
@@ -79,25 +101,6 @@ const ViewFertilizers = () => {
     })),
   ]
 
-  // ── State: filters ──────────────────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-
-  // ── State: data ─────────────────────────────────────────────────────────────
-  const [listData, setListData] = useState([])
-  const [totalRecords, setTotalRecords] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [statusLoading, setStatusLoading] = useState(false)
-
-  // ── State: modals ───────────────────────────────────────────────────────────
-  const [statusModal, setStatusModal] = useState({ open: false, item: null })
-  const [importModal, setImportModal] = useState({ open: false, item: null })
-  const [inUseAlert, setInUseAlert] = useState(false)
-
   // ── Fetch list ──────────────────────────────────────────────────────────────
   const getList = useCallback(async () => {
     try {
@@ -115,27 +118,13 @@ const ViewFertilizers = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, categoryFilter, statusFilter])
+  }, [page, pageSize, search, categoryFilter, statusFilter, setLoading, setListData, setTotalRecords])
 
   useEffect(() => {
     getList()
   }, [getList])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      message.error('Ký tự tìm kiếm không hợp lệ')
-      return
-    }
-    setSearch(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
-
-  const handleClearSearch = () => {
-    setSearchInput('')
-    setSearch('')
-    setPage(1)
-  }
 
   // Kiểm tra BR_FER_02 trước khi mở modal Sửa
   const handleOpenEdit = (record) => {
@@ -175,17 +164,7 @@ const ViewFertilizers = () => {
 
   // ── Table columns ────────────────────────────────────────────────────────────
   const columns = [
-    {
-      title: 'STT',
-      key: 'stt',
-      width: 56,
-      align: 'center',
-      render: (_, __, index) => (
-        <span className="text-sm font-medium text-gray-400">
-          {(page - 1) * pageSize + index + 1}
-        </span>
-      ),
-    },
+    createSTTColumn(page, pageSize),
     {
       title: 'Tên phân bón',
       dataIndex: 'name',
@@ -239,35 +218,12 @@ const ViewFertilizers = () => {
         </span>
       ),
     },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'isActive',
-      key: 'isActive',
-      width: 165,
-      render: (isActive) => {
-        const active = isActive !== false
-        const sysVal = active ? 'ACTIVE' : 'INACTIVE'
-        const label = getDescription(SYSTEM_KEY.STATUS, sysVal) || (active ? 'Hoạt động' : 'Vô hiệu')
-        return (
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${active ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
-              }`}
-          >
-            {active ? (
-              <>
-                <CheckCircleOutlined />
-                <span>{label}</span>
-              </>
-            ) : (
-              <>
-                <StopOutlined />
-                <span>{label}</span>
-              </>
-            )}
-          </div>
-        )
-      },
-    },
+    createStatusColumn({
+      getLabel: (isActive) => {
+        const sysVal = isActive ? 'ACTIVE' : 'INACTIVE'
+        return getDescription(SYSTEM_KEY.STATUS, sysVal) || (isActive ? 'Hoạt động' : 'Vô hiệu')
+      }
+    }),
     {
       title: 'Hành động',
       key: 'actions',
@@ -395,19 +351,13 @@ const ViewFertilizers = () => {
           />
           <Select
             value={categoryFilter}
-            onChange={(val) => {
-              setCategoryFilter(val)
-              setPage(1)
-            }}
+            onChange={(val) => updateFilter('category', val)}
             className="h-10 rounded-xl min-w-[160px]"
             options={selectCategoryOptions}
           />
           <Select
             value={statusFilter}
-            onChange={(val) => {
-              setStatusFilter(val)
-              setPage(1)
-            }}
+            onChange={(val) => updateFilter('status', val)}
             className="h-10 rounded-xl min-w-[160px]"
             options={selectStatusOptions}
           />
@@ -442,17 +392,10 @@ const ViewFertilizers = () => {
           className: 'cursor-pointer',
         })}
         locale={{ emptyText: 'Không có dữ liệu phân bón.' }}
-        pagination={{
-          current: page,
-          pageSize,
-          total: totalRecords,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-          },
-        }}
+        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
+          setPage(p)
+          setPageSize(ps)
+        })}
         rowClassName="hover:bg-green-50/30 transition-colors"
       />
 

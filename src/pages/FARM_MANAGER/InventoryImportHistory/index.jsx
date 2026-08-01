@@ -9,13 +9,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
+import { createSTTColumn } from 'src/components/Table/columns.jsx'
+import { createPaginationConfig } from 'src/utils/tableUtils'
 import { ImportHistoryIcon } from 'src/assets/icon/menu/MenuIcons'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
-import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import InventoryService from 'src/services/InventoryService'
 import { normalizeApiError } from 'src/services/core/apiError'
 import { formatDate as formatConfiguredDate } from 'src/utils/dateFormatters'
+import { useListManagement } from 'src/hooks/useListManagement'
 
 const { RangePicker } = DatePicker
 
@@ -114,15 +116,20 @@ const getNote = record =>
   record.note || record.description || record.remarks || record.reason || EMPTY_VALUE
 
 const InventoryImportHistory = () => {
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [dateRange, setDateRange] = useState([])
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-  const [rows, setRows] = useState([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(false)
+  // ── Use List Management Hook ────────────────────────────────────────────────
+  const {
+    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
+    page, setPage, pageSize, setPageSize,
+    filters, updateFilter,
+    listData: rows, setListData: setRows, totalRecords: total, setTotalRecords: setTotal,
+    loading, setLoading
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { typeFilter: 'all', dateRange: [] }
+  })
+
+  const typeFilter = filters.typeFilter
+  const dateRange = filters.dateRange
 
   const getList = useCallback(async () => {
     try {
@@ -151,32 +158,15 @@ const InventoryImportHistory = () => {
     } finally {
       setLoading(false)
     }
-  }, [dateRange, page, pageSize, search, typeFilter])
+  }, [dateRange, page, pageSize, search, typeFilter, setLoading, setRows, setTotal])
 
   useEffect(() => {
     getList()
   }, [getList])
 
-  const handleSearch = () => {
-    setSearch(searchInput.trim())
-    setPage(1)
-  }
-
-  const handleDateChange = values => {
-    setDateRange(values || [])
-    setPage(1)
-  }
-
-  const columns = useMemo(() => [
-    {
-      title: 'STT',
-      key: 'index',
-      width: 64,
-      align: 'center',
-      render: (_, __, index) => (
-        <span className="font-medium text-gray-400">{(page - 1) * pageSize + index + 1}</span>
-      ),
-    },
+  // ── Table columns ────────────────────────────────────────────────────────────
+  const columns = [
+    createSTTColumn(page, pageSize),
     {
       title: 'Loại vật tư',
       key: 'materialType',
@@ -195,31 +185,41 @@ const InventoryImportHistory = () => {
     {
       title: 'Số lượng đơn vị',
       key: 'quantity',
-      width: 180,
+      width: 160,
       align: 'right',
       render: (_, record) => {
-        const quantity = getQuantity(record)
-        const formattedQuantity = quantity == null ? EMPTY_VALUE : numberFormatter.format(Number(quantity))
-        return <span className="font-semibold tabular-nums text-emerald-700">{formattedQuantity} {getUnit(record)}</span>
+        const qty = getQuantity(record)
+        const unit = getUnit(record)
+        return qty != null ? (
+          <span className="font-semibold text-blue-600">
+            {numberFormatter.format(Number(qty))} {unit}
+          </span>
+        ) : (
+          EMPTY_VALUE
+        )
       },
     },
     {
       title: 'Ngày nhập',
       key: 'date',
-      width: 140,
-      render: (_, record) => <span className="text-gray-700">{formatDate(getTransactionDate(record))}</span>,
+      width: 130,
+      render: (_, record) => formatDate(getTransactionDate(record)),
     },
     {
       title: 'Ghi chú',
       key: 'note',
       width: 300,
-      render: (_, record) => (
-        <span className={`break-words ${getNote(record) === EMPTY_VALUE ? 'text-gray-300' : 'text-gray-600'}`}>
-          {getNote(record)}
-        </span>
-      ),
+      ellipsis: { showTitle: false },
+      render: (_, record) => {
+        const note = getNote(record)
+        return note !== EMPTY_VALUE ? (
+          <span className="text-gray-600">{note}</span>
+        ) : (
+          <span className="text-gray-300">{EMPTY_VALUE}</span>
+        )
+      },
     },
-  ], [page, pageSize])
+  ]
 
   return (
     <div className="admin-compact-list space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
@@ -254,17 +254,14 @@ const InventoryImportHistory = () => {
           />
           <Select
             value={typeFilter}
-            onChange={value => {
-              setTypeFilter(value)
-              setPage(1)
-            }}
+            onChange={(val) => updateFilter('typeFilter', val)}
             options={MATERIAL_TYPE_OPTIONS}
             aria-label="Lọc theo loại vật tư"
             className="w-full h-10 rounded-xl xl:w-52"
           />
           <RangePicker
             value={dateRange}
-            onChange={handleDateChange}
+            onChange={(dates) => updateFilter('dateRange', dates || [])}
             format="DD/MM/YYYY"
             placeholder={['Từ ngày', 'Đến ngày']}
             aria-label="Lọc theo khoảng ngày nhập"
@@ -292,19 +289,11 @@ const InventoryImportHistory = () => {
         rowKey={record => record.id || record.transactionId || `${getTransactionDate(record)}-${getMaterialName(record)}`}
         loading={loading}
         scroll={{ x: 1050 }}
-        locale={{ emptyText: 'Chưa có lịch sử nhập vật tư.' }}
-        pagination={{
-          current: page,
-          pageSize,
-          total,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          onChange: (nextPage, nextPageSize) => {
-            setPage(nextPage)
-            setPageSize(nextPageSize)
-          },
-        }}
-        rowClassName="hover:bg-green-50/30 transition-colors"
+        locale={{ emptyText: 'Không có lịch sử nhập kho.' }}
+        pagination={createPaginationConfig(page, pageSize, total, (p, ps) => {
+          setPage(p)
+          setPageSize(ps)
+        })}
       />
     </div>
   )

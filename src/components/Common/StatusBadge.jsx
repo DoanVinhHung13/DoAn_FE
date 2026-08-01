@@ -1,8 +1,9 @@
 /**
  * StatusBadge — Badge trạng thái dùng chung
- * Dùng nhất quán qua các màn: Plan Template, Season, Field Log
+ * Supports both old API (status string) and new API (isActive boolean)
  */
 import PropTypes from 'prop-types'
+import { CheckCircleOutlined, StopOutlined } from '@ant-design/icons'
 
 const STATUS_MAP = {
   // Season / general statuses
@@ -24,7 +25,35 @@ const STATUS_MAP = {
 
 const FALLBACK = { label: '', bg: 'bg-gray-50', text: 'text-gray-500', dot: 'bg-gray-300' }
 
-const StatusBadge = ({ status, label, showDot = true, className = '' }) => {
+const StatusBadge = ({ 
+  status, 
+  isActive, 
+  activeLabel, 
+  inactiveLabel, 
+  label, 
+  showDot = true, 
+  showIcon = false,
+  className = '' 
+}) => {
+  // Support both old API (status string) and new API (isActive boolean)
+  if (isActive !== undefined) {
+    const active = isActive !== false
+    const displayLabel = active ? (activeLabel || 'Hoạt động') : (inactiveLabel || 'Vô hiệu')
+    const bgColor = active ? 'bg-green-50' : 'bg-red-50'
+    const textColor = active ? 'text-green-700' : 'text-red-600'
+    const dotColor = active ? 'bg-green-500' : 'bg-red-500'
+    const Icon = active ? CheckCircleOutlined : StopOutlined
+
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold cursor-default select-none ${bgColor} ${textColor} ${className}`}>
+        {showIcon && <Icon className="text-xs" />}
+        {showDot && !showIcon && <span className={`h-2 w-2 rounded-full ${dotColor}`} />}
+        <span>{displayLabel}</span>
+      </span>
+    )
+  }
+
+  // Old behavior for status string
   const key = String(status || '').toLowerCase()
   const config = STATUS_MAP[key] || FALLBACK
   const displayLabel = label || config.label || status
@@ -42,9 +71,13 @@ const StatusBadge = ({ status, label, showDot = true, className = '' }) => {
 }
 
 StatusBadge.propTypes = {
-  status: PropTypes.string.isRequired,
+  status: PropTypes.string,
+  isActive: PropTypes.bool,
+  activeLabel: PropTypes.string,
+  inactiveLabel: PropTypes.string,
   label: PropTypes.string,
   showDot: PropTypes.bool,
+  showIcon: PropTypes.bool,
   className: PropTypes.string,
 }
 

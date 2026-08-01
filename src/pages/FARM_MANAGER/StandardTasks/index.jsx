@@ -13,9 +13,10 @@ import { useNavigate } from 'react-router-dom'
 
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
+import { createSTTColumn } from 'src/components/Table/columns.jsx'
+import { createPaginationConfig } from 'src/utils/tableUtils'
 import { TaskCatalogIcon } from 'src/assets/icon/menu/MenuIcons'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
 
 import TaskCatalogService from 'src/services/TaskCatalogService'
@@ -23,6 +24,7 @@ import { normalizeApiError } from 'src/services/core/apiError'
 import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
 import { invalidCharsRegex } from 'src/utils/helpers'
+import { useListManagement } from 'src/hooks/useListManagement'
 
 const unwrapItems = (response) => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
@@ -32,22 +34,27 @@ const unwrapItems = (response) => {
 // ── Main Component ────────────────────────────────────────────────────────────
 const TasksManagement = () => {
   const navigate = useNavigate()
-  // ── State: filters ──────────────────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-  const [cropCatalogId, setCropCatalogId] = useState()
-  const [cropId, setCropId] = useState()
+
+  // ── Use List Management Hook ────────────────────────────────────────────────
+  const {
+    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
+    page, setPage, pageSize, setPageSize,
+    filters, updateFilter,
+    listData, setListData, totalRecords, setTotalRecords,
+    loading, setLoading
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { cropCatalogId: undefined, cropId: undefined }
+  })
+
+  const cropCatalogId = filters.cropCatalogId
+  const cropId = filters.cropId
+
+  // ── State: options ──────────────────────────────────────────────────────────
   const [cropCatalogOptions, setCropCatalogOptions] = useState([])
   const [cropOptions, setCropOptions] = useState([])
 
-  // ── State: data ─────────────────────────────────────────────────────────────
-  const [listData, setListData] = useState([])
-  const [totalRecords, setTotalRecords] = useState(0)
-  const [loading, setLoading] = useState(false)
-
-  // ── Fetch list (mock) ───────────────────────────────────────────────────────
+  // ── Fetch list ──────────────────────────────────────────────────────────────
   const getList = useCallback(async () => {
     try {
       setLoading(true)
@@ -72,7 +79,7 @@ const TasksManagement = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, cropCatalogId, cropId])
+  }, [page, pageSize, search, cropCatalogId, cropId, setListData, setTotalRecords, setLoading])
 
   useEffect(() => {
     const loadCropOptions = async () => {
@@ -95,30 +102,14 @@ const TasksManagement = () => {
   }, [getList])
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      message.error('Ký tự tìm kiếm không hợp lệ')
-      return
-    }
-    setSearch(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
-
-  const handleClearSearch = () => {
-    setSearchInput('')
-    setSearch('')
-    setPage(1)
-  }
-
   const handleCatalogChange = (value) => {
-    setCropCatalogId(value)
+    updateFilter('cropCatalogId', value)
     if (value && cropId) {
       const selectedCrop = cropOptions.find(item => item.id === cropId)
       if (selectedCrop && String(selectedCrop.cropCatalogId) !== String(value)) {
-        setCropId(undefined)
+        updateFilter('cropId', undefined)
       }
     }
-    setPage(1)
   }
 
   const filteredCropOptions = cropOptions.filter(item =>
@@ -146,17 +137,7 @@ const TasksManagement = () => {
 
   // ── Table columns ─────────────────────────────────────────────────────────────
   const columns = [
-    {
-      title: 'STT',
-      key: 'stt',
-      width: 56,
-      align: 'center',
-      render: (_, __, index) => (
-        <span className="text-sm font-medium text-gray-400">
-          {(page - 1) * pageSize + index + 1}
-        </span>
-      ),
-    },
+    createSTTColumn(page, pageSize),
     {
       title: 'Tên công việc',
       dataIndex: 'name',
@@ -283,8 +264,7 @@ const TasksManagement = () => {
             allowClear
             showSearch
             optionFilterProp="label"
-            value={cropId}
-            onChange={(value) => { setCropId(value); setPage(1) }}
+            onChange={(value) => updateFilter('cropId', value)}
             options={filteredCropOptions.map(item => ({ value: item.id, label: item.name }))}
             placeholder="Lọc theo cây trồng"
             className="min-w-[180px] h-10"
@@ -319,18 +299,11 @@ const TasksManagement = () => {
           onClick: () => navigate(ROUTER.FM_TASK_CATALOG_DETAIL.replace(':id', record.id)),
           className: 'cursor-pointer',
         })}
-        locale={{ emptyText: 'Không có dữ liệu công việc.' }}
-        pagination={{
-          current: page,
-          pageSize,
-          total: totalRecords,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-          },
-        }}
+        locale={{ emptyText: 'Chưa có công việc mẫu nào.' }}
+        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
+          setPage(p)
+          setPageSize(ps)
+        })}
         rowClassName="hover:bg-blue-50/30 transition-colors"
       />
     </div>

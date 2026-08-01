@@ -14,15 +14,16 @@ import {
   Typography,
 } from 'antd';
 import {
-  CheckCircleOutlined,
   EditOutlined,
   EyeOutlined,
   SearchOutlined,
   StopOutlined,
+  CheckCircleOutlined,
 } from '@ant-design/icons';
 import { CropIcon } from 'src/assets/icon/menu/MenuIcons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import TitleCustom from 'src/components/TitleCustom';
+import StatusBadge from 'src/components/Common/StatusBadge';
 import CropManagementService from 'src/services/CropManagementService';
 import { isNotFoundError } from 'src/services/core/apiError';
 import CropCatalogService from 'src/services/CropCatalogService';
@@ -312,17 +313,7 @@ const Crops = () => {
       align: 'center',
       render: (_, record) => {
         const isActive = isCropActive(record);
-        return (
-          <div
-            className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${isActive
-              ? 'bg-green-50 text-green-700'
-              : 'bg-red-50 text-red-600'
-              }`}
-          >
-            {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
-            {getStatusLabel(record)}
-          </div>
-        );
+        return <StatusBadge isActive={isActive} activeLabel={getStatusLabel(record)} inactiveLabel={getStatusLabel(record)} />;
       },
     },
     {

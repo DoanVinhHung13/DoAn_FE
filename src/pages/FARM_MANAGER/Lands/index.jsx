@@ -20,11 +20,13 @@ import {
 } from '@ant-design/icons'
 import TitleCustom from 'src/components/TitleCustom'
 import CustomTable from 'src/components/Table/CustomTable'
+import { createSTTColumn } from 'src/components/Table/columns.jsx'
+import { createPaginationConfig } from 'src/utils/tableUtils'
 import LandPlotService from 'src/services/LandPlotService'
 import { useSystemKey } from 'src/hooks/useSystemKey'
-import { usePagination } from 'src/hooks/usePagination'
-import { useSearchInput } from 'src/hooks/useSearchInput'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
+import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
+import { useListManagement } from 'src/hooks/useListManagement'
 import {
   EMPTY_LAND_MESSAGE,
   MSG_LM_26,
@@ -47,14 +49,21 @@ const LandsManagement = () => {
   const { canManage, routes } = useLandPlotAccess()
   const { getCombo } = useSystemKey()
 
-  // ── Bộ lọc & phân trang ──────────────────────────────────────────────────
-  const pagination = usePagination()
-  const search = useSearchInput(() => pagination.reset())
-  const [status, setStatus] = useState('all')
+  // ── Use List Management Hook ────────────────────────────────────────────────
+  const {
+    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
+    page, setPage, pageSize, setPageSize,
+    filters, updateFilter,
+    listData, setListData, totalRecords, setTotalRecords,
+    loading: listLoading, setLoading: setListLoading
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { status: 'all' }
+  })
+
+  const status = filters.status
 
   // ── Danh sách vùng trồng ─────────────────────────────────────────────────
-  const [listData, setListData] = useState([])
-  const [listLoading, setListLoading] = useState(false)
   const [listError, setListError] = useState(null)
   const [weatherByPlotId, setWeatherByPlotId] = useState({})
 
@@ -64,11 +73,11 @@ const LandsManagement = () => {
 
   // ── Tham số query (re-compute khi bộ lọc / phân trang thay đổi) ──────────
   const queryParams = useMemo(() => ({
-    PageIndex: pagination.page,
-    PageSize: pagination.pageSize,
-    SearchKeyword: search.search || undefined,
+    PageIndex: page,
+    PageSize: pageSize,
+    SearchKeyword: search || undefined,
     Status: status === 'all' ? undefined : status,
-  }), [pagination.page, pagination.pageSize, search.search, status])
+  }), [page, pageSize, search, status])
 
   // ── API: lấy danh sách vùng trồng ────────────────────────────────────────
   const fetchLandPlots = useCallback(async () => {
@@ -78,7 +87,7 @@ const LandsManagement = () => {
       const response = await LandPlotService.getLandPlots(queryParams)
       const normalized = normalizeLandPlotResponse(response)
       setListData(normalized.items)
-      pagination.setTotal(normalized.total)
+      setTotalRecords(normalized.total)
     } catch (err) {
       setListError(err)
     } finally {
@@ -139,14 +148,6 @@ const LandsManagement = () => {
     }
   }
 
-  // ── Xử lý tìm kiếm ───────────────────────────────────────────────────────
-
-  const handleClearSearch = () => {
-    setSearchInput('')
-    setKeyword('')
-    setPage(1)
-  }
-
   // ── Tùy chọn bộ lọc trạng thái ───────────────────────────────────────────
   const statusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
@@ -158,12 +159,7 @@ const LandsManagement = () => {
 
   // ── Định nghĩa cột bảng ───────────────────────────────────────────────────
   const columns = [
-    {
-      title: 'STT',
-      width: 70,
-      align: 'center',
-      render: (_, __, index) => (page - 1) * pageSize + index + 1,
-    },
+    createSTTColumn(page, pageSize, { width: 70 }),
     {
       title: 'Tên vùng trồng',
       dataIndex: 'name',
@@ -323,7 +319,7 @@ const LandsManagement = () => {
             className="h-10 min-w-[150px] rounded-xl"
             value={status}
             options={statusOptions}
-            onChange={(value) => { setStatus(value); setPage(1) }}
+            onChange={(value) => updateFilter('status', value)}
           />
 
           <div className="ml-auto flex gap-2">
@@ -357,17 +353,10 @@ const LandsManagement = () => {
           className: 'cursor-pointer',
         })}
         rowClassName="hover:bg-green-50/30 transition-colors"
-        pagination={{
-          current: page,
-          pageSize,
-          total: totalRecords,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          onChange: (nextPage, nextSize) => {
-            setPage(nextPage)
-            setPageSize(nextSize)
-          },
-        }}
+        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
+          setPage(p)
+          setPageSize(ps)
+        })}
         textEmpty={
           <div className="py-8 text-center">
             <p className="mb-4 text-slate-500">{EMPTY_LAND_MESSAGE}</p>

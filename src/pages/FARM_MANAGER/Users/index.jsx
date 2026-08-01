@@ -15,7 +15,6 @@ import {
   Button,
   Card,
   Input,
-  message,
   Select,
   Tooltip,
 } from "antd"
@@ -24,8 +23,9 @@ import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
 import CustomTable from "src/components/Table/CustomTable"
+import { createSTTColumn, createStatusColumn } from "src/components/Table/columns.jsx"
+import { createPaginationConfig } from "src/utils/tableUtils"
 import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
-import { PAGE_SIZE } from "src/constants/pageSizeOptions"
 import { ROLES } from "src/constants/roles"
 import UserService from "src/services/UserService"
 
@@ -33,9 +33,10 @@ import CustomModal from "src/components/Modal/CustomModal"
 import TitleCustom from "src/components/TitleCustom"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
+import { useListManagement } from "src/hooks/useListManagement"
 import ROUTER from "src/router/ROUTER"
 import { formatDate } from "src/utils/dateFormatters"
-import { getAvatarUrl, invalidCharsRegex } from "src/utils/helpers"
+import { getAvatarUrl } from "src/utils/helpers"
 import AssignRolesModal from "./components/AssignRolesModal"
 import CreateAccountModal from "./components/CreateAccountModal"
 import ResetPasswordModal from "./components/ResetPasswordModal"
@@ -86,6 +87,22 @@ const UsersManagement = () => {
 
   const { getOptions, getDescription } = useSystemKey()
 
+  // ── Use List Management Hook ────────────────────────────────────────
+  const {
+    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
+    page, setPage, pageSize, setPageSize,
+    filters, updateFilter,
+    listData, setListData, totalRecords, setTotalRecords,
+    loading, setLoading
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { role: undefined, status: 'all' }
+  })
+
+  const roleFilter = filters.role
+  const statusFilter = filters.status
+
+  // ── Options ────────────────────────────────────────────────
   const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option => {
     const role = option.codeValue || option.value
     return !(isFarmSupervisor && role === ROLES.FARM_SUPERVISOR)
@@ -95,14 +112,7 @@ const UsersManagement = () => {
     ...getOptions(SYSTEM_KEY.STATUS),
   ]
 
-  // ── State ──────────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState("")
-  const [search, setSearch] = useState("")
-  const [roleFilter, setRoleFilter] = useState(undefined)
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-
+  // ── Modal State ────────────────────────────────────────────
   const [formModal, setFormModal] = useState({ open: false, user: null })
   const [createAccountModalOpen, setCreateAccountModalOpen] = useState(false)
   const [accountCandidates, setAccountCandidates] = useState([])
@@ -110,11 +120,6 @@ const UsersManagement = () => {
   const [rolesModal, setRolesModal] = useState({ open: false, user: null })
   const [pwdModal, setPwdModal] = useState({ open: false, user: null })
   const [statusModal, setStatusModal] = useState({ open: false, user: null })
-
-  // ── Data fetching ──────────────────────────────────────────
-  const [listData, setListData] = useState([])
-  const [totalRecords, setTotalRecords] = useState(0)
-  const [loading, setLoading] = useState(false)
 
   const getList = useCallback(async () => {
     try {
@@ -132,7 +137,7 @@ const UsersManagement = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, roleFilter, search, statusFilter])
+  }, [page, pageSize, roleFilter, search, statusFilter, setLoading, setListData, setTotalRecords])
 
   const getAccountCandidates = useCallback(async () => {
     if (!canManageUsers) return
@@ -172,15 +177,6 @@ const UsersManagement = () => {
       setStatusLoading(false)
     }
   }
-
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      message.error("Ký tự tìm kiếm không hợp lệ")
-      return
-    }
-    setSearch(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
 
   // ── Table columns ──────────────────────────────────────────
   const columns = [
@@ -252,38 +248,14 @@ const UsersManagement = () => {
       ),
       width: 120,
     },
-    {
+    createStatusColumn({
       title: "Trạng thái",
-      dataIndex: "isActive",
-      key: "isActive",
-      render: isActive => {
-        // Ánh xạ boolean sang SystemKey value để lấy mô tả
-        const sysVal = isActive ? "ACTIVE" : "INACTIVE"
-        const statusDesc =
-          getDescription(SYSTEM_KEY.STATUS, sysVal) ||
-          (isActive ? "Hoạt động" : "Vô hiệu")
-
-        return (
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none
-                ${isActive ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}
-          >
-            {isActive ? (
-              <>
-                <CheckCircleOutlined />
-                <span>{statusDesc}</span>
-              </>
-            ) : (
-              <>
-                <StopOutlined />
-                <span>{statusDesc}</span>
-              </>
-            )}
-          </div>
-        )
-      },
       width: 150,
-    },
+      getLabel: (isActive) => {
+        const sysVal = isActive ? "ACTIVE" : "INACTIVE"
+        return getDescription(SYSTEM_KEY.STATUS, sysVal) || (isActive ? "Hoạt động" : "Vô hiệu")
+      }
+    }),
 
     {
       title: "Hành động",
@@ -389,10 +361,7 @@ const UsersManagement = () => {
             className="h-10 rounded-xl min-w-[150px]"
             allowClear
             value={roleFilter}
-            onChange={val => {
-              setRoleFilter(val)
-              setPage(1)
-            }}
+            onChange={val => updateFilter('role', val)}
             options={roleOptions.map(opt => ({
               value: opt.codeValue || opt.value,
               label: opt.label || opt.description,
@@ -403,10 +372,7 @@ const UsersManagement = () => {
             className="h-10 rounded-xl min-w-[150px]"
             allowClear
             value={statusFilter}
-            onChange={value => {
-              setStatusFilter(value)
-              setPage(1)
-            }}
+            onChange={value => updateFilter('status', value)}
             options={selectStatusOptions}
           />
           <div className="flex gap-2 ml-auto">
@@ -444,17 +410,10 @@ const UsersManagement = () => {
           }
         }}
         locale={{ emptyText: "No data available" }}
-        pagination={{
-          current: page,
-          pageSize: pageSize,
-          total: totalRecords,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-          },
-        }}
+        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
+          setPage(p)
+          setPageSize(ps)
+        })}
         rowClassName="hover:bg-green-50/30 transition-colors"
       />
 
