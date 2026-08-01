@@ -11,7 +11,7 @@ export const TitleCustomWrapper = styled.div`
     width: 100%;
     min-width: 0;
     min-height: 40px;
-    color: ${({ theme }) => theme.colors.textPrimary};
+    color: #15803d;
     font-family: ${({ theme }) => theme.fonts.family};
     position: relative;
     font-size: ${({ theme }) => theme.fonts.sizeXl}px;
