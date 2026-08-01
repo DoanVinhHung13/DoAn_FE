@@ -21,7 +21,7 @@ const PageHeader = ({ icon: Icon, title, subtitle, extra }) => {
             display: 'flex',
             alignItems: 'center',
           }}>
-            <Icon className="text-3xl" />
+            <Icon style={{ fontSize: '32px' }} />
           </div>
         )}
         <div>

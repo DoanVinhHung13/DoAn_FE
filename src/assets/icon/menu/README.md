@@ -44,7 +44,7 @@ Thư mục này chứa các custom SVG icons được thiết kế riêng cho t�
 
 ## Cách sử dụng trong Menu
 
-Icons đã được tích hợp sẵn vào `MenuItem.jsx`. Menu sẽ tự động hiển thị icon tương ứng.
+Icons đã được tích hợp sẵn vào `MenuItem.jsx`. Menu sẽ tự động hiển thị icon tương ứng với kích thước 18px.
 
 ```jsx
 // Ví dụ trong MenuItem.jsx
@@ -53,12 +53,12 @@ import { DashboardIcon, UserManagementIcon } from 'src/assets/icon/menu/MenuIcon
 export const farmManagerItem = () => [
   {
     key: ROUTER.FM_DASHBOARD,
-    icon: <DashboardIcon className="text-lg" />,
+    icon: <DashboardIcon style={{ fontSize: '18px' }} />,
     label: 'Tổng quan',
   },
   {
     key: ROUTER.FM_USERS,
-    icon: <UserManagementIcon className="text-lg" />,
+    icon: <UserManagementIcon style={{ fontSize: '18px' }} />,
     label: 'Quản lý người dùng',
   },
 ]
@@ -97,7 +97,7 @@ const UsersPage = () => {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <UserManagementIcon className="text-3xl text-primary" />
+        <UserManagementIcon style={{ fontSize: '32px', color: '#1890ff' }} />
         <h2>Quản lý người dùng</h2>
       </div>
       
@@ -199,37 +199,41 @@ import { MyTaskIcon } from 'src/assets/icon/menu/MenuIcons'
 
 ## Tùy chỉnh màu sắc
 
-Icons sử dụng `currentColor`, vì vậy bạn có thể dễ dàng thay đổi màu qua CSS:
+Icons sử dụng `currentColor`, vì vậy bạn có thể dễ dàng thay đổi màu qua style:
 
 ```jsx
-// Màu xanh
-<UserManagementIcon className="text-lg text-blue-500" />
+// Màu xanh dương
+<UserManagementIcon style={{ fontSize: '24px', color: '#1890ff' }} />
 
 // Màu xanh lá
-<LandManagementIcon className="text-lg text-green-600" />
+<LandManagementIcon style={{ fontSize: '24px', color: '#52c41a' }} />
 
 // Màu cam
-<NotificationIcon className="text-lg text-orange-500" />
+<NotificationIcon style={{ fontSize: '24px', color: '#fa8c16' }} />
 
-// Custom style
-<DashboardIcon style={{ color: '#1890ff', fontSize: '24px' }} />
+// Màu đỏ
+<ApprovalLogbookIcon style={{ fontSize: '24px', color: '#ff4d4f' }} />
 ```
 
 ## Responsive Size
 
+Icons tự động scale theo `fontSize`:
+
 ```jsx
-// Small
-<UserManagementIcon className="text-sm" />
+// Small - 16px (submenu items)
+<UserManagementIcon style={{ fontSize: '16px' }} />
 
-// Medium (default)
-<UserManagementIcon className="text-base" />
+// Medium - 18px (main menu items)
+<UserManagementIcon style={{ fontSize: '18px' }} />
 
-// Large
-<UserManagementIcon className="text-lg" />
+// Large - 24px (page titles)
+<UserManagementIcon style={{ fontSize: '24px' }} />
 
-// Extra Large
-<UserManagementIcon className="text-2xl" />
-<UserManagementIcon className="text-3xl" />
+// Extra Large - 32px (page headers)
+<UserManagementIcon style={{ fontSize: '32px' }} />
+
+// Custom size
+<UserManagementIcon style={{ fontSize: '48px' }} />
 ```
 
 ## Notes

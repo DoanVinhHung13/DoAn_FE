@@ -31,81 +31,81 @@ import { ROLES } from 'src/constants/roles'
 export const farmManagerItem = () => [
   {
     key: ROUTER.FM_DASHBOARD,
-    icon: <DashboardIcon className="text-lg" />,
+    icon: <DashboardIcon style={{ fontSize: '18px' }} />,
     label: 'Tổng quan',
   },
   {
     key: ROUTER.FM_USERS,
-    icon: <UserManagementIcon className="text-lg" />,
+    icon: <UserManagementIcon style={{ fontSize: '18px' }} />,
     label: 'Quản lý người dùng',
   },
   {
     key: ROUTER.FM_LANDS,
-    icon: <LandManagementIcon className="text-lg" />,
+    icon: <LandManagementIcon style={{ fontSize: '18px' }} />,
     label: 'Quản lý vùng trồng',
   },
   {
     key: ROUTER.FM_CROP_CATALOGS,
-    icon: <CropCatalogIcon className="text-lg" />,
+    icon: <CropCatalogIcon style={{ fontSize: '18px' }} />,
     label: 'Danh mục cây trồng',
   },
   {
     key: ROUTER.FM_CROPS,
-    icon: <CropIcon className="text-lg" />,
+    icon: <CropIcon style={{ fontSize: '18px' }} />,
     label: 'Cây trồng',
   },
   {
     key: ROUTER.FM_PROCESS_TEMPLATES,
-    icon: <TemplateLibraryIcon className="text-lg" />,
+    icon: <TemplateLibraryIcon style={{ fontSize: '18px' }} />,
     label: 'Thư viện mẫu',
   },
   {
     key: ROUTER.FM_CULTIVATION_LOGBOOKS,
-    icon: <LogbookIcon className="text-lg" />,
+    icon: <LogbookIcon style={{ fontSize: '18px' }} />,
     label: 'Nhật ký canh tác',
   },
   {
     key: ROUTER.FM_LOGBOOKS,
-    icon: <ApprovalLogbookIcon className="text-lg" />,
+    icon: <ApprovalLogbookIcon style={{ fontSize: '18px' }} />,
     label: 'Duyệt nhật ký canh tác',
   },
   {
     key: ROUTER.FM_REPORTS,
-    icon: <ReportIcon className="text-lg" />,
+    icon: <ReportIcon style={{ fontSize: '18px' }} />,
     label: 'Báo cáo thống kê',
   },
   {
     key: ROUTER.FM_TASK_CATALOGS,
-    icon: <TaskCatalogIcon className="text-lg" />,
+    icon: <TaskCatalogIcon style={{ fontSize: '18px' }} />,
     label: 'Danh mục công việc',
   },
   {
     key: ROUTER.FM_HARVEST_BATCHES,
-    icon: <HarvestBatchIcon className="text-lg" />,
+    icon: <HarvestBatchIcon style={{ fontSize: '18px' }} />,
     label: 'Quản lý lô thu hoạch',
   },
   {
     key: ROUTER.FM_NOTIFICATIONS,
-    icon: <NotificationIcon className="text-lg" />,
+    icon: <NotificationIcon style={{ fontSize: '18px' }} />,
     label: 'Thông báo',
   },
   {
     key: 'material-submenu',
-    icon: <MaterialManagementIcon className="text-lg" />,
+    icon: <MaterialManagementIcon style={{ fontSize: '18px' }} />,
     label: 'Quản lý vật tư',
     children: [
-      { key: ROUTER.FM_FERTILIZERS, icon: <FertilizerIcon />, label: 'Phân bón' },
-      { key: ROUTER.FM_PESTICIDES, icon: <PesticideIcon />, label: 'Nông dược' },
-      { key: ROUTER.FM_INVENTORY_IMPORT_HISTORY, icon: <ImportHistoryIcon />, label: 'Lịch sử nhập kho' },
+      { key: ROUTER.FM_FERTILIZERS, icon: <FertilizerIcon style={{ fontSize: '16px' }} />, label: 'Phân bón' },
+      { key: ROUTER.FM_PESTICIDES, icon: <PesticideIcon style={{ fontSize: '16px' }} />, label: 'Nông dược' },
+      { key: ROUTER.FM_INVENTORY_IMPORT_HISTORY, icon: <ImportHistoryIcon style={{ fontSize: '16px' }} />, label: 'Lịch sử nhập kho' },
     ],
   },
   {
     key: 'reference-submenu',
-    icon: <ReferenceBookIcon className="text-lg" />,
+    icon: <ReferenceBookIcon style={{ fontSize: '18px' }} />,
     label: 'Tra cứu cấp phép',
     children: [
-      { key: ROUTER.FM_REF_FERTILIZER, icon: <FertilizerIcon />, label: 'Danh mục phân bón' },
-      { key: ROUTER.FM_REF_PESTICIDE, icon: <PesticideIcon />, label: 'Danh mục nông dược' },
+      { key: ROUTER.FM_REF_FERTILIZER, icon: <FertilizerIcon style={{ fontSize: '16px' }} />, label: 'Danh mục phân bón' },
+      { key: ROUTER.FM_REF_PESTICIDE, icon: <PesticideIcon style={{ fontSize: '16px' }} />, label: 'Danh mục nông dược' },
     ],
   },
 ]
@@ -114,22 +114,22 @@ export const farmManagerItem = () => [
 export const farmSupervisorItem = () => [
   {
     key: ROUTER.FS_CULTIVATION_LOGBOOKS,
-    icon: <PlanLogbookIcon className="text-lg" />,
+    icon: <PlanLogbookIcon style={{ fontSize: '18px' }} />,
     label: 'Kế hoạch & Nhật ký',
   },
   {
     key: ROUTER.FS_FARMERS,
-    icon: <FarmerManagementIcon className="text-lg" />,
+    icon: <FarmerManagementIcon style={{ fontSize: '18px' }} />,
     label: 'Quản lý nông dân',
   },
   {
     key: ROUTER.FS_LANDS,
-    icon: <LandManagementIcon className="text-lg" />,
+    icon: <LandManagementIcon style={{ fontSize: '18px' }} />,
     label: 'Quản lý vùng trồng',
   },
   {
     key: ROUTER.NOTIFICATIONS,
-    icon: <NotificationIcon className="text-lg" />,
+    icon: <NotificationIcon style={{ fontSize: '18px' }} />,
     label: 'Thông báo',
   },
 ]
@@ -138,12 +138,12 @@ export const farmSupervisorItem = () => [
 export const farmLeaderItem = () => [
   {
     key: ROUTER.FL_TASKS,
-    icon: <MyTaskIcon className="text-lg" />,
+    icon: <MyTaskIcon style={{ fontSize: '18px' }} />,
     label: 'Công việc của tôi',
   },
   {
     key: ROUTER.NOTIFICATIONS,
-    icon: <NotificationIcon className="text-lg" />,
+    icon: <NotificationIcon style={{ fontSize: '18px' }} />,
     label: 'Thông báo',
   },
 ]
