@@ -358,10 +358,8 @@ const PlanTemplateCreate = () => {
       await syncSteps(processTemplateId, normalizedSteps)
       navigate(ROUTER.FM_PROCESS_TEMPLATES)
     } catch (error) {
-      const mappedFields = applyApiFieldErrors(form, error, PLAN_TEMPLATE_FIELD_MAPPING)
-      if (mappedFields === 0 && error?.message) {
-        message.error(error.message)
-      }
+      // API error handled by axios interceptor
+      applyApiFieldErrors(form, error, PLAN_TEMPLATE_FIELD_MAPPING)
       logDevDiagnostic("process-template-submit", error)
     } finally {
       setSubmitting(false)

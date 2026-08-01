@@ -378,7 +378,6 @@ const DailyLog = () => {
 
         const taskData = unwrap(taskRes)
         if (!taskData?.id && !taskData?.name) {
-          message.error("Không tìm thấy công việc.")
           navigate(ROUTER.FL_TASKS)
           return
         }
@@ -411,7 +410,7 @@ const DailyLog = () => {
           pesticides: [],
         })
       } catch {
-        message.error("Không thể tải dữ liệu công việc.")
+        // API error handled by axios interceptor
         navigate(ROUTER.FL_TASKS)
       } finally {
         setLoading(false)
@@ -508,8 +507,8 @@ const DailyLog = () => {
           })
         }
       } else {
+        // API error handled by axios interceptor
         const normalizedError = normalizeApiError(taskSumRes.reason)
-        message.error(normalizedError.message)
         console.error("DailyLog summary load error:", {
           kind: normalizedError.kind,
           code: normalizedError.code,
@@ -578,8 +577,8 @@ const DailyLog = () => {
       ])
     } catch (err) {
       onError?.(err)
+      // API error handled by axios interceptor
       const normalizedError = normalizeApiError(err)
-      message.error(normalizedError.message)
       console.error("DailyLog upload error:", {
         kind: normalizedError.kind,
         code: normalizedError.code,
