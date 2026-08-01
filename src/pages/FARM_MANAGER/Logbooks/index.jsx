@@ -22,7 +22,7 @@ import {
   Tag,
   Typography,
 } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
@@ -33,6 +33,7 @@ import { canApproveClosing } from 'src/utils/cultivationStatus'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
 import { getLandPlotNamesDisplay } from 'src/utils/helpers'
+import { useListManagement } from 'src/hooks/useListManagement'
 
 const { Text } = Typography
 
@@ -41,39 +42,38 @@ const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 const FarmManagerLogbooks = () => {
   const navigate = useNavigate()
   const { getLogbookStatus, getReviewStatus } = useCultivationStatus()
-  const [loading, setLoading] = useState(true)
-  const [logbooks, setLogbooks] = useState([])
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
-  const [reloadKey, setReloadKey] = useState(0)
+
+  // ── Use List Management Hook ────────────────────────────────────────────────
+  const {
+    searchInput, setSearchInput, search, handleSearch,
+    listData: logbooks, setListData: setLogbooks,
+    loading, setLoading
+  } = useListManagement({
+    initialPageSize: 100,
+    initialFilters: {}
+  })
+
+  const getList = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await CultivationLogbookService.getClosingReviews({
+        PageIndex: 1,
+        PageSize: 100,
+        SearchKeyword: search || undefined,
+      })
+      const data = unwrap(res)
+      const items = Array.isArray(data) ? data : data?.items || []
+      setLogbooks(items)
+    } catch {
+      setLogbooks([])
+    } finally {
+      setLoading(false)
+    }
+  }, [search, setLoading, setLogbooks])
 
   useEffect(() => {
-    let mounted = true
-    const load = async () => {
-      try {
-        setLoading(true)
-        const res = await CultivationLogbookService.getClosingReviews({
-          PageIndex: 1,
-          PageSize: 100,
-          SearchKeyword: search || undefined,
-        })
-        const data = unwrap(res)
-        const items = Array.isArray(data) ? data : data?.items || []
-        if (mounted) setLogbooks(items)
-      } catch {
-        if (mounted) {
-          setLogbooks([])
-          // axios interceptor handles error notification
-        }
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-    load()
-    return () => {
-      mounted = false
-    }
-  }, [reloadKey, search])
+    getList()
+  }, [getList])
 
   const visible = useMemo(() => {
     return logbooks.filter(canApproveClosing)
@@ -96,11 +96,8 @@ const FarmManagerLogbooks = () => {
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            onPressEnter={() => setSearch(searchInput.trim())}
-            onClear={() => {
-              setSearchInput('')
-              setSearch('')
-            }}
+            onPressEnter={handleSearch}
+            onClear={handleSearch}
             placeholder="Tìm kiếm nhật ký..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="h-10 min-w-48 flex-1 rounded-xl"
@@ -112,7 +109,7 @@ const FarmManagerLogbooks = () => {
             </Tag>
             <Button
               icon={<ReloadOutlined />}
-              onClick={() => setReloadKey((v) => v + 1)}
+              onClick={getList}
               loading={loading}
               className="h-10 px-3 rounded-xl bg-gray-50"
             />
