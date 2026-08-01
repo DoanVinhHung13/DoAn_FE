@@ -24,9 +24,9 @@ import TitleCustom from 'src/components/TitleCustom'
 
 import CustomTable from 'src/components/Table/CustomTable'
 import LandPlotService from 'src/services/LandPlotService'
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from 'src/constants/pageSizeOptions'
-import { invalidCharsRegex } from 'src/utils/helpers'
 import { useSystemKey } from 'src/hooks/useSystemKey'
+import { usePagination } from 'src/hooks/usePagination'
+import { useSearchInput } from 'src/hooks/useSearchInput'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 import {
   EMPTY_LAND_MESSAGE,
@@ -51,15 +51,12 @@ const LandsManagement = () => {
   const { getCombo } = useSystemKey()
 
   // ── Bộ lọc & phân trang ──────────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState('')  // ô input đang gõ
-  const [keyword, setKeyword] = useState('')  // từ khóa đã xác nhận tìm
+  const pagination = usePagination()
+  const search = useSearchInput(() => pagination.reset())
   const [status, setStatus] = useState('all')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   // ── Danh sách vùng trồng ─────────────────────────────────────────────────
   const [listData, setListData] = useState([])
-  const [totalRecords, setTotalRecords] = useState(0)
   const [listLoading, setListLoading] = useState(false)
   const [listError, setListError] = useState(null)
   const [weatherByPlotId, setWeatherByPlotId] = useState({})
@@ -70,11 +67,11 @@ const LandsManagement = () => {
 
   // ── Tham số query (re-compute khi bộ lọc / phân trang thay đổi) ──────────
   const queryParams = useMemo(() => ({
-    PageIndex: page,
-    PageSize: pageSize,
-    SearchKeyword: keyword || undefined,
+    PageIndex: pagination.page,
+    PageSize: pagination.pageSize,
+    SearchKeyword: search.search || undefined,
     Status: status === 'all' ? undefined : status,
-  }), [page, pageSize, keyword, status])
+  }), [pagination.page, pagination.pageSize, search.search, status])
 
   // ── API: lấy danh sách vùng trồng ────────────────────────────────────────
   const fetchLandPlots = useCallback(async () => {
@@ -84,7 +81,7 @@ const LandsManagement = () => {
       const response = await LandPlotService.getLandPlots(queryParams)
       const normalized = normalizeLandPlotResponse(response)
       setListData(normalized.items)
-      setTotalRecords(normalized.total)
+      pagination.setTotal(normalized.total)
     } catch (err) {
       setListError(err)
     } finally {
@@ -146,14 +143,6 @@ const LandsManagement = () => {
   }
 
   // ── Xử lý tìm kiếm ───────────────────────────────────────────────────────
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      message.error('Điều kiện tìm kiếm hoặc bộ lọc không hợp lệ.')
-      return
-    }
-    setKeyword(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
 
   const handleClearSearch = () => {
     setSearchInput('')

@@ -53,12 +53,6 @@ const InventoryImportModal = ({ open, onCancel, onSuccess, item }) => {
       if (!err?.errorFields) {
         const normalizedError = normalizeApiError(err)
         applyApiFieldErrors(form, normalizedError, INVENTORY_IMPORT_FIELD_MAPPING)
-        console.error('Inventory import error:', {
-          kind: normalizedError.kind,
-          code: normalizedError.code,
-          status: normalizedError.status,
-          traceId: normalizedError.traceId,
-        })
       }
     } finally {
       setLoading(false)

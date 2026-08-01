@@ -48,12 +48,11 @@ import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
 import { FertilizerIcon } from 'src/assets/icon/menu/MenuIcons'
 import InventoryImportModal from 'src/components/Inventory/InventoryImportModal'
-import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
 import FertilizerService from 'src/services/FertilizerService'
-import { invalidCharsRegex } from 'src/utils/helpers'
 import { useSystemKey } from 'src/hooks/useSystemKey'
+import { usePagination } from 'src/hooks/usePagination'
+import { useSearchInput } from 'src/hooks/useSearchInput'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -80,16 +79,13 @@ const ViewFertilizers = () => {
   ]
 
   // ── State: filters ──────────────────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const pagination = usePagination()
+  const search = useSearchInput(() => pagination.reset())
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   // ── State: data ─────────────────────────────────────────────────────────────
   const [listData, setListData] = useState([])
-  const [totalRecords, setTotalRecords] = useState(0)
   const [loading, setLoading] = useState(false)
   const [statusLoading, setStatusLoading] = useState(false)
 
@@ -103,39 +99,25 @@ const ViewFertilizers = () => {
     try {
       setLoading(true)
       const params = {
-        PageIndex: page,
-        PageSize: pageSize,
-        SearchKeyword: search || undefined,
+        PageIndex: pagination.page,
+        PageSize: pagination.pageSize,
+        SearchKeyword: search.search || undefined,
         Type: categoryFilter === 'all' ? undefined : categoryFilter,
         Status: statusFilter === 'all' ? undefined : statusFilter,
       }
       const res = await FertilizerService.getFertilizers(params)
       setListData(res?.data?.items || [])
-      setTotalRecords(res?.data?.totalItems || 0)
+      pagination.setTotal(res?.data?.totalItems || 0)
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, categoryFilter, statusFilter])
+  }, [pagination.page, pagination.pageSize, search.search, categoryFilter, statusFilter, pagination])
 
   useEffect(() => {
     getList()
   }, [getList])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      message.error('Ký tự tìm kiếm không hợp lệ')
-      return
-    }
-    setSearch(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
-
-  const handleClearSearch = () => {
-    setSearchInput('')
-    setSearch('')
-    setPage(1)
-  }
 
   // Kiểm tra BR_FER_02 trước khi mở modal Sửa
   const handleOpenEdit = (record) => {
@@ -182,7 +164,7 @@ const ViewFertilizers = () => {
       align: 'center',
       render: (_, __, index) => (
         <span className="text-sm font-medium text-gray-400">
-          {(page - 1) * pageSize + index + 1}
+          {(pagination.page - 1) * pagination.pageSize + index + 1}
         </span>
       ),
     },
@@ -384,20 +366,20 @@ const ViewFertilizers = () => {
         {/* Toolbar */}
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onPressEnter={handleSearch}
+            value={search.input}
+            onChange={(e) => search.setInput(e.target.value)}
+            onPressEnter={search.handleSearch}
             placeholder="Tìm theo mã, tên phân bón..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="w-64 h-10 rounded-xl"
             allowClear
-            onClear={handleClearSearch}
+            onClear={search.clear}
           />
           <Select
             value={categoryFilter}
             onChange={(val) => {
               setCategoryFilter(val)
-              setPage(1)
+              pagination.reset()
             }}
             className="h-10 rounded-xl min-w-[160px]"
             options={selectCategoryOptions}
@@ -406,14 +388,14 @@ const ViewFertilizers = () => {
             value={statusFilter}
             onChange={(val) => {
               setStatusFilter(val)
-              setPage(1)
+              pagination.reset()
             }}
             className="h-10 rounded-xl min-w-[160px]"
             options={selectStatusOptions}
           />
           <div className="flex gap-2 ml-auto">
             <Button
-              onClick={handleSearch}
+              onClick={search.handleSearch}
               icon={<SearchOutlined />}
               className="h-10 px-4 font-semibold rounded-xl bg-gray-50"
             >
@@ -442,17 +424,7 @@ const ViewFertilizers = () => {
           className: 'cursor-pointer',
         })}
         locale={{ emptyText: 'Không có dữ liệu phân bón.' }}
-        pagination={{
-          current: page,
-          pageSize,
-          total: totalRecords,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-          },
-        }}
+        pagination={pagination.config}
         rowClassName="hover:bg-green-50/30 transition-colors"
       />
 

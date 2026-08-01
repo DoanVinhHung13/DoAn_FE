@@ -19,7 +19,9 @@ const FormWrapper = ({
     try {
       await onFinish(values, form);
     } catch (error) {
-      console.error("Form submission error", error);
+      if (import.meta.env.DEV) {
+        console.error("Form submission error", error);
+      }
     } finally {
       setIsSubmitting(false);
     }

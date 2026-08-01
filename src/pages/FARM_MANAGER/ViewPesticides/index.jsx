@@ -25,12 +25,11 @@ import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
 import InventoryImportModal from 'src/components/Inventory/InventoryImportModal'
-import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 
 import PesticideService from 'src/services/PesticideService'
-import { invalidCharsRegex } from 'src/utils/helpers'
 import { useSystemKey } from 'src/hooks/useSystemKey'
+import { usePagination } from 'src/hooks/usePagination'
+import { useSearchInput } from 'src/hooks/useSearchInput'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 
 const ViewPesticides = () => {
@@ -47,15 +46,12 @@ const ViewPesticides = () => {
   ]
 
   // ── State: filters ──────────────────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const pagination = usePagination()
+  const search = useSearchInput(() => pagination.reset())
   const [statusFilter, setStatusFilter] = useState('all')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
 
   // ── State: data ─────────────────────────────────────────────────────────────
   const [listData, setListData] = useState([])
-  const [totalRecords, setTotalRecords] = useState(0)
   const [loading, setLoading] = useState(false)
   const [statusLoading, setStatusLoading] = useState(false)
 
@@ -69,38 +65,24 @@ const ViewPesticides = () => {
     try {
       setLoading(true)
       const params = {
-        PageIndex: page,
-        PageSize: pageSize,
-        SearchKeyword: search || undefined,
+        PageIndex: pagination.page,
+        PageSize: pagination.pageSize,
+        SearchKeyword: search.search || undefined,
         Status: statusFilter === 'all' ? undefined : statusFilter,
       }
       const res = await PesticideService.getPesticides(params)
       setListData(res?.data?.items || [])
-      setTotalRecords(res?.data?.totalItems || res?.data?.items?.length || 0)
+      pagination.setTotal(res?.data?.totalItems || res?.data?.items?.length || 0)
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, statusFilter])
+  }, [pagination.page, pagination.pageSize, search.search, statusFilter, pagination])
 
   useEffect(() => {
     getList()
   }, [getList])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      message.error('Ký tự tìm kiếm không hợp lệ')
-      return
-    }
-    setSearch(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
-
-  const handleClearSearch = () => {
-    setSearchInput('')
-    setSearch('')
-    setPage(1)
-  }
 
   const handleOpenEdit = (record) => {
     if (record.isInActiveUse) {
@@ -144,7 +126,7 @@ const ViewPesticides = () => {
       align: 'center',
       render: (_, __, index) => (
         <span className="text-sm font-medium text-gray-400">
-          {(page - 1) * pageSize + index + 1}
+          {(pagination.page - 1) * pagination.pageSize + index + 1}
         </span>
       ),
     },
@@ -338,27 +320,27 @@ const ViewPesticides = () => {
       <div className="admin-filter-card rounded-lg shadow-sm">
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onPressEnter={handleSearch}
-            placeholder="Tìm theo mã, tên nông dược…"
+            value={search.input}
+            onChange={(e) => search.setInput(e.target.value)}
+            onPressEnter={search.handleSearch}
+            placeholder="Tìm theo mã, tên thuốc bảo vệ thực vật..."
             prefix={<SearchOutlined className="text-gray-300" />}
             className="w-64 h-10 rounded-xl"
             allowClear
-            onClear={handleClearSearch}
+            onClear={search.clear}
           />
           <Select
             value={statusFilter}
             onChange={(val) => {
               setStatusFilter(val)
-              setPage(1)
+              pagination.reset()
             }}
             className="h-10 rounded-xl min-w-[160px]"
             options={selectStatusOptions}
           />
           <div className="flex gap-2 ml-auto">
             <Button
-              onClick={handleSearch}
+              onClick={search.handleSearch}
               icon={<SearchOutlined />}
               className="h-10 px-4 font-semibold rounded-xl bg-gray-50"
             >
@@ -386,17 +368,7 @@ const ViewPesticides = () => {
           className: 'cursor-pointer',
         })}
         locale={{ emptyText: 'Không có dữ liệu nông dược.' }}
-        pagination={{
-          current: page,
-          pageSize,
-          total: totalRecords,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          onChange: (p, ps) => {
-            setPage(p)
-            setPageSize(ps)
-          },
-        }}
+        pagination={pagination.config}
         rowClassName="hover:bg-green-50/30 transition-colors"
       />
 
