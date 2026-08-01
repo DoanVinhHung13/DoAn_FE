@@ -45,7 +45,12 @@ import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import AgriculturalInputCatalogAutocomplete from 'src/components/AgriculturalInputCatalogAutocomplete'
-import CatalogSuggestionService, { getApiData } from 'src/services/CatalogSuggestionService'
+import CatalogSuggestionService, { getCatalogPrefill } from 'src/services/CatalogSuggestionService'
+import {
+  createFertilizerComponentRow,
+  mapCatalogCompositionsToRows,
+} from 'src/services/CatalogSuggestionService/compositions'
+import { FERTILIZER_TYPE_OPTIONS as STANDARD_FERTILIZER_TYPE_OPTIONS } from 'src/constants/fertilizerTypes'
 
 const { Text } = Typography
 
@@ -97,10 +102,10 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const { getCombo } = useSystemKey()
   const { cropOptions, isCropsLoading } = useCropOptions()
 
-  const FERTILIZER_TYPE_OPTIONS = getCombo(SYSTEM_KEY.FERTILIZER_TYPE).map(opt => ({
+  const FERTILIZER_TYPE_OPTIONS = [...STANDARD_FERTILIZER_TYPE_OPTIONS, ...getCombo(SYSTEM_KEY.FERTILIZER_TYPE).map(opt => ({
     value: opt.codeValue || opt.value,
     label: opt.label || opt.description,
-  }))
+  }))].filter((option, index, options) => options.findIndex(item => item.value === option.value) === index)
 
   const UNIT_OPTIONS = [
     { value: MEASUREMENT_UNITS.LITER, label: MEASUREMENT_UNITS.LITER },
@@ -110,21 +115,24 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const [quantityUnit, setQuantityUnit] = React.useState(MEASUREMENT_UNITS.KILOGRAM)
   const [components, setComponents] = React.useState([])
   const [dosages, setDosages] = React.useState([DEFAULT_DOSAGE])
-  const normalizeFertilizerCatalogCompositions = compositions => {
-    if (!Array.isArray(compositions)) return []
-    return compositions.filter(item => item && typeof item.name === 'string' && item.name.trim() && Number.isFinite(Number(item.value)) && typeof item.unit === 'string' && item.unit.trim()).map(item => ({ name: item.name.trim(), value: Number(item.value), unit: item.unit.trim() }))
-  }
+  const prefillRequestRef = React.useRef(0)
   const applyCatalog = async catalog => {
+    const requestId = ++prefillRequestRef.current
     try {
-      const item = getApiData(await CatalogSuggestionService.fertilizerPrefill({ id: catalog.id }))
-      const values = { name: item.name }
+      const item = getCatalogPrefill(await CatalogSuggestionService.fertilizerPrefill({ id: catalog.id })) || {}
+      if (requestId !== prefillRequestRef.current) return
+      const values = { name: item.name || catalog.name }
       if (item.manufacturer?.trim()) values.manufacturer = item.manufacturer.trim()
       if (item.description?.trim()) values.description = item.description.trim()
       if (item.unit?.trim()) { values.unit = item.unit.trim(); setQuantityUnit(item.unit.trim()) }
       if (item.type?.trim()) values.type = item.type.trim()
       form.setFieldsValue(values)
-      setComponents(normalizeFertilizerCatalogCompositions(item.compositions))
-    } catch { /* manual entry remains available */ }
+      setComponents(mapCatalogCompositionsToRows(item.compositions ?? item.Compositions))
+    } catch {
+      if (requestId === prefillRequestRef.current) {
+        message.warning('Không thể tải dữ liệu từ danh mục. Bạn vẫn có thể nhập thủ công.')
+      }
+    }
   }
 
   // ── Populate form on open ──────────────────────────────────────────────────
@@ -163,7 +171,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           return c;
         };
 
-        setComponents(incomingComps.map(mapToDisplay));
+        setComponents(incomingComps.map(c => createFertilizerComponentRow(mapToDisplay(c))));
       } else {
         setComponents([]);
       }
@@ -314,17 +322,16 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
   // ── Component row handlers ─────────────────────────────────────────────────
   const handleComponentChange = (index, field, value) => {
-    const updated = [...components]
-    updated[index] = { ...updated[index], [field]: value }
-    setComponents(updated)
+    setComponents(current => current.map((component, componentIndex) =>
+      componentIndex === index ? { ...component, [field]: value } : component,
+    ))
   }
 
   const handleAddComponent = () =>
-    setComponents([...components, { name: '', value: '', unit: '%' }])
+    setComponents(current => [...current, createFertilizerComponentRow()])
 
-  const handleRemoveComponent = (index) => {
-    setComponents(components.filter((_, i) => i !== index))
-  }
+  const handleRemoveComponent = (index) =>
+    setComponents(current => current.filter((_, i) => i !== index))
 
   // ── Dosage row handlers ────────────────────────────────────────────────────
   const handleDosageChange = (index, field, value) => {
@@ -531,7 +538,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         {components.map((comp, index) => {
           return (
             <div
-              key={index}
+              key={comp.id}
               className="flex items-center gap-2 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2"
             >
               <div style={{ flex: '1 1 140px' }}>

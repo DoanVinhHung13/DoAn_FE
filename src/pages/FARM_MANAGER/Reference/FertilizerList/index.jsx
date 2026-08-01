@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Badge, Breadcrumb, Card, Input, Table, Tabs, Tag, Typography } from 'antd'
+import { Alert, Badge, Breadcrumb, Input, Select, Tabs, Tag, Typography } from 'antd'
 import { BookOutlined, SearchOutlined } from '@ant-design/icons'
 import CatalogService from 'src/services/CatalogService'
 import TableCustom from 'src/components/Table/CustomTable'
+import { FERTILIZER_TYPE_OPTIONS, normalizeFertilizerType } from 'src/constants/fertilizerTypes'
 
 const { Title, Text } = Typography
 
@@ -32,6 +33,7 @@ const normalizeFertilizer = (item, index) => ({
   code: textValue(item.code),
   name: textValue(item.name, item.fertilizerName, item.productName, item.tradeName),
   category: textValue(item.type, item.category, item.fertilizerType, item.classification, getDescriptionPart(item.description, 'Loại')),
+  unit: textValue(item.unit, item.usageUnit),
   ingredients: textValue(
     item.description,
     item.ingredients,
@@ -56,6 +58,8 @@ const FertilizerList = () => {
   const [searchText, setSearchText] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
+  const [selectedType, setSelectedType] = useState('all')
+  const [selectedUnit, setSelectedUnit] = useState('all')
 
   const { data: fertilizerResponse, isLoading, isError } = useQuery({
     queryKey: ['license-catalog-fertilizers', searchText.trim()],
@@ -78,8 +82,12 @@ const FertilizerList = () => {
   }, [fertilizerData])
 
   const filteredData = useMemo(
-    () => fertilizerData.filter(item => activeTab === 'all' || item.category === activeTab),
-    [activeTab, fertilizerData],
+    () => fertilizerData.filter(item =>
+      (activeTab === 'all' || item.category === activeTab) &&
+      (selectedType === 'all' || normalizeFertilizerType(item.category) === selectedType) &&
+      (selectedUnit === 'all' || normalizeFertilizerType(item.unit) === selectedUnit),
+    ),
+    [activeTab, fertilizerData, selectedType, selectedUnit],
   )
 
   const paginatedData = useMemo(
@@ -172,19 +180,35 @@ const FertilizerList = () => {
       </div>
 
       <div className="admin-filter-card shadow-sm border-gray-100 rounded-2xl p-4 bg-white">
-        <Input
-          value={searchText}
-          placeholder="Tìm kiếm theo tên hoặc mã phân bón..."
-          size="large"
-          prefix={<SearchOutlined className="text-gray-400" />}
-          allowClear
-          onChange={(e) => {
-            setSearchText(e.target.value)
-            setActiveTab('all')
-            setCurrentPage(1)
-          }}
-          className="rounded-xl h-10 border-gray-200"
-        />
+        <div className="admin-toolbar flex flex-col sm:flex-row gap-3">
+          <Input
+            value={searchText}
+            placeholder="Tìm kiếm theo tên hoặc mã phân bón..."
+            size="large"
+            prefix={<SearchOutlined className="text-gray-400" />}
+            allowClear
+            onChange={(e) => {
+              setSearchText(e.target.value)
+              setActiveTab('all')
+              setCurrentPage(1)
+            }}
+            className="rounded-xl h-10 border-gray-200 flex-1"
+          />
+          <Select
+            value={selectedType}
+            onChange={(value) => { setSelectedType(value); setActiveTab('all'); setCurrentPage(1) }}
+            options={[{ value: 'all', label: 'Tất cả loại phân bón' }, ...FERTILIZER_TYPE_OPTIONS.map(option => ({ ...option, value: normalizeFertilizerType(option.value) }))]}
+            size="large"
+            className="rounded-xl min-w-[240px] h-10"
+          />
+          <Select
+            value={selectedUnit}
+            onChange={(value) => { setSelectedUnit(value); setCurrentPage(1) }}
+            options={[{ value: 'all', label: 'Tất cả đơn vị' }, { value: 'KG', label: 'kg' }, { value: 'LÍT', label: 'lít' }]}
+            size="large"
+            className="rounded-xl min-w-[160px] h-10"
+          />
+        </div>
       </div>
 
       {isError && (

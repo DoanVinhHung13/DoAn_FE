@@ -16,7 +16,7 @@ import ROUTER from "src/router/ROUTER"
 import PesticideService from "src/services/PesticideService"
 import { applyApiFieldErrors } from "src/services/core/apiError"
 import AgriculturalInputCatalogAutocomplete from "src/components/AgriculturalInputCatalogAutocomplete"
-import CatalogSuggestionService, { getApiData } from "src/services/CatalogSuggestionService"
+import CatalogSuggestionService, { getCatalogPrefill } from "src/services/CatalogSuggestionService"
 
 import SectionTitle from "src/components/Common/SectionTitle"
 import { useCropOptions } from "src/hooks/useCropOptions"
@@ -66,16 +66,23 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
     { value: MEASUREMENT_UNITS.KILOGRAM, label: MEASUREMENT_UNITS.KILOGRAM },
   ]
   const [quantityUnit, setQuantityUnit] = React.useState(MEASUREMENT_UNITS.LITER)
+  const prefillRequestRef = React.useRef(0)
   const applyCatalog = async catalog => {
+    const requestId = ++prefillRequestRef.current
     try {
-      const item = getApiData(await CatalogSuggestionService.pesticidePrefill({ id: catalog.id }))
-      const values = { name: item.name }
+      const item = getCatalogPrefill(await CatalogSuggestionService.pesticidePrefill({ id: catalog.id })) || {}
+      if (requestId !== prefillRequestRef.current) return
+      const values = { name: item.name || catalog.name }
       if (item.manufacturer?.trim()) values.manufacturer = item.manufacturer.trim()
       if (item.description?.trim()) values.description = item.description.trim()
       if (item.unit?.trim()) { values.unit = item.unit.trim(); setQuantityUnit(item.unit.trim()) }
       if (item.type?.trim()) values.type = item.type.trim()
       form.setFieldsValue(values)
-    } catch { /* manual entry remains available */ }
+    } catch {
+      if (requestId === prefillRequestRef.current) {
+        message.warning("Không thể tải dữ liệu từ danh mục. Bạn vẫn có thể nhập thủ công.")
+      }
+    }
   }
 
   React.useEffect(() => {

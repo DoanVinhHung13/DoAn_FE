@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Alert, Badge, Breadcrumb, Card, Input, Select, Table, Tag, Typography } from 'antd'
+import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from 'antd'
 import { FilterOutlined, SafetyCertificateOutlined, SearchOutlined } from '@ant-design/icons'
 import CatalogService from 'src/services/CatalogService'
 import TableCustom from 'src/components/Table/CustomTable'
+import { extractPesticideActiveIngredient, extractPesticideTarget } from 'src/utils/pesticideCatalogDisplay'
 
 const { Title, Text } = Typography
 
@@ -32,13 +33,6 @@ const getCatalogItems = (response) => {
 
 const textValue = (...values) => values.find(value => typeof value === 'string' && value.trim()) || ''
 
-const getDescriptionPart = (description, label) => {
-  if (!description) return ''
-
-  const match = description.match(new RegExp(`${label}:\\s*([^.]*)`, 'i'))
-  return match?.[1]?.trim() || ''
-}
-
 const normalizePesticide = (item, index) => ({
   id: item.id || item._id || item.code || `pesticide-${index}`,
   code: textValue(item.code),
@@ -48,15 +42,15 @@ const normalizePesticide = (item, index) => ({
     item.activeIngredients,
     item.ingredient,
     item.ingredients,
-    getDescriptionPart(item.description, 'Thành phần'),
+    extractPesticideActiveIngredient(item.description),
   ),
-  category: textValue(item.category, item.type, item.pesticideType, item.group, getDescriptionPart(item.description, 'Loại')),
+  category: textValue(item.category, item.type, item.pesticideType, item.group),
   target: textValue(
     item.target,
     item.targetOrganism,
     item.preventionTarget,
     item.usage,
-    getDescriptionPart(item.description, 'Đối tượng'),
+    extractPesticideTarget(item.description),
   ),
   applicant: textValue(
     item.applicant,
