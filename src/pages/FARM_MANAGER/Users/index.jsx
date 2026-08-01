@@ -9,10 +9,10 @@ import {
   ReloadOutlined,
   SearchOutlined,
   StopOutlined,
-  TeamOutlined,
   UserAddOutlined,
   UserOutlined,
 } from "@ant-design/icons"
+import { UserManagementIcon } from "src/assets/icon/menu/MenuIcons"
 
 import {
   Avatar,
@@ -364,7 +364,7 @@ const UsersManagement = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <TeamOutlined className="text-green-600" />
+            <UserManagementIcon style={{ fontSize: '24px', color: '#16a34a' }} />
             Quản lý người dùng
  
           </TitleCustom>
