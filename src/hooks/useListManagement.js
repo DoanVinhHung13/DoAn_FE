@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { message } from 'antd'
 import { invalidCharsRegex } from 'src/utils/helpers'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
@@ -9,30 +9,45 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
  * Consolidates repeated patterns across list management pages:
  * - Search state (input + applied search)
  * - Pagination (page + pageSize)
- * - Filters (dynamic filters object)
+ * - Filters (dynamic filters object including sort)
  * - Data (listData + totalRecords)
  * - Loading state
+ * - Client-side filtering and sorting
  * 
  * Usage:
  * ```javascript
  * const {
  *   searchInput, setSearchInput, search, handleSearch, handleClearSearch,
  *   page, setPage, pageSize, setPageSize,
- *   filters, updateFilter,
+ *   filters, updateFilter, updateSort,
  *   listData, setListData, totalRecords, setTotalRecords,
- *   loading, setLoading
- * } = useListManagement({ initialPageSize: 20, initialFilters: { status: 'all' } })
+ *   loading, setLoading,
+ *   filteredData
+ * } = useListManagement({ 
+ *   initialPageSize: 20, 
+ *   initialFilters: { status: 'all' },
+ *   enableClientFilter: true,
+ *   filterFn: (item) => item.isActive
+ * })
  * ```
  * 
  * @param {Object} options - Configuration options
  * @param {number} options.initialPageSize - Initial page size (default: DEFAULT_PAGE_SIZE)
  * @param {Object} options.initialFilters - Initial filters object (default: {})
+ * @param {string} options.initialSort - Initial sort value (default: '')
+ * @param {boolean} options.enableClientFilter - Enable client-side filtering (default: false)
+ * @param {Function} options.filterFn - Custom filter function for client-side filtering
+ * @param {Function} options.sortFn - Custom sort function
  * @returns {Object} State and handlers for list management
  */
 export const useListManagement = (options = {}) => {
   const {
     initialPageSize = DEFAULT_PAGE_SIZE,
     initialFilters = {},
+    initialSort = '',
+    enableClientFilter = false,
+    filterFn = null,
+    sortFn = null,
   } = options
 
   // ── Search State ────────────────────────────────────────────────────────
@@ -43,8 +58,9 @@ export const useListManagement = (options = {}) => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(initialPageSize)
 
-  // ── Filters ─────────────────────────────────────────────────────────────
+  // ── Filters & Sort ──────────────────────────────────────────────────────
   const [filters, setFilters] = useState(initialFilters)
+  const [sortBy, setSortBy] = useState(initialSort)
 
   // ── Data ────────────────────────────────────────────────────────────────
   const [listData, setListData] = useState([])
@@ -92,8 +108,38 @@ export const useListManagement = (options = {}) => {
    */
   const resetFilters = useCallback(() => {
     setFilters(initialFilters)
+    setSortBy(initialSort)
     setPage(1)
-  }, [initialFilters])
+  }, [initialFilters, initialSort])
+
+  /**
+   * Update sort value and reset to page 1
+   */
+  const updateSort = useCallback((value) => {
+    setSortBy(value)
+    setPage(1)
+  }, [])
+
+  /**
+   * Client-side filtered data (only if enableClientFilter = true)
+   */
+  const filteredData = useMemo(() => {
+    if (!enableClientFilter) return listData
+
+    let result = [...listData]
+
+    // Apply custom filter function
+    if (filterFn) {
+      result = result.filter(filterFn)
+    }
+
+    // Apply custom sort function
+    if (sortFn && sortBy) {
+      result = result.sort((a, b) => sortFn(a, b, sortBy))
+    }
+
+    return result
+  }, [enableClientFilter, listData, filterFn, sortFn, sortBy])
 
   return {
     // Search
@@ -109,17 +155,21 @@ export const useListManagement = (options = {}) => {
     pageSize,
     setPageSize,
 
-    // Filters
+    // Filters & Sort
     filters,
     setFilters,
     updateFilter,
     resetFilters,
+    sortBy,
+    setSortBy,
+    updateSort,
 
     // Data
     listData,
     setListData,
     totalRecords,
     setTotalRecords,
+    filteredData,
 
     // Loading
     loading,

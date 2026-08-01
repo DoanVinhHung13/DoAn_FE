@@ -25,5 +25,31 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Import ordering - không auto-fix nhưng sẽ warning
+      'sort-imports': ['warn', {
+        ignoreCase: true,
+        ignoreDeclarationSort: true, // Chỉ sort members trong cùng import
+        ignoreMemberSort: false,
+        memberSyntaxSortOrder: ['none', 'all', 'multiple', 'single'],
+      }],
+      
+      // Recommend practices
+      'no-unused-vars': ['warn', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      
+      // React best practices
+      'react-hooks/exhaustive-deps': 'warn',
+      'react-refresh/only-export-components': ['warn', { 
+        allowConstantExport: true 
+      }],
+    },
   },
 ])

@@ -34,12 +34,14 @@ export const formatDateForApi = date => {
 
 export const formatDate = (date, format = 'DD/MM/YYYY') => {
   if (!date) return '---';
-  return inConfiguredTimezone(date).format(format);
+  const formatStr = typeof format === 'string' ? format : 'DD/MM/YYYY';
+  return inConfiguredTimezone(date).format(formatStr);
 };
 
 export const formatDateTime = (date, format = 'HH:mm - DD/MM/YYYY') => {
   if (!date) return '---';
-  return inConfiguredTimezone(date).format(format);
+  const formatStr = typeof format === 'string' ? format : 'HH:mm - DD/MM/YYYY';
+  return inConfiguredTimezone(date).format(formatStr);
 };
 
 export const timeAgo = (date) => {

@@ -7,7 +7,7 @@ import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
 import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers'
 import { clearAuthStorage } from 'src/redux/storage'
 import AuthService from 'src/services/AuthService'
-import NotificationBell from '../../NotificationBell'
+import NotificationBell from 'src/components/NotificationBell'
 import {
   DownOutlined,
   MenuOutlined,

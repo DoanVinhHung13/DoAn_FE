@@ -16,7 +16,7 @@ import { normalizeRole } from "src/constants/roles"
 import { getDashboardPathByRole } from "src/router/roleRedirects"
 
 import logo from "src/assets/images/logo/logo-eapls.jpg"
-import AuthService from "../../../services/AuthService"
+import AuthService from "src/services/AuthService"
 import { LOGIN_IDENTIFIER_RULES, PASSWORD_RULES } from "src/utils/helpers"
 import { logDevDiagnostic } from "src/utils/safeDiagnostic"
 
