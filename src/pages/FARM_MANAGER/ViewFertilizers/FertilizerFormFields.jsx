@@ -32,7 +32,6 @@ import {
   Input,
   InputNumber,
   message,
-  Modal,
   Row,
   Select,
   Typography,
@@ -111,19 +110,21 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const [quantityUnit, setQuantityUnit] = React.useState(MEASUREMENT_UNITS.KILOGRAM)
   const [components, setComponents] = React.useState([])
   const [dosages, setDosages] = React.useState([DEFAULT_DOSAGE])
+  const normalizeFertilizerCatalogCompositions = compositions => {
+    if (!Array.isArray(compositions)) return []
+    return compositions.filter(item => item && typeof item.name === 'string' && item.name.trim() && Number.isFinite(Number(item.value)) && typeof item.unit === 'string' && item.unit.trim()).map(item => ({ name: item.name.trim(), value: Number(item.value), unit: item.unit.trim() }))
+  }
   const applyCatalog = async catalog => {
-    const current = form.getFieldsValue(['manufacturer', 'description', 'unit'])
-    const hasExistingData = Boolean(current.manufacturer?.trim() || current.description?.trim() || components.some(c => c.name?.trim() && c.value !== '' && c.value != null))
-    const apply = async () => {
-      try {
+    try {
       const item = getApiData(await CatalogSuggestionService.fertilizerPrefill({ id: catalog.id }))
-      form.setFieldsValue({ name: item.name, manufacturer: item.manufacturer || undefined, description: item.description || undefined, unit: item.unit || undefined, type: item.type || undefined })
-      if (item.unit) setQuantityUnit(item.unit)
-      if (item.compositions?.length) setComponents(item.compositions)
-      } catch { /* manual entry remains available */ }
-    }
-    if (hasExistingData) Modal.confirm({ title: 'Áp dụng dữ liệu từ danh mục?', content: 'Thông tin danh mục sẽ thay thế nhà sản xuất, mô tả, đơn vị và thành phần hiện tại.', okText: 'Áp dụng', cancelText: 'Hủy', onOk: apply })
-    else await apply()
+      const values = { name: item.name }
+      if (item.manufacturer?.trim()) values.manufacturer = item.manufacturer.trim()
+      if (item.description?.trim()) values.description = item.description.trim()
+      if (item.unit?.trim()) { values.unit = item.unit.trim(); setQuantityUnit(item.unit.trim()) }
+      if (item.type?.trim()) values.type = item.type.trim()
+      form.setFieldsValue(values)
+      setComponents(normalizeFertilizerCatalogCompositions(item.compositions))
+    } catch { /* manual entry remains available */ }
   }
 
   // ── Populate form on open ──────────────────────────────────────────────────

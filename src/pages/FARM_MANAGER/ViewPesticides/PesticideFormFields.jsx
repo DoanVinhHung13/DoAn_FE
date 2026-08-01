@@ -6,7 +6,6 @@ import {
   Input,
   InputNumber,
   message,
-  Modal,
   Row,
   Select,
 } from "antd"
@@ -68,17 +67,15 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
   ]
   const [quantityUnit, setQuantityUnit] = React.useState(MEASUREMENT_UNITS.LITER)
   const applyCatalog = async catalog => {
-    const current = form.getFieldsValue(['manufacturer', 'description', 'unit', 'type'])
-    const hasExistingData = Boolean(current.manufacturer?.trim() || current.description?.trim() || current.type?.trim() || (current.unit && current.unit !== MEASUREMENT_UNITS.LITER))
-    const apply = async () => {
-      try {
+    try {
       const item = getApiData(await CatalogSuggestionService.pesticidePrefill({ id: catalog.id }))
-      form.setFieldsValue({ name: item.name, manufacturer: item.manufacturer || undefined, description: item.description || undefined, unit: item.unit || undefined, type: item.type || undefined })
-      if (item.unit) setQuantityUnit(item.unit)
-      } catch { /* manual entry remains available */ }
-    }
-    if (hasExistingData) Modal.confirm({ title: 'Áp dụng dữ liệu từ danh mục?', content: 'Thông tin danh mục sẽ thay thế nhà sản xuất, mô tả, đơn vị và loại nông dược hiện tại.', okText: 'Áp dụng', cancelText: 'Hủy', onOk: apply })
-    else await apply()
+      const values = { name: item.name }
+      if (item.manufacturer?.trim()) values.manufacturer = item.manufacturer.trim()
+      if (item.description?.trim()) values.description = item.description.trim()
+      if (item.unit?.trim()) { values.unit = item.unit.trim(); setQuantityUnit(item.unit.trim()) }
+      if (item.type?.trim()) values.type = item.type.trim()
+      form.setFieldsValue(values)
+    } catch { /* manual entry remains available */ }
   }
 
   React.useEffect(() => {
