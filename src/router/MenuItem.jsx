@@ -3,21 +3,27 @@
 // Sidebar được lọc theo user?.role
 
 import {
-  AppstoreOutlined,
-  FileTextOutlined,
-  BellOutlined,
-  InboxOutlined,
-  CheckCircleOutlined,
-  TeamOutlined,
-  ShopOutlined,
-  EnvironmentOutlined,
-  UserOutlined,
-  BookOutlined,
-  ContainerOutlined,
-  ProfileOutlined,
-  BarChartOutlined,
-  ExperimentOutlined,
-} from '@ant-design/icons'
+  DashboardIcon,
+  UserManagementIcon,
+  LandManagementIcon,
+  CropCatalogIcon,
+  CropIcon,
+  TemplateLibraryIcon,
+  LogbookIcon,
+  ApprovalLogbookIcon,
+  ReportIcon,
+  TaskCatalogIcon,
+  HarvestBatchIcon,
+  NotificationIcon,
+  MaterialManagementIcon,
+  FertilizerIcon,
+  PesticideIcon,
+  ImportHistoryIcon,
+  ReferenceBookIcon,
+  PlanLogbookIcon,
+  FarmerManagementIcon,
+  MyTaskIcon,
+} from 'src/assets/icon/menu/MenuIcons'
 import ROUTER from './ROUTER'
 import { ROLES } from 'src/constants/roles'
 
@@ -25,81 +31,81 @@ import { ROLES } from 'src/constants/roles'
 export const farmManagerItem = () => [
   {
     key: ROUTER.FM_DASHBOARD,
-    icon: <AppstoreOutlined className="text-lg" />,
+    icon: <DashboardIcon className="text-lg" />,
     label: 'Tổng quan',
   },
   {
     key: ROUTER.FM_USERS,
-    icon: <UserOutlined className="text-lg" />,
+    icon: <UserManagementIcon className="text-lg" />,
     label: 'Quản lý người dùng',
   },
   {
     key: ROUTER.FM_LANDS,
-    icon: <EnvironmentOutlined className="text-lg" />,
+    icon: <LandManagementIcon className="text-lg" />,
     label: 'Quản lý vùng trồng',
   },
   {
     key: ROUTER.FM_CROP_CATALOGS,
-    icon: <FileTextOutlined className="text-lg" />,
+    icon: <CropCatalogIcon className="text-lg" />,
     label: 'Danh mục cây trồng',
   },
   {
     key: ROUTER.FM_CROPS,
-    icon: <ExperimentOutlined className="text-lg" />,
+    icon: <CropIcon className="text-lg" />,
     label: 'Cây trồng',
   },
   {
     key: ROUTER.FM_PROCESS_TEMPLATES,
-    icon: <ProfileOutlined className="text-lg" />,
+    icon: <TemplateLibraryIcon className="text-lg" />,
     label: 'Thư viện mẫu',
   },
   {
     key: ROUTER.FM_CULTIVATION_LOGBOOKS,
-    icon: <ContainerOutlined className="text-lg" />,
+    icon: <LogbookIcon className="text-lg" />,
     label: 'Nhật ký canh tác',
   },
   {
     key: ROUTER.FM_LOGBOOKS,
-    icon: <BookOutlined className="text-lg" />,
+    icon: <ApprovalLogbookIcon className="text-lg" />,
     label: 'Duyệt nhật ký canh tác',
   },
   {
     key: ROUTER.FM_REPORTS,
-    icon: <BarChartOutlined className="text-lg" />,
+    icon: <ReportIcon className="text-lg" />,
     label: 'Báo cáo thống kê',
   },
   {
     key: ROUTER.FM_TASK_CATALOGS,
-    icon: <CheckCircleOutlined className="text-lg" />,
+    icon: <TaskCatalogIcon className="text-lg" />,
     label: 'Danh mục công việc',
   },
   {
     key: ROUTER.FM_HARVEST_BATCHES,
-    icon: <InboxOutlined className="text-lg" />,
+    icon: <HarvestBatchIcon className="text-lg" />,
     label: 'Quản lý lô thu hoạch',
   },
   {
     key: ROUTER.FM_NOTIFICATIONS,
-    icon: <BellOutlined className="text-lg" />,
+    icon: <NotificationIcon className="text-lg" />,
     label: 'Thông báo',
   },
   {
     key: 'material-submenu',
-    icon: <ShopOutlined className="text-lg" />,
+    icon: <MaterialManagementIcon className="text-lg" />,
     label: 'Quản lý vật tư',
     children: [
-      { key: ROUTER.FM_FERTILIZERS, label: 'Phân bón' },
-      { key: ROUTER.FM_PESTICIDES, label: 'Nông dược' },
-      { key: ROUTER.FM_INVENTORY_IMPORT_HISTORY, label: 'Lịch sử nhập kho' },
+      { key: ROUTER.FM_FERTILIZERS, icon: <FertilizerIcon />, label: 'Phân bón' },
+      { key: ROUTER.FM_PESTICIDES, icon: <PesticideIcon />, label: 'Nông dược' },
+      { key: ROUTER.FM_INVENTORY_IMPORT_HISTORY, icon: <ImportHistoryIcon />, label: 'Lịch sử nhập kho' },
     ],
   },
   {
     key: 'reference-submenu',
-    icon: <BookOutlined className="text-lg" />,
+    icon: <ReferenceBookIcon className="text-lg" />,
     label: 'Tra cứu cấp phép',
     children: [
-      { key: ROUTER.FM_REF_FERTILIZER, label: 'Danh mục phân bón' },
-      { key: ROUTER.FM_REF_PESTICIDE, label: 'Danh mục nông dược' },
+      { key: ROUTER.FM_REF_FERTILIZER, icon: <FertilizerIcon />, label: 'Danh mục phân bón' },
+      { key: ROUTER.FM_REF_PESTICIDE, icon: <PesticideIcon />, label: 'Danh mục nông dược' },
     ],
   },
 ]
@@ -108,22 +114,22 @@ export const farmManagerItem = () => [
 export const farmSupervisorItem = () => [
   {
     key: ROUTER.FS_CULTIVATION_LOGBOOKS,
-    icon: <ContainerOutlined className="text-lg" />,
+    icon: <PlanLogbookIcon className="text-lg" />,
     label: 'Kế hoạch & Nhật ký',
   },
   {
     key: ROUTER.FS_FARMERS,
-    icon: <TeamOutlined className="text-lg" />,
+    icon: <FarmerManagementIcon className="text-lg" />,
     label: 'Quản lý nông dân',
   },
   {
     key: ROUTER.FS_LANDS,
-    icon: <EnvironmentOutlined className="text-lg" />,
+    icon: <LandManagementIcon className="text-lg" />,
     label: 'Quản lý vùng trồng',
   },
   {
     key: ROUTER.NOTIFICATIONS,
-    icon: <BellOutlined className="text-lg" />,
+    icon: <NotificationIcon className="text-lg" />,
     label: 'Thông báo',
   },
 ]
@@ -132,12 +138,12 @@ export const farmSupervisorItem = () => [
 export const farmLeaderItem = () => [
   {
     key: ROUTER.FL_TASKS,
-    icon: <CheckCircleOutlined className="text-lg" />,
+    icon: <MyTaskIcon className="text-lg" />,
     label: 'Công việc của tôi',
   },
   {
     key: ROUTER.NOTIFICATIONS,
-    icon: <BellOutlined className="text-lg" />,
+    icon: <NotificationIcon className="text-lg" />,
     label: 'Thông báo',
   },
 ]
