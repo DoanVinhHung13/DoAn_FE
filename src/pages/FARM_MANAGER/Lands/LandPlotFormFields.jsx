@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Col, Form, Input, InputNumber, Row } from 'antd'
 import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
+import AddressSelectorField from 'src/components/AddressSelectorField'
 
 /**
  * Form fields tái sử dụng cho LandPlotCreate và LandPlotEdit.
@@ -32,7 +33,7 @@ const LandPlotFormFields = ({
           : undefined
       }
     >
-      <Input.TextArea disabled={disabled} rows={2} maxLength={300} placeholder="Địa chỉ chi tiết" />
+      <AddressSelectorField disabled={disabled} />
     </Form.Item>
 
     <Row gutter={12}>

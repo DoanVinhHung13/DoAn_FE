@@ -6,6 +6,23 @@ import { getProvinces, getWardsByProvince } from 'src/services/LocationService';
 const { Option } = Select;
 const { Text } = Typography;
 
+/** Serialize UI-only address parts for the legacy string field. */
+export const formatAddress = ({ detailAddress, ward, province } = {}) =>
+  [detailAddress, ward, province]
+    .map((part) => (typeof part === 'string' ? part.trim() : ''))
+    .filter(Boolean)
+    .join(', ');
+
+const findTrailingLocation = (address, locations) => {
+  const normalizedAddress = address.trim().toLocaleLowerCase('vi-VN');
+  return [...locations]
+    .sort((a, b) => b.name.length - a.name.length)
+    .find((location) => normalizedAddress.endsWith(location.name.toLocaleLowerCase('vi-VN')));
+};
+
+const removeTrailingLocation = (address, locationName) =>
+  address.slice(0, -locationName.length).replace(/[\s,]+$/, '').trim();
+
 /**
  * Component chọn địa phương Việt Nam (sau sáp nhập 07/2025)
  * Cấu trúc mới: Tỉnh/Thành phố → Phường/Xã (bỏ cấp Quận/Huyện)
@@ -35,6 +52,50 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
     fetch();
   }, []);
 
+  useEffect(() => {
+    if (!value.province || !provinces.length) return;
+    const province = provinces.find((item) => item.name === value.province);
+    if (province && province.code !== selectedProvinceCode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedProvinceCode(province.code);
+    }
+  }, [value.province, provinces, selectedProvinceCode]);
+
+  // Address records created before this selector are still one string. Split
+  // a known "detail, ward, province" value once so edit forms can prefill all
+  // three controls without changing the persisted database format.
+  useEffect(() => {
+    const storedAddress = value.detailAddress?.trim();
+    if (!storedAddress || value.province || !provinces.length) return undefined;
+
+    const province = findTrailingLocation(storedAddress, provinces);
+    if (!province) return undefined;
+
+    let active = true;
+    const detailWithoutProvince = removeTrailingLocation(storedAddress, province.name);
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedProvinceCode(province.code);
+
+    getWardsByProvince(province.code).then((provinceWards) => {
+      if (!active) return;
+
+      const ward = findTrailingLocation(detailWithoutProvince, provinceWards);
+      onChange?.({
+        ...value,
+        detailAddress: ward
+          ? removeTrailingLocation(detailWithoutProvince, ward.name)
+          : detailWithoutProvince,
+        province: province.name,
+        ward: ward?.name || null,
+      });
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [onChange, provinces, value]);
+
   // Load phường/xã khi chọn tỉnh
   useEffect(() => {
     const fetch = async () => {
@@ -51,11 +112,11 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
   }, [selectedProvinceCode]);
 
   const handleProvinceChange = (val, option) => {
-    setSelectedProvinceCode(option.code);
+    setSelectedProvinceCode(option?.code || null);
     setWards([]);
     onChange?.({
       ...value,
-      province: option.name,
+      province: option?.name || null,
       ward: null,
     });
   };
@@ -63,7 +124,7 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
   const handleWardChange = (val, option) => {
     onChange?.({
       ...value,
-      ward: option.name,
+      ward: option?.name || null,
     });
   };
 
@@ -84,6 +145,7 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
             placeholder="Chọn tỉnh/thành phố"
             value={value.province || undefined}
             onChange={handleProvinceChange}
+            allowClear
             showSearch
             disabled={disabled}
             loading={loadingProvinces}
@@ -113,6 +175,7 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
             placeholder="Chọn phường/xã"
             value={value.ward || undefined}
             onChange={handleWardChange}
+            allowClear
             showSearch
             disabled={disabled || !selectedProvinceCode}
             loading={loadingWards}

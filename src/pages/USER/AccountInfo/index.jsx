@@ -26,6 +26,7 @@ import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import TitleCustom from "src/components/TitleCustom";
+import AddressSelectorField from "src/components/AddressSelectorField";
 import { SYSTEM_KEY } from "src/constants/systemKey";
 import { useSystemKey } from "src/hooks/useSystemKey";
 import { useAppDispatch } from "src/redux/hooks";
@@ -456,11 +457,7 @@ const AccountInfo = () => {
                           },
                         ]}
                       >
-                        <Input
-                          prefix={<EnvironmentOutlined className="text-gray-300" />}
-                          placeholder="Số nhà, tên đường..."
-                          className="h-11"
-                        />
+                        <AddressSelectorField />
                       </Form.Item>
                     </Col>
                   </Row>
