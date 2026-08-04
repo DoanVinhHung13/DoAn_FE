@@ -56,6 +56,7 @@ const LandPlotMap = ({
   const [searchError, setSearchError] = useState('')
   const [overlapError, setOverlapError] = useState('')
   const [showResults, setShowResults] = useState(false)
+  const [pickLocationMode, setPickLocationMode] = useState(false)
 
   useEffect(() => {
     overlapPlotsRef.current = overlapPlots
@@ -188,6 +189,36 @@ const LandPlotMap = ({
     [clearSearchMarker],
   )
 
+  const handlePickLocation = useCallback(() => {
+    if (!mapInstance.current) return
+    setPickLocationMode(true)
+    setSearchError('Click trên bản đồ để chọn vị trí chính xác')
+    mapInstance.current.getContainer().style.cursor = 'crosshair'
+  }, [])
+
+  const handleMapClick = useCallback(
+    (e) => {
+      if (!pickLocationMode) return
+      const { lat, lng } = e.latlng
+      setPickLocationMode(false)
+      mapInstance.current.getContainer().style.cursor = ''
+      setSearchError('')
+
+      clearSearchMarker()
+      searchMarkerRef.current = L.marker([lat, lng])
+        .addTo(mapInstance.current)
+        .bindPopup(`Vị trí đã chọn<br/>${lat.toFixed(6)}, ${lng.toFixed(6)}`)
+        .openPopup()
+
+      onAddressSelectRef.current?.({
+        address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+        latitude: lat,
+        longitude: lng,
+      })
+    },
+    [pickLocationMode, clearSearchMarker],
+  )
+
   useEffect(() => {
     if (mapInstance.current || !mapRef.current) return
 
@@ -283,16 +314,19 @@ const LandPlotMap = ({
       map.on('pm:remove', handleRemove)
     }
 
+    map.on('click', handleMapClick)
+
     mapInstance.current = map
 
     return () => {
+      map.off('click', handleMapClick)
       map.remove()
       mapInstance.current = null
       activeLayer.current = null
       searchMarkerRef.current = null
       locateMarkerRef.current = null
     }
-  }, [mode, color, clearActiveLayer, validatePolygon])
+  }, [mode, color, clearActiveLayer, validatePolygon, handleMapClick])
 
   useEffect(() => {
     if (!mapInstance.current) return
@@ -483,6 +517,8 @@ const LandPlotMap = ({
                 const val = e.target.value
                 setSearchQuery(val)
                 setSearchError('')
+                setPickLocationMode(false)
+                mapInstance.current.getContainer().style.cursor = ''
                 triggerAutocomplete(val)
               }}
               onPressEnter={() => triggerAutocomplete(searchQuery)}
@@ -492,6 +528,10 @@ const LandPlotMap = ({
             />
           </div>
 
+          <button type="button" className="land-plot-map__locate" onClick={handlePickLocation}>
+            <EnvironmentOutlined /> Chọn trên bản đồ
+          </button>
+
           <button type="button" className="land-plot-map__locate" onClick={handleLocate}>
             <EnvironmentOutlined /> GPS
           </button>
@@ -500,7 +540,9 @@ const LandPlotMap = ({
 
       {(mode === 'draw' || mode === 'edit') && (
         <div className="land-plot-map__hint-bar">
-          Tìm địa chỉ để di chuyển bản đồ. Vùng nét đứt là lô đất đã có — không được vẽ chồng lên.
+          {pickLocationMode
+            ? 'Click vào bản đồ để chọn vị trí chính xác'
+            : 'Tìm địa chỉ để di chuyển bản đồ. Vùng nét đứt là lô đất đã có — không được vẽ chồng lên.'}
         </div>
       )}
 

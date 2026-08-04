@@ -3,24 +3,29 @@
  * Tìm kiếm địa chỉ qua OpenMap.vn API (https://mapapis.openmap.vn/v1)
  * – Autocomplete: gợi ý real-time khi user gõ
  * – Place Detail: lấy tọa độ chính xác từ place_id
- * Fallback về Nominatim nếu VITE_OPENMAP_API_KEY không được cấu hình.
+ * Bắt buộc phải có VITE_OPENMAP_API_KEY để sử dụng.
  */
 
 const OPENMAP_BASE = 'https://mapapis.openmap.vn/v1'
 const OPENMAP_API_KEY = import.meta.env.VITE_OPENMAP_API_KEY
 
-// Fallback: Nominatim (OpenStreetMap) khi không có API key
-const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/search'
-
 const GEOCODING_ERROR_MESSAGE = 'Không thể tìm kiếm vị trí lúc này. Vui lòng thử lại.'
+const MISSING_API_KEY_MESSAGE = 'Chưa cấu hình API key cho OpenMap.vn. Vui lòng liên hệ quản trị viên.'
 
 export const isExternalAbortError = (error) =>
   error?.name === 'AbortError' || error?.code === 'ABORT_ERR'
 
-const createGeocodingError = (service = 'openmap') => {
+const createGeocodingError = () => {
   const error = new Error(GEOCODING_ERROR_MESSAGE)
   error.type = 'external-service'
-  error.service = service
+  error.service = 'openmap'
+  return error
+}
+
+const createMissingApiKeyError = () => {
+  const error = new Error(MISSING_API_KEY_MESSAGE)
+  error.type = 'missing-config'
+  error.service = 'openmap'
   return error
 }
 
@@ -30,16 +35,18 @@ const createGeocodingError = (service = 'openmap') => {
  * Autocomplete: trả về danh sách gợi ý địa chỉ (chưa có tọa độ).
  * Mỗi item có: { place_id, description, mainText, secondaryText }
  */
-export async function autocompleteAddress(query, { signal, location } = {}) {
+export async function autocompleteAddress(query, { signal, location, limit = 10 } = {}) {
+  if (!OPENMAP_API_KEY) throw createMissingApiKeyError()
+
   const keyword = query?.trim()
   if (!keyword || keyword.length < 2) return []
 
   const params = new URLSearchParams({
     input: keyword,
     apikey: OPENMAP_API_KEY,
+    limit: String(limit),
   })
 
-  // Nếu có vị trí hiện tại → bias kết quả về gần đó
   if (location) {
     params.set('location', `${location.lat},${location.lng}`)
   }
@@ -73,6 +80,8 @@ export async function autocompleteAddress(query, { signal, location } = {}) {
  * Response OpenMap: features[0].geometry.coordinates = [lng, lat]
  */
 export async function getPlaceDetail(placeId, { signal } = {}) {
+  if (!OPENMAP_API_KEY) throw createMissingApiKeyError()
+
   const params = new URLSearchParams({
     ids: placeId,
     apikey: OPENMAP_API_KEY,
@@ -103,82 +112,31 @@ export async function getPlaceDetail(placeId, { signal } = {}) {
   return { latitude: lat, longitude: lng, label }
 }
 
-// ─── Nominatim fallback ───────────────────────────────────────────────────────
-
-async function searchAddressNominatim(query, { limit = 6, signal } = {}) {
-  const params = new URLSearchParams({
-    q: query,
-    format: 'json',
-    addressdetails: '1',
-    limit: String(limit),
-    countrycodes: 'vn',
-  })
-
-  const response = await fetch(`${NOMINATIM_BASE}?${params}`, {
-    headers: { Accept: 'application/json', 'Accept-Language': 'vi' },
-    signal,
-  })
-
-  if (!response.ok) throw createGeocodingError('nominatim')
-
-  let results
-  try {
-    results = await response.json()
-  } catch {
-    throw createGeocodingError('nominatim')
-  }
-
-  if (!Array.isArray(results)) throw createGeocodingError('nominatim')
-
-  return results
-    .map((item) => ({
-      id: item?.place_id,
-      label: item?.display_name,
-      latitude: Number(item?.lat),
-      longitude: Number(item?.lon),
-      type: item?.type,
-      class: item?.class,
-    }))
-    .filter(
-      (item) =>
-        item.id != null &&
-        item.label &&
-        Number.isFinite(item.latitude) &&
-        Number.isFinite(item.longitude),
-    )
-}
-
 // ─── Unified API: dùng bởi LandPlotMap ──────────────────────────────────────
 
 /**
  * searchAddress — giao diện thống nhất cho LandPlotMap.
  *
- * Nếu có VITE_OPENMAP_API_KEY → dùng OpenMap.vn Autocomplete.
- * Ngược lại → fallback Nominatim.
+ * Bắt buộc sử dụng OpenMap.vn Autocomplete API.
+ * Yêu cầu có VITE_OPENMAP_API_KEY được cấu hình.
  *
- * Trả về mảng: [{ id, label, latitude, longitude, place_id? }]
- *  - Với OpenMap: latitude/longitude = null (chưa có), cần gọi getPlaceDetail() khi chọn
- *  - Với Nominatim: latitude/longitude đầy đủ ngay
+ * Trả về mảng: [{ id, label, latitude, longitude, place_id }]
+ * - latitude/longitude = null (chưa có), cần gọi getPlaceDetail() khi chọn
  */
-export async function searchAddress(query, { limit = 6, signal } = {}) {
+export async function searchAddress(query, { signal, limit = 10 } = {}) {
+  if (!OPENMAP_API_KEY) throw createMissingApiKeyError()
+
   const keyword = query?.trim()
   if (!keyword || keyword.length < 2) return []
 
-  if (!OPENMAP_API_KEY) {
-    // Fallback Nominatim
-    return searchAddressNominatim(keyword, { limit, signal })
-  }
+  const suggestions = await autocompleteAddress(keyword, { signal, limit })
 
-  const suggestions = await autocompleteAddress(keyword, { signal })
-
-  // Map sang format thống nhất; tọa độ sẽ được resolve khi user chọn (qua place_id)
   return suggestions.map((s) => ({
     id: s.place_id,
     place_id: s.place_id,
     label: s.description,
     mainText: s.mainText,
     secondaryText: s.secondaryText,
-    // Tọa độ chưa có — sẽ fetch qua getPlaceDetail() khi user click chọn
     latitude: null,
     longitude: null,
   }))
