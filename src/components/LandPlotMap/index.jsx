@@ -13,7 +13,7 @@ import {
   parseBoundaryJson,
 } from 'src/utils/geoJsonUtils'
 import { MSG_LM_25 } from 'src/pages/FARM_MANAGER/Lands/landPlotUtils'
-import { isExternalAbortError, searchAddress } from 'src/utils/geocodingUtils'
+import { getPlaceDetail, isExternalAbortError, searchAddress } from 'src/utils/geocodingUtils'
 import './styles.css'
 
 const DEFAULT_CENTER = [21.0285, 105.8542]
@@ -47,6 +47,8 @@ const LandPlotMap = ({
   const onOverlapErrorRef = useRef(onOverlapError)
   const searchControllerRef = useRef(null)
   const searchRequestIdRef = useRef(0)
+  const debounceTimerRef = useRef(null)
+  const detailControllerRef = useRef(null)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -77,6 +79,8 @@ const LandPlotMap = ({
 
   useEffect(() => () => {
     searchControllerRef.current?.abort()
+    detailControllerRef.current?.abort()
+    clearTimeout(debounceTimerRef.current)
   }, [])
 
   const emitPolygonChange = useCallback((geoJSON) => {
@@ -359,54 +363,88 @@ const LandPlotMap = ({
     })
   }, [color])
 
-  const handleAddressSearch = async (value) => {
-    const keyword = (value ?? searchQuery).trim()
-    if (!keyword) {
-      setSearchError('Vui lòng nhập địa chỉ cần tìm.')
-      return
-    }
-
-    searchControllerRef.current?.abort()
-    const controller = new AbortController()
-    const requestId = searchRequestIdRef.current + 1
-    searchRequestIdRef.current = requestId
-    searchControllerRef.current = controller
-
-    setSearchLoading(true)
-    setSearchError('')
-    setShowResults(true)
-
-    try {
-      const results = await searchAddress(keyword, { signal: controller.signal })
-      if (requestId !== searchRequestIdRef.current) return
-      setSearchResults(results)
-      if (!results.length) {
-        setSearchError('Không tìm thấy địa chỉ phù hợp. Hãy thử từ khóa khác.')
-      }
-    } catch (error) {
-      if (isExternalAbortError(error) || requestId !== searchRequestIdRef.current) return
+  // ── Autocomplete: gọi khi user gõ (debounce 400ms) ─────────────────────────
+  const triggerAutocomplete = useCallback((keyword) => {
+    clearTimeout(debounceTimerRef.current)
+    if (!keyword || keyword.length < 2) {
       setSearchResults([])
-      setSearchError('Không thể tìm kiếm vị trí lúc này. Vui lòng thử lại.')
+      setShowResults(false)
       return
-    } finally {
-      if (requestId === searchRequestIdRef.current) {
-        searchControllerRef.current = null
-        setSearchLoading(false)
-      }
     }
-  }
 
-  const handleSelectResult = (result) => {
+    debounceTimerRef.current = setTimeout(async () => {
+      searchControllerRef.current?.abort()
+      const controller = new AbortController()
+      const requestId = searchRequestIdRef.current + 1
+      searchRequestIdRef.current = requestId
+      searchControllerRef.current = controller
+
+      setSearchLoading(true)
+      setSearchError('')
+      setShowResults(true)
+
+      try {
+        const results = await searchAddress(keyword, { signal: controller.signal })
+        if (requestId !== searchRequestIdRef.current) return
+        setSearchResults(results)
+        if (!results.length) {
+          setSearchError('Không tìm thấy địa chỉ phù hợp. Hãy thử từ khóa khác.')
+        }
+      } catch (error) {
+        if (isExternalAbortError(error) || requestId !== searchRequestIdRef.current) return
+        setSearchResults([])
+        setSearchError('Không thể tìm kiếm vị trí lúc này. Vui lòng thử lại.')
+      } finally {
+        if (requestId === searchRequestIdRef.current) {
+          searchControllerRef.current = null
+          setSearchLoading(false)
+        }
+      }
+    }, 400)
+  }, [])
+
+  // ── Xử lý chọn gợi ý: nếu có place_id → fetch tọa độ; không thì dùng trực tiếp ──
+  const handleSelectResult = useCallback(async (result) => {
     setSearchQuery(result.label)
     setShowResults(false)
     setSearchResults([])
-    flyToLocation(result.latitude, result.longitude, result.label)
-    onAddressSelectRef.current?.({
-      address: result.label,
-      latitude: result.latitude,
-      longitude: result.longitude,
-    })
-  }
+
+    // Nếu đã có tọa độ (fallback Nominatim) → dùng luôn
+    if (result.latitude != null && result.longitude != null) {
+      flyToLocation(result.latitude, result.longitude, result.label)
+      onAddressSelectRef.current?.({
+        address: result.label,
+        latitude: result.latitude,
+        longitude: result.longitude,
+      })
+      return
+    }
+
+    // OpenMap.vn: cần gọi Place Detail để lấy tọa độ
+    if (!result.place_id) return
+
+    detailControllerRef.current?.abort()
+    const controller = new AbortController()
+    detailControllerRef.current = controller
+
+    setSearchLoading(true)
+    try {
+      const detail = await getPlaceDetail(result.place_id, { signal: controller.signal })
+      flyToLocation(detail.latitude, detail.longitude, detail.label || result.label)
+      onAddressSelectRef.current?.({
+        address: detail.label || result.label,
+        latitude: detail.latitude,
+        longitude: detail.longitude,
+      })
+    } catch (error) {
+      if (!isExternalAbortError(error)) {
+        setSearchError('Không thể lấy vị trí. Vui lòng thử lại.')
+      }
+    } finally {
+      detailControllerRef.current = null
+      setSearchLoading(false)
+    }
+  }, [flyToLocation])
 
   const handleLocate = () => {
     if (!navigator.geolocation || !mapInstance.current) return
@@ -442,26 +480,16 @@ const LandPlotMap = ({
               placeholder="Tìm địa chỉ, xã, huyện, tỉnh..."
               value={searchQuery}
               onChange={(e) => {
-                setSearchQuery(e.target.value)
+                const val = e.target.value
+                setSearchQuery(val)
                 setSearchError('')
-                if (!e.target.value) {
-                  setSearchResults([])
-                  setShowResults(false)
-                }
+                triggerAutocomplete(val)
               }}
-              onPressEnter={() => handleAddressSearch()}
+              onPressEnter={() => triggerAutocomplete(searchQuery)}
               onFocus={() => {
                 if (searchResults.length) setShowResults(true)
               }}
             />
-            <button
-              type="button"
-              className="land-plot-map__search-btn"
-              onClick={() => handleAddressSearch()}
-              disabled={searchLoading}
-            >
-              {searchLoading ? 'Đang tìm...' : 'Tìm'}
-            </button>
           </div>
 
           <button type="button" className="land-plot-map__locate" onClick={handleLocate}>
@@ -490,7 +518,16 @@ const LandPlotMap = ({
             <li key={result.id}>
               <button type="button" onClick={() => handleSelectResult(result)}>
                 <EnvironmentOutlined />
-                <span>{result.label}</span>
+                <span className="land-plot-map__result-text">
+                  <span className="land-plot-map__result-main">
+                    {result.mainText || result.label}
+                  </span>
+                  {result.secondaryText && (
+                    <span className="land-plot-map__result-sub">
+                      {result.secondaryText}
+                    </span>
+                  )}
+                </span>
               </button>
             </li>
           ))}
