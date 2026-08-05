@@ -43,6 +43,7 @@ export async function autocompleteAddress(query, { signal, location, limit = 10 
 
   const params = new URLSearchParams({
     input: keyword,
+    admin_v2: 'true',
     apikey: OPENMAP_API_KEY,
     limit: String(limit),
   })
@@ -84,6 +85,7 @@ export async function getPlaceDetail(placeId, { signal } = {}) {
 
   const params = new URLSearchParams({
     ids: placeId,
+    admin_v2: 'true',
     apikey: OPENMAP_API_KEY,
   })
 
