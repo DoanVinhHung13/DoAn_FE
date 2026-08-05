@@ -245,20 +245,6 @@ const Trace = () => {
   const [searchParams] = useSearchParams();
   const recordedScanCodes = useRef(new Set());
 
-  // Parse display options from URL query parameters (e.g. ?log=1&mat=1&pic=1&cert=0)
-  const displayOptions = useMemo(() => {
-    const hasLog = searchParams.get('log');
-    const hasMat = searchParams.get('mat');
-    const hasPic = searchParams.get('pic');
-
-    return {
-      showDailyLog: hasLog !== null ? hasLog === '1' : true,
-      showMaterials: hasMat !== null ? hasMat === '1' : true,
-      showAutomation: hasMat !== null ? hasMat === '1' : true,
-      showPhotos: hasPic !== null ? hasPic === '1' : true,
-    };
-  }, [searchParams]);
-
   const { data: traceability, isLoading } = useQuery({
     queryKey: ['traceability', qrCode],
     queryFn: async () => {
@@ -294,6 +280,13 @@ const Trace = () => {
     const payload = traceability?.data ?? traceability;
     const source = payload?.harvestBatch || payload;
     if (!source) return null;
+
+    const displayOptions = payload?.displayOptions || {
+      showDailyLog: true,
+      showMaterials: true,
+      showAutomation: true,
+      showPhotos: true,
+    };
 
     const toArray = (value) => (Array.isArray(value) ? value : []);
 
@@ -366,7 +359,7 @@ const Trace = () => {
       photos: b.photos.length ? b.photos : logPhotos,
       cultivationLogs,
     };
-  }, [traceability, qrCode, displayOptions]);
+  }, [traceability, qrCode]);
 
   const timelineGroups = useMemo(() => buildTimelineGroups(traceData), [traceData]);
 

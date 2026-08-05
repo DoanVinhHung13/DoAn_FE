@@ -238,13 +238,9 @@ const QRManagement = () => {
     ],
   };
 
-  const getPublicTraceUrl = (code, displayOptions = previewDisplayOptions) => {
+  const getPublicTraceUrl = (code) => {
     if (!code) return '';
-    const params = new URLSearchParams();
-    params.set('log', displayOptions.showDailyLog ? '1' : '0');
-    params.set('mat', displayOptions.showMaterials ? '1' : '0');
-    params.set('pic', displayOptions.showPhotos ? '1' : '0');
-    return `${window.location.origin}/trace/${code}?${params.toString()}`;
+    return `${window.location.origin}/trace/${code}`;
   };
 
   // Trace code: use server-returned code if available, otherwise derive stably from batchCode (no random suffix)
