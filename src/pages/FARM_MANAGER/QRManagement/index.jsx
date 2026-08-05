@@ -42,6 +42,7 @@ import QrCodeService from 'src/services/QrCodeService';
 import { formatDate, parseDate } from 'src/utils/dateFormatters';
 import HarvestBatchService from 'src/services/HarvestBatchService';
 import ROUTER from 'src/router/ROUTER';
+import { TraceView } from 'src/pages/ANONYMOUS/Trace';
 
 const { Text, Paragraph } = Typography;
 
@@ -321,18 +322,33 @@ const QRManagement = () => {
   const handleCreateQR = async () => {
     try {
       const values = await form.validateFields(['harvestBatchId']);
-      if (!previewData?.traceCode || previewData.harvestBatchId !== values.harvestBatchId) {
-        message.warning('Vui lòng xem trước QR trước khi tạo mã chính thức.');
-        return;
-      }
+      
+      const displayOptions = {
+        showDailyLog: !!form.getFieldValue('showDailyLog'),
+        showMaterials: !!form.getFieldValue('showMaterials'),
+        showPhotos: !!form.getFieldValue('showPhotos'),
+      };
 
       const payload = {
         harvestBatchId: values.harvestBatchId,
-        traceCode: previewData.traceCode,
-        displayOptions: previewData.displayOptions,
+        traceCode: previewData?.harvestBatchId === values.harvestBatchId ? previewData?.traceCode : undefined,
+        displayOptions: previewData?.harvestBatchId === values.harvestBatchId ? previewData?.displayOptions : displayOptions,
       };
 
-      createQRMutation.mutate(payload);
+      Modal.confirm({
+        title: 'Xác nhận tạo mã QR chính thức',
+        content: (
+          <div>
+            <p>Bạn có chắc chắn muốn tạo mã QR này?</p>
+            {!previewData && <p className="text-orange-500 text-sm mt-1">Lưu ý: Bạn chưa xem trước mã QR. Khuyến nghị xem trước để kiểm tra thông tin hiển thị trước khi tạo chính thức.</p>}
+          </div>
+        ),
+        okText: 'Tạo mã',
+        cancelText: 'Hủy',
+        onOk: () => {
+          createQRMutation.mutate(payload);
+        },
+      });
     } catch {
       message.warning('Vui lòng chọn lô thu hoạch!');
     }
@@ -795,7 +811,7 @@ const QRManagement = () => {
                   <Paragraph className="text-xs text-gray-500 max-w-xs mb-0">
                     {batchDetail?.isQrEligible !== true
                       ? 'Lô hàng này chưa được hệ thống cho phép tạo QR.'
-                      : 'Vui lòng xem trước QR trước, sau đó bấm nút "Tạo mã QR chính thức" để lưu đúng mã truy xuất đã xem.'}
+                      : 'Bấm nút "Tạo mã QR chính thức" để sinh mã QR cho lô thu hoạch này.'}
                   </Paragraph>
                 </div>
               )}
@@ -818,17 +834,6 @@ const QRManagement = () => {
         }
         styles={{ body: { padding: 0, maxHeight: '80vh', overflowY: 'auto' } }}
       >
-        {/* Preview banner */}
-        <div className="bg-amber-50 border-b border-amber-200 px-5 py-2 flex items-center gap-2">
-          <EyeOutlined className="text-amber-500" />
-          <span className="text-xs text-amber-700 font-medium">
-            Đây là bản xem trước, chưa lưu database.
-            {previewData?.traceability?.verificationStatus && (
-              <> Trạng thái: <strong>{previewData.traceability.verificationStatus}</strong>.</>
-            )}
-          </span>
-        </div>
-
         {/* QR Code + Link Preview */}
         <div className="flex items-center gap-6 px-6 py-5 bg-white border-b border-gray-100">
           <div className="flex-shrink-0 p-3 bg-white rounded-xl shadow border border-gray-100 flex flex-col items-center">
@@ -877,171 +882,7 @@ const QRManagement = () => {
           </div>
         </div>
 
-        <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
-          {/* Header */}
-          <div className="bg-green-600 text-white py-8 px-6">
-            <div className="max-w-full">
-              <div className="flex items-center gap-4 mb-3">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                  <Sprout className="h-7 w-7 text-green-600" />
-                </div>
-                <div>
-                  <Typography.Title level={3} className="!text-white !mb-1">Truy xuất nguồn gốc</Typography.Title>
-                  <Typography.Text className="text-green-100">
-                    Mã lô: <strong>{previewBatchData?.batchCode || 'N/A'}</strong>
-                  </Typography.Text>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="px-5 py-5 space-y-4">
-            {/* Thông tin cơ bản — luôn hiển thị */}
-            <Card className="shadow-sm rounded-xl">
-              <Typography.Title level={5} className="flex items-center gap-2 !mb-3">
-                <Sprout className="h-5 w-5 text-green-600" /> Thông tin sản phẩm
-              </Typography.Title>
-              <Descriptions bordered column={2} size="small">
-                <Descriptions.Item label="Mã lô" span={1}>
-                  <Tag color="blue" className="font-semibold">{previewBatchData?.batchCode || '—'}</Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="Sản phẩm" span={1}>
-                  <Text strong>{previewBatchData?.cropName || previewBatchData?.cropType || '—'}</Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Trang trại / Vùng trồng" span={2}>
-                  <Space>
-                    <EnvironmentOutlined className="text-green-600" />
-                    {previewBatchData?.landPlotName || previewBatchData?.farmName || '—'}
-                  </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Ngày bắt đầu" span={1}>
-                  <Space>
-                    <CalendarOutlined className="text-blue-600" />
-                    {previewBatchData?.startDate ? formatDate(previewBatchData.startDate) : '—'}
-                  </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Ngày thu hoạch" span={1}>
-                  <Space>
-                    <CalendarOutlined className="text-green-600" />
-                    {previewBatchData?.harvestDate ? formatDate(previewBatchData.harvestDate) : '—'}
-                  </Space>
-                </Descriptions.Item>
-                {previewBatchData?.area && (
-                  <Descriptions.Item label="Diện tích" span={1}>
-                    {previewBatchData.area} {formatAreaUnit()}
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </Card>
-
-            {/* Nhật ký hàng ngày */}
-            {previewDisplayOptions.showDailyLog ? (
-              <Card className="shadow-sm rounded-xl">
-                <Typography.Title level={5} className="!mb-3">📝 Nhật ký canh tác hàng ngày</Typography.Title>
-                {previewBatchData.dailyLogs?.length > 0 ? (
-                  <Timeline
-                    mode="left"
-                    items={previewBatchData.dailyLogs.map((log, i) => ({
-                      key: i,
-                      color: 'green',
-                      dot: <CheckCircleOutlined />,
-                      children: (
-                        <div className="pb-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Tag color="blue">{log.date ? formatDate(log.date) : '—'}</Tag>
-                            <Text strong>{log.stage || log.activity || ''}</Text>
-                          </div>
-                          {log.activity && <Typography.Paragraph className="!mb-1"><Text strong>Hoạt động:</Text> {log.activity}</Typography.Paragraph>}
-                          {log.notes && <Typography.Paragraph className="!mb-0 text-gray-500">{log.notes}</Typography.Paragraph>}
-                        </div>
-                      ),
-                    }))}
-                  />
-                ) : (
-                  <Empty description="Chưa có nhật ký canh tác" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                )}
-              </Card>
-            ) : (
-              <Card className="shadow-sm rounded-xl border-dashed border-gray-200 bg-gray-50">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <span>📝</span>
-                  <Text type="secondary" className="text-sm italic">Nhật ký canh tác: <strong>Không hiển thị</strong> (chưa được tích)</Text>
-                </div>
-              </Card>
-            )}
-
-            {/* Thông tin vật tư */}
-            {previewDisplayOptions.showMaterials ? (
-              <Card className="shadow-sm rounded-xl">
-                <Typography.Title level={5} className="flex items-center gap-2 !mb-3">
-                  <ExperimentOutlined className="text-orange-500" /> Thông tin vật tư sử dụng
-                </Typography.Title>
-                {previewBatchData.materials?.length > 0 ? (
-                  <div className="space-y-2">
-                    {previewBatchData.materials.map((mat, i) => (
-                      <Card key={i} size="small" className="bg-gray-50">
-                        <Row gutter={12}>
-                          <Col span={6}><Text type="secondary">Loại</Text><div><Text strong>{mat.type || mat.materialType || '—'}</Text></div></Col>
-                          <Col span={6}><Text type="secondary">Tên</Text><div><Text strong>{mat.name || mat.materialName || '—'}</Text></div></Col>
-                          <Col span={6}><Text type="secondary">Số lượng</Text><div><Text strong className="text-blue-600">{mat.quantity || '—'}</Text></div></Col>
-                          <Col span={6}><Text type="secondary">Nhà cung cấp</Text><div><Text>{mat.supplier || '—'}</Text></div></Col>
-                        </Row>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <Empty description="Chưa có thông tin vật tư" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                )}
-              </Card>
-            ) : (
-              <Card className="shadow-sm rounded-xl border-dashed border-gray-200 bg-gray-50">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <span>🧪</span>
-                  <Text type="secondary" className="text-sm italic">Thông tin vật tư: <strong>Không hiển thị</strong> (chưa được tích)</Text>
-                </div>
-              </Card>
-            )}
-
-            {/* Hình ảnh thực địa */}
-            {previewDisplayOptions.showPhotos ? (
-              <Card className="shadow-sm rounded-xl">
-                <Typography.Title level={5} className="!mb-3">📷 Hình ảnh thực tế tại vùng trồng</Typography.Title>
-                {previewBatchData.photos?.length > 0 ? (
-                  <Row gutter={[12, 12]}>
-                    {previewBatchData.photos.map((photo, i) => (
-                      <Col key={i} xs={24} sm={12} md={8}>
-                        <Card size="small" cover={<Image src={photo.url || photo.imageUrl} alt={photo.caption || photo.description || ''} />}>
-                          <Typography.Paragraph className="!mb-0 text-center text-xs" strong>{photo.caption || photo.description || ''}</Typography.Paragraph>
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
-                ) : (
-                  <Empty description="Chưa có hình ảnh thực địa" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                )}
-              </Card>
-            ) : (
-              <Card className="shadow-sm rounded-xl border-dashed border-gray-200 bg-gray-50">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <span>📷</span>
-                  <Text type="secondary" className="text-sm italic">Hình ảnh thực địa: <strong>Không hiển thị</strong> (chưa được tích)</Text>
-                </div>
-              </Card>
-            )}
-
-            {/* Footer */}
-            <Card className="bg-green-50 border-green-200 rounded-xl">
-              <div className="text-center">
-                <CheckCircleOutlined className="text-3xl text-green-600 mb-2" />
-                <Typography.Title level={5} className="!mb-1">Sản phẩm an toàn, chất lượng đảm bảo</Typography.Title>
-                <Typography.Paragraph className="text-gray-500 !mb-0 text-sm">
-                  Mọi thông tin đều được ghi nhận và xác thực bởi hệ thống quản lý điện tử
-                </Typography.Paragraph>
-              </div>
-            </Card>
-          </div>
-        </div>
+        <TraceView traceabilityData={previewData?.traceability} qrCode={previewTraceCode} isPreview={true} />
       </Modal>
     </>
   );

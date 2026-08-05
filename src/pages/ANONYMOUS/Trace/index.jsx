@@ -17,6 +17,7 @@ import {
   CalendarOutlined,
   ExperimentOutlined,
   FileImageOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import { formatAreaUnit } from 'src/constants/measurementUnits';
 import { Sprout } from 'lucide-react';
@@ -240,44 +241,10 @@ const buildTimelineGroups = (traceData) => {
   }, []);
 };
 
-const Trace = () => {
-  const { qrCode } = useParams();
-  const [searchParams] = useSearchParams();
-  const recordedScanCodes = useRef(new Set());
-
-  const { data: traceability, isLoading } = useQuery({
-    queryKey: ['traceability', qrCode],
-    queryFn: async () => {
-      try {
-        return await http.get(`/traceability/${encodeURIComponent(qrCode)}`, {
-          skipNotice: true,
-          skipAuthRedirect: true,
-        });
-      } catch {
-        return null;
-      }
-    },
-    enabled: Boolean(qrCode),
-    retry: false,
-  });
-
-  useEffect(() => {
-    const payload = traceability?.data ?? traceability;
-    if (!qrCode || !payload?.isValid || recordedScanCodes.current.has(qrCode)) return;
-
-    recordedScanCodes.current.add(qrCode);
-    void http.post(`/traceability/${encodeURIComponent(qrCode)}/scan`, null, {
-      skipNotice: true,
-      skipAuthRedirect: true,
-    }).catch(() => {
-      recordedScanCodes.current.delete(qrCode);
-    });
-  }, [traceability, qrCode]);
-
+export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
   // Construct dynamic trace data
   const traceData = useMemo(() => {
-    // The API returns { success, data: { ...traceability } }.
-    const payload = traceability?.data ?? traceability;
+    const payload = traceabilityData;
     const source = payload?.harvestBatch || payload;
     if (!source) return null;
 
@@ -359,17 +326,9 @@ const Trace = () => {
       photos: b.photos.length ? b.photos : logPhotos,
       cultivationLogs,
     };
-  }, [traceability, qrCode]);
+  }, [traceabilityData, qrCode]);
 
   const timelineGroups = useMemo(() => buildTimelineGroups(traceData), [traceData]);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spin size="large" description="Đang tải thông tin truy xuất..." />
-      </div>
-    );
-  }
 
   if (!traceData) {
     return (
@@ -381,6 +340,17 @@ const Trace = () => {
 
   return (
     <div className="min-h-screen bg-[#f3f9f5] pb-12 text-slate-800">
+      {isPreview && (
+        <div className="bg-amber-50 border-b border-amber-200 px-5 py-2 flex items-center gap-2">
+          <EyeOutlined className="text-amber-500" />
+          <span className="text-xs text-amber-700 font-medium">
+            Đây là bản xem trước, chưa lưu vào hệ thống.
+            {traceabilityData?.verificationStatus && (
+              <> Trạng thái: <strong>{traceabilityData.verificationStatus}</strong>.</>
+            )}
+          </span>
+        </div>
+      )}
       {/* ── Mobile & Desktop Header Banner ── */}
       <div className="border-b border-emerald-100 bg-[#f3f9f5]">
         <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
@@ -667,6 +637,53 @@ const Trace = () => {
       </div>
     </div>
   );
+};
+
+const Trace = () => {
+  const { qrCode } = useParams();
+  const [searchParams] = useSearchParams();
+  const recordedScanCodes = useRef(new Set());
+
+  const { data: traceability, isLoading } = useQuery({
+    queryKey: ['traceability', qrCode],
+    queryFn: async () => {
+      try {
+        return await http.get(`/traceability/${encodeURIComponent(qrCode)}`, {
+          skipNotice: true,
+          skipAuthRedirect: true,
+        });
+      } catch {
+        return null;
+      }
+    },
+    enabled: Boolean(qrCode),
+    retry: false,
+  });
+
+  useEffect(() => {
+    const payload = traceability?.data ?? traceability;
+    if (!qrCode || !payload?.isValid || recordedScanCodes.current.has(qrCode)) return;
+
+    recordedScanCodes.current.add(qrCode);
+    void http.post(`/traceability/${encodeURIComponent(qrCode)}/scan`, null, {
+      skipNotice: true,
+      skipAuthRedirect: true,
+    }).catch(() => {
+      recordedScanCodes.current.delete(qrCode);
+    });
+  }, [traceability, qrCode]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" description="Đang tải thông tin truy xuất..." />
+      </div>
+    );
+  }
+
+  const payload = traceability?.data ?? traceability;
+
+  return <TraceView traceabilityData={payload} qrCode={qrCode} isPreview={false} />;
 };
 
 export default Trace;
