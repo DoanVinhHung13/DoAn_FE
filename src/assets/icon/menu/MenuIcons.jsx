@@ -79,13 +79,13 @@ export const MaterialManagementIcon = (props) => (
 
 export const FertilizerIcon = (props) => (
   <span {...props} className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24", ...props.style }}>
-    inventory
+    science
   </span>
 );
 
 export const PesticideIcon = (props) => (
   <span {...props} className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24", ...props.style }}>
-    inventory
+    bug_report
   </span>
 );
 
@@ -97,7 +97,7 @@ export const ImportHistoryIcon = (props) => (
 
 export const ReferenceBookIcon = (props) => (
   <span {...props} className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24", ...props.style }}>
-    library_books
+    book
   </span>
 );
 

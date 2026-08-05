@@ -28,6 +28,7 @@ import {
   ReloadOutlined,
   StopOutlined,
   SearchOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
@@ -37,6 +38,7 @@ import {
   Select,
   Tag,
   Tooltip,
+  Popconfirm,
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -70,7 +72,7 @@ const ViewFertilizers = () => {
     loading, setLoading
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
-    initialFilters: { category: 'all', status: 'all' }
+    initialFilters: { category: 'all', status: 'ACTIVE' }
   })
 
   const categoryFilter = filters.category
@@ -159,6 +161,15 @@ const ViewFertilizers = () => {
       getList()
     } finally {
       setStatusLoading(false)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    try {
+      await FertilizerService.deleteFertilizer(id)
+      getList()
+    } catch {
+      // error handled by interceptor
     }
   }
 
@@ -296,6 +307,27 @@ const ViewFertilizers = () => {
                 }}
               />
             </Tooltip>
+            <Popconfirm
+              title="Xóa phân bón"
+              description="Bạn có chắc chắn muốn xóa phân bón này không?"
+              onConfirm={(e) => {
+                e.stopPropagation()
+                return handleDelete(record.id)
+              }}
+              onCancel={(e) => e.stopPropagation()}
+              okText="Đồng ý"
+              cancelText="Hủy"
+            >
+              <Tooltip title={locked ? 'Phân bón đang được sử dụng, không thể xóa' : 'Xóa'}>
+                <Button
+                  type="text"
+                  disabled={locked}
+                  icon={<DeleteOutlined className={`text-lg ${locked ? 'text-gray-300' : 'text-red-500'}`} />}
+                  className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : 'hover:bg-red-50'}`}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </Tooltip>
+            </Popconfirm>
           </div>
         )
       },

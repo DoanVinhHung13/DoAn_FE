@@ -104,8 +104,8 @@ export const farmManagerItem = () => [
     icon: <ReferenceBookIcon style={{ fontSize: '22px' }} />,
     label: 'Tra cứu cấp phép',
     children: [
-      { key: ROUTER.FM_REF_FERTILIZER, icon: <FertilizerIcon style={{ fontSize: '16px' }} />, label: 'Danh mục phân bón' },
-      { key: ROUTER.FM_REF_PESTICIDE, icon: <PesticideIcon style={{ fontSize: '16px' }} />, label: 'Danh mục nông dược' },
+      { key: ROUTER.FM_REF_FERTILIZER, icon: <ReferenceBookIcon style={{ fontSize: '16px' }} />, label: 'Danh mục phân bón' },
+      { key: ROUTER.FM_REF_PESTICIDE, icon: <ReferenceBookIcon style={{ fontSize: '16px' }} />, label: 'Danh mục nông dược' },
     ],
   },
 ]

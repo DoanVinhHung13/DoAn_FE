@@ -6,7 +6,8 @@ import {
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
-  StopOutlined
+  StopOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
@@ -14,11 +15,14 @@ import {
   Card,
   Input,
   Select,
+  Tag,
   Tooltip,
+  Popconfirm,
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ROUTER from 'src/router/ROUTER'
+import { PesticideIcon } from 'src/assets/icon/menu/MenuIcons'
 
 import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
@@ -46,7 +50,7 @@ const ViewPesticides = () => {
     loading, setLoading
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
-    initialFilters: { status: 'all' }
+    initialFilters: { category: 'all', status: 'ACTIVE' }
   })
 
   const statusFilter = filters.status
@@ -121,6 +125,15 @@ const ViewPesticides = () => {
       getList()
     } finally {
       setStatusLoading(false)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    try {
+      await PesticideService.deletePesticide(id)
+      getList()
+    } catch {
+      // error handled by interceptor
     }
   }
 
@@ -251,6 +264,27 @@ const ViewPesticides = () => {
                 }}
               />
             </Tooltip>
+            <Popconfirm
+              title="Xóa nông dược"
+              description="Bạn có chắc chắn muốn xóa nông dược này không?"
+              onConfirm={(e) => {
+                e.stopPropagation()
+                return handleDelete(record.id)
+              }}
+              onCancel={(e) => e.stopPropagation()}
+              okText="Đồng ý"
+              cancelText="Hủy"
+            >
+              <Tooltip title={locked ? 'Nông dược đang được sử dụng, không thể xóa' : 'Xóa'}>
+                <Button
+                  type="text"
+                  disabled={locked}
+                  icon={<DeleteOutlined className={`text-lg ${locked ? 'text-gray-300' : 'text-red-500'}`} />}
+                  className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : 'hover:bg-red-50'}`}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </Tooltip>
+            </Popconfirm>
           </div>
         )
       },
@@ -264,7 +298,7 @@ const ViewPesticides = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <BugOutlined className="text-green-600" />
+            <PesticideIcon style={{ fontSize: '24px', color: '#15803d' }} />
             Quản lý nông dược
           </TitleCustom>
         </div>

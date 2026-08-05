@@ -17,6 +17,7 @@ import {
   ReloadOutlined,
   SearchOutlined,
   StopOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons'
 import TitleCustom from 'src/components/TitleCustom'
 import CustomTable from 'src/components/Table/CustomTable'
@@ -27,6 +28,7 @@ import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { useListManagement } from 'src/hooks/useListManagement'
+import { Popconfirm } from 'antd'
 import {
   EMPTY_LAND_MESSAGE,
   MSG_LM_26,
@@ -58,7 +60,7 @@ const LandsManagement = () => {
     loading: listLoading, setLoading: setListLoading
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
-    initialFilters: { status: 'all' }
+    initialFilters: { status: 'ACTIVE' }
   })
 
   const status = filters.status
@@ -145,6 +147,15 @@ const LandsManagement = () => {
       // axios interceptor handles error notification
     } finally {
       setStatusLoading(false)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    try {
+      await LandPlotService.deleteLandPlot(id)
+      fetchLandPlots()
+    } catch {
+      // axios interceptor handles error notification
     }
   }
 
@@ -254,6 +265,28 @@ const LandsManagement = () => {
                     }}
                   />
                 </Tooltip>
+                <Popconfirm
+                  title="Xóa vùng trồng"
+                  description="Bạn có chắc chắn muốn xóa vùng trồng này không?"
+                  onConfirm={(e) => {
+                    e.stopPropagation()
+                    return handleDelete(getItemId(record))
+                  }}
+                  onCancel={(e) => e.stopPropagation()}
+                  okText="Đồng ý"
+                  cancelText="Hủy"
+                >
+                  <Tooltip title="Xóa">
+                    <Button
+                      type="text"
+                      disabled={cultivationLocked}
+                      aria-label={cultivationLocked ? 'Không thể xóa' : 'Xóa vùng trồng'}
+                      icon={<DeleteOutlined className="text-lg text-red-500" />}
+                      className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </Tooltip>
+                </Popconfirm>
               </div>
             )
           },

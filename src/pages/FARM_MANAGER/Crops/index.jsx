@@ -12,6 +12,7 @@ import {
   Tag,
   Tooltip,
   Typography,
+  Popconfirm,
 } from 'antd';
 import {
   EditOutlined,
@@ -19,6 +20,7 @@ import {
   SearchOutlined,
   StopOutlined,
   CheckCircleOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { CropIcon } from 'src/assets/icon/menu/MenuIcons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -104,7 +106,7 @@ const Crops = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
-  const [status, setStatus] = useState('all');
+  const [status, setStatus] = useState('active');
   const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name-asc');
   const [statusTarget, setStatusTarget] = useState(null);
@@ -169,6 +171,18 @@ const Crops = () => {
     onError: (error) => {
       if (isNotFoundError(error)) {
         setStatusTarget(null);
+        queryClient.invalidateQueries({ queryKey: ['crops'] });
+      }
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => CropManagementService.deleteCrop(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['crops'] });
+    },
+    onError: (error) => {
+      if (isNotFoundError(error)) {
         queryClient.invalidateQueries({ queryKey: ['crops'] });
       }
     },
@@ -360,6 +374,28 @@ const Crops = () => {
               onClick={() => setStatusTarget(record)}
             />
           </Tooltip>
+          <Popconfirm
+            title="Xóa cây trồng"
+            description="Bạn có chắc chắn muốn xóa cây trồng này không?"
+            onConfirm={(e) => {
+              e.stopPropagation();
+              return deleteMutation.mutateAsync(getItemId(record));
+            }}
+            onCancel={(e) => e.stopPropagation()}
+            okText="Đồng ý"
+            cancelText="Hủy"
+          >
+            <Tooltip title="Xóa">
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                className="!h-8 !w-8 rounded-lg text-red-500 hover:bg-red-50"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </Tooltip>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -504,8 +540,6 @@ const Crops = () => {
           </div>
         </div>
       </Modal>
-
-
     </div>
   );
 };

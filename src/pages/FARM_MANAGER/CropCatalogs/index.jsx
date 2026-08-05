@@ -15,6 +15,7 @@ import {
   Tag,
   Tooltip,
   Typography,
+  Popconfirm,
 } from 'antd';
 import {
   CheckCircleOutlined,
@@ -22,6 +23,7 @@ import {
   EyeOutlined,
   SearchOutlined,
   StopOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { CropCatalogIcon } from 'src/assets/icon/menu/MenuIcons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -85,7 +87,7 @@ const CropCatalogs = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [keyword, setKeyword] = useState('');
-  const [status, setStatus] = useState('all');
+  const [status, setStatus] = useState('active');
   const [editingCatalog, setEditingCatalog] = useState(null);
   const [selectedCatalogId, setSelectedCatalogId] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
@@ -200,6 +202,24 @@ const CropCatalogs = () => {
         return;
       }
       // axios interceptor handles error notification
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => CropCatalogService.deleteCropCatalog(id),
+    onSuccess: async () => {
+      setInlineError('');
+      queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+      queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
+      await refetchSystemKey();
+    },
+    onError: (error) => {
+      if (isNotFoundError(error)) {
+        setInlineError(EMPTY_MESSAGE);
+        queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
+        queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
+        return;
+      }
     },
   });
 
@@ -357,6 +377,28 @@ const CropCatalogs = () => {
               onClick={() => setStatusTarget(record)}
             />
           </Tooltip>
+          <Popconfirm
+            title="Xóa danh mục cây trồng"
+            description="Bạn có chắc chắn muốn xóa danh mục cây trồng này không?"
+            onConfirm={(e) => {
+              e.stopPropagation();
+              return deleteMutation.mutateAsync(getItemId(record));
+            }}
+            onCancel={(e) => e.stopPropagation()}
+            okText="Đồng ý"
+            cancelText="Hủy"
+          >
+            <Tooltip title="Xóa">
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                className="!h-8 !w-8 rounded-lg text-red-500 hover:bg-red-50"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </Tooltip>
+          </Popconfirm>
         </Space>
       ),
     },

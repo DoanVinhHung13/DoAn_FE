@@ -7,6 +7,7 @@ import {
   StopOutlined,
   UserAddOutlined,
   UserOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons"
 import { UserManagementIcon } from "src/assets/icon/menu/MenuIcons"
 
@@ -17,6 +18,7 @@ import {
   Input,
   Select,
   Tooltip,
+  Popconfirm,
 } from "antd"
 import { useCallback, useEffect, useState } from "react"
 import { useSelector } from "react-redux"
@@ -96,7 +98,7 @@ const UsersManagement = () => {
     loading, setLoading
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
-    initialFilters: { role: undefined, status: 'all' }
+    initialFilters: { role: undefined, status: 'ACTIVE' }
   })
 
   const roleFilter = filters.role
@@ -175,6 +177,15 @@ const UsersManagement = () => {
       setStatusModal({ open: false, user: null })
     } finally {
       setStatusLoading(false)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    try {
+      await UserService.deleteUser(id)
+      getList()
+    } catch {
+      // error handled by axios interceptor
     }
   }
 
@@ -298,6 +309,27 @@ const UsersManagement = () => {
                 }}
               />
             </Tooltip>
+            <Popconfirm
+              title="Xóa người dùng"
+              description="Bạn có chắc chắn muốn xóa người dùng này không?"
+              onConfirm={(e) => {
+                e.stopPropagation()
+                return handleDelete(record.id)
+              }}
+              onCancel={(e) => e.stopPropagation()}
+              okText="Đồng ý"
+              cancelText="Hủy"
+            >
+              <Tooltip title="Xóa">
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined className="text-lg text-red-500" />}
+                  aria-label="Xóa người dùng"
+                  className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50"
+                  onClick={e => e.stopPropagation()}
+                />
+              </Tooltip>
+            </Popconfirm>
           </div>
         )
       },
