@@ -305,7 +305,8 @@ const FarmManagerNotifications = () => {
       return;
     }
 
-    navigate(ROUTER.FM_NOTIFICATION_DETAIL.replace(':id', id));
+    const detailPath = ROUTER.FM_NOTIFICATION_DETAIL;
+    navigate(detailPath.replace(':id', id || 'sent-detail'), { state: { isSent: activeTab === 'sent', notificationItem: item } });
   };
 
   return (
@@ -447,13 +448,13 @@ const FarmManagerNotifications = () => {
                   </span>
                   <span className="min-w-0">
                     <span className="mb-2 flex flex-wrap items-center gap-2">
-                      <Text strong={!item.isRead} className="!text-sm">
+                      <Text strong={activeTab !== 'sent' && !item.isRead} className="!text-sm">
                         {item.title || 'Thông báo'}
                       </Text>
                       <Tag color={NOTIFICATION_TYPE_COLORS[item.type] || TYPE_COLORS[item.type] || 'default'} className="!m-0 !text-xs">
                         {getCategory(item)}
                       </Tag>
-                      {!item.isRead && <Tag color="green" className="!m-0 !text-xs">Chưa đọc</Tag>}
+                      {activeTab !== 'sent' && !item.isRead && <Tag color="green" className="!m-0 !text-xs">Chưa đọc</Tag>}
                     </span>
                     <Text type="secondary" className="block !text-sm !leading-6">
                       {content}
@@ -471,7 +472,7 @@ const FarmManagerNotifications = () => {
                         ? timeAgo(createdAt)
                         : 'Không rõ thời gian'}
                     </Text>
-                    {!item.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />}
+                    {activeTab !== 'sent' && !item.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />}
                   </span>
                 </button>
               );

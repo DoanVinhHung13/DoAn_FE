@@ -8,12 +8,13 @@ import {
   PaperClipOutlined,
 } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
   getNotifications,
   getNotificationById,
   markNotificationAsRead,
+  getSentNotifications,
 } from 'src/services/NotificationService';
 import ROUTER from 'src/router/ROUTER';
 import { getNotificationTypeLabel } from 'src/constants/notificationTypes';
@@ -86,6 +87,8 @@ const getSenderName = (notification) => {
 const NotificationDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isSent = location.state?.isSent;
   const queryClient = useQueryClient();
   const { userInfo } = useSelector((state) => state.appGlobal);
   const listPath =
@@ -94,6 +97,10 @@ const NotificationDetail = () => {
   const { data: notification, isLoading, isError, refetch } = useQuery({
     queryKey: ['notification-detail', id],
     queryFn: async () => {
+      if (location.state?.notificationItem) {
+        return location.state.notificationItem;
+      }
+      
       // Thử gọi API chi tiết trước (có đầy đủ attachments)
       try {
         const res = await getNotificationById(id);
@@ -104,7 +111,8 @@ const NotificationDetail = () => {
         // API /notifications/:id chưa có hoặc lỗi, fallback sang tìm trong danh sách
       }
       // Fallback: tìm trong danh sách
-      const items = normalizeItems(await getNotifications());
+      const fetchList = isSent ? getSentNotifications : getNotifications;
+      const items = normalizeItems(await fetchList());
       return items.find((item) => String(item._id || item.id) === String(id)) || null;
     },
     retry: false,
@@ -113,11 +121,11 @@ const NotificationDetail = () => {
   const notification_id = notification?._id || notification?.id;
 
   useEffect(() => {
-    if (!notification || notification.isRead) return;
+    if (!notification || notification.isRead || isSent) return;
     markNotificationAsRead(notification_id)
       .catch(() => undefined)
       .finally(() => queryClient.invalidateQueries({ queryKey: ['notifications'] }));
-  }, [notification, notification_id, queryClient]);
+  }, [notification, notification_id, queryClient, isSent]);
 
   if (isLoading) {
     return (
@@ -186,12 +194,12 @@ const NotificationDetail = () => {
             <Tag color="blue" className="!m-0 !text-sm">
               {category}
             </Tag>
-            {notification.isRead && (
+            {!isSent && notification.isRead && (
               <Tag color="green" className="!m-0 !text-sm">
                 Đã đọc
               </Tag>
             )}
-            {!notification.isRead && (
+            {!isSent && !notification.isRead && (
               <Tag color="orange" className="!m-0 !text-sm">
                 Chưa đọc
               </Tag>
@@ -225,7 +233,7 @@ const NotificationDetail = () => {
                 </Text>
               </div>
               <Text strong className="!text-base">
-                {getSenderName(notification)}
+                {isSent ? userInfo?.fullName || userInfo?.displayName || userInfo?.email || 'Bạn' : getSenderName(notification)}
               </Text>
             </div>
             <div>

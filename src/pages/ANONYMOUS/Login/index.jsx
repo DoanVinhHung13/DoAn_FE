@@ -124,7 +124,7 @@ const Login = () => {
         </div>
 
         {/* Login Card */}
-        <div className="relative overflow-hidden bg-white shadow-2xl rounded-3xl">
+        <div className="relative overflow-hidden bg-white shadow-2xl rounded-[20px]">
           {/* Gradient Top Border */}
           <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-green-500 to-blue-500"></div>
           
@@ -146,66 +146,60 @@ const Login = () => {
               layout="vertical"
               onFinish={onFinish}
               autoComplete="off"
-              className="space-y-4"
             >
               {/* Username/Email Field */}
               <Form.Item
                 name="identifier"
                 label={
                   <span className="text-sm font-semibold text-gray-700">
-                    Tên đăng nhập / Email
+                    Email / Số điện thoại
                   </span>
                 }
                 rules={LOGIN_IDENTIFIER_RULES}
-                className="mb-4"
               >
                 <Input
                   prefix={<UserOutlined className="text-gray-400" />}
-                  placeholder="nguyenvanan@farm.vn"
-                  className="h-12 px-4 text-base bg-gray-50 border border-gray-300 rounded-xl hover:bg-white hover:border-emerald-400 focus:bg-white focus:border-emerald-500 transition-all"
+                  placeholder="Nhập số điện thoại hoặc email"
+                  className="h-12 px-4 text-base bg-gray-50 border border-gray-300 rounded-lg hover:bg-white hover:border-emerald-400 focus:bg-white focus:border-emerald-500 transition-all placeholder:text-gray-400 placeholder:font-normal"
                 />
               </Form.Item>
 
               {/* Password Field */}
-              <div className="relative">
-                <Form.Item
-                  name="password"
-                  label={
-                    <span className="text-sm font-semibold text-gray-700">
-                      Mật khẩu
-                    </span>
-                  }
-                  rules={PASSWORD_RULES}
-                  className="mb-1"
-                >
-                  <Input.Password
-                    prefix={<LockOutlined className="text-gray-400" />}
-                    placeholder="••••••••"
-                    className="h-12 px-4 text-base bg-gray-50 border border-gray-300 rounded-xl hover:bg-white hover:border-emerald-400 focus:bg-white focus:border-emerald-500 transition-all"
-                  />
-                </Form.Item>
-                
-                {/* Forgot Password Link */}
-                <div className="flex justify-end mb-4">
-                  <Link
-                    to={ROUTER.FORGOT_PASSWORD}
-                    className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
-                  >
-                    Quên mật khẩu?
-                  </Link>
-                </div>
-              </div>
-
-              {/* Remember Me Checkbox */}
               <Form.Item
-                name="remember"
-                valuePropName="checked"
-                className="mb-6"
+                name="password"
+                label={
+                  <span className="text-sm font-semibold text-gray-700">
+                    Mật khẩu
+                  </span>
+                }
+                rules={PASSWORD_RULES}
               >
-                <Checkbox className="text-sm font-medium text-gray-600 hover:text-gray-800">
-                  <span className="ml-1">Duy trì đăng nhập</span>
-                </Checkbox>
+                <Input.Password
+                  prefix={<LockOutlined className="text-gray-400" />}
+                  placeholder="Nhập mật khẩu"
+                  className="h-12 px-4 text-base bg-gray-50 border border-gray-300 rounded-lg hover:bg-white hover:border-emerald-400 focus:bg-white focus:border-emerald-500 transition-all placeholder:text-gray-400 placeholder:font-normal"
+                />
               </Form.Item>
+
+              {/* Remember Me & Forgot Password */}
+              <div className="flex items-center justify-between mb-6 -mt-2">
+                <Form.Item
+                  name="remember"
+                  valuePropName="checked"
+                  className="mb-0"
+                >
+                  <Checkbox className="text-sm font-medium text-gray-600 hover:text-gray-800">
+                    <span className="ml-1">Ghi nhớ đăng nhập</span>
+                  </Checkbox>
+                </Form.Item>
+
+                <Link
+                  to={ROUTER.FORGOT_PASSWORD}
+                  className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+                >
+                  Quên mật khẩu?
+                </Link>
+              </div>
 
               {/* Submit Button */}
               <Form.Item className="mb-0">
@@ -214,16 +208,9 @@ const Login = () => {
                   htmlType="submit"
                   loading={loading}
                   block
-                  className="h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 border-0 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
+                  className="h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 border-0 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
                 >
-                  {loading ? (
-                    <span>Đang đăng nhập...</span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      Đăng nhập
-                      <span className="text-lg">→</span>
-                    </span>
-                  )}
+                  {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                 </Button>
               </Form.Item>
             </Form>
