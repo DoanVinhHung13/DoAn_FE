@@ -10,7 +10,7 @@ import {
   markAllNotificationsAsRead,
 } from 'src/services/NotificationService';
 import ROUTER from 'src/router/ROUTER';
-import { getNotificationTypeLabel } from 'src/constants/notificationTypes';
+import { getNotificationTypeLabel, NOTIFICATION_TYPE_COLORS } from 'src/constants/notificationTypes';
 import { timeAgo } from 'src/utils/dateFormatters';
 import {
   getNotificationActionUrl,
@@ -128,7 +128,7 @@ const NotificationBell = () => {
                   <div className="w-full">
                     <div className="mb-1 flex items-start justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Tag className="!m-0">{getNotificationTypeLabel(item)}</Tag>
+                        <Tag color={NOTIFICATION_TYPE_COLORS[item.type] || 'default'} className="!m-0">{getNotificationTypeLabel(item)}</Tag>
                         <Text strong={!item.isRead} className="text-[13px]">
                           {item.title || 'Thông báo'}
                         </Text>

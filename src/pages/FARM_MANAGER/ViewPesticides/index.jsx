@@ -167,13 +167,24 @@ const ViewPesticides = () => {
       key: 'inventoryQuantity',
       width: 165,
       align: 'right',
-      render: (v, record) => (
-        <span className="text-sm font-semibold text-blue-600">
-          {v != null
-            ? `${Number(v).toLocaleString('vi-VN')} ${record.inventoryUnit || record.unit || ''}`
-            : '0'}
-        </span>
-      ),
+      render: (v, record) => {
+        const qty = Number(v || 0);
+        const minStock = Number(record.minInventory ?? record.minimumStock ?? 0);
+        let colorClass = 'text-blue-600';
+        if (minStock > 0) {
+          if (qty <= minStock) colorClass = 'text-red-500';
+          else if (qty <= minStock * 1.5) colorClass = 'text-orange-500';
+        } else if (qty === 0) {
+          colorClass = 'text-red-500';
+        }
+        return (
+          <span className={`text-sm font-semibold ${colorClass}`}>
+            {v != null
+              ? `${qty.toLocaleString('vi-VN')} ${record.inventoryUnit || record.unit || ''}`
+              : '0'}
+          </span>
+        );
+      },
     },
     {
       title: 'Tồn kho tối thiểu',
