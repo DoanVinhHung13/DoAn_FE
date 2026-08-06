@@ -71,27 +71,27 @@ const componentColumns = [
 
 const dosageColumns = [
   {
-    title: 'Lượng',
+    title: 'Đối tượng',
+    dataIndex: 'target',
+    key: 'target',
+    render: (v) => <Text strong>{v || '—'}</Text>,
+  },
+  {
+    title: 'Liều lượng',
     dataIndex: 'amount',
     key: 'amount',
     align: 'center',
-    width: 80,
-    render: (v) => <Text strong>{v != null && v !== '' ? v : '—'}</Text>,
+    width: 100,
+    render: (v) => <Text>{v != null && v !== '' ? v : '—'}</Text>,
   },
   {
     title: 'Đơn vị tính / diện tích',
     key: 'unitPerArea',
     align: 'center',
-    width: 180,
+    width: 200,
     render: (_, record) => (
       <Text>{`${record.unit || 'kg'}/${formatAreaUnit(record.areaUnit)}`}</Text>
     ),
-  },
-  {
-    title: 'Đối tượng',
-    dataIndex: 'target',
-    key: 'target',
-    render: (v) => <Text>{v || '—'}</Text>,
   },
 ]
 

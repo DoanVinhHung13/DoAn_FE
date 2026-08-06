@@ -20,6 +20,7 @@ export const NOTIFICATION_TYPE_LABELS = {
   CULTIVATION_STAGE_REVIEW_SUBMITTED: 'Giai đoạn chờ xử lý',
   CULTIVATION_STAGE_REVIEW_APPROVED: 'Giai đoạn đã xử lý',
   CULTIVATION_STAGE_REVIEW_REJECTED: 'Giai đoạn bị từ chối',
+  INVENTORY_LOW_STOCK: 'Cảnh báo tồn kho',
 };
 
 export const NOTIFICATION_TYPE_COLORS = {
@@ -44,6 +45,7 @@ export const NOTIFICATION_TYPE_COLORS = {
   CULTIVATION_STAGE_REVIEW_SUBMITTED: 'blue',
   CULTIVATION_STAGE_REVIEW_APPROVED: 'green',
   CULTIVATION_STAGE_REVIEW_REJECTED: 'orange',
+  INVENTORY_LOW_STOCK: 'red',
 };
 
 export const getNotificationTypeLabel = (notification) =>

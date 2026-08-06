@@ -73,14 +73,11 @@ const usageColumns = [
     align: 'center',
     render: (v, record) => {
       const dosage = v != null ? v : '';
-      const dUnit = getQuantityUnit(record.productUnit || record.unit || record.dosageUnitId || record.dosageUnit, MEASUREMENT_UNITS.LITER);
-      const aVal = record.area != null ? record.area : '';
-
-      if (dosage === '' && aVal === '') return <Text>—</Text>;
+      if (dosage === '') return <Text>—</Text>;
 
       return (
         <Text>
-          {`${dosage} ${dUnit}`.trim()}
+          {dosage}
         </Text>
       )
     },

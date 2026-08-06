@@ -11,7 +11,7 @@ import {
 } from "antd"
 import React from "react"
 import { useNavigate } from "react-router-dom"
-import { getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
+import { getQuantityUnit, formatAreaUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import ROUTER from "src/router/ROUTER"
 import PesticideService from "src/services/PesticideService"
 import { applyApiFieldErrors } from "src/services/core/apiError"
@@ -105,7 +105,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                   targetCrop: resolveCropValue(u.targetCrop ?? u.target, cropOptions),
                   dosage: u.dosage,
                   dosageUnit: selectedUnit,
-                  area: u.area,
+                  area: 1,
                   areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
                   isolationDays: u.quarantineDays ?? u.isolationDays,
                 }
@@ -148,7 +148,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
           const usageObj = {
             dosage: u.dosage || 0,
             dosageUnitId: quantityUnit,
-            area: u.area || 0,
+            area: 1,
             areaUnitId: MEASUREMENT_UNITS.SQUARE_METER,
             targetCrop: Array.isArray(u.targetCrop)
               ? u.targetCrop.join(", ")
@@ -211,7 +211,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             }
             rules={[{ required: true, message: "Bắt buộc" }]}
           >
-            <AgriculturalInputCatalogAutocomplete catalogType="PESTICIDE" value={Form.useWatch("name", form)} onChange={value => form.setFieldValue("name", value)} onSelectCatalog={applyCatalog} placeholder="Nhập tên..." />
+            <AgriculturalInputCatalogAutocomplete catalogType="PESTICIDE" value={Form.useWatch("name", form)} onChange={value => form.setFieldValue("name", value)} onSelectCatalog={applyCatalog} placeholder="Nhập tên..." allowCreate={!isEdit} />
           </Form.Item>
         </Col>
 
@@ -438,32 +438,14 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                           <Form.Item {...restField} name={[name, "dosageUnit"]} hidden>
                             <Input />
                           </Form.Item>
-                          <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
-                            {quantityUnit}
-                          </span>
                         </div>
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
-                      <Form.Item label={<>Diện tích </>} className="mb-0">
+                      <Form.Item label={<>Đơn vị tính / Diện tích</>} className="mb-0">
                         <div className="flex items-center gap-2">
-                          <Form.Item
-                            {...restField}
-                            name={[name, "area"]}
-                            className="flex-1 mb-0"
-                            rules={[{ required: true, message: "Vui lòng nhập diện tích" }]}
-                          >
-                            <InputNumber
-                              min={0}
-                              placeholder="Số"
-                              className="w-full text-sm rounded-lg h-9"
-                            />
-                          </Form.Item>
-                          <Form.Item {...restField} name={[name, "areaUnit"]} hidden>
-                            <Input />
-                          </Form.Item>
-                          <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
-                            {MEASUREMENT_UNITS.SQUARE_METER}
+                          <span className="inline-flex h-9 w-full items-center px-3 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-700">
+                            {quantityUnit}/{formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}
                           </span>
                         </div>
                       </Form.Item>

@@ -5,7 +5,7 @@ import CatalogSuggestionService, { getApiData } from 'src/services/CatalogSugges
 
 const { Text } = Typography
 
-const AgriculturalInputCatalogAutocomplete = ({ catalogType, value, onChange, onSelectCatalog, disabled, placeholder }) => {
+const AgriculturalInputCatalogAutocomplete = ({ catalogType, value, onChange, onSelectCatalog, disabled, placeholder, allowCreate = true }) => {
   const [keyword, setKeyword] = React.useState(value || '')
   const [debounced, setDebounced] = React.useState('')
   React.useEffect(() => { const timer = setTimeout(() => setDebounced(String(keyword || '').trim()), 300); return () => clearTimeout(timer) }, [keyword])
@@ -26,8 +26,8 @@ const AgriculturalInputCatalogAutocomplete = ({ catalogType, value, onChange, on
     label: <div className="py-1"><div className="font-medium">{item.name}</div><Text type="secondary" className="text-xs">Mã: {item.code} · {item.manufacturer || ''}</Text><div className="text-xs">{[item.type, item.unit].filter(Boolean).join(' · ')}</div></div>,
     catalog: item,
   }))
-  if (debounced && !isFetching && options.length === 0) options.push({ value: debounced, label: <Text type="secondary">Không tìm thấy trong danh mục. Sử dụng “{debounced}” để tạo mới.</Text> })
-  return <AutoComplete value={value} options={options} onChange={next => { onChange?.(next); setKeyword(next) }} onSelect={(_, option) => { if (option.catalog) { onChange?.(option.catalog.name); setKeyword(option.catalog.name); onSelectCatalog?.(option.catalog) } }} disabled={disabled} placeholder={placeholder} filterOption={false} notFoundContent={isFetching ? <Spin size="small" /> : null} style={{ width: '100%' }} />
+  if (allowCreate && debounced && !isFetching && options.length === 0) options.push({ value: debounced, label: <Text type="secondary">Không tìm thấy trong danh mục. Sử dụng “{debounced}” để tạo mới.</Text> })
+  return <AutoComplete value={value} options={options} onChange={next => { onChange?.(next); setKeyword(next) }} onSelect={(_, option) => { if (option.catalog) { onChange?.(option.catalog.name); setKeyword(option.catalog.name); onSelectCatalog?.(option.catalog) } }} disabled={disabled} placeholder={placeholder} filterOption={false} notFoundContent={isFetching ? <Spin size="small" /> : null} style={{ width: '100%' }} optionLabelProp="value" />
 }
 
 export default AgriculturalInputCatalogAutocomplete

@@ -43,7 +43,7 @@ import FertilizerService from 'src/services/FertilizerService'
 import { applyApiFieldErrors } from 'src/services/core/apiError'
 import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
-import { getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
+import { getQuantityUnit, formatAreaUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import AgriculturalInputCatalogAutocomplete from 'src/components/AgriculturalInputCatalogAutocomplete'
 import CatalogSuggestionService, { getCatalogPrefill } from 'src/services/CatalogSuggestionService'
 import {
@@ -399,7 +399,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               { max: 100, message: 'Tên phân bón tối đa 100 ký tự.' },
             ]}
           >
-            <AgriculturalInputCatalogAutocomplete catalogType="FERTILIZER" value={Form.useWatch('name', form)} onChange={value => form.setFieldValue('name', value)} onSelectCatalog={applyCatalog} placeholder="Tên phân bón" />
+            <AgriculturalInputCatalogAutocomplete catalogType="FERTILIZER" value={Form.useWatch('name', form)} onChange={value => form.setFieldValue('name', value)} onSelectCatalog={applyCatalog} placeholder="Tên phân bón" allowCreate={!isEdit} />
           </Form.Item>
         </Col>
 
@@ -623,31 +623,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             key={index}
             className="flex flex-wrap items-end gap-2 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2"
           >
-            {/* Lượng (amount) */}
-            <div style={{ flex: '0 0 80px' }}>
-              <Text type="secondary" className="block mb-1 text-xs">Lượng </Text>
-              <InputNumber
-                value={dosage.amount}
-                onChange={(val) => handleDosageChange(index, 'amount', val)}
-                placeholder="0"
-                min={0}
-                className="w-full h-9 rounded-lg"
-              />
-            </div>
-            {/* Đơn vị Tính */}
-            <div style={{ flex: '1 1 100px' }}>
-              <Text type="secondary" className="block mb-1 text-xs">Đơn vị Tính (Kg/ Lit) </Text>
-              <Text className="inline-flex h-9 w-full items-center rounded-lg bg-white px-3 text-gray-700">
-                {quantityUnit}
-              </Text>
-            </div>
-            {/* Đơn Vị diện tích */}
-            <div style={{ flex: '1 1 100px' }}>
-              <Text type="secondary" className="block mb-1 text-xs">Đơn Vị diện tích </Text>
-              <Text className="inline-flex h-9 w-full items-center rounded-lg bg-white px-3 text-gray-700">
-                {MEASUREMENT_UNITS.SQUARE_METER}
-              </Text>
-            </div>
             {/* Đối tượng */}
             <div style={{ flex: '2 1 140px' }}>
               <Text type="secondary" className="block mb-1 text-xs">Đối tượng </Text>
@@ -662,6 +637,24 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 showSearch
                 optionFilterProp="label"
               />
+            </div>
+            {/* Lượng (amount) */}
+            <div style={{ flex: '1 1 120px' }}>
+              <Text type="secondary" className="block mb-1 text-xs">Liều lượng </Text>
+              <InputNumber
+                value={dosage.amount}
+                onChange={(val) => handleDosageChange(index, 'amount', val)}
+                placeholder="Số"
+                min={0}
+                className="w-full h-9 rounded-lg"
+              />
+            </div>
+            {/* Đơn vị tính / Diện tích */}
+            <div style={{ flex: '1 1 140px' }}>
+              <Text type="secondary" className="block mb-1 text-xs">Đơn vị tính / Diện tích</Text>
+              <Text className="inline-flex h-9 w-full items-center rounded-lg bg-gray-50 border border-gray-200 px-3 text-sm text-gray-700">
+                {quantityUnit}/{formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}
+              </Text>
             </div>
             <Button
               type="text"
