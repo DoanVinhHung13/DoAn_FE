@@ -231,9 +231,6 @@ const Dashboard = () => {
             Hôm nay là {formatCurrentDate()}
           </Text>
         </div>
-        <Button icon={<CompassOutlined />} className="admin-secondary-action shrink-0">
-          Khám phá module
-        </Button>
       </div>
 
       <Row gutter={[24, 24]}>
