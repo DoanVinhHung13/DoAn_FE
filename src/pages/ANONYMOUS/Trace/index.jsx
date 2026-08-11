@@ -360,7 +360,7 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 mb-2">
-                <CheckCircleOutlined className="text-emerald-300" /> Hệ thống truy xuất nguồn gốc nông sản
+                <CheckCircleOutlined className="text-emerald-300" /> Hệ thống truy xuất nguồn gốc canh tác nông sản
               </div>
               <Title level={2} className="!text-emerald-800 !mb-1 text-xl sm:text-2xl font-bold tracking-tight">
                 Truy xuất nguồn gốc

@@ -113,7 +113,7 @@ const LayoutAdmin = () => {
         ) : (
           <div className="flex w-full items-center justify-center gap-2">
             <img src={logoImg} alt="EAPLS" className="h-9 w-9 shrink-0 object-contain mix-blend-multiply" />
-            <span className="admin-brand-title text-green-600">NHẬT KÝ SẢN XUẤT ĐIỆN TỬ</span>
+            <span className="admin-brand-title text-green-600">NHẬT KÝ CANH TÁC</span>
           </div>
         )}
       </div>
