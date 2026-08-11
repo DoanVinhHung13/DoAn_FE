@@ -240,6 +240,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                 }
                 dependencies={["phoneNumber"]}
                 rules={[...OPTIONAL_EMAIL_RULES, CONTACT_REQUIRED_RULE]}
+                required
               >
                 <Input
                   type="email"
@@ -282,6 +283,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                 </span>
               }
               rules={isEdit ? PHONE_RULES : [...PHONE_RULES, CONTACT_REQUIRED_RULE]}
+              required
             >
               <Input
                 type="tel"

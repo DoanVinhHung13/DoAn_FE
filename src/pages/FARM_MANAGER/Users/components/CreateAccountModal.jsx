@@ -140,6 +140,7 @@ const CreateAccountModal = ({
             dependencies={["phoneNumber"]}
             label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Email</span>}
             rules={[...OPTIONAL_EMAIL_RULES, contactRequiredRule]}
+            required
           >
             <Input
               type="email"
@@ -155,6 +156,7 @@ const CreateAccountModal = ({
             dependencies={["email"]}
             label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Số điện thoại</span>}
             rules={[...PHONE_RULES, contactRequiredRule]}
+            required
           >
             <Input
               type="tel"
