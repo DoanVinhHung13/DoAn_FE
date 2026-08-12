@@ -145,6 +145,32 @@ const formatAreaValue = (value) => {
   return Object.is(roundedValue, -0) ? 0 : roundedValue;
 };
 
+const getPlotArea = (payload, source) => {
+  const plots = [
+    payload?.landPlot,
+    source?.landPlot,
+    ...(Array.isArray(payload?.landPlots) ? payload.landPlots : []),
+    ...(Array.isArray(source?.landPlots) ? source.landPlots : []),
+  ];
+  const areaCandidates = [
+    ...plots.flatMap((plot) => [plot?.area, plot?.areaM2, plot?.cultivatedArea]),
+    payload?.landPlotArea,
+    source?.landPlotArea,
+    payload?.cultivatedArea,
+    source?.cultivatedArea,
+    payload?.cultivatedAreaM2,
+    source?.cultivatedAreaM2,
+    payload?.plotArea,
+    source?.plotArea,
+    payload?.areaM2,
+    source?.areaM2,
+    source?.area,
+    payload?.area,
+  ];
+
+  return areaCandidates.find((area) => area != null && area !== '');
+};
+
 const buildTimelineGroups = (traceData) => {
   if (!traceData) return [];
 
@@ -309,7 +335,7 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
     // The batch/plot area is the area to show in the product summary. The
     // areas stored on cultivation materials are application areas (for
     // example, the area covered by a fertilizer), not the plot's total area.
-    const batchArea = source?.area ?? payload?.area;
+    const batchArea = getPlotArea(payload, source);
     const areaValue = batchArea ?? journalArea;
     const areaUnit = formatAreaUnit(source?.areaUnit || payload?.areaUnit || journalAreaUnit);
     return {
