@@ -34,6 +34,7 @@ import { getLandPlotsFromLogbook } from 'src/utils/helpers'
 import ROUTER from 'src/router/ROUTER'
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { isNotFoundError } from 'src/services/core/apiError'
+import QuarantineSummary from 'src/components/QuarantineSummary'
 
 import StageTaskManagementTab from './components/StageTaskManagementTab'
 import LogbookFinalizationTab from './components/LogbookFinalizationTab'
@@ -136,6 +137,13 @@ const FarmSupervisorPlanDetail = () => {
   )
 
   const isWaitingApproval = plan?.reviewStatus === 'WAITING_APPROVAL'
+
+  const quarantineWarnings = useMemo(
+    () => Object.values(tasks).flatMap(taskList =>
+      taskList.flatMap(task => Array.isArray(task.quarantineWarnings) ? task.quarantineWarnings : []),
+    ),
+    [tasks],
+  )
 
   const canSubmit = useMemo(
     () => !isWaitingApproval && allStagesCompleted,
@@ -291,6 +299,8 @@ const FarmSupervisorPlanDetail = () => {
       </Card>
 
       {/* ── Tabs ─────────────────────────────────────────────────────────────── */}
+      <QuarantineSummary warnings={quarantineWarnings} />
+
       <Tabs
         activeKey={activeTabKey}
         onChange={handleTabChange}

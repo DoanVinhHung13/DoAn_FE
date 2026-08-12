@@ -49,6 +49,7 @@ import CultivationTaskService from "src/services/CultivationTaskService"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
 import { getLandPlotNamesDisplay } from "src/utils/helpers"
+import QuarantineSummary from "src/components/QuarantineSummary"
 
 const { Text, Paragraph } = Typography
 
@@ -176,7 +177,7 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
             </Text>
           </div>
 
-          {quarantineWarnings.map((warning, index) => (
+          {Array.isArray(task.inlineQuarantineWarnings) && task.inlineQuarantineWarnings.map((warning, index) => (
             <Alert
               key={`${warning.pesticideName}-${warning.eligibleDate}-${index}`}
               type="warning"
@@ -285,6 +286,7 @@ const FarmLeaderTasks = () => {
   // stages = data.stages[] array (each stage has .tasks[])
   const [stages, setStages] = useState([])
   const [tasks, setTasks] = useState([]) // flat list for stats
+  const [warningTasks, setWarningTasks] = useState([])
 
   const [loadingSummaries, setLoadingSummaries] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(false)
@@ -347,11 +349,25 @@ const FarmLeaderTasks = () => {
       setLogbookDetail(plan)
       setStages(stagesArr)
       setTasks(flatTasks)
+
+      if (statusFilter === "all") {
+        setWarningTasks(flatTasks)
+      } else {
+        const allRes = await CultivationTaskService.getLogbookById(
+          selectedLogbookId,
+          {},
+          { errorHandling: "component" },
+        )
+        const allData = unwrap(allRes)
+        const allStages = Array.isArray(allData?.stages) ? allData.stages : []
+        setWarningTasks(allStages.flatMap(s => Array.isArray(s.tasks) ? s.tasks : []))
+      }
     } catch {
       setDetailError(true)
       setLogbookDetail(null)
       setStages([])
       setTasks([])
+      setWarningTasks([])
     } finally {
       setLoadingDetail(false)
     }
@@ -486,6 +502,10 @@ const FarmLeaderTasks = () => {
 
   const loading = loadingSummaries
   const isDetailLoading = loadingDetail
+  const quarantineWarnings = useMemo(
+    () => warningTasks.flatMap(task => Array.isArray(task.quarantineWarnings) ? task.quarantineWarnings : []),
+    [warningTasks],
+  )
 
   if (loading) {
     return (
@@ -822,6 +842,8 @@ const FarmLeaderTasks = () => {
                     </div>
                   </div>
                 </Card>
+
+                <QuarantineSummary warnings={quarantineWarnings} />
 
                 {/* ── STAGE SECTIONS & TASK CARDS ──────────────────────────────── */}
                 {displayedStages.length > 0 ? (

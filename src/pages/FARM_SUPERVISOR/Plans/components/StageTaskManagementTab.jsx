@@ -45,11 +45,19 @@ import {
 import { getTaskOrder, orderTasks } from "src/utils/cultivationOrdering"
 import { formatDate } from "src/utils/dateFormatters"
 import { getUserDisplayName } from "src/utils/userDisplayName"
+import { getActiveQuarantineWarnings } from "src/utils/quarantineValidation"
 import AssignTaskModal from "./AssignTaskModal"
 
 const { Text } = Typography
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
+
+const isHarvestTask = task =>
+  task?.activityType === "HARVESTING" ||
+  String(task?.activityType || "").toLowerCase() === "harvesting" ||
+  String(task?.name || task?.taskName || "").trim().toLowerCase() === "thu hoạch"
+
+const getAllTasks = taskMap => Object.values(taskMap).flat()
 
 const taskStatusIcon = s =>
   s === "COMPLETED" ||
@@ -212,6 +220,29 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   }, [])
 
   const handleActivateTask = async taskId => {
+    const taskToActivate = Object.values(tasks)
+      .flat()
+      .find(task => task.id === taskId)
+    const quarantineWarnings = Object.values(tasks)
+      .flatMap(taskList => taskList.flatMap(task => (
+        Array.isArray(task.quarantineWarnings) ? task.quarantineWarnings : []
+      )))
+
+    if (isHarvestTask(taskToActivate)) {
+      const allTasks = getAllTasks(tasks)
+      const unfinishedTasks = allTasks.filter(task => !isHarvestTask(task) && task.status !== "COMPLETED")
+      const unfinishedStages = stages.filter(stage => stage.id !== finalStage?.id && stage.status !== "COMPLETED")
+      const activeQuarantineWarnings = getActiveQuarantineWarnings(quarantineWarnings)
+      if (unfinishedTasks.length > 0 || unfinishedStages.length > 0) {
+        message.warning("Chỉ được kích hoạt thu hoạch sau khi các công việc và giai đoạn trước đã hoàn thành.")
+        return
+      }
+      if (activeQuarantineWarnings.length > 0) {
+        message.warning("Không thể kích hoạt công việc thu hoạch khi cây trồng vẫn còn thời gian cách ly nông dược.")
+        return
+      }
+    }
+
     try {
       await CultivationTaskService.start(taskId)
       loadData()
@@ -251,6 +282,18 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   }, [stages, selectedId])
 
   const selectedStage = stages.find(s => s.id === selectedId) ?? null
+  const finalStage = [...stages]
+    .filter(stage => !stage.isDeleted)
+    .sort(
+      (left, right) =>
+        (right.stageOrder || 0) - (left.stageOrder || 0),
+    )[0]
+  const isFinalStage = Boolean(selectedStage && selectedStage.id === finalStage?.id)
+  const availableTaskCatalogOptions = isFinalStage
+    ? taskCatalogOptions
+    : taskCatalogOptions.filter(
+        option => option.activityType !== "HARVESTING",
+      )
   const selectedTasks = selectedId ? tasks[selectedId] || [] : []
   const orderedSelectedTasks = orderTasks(selectedTasks)
   const selectedIdx = stages.findIndex(s => s.id === selectedId)
@@ -852,7 +895,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                   className="!mb-3"
                                 >
                                   <AutoComplete
-                                    options={taskCatalogOptions.map(catalog => ({
+                                    options={availableTaskCatalogOptions.map(catalog => ({
                                       value: catalog.label,
                                       label: catalog.label,
                                       catalog,

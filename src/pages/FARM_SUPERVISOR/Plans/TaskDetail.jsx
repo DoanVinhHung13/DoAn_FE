@@ -50,6 +50,7 @@ import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { ROLES } from 'src/constants/roles'
 import { formatAreaUnit, getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
+import { getActiveQuarantineWarnings } from 'src/utils/quarantineValidation'
 
 const { TextArea } = Input
 
@@ -70,6 +71,11 @@ const buildDataSentence = (summary) => {
 const getMaterialId = item =>
   item?.fertilizerId || item?.pesticideId || item?.materialId || item?.id
 
+const isHarvestTask = task =>
+  task?.activityType === 'HARVESTING' ||
+  String(task?.activityType || '').toLowerCase() === 'harvesting' ||
+  String(task?.name || task?.taskName || '').trim().toLowerCase() === 'thu hoạch'
+
 // ── Component ─────────────────────────────────────────────────────────────────
 const FarmSupervisorTaskDetail = () => {
   const { getTaskStatus } = useCultivationStatus()
@@ -79,6 +85,7 @@ const FarmSupervisorTaskDetail = () => {
   const { planData: passedPlanData } = location.state || {}
   const [task, setTask] = useState(null)
   const [stage, setStage] = useState(null)
+  const [planStages, setPlanStages] = useState([])
   const [leaders, setLeaders] = useState([])
   const [farmers, setFarmers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -105,6 +112,7 @@ const FarmSupervisorTaskDetail = () => {
 
         if (planData) {
           const stageList = planData.cultivationStages || planData.productionStages || planData.stages || []
+          setPlanStages(stageList)
           let foundStage = null
           let foundTask = null
 
@@ -180,9 +188,29 @@ const FarmSupervisorTaskDetail = () => {
     }
   }
 
+  const quarantineWarnings = Array.isArray(task?.quarantineWarnings)
+    ? task.quarantineWarnings
+    : []
+
   const handleActivate = async () => {
     if (!task?.assignedLeaderId && !task?.farmLeaderId) {
       message.warning('Vui lòng gán người phụ trách trước khi kích hoạt công việc.')
+      return
+    }
+    if (isHarvestTask(task)) {
+      const allTasks = planStages.flatMap(item => item.tasks || [])
+      const unfinishedTasks = allTasks.filter(item => !isHarvestTask(item) && item.status !== 'COMPLETED')
+      const finalStage = [...planStages]
+        .filter(item => !item.isDeleted)
+        .sort((left, right) => (right.stageOrder || 0) - (left.stageOrder || 0))[0]
+      const unfinishedStages = planStages.filter(item => item.id !== finalStage?.id && item.status !== 'COMPLETED')
+      if (unfinishedTasks.length > 0 || unfinishedStages.length > 0) {
+        message.warning('Chỉ được kích hoạt thu hoạch sau khi các công việc và giai đoạn trước đã hoàn thành.')
+        return
+      }
+    }
+    if (isHarvestTask(task) && getActiveQuarantineWarnings(quarantineWarnings).length > 0) {
+      message.warning('Không thể kích hoạt công việc thu hoạch khi cây trồng vẫn còn thời gian cách ly nông dược.')
       return
     }
     try {
