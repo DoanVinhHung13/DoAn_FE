@@ -306,8 +306,12 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
       ? journalAreas.reduce((total, entry) => total + entry.area, 0)
       : null;
     const journalAreaUnit = journalAreas.find((entry) => entry.areaUnit)?.areaUnit || '';
-    const areaValue = journalArea ?? payload?.area;
-    const areaUnit = formatAreaUnit(journalAreaUnit || payload?.areaUnit);
+    // The batch/plot area is the area to show in the product summary. The
+    // areas stored on cultivation materials are application areas (for
+    // example, the area covered by a fertilizer), not the plot's total area.
+    const batchArea = source?.area ?? payload?.area;
+    const areaValue = batchArea ?? journalArea;
+    const areaUnit = formatAreaUnit(source?.areaUnit || payload?.areaUnit || journalAreaUnit);
     return {
       qrCode: payload?.traceCode || qrCode || '—',
       batchCode: b.batchCode || '—',
