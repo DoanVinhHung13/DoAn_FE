@@ -13,6 +13,7 @@ import {
 } from "@ant-design/icons"
 import {
   Alert,
+  AutoComplete,
   Avatar,
   Badge,
   Button,
@@ -268,7 +269,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       tasks: [
         {
           taskCatalogId: null,
-          activityType: "OTHER",
           name: "",
           description: "",
           leaderId: null,
@@ -298,7 +298,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           )
           return {
             taskCatalogId: task.taskCatalogId || null,
-                                        activityType: task.activityType || "OTHER",
             name: (task.name || catalog?.label || "").trim(),
             description:
               (task.description || catalog?.description || "").trim() || null,
@@ -809,7 +808,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                       layout="vertical"
                       initialValues={{
                         tasks: [
-                          { taskCatalogId: null, activityType: "OTHER", name: "", description: "" },
+                          { taskCatalogId: null, name: "", description: "" },
                         ],
                       }}
                     >
@@ -837,58 +836,9 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                 <Form.Item
                                   {...restField}
                                   name={[name, "taskCatalogId"]}
-                                  label="Chọn từ danh mục"
-                                  className="!mb-3"
+                                  hidden
                                 >
-                                  <Select
-                                    allowClear
-                                    showSearch
-                                    optionFilterProp="label"
-                                    placeholder="Chọn công việc có sẵn (hoặc để trống để tạo mới)"
-                                    options={taskCatalogOptions}
-                                    onChange={value => {
-                                      const catalog = taskCatalogOptions.find(
-                                        o => o.value === value,
-                                      )
-                                      const list =
-                                        taskForm.getFieldValue("tasks") || []
-                                      list[name] = {
-                                        ...list[name],
-                                        taskCatalogId: value || null,
-                                        name:
-                                          catalog?.label ||
-                                          list[name]?.name ||
-                                          "",
-                                        description:
-                                          catalog?.description ||
-                                          list[name]?.description ||
-                                          "",
-                                        activityType:
-                                          catalog?.activityType ||
-                                          list[name]?.activityType ||
-                                          "OTHER",
-                                      }
-                                      taskForm.setFieldsValue({
-                                        tasks: [...list],
-                                      })
-                                    }}
-                                  />
-                                </Form.Item>
-                                <Form.Item
-                                  {...restField}
-                                  name={[name, "activityType"]}
-                                  label="Loại công việc"
-                                  className="!mb-3"
-                                >
-                                  <Select
-                                    options={[
-                                      { value: "OTHER", label: "Công việc khác" },
-                                      { value: "IRRIGATION", label: "Tưới nước" },
-                                      { value: "FERTILIZATION", label: "Bón phân" },
-                                      { value: "PESTICIDE_APPLICATION", label: "Phun thuốc" },
-                                      { value: "HARVESTING", label: "Thu hoạch" },
-                                    ]}
-                                  />
+                                  <Input />
                                 </Form.Item>
                                 <Form.Item
                                   {...restField}
@@ -901,7 +851,48 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                   ]}
                                   className="!mb-3"
                                 >
-                                  <Input placeholder="Tên công việc (VD: Bón phân đón đòng...)" />
+                                  <AutoComplete
+                                    options={taskCatalogOptions.map(catalog => ({
+                                      value: catalog.label,
+                                      label: catalog.label,
+                                      catalog,
+                                    }))}
+                                    filterOption={(inputValue, option) =>
+                                      option?.value
+                                        ?.toLowerCase()
+                                        .includes(inputValue.toLowerCase())
+                                    }
+                                    placeholder="Nhập tên công việc (gợi ý từ danh mục)..."
+                                    onChange={value => {
+                                      const catalog = taskCatalogOptions.find(
+                                        item => item.label === value,
+                                      )
+                                      const list =
+                                        taskForm.getFieldValue("tasks") || []
+                                      list[name] = {
+                                        ...list[name],
+                                        taskCatalogId: catalog?.value || null,
+                                      }
+                                      taskForm.setFieldsValue({
+                                        tasks: [...list],
+                                      })
+                                    }}
+                                    onSelect={(_, option) => {
+                                      const catalog = option?.catalog
+                                      if (!catalog) return
+                                      const list =
+                                        taskForm.getFieldValue("tasks") || []
+                                      list[name] = {
+                                        ...list[name],
+                                        name: catalog.label,
+                                        taskCatalogId: catalog.value,
+                                        description: catalog.description || "",
+                                      }
+                                      taskForm.setFieldsValue({
+                                        tasks: [...list],
+                                      })
+                                    }}
+                                  />
                                 </Form.Item>
                                 <Form.Item
                                   {...restField}
@@ -965,7 +956,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                               onClick={() =>
                                 add({
                                   taskCatalogId: null,
-                                  activityType: "OTHER",
                                   name: "",
                                   description: "",
                                   leaderId: null,
