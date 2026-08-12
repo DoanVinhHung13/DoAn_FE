@@ -25,10 +25,8 @@ import {
   Card,
   Descriptions,
   Empty,
-  Form,
   Image,
   Input,
-  InputNumber,
   Modal,
   Spin,
   Tag,
@@ -46,7 +44,6 @@ import CultivationLogbookService from "src/services/CultivationLogbookService"
 import CultivationLogService from "src/services/CultivationLogService"
 import CultivationStageService from "src/services/CultivationStageService"
 import AuditLogService from "src/services/AuditLogService"
-import { getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import { canApproveClosing } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
 import { getLandPlotNamesDisplay } from "src/utils/helpers"
@@ -404,13 +401,6 @@ const LogbookReview = () => {
   const [rejecting, setRejecting] = useState(false)
   const [approving, setApproving] = useState(false)
   const [approveModal, setApproveModal] = useState(false)
-  const [approveForm] = Form.useForm()
-
-  const harvestUnit = getQuantityUnit(
-    logbook?.product?.unit || logbook?.productUnit || logbook?.unit,
-    MEASUREMENT_UNITS.KILOGRAM,
-  )
-
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
@@ -485,14 +475,9 @@ const LogbookReview = () => {
 
   const handleApprove = async () => {
     try {
-      const values = await approveForm.validateFields()
       setApproving(true)
-      await CultivationLogbookService.approveCompletion(id, {
-        quantity: values.quantity,
-        unit: harvestUnit,
-      })
+      await CultivationLogbookService.approveCompletion(id, {})
       setApproveModal(false)
-      approveForm.resetFields()
       await loadData()
     } catch (error) {
       if (error?.errorFields) return // form validation
@@ -544,6 +529,7 @@ const LogbookReview = () => {
     ? getReviewStatus(logbook.reviewStatus)
     : null
   const showApprove = canApproveClosing(logbook)
+  const harvestTask = (logbook.tasks || []).find(task => task.activityType === "HARVESTING")
 
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
@@ -765,10 +751,10 @@ const LogbookReview = () => {
         />
       </Modal>
 
-      {/* ── Modal Duyệt — nhập sản lượng thu hoạch ── */}
+      {/* ── Modal duyệt chốt sổ ── */}
       <Modal
         open={approveModal}
-        onCancel={() => { setApproveModal(false); approveForm.resetFields() }}
+        onCancel={() => setApproveModal(false)}
         title={
           <div className="flex items-center gap-2 text-green-700">
             <CheckCircleOutlined /> Xác nhận duyệt chốt sổ
@@ -777,7 +763,7 @@ const LogbookReview = () => {
         footer={[
           <Button
             key="cancel"
-            onClick={() => { setApproveModal(false); approveForm.resetFields() }}
+            onClick={() => setApproveModal(false)}
             disabled={approving}
           >
             Hủy
@@ -797,33 +783,13 @@ const LogbookReview = () => {
           className="mb-4 rounded-xl"
           type="info"
           showIcon
-          message="Vui lòng nhập thông tin sản lượng thu hoạch để hoàn tất phê duyệt."
+          message="Thông tin thu hoạch đã được tổng hợp từ công việc thu hoạch."
         />
-        <Form form={approveForm} layout="vertical">
-          <Form.Item
-            name="quantity"
-            label="Sản lượng thu hoạch"
-            rules={[
-              { required: true, message: "Vui lòng nhập sản lượng" },
-              { type: "number", min: 0.0001, message: "Sản lượng phải lớn hơn 0" },
-            ]}
-          >
-            <InputNumber
-              className="w-full"
-              min={0.0001}
-              step={0.1}
-              placeholder="Nhập sản lượng..."
-            />
-          </Form.Item>
-          <Form.Item name="unit" hidden>
-            <Input />
-          </Form.Item>
-          <Form.Item label="Đơn vị">
-            <span className="inline-flex h-10 items-center rounded-lg bg-gray-50 px-3 font-semibold text-gray-700">
-              {harvestUnit}
-            </span>
-          </Form.Item>
-        </Form>
+        <div className="space-y-3 rounded-xl border border-green-100 bg-green-50 p-4">
+          <div><strong>Công việc:</strong> {harvestTask?.name || "Thu hoạch"}</div>
+          <div><strong>Trạng thái:</strong> {harvestTask?.status === "COMPLETED" ? "Đã hoàn thành" : "Chưa hoàn thành"}</div>
+          <div className="text-sm text-gray-600">Số lượng, đơn vị và diện tích được tổng hợp tự động từ các nhật ký của công việc thu hoạch.</div>
+        </div>
       </Modal>
     </div>
   )

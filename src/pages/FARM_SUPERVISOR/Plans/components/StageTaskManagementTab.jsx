@@ -259,6 +259,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       tasks: [
         {
           taskCatalogId: null,
+          activityType: "OTHER",
           name: "",
           description: "",
           leaderId: null,
@@ -288,6 +289,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           )
           return {
             taskCatalogId: task.taskCatalogId || null,
+            activityType: task.activityType || "OTHER",
             name: (task.name || catalog?.label || "").trim(),
             description:
               (task.description || catalog?.description || "").trim() || null,
@@ -798,7 +800,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                       layout="vertical"
                       initialValues={{
                         tasks: [
-                          { taskCatalogId: null, name: "", description: "" },
+                          { taskCatalogId: null, activityType: "OTHER", name: "", description: "" },
                         ],
                       }}
                     >
@@ -857,6 +859,22 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         tasks: [...list],
                                       })
                                     }}
+                                  />
+                                </Form.Item>
+                                <Form.Item
+                                  {...restField}
+                                  name={[name, "activityType"]}
+                                  label="Loại công việc"
+                                  className="!mb-3"
+                                >
+                                  <Select
+                                    options={[
+                                      { value: "OTHER", label: "Công việc khác" },
+                                      { value: "IRRIGATION", label: "Tưới nước" },
+                                      { value: "FERTILIZATION", label: "Bón phân" },
+                                      { value: "PESTICIDE_APPLICATION", label: "Phun thuốc" },
+                                      { value: "HARVESTING", label: "Thu hoạch" },
+                                    ]}
                                   />
                                 </Form.Item>
                                 <Form.Item
@@ -934,6 +952,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                               onClick={() =>
                                 add({
                                   taskCatalogId: null,
+                                  activityType: "OTHER",
                                   name: "",
                                   description: "",
                                   leaderId: null,

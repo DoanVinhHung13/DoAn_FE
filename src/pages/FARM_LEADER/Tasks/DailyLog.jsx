@@ -365,6 +365,9 @@ const DailyLog = () => {
           ? values.date.format("YYYY-MM-DD")
           : getLocalNow().format("YYYY-MM-DD"),
         description: values.description || "",
+        executedArea: values.executedArea || 0,
+        harvestQuantity: isHarvestTask ? values.harvestQuantity : null,
+        harvestUnit: isHarvestTask ? values.harvestUnit : null,
         fertilizers: mapFertilizers(values.fertilizers),
         pesticides: mapPesticides(values.pesticides),
         images: imageUrls.map(url => ({ url })),
@@ -520,6 +523,9 @@ const DailyLog = () => {
 
   const statusCfg = getTaskStatus(task.status)
   const isViewOnly = !canWriteDailyLog(task.status)
+  const isHarvestTask = task.activityType === "HARVESTING"
+  const harvestedArea = dailyLogs.reduce((total, log) => total + Number(log.executedArea || 0), 0)
+  const remainingHarvestArea = Math.max(0, Number(task.totalPlanArea || 0) - harvestedArea)
 
   return (
     <div className="pb-20 space-y-4 duration-500 animate-in fade-in slide-in-from-bottom-4">
@@ -720,6 +726,44 @@ const DailyLog = () => {
                 </Col>
               </Row>
             </Card>
+
+            {isHarvestTask && (
+              <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: "20px" }}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-base font-bold text-emerald-800">Dữ liệu thu hoạch</div>
+                  <Tag color="green">Còn lại: {remainingHarvestArea} m²</Tag>
+                </div>
+                <Row gutter={12}>
+                  <Col xs={24} md={10}>
+                    <Form.Item
+                      name="harvestQuantity"
+                      label="Số lượng thu hoạch"
+                      rules={[{ required: true, type: "number", min: 0.0001, message: "Nhập số lượng thu hoạch" }]}
+                    >
+                      <InputNumber min={0} className="w-full" placeholder="Số lượng" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={6}>
+                    <Form.Item
+                      name="harvestUnit"
+                      label="Đơn vị"
+                      rules={[{ required: true, message: "Chọn đơn vị" }]}
+                    >
+                      <Select options={[{ value: "kg", label: "kg" }, { value: "lít", label: "lít" }]} />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Form.Item
+                      name="executedArea"
+                      label="Diện tích thu hoạch (m²)"
+                      rules={[{ required: true, type: "number", min: 0.0001, max: remainingHarvestArea, message: "Nhập diện tích hợp lệ" }]}
+                    >
+                      <InputNumber min={0} max={remainingHarvestArea} className="w-full" placeholder="Diện tích" />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Card>
+            )}
 
             <Card
               bordered={false}
@@ -1461,6 +1505,14 @@ const DailyLog = () => {
       >
         <Spin spinning={summaryLoading} tip="Đang tải tổng hợp...">
           <div className="py-1 space-y-5 text-sm">
+            {isHarvestTask && (
+              <Alert
+                type="success"
+                showIcon
+                message="Tổng hợp thu hoạch"
+                description={`Số lượng: ${leaderSummary?.totalHarvestQuantity ?? 0} ${leaderSummary?.harvestUnit || ""} · Diện tích: ${leaderSummary?.totalHarvestedArea ?? 0} m²`}
+              />
+            )}
             {/* ── Thống kê thời gian thực tế ── */}
             {(() => {
               // Lấy ngày bắt đầu thực tế

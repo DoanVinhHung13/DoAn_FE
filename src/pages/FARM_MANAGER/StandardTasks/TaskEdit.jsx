@@ -24,8 +24,8 @@ const TaskEdit = () => {
         const data = unwrap(res) || {}
 
         form.setFieldsValue({
-          cropCatalogId: data.cropCatalogId,
-          cropId: data.cropId,
+          cropCatalogId: data.cropCatalogId || '__ALL__',
+          cropId: data.cropId || '__ALL__',
           name: data.name,
           description: data.description,
         })
@@ -43,8 +43,8 @@ const TaskEdit = () => {
       setLoading(true)
 
       const body = {
-        cropCatalogId: values.cropCatalogId,
-        cropId: values.cropId,
+        cropCatalogId: values.cropCatalogId === '__ALL__' ? null : values.cropCatalogId,
+        cropId: values.cropId === '__ALL__' ? null : values.cropId,
         name: values.name?.trim(),
         description: values.description?.trim() || null,
       }

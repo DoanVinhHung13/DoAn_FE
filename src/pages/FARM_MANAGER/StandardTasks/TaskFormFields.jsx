@@ -11,6 +11,7 @@ const unwrapItems = (response) => {
 }
 
 const getCropCatalogId = (crop) => crop.cropCatalogId || crop.cropCatalog?.id
+const ALL_OPTION_VALUE = '__ALL__'
 
 const TaskFormFields = ({ form, readOnly = false }) => {
   const [catalogs, setCatalogs] = useState([])
@@ -21,6 +22,7 @@ const TaskFormFields = ({ form, readOnly = false }) => {
   const debouncedCatalogSearch = useDebouncedValue(catalogSearch, 400)
   const debouncedCropSearch = useDebouncedValue(cropSearch, 400)
   const selectedCatalogId = Form.useWatch('cropCatalogId', form)
+  const selectedCatalogFilter = selectedCatalogId === ALL_OPTION_VALUE ? undefined : selectedCatalogId
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -28,7 +30,7 @@ const TaskFormFields = ({ form, readOnly = false }) => {
         setLoading(true)
         const [catalogResponse, cropResponse] = await Promise.all([
           CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE', SearchKeyword: debouncedCatalogSearch || undefined }),
-          CropManagementService.getCrops({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE', CropCatalogId: selectedCatalogId || undefined, SearchKeyword: debouncedCropSearch || undefined }),
+          CropManagementService.getCrops({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE', CropCatalogId: selectedCatalogFilter || undefined, SearchKeyword: debouncedCropSearch || undefined }),
         ])
         setCatalogs(unwrapItems(catalogResponse).filter(item => item.isActive !== false))
         setCrops(unwrapItems(cropResponse).filter(item => item.isActive !== false))
@@ -41,17 +43,20 @@ const TaskFormFields = ({ form, readOnly = false }) => {
     }
 
     loadOptions()
-  }, [debouncedCatalogSearch, debouncedCropSearch, selectedCatalogId])
+  }, [debouncedCatalogSearch, debouncedCropSearch, selectedCatalogFilter])
 
   const catalogOptions = useMemo(
-    () => catalogs.map(item => ({ value: item.id, label: item.name })),
+    () => [{ value: ALL_OPTION_VALUE, label: 'Tất cả' }, ...catalogs.map(item => ({ value: item.id, label: item.name }))],
     [catalogs],
   )
   const cropOptions = useMemo(
-    () => crops
-      .filter(item => !selectedCatalogId || String(getCropCatalogId(item)) === String(selectedCatalogId))
-      .map(item => ({ value: item.id, label: item.name })),
-    [crops, selectedCatalogId],
+    () => [
+      { value: ALL_OPTION_VALUE, label: 'Tất cả' },
+      ...crops
+        .filter(item => !selectedCatalogFilter || String(getCropCatalogId(item)) === String(selectedCatalogFilter))
+        .map(item => ({ value: item.id, label: item.name })),
+    ],
+    [crops, selectedCatalogFilter],
   )
 
   return (
@@ -60,7 +65,7 @@ const TaskFormFields = ({ form, readOnly = false }) => {
         <Form.Item
           name="cropCatalogId"
           label="Danh mục cây trồng"
-          rules={!readOnly ? [{ required: true, message: 'Vui lòng chọn danh mục cây trồng.' }] : []}
+          rules={!readOnly ? [{ required: true, message: 'Vui lòng chọn phạm vi danh mục cây trồng.' }] : []}
         >
           <Select
             showSearch
@@ -71,7 +76,7 @@ const TaskFormFields = ({ form, readOnly = false }) => {
             onSearch={setCatalogSearch}
             filterOption={false}
             placeholder="Chọn danh mục cây trồng"
-            onChange={() => form?.setFieldValue('cropId', undefined)}
+            onChange={() => form?.setFieldValue('cropId', ALL_OPTION_VALUE)}
           />
         </Form.Item>
       </Col>
@@ -79,17 +84,17 @@ const TaskFormFields = ({ form, readOnly = false }) => {
         <Form.Item
           name="cropId"
           label="Cây trồng"
-          rules={!readOnly ? [{ required: true, message: 'Vui lòng chọn cây trồng.' }] : []}
+          rules={!readOnly ? [{ required: true, message: 'Vui lòng chọn phạm vi cây trồng.' }] : []}
         >
           <Select
             showSearch
             optionFilterProp="label"
             loading={loading}
-            disabled={readOnly || !selectedCatalogId}
+            disabled={readOnly}
             options={cropOptions}
             onSearch={setCropSearch}
             filterOption={false}
-            placeholder={selectedCatalogId ? 'Chọn cây trồng' : 'Chọn danh mục trước'}
+            placeholder="Chọn cây trồng hoặc Tất cả"
           />
         </Form.Item>
       </Col>

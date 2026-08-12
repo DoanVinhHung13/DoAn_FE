@@ -16,8 +16,8 @@ const TaskCreate = () => {
     try {
       setLoading(true)
       const body = {
-        cropCatalogId: values.cropCatalogId,
-        cropId: values.cropId,
+        cropCatalogId: values.cropCatalogId === '__ALL__' ? null : values.cropCatalogId,
+        cropId: values.cropId === '__ALL__' ? null : values.cropId,
         name: values.name?.trim(),
         description: values.description?.trim() || null,
       }
