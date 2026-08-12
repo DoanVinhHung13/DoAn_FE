@@ -19,6 +19,7 @@ import {
   SearchOutlined,
   TagsOutlined,
   TeamOutlined,
+  WarningOutlined,
 } from "@ant-design/icons"
 import {
   Alert,
@@ -101,6 +102,9 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
       ? { fullName: task.assignedLeaderName, isLeader: true }
       : null)
   const members = assignments.filter(a => !a.isLeader)
+  const quarantineWarnings = Array.isArray(task.quarantineWarnings)
+    ? task.quarantineWarnings
+    : []
 
   return (
     <Card
@@ -171,6 +175,26 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
               {task.startDate ? formatDate(task.startDate) : "—"}
             </Text>
           </div>
+
+          {quarantineWarnings.map((warning, index) => (
+            <Alert
+              key={`${warning.pesticideName}-${warning.eligibleDate}-${index}`}
+              type="warning"
+              showIcon
+              icon={<WarningOutlined />}
+              className="!rounded-xl !border-amber-200 !bg-amber-50/80 !px-3 !py-2"
+              message={
+                <span className="text-xs font-semibold text-amber-800">
+                  Chưa đủ thời gian cách ly: {warning.pesticideName}.
+                </span>
+              }
+              description={
+                <span className="text-xs text-amber-700">
+                  Thời gian cách ly đến: {formatDate(warning.eligibleDate)}.
+                </span>
+              }
+            />
+          ))}
 
           {/* Team Assignment */}
           <div className="space-y-1.5 pt-0.5">
