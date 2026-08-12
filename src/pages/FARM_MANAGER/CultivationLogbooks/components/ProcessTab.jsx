@@ -342,7 +342,7 @@ const ProcessTab = ({ item }) => {
 
                   <div className="mb-3 flex items-center justify-between">
                     <Text className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Nhật ký hàng ngày của Farm Leader
+                      Nhật ký hàng ngày của Tổ trưởng
                     </Text>
                     <Badge count={stageLogs.length} color="#16a34a" showZero className="ml-2" />
                   </div>
