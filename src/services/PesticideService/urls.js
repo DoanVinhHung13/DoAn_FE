@@ -8,4 +8,6 @@ export const apiGetPesticideById = (id) => `/pesticides/${id}`
 export const apiUpdatePesticide = (id) => `/pesticides/${id}`
 export const apiDeletePesticide = (id) => `/pesticides/${id}`
 export const apiTogglePesticideStatus = (id) => `/pesticides/${id}/status`
+export const apiDeactivatePesticide = (id) => `/pesticides/${id}/deactivate`
+export const apiReactivatePesticide = (id) => `/pesticides/${id}/reactivate`
 export const apiGetPesticideSelection = '/pesticides/selection'

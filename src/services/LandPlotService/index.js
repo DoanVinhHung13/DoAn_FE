@@ -9,6 +9,7 @@ import {
 
   apiActivateLandPlot,
   apiDeactivateLandPlot,
+  apiReactivateLandPlot,
   apiGetLandPlotsAvailableForLogbook,
 } from './urls'
 
@@ -21,6 +22,7 @@ const deleteLandPlot = (id) => http.delete(apiDeleteLandPlot(id))
 
 const activateLandPlot = (id) => http.post(apiActivateLandPlot(id))
 const deactivateLandPlot = (id) => http.post(apiDeactivateLandPlot(id))
+const reactivateLandPlot = (id) => http.post(apiReactivateLandPlot(id))
 
 const getAvailableForLogbook = (params) =>
   http.get(apiGetLandPlotsAvailableForLogbook, { params, skipNotice: true })
@@ -35,6 +37,7 @@ const LandPlotService = {
 
   activateLandPlot,
   deactivateLandPlot,
+  reactivateLandPlot,
   getAvailableForLogbook,
 }
 

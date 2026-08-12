@@ -161,7 +161,7 @@ const Crops = () => {
   const statusMutation = useMutation({
     mutationFn: ({ id, nextActive }) =>
       nextActive
-        ? CropManagementService.activateCrop(id)
+        ? CropManagementService.reactivateCrop(id)
         : CropManagementService.deactivateCrop(id),
     onSuccess: () => {
       setStatusTarget(null);
@@ -374,7 +374,7 @@ const Crops = () => {
               onClick={() => setStatusTarget(record)}
             />
           </Tooltip>
-          <Popconfirm
+          {!isCropActive(record) && <Popconfirm
             title="Xóa cây trồng"
             description="Bạn có chắc chắn muốn xóa cây trồng này không?"
             onConfirm={(e) => {
@@ -395,7 +395,7 @@ const Crops = () => {
                 onClick={(e) => e.stopPropagation()}
               />
             </Tooltip>
-          </Popconfirm>
+          </Popconfirm>}
         </Space>
       ),
     },

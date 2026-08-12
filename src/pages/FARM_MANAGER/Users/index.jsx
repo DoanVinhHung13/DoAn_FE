@@ -311,7 +311,7 @@ const UsersManagement = () => {
                 }}
               />
             </Tooltip>
-            <Popconfirm
+            {!record.isActive && <Popconfirm
               title="Xóa người dùng"
               description="Bạn có chắc chắn muốn xóa người dùng này không?"
               onConfirm={(e) => {
@@ -331,7 +331,7 @@ const UsersManagement = () => {
                   onClick={e => e.stopPropagation()}
                 />
               </Tooltip>
-            </Popconfirm>
+            </Popconfirm>}
           </div>
         )
       },

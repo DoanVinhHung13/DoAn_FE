@@ -10,6 +10,8 @@ import {
   apiUpdatePesticide,
   apiDeletePesticide,
   apiTogglePesticideStatus,
+  apiDeactivatePesticide,
+  apiReactivatePesticide,
   apiGetPesticideSelection,
 } from './urls'
 
@@ -26,6 +28,8 @@ const updatePesticide = (id, body, config) => http.put(apiUpdatePesticide(id), b
 const deletePesticide = (id) => http.delete(apiDeletePesticide(id))
 
 const togglePesticideStatus = (id, body) => http.patch(apiTogglePesticideStatus(id), body)
+const deactivatePesticide = (id) => http.post(apiDeactivatePesticide(id))
+const reactivatePesticide = (id) => http.post(apiReactivatePesticide(id))
 
 /** GET /pesticides/selection — dùng cho Daily Log Select */
 const getPesticideSelection = (params) =>
@@ -38,6 +42,8 @@ const PesticideService = {
   updatePesticide,
   deletePesticide,
   togglePesticideStatus,
+  deactivatePesticide,
+  reactivatePesticide,
   getPesticideSelection,
 }
 

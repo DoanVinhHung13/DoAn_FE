@@ -7,6 +7,7 @@ export const apiDeleteLandPlot = (id) => `/land-plots/${id}`
 
 export const apiActivateLandPlot = (id) => `/land-plots/${id}/activate`
 export const apiDeactivateLandPlot = (id) => `/land-plots/${id}/deactivate`
+export const apiReactivateLandPlot = (id) => `/land-plots/${id}/reactivate`
 
 // Swagger: GET /api/land-plots/available-for-logbook
 export const apiGetLandPlotsAvailableForLogbook = '/land-plots/available-for-logbook'

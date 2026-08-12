@@ -24,6 +24,8 @@ import {
   apiUpdateFertilizer,
   apiDeleteFertilizer,
   apiToggleFertilizerStatus,
+  apiDeactivateFertilizer,
+  apiReactivateFertilizer,
   apiGetFertilizerSelection,
 } from './urls'
 
@@ -64,6 +66,8 @@ const deleteFertilizer = (id) => http.delete(apiDeleteFertilizer(id))
  *       dùng chung PUT với toàn bộ body update + trường isActive.
  */
 const toggleFertilizerStatus = (id, body) => http.put(apiToggleFertilizerStatus(id), body)
+const deactivateFertilizer = (id) => http.post(apiDeactivateFertilizer(id))
+const reactivateFertilizer = (id) => http.post(apiReactivateFertilizer(id))
 
 /** GET /fertilizers/selection — dùng cho Daily Log Select */
 const getFertilizerSelection = (params) =>
@@ -76,6 +80,8 @@ const FertilizerService = {
   updateFertilizer,
   deleteFertilizer,
   toggleFertilizerStatus,
+  deactivateFertilizer,
+  reactivateFertilizer,
   getFertilizerSelection,
 }
 

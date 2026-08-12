@@ -265,7 +265,7 @@ const LandsManagement = () => {
                     }}
                   />
                 </Tooltip>
-                <Popconfirm
+                {!active && <Popconfirm
                   title="Xóa vùng trồng"
                   description="Bạn có chắc chắn muốn xóa vùng trồng này không?"
                   onConfirm={(e) => {
@@ -286,7 +286,7 @@ const LandsManagement = () => {
                       onClick={(e) => e.stopPropagation()}
                     />
                   </Tooltip>
-                </Popconfirm>
+                </Popconfirm>}
               </div>
             )
           },

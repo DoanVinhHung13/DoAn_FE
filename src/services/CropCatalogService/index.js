@@ -3,6 +3,7 @@ import {
   apiActivateCropCatalog,
   apiCreateCropCatalog,
   apiDeactivateCropCatalog,
+  apiReactivateCropCatalog,
   apiDeleteCropCatalog,
   apiGetCropCatalogById,
   apiGetCropCatalogs,
@@ -16,6 +17,7 @@ const updateCropCatalog = (id, body, config) => http.put(apiUpdateCropCatalog(id
 const deleteCropCatalog = (id) => http.delete(apiDeleteCropCatalog(id));
 const activateCropCatalog = (id) => http.post(apiActivateCropCatalog(id));
 const deactivateCropCatalog = (id) => http.post(apiDeactivateCropCatalog(id));
+const reactivateCropCatalog = (id) => http.post(apiReactivateCropCatalog(id));
 
 const CropCatalogService = {
   getCropCatalogs,
@@ -25,6 +27,7 @@ const CropCatalogService = {
   deleteCropCatalog,
   activateCropCatalog,
   deactivateCropCatalog,
+  reactivateCropCatalog,
 };
 
 export default CropCatalogService;

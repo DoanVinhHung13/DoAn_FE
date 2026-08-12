@@ -154,9 +154,10 @@ const ViewFertilizers = () => {
     const { item } = statusModal
     try {
       setStatusLoading(true)
-      await FertilizerService.toggleFertilizerStatus(item.id, {
-        isActive: !item.isActive,
-      })
+      const toggle = item.isActive
+        ? FertilizerService.deactivateFertilizer
+        : FertilizerService.reactivateFertilizer
+      await toggle(item.id)
       setStatusModal({ open: false, item: null })
       getList()
     } finally {
@@ -318,7 +319,7 @@ const ViewFertilizers = () => {
                 }}
               />
             </Tooltip>
-            <Popconfirm
+          {!active && <Popconfirm
               title="Xóa phân bón"
               description="Bạn có chắc chắn muốn xóa phân bón này không?"
               onConfirm={(e) => {
@@ -338,7 +339,7 @@ const ViewFertilizers = () => {
                   onClick={(e) => e.stopPropagation()}
                 />
               </Tooltip>
-            </Popconfirm>
+          </Popconfirm>}
           </div>
         )
       },

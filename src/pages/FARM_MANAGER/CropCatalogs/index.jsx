@@ -182,7 +182,7 @@ const CropCatalogs = () => {
   const statusMutation = useMutation({
     mutationFn: ({ id, nextActive }) =>
       nextActive
-        ? CropCatalogService.activateCropCatalog(id)
+        ? CropCatalogService.reactivateCropCatalog(id)
         : CropCatalogService.deactivateCropCatalog(id),
     onSuccess: async () => {
       setStatusTarget(null);
@@ -377,7 +377,7 @@ const CropCatalogs = () => {
               onClick={() => setStatusTarget(record)}
             />
           </Tooltip>
-          <Popconfirm
+          {!isCatalogActive(record) && <Popconfirm
             title="Xóa danh mục cây trồng"
             description="Bạn có chắc chắn muốn xóa danh mục cây trồng này không?"
             onConfirm={(e) => {
@@ -398,7 +398,7 @@ const CropCatalogs = () => {
                 onClick={(e) => e.stopPropagation()}
               />
             </Tooltip>
-          </Popconfirm>
+          </Popconfirm>}
         </Space>
       ),
     },

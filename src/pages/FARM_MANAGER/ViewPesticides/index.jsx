@@ -118,9 +118,10 @@ const ViewPesticides = () => {
     const { item } = statusModal
     try {
       setStatusLoading(true)
-      await PesticideService.togglePesticideStatus(item.id, {
-        isActive: !item.isActive,
-      })
+      const toggle = item.isActive
+        ? PesticideService.deactivatePesticide
+        : PesticideService.reactivatePesticide
+      await toggle(item.id)
       setStatusModal({ open: false, item: null })
       getList()
     } finally {
@@ -275,7 +276,7 @@ const ViewPesticides = () => {
                 }}
               />
             </Tooltip>
-            <Popconfirm
+          {!active && <Popconfirm
               title="Xóa nông dược"
               description="Bạn có chắc chắn muốn xóa nông dược này không?"
               onConfirm={(e) => {
@@ -295,7 +296,7 @@ const ViewPesticides = () => {
                   onClick={(e) => e.stopPropagation()}
                 />
               </Tooltip>
-            </Popconfirm>
+          </Popconfirm>}
           </div>
         )
       },
