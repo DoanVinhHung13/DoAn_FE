@@ -68,7 +68,7 @@ function NotFound() {
         </div>
 
         <Text className="text-gray-300 text-xs block mt-6 tracking-widest uppercase font-bold">
-          EAPLS · Hệ thống Nhật ký Sản xuất
+          EAPLS · Hệ thống Nhật ký Canh tác
         </Text>
       </div>
     </div>

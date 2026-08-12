@@ -29,7 +29,7 @@ const stories = [
     stats: ['20 ha', 'Hữu cơ', 'Xuất Đài Loan'],
     detail: {
       challenge: 'Đối tác nước ngoài yêu cầu khắt khe về việc minh bạch quá trình sử dụng phân bón hữu cơ và nông dược sinh học trong suốt chu kỳ sinh trưởng của cây Sachi.',
-      solution: 'Triển khai hệ thống truy xuất nguồn gốc QR code tích hợp với nhật ký sản xuất điện tử. Toàn bộ dữ liệu được lưu trữ không thể thay đổi trên hệ thống.',
+      solution: 'Triển khai hệ thống truy xuất nguồn gốc QR code tích hợp với nhật ký canh tác. Toàn bộ dữ liệu được lưu trữ không thể thay đổi trên hệ thống.',
       impact: 'Ký kết hợp đồng dài hạn với đối tác Đài Loan, giảm 30% thời gian báo cáo và đối soát dữ liệu chất lượng hàng tháng.',
     },
   },

@@ -47,7 +47,7 @@ const HeroSection = () => {
                 className="text-xs font-semibold uppercase tracking-widest"
                 style={{ color: '#a5d6a7' }}
               >
-                Hệ thống truy xuất nguồn gốc nông sản
+                Hệ thống truy xuất nguồn gốc canh tác nông sản
               </span>
             </div>
 

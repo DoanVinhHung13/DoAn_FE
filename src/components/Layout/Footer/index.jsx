@@ -38,7 +38,7 @@ const PublicFooter = () => {
                                 <img src={logo} alt="EAPLS Logo" className="w-[140%] h-[140%] object-contain mix-blend-multiply" />
                             </div>
                             <div className="flex flex-col justify-center">
-                                <span className="text-green-400 font-extrabold text-[14px] leading-[1.1] uppercase tracking-tight">Nhật ký sản xuất</span>
+                                <span className="text-green-400 font-extrabold text-[14px] leading-[1.1] uppercase tracking-tight">Nhật ký canh tác</span>
                                 <span className="text-green-400 font-bold text-[14px] leading-[1.1] uppercase tracking-tight">Điện tử</span>
                             </div>
                         </div>
@@ -139,7 +139,7 @@ const PublicFooter = () => {
                             © 2026 EAPLS. Tất cả quyền được bảo lưu.
                         </Text>
                         <Text className="text-gray-500 text-xs block">
-                            Minh bạch - Chuẩn hóa - Tin cậy - Nhật ký sản xuất điện tử
+                            Minh bạch - Chuẩn hóa - Tin cậy - Nhật ký canh tác
                         </Text>
                     </div>
                 </div>

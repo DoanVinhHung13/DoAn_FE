@@ -81,7 +81,7 @@ const PublicNavbar = () => {
             </div>
             <div className="flex flex-col justify-center">
               <span className="text-green-600 font-extrabold text-[18px] leading-[1.1] uppercase tracking-tight">
-                Nhật ký sản xuất
+                Nhật ký canh tác
               </span>
               <span className="text-green-600 font-extrabold text-[18px] leading-[1.1] uppercase tracking-tight">
                 Điện tử

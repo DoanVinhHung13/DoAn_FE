@@ -119,7 +119,7 @@ const Login = () => {
             </div>
           </div>
           <h1 className="text-lg font-semibold text-emerald-700">
-            Nhật ký sản xuất điện tử
+            Nhật ký canh tác
           </h1>
         </div>
 
