@@ -64,6 +64,7 @@ const LandsManagement = () => {
   })
 
   const status = filters.status
+  const hasActiveFilters = Boolean(search.trim()) || status !== 'ACTIVE'
 
   // ── Danh sách vùng trồng ─────────────────────────────────────────────────
   const [listError, setListError] = useState(null)
@@ -393,7 +394,7 @@ const LandsManagement = () => {
         textEmpty={
           <div className="py-8 text-center">
             <p className="mb-4 text-slate-500">{EMPTY_LAND_MESSAGE}</p>
-            {canManage && routes.create && (
+            {canManage && routes.create && !hasActiveFilters && (
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
