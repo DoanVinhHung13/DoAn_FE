@@ -138,11 +138,20 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         const data = unwrap(res)
         const items = Array.isArray(data) ? data : data?.items || []
         setTaskCatalogOptions(
-          items.map(item => ({
+          items
+            .filter(
+              item =>
+                !(
+                  String(item.name || "").trim().toLowerCase() === "thu hoạch" &&
+                  item.activityType !== "HARVESTING"
+                ),
+            )
+            .map(item => ({
             value: item.id,
             label: item.name,
             description: item.description,
-          })),
+            activityType: item.activityType,
+            })),
         )
       } catch {
         setTaskCatalogOptions([])
@@ -289,7 +298,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           )
           return {
             taskCatalogId: task.taskCatalogId || null,
-            activityType: task.activityType || "OTHER",
+                                        activityType: task.activityType || "OTHER",
             name: (task.name || catalog?.label || "").trim(),
             description:
               (task.description || catalog?.description || "").trim() || null,
@@ -854,6 +863,10 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                           catalog?.description ||
                                           list[name]?.description ||
                                           "",
+                                        activityType:
+                                          catalog?.activityType ||
+                                          list[name]?.activityType ||
+                                          "OTHER",
                                       }
                                       taskForm.setFieldsValue({
                                         tasks: [...list],
