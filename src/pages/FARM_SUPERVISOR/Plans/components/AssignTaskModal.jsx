@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { ROLES } from "src/constants/roles"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import UserService from "src/services/UserService"
+import useDebouncedValue from "src/hooks/useDebouncedValue"
 
 const AssignTaskModal = ({
   open,
@@ -16,6 +17,10 @@ const AssignTaskModal = ({
   const [farmers, setFarmers] = useState([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [leaderSearch, setLeaderSearch] = useState('')
+  const [farmerSearch, setFarmerSearch] = useState('')
+  const debouncedLeaderSearch = useDebouncedValue(leaderSearch, 400)
+  const debouncedFarmerSearch = useDebouncedValue(farmerSearch, 400)
 
   const leaderOptions = leaders.map(l => ({
     value: l.id,
@@ -43,21 +48,27 @@ const AssignTaskModal = ({
     }
   }, [open, task, form])
 
+  useEffect(() => {
+    if (open && (debouncedLeaderSearch || debouncedFarmerSearch)) fetchUsers()
+  }, [open, debouncedLeaderSearch, debouncedFarmerSearch])
+
   const fetchUsers = async () => {
     setLoading(true)
     try {
       const [leadersRes, farmersRes] = await Promise.all([
         UserService.getUsers({
           PageIndex: 1,
-          PageSize: 1000,
+          PageSize: 100,
           Role: ROLES.FARMER_LEADER,
           IsActive: true,
+          SearchKeyword: debouncedLeaderSearch || undefined,
         }).catch(() => ({ data: { items: [] } })),
         UserService.getUsers({
           PageIndex: 1,
-          PageSize: 1000,
+          PageSize: 100,
           Role: ROLES.FARMER,
           IsActive: true,
+          SearchKeyword: debouncedFarmerSearch || undefined,
         }).catch(() => ({ data: { items: [] } })),
       ])
 
@@ -132,12 +143,9 @@ const AssignTaskModal = ({
             options={leaderOptions}
             placeholder="Chọn người phụ trách..."
             showSearch
-            filterOption={(input, option) =>
-              String(option?.label || "")
-                .toLowerCase()
-                .includes(input.toLowerCase())
-            }
             loading={loading}
+            onSearch={setLeaderSearch}
+            filterOption={false}
           />
         </Form.Item>
         <Form.Item name="farmerIds" label="Người hỗ trợ">
@@ -146,12 +154,9 @@ const AssignTaskModal = ({
             options={farmerOptions}
             placeholder="Chọn người hỗ trợ..."
             showSearch
-            filterOption={(input, option) =>
-              String(option?.label || "")
-                .toLowerCase()
-                .includes(input.toLowerCase())
-            }
             loading={loading}
+            onSearch={setFarmerSearch}
+            filterOption={false}
           />
         </Form.Item>
       </Form>

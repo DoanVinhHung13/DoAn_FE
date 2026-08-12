@@ -33,6 +33,7 @@ import { useAppDispatch } from "src/redux/hooks";
 import authSession from "src/redux/authSession";
 import { setUserInfo } from "src/redux/slices/appGlobalSlice";
 import UserService from "src/services/UserService";
+import { getRoleLabel } from "src/utils/roleLabels";
 import { applyApiFieldErrors, getApiMessage } from "src/services/core/apiError";
 import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers";
 import {
@@ -168,7 +169,7 @@ const AccountInfo = () => {
   };
 
   const previewName = editing ? watchedName || user?.fullName : user?.fullName;
-  const role = user?.role || user?.roles?.[0] || "";
+  const role = getRoleLabel(user?.role || user?.roles?.[0], "");
   const addressText = [user?.address].filter(Boolean).join(", ");
 
   const summaryRow = (icon, label, value) => (

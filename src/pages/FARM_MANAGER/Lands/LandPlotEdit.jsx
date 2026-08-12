@@ -83,7 +83,7 @@ const LandPlotEdit = () => {
   const fetchExistingPlots = useCallback(async () => {
     if (!canManage || !id) return
     try {
-      const response = await LandPlotService.getLandPlots({ PageIndex: 1, PageSize: 200 })
+      const response = await LandPlotService.getLandPlots({ PageIndex: 1, PageSize: 100 })
       const allPlots = normalizeLandPlotResponse(response).items
       setExistingPlots(allPlots.filter((item) => (item.id || item._id) !== id))
     } catch {

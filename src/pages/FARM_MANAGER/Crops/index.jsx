@@ -31,6 +31,7 @@ import { isNotFoundError } from 'src/services/core/apiError';
 import CropCatalogService from 'src/services/CropCatalogService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
+import { useDebouncedValue } from 'src/hooks/useDebouncedValue';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import TableCustom from 'src/components/Table/CustomTable';
 import { getListPresentationState } from 'src/utils/listPresentation';
@@ -112,6 +113,7 @@ const Crops = () => {
   const [statusTarget, setStatusTarget] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const debouncedKeyword = useDebouncedValue(keyword, 400);
 
   const { getCombo } = useSystemKey();
   const cropStatusOptions = getCombo(SYSTEM_KEY.CROP_STATUS);
@@ -123,7 +125,7 @@ const Crops = () => {
       return [
         ...baseOptions,
         ...cropStatusOptions.map(opt => ({
-          value: opt.codeValue || opt.CodeValue,
+          value: String(opt.codeValue || opt.CodeValue || '').toLowerCase(),
           label: opt.description || opt.Description,
         }))
       ];
@@ -137,9 +139,16 @@ const Crops = () => {
   }, [cropStatusOptions]);
 
   const { data, isLoading, isFetching, isError, refetch, error } = useQuery({
-    queryKey: ['crops'],
+    queryKey: ['crops', page, pageSize, debouncedKeyword, status, category, sortBy],
     queryFn: async () => {
-      const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 200 });
+      const response = await CropManagementService.getCrops({
+        PageIndex: page,
+        PageSize: pageSize,
+        SearchKeyword: debouncedKeyword.trim() || undefined,
+        Status: status === 'all' ? undefined : status,
+        CropCatalogId: category === 'all' ? undefined : category,
+        SortBy: sortBy === 'name-asc' || sortBy === 'name-desc' ? sortBy : undefined,
+      });
       return normalizeCropResponse(response);
     },
     retry: false,
@@ -212,10 +221,11 @@ const Crops = () => {
             String(value).toLocaleLowerCase('vi').includes(normalizedKeyword)
           );
 
+      const normalizedStatus = String(status).toLowerCase();
       const matchesStatus =
-        status === 'all' ||
-        (status === 'active' && isCropActive(item)) ||
-        (status === 'inactive' && !isCropActive(item));
+        normalizedStatus === 'all' ||
+        (normalizedStatus === 'active' && isCropActive(item)) ||
+        (normalizedStatus === 'inactive' && !isCropActive(item));
       const matchesCategory = category === 'all' || item.cropCatalogId === category;
 
       return matchesKeyword && matchesStatus && matchesCategory;
@@ -240,15 +250,8 @@ const Crops = () => {
     });
   }, [category, data?.items, keyword, sortBy, status]);
 
-  const visiblePage = Math.min(
-    page,
-    Math.max(1, Math.ceil(filteredCrops.length / pageSize)),
-  );
-
-  const paginatedCrops = useMemo(
-    () => filteredCrops.slice((visiblePage - 1) * pageSize, visiblePage * pageSize),
-    [filteredCrops, pageSize, visiblePage],
-  );
+  const visiblePage = page;
+  const paginatedCrops = filteredCrops;
 
   const hasActiveFilters = Boolean(keyword.trim()) || status !== 'all' || category !== 'all' || sortBy !== 'name-asc';
   const listPresentation = getListPresentationState({
@@ -484,7 +487,7 @@ const Crops = () => {
         pagination={{
           current: visiblePage,
           pageSize,
-          total: filteredCrops.length,
+          total: data?.total || 0,
           showSizeChanger: true,
           pageSizeOptions: [10, 20, 50],
           onChange: (nextPage, nextPageSize) => {

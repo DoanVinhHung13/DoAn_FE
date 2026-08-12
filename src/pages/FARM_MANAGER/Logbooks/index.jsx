@@ -18,6 +18,7 @@ import {
   Card,
   Empty,
   Input,
+  Pagination,
   Skeleton,
   Tag,
   Typography,
@@ -46,8 +47,9 @@ const FarmManagerLogbooks = () => {
   // ── Use List Management Hook ────────────────────────────────────────────────
   const {
     searchInput, setSearchInput, search, handleSearch,
+    page, setPage, pageSize, setPageSize,
     listData: logbooks, setListData: setLogbooks,
-    loading, setLoading
+    totalRecords, setTotalRecords, loading, setLoading
   } = useListManagement({
     initialPageSize: 100,
     initialFilters: {}
@@ -57,19 +59,20 @@ const FarmManagerLogbooks = () => {
     try {
       setLoading(true)
       const res = await CultivationLogbookService.getClosingReviews({
-        PageIndex: 1,
-        PageSize: 100,
+        PageIndex: page,
+        PageSize: pageSize,
         SearchKeyword: search || undefined,
       })
       const data = unwrap(res)
       const items = Array.isArray(data) ? data : data?.items || []
       setLogbooks(items)
+      setTotalRecords(data?.totalItems ?? data?.totalCount ?? items.length)
     } catch {
       setLogbooks([])
     } finally {
       setLoading(false)
     }
-  }, [search, setLoading, setLogbooks])
+  }, [page, pageSize, search, setLoading, setLogbooks, setTotalRecords])
 
   useEffect(() => {
     getList()
@@ -128,7 +131,8 @@ const FarmManagerLogbooks = () => {
             <Skeleton active paragraph={{ rows: 6 }} />
           </div>
         ) : visible.length ? (
-          <div className="p-5 grid gap-4 xl:grid-cols-2">
+          <div>
+            <div className="p-5 grid gap-4 xl:grid-cols-2">
             {visible.map((lb) => {
               const cfg = getLogbookStatus(lb.status)
               const reviewCfg = lb.reviewStatus ? getReviewStatus(lb.reviewStatus) : null
@@ -194,6 +198,19 @@ const FarmManagerLogbooks = () => {
                 </Card>
               )
             })}
+            </div>
+            <div className="flex justify-end border-t border-gray-100 px-5 py-4">
+            <Pagination
+              current={page}
+              pageSize={pageSize}
+              total={totalRecords}
+              showSizeChanger
+              onChange={(nextPage, nextPageSize) => {
+                setPage(nextPageSize !== pageSize ? 1 : nextPage)
+                setPageSize(nextPageSize)
+              }}
+            />
+            </div>
           </div>
         ) : (
           <div className="p-8">

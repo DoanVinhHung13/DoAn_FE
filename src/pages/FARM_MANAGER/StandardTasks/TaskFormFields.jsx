@@ -3,6 +3,7 @@ import { Col, Form, Input, Row, Select } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
+import useDebouncedValue from 'src/hooks/useDebouncedValue'
 
 const unwrapItems = (response) => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
@@ -15,6 +16,10 @@ const TaskFormFields = ({ form, readOnly = false }) => {
   const [catalogs, setCatalogs] = useState([])
   const [crops, setCrops] = useState([])
   const [loading, setLoading] = useState(false)
+  const [catalogSearch, setCatalogSearch] = useState('')
+  const [cropSearch, setCropSearch] = useState('')
+  const debouncedCatalogSearch = useDebouncedValue(catalogSearch, 400)
+  const debouncedCropSearch = useDebouncedValue(cropSearch, 400)
   const selectedCatalogId = Form.useWatch('cropCatalogId', form)
 
   useEffect(() => {
@@ -22,8 +27,8 @@ const TaskFormFields = ({ form, readOnly = false }) => {
       try {
         setLoading(true)
         const [catalogResponse, cropResponse] = await Promise.all([
-          CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 1000, Status: 'ACTIVE' }),
-          CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000, Status: 'ACTIVE' }),
+          CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE', SearchKeyword: debouncedCatalogSearch || undefined }),
+          CropManagementService.getCrops({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE', CropCatalogId: selectedCatalogId || undefined, SearchKeyword: debouncedCropSearch || undefined }),
         ])
         setCatalogs(unwrapItems(catalogResponse).filter(item => item.isActive !== false))
         setCrops(unwrapItems(cropResponse).filter(item => item.isActive !== false))
@@ -36,7 +41,7 @@ const TaskFormFields = ({ form, readOnly = false }) => {
     }
 
     loadOptions()
-  }, [])
+  }, [debouncedCatalogSearch, debouncedCropSearch, selectedCatalogId])
 
   const catalogOptions = useMemo(
     () => catalogs.map(item => ({ value: item.id, label: item.name })),
@@ -63,6 +68,8 @@ const TaskFormFields = ({ form, readOnly = false }) => {
             loading={loading}
             disabled={readOnly}
             options={catalogOptions}
+            onSearch={setCatalogSearch}
+            filterOption={false}
             placeholder="Chọn danh mục cây trồng"
             onChange={() => form?.setFieldValue('cropId', undefined)}
           />
@@ -80,6 +87,8 @@ const TaskFormFields = ({ form, readOnly = false }) => {
             loading={loading}
             disabled={readOnly || !selectedCatalogId}
             options={cropOptions}
+            onSearch={setCropSearch}
+            filterOption={false}
             placeholder={selectedCatalogId ? 'Chọn cây trồng' : 'Chọn danh mục trước'}
           />
         </Form.Item>

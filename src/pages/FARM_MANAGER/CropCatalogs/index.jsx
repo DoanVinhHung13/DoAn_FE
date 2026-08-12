@@ -32,6 +32,7 @@ import TitleCustom from 'src/components/TitleCustom';
 import CropCatalogService from 'src/services/CropCatalogService';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
+import { useDebouncedValue } from 'src/hooks/useDebouncedValue';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import { applyApiFieldErrors, isNotFoundError } from 'src/services/core/apiError';
 import { getListPresentationState } from 'src/utils/listPresentation';
@@ -61,7 +62,7 @@ const displayValue = (value) => {
 const normalizeResponse = (response) => {
   const data = response?.data?.data ?? response?.data ?? response;
   const items = Array.isArray(data) ? data : (data?.items || []);
-  return { items };
+  return { items, totalItems: data?.totalItems ?? items.length };
 };
 
 const isCatalogActive = (item) => item?.isActive !== false;
@@ -94,6 +95,7 @@ const CropCatalogs = () => {
   const [inlineError, setInlineError] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const debouncedKeyword = useDebouncedValue(keyword, 400);
 
   // SystemKey hook
   const { getCombo, refetchSystemKey } = useSystemKey();
@@ -107,7 +109,7 @@ const CropCatalogs = () => {
       return [
         ...baseOptions,
         ...catalogStatusOptions.map(opt => ({
-          value: opt.codeValue || opt.CodeValue,
+          value: String(opt.codeValue || opt.CodeValue || '').toLowerCase(),
           label: opt.description || opt.Description,
         }))
       ];
@@ -121,10 +123,15 @@ const CropCatalogs = () => {
   }, [catalogStatusOptions]);
 
   const { data, isLoading, isFetching, isError, refetch, error } = useQuery({
-    queryKey: ['crop-catalogs'],
+    queryKey: ['crop-catalogs', page, pageSize, debouncedKeyword, status],
     queryFn: async () => {
       try {
-        const response = await CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 200 });
+        const response = await CropCatalogService.getCropCatalogs({
+          PageIndex: page,
+          PageSize: pageSize,
+          SearchKeyword: debouncedKeyword.trim() || undefined,
+          Status: status === 'all' ? undefined : status,
+        });
         return normalizeResponse(response);
       } catch (err) {
         logDevDiagnostic('crop-catalog-list', err)
@@ -251,35 +258,9 @@ const CropCatalogs = () => {
     });
   };
 
-  const filteredCatalogs = useMemo(() => {
-    const normalizedKeyword = keyword.trim().toLocaleLowerCase('vi');
-    return (data?.items || []).filter((item) => {
-      const matchesKeyword =
-        !normalizedKeyword ||
-        [item.name, item.cropCatalogName, item.description]
-          .filter(Boolean)
-          .some((value) =>
-            String(value).toLocaleLowerCase('vi').includes(normalizedKeyword)
-          );
-
-      const matchesStatus =
-        status === 'all' ||
-        (status === 'active' && isCatalogActive(item)) ||
-        (status === 'inactive' && !isCatalogActive(item));
-
-      return matchesKeyword && matchesStatus;
-    });
-  }, [data?.items, keyword, status]);
-
-  const visiblePage = Math.min(
-    page,
-    Math.max(1, Math.ceil(filteredCatalogs.length / pageSize)),
-  );
-
-  const paginatedCatalogs = useMemo(
-    () => filteredCatalogs.slice((visiblePage - 1) * pageSize, visiblePage * pageSize),
-    [filteredCatalogs, pageSize, visiblePage],
-  );
+  const filteredCatalogs = data?.items || [];
+  const visiblePage = page;
+  const paginatedCatalogs = filteredCatalogs;
 
   const hasActiveFilters = Boolean(keyword.trim()) || status !== 'all';
   const listPresentation = getListPresentationState({
@@ -480,7 +461,7 @@ const CropCatalogs = () => {
         pagination={{
           current: visiblePage,
           pageSize,
-          total: filteredCatalogs.length,
+          total: data?.totalItems || 0,
           showSizeChanger: true,
           pageSizeOptions: [10, 20, 50],
           onChange: (nextPage, nextPageSize) => {

@@ -206,7 +206,7 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
             </Text>
             <div className="flex flex-wrap items-center gap-1.5">
               {leader && (
-                <Tooltip title={`Trưởng nhóm: ${leader.fullName}`}>
+                <Tooltip title={`Tổ trưởng: ${leader.fullName}`}>
                   <Tag
                     color="gold"
                     className="rounded-full px-2.5 py-0.5 text-xs font-semibold flex items-center gap-1 border-amber-200"

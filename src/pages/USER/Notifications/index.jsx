@@ -5,6 +5,7 @@ import {
   Card,
   Empty,
   Input,
+  Pagination,
   Select,
   Skeleton,
   Tag,
@@ -25,9 +26,11 @@ import { NotificationIcon } from 'src/assets/icon/menu/MenuIcons';
 import ROUTER from 'src/router/ROUTER';
 import {
   getNotificationTypeLabel,
+  NOTIFICATION_TYPE_LABELS,
   NOTIFICATION_TYPE_COLORS,
 } from 'src/constants/notificationTypes';
 import { parseDate, timeAgo } from 'src/utils/dateFormatters';
+import { useDebouncedValue } from 'src/hooks/useDebouncedValue';
 import {
   getNotificationActionUrl,
   getNotificationContext,
@@ -66,7 +69,7 @@ const normalizeNotifications = (response) => {
     nestedPayload?.unreadCount ??
     items.filter((item) => !item.isRead).length;
 
-  return { items, unreadCount };
+  return { items, unreadCount, totalItems: nestedPayload?.totalItems ?? payload?.totalItems ?? items.length };
 };
 
 const getCategory = getNotificationTypeLabel;
@@ -78,10 +81,19 @@ const Notifications = () => {
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('all');
   const [category, setCategory] = useState('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const debouncedKeyword = useDebouncedValue(keyword, 400);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: async () => normalizeNotifications(await getNotifications()),
+    queryKey: ['notifications', page, pageSize, debouncedKeyword, status, category],
+    queryFn: async () => normalizeNotifications(await getNotifications({
+      PageIndex: page,
+      PageSize: pageSize,
+      SearchKeyword: debouncedKeyword.trim() || undefined,
+      IsRead: status === 'all' ? undefined : status === 'read',
+      Type: category === 'all' ? undefined : category,
+    })),
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
@@ -94,10 +106,10 @@ const Notifications = () => {
   });
 
   const categoryOptions = useMemo(() => {
-    const categories = [...new Set((data?.items || []).map(getCategory).filter(Boolean))];
+    const categories = Object.entries(NOTIFICATION_TYPE_LABELS).map(([value, label]) => ({ value, label }));
     return [
       { value: 'all', label: 'Tất cả danh mục' },
-      ...categories.map((item) => ({ value: item, label: item })),
+      ...categories,
     ];
   }, [data?.items]);
 
@@ -123,11 +135,13 @@ const Notifications = () => {
         status === 'all' ||
         (status === 'read' && item.isRead) ||
         (status === 'unread' && !item.isRead);
-      const matchesCategory = category === 'all' || getCategory(item) === category;
+      const matchesCategory = category === 'all' || item.type === category;
 
       return matchesKeyword && matchesStatus && matchesCategory;
     });
   }, [category, data?.items, keyword, status]);
+
+  const paginatedNotifications = filteredNotifications;
 
   const handleNotificationClick = async (item) => {
     const id = item._id || item.id;
@@ -174,13 +188,16 @@ const Notifications = () => {
           <Input
             allowClear
             value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
+            onChange={(event) => {
+              setKeyword(event.target.value);
+              setPage(1);
+            }}
             prefix={<SearchOutlined className="text-gray-400" />}
             placeholder="Tìm theo tiêu đề hoặc nội dung"
             className="h-10 rounded-lg"
           />
-          <Select value={status} onChange={setStatus} options={STATUS_OPTIONS} className="h-10" />
-          <Select value={category} onChange={setCategory} options={categoryOptions} className="h-10" />
+          <Select value={status} onChange={(value) => { setStatus(value); setPage(1); }} options={STATUS_OPTIONS} className="h-10" />
+          <Select value={category} onChange={(value) => { setCategory(value); setPage(1); }} options={categoryOptions} className="h-10" />
         </div>
       </div>
 
@@ -218,7 +235,7 @@ const Notifications = () => {
           />
         ) : (
           <div className="space-y-4 p-5">
-            {filteredNotifications.map((item) => {
+            {paginatedNotifications.map((item) => {
               const id = item._id || item.id;
               const createdAt = item.createdAt || item.timestamp || item.date;
               const content = item.message || item.content || '';
@@ -275,6 +292,18 @@ const Notifications = () => {
                 </button>
               );
             })}
+            <div className="flex justify-end border-t border-gray-100 pt-4">
+              <Pagination
+                current={page}
+                pageSize={pageSize}
+                total={data?.totalItems || 0}
+                showSizeChanger
+                onChange={(nextPage, nextPageSize) => {
+                  setPage(nextPageSize !== pageSize ? 1 : nextPage);
+                  setPageSize(nextPageSize);
+                }}
+              />
+            </div>
           </div>
         )}
       </Card>

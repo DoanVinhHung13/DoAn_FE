@@ -84,8 +84,8 @@ const TasksManagement = () => {
   useEffect(() => {
     const loadCropOptions = async () => {
       const [catalogResponse, cropResponse] = await Promise.all([
-        CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 1000, Status: 'ACTIVE' }),
-        CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000, Status: 'ACTIVE' }),
+        CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE' }),
+        CropManagementService.getCrops({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE' }),
       ])
       setCropCatalogOptions(unwrapItems(catalogResponse).filter(item => item.isActive !== false))
       setCropOptions(unwrapItems(cropResponse).filter(item => item.isActive !== false))

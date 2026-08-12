@@ -136,7 +136,7 @@ const CultivationLogbookCreate = () => {
       try {
         const response = await UserService.getUsers({
           PageIndex: 1,
-          PageSize: 1000,
+          PageSize: 100,
           Role: ROLES.FARM_SUPERVISOR,
           IsActive: true,
         })
@@ -169,7 +169,7 @@ const CultivationLogbookCreate = () => {
       try {
         const response = await CropCatalogService.getCropCatalogs({
           PageIndex: 1,
-          PageSize: 1000,
+          PageSize: 100,
           Status: true,
         })
         if (!isMounted) return
@@ -198,7 +198,7 @@ const CultivationLogbookCreate = () => {
       try {
         const response = await CropManagementService.getCrops({
           PageIndex: 1,
-          PageSize: 1000,
+          PageSize: 100,
           Status: true,
         })
         if (!isMounted) return
@@ -228,7 +228,7 @@ const CultivationLogbookCreate = () => {
       try {
         const response = await LandPlotService.getAvailableForLogbook({
           PageIndex: 1,
-          PageSize: 1000,
+          PageSize: 100,
           logbookId: isEdit ? id : undefined,
         })
         if (!isMounted) return
@@ -376,7 +376,7 @@ const CultivationLogbookCreate = () => {
       try {
         const res = await CropManagementService.getCrops({
           PageIndex: 1,
-          PageSize: 1000,
+          PageSize: 100,
           Status: true,
         })
         const allCrops = normalizeResponse(res)
@@ -469,7 +469,7 @@ const CultivationLogbookCreate = () => {
       setTemplatesLoading(true)
       const response = await ProcessTemplateService.getProcessTemplates({
         PageIndex: 1,
-        PageSize: 1000,
+        PageSize: 100,
         SearchKeyword: search || undefined,
         CropId: cropId || undefined,
         CropCatalogId: cropCatalogId || undefined,

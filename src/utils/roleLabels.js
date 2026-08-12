@@ -1,7 +1,7 @@
 const ROLE_LABELS = {
   FARM_MANAGER: 'Quản lý trang trại',
   FARM_SUPERVISOR: 'Giám sát trang trại',
-  FARMER_LEADER: 'Đội trưởng',
+  FARMER_LEADER: 'Tổ trưởng',
   FARMER: 'Nông dân',
 }
 

@@ -6,7 +6,7 @@ export const useCropOptions = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['crops-selection'],
     queryFn: async () => {
-      const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000 })
+      const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 100 })
       const payload = response?.data ?? response ?? {}
       const items = Array.isArray(payload)
         ? payload

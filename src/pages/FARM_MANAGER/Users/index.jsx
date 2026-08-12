@@ -149,7 +149,7 @@ const UsersManagement = () => {
       setAccountCandidatesLoading(true)
       const res = await UserService.getUsers({
         PageIndex: 1,
-        PageSize: 1000,
+        PageSize: 100,
         HasAccount: false,
       })
       const { items } = getUserListData(res)
@@ -396,7 +396,7 @@ const UsersManagement = () => {
             onChange={val => updateFilter('role', val)}
             options={roleOptions.map(opt => ({
               value: opt.codeValue || opt.value,
-              label: opt.label || opt.description,
+              label: getRoleLabel(opt.codeValue || opt.value),
             }))}
           />
           <Select

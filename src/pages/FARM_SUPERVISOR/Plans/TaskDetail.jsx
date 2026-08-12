@@ -97,8 +97,8 @@ const FarmSupervisorTaskDetail = () => {
       try {
         const [planRes, leadersRes, farmersRes] = await Promise.all([
           !passedPlanData ? CultivationLogbookService.getById(planId).catch(() => null) : Promise.resolve({ data: passedPlanData }),
-          UserService.getUsers({ PageIndex: 1, PageSize: 1000, Role: ROLES.FARMER_LEADER, IsActive: true }).catch(() => ({ data: { items: [] } })),
-          UserService.getUsers({ PageIndex: 1, PageSize: 1000, Role: ROLES.FARMER, IsActive: true }).catch(() => ({ data: { items: [] } })),
+          UserService.getUsers({ PageIndex: 1, PageSize: 100, Role: ROLES.FARMER_LEADER, IsActive: true }).catch(() => ({ data: { items: [] } })),
+          UserService.getUsers({ PageIndex: 1, PageSize: 100, Role: ROLES.FARMER, IsActive: true }).catch(() => ({ data: { items: [] } })),
         ])
 
         const planData = planRes?.data ?? planRes
@@ -374,7 +374,7 @@ const FarmSupervisorTaskDetail = () => {
         {/* Cột phải: Nhật ký và biên soạn */}
         <Col xs={24} lg={14}>
           <div className="space-y-5">
-            {/* Báo cáo từ Leader */}
+            {/* Báo cáo từ Tổ trưởng */}
             {task.leaderSummary ? (
               <Card bordered={false} className="shadow-sm rounded-2xl border border-green-100">
                 <div className="flex items-center gap-2 mb-4">
@@ -440,7 +440,7 @@ const FarmSupervisorTaskDetail = () => {
                   )}
 
                   {/* Mô tả từ Leader */}
-                  <Collapse.Panel header="✍️ Mô tả tổng kết từ Leader" key="description">
+                  <Collapse.Panel header="✍️ Mô tả tổng kết từ Tổ trưởng" key="description">
                     <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm italic text-blue-900">
                       "{task.leaderSummary.description}"
                     </div>

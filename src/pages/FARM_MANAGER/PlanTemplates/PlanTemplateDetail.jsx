@@ -61,7 +61,7 @@ const PlanTemplateDetail = () => {
         setLoading(true)
         const [templateResponse, stepsResponse] = await Promise.all([
           ProcessTemplateService.getProcessTemplateById(id),
-          ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
+          ProcessStepService.getAll({ PageIndex: 1, PageSize: 100 }),
         ])
         if (!mounted) return
 

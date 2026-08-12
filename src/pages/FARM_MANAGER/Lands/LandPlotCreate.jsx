@@ -51,7 +51,7 @@ const LandPlotCreate = () => {
   const fetchExistingPlots = useCallback(async () => {
     if (!canManage) return
     try {
-      const response = await LandPlotService.getLandPlots({ PageIndex: 1, PageSize: 200 })
+      const response = await LandPlotService.getLandPlots({ PageIndex: 1, PageSize: 100 })
       setExistingPlots(normalizeLandPlotResponse(response).items)
     } catch {
       // Không ảnh hưởng UX chính

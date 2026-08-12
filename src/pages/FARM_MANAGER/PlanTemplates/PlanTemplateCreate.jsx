@@ -149,10 +149,10 @@ const PlanTemplateCreate = () => {
       try {
         setLoadingOptions(true)
         const [catalogResponse, cropResponse] = await Promise.all([
-          CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 1000, Status: true }),
+          CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100, Status: true }),
           CropManagementService.getCrops({
             PageIndex: 1,
-            PageSize: 1000,
+            PageSize: 100,
             Status: true,
           }),
         ])
@@ -178,7 +178,7 @@ const PlanTemplateCreate = () => {
         setLoadingDetail(true)
         const [templateResponse, stepsResponse] = await Promise.all([
           ProcessTemplateService.getProcessTemplateById(id),
-          ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
+          ProcessStepService.getAll({ PageIndex: 1, PageSize: 100 }),
         ])
         if (!mounted) return
 

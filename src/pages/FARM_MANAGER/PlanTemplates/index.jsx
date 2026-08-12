@@ -99,7 +99,7 @@ const PlanTemplateList = () => {
       }
       const [templateResponse, stepResponse] = await Promise.all([
         ProcessTemplateService.getProcessTemplates(params),
-        ProcessStepService.getAll({ PageIndex: 1, PageSize: 1000 }),
+        ProcessStepService.getAll({ PageIndex: 1, PageSize: 100 }),
       ])
       const stepCountByTemplate = normalizeItems(stepResponse).reduce(
         (counts, step) => {
@@ -141,12 +141,12 @@ const PlanTemplateList = () => {
         const [cropResponse, catalogResponse] = await Promise.all([
           CropManagementService.getCrops({
             PageIndex: 1,
-            PageSize: 1000,
+            PageSize: 100,
             Status: true,
           }),
           CropCatalogService.getCropCatalogs({
             PageIndex: 1,
-            PageSize: 1000,
+            PageSize: 100,
             Status: true,
           }),
         ])

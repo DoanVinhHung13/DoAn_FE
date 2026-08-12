@@ -131,7 +131,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       try {
         const res = await TaskCatalogService.getTaskCatalogs({
           PageIndex: 1,
-          PageSize: 200,
+            PageSize: 100,
           CropCatalogId: plan?.cropCatalogId,
           CropId: plan?.cropId,
         })
@@ -159,13 +159,13 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         const [leadersRes, farmersRes] = await Promise.all([
           UserService.getUsers({
             PageIndex: 1,
-            PageSize: 1000,
+            PageSize: 100,
             Role: ROLES.FARMER_LEADER,
             IsActive: true,
           }).catch(() => ({ data: { items: [] } })),
           UserService.getUsers({
             PageIndex: 1,
-            PageSize: 1000,
+            PageSize: 100,
             Role: ROLES.FARMER,
             IsActive: true,
           }).catch(() => ({ data: { items: [] } })),
