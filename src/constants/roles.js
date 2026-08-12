@@ -2,7 +2,7 @@
 export const ROLES = {
   FARM_MANAGER: "FARM_MANAGER",
   FARM_SUPERVISOR: "FARM_SUPERVISOR",
-  FARM_LEADER: "FARM_LEADER",
+  FARMER_LEADER: "FARMER_LEADER",
   FARMER: "FARMER",
 }
 
@@ -11,7 +11,7 @@ export const normalizeRole = (apiRole) => {
   const normalized = String(apiRole).toUpperCase().replace(/[\s_]/g, '')
   if (normalized === "FARMMANAGER") return ROLES.FARM_MANAGER
   if (normalized === "FARMSUPERVISOR") return ROLES.FARM_SUPERVISOR
-  if (normalized === "FARMLEADER") return ROLES.FARM_LEADER
+  if (normalized === "FARMERLEADER") return ROLES.FARMER_LEADER
   if (normalized === "FARMER") return ROLES.FARMER
   return apiRole // fallback
 }

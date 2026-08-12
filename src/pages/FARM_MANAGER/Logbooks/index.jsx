@@ -170,7 +170,7 @@ const FarmManagerLogbooks = () => {
                       </div>
                     </div>
                     <div>
-                      <Text type="secondary">Farm Supervisor</Text>
+                      <Text type="secondary">Giám sát trang trại</Text>
                       <div className="mt-1 font-semibold">
                         <UserOutlined className="mr-1 text-green-600" />
                         {lb.supervisorName}

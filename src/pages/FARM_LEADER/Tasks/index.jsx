@@ -395,7 +395,7 @@ const FarmLeaderTasks = () => {
                   color={isSelected ? "emerald" : "default"}
                   className="m-0 text-[10px] rounded-full px-2 border-0 font-bold"
                 >
-                  {summary.totalTasks ?? 0} task
+                  {summary.totalTasks ?? 0} công việc
                 </Tag>
                 <span className="text-[9px] text-emerald-600 font-semibold mt-0.5">
                   {summary.inProgressTasks ?? 0} đang làm

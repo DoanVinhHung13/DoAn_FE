@@ -38,11 +38,9 @@ const normalizeItems = (response) => {
 
 const ROLE_LABELS = {
   FARM_MANAGER: 'Quản lý trang trại',
-  LAND_MANAGER: 'Quản lý vùng trồng',
-  MATERIAL_MANAGER: 'Quản lý vật tư',
+  FARM_SUPERVISOR: 'Giám sát trang trại',
+  FARMER_LEADER: 'Đội trưởng',
   FARMER: 'Nông dân',
-  ADMIN: 'Quản trị viên',
-  SYSTEM: 'Hệ thống',
 };
 
 const getSenderName = (notification) => {

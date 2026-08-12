@@ -50,7 +50,7 @@ const AssignTaskModal = ({
         UserService.getUsers({
           PageIndex: 1,
           PageSize: 1000,
-          Role: ROLES.FARM_LEADER,
+          Role: ROLES.FARMER_LEADER,
           IsActive: true,
         }).catch(() => ({ data: { items: [] } })),
         UserService.getUsers({

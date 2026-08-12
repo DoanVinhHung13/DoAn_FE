@@ -18,6 +18,7 @@ import { getMenuByRole } from 'src/router/MenuItem'
 import ROUTER from 'src/router/ROUTER'
 import logoImg from 'src/assets/images/logo/logo-eapls.jpg'
 import { logDevDiagnostic } from 'src/utils/safeDiagnostic'
+import { getRoleLabel } from 'src/utils/roleLabels'
 
 const { Header, Sider, Content } = Layout
 const { Text } = Typography
@@ -69,7 +70,7 @@ const LayoutAdmin = () => {
             {user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}
           </Text>
           <Text type="secondary" className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">
-            {user?.role || 'User'}
+            {getRoleLabel(user?.role)}
           </Text>
         </div>
       ),
@@ -225,7 +226,7 @@ const LayoutAdmin = () => {
                       {user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}
                     </Text>
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                      {user?.role || 'Admin Account'}
+                      {getRoleLabel(user?.role)}
                     </Text>
                   </div>
                 )}

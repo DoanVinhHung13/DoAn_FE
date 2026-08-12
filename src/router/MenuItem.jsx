@@ -1,5 +1,5 @@
 // src/router/MenuItem.jsx
-// 3 Roles: FARM_MANAGER, FARM_SUPERVISOR, FARM_LEADER
+// 3 Roles: FARM_MANAGER, FARM_SUPERVISOR, FARMER_LEADER
 // Sidebar được lọc theo user?.role
 
 import {
@@ -153,7 +153,7 @@ export const getMenuByRole = (role) => {
   switch (role) {
     case ROLES.FARM_MANAGER: return farmManagerItem()
     case ROLES.FARM_SUPERVISOR: return farmSupervisorItem()
-    case ROLES.FARM_LEADER: return farmLeaderItem()
+    case ROLES.FARMER_LEADER: return farmLeaderItem()
     default: return []
   }
 }

@@ -1,6 +1,6 @@
 export const ROLE_CONFIG = {
-  FARM_MANAGER:     { label: 'Farm Manager' },
-  LAND_MANAGER:     { label: 'Land Manager' },
-  MATERIAL_MANAGER: { label: 'Material Manager' },
-  FARMER:           { label: 'Farmer' },
+  FARM_MANAGER:     { label: 'Quản lý trang trại' },
+  FARM_SUPERVISOR:  { label: 'Giám sát trang trại' },
+  FARMER_LEADER:    { label: 'Đội trưởng' },
+  FARMER:           { label: 'Nông dân' },
 }

@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react'
 import { formatDateTime } from 'src/utils/dateFormatters'
 import SectionTitle from 'src/components/Common/SectionTitle'
 import { getUserDisplayName } from 'src/utils/userDisplayName'
+import { getRoleLabel } from 'src/utils/roleLabels'
 
 const ReviewHistoryTab = ({ item }) => {
   const [reviewHistory, setReviewHistory] = useState([])
@@ -22,10 +23,10 @@ const ReviewHistoryTab = ({ item }) => {
       if (item.createdAt) {
         history.push({
           action: 'CREATED',
-          actor: 'Farm Manager',
+          actor: getRoleLabel('FARM_MANAGER'),
           actorName: getUserDisplayName(item.createdByName, item.createdBy, item.managerName, item.manager),
           timestamp: item.createdAt,
-          description: 'Tạo kế hoạch sản xuất và phân công cho Supervisor',
+          description: 'Tạo kế hoạch sản xuất và phân công cho giám sát viên',
         })
       }
 
@@ -33,7 +34,7 @@ const ReviewHistoryTab = ({ item }) => {
       if (item.submittedAt) {
         history.push({
           action: 'SUBMITTED_FOR_REVIEW',
-          actor: 'Farm Supervisor',
+          actor: getRoleLabel('FARM_SUPERVISOR'),
           actorName: getUserDisplayName(item.submittedByName, item.submittedBy, item.supervisorName, item.supervisor),
           timestamp: item.submittedAt,
           description: 'Gửi yêu cầu phê duyệt nhật ký',
@@ -45,7 +46,7 @@ const ReviewHistoryTab = ({ item }) => {
         item.editHistory.forEach(edit => {
           history.push({
             action: 'EDITED',
-            actor: edit.role || 'Farm Supervisor',
+            actor: getRoleLabel(edit.role, getRoleLabel('FARM_SUPERVISOR')),
             actorName: getUserDisplayName(edit.editorName, edit.userName, edit.editor, edit.updatedBy, edit.createdBy),
             timestamp: edit.editedAt || edit.timestamp,
             description: edit.description || `Biên tập mô tả của công việc "${edit.taskName || 'công việc'}"`,
@@ -61,7 +62,7 @@ const ReviewHistoryTab = ({ item }) => {
       if (item.reviewedAt) {
         history.push({
           action: item.reviewStatus === 'APPROVED' ? 'APPROVED' : item.reviewStatus === 'REJECTED' ? 'REJECTED' : 'REVIEWED',
-          actor: 'Farm Manager',
+          actor: getRoleLabel('FARM_MANAGER'),
           actorName: getUserDisplayName(item.reviewedByName, item.reviewerName, item.reviewedBy, item.reviewer),
           timestamp: item.reviewedAt,
           description: item.reviewStatus === 'APPROVED' 

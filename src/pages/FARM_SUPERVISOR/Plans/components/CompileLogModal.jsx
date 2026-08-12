@@ -69,7 +69,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
       const targetStageId = task?.cultivationStageId || task?.stageId
       const taskId = task?.taskId || task?.cultivationTaskId || task?.workTaskId || task?.id
       if (!taskId) {
-        message.error('Không xác định được CultivationTaskId của Summary.')
+        message.error('Không xác định được công việc cần biên soạn bản tổng hợp.')
         return
       }
 
@@ -165,7 +165,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
           {!officialLogId && (
             <Alert
               message="Chưa có nhật ký canh tác để biên soạn"
-              description="Cần người phụ trách gửi bản tổng hợp trước. Hệ thống sẽ tạo nhật ký chờ xử lý để Supervisor chỉnh mô tả."
+              description="Cần người phụ trách gửi bản tổng hợp trước. Hệ thống sẽ tạo nhật ký chờ xử lý để giám sát viên chỉnh mô tả."
               type="warning"
               showIcon
               className="rounded-xl"
@@ -182,7 +182,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
           <Form form={form} layout="vertical">
             <Form.Item
               name="supervisorDescription"
-              label="Mô tả (Farm Supervisor biên tập)"
+              label="Mô tả (giám sát viên biên tập)"
               rules={[{ required: true, message: 'Nhập mô tả nhật ký' }]}
               extra="Viết lại theo văn phong chuẩn nhật ký canh tác."
             >

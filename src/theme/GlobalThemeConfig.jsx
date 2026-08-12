@@ -1,4 +1,5 @@
 import { ConfigProvider, theme as antdTheme } from 'antd'
+import viVN from 'antd/locale/vi_VN'
 import { useContext } from 'react'
 import { StoreContext } from 'src/contexts'
 import designTokens from './designTokens'
@@ -9,6 +10,7 @@ function GlobalThemeConfig({ children }) {
 
   return (
     <ConfigProvider
+      locale={viVN}
       theme={{
         algorithm: isDarkMode ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {

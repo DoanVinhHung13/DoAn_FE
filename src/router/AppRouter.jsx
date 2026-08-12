@@ -254,7 +254,7 @@ const routes = [
 
           // ── Farm Leader Routes ────────────────────────────────────────────
           {
-            element: <ProtectedRoute allowedRoles={[ROLES.FARM_LEADER, ROLES.FARM_SUPERVISOR, ROLES.FARMER]} />,
+            element: <ProtectedRoute allowedRoles={[ROLES.FARMER_LEADER, ROLES.FARM_SUPERVISOR, ROLES.FARMER]} />,
             children: [
               { path: ROUTER.FL_TASKS, element: <Lazy><FarmLeaderTasks /></Lazy> },
               { path: ROUTER.FL_TASK_LOG, element: <Lazy><FarmLeaderDailyLog /></Lazy> },

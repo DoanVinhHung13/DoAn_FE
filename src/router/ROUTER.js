@@ -1,5 +1,5 @@
 // src/router/ROUTER.js
-// Active roles: FARM_MANAGER, FARM_SUPERVISOR, FARM_LEADER
+// Active roles: FARM_MANAGER, FARM_SUPERVISOR, FARMER_LEADER
 
 const ROUTER = {
   // ── Public & Common ────────────────────────────────────────────────────────

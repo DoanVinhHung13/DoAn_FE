@@ -755,7 +755,7 @@ const LogbookReview = () => {
           className="mb-3 rounded-xl"
           type="warning"
           showIcon
-          message="Supervisor sẽ nhận lý do và chỉnh sửa lại."
+          message="Giám sát viên sẽ nhận lý do và chỉnh sửa lại."
         />
         <Input.TextArea
           rows={4}

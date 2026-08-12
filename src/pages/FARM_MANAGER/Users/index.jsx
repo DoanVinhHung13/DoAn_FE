@@ -39,6 +39,7 @@ import { useListManagement } from "src/hooks/useListManagement"
 import ROUTER from "src/router/ROUTER"
 import { formatDate } from "src/utils/dateFormatters"
 import { getAvatarUrl } from "src/utils/helpers"
+import { getRoleLabel } from "src/utils/roleLabels"
 import AssignRolesModal from "./components/AssignRolesModal"
 import CreateAccountModal from "./components/CreateAccountModal"
 import ResetPasswordModal from "./components/ResetPasswordModal"
@@ -64,8 +65,8 @@ const hasRole = (user, expectedRole) => {
 const getRoleTag = (role, roleDesc) => {
   let color = "default"
   if (role === "FARM_MANAGER") color = "green"
-  else if (role === "LAND_MANAGER") color = "blue"
-  else if (role === "MATERIAL_MANAGER") color = "orange"
+  else if (role === "FARM_SUPERVISOR") color = "blue"
+  else if (role === "FARMER_LEADER") color = "purple"
   else if (role === "FARMER") color = "cyan"
 
   return (
@@ -73,7 +74,7 @@ const getRoleTag = (role, roleDesc) => {
       key={role}
       className={`px-2 py-0.5 rounded-full text-[11px] font-semibold bg-${color}-50 text-${color}-600 border border-${color}-100`}
     >
-      {roleDesc || role}
+      {roleDesc || getRoleLabel(role)}
     </span>
   )
 }
@@ -105,9 +106,10 @@ const UsersManagement = () => {
   const statusFilter = filters.status
 
   // ── Options ────────────────────────────────────────────────
+  const allowedRoles = Object.values(ROLES)
   const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option => {
     const role = option.codeValue || option.value
-    return !(isFarmSupervisor && role === ROLES.FARM_SUPERVISOR)
+    return allowedRoles.includes(role) && !(isFarmSupervisor && role === ROLES.FARM_SUPERVISOR)
   })
   const selectStatusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
@@ -383,9 +385,7 @@ const UsersManagement = () => {
             className="w-64 h-10 rounded-xl"
             allowClear
             onClear={() => {
-              setSearchInput("")
-              setSearch("")
-              setPage(1)
+              handleClearSearch()
             }}
           />
           <Select
@@ -441,7 +441,7 @@ const UsersManagement = () => {
             className: "cursor-pointer",
           }
         }}
-        locale={{ emptyText: "No data available" }}
+        locale={{ emptyText: "Không có dữ liệu" }}
         pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
           setPage(p)
           setPageSize(ps)

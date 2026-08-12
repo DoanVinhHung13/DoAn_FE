@@ -551,7 +551,7 @@ const DailyLog = () => {
                   onClick={openSummaryModal}
                   className="h-10 px-5 font-semibold rounded-xl border-emerald-500 text-emerald-600 hover:!bg-emerald-50 shrink-0"
                 >
-                  Xem lại Summary đã gửi
+                  Xem lại bản tổng hợp đã gửi
                 </Button>
               ) : (
                 !isViewOnly && (
@@ -561,7 +561,7 @@ const DailyLog = () => {
                     onClick={openSummaryModal}
                     className="h-10 px-5 font-semibold rounded-xl bg-emerald-600 border-emerald-600 hover:!bg-emerald-700 hover:!border-emerald-700 shrink-0"
                   >
-                    Hoàn thành & Gửi Summary
+                    Hoàn thành & gửi bản tổng hợp
                   </Button>
                 )
               )}
@@ -605,7 +605,7 @@ const DailyLog = () => {
         <Alert
           type="warning"
           showIcon
-          message="Đã gửi summary — đang chờ Farm Supervisor biên soạn / duyệt."
+          message="Đã gửi bản tổng hợp — đang chờ giám sát viên biên soạn / duyệt."
           className="rounded-xl"
         />
       )}
@@ -1435,8 +1435,8 @@ const DailyLog = () => {
               <SendOutlined />
             )}
             {task.status === "WAITING_APPROVAL"
-              ? "Summary đã gửi"
-              : "Tạo Summary & Gửi báo cáo hoàn thành"}
+              ? "Bản tổng hợp đã gửi"
+              : "Tạo bản tổng hợp & gửi báo cáo hoàn thành"}
           </div>
         }
         onOk={

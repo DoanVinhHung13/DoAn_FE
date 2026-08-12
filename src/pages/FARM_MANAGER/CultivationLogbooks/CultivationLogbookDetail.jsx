@@ -140,7 +140,7 @@ const CultivationLogbookDetail = () => {
       label: (
         <span className="flex items-center gap-2">
           <HistoryOutlined />
-          Lịch sử ghi Log
+          Lịch sử ghi nhật ký
         </span>
       ),
     },

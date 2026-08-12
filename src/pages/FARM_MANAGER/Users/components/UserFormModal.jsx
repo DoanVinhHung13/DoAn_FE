@@ -61,7 +61,10 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   const isEdit = !!editingUser
   const { getOptions } = useSystemKey()
   const genderOptions = getOptions(SYSTEM_KEY.GENDER)
-  const roleOptions = getOptions(SYSTEM_KEY.ROLE)
+  const allowedRoles = Object.values(ROLES)
+  const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option =>
+    allowedRoles.includes(option.codeValue || option.value),
+  )
   const allowedRoleOptions = currentRoles.includes(ROLES.FARM_MANAGER)
     ? roleOptions
     : roleOptions.filter(option => (option.codeValue || option.value) !== ROLES.FARM_MANAGER)

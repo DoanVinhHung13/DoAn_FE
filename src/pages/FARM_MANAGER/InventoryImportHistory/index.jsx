@@ -247,9 +247,7 @@ const InventoryImportHistory = () => {
             className="w-full h-10 rounded-xl xl:w-64"
             allowClear
             onClear={() => {
-              setSearchInput('')
-              setSearch('')
-              setPage(1)
+              handleClearSearch()
             }}
           />
           <Select

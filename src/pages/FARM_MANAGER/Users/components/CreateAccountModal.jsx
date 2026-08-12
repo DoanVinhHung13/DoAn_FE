@@ -40,9 +40,10 @@ const CreateAccountModal = ({
   const [form] = Form.useForm()
   const [loading, setLoading] = React.useState(false)
   const { getOptions } = useSystemKey()
+  const allowedRoles = Object.values(ROLES)
   const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option => {
     const role = option.codeValue || option.value
-    if (role === ROLES.FARM_MANAGER || role === ROLES.FARMER) return false
+    if (!allowedRoles.includes(role) || role === ROLES.FARM_MANAGER || role === ROLES.FARMER) return false
     return canCreateSupervisor || role !== ROLES.FARM_SUPERVISOR
   })
 
@@ -69,7 +70,7 @@ const CreateAccountModal = ({
 
   const handleSubmit = async values => {
     if (!canCreateSupervisor && values.role === ROLES.FARM_SUPERVISOR) {
-      message.error("Supervisor không được cấp tài khoản Supervisor.")
+      message.error("Giám sát viên không được cấp tài khoản cùng vai trò.")
       return
     }
 

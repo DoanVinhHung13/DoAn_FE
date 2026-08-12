@@ -13,11 +13,12 @@ import { ROLE_CONFIG } from '../components/roleConfig'
 import TitleCustom from 'src/components/TitleCustom'
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
+import { getRoleLabel } from "src/utils/roleLabels"
 
 const { Text, Title } = Typography
 
 const getRoleTag = (role) => {
-  const cfg = ROLE_CONFIG[role] || { label: role, color: 'default' }
+  const cfg = ROLE_CONFIG[role] || { label: getRoleLabel(role), color: 'default' }
   return (
     <Tag key={role} color={cfg.color} className="rounded-full font-semibold text-[11px] border-0 m-0">
       {cfg.label}

@@ -68,10 +68,10 @@ const TYPE_COLORS = {
 };
 
 const ROLE_OPTIONS = [
-  { value: 'FARMER', label: 'Nhân viên trồng cây (Farmer)' },
-  { value: 'LAND_MANAGER', label: 'Quản lý đất đai (Land Manager)' },
-  { value: 'FARM_MANAGER', label: 'Quản lý trang trại (Farm Manager)' },
-  { value: 'MATERIAL_MANAGER', label: 'Quản lý vật tư (Material Manager)' },
+  { value: 'FARMER', label: 'Nông dân' },
+  { value: 'FARM_MANAGER', label: 'Quản lý trang trại' },
+  { value: 'FARM_SUPERVISOR', label: 'Giám sát trang trại' },
+  { value: 'FARMER_LEADER', label: 'Đội trưởng' },
 ];
 
 const RECIPIENT_TYPE = {

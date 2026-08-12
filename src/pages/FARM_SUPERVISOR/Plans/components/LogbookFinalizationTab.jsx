@@ -595,7 +595,7 @@ const SummaryCompilePanel = ({
         <div className="flex items-center gap-2 mb-3">
           <EditOutlined className="text-green-600" />
           <Text strong className="text-green-800">
-            Viết lại mô tả (Supervisor)
+            Viết lại mô tả (giám sát viên)
           </Text>
           {readOnly && (
             <Tag icon={<LockOutlined />} color="warning" className="rounded-full ml-auto">
@@ -1247,7 +1247,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
           </div>
           <div>
             <label className="block mb-1 text-xs font-semibold text-gray-500">
-              Nội dung mô tả chính thức (Supervisor chỉnh sửa):
+              Nội dung mô tả chính thức (giám sát viên chỉnh sửa):
             </label>
 
             <Input.TextArea

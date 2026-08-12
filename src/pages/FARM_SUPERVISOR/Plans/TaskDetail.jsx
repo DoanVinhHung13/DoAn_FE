@@ -97,7 +97,7 @@ const FarmSupervisorTaskDetail = () => {
       try {
         const [planRes, leadersRes, farmersRes] = await Promise.all([
           !passedPlanData ? CultivationLogbookService.getById(planId).catch(() => null) : Promise.resolve({ data: passedPlanData }),
-          UserService.getUsers({ PageIndex: 1, PageSize: 1000, Role: ROLES.FARM_LEADER, IsActive: true }).catch(() => ({ data: { items: [] } })),
+          UserService.getUsers({ PageIndex: 1, PageSize: 1000, Role: ROLES.FARMER_LEADER, IsActive: true }).catch(() => ({ data: { items: [] } })),
           UserService.getUsers({ PageIndex: 1, PageSize: 1000, Role: ROLES.FARMER, IsActive: true }).catch(() => ({ data: { items: [] } })),
         ])
 
@@ -591,7 +591,7 @@ const FarmSupervisorTaskDetail = () => {
           )}
 
           <Form.Item
-            name="supervisorDescription" label="Mô tả (Farm Supervisor biên tập)"
+                    name="supervisorDescription" label="Mô tả (giám sát viên biên tập)"
             rules={[{ required: true, message: 'Nhập mô tả nhật ký' }]}
             extra="Viết lại theo văn phong chuẩn nhật ký canh tác. Không được sửa số liệu ở phần trên."
           >

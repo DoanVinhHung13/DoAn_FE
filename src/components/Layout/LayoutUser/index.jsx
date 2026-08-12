@@ -56,7 +56,7 @@ const LayoutUser = () => {
               color: isDarkMode ? "#e5e7eb" : "#111827",
             }}
           >
-            {collapseMenu ? "User" : "Farmer Dashboard"}
+            {collapseMenu ? "Người dùng" : "Tổng quan nông trại"}
           </div>
           <Menu
             onClick={onChange}
