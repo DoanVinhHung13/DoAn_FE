@@ -137,9 +137,9 @@ export const getHarvestBatchStatus = (status, systemKeyOptions) =>
 export const getEquipmentStatus = (status, systemKeyOptions) =>
   resolveStatusMeta(status, EQUIPMENT_STATUS, systemKeyOptions)
 
-/** FL can write daily logs when task is in progress / assigned */
+/** FL can write daily logs only when task is in progress (not when merely assigned) */
 export const canWriteDailyLog = (status) =>
-  status === 'IN_PROGRESS' || status === 'ASSIGNED' || status === 'ACTIVE'
+  status === 'IN_PROGRESS'
 
 /** FS can compile when leader submitted summary */
 export const canCompileTask = (status) => status === 'WAITING_APPROVAL'
