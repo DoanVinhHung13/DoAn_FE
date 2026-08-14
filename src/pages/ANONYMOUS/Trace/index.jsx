@@ -496,6 +496,16 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
               </Title>
             </div>
 
+            {traceData.harvestSummary.quantity != null && (
+              <Paragraph className="!mb-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 text-sm leading-6 text-slate-700 sm:text-base">
+                Đã thu hoạch tổng cộng{' '}
+                <Text strong className="text-emerald-700">{traceData.harvestSummary.quantity} kg</Text>
+                {traceData.harvestSummary.area != null && (
+                  <> trên diện tích <Text strong className="text-emerald-700">{traceData.harvestSummary.area} m²</Text></>
+                )}.
+              </Paragraph>
+            )}
+
             {timelineGroups.length > 0 ? (
               <div className="space-y-9 px-1 sm:px-2">
                 {timelineGroups.map((group) => (
@@ -567,29 +577,6 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
             ) : (
               <div className="py-6 text-center text-sm text-slate-400">Chưa có nhật ký chính thức</div>
             )}
-          </Card>
-        )}
-
-        {traceData.harvestSummary.quantity != null && (
-          <Card className="trace-card rounded-2xl border border-emerald-100 shadow-sm">
-            <div className="mb-3 flex items-start gap-3 border-b border-emerald-100 pb-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                <Sprout className="text-lg" />
-              </div>
-              <div>
-                <Title level={4} className="!mb-0.5 !text-base sm:!text-lg font-bold text-emerald-900">
-                  Tổng hợp thu hoạch
-                </Title>
-                <Text className="text-xs text-slate-500">Sản lượng ghi nhận trong toàn bộ nhật ký</Text>
-              </div>
-            </div>
-            <Paragraph className="!mb-0 text-sm leading-6 text-slate-700 sm:text-base">
-              Đã thu hoạch tổng cộng{' '}
-              <Text strong className="text-emerald-700">{traceData.harvestSummary.quantity} kg</Text>
-              {traceData.harvestSummary.area != null && (
-                <> trên diện tích <Text strong className="text-emerald-700">{traceData.harvestSummary.area} m²</Text></>
-              )}.
-            </Paragraph>
           </Card>
         )}
 
