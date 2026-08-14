@@ -18,6 +18,11 @@ const { Text } = Typography
 const formatKnownDateRange = (startDate, endDate) =>
   [startDate, endDate].filter(Boolean).map(formatDate).join(' — ')
 
+const getHarvestQuantity = log =>
+  log?.harvestQuantity ?? log?.quantityHarvested ?? log?.harvestedQuantity ?? log?.HarvestQuantity
+
+const getHarvestArea = log => Number(log?.executedArea ?? log?.harvestedArea ?? 0)
+
 // Item trong danh sách "Lộ trình sản xuất" bên trái
 const StageListItem = ({ stage, index, isActive, onClick }) => {
   const plannedPeriod = formatKnownDateRange(stage.startDate, stage.endDate)
@@ -126,6 +131,22 @@ const DailyLogCard = ({ log, index }) => {
           <div className="mb-4">
             <p className="mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nội dung công việc</p>
             <p className="text-sm text-gray-700 whitespace-pre-wrap mb-0 bg-gray-50 p-3 rounded-lg border border-gray-100">{description}</p>
+          </div>
+        )}
+
+        {(getHarvestQuantity(log) != null || getHarvestArea(log) > 0) && (
+          <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-800">
+              Thu hoạch
+            </p>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {getHarvestQuantity(log) != null && (
+                <span className="font-bold text-emerald-700">{getHarvestQuantity(log)} kg</span>
+              )}
+              {getHarvestArea(log) > 0 && (
+                <span className="text-gray-500">· {getHarvestArea(log)} {formatAreaUnit('m2')}</span>
+              )}
+            </div>
           </div>
         )}
 

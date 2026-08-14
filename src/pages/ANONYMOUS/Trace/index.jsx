@@ -199,6 +199,8 @@ const buildTimelineGroups = (traceData) => {
           startDate: log.workStartDate || log.activityDate || dailyLog?.date,
           endDate: log.workEndDate || log.activityDate || dailyLog?.date,
           description: log.description || dailyLog?.activity || '',
+          harvestQuantity: log.harvestQuantity ?? dailyLog?.harvestQuantity ?? log.quantityHarvested ?? dailyLog?.quantityHarvested,
+          harvestedArea: log.executedArea ?? dailyLog?.executedArea ?? log.harvestedArea ?? dailyLog?.harvestedArea,
           updatedBy: getUserDisplayName(
             log.supervisorEditorName,
             log.editedByName,
@@ -224,6 +226,8 @@ const buildTimelineGroups = (traceData) => {
         startDate: log.date,
         endDate: log.date,
         description: log.activity || log.notes || '',
+        harvestQuantity: log.harvestQuantity ?? log.quantityHarvested ?? log.harvestedQuantity,
+        harvestedArea: log.executedArea ?? log.harvestedArea,
         updatedBy: getUserDisplayName(
           log.updatedByName,
           log.updatedBy,
@@ -504,6 +508,19 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
                             <Paragraph className="!mb-1 !mt-2 text-slate-700 text-xs sm:text-sm whitespace-pre-wrap">
                               {entry.description}
                             </Paragraph>
+                          )}
+                          {(entry.harvestQuantity != null || Number(entry.harvestedArea || 0) > 0) && (
+                            <div className="mt-2 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+                              <Text className="block text-xs font-semibold text-emerald-800">Thu hoạch</Text>
+                              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                                {entry.harvestQuantity != null && (
+                                  <Text strong className="text-emerald-700">{entry.harvestQuantity} kg</Text>
+                                )}
+                                {Number(entry.harvestedArea || 0) > 0 && (
+                                  <Text className="text-slate-500">· {entry.harvestedArea} m²</Text>
+                                )}
+                              </div>
+                            </div>
                           )}
                           {(entry.materials.length > 0 || entry.materialsText) && (
                             <div className="mt-2 space-y-1">

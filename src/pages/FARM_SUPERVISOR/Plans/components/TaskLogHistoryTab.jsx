@@ -15,6 +15,11 @@ import { orderTasks } from 'src/utils/cultivationOrdering'
 
 const { Text, Title } = Typography
 
+const getHarvestQuantity = log =>
+  log?.harvestQuantity ?? log?.quantityHarvested ?? log?.harvestedQuantity ?? log?.HarvestQuantity
+
+const getHarvestArea = log => Number(log?.executedArea ?? log?.harvestedArea ?? 0)
+
 const TaskLogHistoryTab = ({ stages, tasks }) => {
   const [selectedTask, setSelectedTask] = useState(null)
   const [logs, setLogs] = useState([])
@@ -147,6 +152,27 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                         </div>
                       ) : (
                         <div className="text-sm text-gray-400 italic mb-3">Không có ghi chú</div>
+                      )}
+
+                      {(getHarvestQuantity(log) != null || getHarvestArea(log) > 0) && (
+                        <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+                          <div className="mb-2 flex items-center gap-1.5 text-xs font-bold text-emerald-800">
+                            <ExperimentOutlined className="text-emerald-600" />
+                            Thu hoạch:
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 text-sm">
+                            {getHarvestQuantity(log) != null && (
+                              <span className="font-bold text-emerald-700">
+                                {getHarvestQuantity(log)} kg
+                              </span>
+                            )}
+                            {getHarvestArea(log) > 0 && (
+                              <span className="text-gray-500">
+                                · {getHarvestArea(log)} {formatAreaUnit('m2')}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       )}
 
                       {/* Vật tư: Phân bón & Nông dược */}

@@ -220,6 +220,12 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
 
                       const totalFertilizers = summary.totalFertilizers || summary.fertilizers || task.totalFertilizers || []
                       const totalPesticides = summary.totalPesticides || summary.pesticides || task.totalPesticides || []
+                      const totalHarvestQuantity =
+                        summary.totalHarvestQuantity ?? task.totalHarvestQuantity ?? task.harvestQuantity
+                      const totalHarvestedArea =
+                        summary.totalHarvestedArea ?? task.totalHarvestedArea ?? task.executedArea
+                      const isHarvestTask = [task.activityType, task.taskType]
+                        .some(value => ['HARVESTING', 'HARVEST'].includes(String(value || '').trim().toUpperCase()))
 
                       return (
                         <div key={task.id || logIndex} className="flex gap-3">
@@ -259,6 +265,23 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                               <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
                                 {materialsText}
                               </Paragraph>
+                            )}
+
+                            {isHarvestTask && totalHarvestQuantity != null && (
+                              <div className="p-3 my-2 bg-emerald-50 border border-emerald-100 rounded-lg">
+                                <p className="mb-1 text-xs text-emerald-800 font-medium">Thu hoạch:</p>
+                                <div className="flex items-center gap-2 text-xs text-gray-700">
+                                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0" />
+                                  <span className="font-semibold text-emerald-700">
+                                    {totalHarvestQuantity} kg
+                                  </span>
+                                  {Number(totalHarvestedArea || 0) > 0 && (
+                                    <span className="text-gray-500">
+                                      · {totalHarvestedArea} m²
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             )}
 
                             {/* 4. Số liệu tổng hợp */}
