@@ -19,6 +19,7 @@ import {
   AreaChartOutlined,
   BarChartOutlined,
   ExperimentOutlined,
+  FileExcelOutlined,
   FieldTimeOutlined,
   ReloadOutlined,
   SearchOutlined,
@@ -29,6 +30,8 @@ import { ReportIcon } from 'src/assets/icon/menu/MenuIcons'
 import { formatAreaUnit } from 'src/constants/measurementUnits'
 import { useCropOptions } from 'src/hooks/useCropOptions'
 import ReportService from 'src/services/ReportService'
+import authSession from 'src/redux/authSession'
+import { ROLES } from 'src/constants/roles'
 import { getLocalNow, formatDateForApi } from 'src/utils/dateFormatters'
 
 const { RangePicker } = DatePicker
@@ -38,6 +41,12 @@ const REPORT_TYPES = {
   HARVEST: 'harvest',
   AREA: 'area',
   MATERIAL: 'material',
+}
+
+const REPORT_API_NAMES = {
+  [REPORT_TYPES.HARVEST]: 'harvest-yield',
+  [REPORT_TYPES.AREA]: 'cultivated-area',
+  [REPORT_TYPES.MATERIAL]: 'material-usage',
 }
 
 const REPORT_META = {
@@ -195,6 +204,9 @@ const ReportStatistics = () => {
   const [reportLoading, setReportLoading] = useState(false)
   const [reportError, setReportError] = useState(null)
   const [reportData, setReportData] = useState({ rows: [], total: 0, unit: '' })
+  const [exportLoading, setExportLoading] = useState(false)
+  const currentUser = authSession.getUser()
+  const canExport = currentUser?.role === ROLES.FARM_MANAGER || currentUser?.roles?.includes(ROLES.FARM_MANAGER)
 
   const selectedCropLabel = useMemo(
     () => cropOptions.find((option) => String(option.value) === String(selectedCropId))?.label,
@@ -238,6 +250,41 @@ const ReportStatistics = () => {
       setReportLoading(false)
     }
   }, [activeReport, dateRange, selectedCropId, selectedCropLabel])
+
+  const handleExportExcel = useCallback(async () => {
+    if (!dateRange?.[0] || !dateRange?.[1]) {
+      message.warning('Vui lòng chọn đầy đủ thời gian bắt đầu và kết thúc.')
+      return
+    }
+
+    setExportLoading(true)
+    try {
+      const params = {
+        reportName: REPORT_API_NAMES[activeReport],
+        DateFrom: formatDateForApi(dateRange[0]),
+        DateTo: formatDateForApi(dateRange[1]),
+        ...(activeReport === REPORT_TYPES.AREA && selectedCropId ? { CropId: selectedCropId } : {}),
+      }
+      const response = await ReportService.exportReportExcel(params)
+      const blob = response instanceof Blob ? response : response?.data
+      if (!(blob instanceof Blob)) throw new Error('Tệp Excel không hợp lệ.')
+
+      const downloadUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      const timestamp = new Date().toISOString().slice(0, 19).replaceAll('-', '').replaceAll(':', '')
+      link.download = `eapls-${REPORT_API_NAMES[activeReport]}-${timestamp}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(downloadUrl)
+      message.success('Xuất báo cáo Excel thành công.')
+    } catch (error) {
+      message.error(error?.message || 'Không thể xuất báo cáo Excel.')
+    } finally {
+      setExportLoading(false)
+    }
+  }, [activeReport, dateRange, selectedCropId])
 
   useEffect(() => {
     fetchReport(activeReport)
@@ -302,9 +349,21 @@ const ReportStatistics = () => {
           </TitleCustom>
           <Text className="text-gray-500">Theo dõi nhanh sản lượng, diện tích và vật tư của hoạt động canh tác.</Text>
         </div>
-        <Button icon={<ReloadOutlined />} onClick={() => fetchReport()} loading={reportLoading}>
-          Tải lại
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button icon={<ReloadOutlined />} onClick={() => fetchReport()} loading={reportLoading}>
+            Tải lại
+          </Button>
+          {canExport && (
+            <Button
+              type="primary"
+              icon={<FileExcelOutlined />}
+              onClick={handleExportExcel}
+              loading={exportLoading}
+            >
+              Xuất Excel
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card
