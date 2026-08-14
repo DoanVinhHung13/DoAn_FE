@@ -6,7 +6,7 @@ import {
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
-import { Button, Input, Popconfirm, Select, Tag, Tooltip } from 'antd'
+import { Button, Input, Popconfirm, Select, Tooltip } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -140,7 +140,7 @@ const TasksManagement = () => {
       title: 'Tên công việc',
       dataIndex: 'name',
       key: 'name',
-      width: '15%',
+      width: '18%',
       render: (v) => (
         <span className="text-sm font-medium text-gray-800">{v || '—'}</span>
       ),
@@ -149,7 +149,7 @@ const TasksManagement = () => {
       title: 'Mô tả',
       dataIndex: 'description',
       key: 'description',
-      width: '30%',
+      width: '34%',
       render: (v) => (
         <span className="text-sm text-gray-600">{v || '—'}</span>
       ),
@@ -158,25 +158,15 @@ const TasksManagement = () => {
       title: 'Danh mục cây trồng',
       dataIndex: 'cropCatalogName',
       key: 'cropCatalogName',
-      width: '17%',
+      width: '18%',
       render: (v) => <span className="text-sm text-gray-600">{v || '—'}</span>,
     },
     {
       title: 'Cây trồng',
       dataIndex: 'cropName',
       key: 'cropName',
-      width: '16%',
+      width: '17%',
       render: (v) => <span className="text-sm font-semibold text-gray-700">{v || '—'}</span>,
-    },
-    {
-      title: 'Loại công việc',
-      dataIndex: 'taskType',
-      key: 'taskType',
-      width: '9%',
-      render: (value, record) => String(value || '').toUpperCase() === 'HARVEST'
-        || String(record?.activityType || '').toUpperCase() === 'HARVESTING'
-        ? <Tag color="gold">Thu hoạch</Tag>
-        : <Tag color="blue">Công việc thường</Tag>,
     },
     {
       title: 'Hành động',

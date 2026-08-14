@@ -1,5 +1,5 @@
-import { ArrowLeftOutlined, CheckSquareOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Skeleton } from 'antd'
+import { ArrowLeftOutlined, CheckSquareOutlined, EditOutlined } from '@ant-design/icons'
+import { Button, Card, Form, Skeleton, Tag } from 'antd'
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
@@ -16,6 +16,8 @@ const TaskDetail = () => {
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const [initialLoading, setInitialLoading] = useState(true)
+  const taskType = Form.useWatch('taskType', form)
+  const taskTypeLabel = taskType === 'HARVEST' ? 'Thu hoạch' : 'Công việc thường'
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -51,6 +53,21 @@ const TaskDetail = () => {
             <CheckSquareOutlined className="text-blue-600" />
             Chi tiết công việc
           </TitleCustom>
+        </div>
+        <div className="flex items-center gap-3">
+          {!initialLoading && (
+            <Tag color={taskType === 'HARVEST' ? 'gold' : 'blue'} className="m-0 rounded-full px-3 py-1">
+              {taskTypeLabel}
+            </Tag>
+          )}
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => navigate(ROUTER.FM_TASK_CATALOG_EDIT.replace(':id', id))}
+            className="h-10 rounded-xl border-0 bg-blue-600 px-5 font-bold shadow-lg shadow-blue-100"
+          >
+            Chỉnh sửa
+          </Button>
         </div>
       </div>
 
