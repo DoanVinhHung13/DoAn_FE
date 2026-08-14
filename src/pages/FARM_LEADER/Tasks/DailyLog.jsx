@@ -24,10 +24,10 @@ import {
   EyeOutlined,
   FileTextOutlined,
   FormOutlined,
+  InboxOutlined,
   PictureOutlined,
   PlusOutlined,
   SendOutlined,
-  ShoppingOutlined,
 } from "@ant-design/icons"
 import {
   Alert,
@@ -1376,7 +1376,7 @@ const DailyLog = () => {
                           {getHarvestQuantity(log) !== null && (
                             <div className="mt-2 bg-emerald-50/70 rounded-xl p-2.5 border border-emerald-100/80 space-y-1">
                               <div className="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
-                                <ExperimentOutlined className="text-emerald-600" />
+                                <InboxOutlined className="text-emerald-600" />
                                 Đã thu hoạch:
                               </div>
                               <div className="text-xs text-gray-700 flex flex-wrap items-center gap-x-1.5 pl-1.5">
@@ -1638,7 +1638,7 @@ const DailyLog = () => {
               return (
                 <div>
                   <div className="flex items-center gap-2 mb-2 font-semibold text-emerald-800">
-                    <ShoppingOutlined className="text-emerald-600" />
+                    <InboxOutlined className="text-emerald-600" />
                     Tổng hợp thu hoạch
                   </div>
                   <Table

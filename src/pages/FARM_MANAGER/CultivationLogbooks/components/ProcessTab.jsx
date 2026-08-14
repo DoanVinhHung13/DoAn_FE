@@ -3,6 +3,7 @@ import {
   UserOutlined,
   CheckCircleOutlined,
   FileImageOutlined,
+  InboxOutlined,
 } from '@ant-design/icons'
 import { Card, Empty, Image, Tag, Spin, List, Avatar, Typography, Alert, Divider, Badge } from 'antd'
 import { useEffect, useState } from 'react'
@@ -137,7 +138,7 @@ const DailyLogCard = ({ log, index }) => {
         {(getHarvestQuantity(log) != null || getHarvestArea(log) > 0) && (
           <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-800">
-              Thu hoạch
+              <><InboxOutlined className="mr-1 text-emerald-600" />Thu hoạch</>
             </p>
             <div className="flex flex-wrap items-center gap-2 text-sm">
               {getHarvestQuantity(log) != null && (

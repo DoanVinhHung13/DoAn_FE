@@ -1,6 +1,7 @@
 import {
   FileImageOutlined,
   CalendarOutlined,
+  InboxOutlined,
 } from '@ant-design/icons'
 import { Card, Empty, Image, Spin, List, Avatar, Typography } from 'antd'
 import { useEffect, useState } from 'react'
@@ -272,7 +273,10 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                               <div className="p-3 my-2 bg-gray-50 border border-gray-200 rounded-lg">
                                 {isHarvestTask && totalHarvestQuantity != null && (
                                   <div className="mb-2">
-                                    <p className="mb-1 text-xs text-emerald-700 font-medium">Thu hoạch:</p>
+                                    <p className="mb-1 text-xs text-emerald-700 font-medium">
+                                      <InboxOutlined className="mr-1" />
+                                      Thu hoạch:
+                                    </p>
                                     <p className="mb-0 text-xs leading-relaxed text-gray-700">
                                       Đã thu hoạch tổng cộng{' '}
                                       <span className="font-semibold text-emerald-700">{totalHarvestQuantity} kg</span>

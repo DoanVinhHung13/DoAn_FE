@@ -3,6 +3,7 @@ import {
   ExperimentOutlined,
   EyeOutlined,
   FileTextOutlined,
+  InboxOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import { Alert, Card, Col, Empty, Image, Row, Spin, Tag, Tree, Typography } from 'antd'
@@ -157,7 +158,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                       {(getHarvestQuantity(log) != null || getHarvestArea(log) > 0) && (
                         <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
                           <div className="mb-2 flex items-center gap-1.5 text-xs font-bold text-emerald-800">
-                            <ExperimentOutlined className="text-emerald-600" />
+                            <InboxOutlined className="text-emerald-600" />
                             Thu hoạch:
                           </div>
                           <div className="flex flex-wrap items-center gap-2 text-sm">
