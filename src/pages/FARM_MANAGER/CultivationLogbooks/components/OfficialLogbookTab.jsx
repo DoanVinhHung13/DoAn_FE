@@ -267,26 +267,21 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                               </Paragraph>
                             )}
 
-                            {isHarvestTask && totalHarvestQuantity != null && (
-                              <div className="p-3 my-2 bg-emerald-50 border border-emerald-100 rounded-lg">
-                                <p className="mb-1 text-xs text-emerald-800 font-medium">Thu hoạch:</p>
-                                <div className="flex items-center gap-2 text-xs text-gray-700">
-                                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full flex-shrink-0" />
-                                  <span className="font-semibold text-emerald-700">
-                                    {totalHarvestQuantity} kg
-                                  </span>
-                                  {Number(totalHarvestedArea || 0) > 0 && (
-                                    <span className="text-gray-500">
-                                      · {totalHarvestedArea} m²
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
                             {/* 4. Số liệu tổng hợp */}
-                            {(totalFertilizers.length > 0 || totalPesticides.length > 0) && (
+                            {(isHarvestTask && totalHarvestQuantity != null) || totalFertilizers.length > 0 || totalPesticides.length > 0 ? (
                               <div className="p-3 my-2 bg-gray-50 border border-gray-200 rounded-lg">
+                                {isHarvestTask && totalHarvestQuantity != null && (
+                                  <div className="mb-2">
+                                    <p className="mb-1 text-xs text-emerald-700 font-medium">Thu hoạch:</p>
+                                    <p className="mb-0 text-xs leading-relaxed text-gray-700">
+                                      Đã thu hoạch tổng cộng{' '}
+                                      <span className="font-semibold text-emerald-700">{totalHarvestQuantity} kg</span>
+                                      {Number(totalHarvestedArea || 0) > 0 && (
+                                        <> trên diện tích <span className="font-semibold text-emerald-700">{totalHarvestedArea} m²</span></>
+                                      )}.
+                                    </p>
+                                  </div>
+                                )}
                                 {totalFertilizers.length > 0 && (
                                   <div className="mb-2">
                                     <p className="mb-1 text-xs text-gray-500 font-medium">Phân bón:</p>
@@ -322,7 +317,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                                   </div>
                                 )}
                               </div>
-                            )}
+                            ) : null}
 
                             {/* 5. Ảnh minh chứng */}
                             {images.length > 0 && (

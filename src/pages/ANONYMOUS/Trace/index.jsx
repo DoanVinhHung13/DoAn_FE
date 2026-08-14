@@ -336,6 +336,17 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
       ? journalAreas.reduce((total, entry) => total + entry.area, 0)
       : null;
     const journalAreaUnit = journalAreas.find((entry) => entry.areaUnit)?.areaUnit || '';
+    const harvestLogs = b.dailyLogs.some((log) => (
+      log?.harvestQuantity != null || log?.quantityHarvested != null || log?.harvestedQuantity != null
+    )) ? b.dailyLogs : cultivationLogs;
+    const harvestQuantityFromLogs = harvestLogs.reduce((total, log) => (
+      total + Number(log?.harvestQuantity ?? log?.quantityHarvested ?? log?.harvestedQuantity ?? 0)
+    ), 0);
+    const harvestAreaFromLogs = harvestLogs.reduce((total, log) => (
+      total + Number(log?.executedArea ?? log?.harvestedArea ?? 0)
+    ), 0);
+    const summaryHarvestQuantity = Number(b.quantity ?? b.harvestQuantity ?? harvestQuantityFromLogs);
+    const summaryHarvestArea = Number(source?.harvestedArea ?? source?.harvestArea ?? harvestAreaFromLogs);
     // The batch/plot area is the area to show in the product summary. The
     // areas stored on cultivation materials are application areas (for
     // example, the area covered by a fertilizer), not the plot's total area.
@@ -351,6 +362,10 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
       startDate: b.startDate,
       area: areaValue != null ? [formatAreaValue(areaValue), areaUnit].filter(Boolean).join(' ') : '—',
       yield: b.quantity != null ? `${b.quantity} ${b.unit || ''}`.trim() : '—',
+      harvestSummary: {
+        quantity: Number.isFinite(summaryHarvestQuantity) && summaryHarvestQuantity > 0 ? summaryHarvestQuantity : null,
+        area: Number.isFinite(summaryHarvestArea) && summaryHarvestArea > 0 ? summaryHarvestArea : null,
+      },
       dailyLogs: b.dailyLogs,
 
       displayOptions,
@@ -509,19 +524,6 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
                               {entry.description}
                             </Paragraph>
                           )}
-                          {(entry.harvestQuantity != null || Number(entry.harvestedArea || 0) > 0) && (
-                            <div className="mt-2 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
-                              <Text className="block text-xs font-semibold text-emerald-800">Thu hoạch</Text>
-                              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-                                {entry.harvestQuantity != null && (
-                                  <Text strong className="text-emerald-700">{entry.harvestQuantity} kg</Text>
-                                )}
-                                {Number(entry.harvestedArea || 0) > 0 && (
-                                  <Text className="text-slate-500">· {entry.harvestedArea} m²</Text>
-                                )}
-                              </div>
-                            </div>
-                          )}
                           {(entry.materials.length > 0 || entry.materialsText) && (
                             <div className="mt-2 space-y-1">
                               {getMaterialLines(entry).map((material, materialIndex) => (
@@ -565,6 +567,29 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
             ) : (
               <div className="py-6 text-center text-sm text-slate-400">Chưa có nhật ký chính thức</div>
             )}
+          </Card>
+        )}
+
+        {traceData.harvestSummary.quantity != null && (
+          <Card className="trace-card rounded-2xl border border-emerald-100 shadow-sm">
+            <div className="mb-3 flex items-start gap-3 border-b border-emerald-100 pb-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                <Sprout className="text-lg" />
+              </div>
+              <div>
+                <Title level={4} className="!mb-0.5 !text-base sm:!text-lg font-bold text-emerald-900">
+                  Tổng hợp thu hoạch
+                </Title>
+                <Text className="text-xs text-slate-500">Sản lượng ghi nhận trong toàn bộ nhật ký</Text>
+              </div>
+            </div>
+            <Paragraph className="!mb-0 text-sm leading-6 text-slate-700 sm:text-base">
+              Đã thu hoạch tổng cộng{' '}
+              <Text strong className="text-emerald-700">{traceData.harvestSummary.quantity} kg</Text>
+              {traceData.harvestSummary.area != null && (
+                <> trên diện tích <Text strong className="text-emerald-700">{traceData.harvestSummary.area} m²</Text></>
+              )}.
+            </Paragraph>
           </Card>
         )}
 
