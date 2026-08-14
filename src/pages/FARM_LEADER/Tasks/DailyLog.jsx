@@ -1654,6 +1654,10 @@ const DailyLog = () => {
                       days: f.days,
                     }))
 
+              if (rows.length === 0) return null
+
+              if (rows.length === 0) return null
+
               const cols = [
                 {
                   title: "Loại phân bón",
@@ -1873,6 +1877,8 @@ const DailyLog = () => {
                     : img?.imageUrl || img?.url || img?.fileUrl,
                 )
                 .filter(Boolean)
+
+              if (summaryImages.length === 0) return null
 
               return (
                 <div>
