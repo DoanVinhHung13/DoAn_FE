@@ -1721,9 +1721,7 @@ const DailyLog = () => {
                       days: f.days,
                     }))
 
-              if (rows.length === 0) return null
-
-              if (rows.length === 0) return null
+              if (!rows.some(row => Number(row.totalQuantity) > 0)) return null
 
               const cols = [
                 {
@@ -1841,6 +1839,8 @@ const DailyLog = () => {
                       recommendation: p.recommendationText,
                       days: p.days,
                     }))
+
+              if (!rows.some(row => Number(row.totalQuantity) > 0)) return null
 
               const cols = [
                 {
