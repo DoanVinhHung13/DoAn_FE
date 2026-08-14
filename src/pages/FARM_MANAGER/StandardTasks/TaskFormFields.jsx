@@ -27,6 +27,7 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
   const [catalogSearch, setCatalogSearch] = useState('')
   const [cropSearch, setCropSearch] = useState('')
   const selectedCatalogId = Form.useWatch('cropCatalogId', form)
+  const selectedTaskType = Form.useWatch('taskType', form)
   const debouncedCatalogSearch = useDebouncedValue(catalogSearch, 400)
   const debouncedCropSearch = useDebouncedValue(cropSearch, 400)
   const selectedCatalogFilter = selectedCatalogId && selectedCatalogId !== ALL_OPTION_VALUE
@@ -138,6 +139,8 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
               block
               className="task-type-segmented"
               disabled={readOnly}
+              value={normalizeTaskType(selectedTaskType)}
+              onChange={(value) => form?.setFieldValue('taskType', normalizeTaskType(value))}
               options={[
                 { label: 'Công việc thường', value: NORMAL_TASK },
                 { label: 'Thu hoạch', value: HARVEST_TASK },
