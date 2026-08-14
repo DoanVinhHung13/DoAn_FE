@@ -73,6 +73,7 @@ import { getUserDisplayName } from "src/utils/userDisplayName"
 
 const { Text } = Typography
 const { TextArea } = Input
+const HARVEST_UNIT = MEASUREMENT_UNITS.KILOGRAM
 
 const DAILY_LOG_FIELD_MAPPING = {
   Date: "date",
@@ -101,6 +102,19 @@ const toFiniteNumber = value => {
 
   return Number.isFinite(number) ? number : null
 }
+
+const getHarvestQuantity = log =>
+  toFiniteNumber(
+    log?.harvestQuantity ??
+      log?.quantityHarvested ??
+      log?.harvestedQuantity ??
+      log?.HarvestQuantity,
+  )
+
+const isHarvestTaskData = task =>
+  [task?.activityType, task?.taskType]
+    .some(value => String(value || '').trim().toUpperCase() === 'HARVESTING' ||
+      String(value || '').trim().toUpperCase() === 'HARVEST')
 
 const toFertilizerOptions = list =>
   (list || []).map(item => {
@@ -216,8 +230,18 @@ const DailyLog = () => {
   const aggregateFromLogs = useMemo(() => {
     const fertMap = {} // key: `${fertilizerId}|${unit}`
     const pestMap = {} // key: `${pesticideId}|${unit}`
+    let totalHarvestQuantity = 0
+    let totalHarvestedArea = 0
+    let harvestLogCount = 0
 
     for (const log of dailyLogs) {
+      const harvestQuantity = getHarvestQuantity(log)
+      if (harvestQuantity !== null) {
+        totalHarvestQuantity += harvestQuantity
+        totalHarvestedArea += Number(log.executedArea || 0)
+        harvestLogCount += 1
+      }
+
       // --- fertilizers ---
       for (const f of log.fertilizers || []) {
         const id = f.fertilizerId || f.id || f.materialId
@@ -270,6 +294,10 @@ const DailyLog = () => {
     return {
       fertilizers: Object.values(fertMap),
       pesticides: Object.values(pestMap),
+      totalHarvestQuantity,
+      totalHarvestedArea,
+      harvestUnit: HARVEST_UNIT,
+      harvestLogCount,
       logCount: dailyLogs.length,
     }
   }, [dailyLogs, fertilizerOptions, pesticideOptions])
@@ -315,7 +343,7 @@ const DailyLog = () => {
 
         form.setFieldsValue({
           date: getLocalNow(),
-          harvestUnit: "kg",
+          harvestUnit: HARVEST_UNIT,
           fertilizers: [],
           pesticides: [],
         })
@@ -368,7 +396,7 @@ const DailyLog = () => {
         description: values.description || "",
         executedArea: values.executedArea || 0,
         harvestQuantity: isHarvestTask ? values.harvestQuantity : null,
-        harvestUnit: isHarvestTask ? values.harvestUnit : null,
+        harvestUnit: isHarvestTask ? HARVEST_UNIT : null,
         fertilizers: isHarvestTask ? [] : mapFertilizers(values.fertilizers),
         pesticides: isHarvestTask ? [] : mapPesticides(values.pesticides),
         images: imageUrls.map(url => ({ url })),
@@ -524,8 +552,7 @@ const DailyLog = () => {
 
   const statusCfg = getTaskStatus(task.status)
   const isViewOnly = !canWriteDailyLog(task.status)
-  const isHarvestTask =
-    String(task.activityType || "").trim().toUpperCase() === "HARVESTING"
+  const isHarvestTask = isHarvestTaskData(task)
   const harvestedArea = dailyLogs.reduce((total, log) => total + Number(log.executedArea || 0), 0)
   const remainingHarvestArea = Math.max(0, Number(task.totalPlanArea || 0) - harvestedArea)
 
@@ -751,7 +778,7 @@ const DailyLog = () => {
                       label="Đơn vị"
                       rules={[{ required: true, message: "Chọn đơn vị" }]}
                     >
-                      <Select options={[{ value: "kg", label: "kg" }, { value: "lít", label: "lít" }]} />
+                      <Select disabled options={[{ value: HARVEST_UNIT, label: HARVEST_UNIT }]} />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={8}>
@@ -1345,6 +1372,25 @@ const DailyLog = () => {
                             </p>
                           )}
 
+                          {getHarvestQuantity(log) !== null && (
+                            <div className="mt-2 bg-emerald-50/70 rounded-xl p-2.5 border border-emerald-100/80 space-y-1">
+                              <div className="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
+                                <ExperimentOutlined className="text-emerald-600" />
+                                Đã thu hoạch:
+                              </div>
+                              <div className="text-xs text-gray-700 flex flex-wrap items-center gap-x-1.5 pl-1.5">
+                                <span className="font-bold text-emerald-700">
+                                  {getHarvestQuantity(log)} {HARVEST_UNIT}
+                                </span>
+                                {Number(log.executedArea || 0) > 0 && (
+                                  <span className="text-gray-500 text-[11px]">
+                                    ({log.executedArea} {formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)})
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Phân bón */}
                           {log.fertilizers?.length > 0 && (
                             <div className="mt-2 bg-blue-50/60 rounded-xl p-2.5 border border-blue-100/80 space-y-1">
@@ -1516,7 +1562,7 @@ const DailyLog = () => {
                 type="success"
                 showIcon
                 message="Tổng hợp thu hoạch"
-                description={`Số lượng: ${leaderSummary?.totalHarvestQuantity ?? 0} ${leaderSummary?.harvestUnit || ""} · Diện tích: ${leaderSummary?.totalHarvestedArea ?? 0} m²`}
+                description={`Số lượng: ${leaderSummary?.totalHarvestQuantity ?? aggregateFromLogs.totalHarvestQuantity} ${HARVEST_UNIT} · Diện tích: ${leaderSummary?.totalHarvestedArea ?? aggregateFromLogs.totalHarvestedArea} m²`}
               />
             )}
             {/* ── Thống kê thời gian thực tế ── */}
