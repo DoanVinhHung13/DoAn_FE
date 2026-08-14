@@ -1,4 +1,4 @@
-import { CheckSquareOutlined, FileTextOutlined } from '@ant-design/icons'
+import { FileTextOutlined } from '@ant-design/icons'
 import { Col, Form, Input, Row, Segmented, Select } from 'antd'
 import React, { useEffect, useMemo, useState } from 'react'
 import useDebouncedValue from 'src/hooks/useDebouncedValue'
@@ -168,7 +168,6 @@ const TaskFormFields = ({ form, readOnly = false }) => {
           ] : []}
         >
           <Input
-            prefix={<CheckSquareOutlined className="text-gray-300" />}
             placeholder="VD: Tưới nước buổi sáng"
             className="h-10 rounded-lg"
             readOnly={readOnly}
@@ -180,7 +179,7 @@ const TaskFormFields = ({ form, readOnly = false }) => {
           <Input.TextArea
             rows={4}
             placeholder="Nhập mô tả chi tiết, quy trình thực hiện, yêu cầu kỹ thuật..."
-            className="rounded-lg"
+            className="task-description-textarea rounded-lg"
             maxLength={1000}
             showCount={!readOnly}
             readOnly={readOnly}

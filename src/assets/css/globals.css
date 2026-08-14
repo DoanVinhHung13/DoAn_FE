@@ -470,6 +470,36 @@ a,
   line-height: inherit;
 }
 
+/* Keep the task catalog readable without forcing a horizontal scroll. */
+.task-catalog-table .ant-table-container,
+.task-catalog-table .ant-table-content {
+  overflow-x: hidden !important;
+}
+
+.task-catalog-table .ant-table-thead>tr>th,
+.task-catalog-table .ant-table-tbody>tr>td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.task-catalog-table .ant-table-thead>tr>th {
+  line-height: 1.25;
+  text-align: left;
+}
+
+.task-catalog-table .ant-table-thead>tr>th:first-child,
+.task-catalog-table .ant-table-tbody>tr>td:first-child,
+.task-catalog-table .ant-table-thead>tr>th:last-child,
+.task-catalog-table .ant-table-tbody>tr>td:last-child {
+  text-align: center;
+}
+
+.task-catalog-table .ant-table-tbody>tr>td .ant-tag {
+  white-space: normal;
+  text-align: center;
+}
+
 .admin-compact-list .ant-table-pagination.ant-pagination {
   margin: 12px 16px !important;
 }
@@ -675,6 +705,11 @@ a,
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   line-height: 38px !important;
+}
+
+.task-description-textarea {
+  line-height: 24px !important;
+  padding: 8px 12px !important;
 }
 
 .ant-input-affix-wrapper,
