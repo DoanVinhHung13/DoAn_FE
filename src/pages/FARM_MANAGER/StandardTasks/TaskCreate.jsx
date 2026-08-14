@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import TaskCatalogService from 'src/services/TaskCatalogService'
+import { applyApiFieldErrors, normalizeApiError } from 'src/services/core/apiError'
 import TaskFormFields from './TaskFormFields'
 
 const TaskCreate = () => {
@@ -20,13 +21,20 @@ const TaskCreate = () => {
         cropId: values.cropId === '__ALL__' ? null : values.cropId,
         name: values.name?.trim(),
         description: values.description?.trim() || null,
+        taskType: values.taskType || 'NORMAL',
+        activityType: values.taskType === 'HARVEST' ? 'HARVESTING' : (values.activityType || 'OTHER'),
       }
 
-      await TaskCatalogService.createTaskCatalog(body)
+      await TaskCatalogService.createTaskCatalog(body, {
+        errorHandling: 'form',
+        fieldErrorMapping: { CropCatalogId: 'cropCatalogId', CropId: 'cropId', Name: 'name', Description: 'description', TaskType: 'taskType', ActivityType: 'activityType' },
+      })
 
       navigate(ROUTER.FM_TASK_CATALOGS)
-    } catch {
-      // axios interceptor handles error notification
+    } catch (error) {
+      applyApiFieldErrors(form, normalizeApiError(error), {
+        CropCatalogId: 'cropCatalogId', CropId: 'cropId', Name: 'name', Description: 'description', TaskType: 'taskType', ActivityType: 'activityType',
+      })
     } finally {
       setLoading(false)
     }
@@ -55,6 +63,7 @@ const TaskCreate = () => {
         <Form
           form={form}
           layout="vertical"
+          initialValues={{ cropCatalogId: '__ALL__', cropId: '__ALL__', taskType: 'NORMAL', activityType: 'OTHER' }}
           onFinish={handleSubmit}
         >
           <TaskFormFields form={form} isEdit={false} />

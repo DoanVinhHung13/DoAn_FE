@@ -1,13 +1,12 @@
 
 import {
-  CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
-import { Button, Card, Input, message, Popconfirm, Select, Tooltip } from 'antd'
+import { Button, Input, Popconfirm, Select, Tag, Tooltip } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -23,7 +22,6 @@ import TaskCatalogService from 'src/services/TaskCatalogService'
 import { normalizeApiError } from 'src/services/core/apiError'
 import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
-import { invalidCharsRegex } from 'src/utils/helpers'
 import { useListManagement } from 'src/hooks/useListManagement'
 
 const unwrapItems = (response) => {
@@ -169,6 +167,16 @@ const TasksManagement = () => {
       key: 'cropName',
       width: 200,
       render: (v) => <span className="text-sm font-semibold text-gray-700">{v || '—'}</span>,
+    },
+    {
+      title: 'Loại công việc',
+      dataIndex: 'taskType',
+      key: 'taskType',
+      width: 170,
+      render: (value, record) => String(value || '').toUpperCase() === 'HARVEST'
+        || String(record?.activityType || '').toUpperCase() === 'HARVESTING'
+        ? <Tag color="gold">Thu hoạch</Tag>
+        : <Tag color="blue">Công việc thường</Tag>,
     },
     {
       title: 'Hành động',

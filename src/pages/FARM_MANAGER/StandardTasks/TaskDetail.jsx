@@ -8,6 +8,8 @@ import TaskCatalogService from 'src/services/TaskCatalogService'
 import TaskFormFields from './TaskFormFields'
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res
+const normalizeTaskType = (data) => String(data?.taskType || '').toUpperCase() === 'HARVEST'
+  || String(data?.activityType || '').toUpperCase() === 'HARVESTING' ? 'HARVEST' : 'NORMAL'
 
 const TaskDetail = () => {
   const { id } = useParams()
@@ -24,6 +26,8 @@ const TaskDetail = () => {
         form.setFieldsValue({
           cropCatalogId: data.cropCatalogId || '__ALL__',
           cropId: data.cropId || '__ALL__',
+          taskType: normalizeTaskType(data),
+          activityType: data.activityType || (normalizeTaskType(data) === 'HARVEST' ? 'HARVESTING' : 'OTHER'),
           name: data.name,
           description: data.description,
         })

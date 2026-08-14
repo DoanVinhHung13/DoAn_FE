@@ -5,9 +5,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import TaskCatalogService from 'src/services/TaskCatalogService'
+import { applyApiFieldErrors, normalizeApiError } from 'src/services/core/apiError'
 import TaskFormFields from './TaskFormFields'
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res
+const normalizeTaskType = (data) => String(data?.taskType || '').toUpperCase() === 'HARVEST'
+  || String(data?.activityType || '').toUpperCase() === 'HARVESTING' ? 'HARVEST' : 'NORMAL'
 
 const TaskEdit = () => {
   const { id } = useParams()
@@ -26,6 +29,8 @@ const TaskEdit = () => {
         form.setFieldsValue({
           cropCatalogId: data.cropCatalogId || '__ALL__',
           cropId: data.cropId || '__ALL__',
+          taskType: normalizeTaskType(data),
+          activityType: data.activityType || (normalizeTaskType(data) === 'HARVEST' ? 'HARVESTING' : 'OTHER'),
           name: data.name,
           description: data.description,
         })
@@ -47,13 +52,20 @@ const TaskEdit = () => {
         cropId: values.cropId === '__ALL__' ? null : values.cropId,
         name: values.name?.trim(),
         description: values.description?.trim() || null,
+        taskType: values.taskType || 'NORMAL',
+        activityType: values.taskType === 'HARVEST' ? 'HARVESTING' : (values.activityType || 'OTHER'),
       }
 
-      await TaskCatalogService.updateTaskCatalog(id, body)
+      await TaskCatalogService.updateTaskCatalog(id, body, {
+        errorHandling: 'form',
+        fieldErrorMapping: { CropCatalogId: 'cropCatalogId', CropId: 'cropId', Name: 'name', Description: 'description', TaskType: 'taskType', ActivityType: 'activityType' },
+      })
 
       navigate(ROUTER.FM_TASK_CATALOGS)
-    } catch {
-      // axios interceptor handles error notification
+    } catch (error) {
+      applyApiFieldErrors(form, normalizeApiError(error), {
+        CropCatalogId: 'cropCatalogId', CropId: 'cropId', Name: 'name', Description: 'description', TaskType: 'taskType', ActivityType: 'activityType',
+      })
     } finally {
       setLoading(false)
     }

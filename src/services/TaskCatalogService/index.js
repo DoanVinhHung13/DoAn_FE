@@ -6,11 +6,11 @@
  */
 import http from '../01_axios'
 import {
-  apiGetTaskCatalogs,
   apiCreateTaskCatalog,
-  apiGetTaskCatalogById,
-  apiUpdateTaskCatalog,
   apiDeleteTaskCatalog,
+  apiGetTaskCatalogById,
+  apiGetTaskCatalogs,
+  apiUpdateTaskCatalog,
 } from './urls'
 
 const silentConfig = { skipNotice: true }
@@ -19,9 +19,9 @@ const getTaskCatalogs = (params, config = {}) => http.get(apiGetTaskCatalogs, { 
 
 const getTaskCatalogById = (id) => http.get(apiGetTaskCatalogById(id), silentConfig)
 
-const createTaskCatalog = (body) => http.post(apiCreateTaskCatalog, body)
+const createTaskCatalog = (body, config = {}) => http.post(apiCreateTaskCatalog, body, config)
 
-const updateTaskCatalog = (id, body) => http.put(apiUpdateTaskCatalog(id), body)
+const updateTaskCatalog = (id, body, config = {}) => http.put(apiUpdateTaskCatalog(id), body, config)
 
 const deleteTaskCatalog = (id) => http.delete(apiDeleteTaskCatalog(id))
 
