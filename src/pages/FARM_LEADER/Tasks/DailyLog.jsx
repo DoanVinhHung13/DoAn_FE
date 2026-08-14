@@ -1557,14 +1557,6 @@ const DailyLog = () => {
       >
         <Spin spinning={summaryLoading} tip="Đang tải tổng hợp...">
           <div className="py-1 space-y-5 text-sm">
-            {isHarvestTask && (
-              <Alert
-                type="success"
-                showIcon
-                message="Tổng hợp thu hoạch"
-                description={`Số lượng: ${leaderSummary?.totalHarvestQuantity ?? aggregateFromLogs.totalHarvestQuantity} ${HARVEST_UNIT} · Diện tích: ${leaderSummary?.totalHarvestedArea ?? aggregateFromLogs.totalHarvestedArea} m²`}
-              />
-            )}
             {/* ── Thống kê thời gian thực tế ── */}
             {(() => {
               // Lấy ngày bắt đầu thực tế
@@ -1620,6 +1612,81 @@ const DailyLog = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              )
+            })()}
+
+            {isHarvestTask && (() => {
+              const harvestRows = dailyLogs
+                .map((log, index) => ({
+                  key: log.id || `harvest-${index}`,
+                  date: log.date,
+                  quantity: getHarvestQuantity(log),
+                  area: Number(log.executedArea || 0),
+                }))
+                .filter(row => row.quantity !== null || row.area > 0)
+
+              const totalQuantity = harvestRows.reduce(
+                (total, row) => total + Number(row.quantity || 0),
+                0,
+              )
+              const totalArea = harvestRows.reduce((total, row) => total + row.area, 0)
+
+              if (harvestRows.length === 0) return null
+
+              return (
+                <div>
+                  <div className="flex items-center gap-2 mb-2 font-semibold text-emerald-800">
+                    <ExperimentOutlined className="text-emerald-600" />
+                    Tổng hợp thu hoạch
+                  </div>
+                  <Table
+                    columns={[
+                      {
+                        title: "Ngày",
+                        dataIndex: "date",
+                        key: "date",
+                        render: (value, record) => record.key === "harvest-total"
+                          ? <span className="font-bold">Tổng hợp</span>
+                          : value ? formatDate(value) : "—",
+                      },
+                      {
+                        title: "Số lượng thu hoạch",
+                        dataIndex: "quantity",
+                        key: "quantity",
+                        align: "right",
+                        render: value => (
+                          <span className="font-semibold text-emerald-700">
+                            {value ?? "—"} {value != null ? HARVEST_UNIT : ""}
+                          </span>
+                        ),
+                      },
+                      {
+                        title: "Diện tích",
+                        dataIndex: "area",
+                        key: "area",
+                        align: "right",
+                        render: value => (
+                          <span className="font-semibold text-gray-700">
+                            {value > 0 ? `${value} ${formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}` : "—"}
+                          </span>
+                        ),
+                      },
+                    ]}
+                    dataSource={[
+                      ...harvestRows,
+                      {
+                        key: "harvest-total",
+                        date: "Tổng hợp",
+                        quantity: totalQuantity,
+                        area: totalArea,
+                      },
+                    ]}
+                    rowClassName={record => record.key === "harvest-total" ? "font-bold bg-emerald-50" : ""}
+                    size="small"
+                    pagination={false}
+                    className="overflow-hidden border border-emerald-100 rounded-xl"
+                  />
                 </div>
               )
             })()}
