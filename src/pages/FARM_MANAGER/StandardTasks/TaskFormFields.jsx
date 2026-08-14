@@ -8,8 +8,6 @@ import CropManagementService from 'src/services/CropManagementService'
 const ALL_OPTION_VALUE = '__ALL__'
 const NORMAL_TASK = 'NORMAL'
 const HARVEST_TASK = 'HARVEST'
-const NORMAL_ACTIVITY = 'OTHER'
-const HARVEST_ACTIVITY = 'HARVESTING'
 
 const unwrapItems = (response) => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
@@ -21,7 +19,7 @@ const getCropCatalogId = (crop) => crop.cropCatalogId || crop.cropCatalog?.id
 const normalizeTaskType = (value) =>
   String(value || '').toUpperCase() === HARVEST_TASK ? HARVEST_TASK : NORMAL_TASK
 
-const TaskFormFields = ({ form, readOnly = false }) => {
+const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
   const [catalogs, setCatalogs] = useState([])
   const [crops, setCrops] = useState([])
   const [catalogLoading, setCatalogLoading] = useState(false)
@@ -29,7 +27,6 @@ const TaskFormFields = ({ form, readOnly = false }) => {
   const [catalogSearch, setCatalogSearch] = useState('')
   const [cropSearch, setCropSearch] = useState('')
   const selectedCatalogId = Form.useWatch('cropCatalogId', form)
-  const selectedTaskType = Form.useWatch('taskType', form)
   const debouncedCatalogSearch = useDebouncedValue(catalogSearch, 400)
   const debouncedCropSearch = useDebouncedValue(cropSearch, 400)
   const selectedCatalogFilter = selectedCatalogId && selectedCatalogId !== ALL_OPTION_VALUE
@@ -103,15 +100,6 @@ const TaskFormFields = ({ form, readOnly = false }) => {
     form?.setFieldValue('cropCatalogId', value)
   }
 
-  const handleTaskTypeChange = (value) => {
-    form?.setFieldsValue({
-      taskType: value,
-      activityType: value === HARVEST_TASK
-        ? HARVEST_ACTIVITY
-        : (form?.getFieldValue('activityType') === HARVEST_ACTIVITY ? NORMAL_ACTIVITY : form?.getFieldValue('activityType') || NORMAL_ACTIVITY),
-    })
-  }
-
   return (
     <Row gutter={16}>
       <Col xs={24} md={12}>
@@ -143,21 +131,21 @@ const TaskFormFields = ({ form, readOnly = false }) => {
           />
         </Form.Item>
       </Col>
-      <Col xs={24} md={12}>
-        <Form.Item name="taskType" label="Loại công việc">
-          <Segmented
-            block
-            className="task-type-segmented"
-            disabled={readOnly}
-            value={normalizeTaskType(selectedTaskType)}
-            onChange={handleTaskTypeChange}
-            options={[
-              { label: 'Công việc thường', value: NORMAL_TASK },
-              { label: 'Thu hoạch', value: HARVEST_TASK },
-            ]}
-          />
-        </Form.Item>
-      </Col>
+      {showTaskType && (
+        <Col xs={24} md={12}>
+          <Form.Item name="taskType" label="Loại công việc" normalize={normalizeTaskType}>
+            <Segmented
+              block
+              className="task-type-segmented"
+              disabled={readOnly}
+              options={[
+                { label: 'Công việc thường', value: NORMAL_TASK },
+                { label: 'Thu hoạch', value: HARVEST_TASK },
+              ]}
+            />
+          </Form.Item>
+        </Col>
+      )}
       <Col xs={24}>
         <Form.Item
           name="name"

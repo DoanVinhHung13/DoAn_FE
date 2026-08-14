@@ -76,7 +76,7 @@ const TaskDetail = () => {
           <Skeleton active paragraph={{ rows: 6 }} />
         ) : (
           <Form form={form} layout="vertical">
-            <TaskFormFields form={form} readOnly={true} />
+            <TaskFormFields form={form} readOnly={true} showTaskType={false} />
 
             <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
               <Button
