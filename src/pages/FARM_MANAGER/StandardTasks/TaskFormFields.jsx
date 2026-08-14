@@ -19,7 +19,7 @@ const getCropCatalogId = (crop) => crop.cropCatalogId || crop.cropCatalog?.id
 const normalizeTaskType = (value) =>
   String(value || '').toUpperCase() === HARVEST_TASK ? HARVEST_TASK : NORMAL_TASK
 
-const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
+const TaskFormFields = ({ form, isEdit = false, readOnly = false, showTaskType = true }) => {
   const [catalogs, setCatalogs] = useState([])
   const [crops, setCrops] = useState([])
   const [catalogLoading, setCatalogLoading] = useState(false)
@@ -138,7 +138,7 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
             <Segmented
               block
               className="task-type-segmented"
-              disabled={readOnly}
+              disabled={readOnly || isEdit}
               value={normalizeTaskType(selectedTaskType)}
               onChange={(value) => form?.setFieldValue('taskType', normalizeTaskType(value))}
               options={[
