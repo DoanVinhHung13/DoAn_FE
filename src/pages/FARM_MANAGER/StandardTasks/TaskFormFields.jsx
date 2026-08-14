@@ -147,6 +147,7 @@ const TaskFormFields = ({ form, readOnly = false }) => {
         <Form.Item name="taskType" label="Loại công việc">
           <Segmented
             block
+            className="task-type-segmented"
             disabled={readOnly}
             value={normalizeTaskType(selectedTaskType)}
             onChange={handleTaskTypeChange}

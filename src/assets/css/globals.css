@@ -104,6 +104,51 @@ a,
   background: var(--color-border-strong);
 }
 
+/* Make the two task types read as distinct, selectable controls. */
+.task-type-segmented {
+  min-height: 44px;
+  padding: 4px !important;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted) !important;
+  gap: 4px;
+}
+
+.task-type-segmented .ant-segmented-group {
+  gap: 4px;
+}
+
+.task-type-segmented .ant-segmented-item {
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.task-type-segmented .ant-segmented-item:hover:not(.ant-segmented-item-selected) {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.task-type-segmented .ant-segmented-item-selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary) !important;
+  box-shadow: 0 2px 6px rgba(21, 128, 61, 0.2);
+  color: #fff !important;
+  font-weight: 700;
+}
+
+.task-type-segmented .ant-segmented-item-selected .ant-segmented-item-label {
+  color: #fff !important;
+}
+
+.task-type-segmented.ant-segmented-disabled {
+  opacity: 0.65;
+}
+
 .ant-layout,
 .ant-layout-content {
   background: var(--color-background) !important;
