@@ -199,8 +199,6 @@ const buildTimelineGroups = (traceData) => {
           startDate: log.workStartDate || log.activityDate || dailyLog?.date,
           endDate: log.workEndDate || log.activityDate || dailyLog?.date,
           description: log.description || dailyLog?.activity || '',
-          harvestQuantity: log.harvestQuantity ?? dailyLog?.harvestQuantity ?? log.quantityHarvested ?? dailyLog?.quantityHarvested,
-          harvestedArea: log.executedArea ?? dailyLog?.executedArea ?? log.harvestedArea ?? dailyLog?.harvestedArea,
           updatedBy: getUserDisplayName(
             log.supervisorEditorName,
             log.editedByName,
@@ -226,8 +224,6 @@ const buildTimelineGroups = (traceData) => {
         startDate: log.date,
         endDate: log.date,
         description: log.activity || log.notes || '',
-        harvestQuantity: log.harvestQuantity ?? log.quantityHarvested ?? log.harvestedQuantity,
-        harvestedArea: log.executedArea ?? log.harvestedArea,
         updatedBy: getUserDisplayName(
           log.updatedByName,
           log.updatedBy,
@@ -336,17 +332,6 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
       ? journalAreas.reduce((total, entry) => total + entry.area, 0)
       : null;
     const journalAreaUnit = journalAreas.find((entry) => entry.areaUnit)?.areaUnit || '';
-    const harvestLogs = b.dailyLogs.some((log) => (
-      log?.harvestQuantity != null || log?.quantityHarvested != null || log?.harvestedQuantity != null
-    )) ? b.dailyLogs : cultivationLogs;
-    const harvestQuantityFromLogs = harvestLogs.reduce((total, log) => (
-      total + Number(log?.harvestQuantity ?? log?.quantityHarvested ?? log?.harvestedQuantity ?? 0)
-    ), 0);
-    const harvestAreaFromLogs = harvestLogs.reduce((total, log) => (
-      total + Number(log?.executedArea ?? log?.harvestedArea ?? 0)
-    ), 0);
-    const summaryHarvestQuantity = Number(b.quantity ?? b.harvestQuantity ?? harvestQuantityFromLogs);
-    const summaryHarvestArea = Number(source?.harvestedArea ?? source?.harvestArea ?? harvestAreaFromLogs);
     // The batch/plot area is the area to show in the product summary. The
     // areas stored on cultivation materials are application areas (for
     // example, the area covered by a fertilizer), not the plot's total area.
@@ -362,10 +347,6 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
       startDate: b.startDate,
       area: areaValue != null ? [formatAreaValue(areaValue), areaUnit].filter(Boolean).join(' ') : '—',
       yield: b.quantity != null ? `${b.quantity} ${b.unit || ''}`.trim() : '—',
-      harvestSummary: {
-        quantity: Number.isFinite(summaryHarvestQuantity) && summaryHarvestQuantity > 0 ? summaryHarvestQuantity : null,
-        area: Number.isFinite(summaryHarvestArea) && summaryHarvestArea > 0 ? summaryHarvestArea : null,
-      },
       dailyLogs: b.dailyLogs,
 
       displayOptions,
@@ -495,16 +476,6 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
                 Nhật ký canh tác điện tử
               </Title>
             </div>
-
-            {traceData.harvestSummary.quantity != null && (
-              <Paragraph className="!mb-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3 text-sm leading-6 text-slate-700 sm:text-base">
-                Đã thu hoạch tổng cộng{' '}
-                <Text strong className="text-emerald-700">{traceData.harvestSummary.quantity} kg</Text>
-                {traceData.harvestSummary.area != null && (
-                  <> trên diện tích <Text strong className="text-emerald-700">{traceData.harvestSummary.area} m²</Text></>
-                )}.
-              </Paragraph>
-            )}
 
             {timelineGroups.length > 0 ? (
               <div className="space-y-9 px-1 sm:px-2">
