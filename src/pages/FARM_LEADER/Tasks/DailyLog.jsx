@@ -315,6 +315,7 @@ const DailyLog = () => {
 
         form.setFieldsValue({
           date: getLocalNow(),
+          harvestUnit: "kg",
           fertilizers: [],
           pesticides: [],
         })
@@ -368,8 +369,8 @@ const DailyLog = () => {
         executedArea: values.executedArea || 0,
         harvestQuantity: isHarvestTask ? values.harvestQuantity : null,
         harvestUnit: isHarvestTask ? values.harvestUnit : null,
-        fertilizers: mapFertilizers(values.fertilizers),
-        pesticides: mapPesticides(values.pesticides),
+        fertilizers: isHarvestTask ? [] : mapFertilizers(values.fertilizers),
+        pesticides: isHarvestTask ? [] : mapPesticides(values.pesticides),
         images: imageUrls.map(url => ({ url })),
       }
 
@@ -523,7 +524,8 @@ const DailyLog = () => {
 
   const statusCfg = getTaskStatus(task.status)
   const isViewOnly = !canWriteDailyLog(task.status)
-  const isHarvestTask = task.activityType === "HARVESTING"
+  const isHarvestTask =
+    String(task.activityType || "").trim().toUpperCase() === "HARVESTING"
   const harvestedArea = dailyLogs.reduce((total, log) => total + Number(log.executedArea || 0), 0)
   const remainingHarvestArea = Math.max(0, Number(task.totalPlanArea || 0) - harvestedArea)
 
@@ -765,11 +767,13 @@ const DailyLog = () => {
               </Card>
             )}
 
-            <Card
-              bordered={false}
-              className="shadow-sm rounded-2xl"
-              bodyStyle={{ padding: "20px" }}
-            >
+            {!isHarvestTask && (
+              <>
+                <Card
+                  bordered={false}
+                  className="shadow-sm rounded-2xl"
+                  bodyStyle={{ padding: "20px" }}
+                >
               <div className="mb-4 text-base font-bold text-gray-800">
                 Phân bón
               </div>
@@ -1010,13 +1014,13 @@ const DailyLog = () => {
                   </div>
                 )}
               </Form.List>
-            </Card>
+                </Card>
 
-            <Card
-              bordered={false}
-              className="shadow-sm rounded-2xl"
-              bodyStyle={{ padding: "20px" }}
-            >
+                <Card
+                  bordered={false}
+                  className="shadow-sm rounded-2xl"
+                  bodyStyle={{ padding: "20px" }}
+                >
               <div className="mb-4 text-base font-bold text-gray-800">
                 Nông dược
               </div>
@@ -1253,7 +1257,9 @@ const DailyLog = () => {
                   </div>
                 )}
               </Form.List>
-            </Card>
+                </Card>
+              </>
+            )}
 
             {!isViewOnly && (
               <div className="flex flex-wrap justify-end gap-3 pt-2 pb-6">
