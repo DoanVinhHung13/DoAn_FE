@@ -27,6 +27,7 @@ import {
   PictureOutlined,
   PlusOutlined,
   SendOutlined,
+  ShoppingOutlined,
 } from "@ant-design/icons"
 import {
   Alert,
@@ -1637,7 +1638,7 @@ const DailyLog = () => {
               return (
                 <div>
                   <div className="flex items-center gap-2 mb-2 font-semibold text-emerald-800">
-                    <ExperimentOutlined className="text-emerald-600" />
+                    <ShoppingOutlined className="text-emerald-600" />
                     Tổng hợp thu hoạch
                   </div>
                   <Table
