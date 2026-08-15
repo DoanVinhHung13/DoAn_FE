@@ -171,7 +171,7 @@ const FarmManagerLogbooks = () => {
                       </div>
                     </div>
                     <div>
-                      <Text type="secondary">Giám sát trang trại</Text>
+                      <Text type="secondary">Giám sát nông trại</Text>
                       <div className="mt-1 font-semibold">
                         <UserOutlined className="mr-1 text-green-600" />
                         {lb.supervisorName}

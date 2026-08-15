@@ -21,9 +21,9 @@ const modules = [
   },
   {
     id: 'mgmt',
-    tag: 'Dành cho trang trại, HTX & doanh nghiệp',
+    tag: 'Dành cho nông trại, HTX & doanh nghiệp',
     title: 'Hệ thống Quản trị & Nhật ký Điện tử',
-    desc: 'Phần mềm chuyển đổi số nông nghiệp toàn diện. Hỗ trợ chủ trang trại và nhân sự quản lý vùng trồng, lập quy trình canh tác, số hóa ghi chép bón phân/nông dược và cấp phát tem QR.',
+    desc: 'Phần mềm chuyển đổi số nông nghiệp toàn diện. Hỗ trợ chủ nông trại và nhân sự quản lý vùng trồng, lập quy trình canh tác, số hóa ghi chép bón phân/nông dược và cấp phát tem QR.',
     btnLabel: 'Truy cập Quản trị',
     bgColor: '#01579b',
     image:
@@ -64,7 +64,7 @@ const FeaturesSection = () => {
             Các hợp phần chính của hệ thống
           </h2>
           <p style={{ color: '#616161', fontSize: '0.95rem', maxWidth: 540, margin: '0 auto' }}>
-            Hai giải pháp cốt lõi phục vụ minh bạch nguồn gốc cho người tiêu dùng và số hóa quản lý cho trang trại
+            Hai giải pháp cốt lõi phục vụ minh bạch nguồn gốc cho người tiêu dùng và số hóa quản lý cho nông trại
           </p>
         </div>
 

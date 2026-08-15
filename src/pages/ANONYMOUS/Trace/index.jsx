@@ -442,7 +442,7 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
             </div>
 
             <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 sm:col-span-2">
-              <Text className="text-slate-500 text-xs font-semibold block mb-1">Vùng trồng & Trang trại</Text>
+              <Text className="text-slate-500 text-xs font-semibold block mb-1">Vùng trồng & Nông trại</Text>
               <Space className="text-xs sm:text-sm">
                 <EnvironmentOutlined className="text-emerald-600 text-sm" />
                 <Text strong className="text-slate-800">{traceData.farmName}</Text>
@@ -628,7 +628,7 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
                 📷
               </div>
               <Title level={4} className="!mb-0 !text-base sm:!text-lg font-bold text-slate-800">
-                Hình ảnh thực tế tại trang trại
+                Hình ảnh thực tế tại nông trại
               </Title>
             </div>
 

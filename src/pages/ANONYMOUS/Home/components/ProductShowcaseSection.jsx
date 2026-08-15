@@ -31,7 +31,7 @@ const products = [
   },
   {
     name: 'Trái cây xuất khẩu chuẩn VietGAP',
-    brand: 'Trang trại Ogasachi',
+    brand: 'Nông trại Ogasachi',
     image: '/images/fruit_product.png',
     tag: 'Trái cây',
     color: 'orange',

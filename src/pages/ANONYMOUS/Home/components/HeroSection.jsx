@@ -74,7 +74,7 @@ const HeroSection = () => {
                 maxWidth: 520,
               }}
             >
-              Nền tảng EAPLS giúp trang trại và hợp tác xã số hóa quy trình sản xuất: từ ghi chép nhật ký canh tác, quản lý vật tư bón phân/nông dược đến quản lý lô thu hoạch và phát hành tem QR truy xuất nguồn gốc.
+              Nền tảng EAPLS giúp nông trại và hợp tác xã số hóa quy trình sản xuất: từ ghi chép nhật ký canh tác, quản lý vật tư bón phân/nông dược đến quản lý lô thu hoạch và phát hành tem QR truy xuất nguồn gốc.
             </p>
 
             {/* Nút */}

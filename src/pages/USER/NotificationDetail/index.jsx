@@ -37,8 +37,8 @@ const normalizeItems = (response) => {
 };
 
 const ROLE_LABELS = {
-  FARM_MANAGER: 'Quản lý trang trại',
-  FARM_SUPERVISOR: 'Giám sát trang trại',
+  FARM_MANAGER: 'Quản lý nông trại',
+  FARM_SUPERVISOR: 'Giám sát nông trại',
   FARMER_LEADER: 'Tổ trưởng',
   FARMER: 'Nông dân',
 };

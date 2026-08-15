@@ -71,7 +71,7 @@ const TYPE_COLORS = {
 };
 
 const ROLE_OPTIONS = [
-  { value: 'FARM_SUPERVISOR', label: 'Giám sát trang trại' },
+  { value: 'FARM_SUPERVISOR', label: 'Giám sát nông trại' },
   { value: 'FARMER_LEADER', label: 'Tổ trưởng' },
 ];
 

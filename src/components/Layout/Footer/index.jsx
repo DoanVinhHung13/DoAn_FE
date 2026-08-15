@@ -43,7 +43,7 @@ const PublicFooter = () => {
                             </div>
                         </div>
                         <Paragraph className="text-gray-400 max-w-sm leading-relaxed">
-                            Hệ thống số hóa nhật ký canh tác & truy xuất nguồn gốc nông sản. Giúp trang trại và hợp tác xã quản lý toàn bộ quy trình sản xuất minh bạch và hiệu quả.
+                            Hệ thống số hóa nhật ký canh tác & truy xuất nguồn gốc nông sản. Giúp nông trại và hợp tác xã quản lý toàn bộ quy trình sản xuất minh bạch và hiệu quả.
                         </Paragraph>
 
                         <div className="space-y-3 pt-4">
