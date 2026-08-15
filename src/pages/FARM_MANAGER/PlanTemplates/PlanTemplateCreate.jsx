@@ -83,7 +83,7 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
   const hasNameSpaceError = Boolean(trimmedName && trimmedName !== trimmedName.replace(/\s+/g, ' '))
 
   const hasEmptyDescError = touched && !trimmedDesc
-  const hasDescLengthError = trimmedDesc.length > 500
+  const hasDescLengthError = trimmedDesc.length > 200
   const hasDescSpaceError = Boolean(trimmedDesc && trimmedDesc !== trimmedDesc.replace(/\s+/g, ' '))
 
   const hasNameError = hasEmptyNameError || hasNameLengthError || hasNameSpaceError
@@ -152,7 +152,7 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
       )}
       {hasDescLengthError && (
         <p className="mt-0.5 mb-0 text-xs text-red-500">
-          Mô tả công việc không được vượt quá 500 ký tự.
+        Mô tả công việc không được vượt quá 200 ký tự.
         </p>
       )}
       {hasDescSpaceError && !hasDescLengthError && (
@@ -404,8 +404,12 @@ const PlanTemplateCreate = () => {
       message.error("Vui lòng nhập mô tả công việc cho tất cả các bước quy trình.")
       return
     }
-    if (normalizedSteps.some(step => step.description.length > 500)) {
-      message.error("Mô tả bước quy trình không được vượt quá 500 ký tự.")
+    if (normalizedSteps.some(step => step.description.length > 200)) {
+      message.error("Mô tả bước quy trình không được vượt quá 200 ký tự.")
+      return
+    }
+    if (normalizedSteps.some(step => !step.description.trim())) {
+      message.error("Mô tả bước quy trình không được chỉ chứa khoảng trắng.")
       return
     }
     if (normalizedSteps.some(step => step.description !== step.description.replace(/\s+/g, ' '))) {
@@ -498,6 +502,8 @@ const PlanTemplateCreate = () => {
                   ]}
                 >
                   <Input
+                    maxLength={100}
+                    showCount
                     placeholder="Ví dụ: Quy trình trồng ngô ngọt"
                     className="h-10"
                   />
@@ -579,9 +585,9 @@ const PlanTemplateCreate = () => {
                       validator: (_, value) => {
                         if (!value) return Promise.resolve();
                         const trimmed = value.trim();
-                        if (!trimmed) return Promise.resolve();
-                        if (trimmed.length > 500) {
-                          return Promise.reject(new Error("Mô tả không được vượt quá 500 ký tự."));
+                        if (!trimmed) return Promise.reject(new Error("Mô tả không được chỉ chứa khoảng trắng."));
+                        if (trimmed.length > 200) {
+                          return Promise.reject(new Error("Mô tả không được vượt quá 200 ký tự."));
                         }
                         if (trimmed !== trimmed.replace(/\s+/g, " ")) {
                           return Promise.reject(new Error("Mô tả không được chứa nhiều khoảng trắng liên tiếp."));
@@ -593,6 +599,7 @@ const PlanTemplateCreate = () => {
                 >
                   <Input.TextArea
                     rows={3}
+                    maxLength={200}
                     showCount
                     placeholder="Mô tả mục tiêu và phạm vi áp dụng của mẫu..."
                   />

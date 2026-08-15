@@ -507,7 +507,7 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
                             Cập nhật bởi {entry.updatedBy}
                           </Text>
                           {entry.description && (
-                            <Paragraph className="!mb-1 !mt-2 text-slate-700 text-xs sm:text-sm whitespace-pre-wrap">
+                            <Paragraph className="!mb-1 !mt-2 min-w-0 max-w-full text-slate-700 text-xs sm:text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                               {entry.description}
                             </Paragraph>
                           )}

@@ -256,7 +256,7 @@ const NotificationDetail = () => {
               Nội dung thông báo
             </Text>
           </div>
-          <Paragraph className="!mb-0 whitespace-pre-wrap !text-[15px] !leading-7 text-gray-700">
+          <Paragraph className="!mb-0 min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] !text-[15px] !leading-7 text-gray-700">
             {content || 'Thông báo này không có nội dung.'}
           </Paragraph>
         </div>

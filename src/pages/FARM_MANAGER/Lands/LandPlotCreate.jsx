@@ -166,8 +166,8 @@ const LandPlotCreate = () => {
               height={520}
               overlapPlots={existingPlots}
               onPolygonChange={handlePolygonChange}
-              onAddressSelect={({ address }) => {
-                if (address) form.setFieldsValue({ address })
+              onAddressSelect={({ address, latitude, longitude }) => {
+                if (address) form.setFieldsValue({ address, latitude, longitude })
               }}
             />
           </Card>

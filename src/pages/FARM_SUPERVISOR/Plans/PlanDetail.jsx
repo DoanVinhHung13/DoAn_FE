@@ -289,7 +289,7 @@ const FarmSupervisorPlanDetail = () => {
               <span className="font-semibold text-red-700">Lý do từ chối duyệt</span>
             }
             description={
-              <span className="text-red-600 whitespace-pre-line">{plan.rejectionReason}</span>
+              <span className="text-red-600 whitespace-pre-line break-words [overflow-wrap:anywhere]">{plan.rejectionReason}</span>
             }
           />
         )}

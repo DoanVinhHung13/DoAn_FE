@@ -15,6 +15,8 @@ const LandPlotFormFields = ({
   disabled = false,
 }) => {
   return <>
+    <Form.Item name="latitude" hidden><Input /></Form.Item>
+    <Form.Item name="longitude" hidden><Input /></Form.Item>
     <Form.Item
       label="Tên vùng trồng"
       name="name"
@@ -123,9 +125,9 @@ const LandPlotFormFields = ({
           validator: (_, value) => {
             if (!value) return Promise.resolve();
             const trimmed = value.trim();
-            if (!trimmed) return Promise.resolve();
-            if (trimmed.length > 500) {
-              return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+            if (!trimmed) return Promise.reject(new Error('Mô tả không được chỉ chứa khoảng trắng'));
+            if (trimmed.length > 200) {
+              return Promise.reject(new Error('Mô tả không được vượt quá 200 ký tự.'));
             }
             if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
               return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
@@ -135,7 +137,7 @@ const LandPlotFormFields = ({
         },
       ]}
     >
-      <Input.TextArea disabled={disabled} rows={3} placeholder="Ghi chú thêm về vùng trồng" />
+      <Input.TextArea disabled={disabled} rows={3} maxLength={200} showCount placeholder="Ghi chú thêm về vùng trồng" />
     </Form.Item>
   </>
 }

@@ -190,7 +190,7 @@ const CatalogDetail = () => {
                 }
                 className="rounded-lg shadow-sm"
               >
-                <Paragraph className="mb-0 whitespace-pre-wrap text-gray-700">
+                <Paragraph className="mb-0 min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-gray-700">
                   {catalogDetail.description}
                 </Paragraph>
               </Card>

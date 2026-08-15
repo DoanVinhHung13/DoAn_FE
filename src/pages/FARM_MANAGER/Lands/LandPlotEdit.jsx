@@ -231,8 +231,8 @@ const LandPlotEdit = () => {
               excludePlotId={id}
               overlapPlots={existingPlots}
               onPolygonChange={handlePolygonChange}
-              onAddressSelect={({ address }) => {
-                if (address) form.setFieldsValue({ address })
+              onAddressSelect={({ address, latitude, longitude }) => {
+                if (address) form.setFieldsValue({ address, latitude, longitude })
               }}
             />
           </Card>

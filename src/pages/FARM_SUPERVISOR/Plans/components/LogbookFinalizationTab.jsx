@@ -375,8 +375,13 @@ const SummaryCompilePanel = ({
   const harvestArea = Number(leaderSummary?.totalHarvestedArea || 0)
 
   const handleSave = async () => {
-    if (!description?.trim()) {
+    const normalizedDescription = description?.trim() || ""
+    if (!normalizedDescription) {
       message.error("Vui lòng nhập mô tả mới.")
+      return
+    }
+    if (normalizedDescription.length > 200) {
+      message.error("Mô tả tổng hợp không được vượt quá 200 ký tự.")
       return
     }
     try {
@@ -389,7 +394,7 @@ const SummaryCompilePanel = ({
         return
       }
 
-      await saveCompiledDescription(targetStageId, taskId, description.trim())
+      await saveCompiledDescription(targetStageId, taskId, normalizedDescription)
       onSaved?.()
     } catch {
       // axios interceptor handles error notification
@@ -603,7 +608,7 @@ const SummaryCompilePanel = ({
           <div className="mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
             Mô tả từ người phụ trách
           </div>
-          <div className="p-3 text-sm font-medium text-blue-900 whitespace-pre-wrap border border-blue-100 rounded-lg bg-blue-50">
+          <div className="min-w-0 max-w-full p-3 text-sm font-medium text-blue-900 whitespace-pre-wrap break-words [overflow-wrap:anywhere] border border-blue-100 rounded-lg bg-blue-50">
             {leaderSummary?.leaderSubmittedDescription ||
               leaderSummary?.descriptionSummary ||
               leaderSummary?.description ||
@@ -626,6 +631,8 @@ const SummaryCompilePanel = ({
         </div>
         <TextArea
           rows={5}
+          maxLength={200}
+          showCount
           value={description}
           onChange={e => setDescription(e.target.value)}
           placeholder="Nhập mô tả chuẩn để lưu vào nhật ký..."
@@ -681,6 +688,14 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
       setSavingEdit(true)
       const logId = editModal.log.id
       const newDesc = editModal.description?.trim() || ""
+      if (!newDesc) {
+        message.error("Mô tả nhật ký không được để trống hoặc chỉ chứa khoảng trắng.")
+        return
+      }
+      if (newDesc.length > 200) {
+        message.error("Mô tả nhật ký không được vượt quá 200 ký tự.")
+        return
+      }
 
       if (CultivationLogService.patchDescription) {
         await CultivationLogService.patchDescription(logId, {
@@ -1099,7 +1114,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                             <div className="text-[11px] font-bold text-green-800 uppercase mb-1">
                               Mô tả nhật ký:
                             </div>
-                            <p className="m-0 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap">
+                            <p className="m-0 min-w-0 max-w-full text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                               {description}
                             </p>
                           </div>
@@ -1121,7 +1136,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                                 )}{' '}
                                 {isHarvestMaterialsText ? 'Sản lượng:' : 'Vật tư sử dụng:'}
                               </div>
-                              <p className={`m-0 text-sm leading-relaxed whitespace-pre-wrap ${isHarvestMaterialsText ? 'text-emerald-700' : 'text-gray-700'
+                              <p className={`m-0 min-w-0 max-w-full text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${isHarvestMaterialsText ? 'text-emerald-700' : 'text-gray-700'
                                 }`}>
                                 {materialsText}
                               </p>
@@ -1273,6 +1288,8 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
 
             <Input.TextArea
               rows={4}
+              maxLength={200}
+              showCount
               value={editModal.description}
               onChange={e =>
                 setEditModal(prev => ({ ...prev, description: e.target.value }))

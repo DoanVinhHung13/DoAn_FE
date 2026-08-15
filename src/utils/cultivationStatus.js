@@ -100,7 +100,7 @@ export const toFilterOptions = (systemKeyOptions = [], allLabel = 'Tất cả tr
         value: optionValue(opt),
         label: optionLabel(opt) || String(optionValue(opt) ?? ''),
       }))
-      .filter((opt) => opt.value != null && opt.value !== ''),
+      .filter((opt) => opt.value != null && opt.value !== '' && !['CANCELLED', 'CANCELED'].includes(String(opt.value).toUpperCase())),
   ]
 }
 
@@ -109,7 +109,6 @@ export const LOGBOOK_STATUS_FILTER_OPTIONS = [
   { value: 'PLANNED', label: 'Kế hoạch' },
   { value: 'IN_PROGRESS', label: 'Đang thực hiện' },
   { value: 'COMPLETED', label: 'Đã hoàn thành' },
-  { value: 'CANCELLED', label: 'Đã hủy' },
 ]
 
 export const CLOSING_STATUS_FILTER_OPTIONS = [

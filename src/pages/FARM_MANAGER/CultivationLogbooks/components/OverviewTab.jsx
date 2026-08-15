@@ -112,7 +112,7 @@ const OverviewTab = ({ item }) => {
                     </p>
                   )}
                   {getStageNote(stage) && (
-                    <p className="mt-2 mb-0 text-sm leading-relaxed text-gray-600 whitespace-pre-wrap">
+                    <p className="mt-2 mb-0 min-w-0 max-w-full text-sm leading-relaxed text-gray-600 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                       {getStageNote(stage)}
                     </p>
                   )}
@@ -131,7 +131,7 @@ const OverviewTab = ({ item }) => {
       {/* Mô tả nhật ký */}
       <Card bordered={false} className="shadow-sm rounded-2xl">
         <SectionTitle>Mô tả nhật ký</SectionTitle>
-        <div className="text-sm leading-6 text-gray-600 whitespace-pre-wrap">
+        <div className="min-w-0 max-w-full text-sm leading-6 text-gray-600 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
           {item.description || (
             <span className="italic text-gray-400">
               Chưa có mô tả cho nhật ký này.

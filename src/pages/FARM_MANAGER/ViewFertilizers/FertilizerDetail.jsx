@@ -289,7 +289,7 @@ const FertilizerDetail = () => {
                 <p className="mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                   Mô tả
                 </p>
-                <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line m-0">
+                <p className="min-w-0 max-w-full text-sm leading-relaxed text-gray-700 whitespace-pre-line break-words [overflow-wrap:anywhere] m-0">
                   {item.description}
                 </p>
               </div>

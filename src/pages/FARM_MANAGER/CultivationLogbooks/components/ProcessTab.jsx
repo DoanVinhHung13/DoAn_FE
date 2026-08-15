@@ -131,7 +131,7 @@ const DailyLogCard = ({ log, index }) => {
         {description && (
           <div className="mb-4">
             <p className="mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nội dung công việc</p>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap mb-0 bg-gray-50 p-3 rounded-lg border border-gray-100">{description}</p>
+            <p className="min-w-0 max-w-full text-sm text-gray-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere] mb-0 bg-gray-50 p-3 rounded-lg border border-gray-100">{description}</p>
           </div>
         )}
 

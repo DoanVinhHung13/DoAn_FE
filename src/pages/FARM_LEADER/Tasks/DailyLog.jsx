@@ -631,7 +631,7 @@ const DailyLog = () => {
               )}
             </div>
             {task.description && (
-              <div className="mt-2 text-sm text-gray-600">
+              <div className="mt-2 min-w-0 max-w-full text-sm text-gray-600 break-words [overflow-wrap:anywhere]">
                 {task.description}
               </div>
             )}
@@ -790,10 +790,22 @@ const DailyLog = () => {
                   <Form.Item
                     name="description"
                     label="Chi tiết công việc"
-                    rules={[{ required: true, message: "Nhập mô tả" }]}
+                    rules={[
+                      { required: true, message: "Nhập mô tả" },
+                      {
+                        validator: (_, value) => {
+                          const text = typeof value === "string" ? value.trim() : ""
+                          if (!text) return Promise.reject(new Error("Chi tiết công việc không được để trống hoặc chỉ chứa khoảng trắng."))
+                          if (text.length > 200) return Promise.reject(new Error("Chi tiết công việc không được vượt quá 200 ký tự."))
+                          return Promise.resolve()
+                        },
+                      },
+                    ]}
                   >
                     <TextArea
                       rows={3}
+                      maxLength={200}
+                      showCount
                       placeholder="Mô tả tình hình cây trồng, vấn đề phát sinh..."
                       disabled={isViewOnly}
                     />
@@ -1411,7 +1423,7 @@ const DailyLog = () => {
                             </span>
                           </div>
                           {log.description && (
-                            <p className="text-sm m-0 mt-1.5 text-gray-700 font-medium leading-relaxed">
+                            <p className="min-w-0 max-w-full text-sm m-0 mt-1.5 text-gray-700 font-medium leading-relaxed break-words [overflow-wrap:anywhere]">
                               {log.description}
                             </p>
                           )}
@@ -2041,11 +2053,19 @@ const DailyLog = () => {
                   </span>
                 }
                 rules={
-                  task.status !== "WAITING_APPROVAL"
+                    task.status !== "WAITING_APPROVAL"
                     ? [
                       {
                         required: true,
                         message: "Vui lòng viết mô tả tổng kết",
+                      },
+                      {
+                        validator: (_, value) => {
+                          const text = typeof value === "string" ? value.trim() : ""
+                          if (!text) return Promise.reject(new Error("Mô tả tổng kết không được để trống hoặc chỉ chứa khoảng trắng."))
+                          if (text.length > 200) return Promise.reject(new Error("Mô tả tổng kết không được vượt quá 200 ký tự."))
+                          return Promise.resolve()
+                        },
                       },
                     ]
                     : []
@@ -2053,6 +2073,8 @@ const DailyLog = () => {
               >
                 <TextArea
                   rows={3}
+                  maxLength={200}
+                  showCount
                   placeholder="VD: Đã hoàn thành công việc phun nông dược theo kế hoạch, cây trồng phát triển tốt…"
                   disabled={task.status === "WAITING_APPROVAL"}
                 />

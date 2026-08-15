@@ -266,7 +266,7 @@ const LogEntry = ({ log }) => {
         )}
 
         {description && (
-          <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+          <Paragraph className="!mb-1 !mt-0 min-w-0 max-w-full text-sm text-gray-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed">
             {description}
           </Paragraph>
         )}
@@ -285,7 +285,7 @@ const LogEntry = ({ log }) => {
               )}
               {isHarvestMaterialsText ? 'Sản lượng:' : 'Vật tư sử dụng:'}
             </div>
-            <Paragraph className={`!mb-0 !mt-0 text-sm whitespace-pre-wrap leading-relaxed ${isHarvestMaterialsText ? 'text-emerald-700' : 'text-gray-700'
+            <Paragraph className={`!mb-0 !mt-0 min-w-0 max-w-full text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed ${isHarvestMaterialsText ? 'text-emerald-700' : 'text-gray-700'
               }`}>
               {materialsText}
             </Paragraph>
@@ -504,14 +504,19 @@ const LogbookReview = () => {
   }
 
   const handleReject = async () => {
-    if (!rejectReason.trim()) {
+    const reason = rejectReason.trim()
+    if (!reason) {
       message.warning("Vui lòng nhập lý do từ chối.")
+      return
+    }
+    if (reason.length > 200) {
+      message.warning("Lý do từ chối không được vượt quá 200 ký tự.")
       return
     }
     try {
       setRejecting(true)
       await CultivationLogbookService.rejectCompletion(id, {
-        reason: rejectReason.trim(),
+        reason,
       })
       navigate(ROUTER.FM_LOGBOOKS)
     } catch {
@@ -761,6 +766,8 @@ const LogbookReview = () => {
         />
         <Input.TextArea
           rows={4}
+          maxLength={200}
+          showCount
           value={rejectReason}
           onChange={e => setRejectReason(e.target.value)}
           placeholder="Lý do từ chối..."

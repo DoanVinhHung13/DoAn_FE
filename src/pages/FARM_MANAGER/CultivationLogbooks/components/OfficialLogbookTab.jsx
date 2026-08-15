@@ -289,14 +289,14 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
 
                             {/* 2. Mô tả */}
                             {description && (
-                              <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                              <Paragraph className="!mb-1 !mt-0 min-w-0 max-w-full text-sm text-gray-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed">
                                 {description}
                               </Paragraph>
                             )}
 
                             {/* 3. Materials text */}
                             {materialsText && (
-                              <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                              <Paragraph className="!mb-1 !mt-0 min-w-0 max-w-full text-sm text-gray-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed">
                                 {materialsText}
                               </Paragraph>
                             )}

@@ -605,8 +605,8 @@ const CultivationLogbookCreate = () => {
       return
     }
 
-    if (stages.some((stage) => stage.description && stage.description.trim().length > 500)) {
-      message.warning('Mô tả giai đoạn không được vượt quá 500 ký tự.')
+    if (stages.some((stage) => stage.description && stage.description.trim().length > 200)) {
+      message.warning('Mô tả giai đoạn không được vượt quá 200 ký tự.')
       return
     }
 
@@ -823,15 +823,15 @@ const CultivationLogbookCreate = () => {
                     validator: (_, value) => {
                       if (!value) return Promise.resolve();
                       const trimmed = value.trim();
-                      if (!trimmed) return Promise.resolve();
-                      if (trimmed.length > 500) return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+                      if (!trimmed) return Promise.reject(new Error('Mô tả nhật ký không được chỉ chứa khoảng trắng.'));
+                      if (trimmed.length > 200) return Promise.reject(new Error('Mô tả không được vượt quá 200 ký tự.'));
                       if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
                       return Promise.resolve();
                     },
                   },
                 ]}
               >
-                <Input.TextArea rows={3} placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..." disabled={!canEditGeneralInfo} showCount />
+                <Input.TextArea rows={3} maxLength={200} placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..." disabled={!canEditGeneralInfo} showCount />
               </Form.Item>
             </Col>
           </Row>
@@ -887,6 +887,7 @@ const CultivationLogbookCreate = () => {
                       value={stage.description}
                       onChange={(e) => updateStage(index, 'description', e.target.value)}
                       rows={2}
+                      maxLength={200}
                       placeholder="Mô tả chi tiết công việc cần thực hiện trong giai đoạn này..."
                       disabled={!canEditStages}
                     />
@@ -895,12 +896,12 @@ const CultivationLogbookCreate = () => {
                         Vui lòng nhập mô tả công việc cần làm.
                       </p>
                     )}
-                    {stage.description?.trim() && stage.description.trim().length > 500 && (
+                    {stage.description?.trim() && stage.description.trim().length > 200 && (
                       <p className="mt-0.5 mb-0 text-xs text-red-500">
-                        Mô tả giai đoạn không được vượt quá 500 ký tự.
+                        Mô tả giai đoạn không được vượt quá 200 ký tự.
                       </p>
                     )}
-                    {stage.description?.trim() && stage.description.trim() !== stage.description.trim().replace(/\s+/g, ' ') && stage.description.trim().length <= 500 && (
+                    {stage.description?.trim() && stage.description.trim() !== stage.description.trim().replace(/\s+/g, ' ') && stage.description.trim().length <= 200 && (
                       <p className="mt-0.5 mb-0 text-xs text-red-500">
                         Mô tả giai đoạn không được chứa nhiều khoảng trắng liên tiếp.
                       </p>

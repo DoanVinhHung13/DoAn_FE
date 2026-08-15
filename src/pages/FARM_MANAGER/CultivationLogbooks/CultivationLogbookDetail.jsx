@@ -183,7 +183,7 @@ const CultivationLogbookDetail = () => {
             </div>
 
             {(item.description || item.note) && (
-              <p className="mb-2 text-sm text-gray-600 whitespace-pre-wrap">
+              <p className="mb-2 min-w-0 max-w-full text-sm text-gray-600 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                 {item.description || item.note}
               </p>
             )}

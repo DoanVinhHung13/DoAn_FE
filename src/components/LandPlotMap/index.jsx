@@ -575,6 +575,9 @@ const LandPlotMap = ({
       (pos) => {
         const { latitude, longitude } = pos.coords
         setSearchError('')
+        const fallbackAddress = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+        setSearchQuery(fallbackAddress)
+        onAddressSelectRef.current?.({ address: fallbackAddress, latitude, longitude })
         mapInstance.current.flyTo([latitude, longitude], SEARCH_ZOOM)
         clearLocateMarker()
         locateMarkerRef.current = L.marker([latitude, longitude])
@@ -583,6 +586,16 @@ const LandPlotMap = ({
             `Vị trí hiện tại<br/>${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
           )
           .openPopup()
+        reverseGeocode(latitude, longitude)
+          .then((address) => {
+            if (address) {
+              setSearchQuery(address)
+              onAddressSelectRef.current?.({ address, latitude, longitude })
+            }
+          })
+          .catch(() => {
+            // Tọa độ GPS vẫn hợp lệ nếu reverse geocoding không thành công.
+          })
       },
       () => {
         setSearchError('Không thể định vị GPS. Hãy dùng tìm kiếm địa chỉ.')

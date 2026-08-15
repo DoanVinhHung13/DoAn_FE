@@ -117,8 +117,8 @@ const CatalogCreate = () => {
                   if (!trimmed) {
                     return Promise.reject(new Error('Mô tả không được chỉ chứa khoảng trắng.'));
                   }
-                  if (trimmed.length > 500) {
-                    return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+                  if (trimmed.length > 200) {
+                    return Promise.reject(new Error('Mô tả không được vượt quá 200 ký tự.'));
                   }
                   if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
                     return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
@@ -130,6 +130,8 @@ const CatalogCreate = () => {
           >
             <Input.TextArea
               rows={4}
+              maxLength={200}
+              showCount
               className="rounded-lg"
               placeholder="Nhập mô tả danh mục cây trồng"
             />

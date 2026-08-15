@@ -239,7 +239,7 @@ const PlanTemplateDetail = () => {
                       </div> */}
                     </div>
 
-                    <p className="m-0 whitespace-pre-line text-sm leading-5 text-gray-600">
+                    <p className="m-0 min-w-0 max-w-full whitespace-pre-line break-words [overflow-wrap:anywhere] text-sm leading-5 text-gray-600">
                       {step.description || 'Chưa có mô tả công việc.'}
                     </p>
 
@@ -248,7 +248,7 @@ const PlanTemplateDetail = () => {
                         <span className="shrink-0 font-semibold text-amber-700">
                           Ghi chú:
                         </span>
-                        <p className="m-0 whitespace-pre-line leading-5 text-amber-900">
+                        <p className="m-0 min-w-0 max-w-full whitespace-pre-line break-words [overflow-wrap:anywhere] leading-5 text-amber-900">
                           {step.note}
                         </p>
                       </div>
