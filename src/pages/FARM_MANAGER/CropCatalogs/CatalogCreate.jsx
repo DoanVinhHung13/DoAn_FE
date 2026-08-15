@@ -92,7 +92,7 @@ const CatalogCreate = () => {
               },
             ]}
           >
-            <Input className="h-11 rounded-lg" placeholder="Nhập tên loại cây trồng" maxLength={100} />
+            <Input className="h-11 rounded-lg" placeholder="Nhập tên loại cây trồng" />
           </Form.Item>
 
           <Form.Item 
@@ -119,7 +119,6 @@ const CatalogCreate = () => {
               rows={4}
               className="rounded-lg"
               placeholder="Nhập mô tả danh mục cây trồng"
-              maxLength={500}
             />
           </Form.Item>
 

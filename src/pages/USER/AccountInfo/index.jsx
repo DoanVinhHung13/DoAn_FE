@@ -313,13 +313,15 @@ const AccountInfo = () => {
                         rules={[
                           {
                             required: true,
-                            whitespace: true,
                             message: "Vui lòng nhập họ và tên.",
                           },
                           {
                             validator: (_, value) => {
                               if (!value) return Promise.resolve();
                               const trimmed = value.trim();
+                              if (!trimmed) {
+                                return Promise.reject(new Error("Họ và tên không được chỉ chứa khoảng trắng."));
+                              }
                               if (trimmed.length < 2) {
                                 return Promise.reject(new Error("Họ và tên phải có ít nhất 2 ký tự."));
                               }
@@ -340,7 +342,6 @@ const AccountInfo = () => {
                         <Input
                           prefix={<UserOutlined className="text-gray-300" />}
                           className="h-11"
-                          maxLength={100}
                         />
                       </Form.Item>
                     </Col>
@@ -383,7 +384,6 @@ const AccountInfo = () => {
                         <Input
                           prefix={<PhoneOutlined className="text-gray-300" />}
                           className="h-11"
-                          maxLength={100}
                         />
                       </Form.Item>
                     </Col>
@@ -479,7 +479,7 @@ const AccountInfo = () => {
                           },
                         ]}
                       >
-                        <AddressSelectorField maxLength={500} />
+                        <AddressSelectorField />
                       </Form.Item>
                     </Col>
                   </Row>

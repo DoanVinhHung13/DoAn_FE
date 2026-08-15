@@ -18,7 +18,6 @@ const LandPlotFormFields = ({
     <Form.Item
       label="Tên vùng trồng"
       name="name"
-      normalize={(val) => (typeof val === 'string' ? val.replace(/^\s+/, '') : val)}
       rules={[
         { required: true, message: 'Vui lòng nhập tên vùng trồng' },
         {
@@ -39,7 +38,7 @@ const LandPlotFormFields = ({
         },
       ]}
     >
-      <Input disabled={disabled} placeholder="Ví dụ: Lô A1" maxLength={100} />
+      <Input disabled={disabled} placeholder="Ví dụ: Lô A1" />
     </Form.Item>
 
     <Form.Item
@@ -65,7 +64,7 @@ const LandPlotFormFields = ({
         },
       ]}
     >
-      <AddressSelectorField disabled={disabled} maxLength={500} />
+      <AddressSelectorField disabled={disabled} />
     </Form.Item>
 
     <Row gutter={12}>
@@ -116,7 +115,7 @@ const LandPlotFormFields = ({
         },
       ]}
     >
-      <Input.TextArea disabled={disabled} rows={3} placeholder="Ghi chú thêm về vùng trồng" maxLength={500} />
+      <Input.TextArea disabled={disabled} rows={3} placeholder="Ghi chú thêm về vùng trồng" />
     </Form.Item>
   </>
 }

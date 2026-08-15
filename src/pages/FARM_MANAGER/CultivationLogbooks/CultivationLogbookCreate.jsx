@@ -568,6 +568,26 @@ const CultivationLogbookCreate = () => {
       return
     }
 
+    if (stages.some((stage) => stage.title.trim().length > 100)) {
+      message.warning('Tên giai đoạn không được vượt quá 100 ký tự.')
+      return
+    }
+
+    if (stages.some((stage) => stage.title.trim() !== stage.title.trim().replace(/\s+/g, ' '))) {
+      message.warning('Tên giai đoạn không được chứa nhiều khoảng trắng liên tiếp.')
+      return
+    }
+
+    if (stages.some((stage) => stage.description && stage.description.trim().length > 500)) {
+      message.warning('Mô tả giai đoạn không được vượt quá 500 ký tự.')
+      return
+    }
+
+    if (stages.some((stage) => stage.description && stage.description.trim() !== stage.description.trim().replace(/\s+/g, ' '))) {
+      message.warning('Mô tả giai đoạn không được chứa nhiều khoảng trắng liên tiếp.')
+      return
+    }
+
     if (stages.some((stage) => stage.startDate && stage.endDate && stage.startDate.isAfter(stage.endDate))) {
       message.warning('Ngày bắt đầu không được sau ngày kết thúc trong bất kỳ giai đoạn nào.')
       return
@@ -681,7 +701,7 @@ const CultivationLogbookCreate = () => {
                   },
                 ]}
               >
-                <Input placeholder="VD: Vụ Đông Xuân 2026 - Lúa ST25" disabled={!canEditGeneralInfo} maxLength={100} />
+                <Input placeholder="VD: Vụ Đông Xuân 2026 - Lúa ST25" disabled={!canEditGeneralInfo} />
               </Form.Item>
             </Col>
             <Col xs={24} md={12} lg={8}>
@@ -783,7 +803,7 @@ const CultivationLogbookCreate = () => {
                   },
                 ]}
               >
-                <Input.TextArea rows={3} placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..." disabled={!canEditGeneralInfo} maxLength={500} showCount />
+                <Input.TextArea rows={3} placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..." disabled={!canEditGeneralInfo} showCount />
               </Form.Item>
             </Col>
           </Row>
@@ -820,8 +840,17 @@ const CultivationLogbookCreate = () => {
                       onChange={(e) => updateStage(index, 'title', e.target.value)}
                       placeholder="VD: Chuẩn bị đất & Xuống giống"
                       disabled={!canEditStages}
-                      maxLength={100}
                     />
+                    {stage.title?.trim() && stage.title.trim().length > 100 && (
+                      <p className="mt-0.5 mb-0 text-xs text-red-500">
+                        Tên giai đoạn không được vượt quá 100 ký tự.
+                      </p>
+                    )}
+                    {stage.title?.trim() && stage.title.trim() !== stage.title.trim().replace(/\s+/g, ' ') && stage.title.trim().length <= 100 && (
+                      <p className="mt-0.5 mb-0 text-xs text-red-500">
+                        Tên giai đoạn không được chứa nhiều khoảng trắng liên tiếp.
+                      </p>
+                    )}
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={24}>
@@ -832,8 +861,17 @@ const CultivationLogbookCreate = () => {
                       rows={2}
                       placeholder="Mô tả chi tiết công việc cần thực hiện trong giai đoạn này..."
                       disabled={!canEditStages}
-                      maxLength={500}
                     />
+                    {stage.description?.trim() && stage.description.trim().length > 500 && (
+                      <p className="mt-0.5 mb-0 text-xs text-red-500">
+                        Mô tả giai đoạn không được vượt quá 500 ký tự.
+                      </p>
+                    )}
+                    {stage.description?.trim() && stage.description.trim() !== stage.description.trim().replace(/\s+/g, ' ') && stage.description.trim().length <= 500 && (
+                      <p className="mt-0.5 mb-0 text-xs text-red-500">
+                        Mô tả giai đoạn không được chứa nhiều khoảng trắng liên tiếp.
+                      </p>
+                    )}
                   </Form.Item>
                 </Col>
               </Row>

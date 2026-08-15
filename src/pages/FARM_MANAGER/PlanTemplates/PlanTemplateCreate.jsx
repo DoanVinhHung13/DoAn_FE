@@ -75,11 +75,23 @@ const createEmptyStep = order => ({
 
 const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
   const [touched, setTouched] = useState(false)
-  const hasError = touched && !step.stepName?.trim()
+  const trimmedName = step.stepName?.trim() || ''
+  const trimmedDesc = step.description?.trim() || ''
+
+  const hasEmptyNameError = touched && !trimmedName
+  const hasNameLengthError = trimmedName.length > 100
+  const hasNameSpaceError = Boolean(trimmedName && trimmedName !== trimmedName.replace(/\s+/g, ' '))
+
+  const hasDescLengthError = trimmedDesc.length > 500
+  const hasDescSpaceError = Boolean(trimmedDesc && trimmedDesc !== trimmedDesc.replace(/\s+/g, ' '))
+
+  const hasNameError = hasEmptyNameError || hasNameLengthError || hasNameSpaceError
+  const hasDescError = hasDescLengthError || hasDescSpaceError
+
   return (
     <div
       className={`p-4 border rounded-xl transition-colors ${
-        hasError
+        hasNameError || hasDescError
           ? "border-red-300 bg-red-50/30"
           : "border-gray-100 bg-gray-50 hover:border-green-200"
       }`}
@@ -94,12 +106,21 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
             onChange={e => updateStep(index, "stepName", e.target.value)}
             onBlur={() => setTouched(true)}
             placeholder={`Tên bước ${index + 1} (bắt buộc)`}
-            maxLength={100}
-            className={`font-semibold ${hasError ? "border-red-400 focus:border-red-500" : ""}`}
+            className={`font-semibold ${hasNameError ? "border-red-400 focus:border-red-500" : ""}`}
           />
-          {hasError && (
+          {hasEmptyNameError && (
             <p className="mt-0.5 mb-0 text-xs text-red-500">
               Vui lòng nhập tên bước
+            </p>
+          )}
+          {hasNameLengthError && (
+            <p className="mt-0.5 mb-0 text-xs text-red-500">
+              Tên bước không được vượt quá 100 ký tự.
+            </p>
+          )}
+          {hasNameSpaceError && !hasNameLengthError && (
+            <p className="mt-0.5 mb-0 text-xs text-red-500">
+              Tên bước không được chứa nhiều khoảng trắng liên tiếp.
             </p>
           )}
         </div>
@@ -121,8 +142,18 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
         value={step.description}
         onChange={e => updateStep(index, "description", e.target.value)}
         placeholder="Mô tả cách thực hiện bước này..."
-        maxLength={500}
+        className={hasDescError ? "border-red-400 focus:border-red-500" : ""}
       />
+      {hasDescLengthError && (
+        <p className="mt-0.5 mb-0 text-xs text-red-500">
+          Mô tả công việc không được vượt quá 500 ký tự.
+        </p>
+      )}
+      {hasDescSpaceError && !hasDescLengthError && (
+        <p className="mt-0.5 mb-0 text-xs text-red-500">
+          Mô tả công việc không được chứa nhiều khoảng trắng liên tiếp.
+        </p>
+      )}
     </div>
   )
 }
@@ -325,10 +356,27 @@ const PlanTemplateCreate = () => {
     const normalizedSteps = steps.map((step, index) => ({
       ...step,
       stepOrder: index + 1,
-      stepName: step.stepName?.trim(),
+      stepName: step.stepName?.trim() || '',
+      description: step.description?.trim() || '',
     }))
     if (normalizedSteps.some(step => !step.stepName)) {
       message.error("Vui lòng nhập tên cho tất cả các bước quy trình.")
+      return
+    }
+    if (normalizedSteps.some(step => step.stepName.length > 100)) {
+      message.error("Tên bước quy trình không được vượt quá 100 ký tự.")
+      return
+    }
+    if (normalizedSteps.some(step => step.stepName !== step.stepName.replace(/\s+/g, ' '))) {
+      message.error("Tên bước quy trình không được chứa nhiều khoảng trắng liên tiếp.")
+      return
+    }
+    if (normalizedSteps.some(step => step.description.length > 500)) {
+      message.error("Mô tả bước quy trình không được vượt quá 500 ký tự.")
+      return
+    }
+    if (normalizedSteps.some(step => step.description !== step.description.replace(/\s+/g, ' '))) {
+      message.error("Mô tả bước quy trình không được chứa nhiều khoảng trắng liên tiếp.")
       return
     }
 
@@ -418,7 +466,6 @@ const PlanTemplateCreate = () => {
                   <Input
                     placeholder="Ví dụ: Quy trình trồng ngô ngọt"
                     className="h-10"
-                    maxLength={100}
                   />
                 </Form.Item>
               </Col>
@@ -512,7 +559,6 @@ const PlanTemplateCreate = () => {
                 >
                   <Input.TextArea
                     rows={3}
-                    maxLength={500}
                     showCount
                     placeholder="Mô tả mục tiêu và phạm vi áp dụng của mẫu..."
                   />

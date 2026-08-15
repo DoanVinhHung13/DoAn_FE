@@ -228,7 +228,6 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                 prefix={<UserOutlined className="text-gray-300" />}
                 placeholder="Nguyễn Văn A"
                 className="h-10 rounded-lg"
-                maxLength={100}
               />
             </Form.Item>
           </Col>

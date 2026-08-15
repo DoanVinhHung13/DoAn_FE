@@ -185,11 +185,14 @@ const CropCreate = () => {
                     name="name"
                     label="Tên cây trồng"
                     rules={[
-                      { required: true, whitespace: true, message: 'Vui lòng nhập tên cây trồng.' },
+                      { required: true, message: 'Vui lòng nhập tên cây trồng.' },
                       {
                         validator: (_, value) => {
                           if (!value) return Promise.resolve();
                           const trimmed = value.trim();
+                          if (!trimmed) {
+                            return Promise.reject(new Error('Tên cây trồng không được chỉ chứa khoảng trắng.'));
+                          }
                           if (trimmed.length > 100) {
                             return Promise.reject(new Error('Tên cây trồng không được vượt quá 100 ký tự.'));
                           }
@@ -201,7 +204,7 @@ const CropCreate = () => {
                       },
                     ]}
                   >
-                    <Input className="h-11 rounded-lg" placeholder="Nhập tên cây trồng" maxLength={100} />
+                    <Input className="h-11 rounded-lg" placeholder="Nhập tên cây trồng" />
                   </Form.Item>
 
                   <Form.Item
@@ -254,7 +257,7 @@ const CropCreate = () => {
                     },
                   ]}
                 >
-                  <Input.TextArea rows={4} className="rounded-lg" placeholder="Nhập mô tả" maxLength={500} />
+                  <Input.TextArea rows={4} className="rounded-lg" placeholder="Nhập mô tả" />
                 </Form.Item>
               </Card>
 

@@ -249,7 +249,6 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             <Input
               placeholder="Nhập nhà sản xuất..."
               className="h-10 rounded-xl"
-              maxLength={100}
             />
           </Form.Item>
         </Col>
@@ -324,7 +323,6 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
               rows={4}
               placeholder="Nhập mô tả chi tiết..."
               className="rounded-xl"
-              maxLength={500}
               showCount
             />
           </Form.Item>

@@ -588,12 +588,17 @@ const FarmManagerNotifications = () => {
             name="title"
             label="Tiêu đề"
             rules={[
+              { required: true, message: 'Vui lòng nhập tiêu đề thông báo.' },
               {
-                required: true,
-                whitespace: true,
-                message: 'Vui lòng nhập tiêu đề thông báo.',
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.reject(new Error('Tiêu đề thông báo không được chỉ chứa khoảng trắng.'));
+                  if (trimmed.length > 200) return Promise.reject(new Error('Tiêu đề không được vượt quá 200 ký tự.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Tiêu đề không được chứa nhiều khoảng trắng liên tiếp.'));
+                  return Promise.resolve();
+                },
               },
-              { max: 200, message: 'Tiêu đề không được vượt quá 200 ký tự.' },
             ]}
           >
             <Input className="h-11 rounded-lg" placeholder="Nhập tiêu đề thông báo" />
@@ -603,12 +608,17 @@ const FarmManagerNotifications = () => {
             name="message"
             label="Nội dung"
             rules={[
+              { required: true, message: 'Vui lòng nhập nội dung thông báo.' },
               {
-                required: true,
-                whitespace: true,
-                message: 'Vui lòng nhập nội dung thông báo.',
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.reject(new Error('Nội dung thông báo không được chỉ chứa khoảng trắng.'));
+                  if (trimmed.length > 1000) return Promise.reject(new Error('Nội dung không được vượt quá 1000 ký tự.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Nội dung không được chứa nhiều khoảng trắng liên tiếp.'));
+                  return Promise.resolve();
+                },
               },
-              { max: 1000, message: 'Nội dung không được vượt quá 1000 ký tự.' },
             ]}
           >
             <TextArea
@@ -616,7 +626,6 @@ const FarmManagerNotifications = () => {
               className="rounded-lg"
               placeholder="Nhập nội dung thông báo"
               showCount
-              maxLength={1000}
             />
           </Form.Item>
 

@@ -92,7 +92,6 @@ export const trimData = (data) => {
 
 export const FULL_NAME_RULES = [
   { required: true, message: 'Vui lòng nhập họ tên!' },
-  { whitespace: true, message: 'Họ tên không hợp lệ!' },
   {
     pattern: /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$/,
     message: 'Họ tên không được chứa số hoặc ký tự đặc biệt!'
@@ -101,6 +100,7 @@ export const FULL_NAME_RULES = [
     validator: (_, value) => {
       if (!value) return Promise.resolve();
       const trimmed = value.trim();
+      if (!trimmed) return Promise.reject(new Error('Họ tên không được chỉ chứa khoảng trắng.'));
       if (trimmed.length > 100) return Promise.reject(new Error('Họ tên không được vượt quá 100 ký tự.'));
       if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Họ tên không được chứa nhiều khoảng trắng liên tiếp.'));
       return Promise.resolve();

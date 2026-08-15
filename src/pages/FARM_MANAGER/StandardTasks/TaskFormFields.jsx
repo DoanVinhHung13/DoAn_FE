@@ -177,7 +177,6 @@ const TaskFormFields = ({ form, isEdit = false, readOnly = false, showTaskType =
             placeholder="VD: Tưới nước buổi sáng"
             className="h-10 rounded-lg"
             readOnly={readOnly}
-            maxLength={100}
           />
         </Form.Item>
       </Col>
@@ -206,7 +205,6 @@ const TaskFormFields = ({ form, isEdit = false, readOnly = false, showTaskType =
             rows={4}
             placeholder="Nhập mô tả chi tiết, quy trình thực hiện, yêu cầu kỹ thuật..."
             className="task-description-textarea rounded-lg"
-            maxLength={500}
             showCount={!readOnly}
             readOnly={readOnly}
           />

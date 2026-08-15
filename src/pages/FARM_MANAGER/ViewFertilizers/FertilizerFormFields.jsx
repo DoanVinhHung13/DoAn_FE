@@ -205,7 +205,16 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       // Unit-specific validations
       let totalPercentage = 0;
       for (const comp of components) {
-        if (!comp.name?.trim()) continue;
+        const compName = comp.name?.trim() || '';
+        if (compName.length > 100) {
+          message.error('Tên thành phần không được vượt quá 100 ký tự.');
+          return;
+        }
+        if (compName && compName !== compName.replace(/\s+/g, ' ')) {
+          message.error('Tên thành phần không được chứa nhiều khoảng trắng liên tiếp.');
+          return;
+        }
+        if (!compName) continue;
 
         let val;
         if (comp.unit === 'CFU/g') {
@@ -434,7 +443,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               },
             ]}
           >
-            <Input placeholder="Nhà Sản Xuất" className="h-10 rounded-lg" maxLength={100} />
+            <Input placeholder="Nhà Sản Xuất" className="h-10 rounded-lg" />
           </Form.Item>
         </Col>
 
@@ -542,7 +551,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               rows={3}
               placeholder="Mô Tả"
               className="rounded-lg"
-              maxLength={500}
               showCount
             />
           </Form.Item>
@@ -569,69 +577,87 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
       <div className="space-y-2 mb-3">
         {components.map((comp, index) => {
+          const trimmedCompName = comp.name?.trim() || ''
+          const hasNameLengthError = trimmedCompName.length > 100
+          const hasNameSpaceError = Boolean(trimmedCompName && trimmedCompName !== trimmedCompName.replace(/\s+/g, ' '))
+          const hasNameError = hasNameLengthError || hasNameSpaceError
+
           return (
             <div
               key={comp.id}
-              className="flex items-center gap-2 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2"
+              className={`flex flex-col rounded-lg bg-gray-50 border p-2 mb-2 ${
+                hasNameError ? 'border-red-300' : 'border-gray-100'
+              }`}
             >
-              <div style={{ flex: '1 1 140px' }}>
-                <Input
-                  value={comp.name}
-                  onChange={(e) => handleComponentChange(index, 'name', e.target.value)}
-                  placeholder="Tên thành phần"
-                  className="h-9 rounded-lg"
-                  maxLength={100}
-                />
-              </div>
-              <div style={{ flex: '1 1 100px' }}>
-                {comp.unit === 'CFU/g' ? (
-                  <div className="flex items-center gap-1 w-full bg-white border border-gray-300 rounded-lg overflow-hidden focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500 h-9 px-1">
-                    <Input
-                      type="number"
+              <div className="flex items-center gap-2">
+                <div style={{ flex: '1 1 140px' }}>
+                  <Input
+                    value={comp.name}
+                    onChange={(e) => handleComponentChange(index, 'name', e.target.value)}
+                    placeholder="Tên thành phần"
+                    className={`h-9 rounded-lg ${hasNameError ? 'border-red-400 focus:border-red-500' : ''}`}
+                  />
+                </div>
+                <div style={{ flex: '1 1 100px' }}>
+                  {comp.unit === 'CFU/g' ? (
+                    <div className="flex items-center gap-1 w-full bg-white border border-gray-300 rounded-lg overflow-hidden focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500 h-9 px-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.1}
+                        value={comp.base}
+                        onChange={(e) => handleComponentChange(index, 'base', e.target.value)}
+                        placeholder="Cơ số"
+                        className="border-none shadow-none p-1 text-center bg-transparent h-full min-w-[30px]"
+                        style={{ flex: 1, boxShadow: 'none' }}
+                      />
+                      <span className="text-gray-500 font-semibold select-none whitespace-nowrap text-xs">
+                        x 10<sup className="ml-0.5 mt-1 text-[10px]">^</sup>
+                      </span>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={comp.exponent}
+                        onChange={(e) => handleComponentChange(index, 'exponent', e.target.value)}
+                        placeholder="Mũ"
+                        className="border-none shadow-none p-1 text-center bg-transparent h-full min-w-[30px]"
+                        style={{ flex: 1, boxShadow: 'none' }}
+                      />
+                    </div>
+                  ) : (
+                    <InputNumber
+                      value={comp.value}
+                      onChange={(val) => handleComponentChange(index, 'value', val)}
+                      placeholder="0.0"
                       min={0}
                       step={0.1}
-                      value={comp.base}
-                      onChange={(e) => handleComponentChange(index, 'base', e.target.value)}
-                      placeholder="Cơ số"
-                      className="border-none shadow-none p-1 text-center bg-transparent h-full min-w-[30px]"
-                      style={{ flex: 1, boxShadow: 'none' }}
+                      className="w-full h-9 rounded-lg"
                     />
-                    <span className="text-gray-500 font-semibold select-none whitespace-nowrap text-xs">
-                      x 10<sup className="ml-0.5 mt-1 text-[10px]">^</sup>
-                    </span>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={comp.exponent}
-                      onChange={(e) => handleComponentChange(index, 'exponent', e.target.value)}
-                      placeholder="Mũ"
-                      className="border-none shadow-none p-1 text-center bg-transparent h-full min-w-[30px]"
-                      style={{ flex: 1, boxShadow: 'none' }}
-                    />
-                  </div>
-                ) : (
-                  <InputNumber
-                    value={comp.value}
-                    onChange={(val) => handleComponentChange(index, 'value', val)}
-                    placeholder="0.0"
-                    min={0}
-                    step={0.1}
-                    className="w-full h-9 rounded-lg"
-                  />
-                )}
+                  )}
+                </div>
+                <div style={{ flex: '1 1 120px' }}>
+                  <Text className="inline-flex h-9 w-full items-center rounded-lg bg-white px-3 text-gray-700">
+                    {comp.unit || '%'}
+                  </Text>
+                </div>
+                <Button
+                  type="text"
+                  danger
+                  icon={<MinusCircleOutlined />}
+                  onClick={() => handleRemoveComponent(index)}
+                  className="!h-9 !w-9 shrink-0 rounded-lg"
+                />
               </div>
-              <div style={{ flex: '1 1 120px' }}>
-                <Text className="inline-flex h-9 w-full items-center rounded-lg bg-white px-3 text-gray-700">
-                  {comp.unit || '%'}
-                </Text>
-              </div>
-              <Button
-                type="text"
-                danger
-                icon={<MinusCircleOutlined />}
-                onClick={() => handleRemoveComponent(index)}
-                className="!h-9 !w-9 shrink-0 rounded-lg"
-              />
+              {hasNameLengthError && (
+                <p className="mt-1 mb-0 text-xs text-red-500 px-1">
+                  Tên thành phần không được vượt quá 100 ký tự.
+                </p>
+              )}
+              {hasNameSpaceError && !hasNameLengthError && (
+                <p className="mt-1 mb-0 text-xs text-red-500 px-1">
+                  Tên thành phần không được chứa nhiều khoảng trắng liên tiếp.
+                </p>
+              )}
             </div>
           )
         })}
