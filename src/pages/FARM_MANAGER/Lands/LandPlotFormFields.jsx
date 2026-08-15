@@ -14,20 +14,14 @@ const LandPlotFormFields = ({
   showAreaPlaceholder = false,
   disabled = false,
 }) => {
-  const requiredTextRule = (message) => ({
-    validator: (_, value) =>
-      typeof value === 'string' && value.trim()
-        ? Promise.resolve()
-        : Promise.reject(new Error(message)),
-  })
-
   return <>
     <Form.Item
       label="Tên vùng trồng"
       name="name"
+      normalize={(val) => (typeof val === 'string' ? val.replace(/^\s+/, '') : val)}
       rules={[
         { required: true, message: 'Vui lòng nhập tên vùng trồng' },
-        requiredTextRule('Tên vùng trồng không được để trống hoặc chỉ chứa khoảng trắng'),
+        { whitespace: true, message: 'Tên vùng trồng không được chỉ chứa khoảng trắng' },
       ]}
     >
       <Input disabled={disabled} placeholder="Ví dụ: Lô A1" maxLength={200} />
@@ -38,7 +32,7 @@ const LandPlotFormFields = ({
       name="address"
       rules={[
         { required: true, message: 'Vui lòng nhập địa chỉ' },
-        requiredTextRule('Địa chỉ không được để trống hoặc chỉ chứa khoảng trắng'),
+        { whitespace: true, message: 'Địa chỉ không được chỉ chứa khoảng trắng' },
       ]}
     >
       <AddressSelectorField disabled={disabled} />

@@ -33,8 +33,6 @@ const LandPlotDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const { canManage, routes } = useLandPlotAccess()
-
-  // ── State: chi tiết vùng trồng ───────────────────────────────────────────
   const [plot, setPlot] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -42,7 +40,6 @@ const LandPlotDetail = () => {
   const [weatherLoading, setWeatherLoading] = useState(false)
   const [weatherError, setWeatherError] = useState(null)
 
-  // ── Fetch: lấy chi tiết vùng trồng ───────────────────────────────────────
   const fetchPlotDetail = useCallback(async () => {
     if (!id) return
     try {
@@ -56,10 +53,6 @@ const LandPlotDetail = () => {
       setLoading(false)
     }
   }, [id])
-
-  useEffect(() => {
-    fetchPlotDetail()
-  }, [fetchPlotDetail])
 
   const fetchPlotWeather = useCallback(async () => {
     if (!id) return
@@ -75,6 +68,11 @@ const LandPlotDetail = () => {
       setWeatherLoading(false)
     }
   }, [id])
+
+  useEffect(() => {
+    fetchPlotDetail()
+  }, [fetchPlotDetail])
+
 
   useEffect(() => {
     fetchPlotWeather()

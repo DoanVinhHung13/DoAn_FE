@@ -1,4 +1,4 @@
-export const getSafeErrorMetadata = (error, metadata = {}) => ({
+const getSafeErrorMetadata = (error, metadata = {}) => ({
   ...metadata,
   type: error?.type || error?.kind,
   code: error?.code,

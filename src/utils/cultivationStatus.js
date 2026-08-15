@@ -164,11 +164,3 @@ export const canReorderTask = (task) =>
 
 export const canReorderTaskList = (tasks) =>
   Array.isArray(tasks) && tasks.every(canReorderTask)
-
-/** Closing list filter: match status or reviewStatus */
-export const matchesClosingFilter = (logbook, filter) => {
-  if (filter === 'all') return true
-  if (logbook?.status === filter) return true
-  if (logbook?.reviewStatus === filter) return true
-  return false
-}

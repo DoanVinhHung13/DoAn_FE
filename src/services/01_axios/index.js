@@ -206,10 +206,3 @@ instance.interceptors.response.use(
 )
 
 export default instance
-
-export const httpGetFile = (path = "", optionalHeader = {}) =>
-  instance({
-    method: "GET",
-    url: path,
-    headers: { ...optionalHeader },
-  })

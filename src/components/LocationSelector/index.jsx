@@ -37,6 +37,7 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
   const [wards, setWards] = useState([]);
 
   const [selectedProvinceCode, setSelectedProvinceCode] = useState(null);
+  const [provinceTouched, setProvinceTouched] = useState(false);
 
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [loadingWards, setLoadingWards] = useState(false);
@@ -112,6 +113,7 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
   }, [selectedProvinceCode]);
 
   const handleProvinceChange = (val, option) => {
+    setProvinceTouched(true);
     setSelectedProvinceCode(option?.code || null);
     setWards([]);
     onChange?.({
@@ -140,7 +142,9 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Tỉnh / Thành phố */}
         <div className="flex flex-col gap-2">
-          <Text className="text-gray-600 font-medium">Tỉnh/Thành phố</Text>
+          <Text className="text-gray-600 font-medium">
+            Tỉnh/Thành phố <span className="text-red-500">*</span>
+          </Text>
           <Select
             placeholder="Chọn tỉnh/thành phố"
             value={value.province || undefined}
@@ -154,6 +158,8 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
               (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
             }
             className="h-12 rounded-xl"
+            status={provinceTouched && !value.province ? 'error' : ''}
+            onDropdownVisibleChange={(open) => { if (!open && !value.province) setProvinceTouched(true) }}
           >
             {provinces.map((p) => (
               <Option value={p.name} key={p.code} code={p.code} name={p.name}>
@@ -161,6 +167,9 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
               </Option>
             ))}
           </Select>
+          {provinceTouched && !value.province && (
+            <span className="text-red-500 text-xs">Vui lòng chọn tỉnh/thành phố</span>
+          )}
         </div>
 
         {/* Phường / Xã (trực tiếp từ tỉnh, không qua huyện) */}

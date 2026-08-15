@@ -26,19 +26,6 @@
  */
 import http from "../01_axios"
 
-// ─── Endpoints ─────────────────────────────────────────────
-export const USER_URLS = {
-  list: "/users",
-  detail: id => `/users/${id}`,
-  byId: id => `/users/${id}`,
-  status: id => `/users/${id}/status`,
-  roles: id => `/users/${id}/roles`,
-  createAccount: id => `/users/${id}/account`,
-  password: id => `/users/${id}/password`,
-  myProfile: "/users/me/profile",
-  myAvatar: "/users/me/avatar",
-}
-
 // ─── Quản lý danh sách ─────────────────────────────────────
 
 const normalizeListParams = (params = {}) => ({
@@ -52,44 +39,44 @@ const normalizeListParams = (params = {}) => ({
 })
 
 /** GET /users with canonical camelCase query parameters. */
-const getUsers = params => http.get(USER_URLS.list, { params: normalizeListParams(params) })
+const getUsers = params => http.get('/users', { params: normalizeListParams(params) })
 
 /** GET /user/:id */
-const getUserById = id => http.get(USER_URLS.detail(id))
+const getUserById = id => http.get(`/users/${id}`)
 
 /**
  * POST /users — tạo tài khoản nội bộ (Farm Manager only)
  * Body: { fullName, email, password, roles? }
  */
-const createUser = (body, config) => http.post(USER_URLS.list, body, config)
+const createUser = (body, config) => http.post('/users', body, config)
 
 /**
  * PUT /users/:id — cập nhật hồ sơ người dùng khác (Farm Manager)
  * Body: { fullName, phoneNumber?, avatarUrl?, isActive }
  */
-const updateUser = (id, body, config) => http.put(USER_URLS.byId(id), body, config)
+const updateUser = (id, body, config) => http.put(`/users/${id}`, body, config)
 
 /** DELETE /users/:id — xóa mềm, thu hồi refresh token (Farm Manager) */
 const deleteUser = id => http.delete(USER_URLS.byId(id))
 
 /**
- * PUT /users/:id/status — kích hoạt / vô hiệu hóa (Farm Manager)
+ * PUT /users/:id/status — đổi trạng thái isActive (Farm Manager)
  * Body: { isActive: boolean }
  * NOTE: Swagger dùng PUT (không phải PATCH)
  */
-const changeUserStatus = (id, body) => http.put(USER_URLS.status(id), body)
+const changeUserStatus = (id, body) => http.put(`/users/${id}/status`, body)
 
 /**
  * PUT /users/:id/roles — thay thế danh sách vai trò (Farm Manager)
  * Body: { roles: string[] }
  */
-const assignRoles = (id, body) => http.put(USER_URLS.roles(id), body)
+const assignRoles = (id, body) => http.put(`/users/${id}/roles`, body)
 
 /** POST /users/:id/account — cấp mật khẩu và vai trò cho nhân viên đã tồn tại */
-const createAccount = (id, body, config) => http.post(USER_URLS.createAccount(id), body, config)
+const createAccount = (id, body, config) => http.post(`/users/${id}/account`, body, config)
 
 /** PUT /users/:id/password — đổi mật khẩu người dùng khác (Farm Manager) */
-const changeUserPassword = (id, body) => http.put(USER_URLS.password(id), body)
+const changeUserPassword = (id, body) => http.put(`/users/${id}/password`, body)
 
 // ─── Profile của user đang đăng nhập ───────────────────────
 
@@ -98,14 +85,14 @@ const changeUserPassword = (id, body) => http.put(USER_URLS.password(id), body)
  * Body: { fullName: string (required), phoneNumber?, dateOfBirth?, gender?, address? }
  * Response: UserDto đã cập nhật
  */
-const updateMyProfile = (body, config) => http.put(USER_URLS.myProfile, body, config)
+const updateMyProfile = (body, config) => http.put('/users/me/profile', body, config)
 
 /**
  * POST /users/me/avatar — upload avatar lên Cloudinary
  * Body: FormData với field "file" (ảnh)
  */
 const uploadMyAvatar = formData =>
-  http.post(USER_URLS.myAvatar, formData, {
+  http.post('/users/me/avatar', formData, {
     headers: { "Content-Type": "multipart/form-data" },
   })
 

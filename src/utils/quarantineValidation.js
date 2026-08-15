@@ -17,7 +17,7 @@ const toDateOnly = value => {
   return date
 }
 
-export const getQuarantineEndDate = warning => {
+const getQuarantineEndDate = warning => {
   const explicitEndDate = warning?.eligibleDate || warning?.quarantineUntil
   if (explicitEndDate) return toDateOnly(explicitEndDate)
 
@@ -33,7 +33,7 @@ export const getQuarantineEndDate = warning => {
   return endDate
 }
 
-export const isQuarantineActive = warning => {
+const isQuarantineActive = warning => {
   const endDate = getQuarantineEndDate(warning)
   if (!endDate) return false
 

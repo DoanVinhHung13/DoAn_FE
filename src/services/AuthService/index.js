@@ -16,31 +16,18 @@
 import http from '../01_axios'
 import { getRefreshToken } from 'src/redux/authTokens'
 
-// ─── Endpoints ─────────────────────────────────────────────
-export const AUTH_URLS = {
-  login:          '/auth/login',
-  register:       '/auth/register',
-  logout:         '/auth/logout',
-  refreshToken:   '/auth/refresh-token',
-  verifyOTP:      '/auth/verify-otp',
-  forgotPassword: '/auth/forgot-password',
-  resetPassword:  '/auth/reset-password',
-  changePassword: '/auth/change-password',
-  me:             '/auth/me',
-}
-
 // ─── Methods ───────────────────────────────────────────────
-const login          = (body) => http.post(AUTH_URLS.login, body)
-const register       = (body) => http.post(AUTH_URLS.register, body)
-const logout         = ()     => http.post(AUTH_URLS.logout, { refreshToken: getRefreshToken() })
-const refreshToken   = (body) => http.post(AUTH_URLS.refreshToken, body)
-const verifyOTP      = (body) => http.post(AUTH_URLS.verifyOTP, body)
-const forgotPassword = (body) => http.post(AUTH_URLS.forgotPassword, body)
-const resetPassword  = (body) => http.post(AUTH_URLS.resetPassword, body)
-const changePassword = (body, config) => http.post(AUTH_URLS.changePassword, body, config)
+const login          = (body) => http.post('/auth/login', body)
+const register       = (body) => http.post('/auth/register', body)
+const logout         = ()     => http.post('/auth/logout', { refreshToken: getRefreshToken() })
+const refreshToken   = (body) => http.post('/auth/refresh-token', body)
+const verifyOTP      = (body) => http.post('/auth/verify-otp', body)
+const forgotPassword = (body) => http.post('/auth/forgot-password', body)
+const resetPassword  = (body) => http.post('/auth/reset-password', body)
+const changePassword = (body, config) => http.post('/auth/change-password', body, config)
 
 /** GET /auth/me — thông tin user đang đăng nhập */
-const getProfile = () => http.get(AUTH_URLS.me)
+const getProfile = () => http.get('/auth/me')
 
 const AuthService = {
   login,

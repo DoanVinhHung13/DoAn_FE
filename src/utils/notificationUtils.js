@@ -144,3 +144,4 @@ export const getNotificationActionUrl = notification => {
 
   return ''
 }
+

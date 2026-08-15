@@ -39,16 +39,9 @@ export const getWardsByProvince = provinceCode => {
   });
 };
 
-export const getDistrictsByProvince = () => Promise.resolve([]);
-export const getWardsByDistrict = () => Promise.resolve([]);
-export const checkMergeWarning = () => null;
-
 const LocationService = {
   getProvinces,
   getWardsByProvince,
-  getDistrictsByProvince,
-  getWardsByDistrict,
-  checkMergeWarning,
 };
 
 export default LocationService;

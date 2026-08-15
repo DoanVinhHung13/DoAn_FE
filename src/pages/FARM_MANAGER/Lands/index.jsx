@@ -65,16 +65,11 @@ const LandsManagement = () => {
 
   const status = filters.status
   const hasActiveFilters = Boolean(search.trim()) || status !== 'ACTIVE'
-
-  // ── Danh sách vùng trồng ─────────────────────────────────────────────────
   const [listError, setListError] = useState(null)
   const [weatherByPlotId, setWeatherByPlotId] = useState({})
-
-  // ── Modal đổi trạng thái ─────────────────────────────────────────────────
   const [statusTarget, setStatusTarget] = useState(null) // plot đang chờ xác nhận
   const [statusLoading, setStatusLoading] = useState(false)
 
-  // ── Tham số query (re-compute khi bộ lọc / phân trang thay đổi) ──────────
   const queryParams = useMemo(() => ({
     PageIndex: page,
     PageSize: pageSize,
@@ -82,7 +77,6 @@ const LandsManagement = () => {
     Status: status === 'all' ? undefined : status,
   }), [page, pageSize, search, status])
 
-  // ── API: lấy danh sách vùng trồng ────────────────────────────────────────
   const fetchLandPlots = useCallback(async () => {
     setListLoading(true)
     setListError(null)
@@ -97,10 +91,6 @@ const LandsManagement = () => {
       setListLoading(false)
     }
   }, [queryParams])
-
-  useEffect(() => {
-    fetchLandPlots()
-  }, [fetchLandPlots])
 
   const loadWeatherForPlot = useCallback(async (plotId) => {
     if (!plotId) return
@@ -125,10 +115,13 @@ const LandsManagement = () => {
   }, [])
 
   useEffect(() => {
+    fetchLandPlots()
+  }, [fetchLandPlots])
+
+  useEffect(() => {
     listData.forEach((plot) => loadWeatherForPlot(getItemId(plot)))
   }, [listData, loadWeatherForPlot])
 
-  // ── API: đổi trạng thái kích hoạt / vô hiệu hóa ─────────────────────────
   const handleConfirmChangeStatus = async () => {
     if (!statusTarget) return
     const id = getItemId(statusTarget)
@@ -143,7 +136,7 @@ const LandsManagement = () => {
       }
 
       setStatusTarget(null)
-      fetchLandPlots() // tải lại danh sách sau khi đổi trạng thái
+      fetchLandPlots()
     } catch {
       // axios interceptor handles error notification
     } finally {
@@ -160,7 +153,6 @@ const LandsManagement = () => {
     }
   }
 
-  // ── Tùy chọn bộ lọc trạng thái ───────────────────────────────────────────
   const statusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
     ...getCombo(SYSTEM_KEY.STATUS).map((opt) => ({
@@ -169,7 +161,6 @@ const LandsManagement = () => {
     })),
   ]
 
-  // ── Định nghĩa cột bảng ───────────────────────────────────────────────────
   const columns = [
     createSTTColumn(page, pageSize, { width: 70 }),
     {
@@ -296,7 +287,6 @@ const LandsManagement = () => {
       : []),
   ]
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
 

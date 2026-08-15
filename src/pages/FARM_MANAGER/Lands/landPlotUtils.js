@@ -50,8 +50,7 @@ export const getItemId = (item) => item?.id
 /** Kiểm tra vùng trồng đang hoạt động hay không */
 export const isLandPlotActive = (item) => item?.isActive !== false
 
-
-export const LAND_PLOT_CULTIVATION_STATUS = {
+const LAND_PLOT_CULTIVATION_STATUS = {
   AVAILABLE: {
     label: 'Đang trống',
     badgeClass: 'bg-slate-100 text-slate-600',
@@ -139,7 +138,8 @@ export const isOverlapApiError = (msgOrError) => {
  */
 export const buildLandPlotPayload = (values, polygonData) => {
   const areaM2 = polygonData?.areaM2 || 0
-  const area = Number((areaM2 || values.area || 0).toFixed(2))
+  // Ưu tiên giá trị user nhập tay; fallback sang areaM2 từ polygon nếu form trống
+  const area = Number((values.area || areaM2 || 0).toFixed(2))
 
   // Tính tọa độ trung tâm từ geoJSON
   const center = polygonData?.geoJSON || null
