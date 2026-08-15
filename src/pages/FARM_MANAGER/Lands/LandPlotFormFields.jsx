@@ -72,12 +72,27 @@ const LandPlotFormFields = ({
         <Form.Item
           label="Diện tích"
           name="area"
-          rules={[{ required: true, message: 'Vui lòng nhập diện tích' }]}
+          rules={[
+            { required: true, message: 'Vui lòng nhập diện tích' },
+            {
+              validator: (_, value) => {
+                if (value === undefined || value === null || value === '') {
+                  return Promise.resolve()
+                }
+                if (typeof value !== 'number' || Number.isNaN(value)) {
+                  return Promise.reject(new Error('Diện tích phải là số hợp lệ'))
+                }
+                if (value <= 0) {
+                  return Promise.reject(new Error('Diện tích phải lớn hơn 0'))
+                }
+                return Promise.resolve()
+              },
+            },
+          ]}
         >
           <InputNumber
             disabled={disabled}
             className="w-full"
-            min={0.0001}
             step={0.01}
             placeholder={showAreaPlaceholder ? 'Tự động từ bản đồ' : undefined}
           />

@@ -34,6 +34,8 @@ const LandPlotEdit = () => {
     polygonData,
     mapError,
     isSaving,
+    hasFormErrors,
+    handleFieldsChange,
     setMapError,
     setIsSubmitting,
     handlePolygonChange,
@@ -183,7 +185,7 @@ const LandPlotEdit = () => {
           type="primary"
           icon={<SaveOutlined />}
           loading={isSaving}
-          disabled={cultivationLocked}
+          disabled={cultivationLocked || hasFormErrors}
           onClick={handleSubmit}
         >
           Lưu
@@ -203,7 +205,7 @@ const LandPlotEdit = () => {
                 description="Vùng trồng đang thuộc nhật ký kế hoạch hoặc đang trồng. Chỉ có thể chỉnh sửa khi không còn nhật ký đang sử dụng."
               />
             )}
-            <Form form={form} layout="vertical">
+            <Form form={form} layout="vertical" onFieldsChange={handleFieldsChange}>
               <LandPlotFormFields disabled={cultivationLocked} />
             </Form>
           </Card>
@@ -236,7 +238,7 @@ const LandPlotEdit = () => {
         <Space>
           <Button onClick={() => navigate(routes.detail(id))}>Hủy</Button>
           <Button
-            disabled={cultivationLocked}
+            disabled={cultivationLocked || hasFormErrors}
             type="primary"
             icon={<SaveOutlined />}
             loading={isSaving}

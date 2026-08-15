@@ -30,6 +30,8 @@ const LandPlotCreate = () => {
     polygonData,
     mapError,
     isSaving,
+    hasFormErrors,
+    handleFieldsChange,
     setMapError,
     setIsSubmitting,
     handlePolygonChange,
@@ -112,6 +114,7 @@ const LandPlotCreate = () => {
           type="primary"
           icon={<SaveOutlined />}
           loading={isSaving}
+          disabled={hasFormErrors}
           onClick={handleSubmit}
         >
           Xác nhận
@@ -122,7 +125,7 @@ const LandPlotCreate = () => {
         {/* Cột trái: form thông tin */}
         <Col xs={24} xl={10}>
           <Card title="Thông tin vùng trồng">
-            <Form form={form} layout="vertical">
+            <Form form={form} layout="vertical" onFieldsChange={handleFieldsChange}>
               <LandPlotFormFields showAreaPlaceholder />
             </Form>
           </Card>
@@ -166,6 +169,7 @@ const LandPlotCreate = () => {
             type="primary"
             icon={<SaveOutlined />}
             loading={isSaving}
+            disabled={hasFormErrors}
             onClick={handleSubmit}
           >
             Xác nhận
