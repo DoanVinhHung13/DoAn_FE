@@ -814,7 +814,7 @@ const DailyLog = () => {
               </Row>
             </Card>
 
-            {isHarvestTask && (
+            {isHarvestTask && remainingHarvestArea > 0 && (
               <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: "20px" }}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-base font-bold text-emerald-800">Dữ liệu thu hoạch</div>
@@ -843,9 +843,9 @@ const DailyLog = () => {
                     <Form.Item
                       name="executedArea"
                       label="Diện tích thu hoạch (m²)"
-                      rules={[{ required: true, type: "number", min: 0.0001, max: remainingHarvestArea, message: "Nhập diện tích hợp lệ" }]}
+                      rules={[{ required: true, type: "number", min: 0.0001, message: "Nhập diện tích hợp lệ" }]}
                     >
-                      <InputNumber min={0} max={remainingHarvestArea} className="w-full" placeholder="Diện tích" />
+                      <InputNumber min={0} className="w-full" placeholder="Diện tích" />
                     </Form.Item>
                   </Col>
                 </Row>
