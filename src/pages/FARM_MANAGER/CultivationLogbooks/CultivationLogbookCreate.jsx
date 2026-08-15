@@ -578,6 +578,11 @@ const CultivationLogbookCreate = () => {
       return
     }
 
+    if (stages.some((stage) => !stage.description || !stage.description.trim())) {
+      message.warning('Vui lòng nhập mô tả công việc cần làm cho tất cả các giai đoạn.')
+      return
+    }
+
     if (stages.some((stage) => stage.description && stage.description.trim().length > 500)) {
       message.warning('Mô tả giai đoạn không được vượt quá 500 ký tự.')
       return
@@ -854,7 +859,7 @@ const CultivationLogbookCreate = () => {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={24}>
-                  <Form.Item label="Mô tả công việc cần làm">
+                  <Form.Item label="Mô tả công việc cần làm" required>
                     <Input.TextArea
                       value={stage.description}
                       onChange={(e) => updateStage(index, 'description', e.target.value)}
@@ -862,6 +867,11 @@ const CultivationLogbookCreate = () => {
                       placeholder="Mô tả chi tiết công việc cần thực hiện trong giai đoạn này..."
                       disabled={!canEditStages}
                     />
+                    {!stage.description?.trim() && (
+                      <p className="mt-0.5 mb-0 text-xs text-red-500">
+                        Vui lòng nhập mô tả công việc cần làm.
+                      </p>
+                    )}
                     {stage.description?.trim() && stage.description.trim().length > 500 && (
                       <p className="mt-0.5 mb-0 text-xs text-red-500">
                         Mô tả giai đoạn không được vượt quá 500 ký tự.

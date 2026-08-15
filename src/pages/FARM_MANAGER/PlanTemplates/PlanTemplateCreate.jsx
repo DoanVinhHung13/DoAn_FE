@@ -82,11 +82,12 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
   const hasNameLengthError = trimmedName.length > 100
   const hasNameSpaceError = Boolean(trimmedName && trimmedName !== trimmedName.replace(/\s+/g, ' '))
 
+  const hasEmptyDescError = touched && !trimmedDesc
   const hasDescLengthError = trimmedDesc.length > 500
   const hasDescSpaceError = Boolean(trimmedDesc && trimmedDesc !== trimmedDesc.replace(/\s+/g, ' '))
 
   const hasNameError = hasEmptyNameError || hasNameLengthError || hasNameSpaceError
-  const hasDescError = hasDescLengthError || hasDescSpaceError
+  const hasDescError = hasEmptyDescError || hasDescLengthError || hasDescSpaceError
 
   return (
     <div
@@ -135,7 +136,7 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
       </div>
 
       <Text type="secondary" className="block mb-1 text-xs font-medium">
-        Mô tả công việc
+        <span className="text-red-500 mr-1">*</span>Mô tả công việc (bắt buộc)
       </Text>
       <Input.TextArea
         rows={3}
@@ -144,6 +145,11 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
         placeholder="Mô tả cách thực hiện bước này..."
         className={hasDescError ? "border-red-400 focus:border-red-500" : ""}
       />
+      {hasEmptyDescError && (
+        <p className="mt-0.5 mb-0 text-xs text-red-500">
+          Vui lòng nhập mô tả công việc
+        </p>
+      )}
       {hasDescLengthError && (
         <p className="mt-0.5 mb-0 text-xs text-red-500">
           Mô tả công việc không được vượt quá 500 ký tự.
@@ -369,6 +375,10 @@ const PlanTemplateCreate = () => {
     }
     if (normalizedSteps.some(step => step.stepName !== step.stepName.replace(/\s+/g, ' '))) {
       message.error("Tên bước quy trình không được chứa nhiều khoảng trắng liên tiếp.")
+      return
+    }
+    if (normalizedSteps.some(step => !step.description)) {
+      message.error("Vui lòng nhập mô tả công việc cho tất cả các bước quy trình.")
       return
     }
     if (normalizedSteps.some(step => step.description.length > 500)) {
