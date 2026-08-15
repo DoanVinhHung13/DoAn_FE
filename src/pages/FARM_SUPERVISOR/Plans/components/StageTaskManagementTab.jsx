@@ -296,6 +296,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     )
   const selectedTasks = selectedId ? tasks[selectedId] || [] : []
   const orderedSelectedTasks = orderTasks(selectedTasks)
+  const hasHarvestTask = getAllTasks(tasks).some(isHarvestTask)
   const selectedIdx = stages.findIndex(s => s.id === selectedId)
   const canReorderSelectedStage =
     canReorderStageTasks(selectedStage, plan) &&
@@ -303,6 +304,10 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const openAddTask = () => {
+    if (hasHarvestTask) {
+      message.warning("Sau khi tạo công việc thu hoạch, không thể tạo thêm công việc nào trong nhật ký này.")
+      return
+    }
     if (selectedStage?.status === "COMPLETED") {
       message.warning("Giai đoạn đã hoàn thành. Không thể thêm công việc mới.")
       return
@@ -348,12 +353,23 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             farmerIds: Array.isArray(task.farmerIds)
               ? task.farmerIds.filter(Boolean)
               : [],
+            activityType:
+              catalog?.activityType ||
+              (isHarvestTask({ name: (task.name || "").trim() }) ? "HARVESTING" : "OTHER"),
           }
         })
         .filter(task => task.name)
 
       if (!validTasks.length) {
         message.warning("Chọn công việc từ danh mục hoặc nhập tên mới")
+        setSavingTask(false)
+        return
+      }
+
+      const harvestFlags = validTasks.map(isHarvestTask)
+      const firstHarvestIndex = harvestFlags.findIndex(Boolean)
+      if (firstHarvestIndex >= 0 && harvestFlags.slice(firstHarvestIndex + 1).some(flag => !flag)) {
+        message.warning("Công việc thu hoạch phải ở cuối cùng.")
         setSavingTask(false)
         return
       }
@@ -825,10 +841,18 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     type="dashed"
                     icon={<PlusOutlined />}
                     onClick={openAddTask}
+                    disabled={hasHarvestTask}
+                    title={
+                      hasHarvestTask
+                        ? "Nhật ký đã có công việc thu hoạch"
+                        : "Thêm công việc vào giai đoạn này"
+                    }
                     block
                     className="mt-3 text-green-700 border-green-300 rounded-xl hover:border-green-500"
                   >
-                    Thêm công việc vào giai đoạn này
+                    {hasHarvestTask
+                      ? "Đã có công việc thu hoạch — không thể thêm task"
+                      : "Thêm công việc vào giai đoạn này"}
                   </Button>
                 )}
 
