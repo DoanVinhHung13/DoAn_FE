@@ -31,48 +31,48 @@ const StageListItem = ({ stage, index, isActive, onClick }) => {
 
   return (
     <List.Item
-    onClick={onClick}
-    className="mb-2 cursor-pointer rounded-xl px-3 py-2 transition-colors"
-    style={{
-      border: isActive ? '1px solid #22c55e' : '1px solid #e5e7eb',
-      background: isActive ? '#f0fdf4' : '#fff',
-    }}
-  >
-    <List.Item.Meta
-      avatar={
-        <Avatar
-          size={32}
-          style={{
-            backgroundColor: isActive ? '#16a34a' : '#f3f4f6',
-            color: isActive ? '#fff' : '#6b7280',
-            fontWeight: 700,
-          }}
-        >
-          {index + 1}
-        </Avatar>
-      }
-      title={
-        <Text strong style={{ color: isActive ? '#15803d' : '#1f2937', whiteSpace: 'normal' }}>
-          {stage.stageName || stage.name || `Giai đoạn ${index + 1}`}
-        </Text>
-      }
-      description={
-        (plannedPeriod || actualPeriod) && (
-          <div className="flex flex-col gap-0.5">
-            {plannedPeriod && (
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                Kế hoạch: {plannedPeriod}
-              </Text>
-            )}
-            {actualPeriod && (
-              <Text style={{ fontSize: 11, color: '#16a34a' }}>
-                Thực tế: {actualPeriod}
-              </Text>
-            )}
-          </div>
-        )
-      }
-    />
+      onClick={onClick}
+      className="mb-2 cursor-pointer rounded-xl px-3 py-2 transition-colors"
+      style={{
+        border: isActive ? '1px solid #22c55e' : '1px solid #e5e7eb',
+        background: isActive ? '#f0fdf4' : '#fff',
+      }}
+    >
+      <List.Item.Meta
+        avatar={
+          <Avatar
+            size={32}
+            style={{
+              backgroundColor: isActive ? '#16a34a' : '#f3f4f6',
+              color: isActive ? '#fff' : '#6b7280',
+              fontWeight: 700,
+            }}
+          >
+            {index + 1}
+          </Avatar>
+        }
+        title={
+          <Text strong style={{ color: isActive ? '#15803d' : '#1f2937', whiteSpace: 'normal' }}>
+            {stage.stageName || stage.name || `Giai đoạn ${index + 1}`}
+          </Text>
+        }
+        description={
+          (plannedPeriod || actualPeriod) && (
+            <div className="flex flex-col gap-0.5">
+              {plannedPeriod && (
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  Kế hoạch: {plannedPeriod}
+                </Text>
+              )}
+              {actualPeriod && (
+                <Text style={{ fontSize: 11, color: '#16a34a' }}>
+                  Thực tế: {actualPeriod}
+                </Text>
+              )}
+            </div>
+          )
+        }
+      />
     </List.Item>
   )
 }
@@ -355,7 +355,6 @@ const ProcessTab = ({ item }) => {
                       message="Mô tả giai đoạn"
                       description={selectedStage.description || selectedStage.note}
                       type="info"
-                      showIcon
                       className="mb-5 rounded-xl border-blue-100 bg-blue-50/50"
                     />
                   )}

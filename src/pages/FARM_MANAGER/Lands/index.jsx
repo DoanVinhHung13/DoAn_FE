@@ -312,7 +312,6 @@ const LandsManagement = () => {
       {listError && (
         <Alert
           type="error"
-          showIcon
           message="Không thể tải danh sách vùng trồng."
           description={listError?.message}
           action={

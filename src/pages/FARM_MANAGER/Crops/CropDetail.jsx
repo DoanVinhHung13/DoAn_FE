@@ -96,12 +96,12 @@ const CropDetail = () => {
         const items = Array.isArray(data)
           ? data
           : data?.items ||
-            data?.results ||
-            data?.crops ||
-            data?.cropCatalogs ||
-            payload?.items ||
-            payload?.results ||
-            [];
+          data?.results ||
+          data?.crops ||
+          data?.cropCatalogs ||
+          payload?.items ||
+          payload?.results ||
+          [];
         return items;
       } catch {
         return [];
@@ -138,7 +138,6 @@ const CropDetail = () => {
           <TitleCustom className="!mb-0">Chi tiết cây trồng</TitleCustom>
         </div>
         <Alert
-          showIcon
           type="error"
           message="Không thể tải thông tin cây trồng."
           action={
@@ -193,7 +192,7 @@ const CropDetail = () => {
             Chi tiết cây trồng
           </TitleCustom>
         </div>
-        <Space>      
+        <Space>
           <Button
             type="primary"
             icon={<EditOutlined />}
@@ -239,11 +238,10 @@ const CropDetail = () => {
 
               <div className="flex items-center gap-3">
                 <div
-                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${
-                    isActive
+                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${isActive
                       ? 'bg-green-50 text-green-700'
                       : 'bg-red-50 text-red-600'
-                  }`}
+                    }`}
                 >
                   {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
                   {getStatusLabel(cropDetail)}
@@ -279,13 +277,13 @@ const CropDetail = () => {
                 <Descriptions.Item label="Danh mục">
                   {displayValue(getCropCatalogName(cropDetail.cropCatalogId))}
                 </Descriptions.Item>
-                
-              
+
+
               </Descriptions>
             </Card>
 
             {/* Cultivation Conditions */}
-  
+
             {/* Description */}
             <Card
               title={

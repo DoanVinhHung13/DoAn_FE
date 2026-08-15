@@ -423,7 +423,7 @@ const ReportStatistics = () => {
       {reportError && (
         <Alert
           type="error"
-          showIcon
+
           message="Không thể tải dữ liệu báo cáo"
           description={reportError?.message || 'Vui lòng thử lại sau.'}
         />

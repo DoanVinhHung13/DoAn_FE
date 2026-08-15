@@ -202,7 +202,6 @@ const FertilizerList = () => {
       {isError && (
         <Alert
           type="error"
-          showIcon
           message="Không thể tải danh mục phân bón"
           description="Vui lòng kiểm tra đăng nhập hoặc thử lại sau."
         />

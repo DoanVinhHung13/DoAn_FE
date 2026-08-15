@@ -187,7 +187,6 @@ const LandPlotDetail = () => {
                 <Alert
                   className="mt-4"
                   type="warning"
-                  showIcon
                   message="Vùng trồng đang được sử dụng"
                   description="Thông tin vùng trồng và cây trồng sẽ được khóa cho đến khi nhật ký hoàn thành hoặc bị hủy."
                 />

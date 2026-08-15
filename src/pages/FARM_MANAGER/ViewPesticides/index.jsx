@@ -276,7 +276,7 @@ const ViewPesticides = () => {
                 }}
               />
             </Tooltip>
-          {!active && <Popconfirm
+            {!active && <Popconfirm
               title="Xóa nông dược"
               description="Bạn có chắc chắn muốn xóa nông dược này không?"
               onConfirm={(e) => {
@@ -296,7 +296,7 @@ const ViewPesticides = () => {
                   onClick={(e) => e.stopPropagation()}
                 />
               </Tooltip>
-          </Popconfirm>}
+            </Popconfirm>}
           </div>
         )
       },
@@ -329,7 +329,7 @@ const ViewPesticides = () => {
         <Alert
           message="Nông dược đang được sử dụng, không thể chỉnh sửa hoặc vô hiệu hóa."
           type="warning"
-          showIcon
+
           closable
           onClose={() => setInUseAlert(false)}
           className="rounded-xl"

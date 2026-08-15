@@ -181,7 +181,6 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
             <Alert
               key={`${warning.pesticideName}-${warning.eligibleDate}-${index}`}
               type="warning"
-              showIcon
               icon={<WarningOutlined />}
               className="!rounded-xl !border-amber-200 !bg-amber-50/80 !px-3 !py-2"
               message={
@@ -588,7 +587,6 @@ const FarmLeaderTasks = () => {
       {summariesError ? (
         <Alert
           type="error"
-          showIcon
           message="Không thể tải danh sách kế hoạch."
           action={<Button size="small" onClick={loadLogbookSummaries}>Thử lại</Button>}
           className="rounded-xl"

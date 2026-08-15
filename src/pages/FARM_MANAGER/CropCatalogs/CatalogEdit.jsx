@@ -107,7 +107,6 @@ const CatalogEdit = () => {
           <TitleCustom className="!mb-0">Chỉnh sửa danh mục cây trồng</TitleCustom>
         </div>
         <Alert
-          showIcon
           type="error"
           message="Không thể tải thông tin danh mục cây trồng."
           action={
@@ -162,7 +161,7 @@ const CatalogEdit = () => {
           form={form}
           layout="vertical"
           onFinish={(values) => updateMutation.mutate(values)}
-          onFinishFailed={() => {}}
+          onFinishFailed={() => { }}
           scrollToFirstError
         >
           <Form.Item
@@ -194,8 +193,8 @@ const CatalogEdit = () => {
             />
           </Form.Item>
 
-          <Form.Item 
-            name="description" 
+          <Form.Item
+            name="description"
             label="Mô tả"
             rules={[
               {

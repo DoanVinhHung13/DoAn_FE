@@ -215,7 +215,7 @@ const LandPlotEdit = () => {
         <Col xs={24} xl={14}>
           <Card title="Chỉnh sửa bản đồ ranh giới">
             {mapError && (
-              <Alert className="mb-3" type="error" showIcon message={mapError} />
+              <Alert className="mb-3" type="error" message={mapError} />
             )}
             <LandPlotMap
               mode={cultivationLocked ? 'view' : 'edit'}

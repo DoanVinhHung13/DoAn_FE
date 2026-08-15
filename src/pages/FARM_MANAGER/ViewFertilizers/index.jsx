@@ -319,7 +319,7 @@ const ViewFertilizers = () => {
                 }}
               />
             </Tooltip>
-          {!active && <Popconfirm
+            {!active && <Popconfirm
               title="Xóa phân bón"
               description="Bạn có chắc chắn muốn xóa phân bón này không?"
               onConfirm={(e) => {
@@ -339,7 +339,7 @@ const ViewFertilizers = () => {
                   onClick={(e) => e.stopPropagation()}
                 />
               </Tooltip>
-          </Popconfirm>}
+            </Popconfirm>}
           </div>
         )
       },
@@ -372,7 +372,7 @@ const ViewFertilizers = () => {
         <Alert
           message="Phân bón đang được sử dụng trong kế hoạch sản xuất, không thể chỉnh sửa hoặc vô hiệu hóa."
           type="warning"
-          showIcon
+
           closable
           onClose={() => setInUseAlert(false)}
           className="rounded-xl"

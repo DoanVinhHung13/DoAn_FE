@@ -83,7 +83,6 @@ const CatalogDetail = () => {
           <TitleCustom className="!mb-0">Chi tiết danh mục cây trồng</TitleCustom>
         </div>
         <Alert
-          showIcon
           type="error"
           message="Không thể tải thông tin danh mục cây trồng."
           action={
@@ -169,11 +168,10 @@ const CatalogDetail = () => {
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
                   <div
-                    className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${
-                      isActive
+                    className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${isActive
                         ? 'bg-green-50 text-green-700'
                         : 'bg-red-50 text-red-600'
-                    }`}
+                      }`}
                   >
                     {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
                     {getStatusLabel(catalogDetail)}

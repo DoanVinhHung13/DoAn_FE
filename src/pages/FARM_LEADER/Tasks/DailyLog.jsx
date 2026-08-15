@@ -164,6 +164,7 @@ const DailyLog = () => {
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [entryRecommendations, setEntryRecommendations] = useState({})
   const [remainingAreas, setRemainingAreas] = useState({})
+  const [showImageError, setShowImageError] = useState(false)
 
 
   const loadRemainingArea = async (materialType, rowIndex, materialId) => {
@@ -382,12 +383,19 @@ const DailyLog = () => {
 
   const handleSave = async () => {
     try {
-      const values = await form.validateFields()
-      setSaving(true)
-
-      const imageUrls = fileList
+      const imageUrls = (fileList || [])
         .map(file => file.url || file.response?.url || file.response?.data?.url)
         .filter(Boolean)
+
+      if (imageUrls.length === 0) {
+        setShowImageError(true)
+        form.setFields([{ name: "images", errors: ["Vui lòng tải lên ít nhất 1 ảnh minh chứng."] }])
+        return
+      }
+
+      const values = await form.validateFields()
+
+      setSaving(true)
 
       const payload = {
         taskId,
@@ -413,6 +421,7 @@ const DailyLog = () => {
       setRefreshKey(k => k + 1)
       form.resetFields()
       setFileList([])
+      setShowImageError(false)
     } catch (error) {
       if (error?.errorFields) {
         message.warning("Vui lòng kiểm tra lại các trường nhập.")
@@ -467,6 +476,19 @@ const DailyLog = () => {
 
   const handleSubmitSummary = async () => {
     try {
+      const summaryImages = (
+        leaderSummary?.images?.length > 0
+          ? leaderSummary.images
+          : dailyLogs.flatMap(log => log.images || [])
+      )
+        .map(img => typeof img === "string" ? img : img?.imageUrl || img?.url || img?.fileUrl)
+        .filter(Boolean)
+
+      if (summaryImages.length === 0) {
+        message.warning("Công việc cần có ít nhất 1 ảnh minh chứng trong nhật ký trước khi gửi tổng kết.")
+        return
+      }
+
       setSubmitting(true)
       const summaryValues = await summaryForm.validateFields()
 
@@ -508,15 +530,21 @@ const DailyLog = () => {
         throw new Error("Upload không trả về url")
       }
       onSuccess({ url })
-      setFileList(prev => [
-        ...prev.filter(f => f.uid !== file.uid),
-        {
-          uid: file.uid,
-          name: file.name,
-          status: "done",
-          url,
-        },
-      ])
+      setShowImageError(false)
+      setFileList(prev => {
+        const next = [
+          ...prev.filter(f => f.uid !== file.uid),
+          {
+            uid: file.uid,
+            name: file.name,
+            status: "done",
+            url,
+          },
+        ]
+        form.setFieldsValue({ images: next })
+        form.setFields([{ name: "images", errors: [] }])
+        return next
+      })
     } catch (err) {
       onError?.(err)
       // API error handled by axios interceptor
@@ -640,7 +668,6 @@ const DailyLog = () => {
       {task.status === "WAITING_APPROVAL" && (
         <Alert
           type="warning"
-          showIcon
           message="Đã gửi bản tổng hợp — đang chờ giám sát viên biên soạn / duyệt."
           className="rounded-xl"
         />
@@ -679,7 +706,23 @@ const DailyLog = () => {
                 </Col>
 
                 <Col xs={24} md={12}>
-                  <Form.Item label="Ảnh minh chứng">
+                  <Form.Item
+                    name="images"
+                    label="Ảnh minh chứng"
+                    rules={[
+                      {
+                        validator: () => {
+                          const imageUrls = (fileList || [])
+                            .map(file => file.url || file.response?.url || file.response?.data?.url)
+                            .filter(Boolean)
+                          if (showImageError && imageUrls.length === 0) {
+                            return Promise.reject(new Error("Vui lòng tải lên ít nhất 1 ảnh minh chứng."))
+                          }
+                          return Promise.resolve()
+                        },
+                      },
+                    ]}
+                  >
                     <Image.PreviewGroup>
                       <div className="flex flex-wrap items-center gap-2">
                         {fileList.map((file, idx) => (
@@ -703,9 +746,11 @@ const DailyLog = () => {
                                 type="button"
                                 onClick={e => {
                                   e.stopPropagation()
-                                  setFileList(prev =>
-                                    prev.filter(item => item.uid !== file.uid),
-                                  )
+                                  setFileList(prev => {
+                                    const next = prev.filter(item => item.uid !== file.uid)
+                                    form.setFieldsValue({ images: next })
+                                    return next
+                                  })
                                 }}
                                 className="absolute z-20 flex items-center justify-center w-4 h-4 text-white transition-colors rounded-full shadow-xs top-1 right-1 bg-black/70 hover:bg-red-600 opacity-90 group-hover:opacity-100"
                                 title="Xóa ảnh"
@@ -1791,7 +1836,6 @@ const DailyLog = () => {
                   {rows.some(row => row.recommendation) && (
                     <Alert
                       type="warning"
-                      showIcon
                       className="mt-3 rounded-xl"
                       message="Khuyến nghị lượng sử dụng phân bón"
                       description={

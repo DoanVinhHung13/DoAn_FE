@@ -264,7 +264,6 @@ const Dashboard = () => {
                 <Alert
                   className="my-auto"
                   type="error"
-                  showIcon
                   message="Không thể tải danh sách vùng trồng"
                   action={<Button icon={<ReloadOutlined />} onClick={refetchPlots}>Thử lại</Button>}
                 />

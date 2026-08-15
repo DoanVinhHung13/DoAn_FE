@@ -206,7 +206,7 @@ const FarmSupervisorPlans = () => {
         <div className="p-5 bg-white rounded-2xl">
           <Alert
             type="error"
-            showIcon
+
             message="Không thể tải danh sách kế hoạch."
             action={<Button size="small" onClick={() => setReloadKey((v) => v + 1)}>Thử lại</Button>}
             className="rounded-xl"

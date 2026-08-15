@@ -404,7 +404,6 @@ const CropCatalogs = () => {
 
       {isError && (
         <Alert
-          showIcon
           type="error"
           message="Không thể tải danh sách danh mục cây trồng."
           description={error?.message || 'Vui lòng thử lại sau ít phút.'}
@@ -418,7 +417,6 @@ const CropCatalogs = () => {
 
       {inlineError && (
         <Alert
-          showIcon
           closable
           type="error"
           message={inlineError}
@@ -579,7 +577,6 @@ const CropCatalogs = () => {
             {isCatalogActive(statusTarget) && (
               <Alert
                 type="warning"
-                showIcon
                 message={
                   <div className="space-y-2">
                     <Text strong>Lưu ý khi vô hiệu hóa danh mục:</Text>

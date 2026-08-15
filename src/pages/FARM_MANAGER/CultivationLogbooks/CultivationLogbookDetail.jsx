@@ -108,7 +108,6 @@ const CultivationLogbookDetail = () => {
       <div className="space-y-4">
         <Alert
           type="error"
-          showIcon
           message="Không thể tải chi tiết nhật ký canh tác."
           action={<Button size="small" onClick={() => setReloadKey((key) => key + 1)}>Thử lại</Button>}
           className="rounded-xl"

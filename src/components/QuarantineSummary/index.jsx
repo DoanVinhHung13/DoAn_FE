@@ -17,7 +17,6 @@ const QuarantineSummary = ({ warnings = [], className = '' }) => {
   return (
     <Alert
       type="warning"
-      showIcon
       icon={<WarningOutlined />}
       className={`rounded-2xl border-amber-200 bg-amber-50 shadow-xs ${className}`}
       message={

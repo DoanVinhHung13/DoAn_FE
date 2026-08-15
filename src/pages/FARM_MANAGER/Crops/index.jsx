@@ -422,7 +422,6 @@ const Crops = () => {
 
       {isError && (
         <Alert
-          showIcon
           type="error"
           message="Không thể tải danh sách cây trồng."
           description={error?.message || 'Vui lòng thử lại sau ít phút.'}

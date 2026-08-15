@@ -116,7 +116,7 @@ const CultivationLogbookList = () => {
       content: `Nhật ký “${record.logbookName || 'này'}” sẽ được xóa khỏi danh sách.`,
       okText: 'Xóa',
       cancelText: 'Hủy',
-        okButtonProps: { danger: true },
+      okButtonProps: { danger: true },
       onOk: async () => {
         await CultivationLogbookService.deleteById(record.id)
         if (listData.length === 1 && page > 1) {
@@ -312,7 +312,6 @@ const CultivationLogbookList = () => {
         <div className="p-5">
           <Alert
             type="error"
-            showIcon
             message="Không thể tải danh sách nhật ký canh tác."
             action={<Button size="small" onClick={getList}>Thử lại</Button>}
             className="rounded-xl"

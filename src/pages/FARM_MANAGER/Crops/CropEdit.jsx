@@ -80,12 +80,12 @@ const CropEdit = () => {
         const items = Array.isArray(data)
           ? data
           : data?.items ||
-            data?.results ||
-            data?.crops ||
-            data?.cropCatalogs ||
-            payload?.items ||
-            payload?.results ||
-            [];
+          data?.results ||
+          data?.crops ||
+          data?.cropCatalogs ||
+          payload?.items ||
+          payload?.results ||
+          [];
         return items.filter(isActiveCropCatalog);
       } catch {
         return [];
@@ -141,13 +141,13 @@ const CropEdit = () => {
         months: 30,
         years: 365,
       };
-      
-      const minDays = values.minHarvestDays 
-        ? values.minHarvestDays * unitToDays[values.minDurationUnit || 'days'] 
+
+      const minDays = values.minHarvestDays
+        ? values.minHarvestDays * unitToDays[values.minDurationUnit || 'days']
         : null;
-        
-      const maxDays = values.maxHarvestDays 
-        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || 'days'] 
+
+      const maxDays = values.maxHarvestDays
+        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || 'days']
         : null;
 
       const payload = {
@@ -159,7 +159,7 @@ const CropEdit = () => {
         imageUrl: values.imageUrl?.trim() || '',
         isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
       };
-      
+
       return CropManagementService.updateCrop(id, payload, {
         errorHandling: 'form',
         fieldErrorMapping: CROP_FIELD_MAPPING,
@@ -193,9 +193,9 @@ const CropEdit = () => {
 
     try {
       const response = await UploadService.uploadImage(formData);
-      
+
       const payload = response?.data?.data || response?.data || {};
-      
+
       const imageUrl =
         payload.imageUrl ||
         payload.url ||
@@ -238,7 +238,6 @@ const CropEdit = () => {
           <TitleCustom className="!mb-0">Chỉnh sửa cây trồng</TitleCustom>
         </div>
         <Alert
-          showIcon
           type="error"
           message="Không thể tải thông tin cây trồng."
           action={
@@ -292,14 +291,14 @@ const CropEdit = () => {
         form={form}
         layout="vertical"
         onFinish={(values) => updateMutation.mutate(values)}
-        onFinishFailed={() => {}}
+        onFinishFailed={() => { }}
         scrollToFirstError
       >
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={16}>
             <div className="space-y-6">
               {/* Basic Information Card */}
-              <Card 
+              <Card
                 className="rounded-lg shadow-sm"
                 title={<span className="text-lg font-semibold text-green-600">Thông tin cơ bản</span>}
               >
@@ -346,17 +345,17 @@ const CropEdit = () => {
                     />
                   </Form.Item>
 
-                  
+
                 </div>
               </Card>
 
               {/* Detailed Information Card */}
-              <Card 
+              <Card
                 className="rounded-lg shadow-sm"
                 title={<span className="text-lg font-semibold text-green-600">Thông tin chi tiết</span>}
               >
-                <Form.Item 
-                  name="description" 
+                <Form.Item
+                  name="description"
                   label="Mô tả"
                   rules={[
                     {
@@ -383,14 +382,14 @@ const CropEdit = () => {
                 </Form.Item>
               </Card>
 
-             
+
             </div>
           </Col>
 
           <Col xs={24} lg={8}>
             <div className="space-y-6">
               {/* Image Upload Card */}
-              <Card 
+              <Card
                 className="rounded-lg shadow-sm"
                 title={<span className="text-lg font-semibold text-green-600">Ảnh minh họa</span>}
               >
@@ -434,8 +433,8 @@ const CropEdit = () => {
                       beforeUpload={beforeCropImageUpload}
                       customRequest={(options) => handleCropImageUpload(options)}
                     >
-                      <Button 
-                        icon={<UploadOutlined />} 
+                      <Button
+                        icon={<UploadOutlined />}
                         loading={uploading}
                         className="h-11 rounded-lg w-full"
                       >

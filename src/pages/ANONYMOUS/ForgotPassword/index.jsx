@@ -196,7 +196,6 @@ const ForgotPassword = () => {
                 : "Mã OTP đã hết hạn. Vui lòng gửi lại mã mới."
             }
             type="info"
-            showIcon
             className="text-left rounded-2xl border-blue-50 bg-blue-50/50"
           />
           <div className="flex justify-center py-2">

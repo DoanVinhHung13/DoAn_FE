@@ -56,7 +56,7 @@ const LandPlotCreate = () => {
         PageSize: 100,
       })
       setExistingPlots(normalizeLandPlotResponse(response).items)
-    } catch {}
+    } catch { }
   }, [canManage])
 
   useEffect(() => {
@@ -141,7 +141,6 @@ const LandPlotCreate = () => {
               <Alert
                 className="mb-3"
                 type="error"
-                showIcon
                 message={mapError}
               />
             )}

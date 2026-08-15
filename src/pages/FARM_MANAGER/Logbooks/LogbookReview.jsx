@@ -88,10 +88,10 @@ const AUDIT_ACTION_LABELS = {
 const getAuditAction = item =>
   String(
     item?.action ??
-      item?.Action ??
-      item?.eventType ??
-      item?.EventType ??
-      "",
+    item?.Action ??
+    item?.eventType ??
+    item?.EventType ??
+    "",
   )
     .trim()
     .toUpperCase()
@@ -206,15 +206,15 @@ const LogEntry = ({ log }) => {
   const editedAt = summary.editedAt || log.editedAt || log.updatedAt
   const totalFertilizers = asList(
     summary.totalFertilizers ||
-      summary.fertilizers ||
-      log.totalFertilizers ||
-      log.fertilizers,
+    summary.fertilizers ||
+    log.totalFertilizers ||
+    log.fertilizers,
   )
   const totalPesticides = asList(
     summary.totalPesticides ||
-      summary.pesticides ||
-      log.totalPesticides ||
-      log.pesticides,
+    summary.pesticides ||
+    log.totalPesticides ||
+    log.pesticides,
   )
   const summaryImages = asList(summary.images)
   const rawImages = summaryImages.length
@@ -441,15 +441,15 @@ const LogbookReview = () => {
       const hasStageLogs = fetchedStageGroups.some(group => group.logs.length > 0)
       const fallbackStageGroups = stages.length
         ? stages.map((stage, index) => ({
-            stage,
-            logs:
-              index === 0
-                ? getOrderedStageLogs(
-                    fallbackLogs,
-                    stage.tasks || stage.cultivationTasks || [],
-                  )
-                : [],
-          }))
+          stage,
+          logs:
+            index === 0
+              ? getOrderedStageLogs(
+                fallbackLogs,
+                stage.tasks || stage.cultivationTasks || [],
+              )
+              : [],
+        }))
         : fallbackLogs.length
           ? [{ stage: null, logs: fallbackLogs }]
           : []
@@ -782,7 +782,6 @@ const LogbookReview = () => {
         <Alert
           className="mb-4 rounded-xl"
           type="info"
-          showIcon
           message="Thông tin thu hoạch đã được tổng hợp từ công việc thu hoạch."
         />
         <div className="space-y-3 rounded-xl border border-green-100 bg-green-50 p-4">

@@ -191,7 +191,7 @@ const PesticideList = () => {
       {isError && (
         <Alert
           type="error"
-          showIcon
+
           message="Không thể tải danh mục nông dược"
           description="Vui lòng kiểm tra đăng nhập hoặc thử lại sau."
         />
