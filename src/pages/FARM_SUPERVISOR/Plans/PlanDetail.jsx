@@ -136,7 +136,8 @@ const FarmSupervisorPlanDetail = () => {
     [stages]
   )
 
-  const isWaitingApproval = plan?.reviewStatus === 'WAITING_APPROVAL'
+  // Keep the BE review status, but the FE flow treats a submitted plan as completed.
+  const isPlanCompleted = plan?.status === 'COMPLETED' || plan?.reviewStatus === 'WAITING_APPROVAL'
 
   const quarantineWarnings = useMemo(
     () => Object.values(tasks).flatMap(taskList =>
@@ -146,8 +147,8 @@ const FarmSupervisorPlanDetail = () => {
   )
 
   const canSubmit = useMemo(
-    () => !isWaitingApproval && allStagesCompleted,
-    [isWaitingApproval, allStagesCompleted]
+    () => !isPlanCompleted && allStagesCompleted,
+    [isPlanCompleted, allStagesCompleted]
   )
 
   const handleSubmitLogbook = async () => {
@@ -210,12 +211,10 @@ const FarmSupervisorPlanDetail = () => {
             Chi tiết Kế hoạch
           </TitleCustom>
         </div>
-        {plan?.status !== 'COMPLETED' && (
+        {!isPlanCompleted && (
           <Tooltip
             title={
-              isWaitingApproval
-                ? 'Nhật ký đang chờ duyệt, không thể gửi lại.'
-                : !canSubmit
+              !canSubmit
                 ? 'Hoàn thành tất cả các giai đoạn trước khi gửi.'
                 : ''
             }
@@ -348,7 +347,7 @@ const FarmSupervisorPlanDetail = () => {
         okButtonProps={{ className: 'bg-green-600' }}
       >
         <Alert
-          message="Bạn có chắc muốn gửi toàn bộ nhật ký canh tác lên quản lý nông trại để xét duyệt không?"
+          message="Bạn có chắc muốn gửi toàn bộ nhật ký canh tác lên quản lý nông trại không?"
           type="warning"
           className="rounded-xl"
         />

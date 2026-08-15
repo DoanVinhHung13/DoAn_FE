@@ -2,7 +2,7 @@
  * Farm Supervisor — Tab Chốt Logbook
  *
  * Trái: danh sách Stage
- * Phải: Summary Leader gửi (WAITING_APPROVAL) → expand xem chi tiết → viết lại mô tả → Lưu
+ * Phải: Summary Leader gửi → expand xem chi tiết → viết lại mô tả → Lưu
  */
 import {
   BookOutlined,
@@ -10,6 +10,7 @@ import {
   EditOutlined,
   ExperimentOutlined,
   EyeOutlined,
+  InboxOutlined,
   LockOutlined,
   SaveOutlined,
   SendOutlined,
@@ -482,7 +483,7 @@ const SummaryCompilePanel = ({
         {(harvestQuantity != null || harvestArea > 0) && (
           <div className="p-3 border border-emerald-100 rounded-xl bg-emerald-50/70">
             <div className="mb-1 text-xs font-bold tracking-wide text-emerald-800 uppercase">
-              Số liệu thu hoạch
+              Số liệu sản lượng
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm">
               {harvestQuantity != null && (
@@ -619,7 +620,7 @@ const SummaryCompilePanel = ({
           </Text>
           {readOnly && (
             <Tag icon={<LockOutlined />} color="warning" className="rounded-full ml-auto">
-              Đang chờ duyệt — không thể chỉnh sửa
+              Đã gửi — không thể chỉnh sửa
             </Tag>
           )}
         </div>
@@ -650,9 +651,8 @@ const SummaryCompilePanel = ({
 }
 
 const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
-  const isPlanCompleted = plan?.status === 'COMPLETED'
-  const isReadOnly = plan?.reviewStatus === 'WAITING_APPROVAL' || isPlanCompleted
-  const isWaitingApproval = plan?.reviewStatus === 'WAITING_APPROVAL'
+  const isPlanCompleted = plan?.status === 'COMPLETED' || plan?.reviewStatus === 'WAITING_APPROVAL'
+  const isReadOnly = isPlanCompleted
   const { getStageStatus, getReviewStatus } = useCultivationStatus()
   const [selectedId, setSelectedId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -732,6 +732,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
   )
 
   const pendingSummaries = useMemo(() => {
+    if (isPlanCompleted) return []
     if (stageSummary) {
       const summaries =
         stageSummary.taskSummaries ||
@@ -743,7 +744,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
     }
     if (!selectedId) return []
     return (tasks[selectedId] || []).filter(t => canCompileTask(t.status))
-  }, [stageSummary, tasks, selectedId])
+  }, [stageSummary, tasks, selectedId, isPlanCompleted])
 
   useEffect(() => {
     setActiveKeys([])
@@ -822,18 +823,6 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
       bordered={false}
       className="duration-500 shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-4"
     >
-      {isWaitingApproval && (
-        <Alert
-          type="info"
-          className="mb-4 rounded-xl"
-          message={
-            <span className="font-semibold text-blue-700">
-              sảnnhật ký lên quản lý nông trại — Đang chờ duyệt
-            </span>
-          }
-          description="Nhật ký canh tác đã được gửi thành công. Vui lòng chờ quản lý nông trại xem xét và phê duyệt."
-        />
-      )}
       {!isReadOnly && selectedStage?.status !== 'COMPLETED' && (
         <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
           <Button
@@ -911,7 +900,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                   </div>
                 ) : pendingSummaries.length === 0 ? (
                   <Empty
-                    description="Không có bản tổng hợp chờ duyệt"
+                    description="Không có bản tổng hợp cần xử lý"
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                   />
                 ) : (
@@ -963,7 +952,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                             task={taskItem}
                             stageId={selectedId}
                             onSaved={handleSaved}
-                            readOnly={isWaitingApproval || isPlanCompleted}
+                            readOnly={isPlanCompleted}
                           />
                         ),
                       }
@@ -1007,6 +996,8 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                         log.description ||
                         log.descriptionSummary ||
                         "Chưa có mô tả"
+                      const materialsText = log.materialsText || ''
+                      const isHarvestMaterialsText = /(?:sản lượng|thu hoạch)/i.test(materialsText)
                       const materials =
                         log.materials || log.summary?.materials || []
                       const fertilizers =
@@ -1063,7 +1054,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                                   {formatDate(log.date || log.createdAt)}
                                 </span>
                               )}
-                              {!isWaitingApproval && !isPlanCompleted && (
+                              {!isPlanCompleted && (
                                 <Button
                                   type="primary"
                                   size="small"
@@ -1114,14 +1105,25 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                           </div>
 
                           {/* Vật tư dạng text (materialsText) */}
-                          {log.materialsText && (
-                            <div className="p-3 mb-3 border border-blue-100 rounded-lg bg-blue-50/50">
-                              <div className="text-[11px] font-bold text-blue-800 uppercase mb-1.5 flex items-center gap-1">
-                                <ExperimentOutlined className="text-blue-600" />{" "}
-                                Vật tư sử dụng:
+                          {materialsText && (
+                            <div
+                              className={`p-3 mb-3 rounded-lg ${isHarvestMaterialsText
+                                ? 'border border-emerald-100 bg-emerald-50/70'
+                                : 'border border-blue-100 bg-blue-50/50'
+                                }`}
+                            >
+                              <div className={`text-[11px] font-bold uppercase mb-1.5 flex items-center gap-1 ${isHarvestMaterialsText ? 'text-emerald-800' : 'text-blue-800'
+                                }`}>
+                                {isHarvestMaterialsText ? (
+                                  <InboxOutlined className="text-emerald-600" />
+                                ) : (
+                                  <ExperimentOutlined className="text-blue-600" />
+                                )}{' '}
+                                {isHarvestMaterialsText ? 'Sản lượng:' : 'Vật tư sử dụng:'}
                               </div>
-                              <p className="m-0 text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
-                                {log.materialsText}
+                              <p className={`m-0 text-sm leading-relaxed whitespace-pre-wrap ${isHarvestMaterialsText ? 'text-emerald-700' : 'text-gray-700'
+                                }`}>
+                                {materialsText}
                               </p>
                             </div>
                           )}

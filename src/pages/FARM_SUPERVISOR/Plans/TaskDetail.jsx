@@ -432,7 +432,7 @@ const FarmSupervisorTaskDetail = () => {
                     <Collapse.Panel header="🌱 Chi tiết Phân bón" key="fertilizers">
                       <div className="space-y-2">
                         {fertilizerRows.map((f) => (
-                          <div key={f.name} className="rounded-lg bg-green-50 p-2 text-sm">
+                          <div key={f.name} className="rounded-lg bg-blue-50 p-2 text-sm">
                             <div className="font-semibold">{f.name}</div>
                             <div>
                               Tổng: {f.totalQuantity} {getQuantityUnit(f.quantityUnit || f.unit, MEASUREMENT_UNITS.KILOGRAM)} / {f.totalArea} {formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}
@@ -451,7 +451,7 @@ const FarmSupervisorTaskDetail = () => {
                     <Collapse.Panel header="🔬 Chi tiết nông dược" key="pesticides">
                       <div className="space-y-2">
                         {pesticideRows.map((p) => (
-                          <div key={p.name} className="rounded-lg bg-orange-50 p-2 text-sm">
+                          <div key={p.name} className="rounded-lg bg-purple-50 p-2 text-sm">
                             <div className="font-semibold">{p.name}</div>
                             <div>
                               Tổng: {p.totalQuantity} {getQuantityUnit(p.quantityUnit || p.unit, MEASUREMENT_UNITS.LITER)} / {p.totalArea} {formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}

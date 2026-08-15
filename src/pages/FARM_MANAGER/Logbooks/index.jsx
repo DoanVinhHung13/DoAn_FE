@@ -107,9 +107,6 @@ const FarmManagerLogbooks = () => {
             allowClear
           />
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <Tag color="gold" className="m-0 flex h-10 items-center rounded-xl px-3">
-              Chờ duyệt
-            </Tag>
             <Button
               icon={<ReloadOutlined />}
               onClick={getList}

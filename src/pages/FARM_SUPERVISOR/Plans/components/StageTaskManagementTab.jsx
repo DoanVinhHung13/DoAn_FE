@@ -624,11 +624,9 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                   </div>
                                   <div
                                     className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg
-                                      ${task.status === "COMPLETED"
+                                      ${["COMPLETED", "WAITING_APPROVAL", "PENDING_REVIEW"].includes(task.status)
                                         ? "bg-green-100 text-green-700"
-                                        : task.status === "WAITING_APPROVAL"
-                                          ? "bg-amber-100 text-amber-700"
-                                          : task.status === "IN_PROGRESS" ||
+                                        : task.status === "IN_PROGRESS" ||
                                             task.status === "ACTIVE"
                                             ? "bg-blue-100 text-blue-700"
                                             : "bg-gray-100 text-gray-500"

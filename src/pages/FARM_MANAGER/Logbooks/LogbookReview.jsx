@@ -17,6 +17,7 @@ import {
   EnvironmentOutlined,
   ExperimentOutlined,
   FileImageOutlined,
+  InboxOutlined,
   UserOutlined,
 } from "@ant-design/icons"
 import {
@@ -181,6 +182,7 @@ const LogEntry = ({ log }) => {
     log.summaryDescription ||
     log.finalDescription
   const materialsText = summary.materialsText || log.materialsText
+  const isHarvestMaterialsText = /(?:sản lượng|thu hoạch)/i.test(materialsText || '')
   const workStartDate =
     log.workStartDate || summary.workStartDate || log.startDate
   const workEndDate = log.workEndDate || summary.workEndDate || log.endDate
@@ -270,9 +272,24 @@ const LogEntry = ({ log }) => {
         )}
 
         {materialsText && (
-          <Paragraph className="!mb-1 !mt-0 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-            {materialsText}
-          </Paragraph>
+          <div className={`p-3 mb-3 rounded-lg ${isHarvestMaterialsText
+            ? 'border border-emerald-100 bg-emerald-50/70'
+            : 'border border-blue-100 bg-blue-50/50'
+            }`}>
+            <div className={`mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase ${isHarvestMaterialsText ? 'text-emerald-800' : 'text-blue-800'
+              }`}>
+              {isHarvestMaterialsText ? (
+                <InboxOutlined className="text-emerald-600" />
+              ) : (
+                <ExperimentOutlined className="text-blue-600" />
+              )}
+              {isHarvestMaterialsText ? 'Sản lượng:' : 'Vật tư sử dụng:'}
+            </div>
+            <Paragraph className={`!mb-0 !mt-0 text-sm whitespace-pre-wrap leading-relaxed ${isHarvestMaterialsText ? 'text-emerald-700' : 'text-gray-700'
+              }`}>
+              {materialsText}
+            </Paragraph>
+          </div>
         )}
 
         {(totalFertilizers.length > 0 || totalPesticides.length > 0) && (
@@ -280,18 +297,18 @@ const LogEntry = ({ log }) => {
             {totalFertilizers.length > 0 && (
               <div className="mb-2">
                 <p className="mb-1 text-xs font-medium text-gray-500">
-                  <ExperimentOutlined className="mr-1 text-green-600" />
+                  <ExperimentOutlined className="mr-1 text-blue-600" />
                   Phân bón:
                 </p>
                 <div className="space-y-1">
                   {totalFertilizers.map((fert, index) => (
                     <div key={index} className="flex items-center gap-2 text-xs text-gray-700">
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full shrink-0" />
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full shrink-0" />
                       <span className="font-medium">
                         {fert.name || fert.fertilizerName || fert.materialName}
                       </span>
                       <span className="text-gray-400">-</span>
-                      <span className="font-medium text-green-700">
+                      <span className="font-medium text-blue-700">
                         {fert.quantity || fert.totalQuantity} {fert.unit || fert.quantityUnit || "kg"}
                       </span>
                     </div>
@@ -302,18 +319,18 @@ const LogEntry = ({ log }) => {
             {totalPesticides.length > 0 && (
               <div>
                 <p className="mb-1 text-xs font-medium text-gray-500">
-                  <ExperimentOutlined className="mr-1 text-orange-600" />
+                  <ExperimentOutlined className="mr-1 text-purple-600" />
                   Nông dược:
                 </p>
                 <div className="space-y-1">
                   {totalPesticides.map((pest, index) => (
                     <div key={index} className="flex items-center gap-2 text-xs text-gray-700">
-                      <span className="w-1.5 h-1.5 bg-orange-500 rounded-full shrink-0" />
+                      <span className="w-1.5 h-1.5 bg-purple-500 rounded-full shrink-0" />
                       <span className="font-medium">
                         {pest.name || pest.pesticideName || pest.materialName}
                       </span>
                       <span className="text-gray-400">-</span>
-                      <span className="font-medium text-orange-700">
+                      <span className="font-medium text-purple-700">
                         {pest.quantity || pest.totalQuantity} {pest.unit || pest.quantityUnit || "lít"}
                       </span>
                     </div>

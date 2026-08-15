@@ -214,7 +214,7 @@ const ReviewHistoryTab = ({ item }) => {
               color={item.reviewStatus === 'APPROVED' ? 'green' : item.reviewStatus === 'REJECTED' ? 'red' : 'gold'}
               className="px-3 py-1 font-semibold"
             >
-              {item.reviewStatus === 'APPROVED' ? 'Đã duyệt' : item.reviewStatus === 'REJECTED' ? 'Bị từ chối' : 'Chờ duyệt'}
+              {item.reviewStatus === 'APPROVED' ? 'Đã duyệt' : item.reviewStatus === 'REJECTED' ? 'Bị từ chối' : 'Đã hoàn thành'}
             </Tag>
           </div>
           

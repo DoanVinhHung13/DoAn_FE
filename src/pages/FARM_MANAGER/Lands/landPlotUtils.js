@@ -47,8 +47,22 @@ export const normalizeLandPlotResponse = (response) => {
 /** Lấy ID từ item */
 export const getItemId = (item) => item?.id
 
-/** Kiểm tra vùng trồng đang hoạt động hay không */
-export const isLandPlotActive = (item) => item?.isActive !== false
+/** Kiểm tra vùng trồng đang hoạt động hay không.
+ * API có thể trả về cờ isActive hoặc chỉ trả về status.
+ */
+export const isLandPlotActive = (item) => {
+  if (typeof item?.isActive === 'boolean') return item.isActive
+
+  const status = String(item?.status ?? item?.Status ?? '').trim().toLowerCase()
+  if (['inactive', 'disabled', 'deleted', 'stopped', 'ngừng hoạt động'].includes(status)) {
+    return false
+  }
+  if (['active', 'enabled', 'đang hoạt động', 'hoạt động'].includes(status)) {
+    return true
+  }
+
+  return true
+}
 
 const LAND_PLOT_CULTIVATION_STATUS = {
   AVAILABLE: {
@@ -97,8 +111,14 @@ export const displayValue = (value) => value || 'Chưa cập nhật'
 /** Format diện tích để hiển thị (VD: "1.5 ha" hoặc "500 m²") */
 export const formatLandArea = (area, unit = MEASUREMENT_UNITS.SQUARE_METER) => {
   if (area == null || area === '') return 'Chưa cập nhật'
-  const numeric = Number(area)
-  if (Number.isNaN(numeric)) return displayValue(area)
+  const raw = String(area).trim()
+  const normalized = raw.includes(',')
+    ? raw.replace(/\./g, '').replace(',', '.')
+    : /^\d{1,3}(?:\.\d{3})+$/.test(raw)
+      ? raw.replace(/\./g, '')
+      : raw
+  const numeric = Number(normalized)
+  if (!Number.isFinite(numeric)) return displayValue(area)
   return `${numeric.toLocaleString('vi-VN')} ${formatAreaUnit(unit)}`
 }
 

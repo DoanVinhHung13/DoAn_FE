@@ -331,9 +331,6 @@ const FarmLeaderTasks = () => {
       setLoadingDetail(true)
       setDetailError(false)
       const params = {}
-      if (statusFilter !== "all") {
-        params.statuses = statusFilter
-      }
       const res = await CultivationTaskService.getLogbookById(
         selectedLogbookId,
         params,
@@ -432,23 +429,21 @@ const FarmLeaderTasks = () => {
     const totalPlans = logbookSummaries.length
     let totalTasks = 0
     let activeTasks = 0
-    let waitingTasks = 0
     let completedTasks = 0
 
     logbookSummaries.forEach(lb => {
       totalTasks += lb.totalTasks ?? 0
       activeTasks += lb.inProgressTasks ?? 0
-      waitingTasks += lb.waitingApprovalTasks ?? 0
-      completedTasks += lb.completedTasks ?? 0
+      completedTasks += (lb.completedTasks ?? 0) + (lb.waitingApprovalTasks ?? 0)
     })
 
-    return { totalPlans, totalTasks, activeTasks, waitingTasks, completedTasks }
+    return { totalPlans, totalTasks, activeTasks, completedTasks }
   }, [logbookSummaries])
 
   // ── Selected plan stats from logbookDetail (right panel) ──────────────────
   const planStats = useMemo(() => {
     if (!logbookDetail)
-      return { total: 0, completed: 0, pct: 0, active: 0, waiting: 0 }
+    return { total: 0, completed: 0, pct: 0, active: 0 }
     // Prefer pre-computed values from plan object (API already computes these)
     const total = logbookDetail.totalTasks ?? tasks.length
     const completed = logbookDetail.completedTasks ?? tasks.filter(t => t.status === "COMPLETED").length
@@ -456,8 +451,9 @@ const FarmLeaderTasks = () => {
       ["IN_PROGRESS", "ACTIVE", "OVERDUE"].includes(t.status),
     ).length
     const waiting = logbookDetail.pendingApprovalTasks ?? tasks.filter(t => t.status === "WAITING_APPROVAL").length
-    const pct = logbookDetail.overallProgress ?? (total > 0 ? Math.round((completed / total) * 100) : 0)
-    return { total, completed, pct, active, waiting }
+    const displayedCompleted = completed + waiting
+    const pct = logbookDetail.overallProgress ?? (total > 0 ? Math.round((displayedCompleted / total) * 100) : 0)
+    return { total, completed: displayedCompleted, pct, active }
   }, [logbookDetail, tasks])
 
   // ── Stages for display — use API stages directly (already grouped) ─────────
@@ -468,14 +464,28 @@ const FarmLeaderTasks = () => {
         .map(s => ({
           id: s.stageId,
           name: s.stageName,
-          filteredTasks: orderTasks(Array.isArray(s.tasks) ? s.tasks : []),
+          filteredTasks: orderTasks(
+            (Array.isArray(s.tasks) ? s.tasks : []).filter(task =>
+              statusFilter === "all" ||
+              (["WAITING_APPROVAL", "PENDING_REVIEW"].includes(String(task.status).toUpperCase())
+                ? "COMPLETED"
+                : task.status) === statusFilter,
+            ),
+          ),
         }))
         .filter(s => s.filteredTasks.length > 0)
     }
     // Fallback: group flat tasks by stage (backward-compat)
     if (!tasks.length) return []
     const stageMap = new Map()
-    tasks.forEach(t => {
+    tasks
+      .filter(task =>
+        statusFilter === "all" ||
+        (["WAITING_APPROVAL", "PENDING_REVIEW"].includes(String(task.status).toUpperCase())
+          ? "COMPLETED"
+          : task.status) === statusFilter,
+      )
+      .forEach(t => {
       const stId = t.cultivationStageId || t.stageId || "default"
       const stName = t.cultivationStageName || t.stageName || "Giai đoạn"
       if (!stageMap.has(stId)) {
@@ -487,7 +497,7 @@ const FarmLeaderTasks = () => {
       ...stage,
       filteredTasks: orderTasks(stage.filteredTasks),
     }))
-  }, [stages, tasks])
+  }, [stages, tasks, statusFilter])
 
   const openTaskLog = taskId => {
     navigate(ROUTER.FL_TASK_LOG.replace(":taskId", taskId))
@@ -534,7 +544,7 @@ const FarmLeaderTasks = () => {
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-4 gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200/60 text-xs">
+          <div className="grid grid-cols-3 gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200/60 text-xs">
             <div className="px-3 py-1 text-center">
               <span className="text-[10px] uppercase font-bold text-slate-400 block">
                 Kế hoạch
@@ -549,14 +559,6 @@ const FarmLeaderTasks = () => {
               </span>
               <span className="text-sm font-bold text-emerald-600">
                 {overallStats.activeTasks}
-              </span>
-            </div>
-            <div className="px-3 py-1 text-center border-l border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-amber-500 block">
-                Chờ duyệt
-              </span>
-              <span className="text-sm font-bold text-amber-600">
-                {overallStats.waitingTasks}
               </span>
             </div>
             <div className="px-3 py-1 text-center border-l border-slate-200">
@@ -696,7 +698,6 @@ const FarmLeaderTasks = () => {
                         {[
                           { key: "all", label: "Tất cả" },
                           { key: "IN_PROGRESS", label: "Đang làm" },
-                          { key: "WAITING_APPROVAL", label: "Chờ duyệt" },
                           { key: "COMPLETED", label: "Hoàn thành" },
                         ].map(item => {
                           const isActive = statusFilter === item.key
@@ -813,10 +814,10 @@ const FarmLeaderTasks = () => {
                       </div>
                       <div>
                         <span className="text-slate-300 text-[11px] block">
-                          Chờ phê duyệt
+                          Hoàn thành
                         </span>
-                        <span className="text-lg font-bold text-amber-300">
-                          {planStats.waiting}
+                        <span className="text-lg font-bold text-blue-300">
+                          {planStats.completed}
                         </span>
                       </div>
                       <div>

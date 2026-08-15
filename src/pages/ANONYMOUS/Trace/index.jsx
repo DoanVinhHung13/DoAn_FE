@@ -18,6 +18,7 @@ import {
   ExperimentOutlined,
   FileImageOutlined,
   EyeOutlined,
+  InboxOutlined,
 } from '@ant-design/icons';
 import { formatAreaUnit } from 'src/constants/measurementUnits';
 import { Sprout } from 'lucide-react';
@@ -88,6 +89,9 @@ const formatMaterialQuantity = (material) => {
 
 const getMaterialColorClass = (material) => {
   const type = String(getMaterialType(material, '')).trim().toUpperCase();
+  if (type.includes('HARVEST') || type.includes('THU HOẠCH') || type.includes('SẢN LƯỢNG')) {
+    return 'text-emerald-700';
+  }
   if (type.includes('FERTILIZER') || type.includes('PHÂN BÓN')) return 'text-blue-700';
   if (type.includes('PESTICIDE') || type.includes('CROP_PROTECTION') || type.includes('NÔNG DƯỢC')) {
     return 'text-purple-700';
@@ -456,9 +460,11 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
             </div>
 
             <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 flex flex-col justify-between">
-              <Text className="text-slate-500 text-xs font-semibold block mb-1">Diện tích & Sản lượng</Text>
+              <Text className="text-emerald-700 text-xs font-semibold block mb-1">
+                <InboxOutlined className="mr-1" /> Diện tích & Sản lượng
+              </Text>
               <Text className="text-xs sm:text-sm font-semibold text-slate-800">
-                {traceData.area} • <span className="text-emerald-600">{traceData.yield}</span>
+                {traceData.area} • <span className="text-emerald-700">{traceData.yield}</span>
               </Text>
             </div>
 
@@ -580,7 +586,7 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
                   {traceData.materials.map((material, index) => (
                     <tr key={`table-${material.id || `${material.name}-${material.usedAt || index}`}`}>
                       <td className="px-4 py-3">
-                        <Tag color={material.type === 'Nông dược' ? 'orange' : 'green'} className="m-0 rounded-md text-xs font-semibold">
+                        <Tag color={material.type === 'Nông dược' ? 'purple' : 'blue'} className="m-0 rounded-md text-xs font-semibold">
                           {material.type}
                         </Tag>
                       </td>
@@ -598,7 +604,7 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
                 <div key={material.id || `${material.name}-${material.usedAt || index}`} className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-3.5 sm:p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex items-center gap-2">
-                      <Tag color={material.type === 'Nông dược' ? 'orange' : 'green'} className="m-0 rounded-md text-xs font-semibold">
+                      <Tag color={material.type === 'Nông dược' ? 'purple' : 'blue'} className="m-0 rounded-md text-xs font-semibold">
                         {material.type}
                       </Tag>
                       <Text strong className="text-sm text-slate-900 sm:text-base">{material.name}</Text>

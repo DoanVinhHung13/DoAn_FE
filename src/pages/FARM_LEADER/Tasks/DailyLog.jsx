@@ -667,8 +667,8 @@ const DailyLog = () => {
 
       {task.status === "WAITING_APPROVAL" && (
         <Alert
-          type="warning"
-          message="Đã gửi bản tổng hợp — đang chờ giám sát viên biên soạn / duyệt."
+          type="info"
+          message="Đã gửi bản tổng hợp cho giám sát viên biên soạn."
           className="rounded-xl"
         />
       )}

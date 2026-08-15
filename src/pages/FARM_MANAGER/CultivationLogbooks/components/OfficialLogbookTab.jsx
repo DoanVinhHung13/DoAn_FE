@@ -308,7 +308,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                                   <div className="mb-2">
                                     <p className="mb-1 text-xs text-emerald-700 font-medium">
                                       <InboxOutlined className="mr-1" />
-                                      Thu hoạch:
+                                      Sản lượng:
                                     </p>
                                     <p className="mb-0 text-xs leading-relaxed text-gray-700">
                                       Đã thu hoạch tổng cộng{' '}
@@ -325,10 +325,10 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                                     <div className="space-y-1">
                                       {totalFertilizers.map((fert, idx) => (
                                         <div key={idx} className="flex items-center gap-2 text-xs text-gray-700">
-                                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0" />
+                                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
                                           <span className="font-medium">{fert.name || fert.fertilizerName || fert.materialName}</span>
                                           <span className="text-gray-400">-</span>
-                                          <span className="font-medium text-green-700">
+                                          <span className="font-medium text-blue-700">
                                             {fert.quantity || fert.totalQuantity} {fert.unit || 'kg'}
                                           </span>
                                         </div>
@@ -342,10 +342,10 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                                     <div className="space-y-1">
                                       {totalPesticides.map((pest, idx) => (
                                         <div key={idx} className="flex items-center gap-2 text-xs text-gray-700">
-                                          <span className="w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0" />
+                                      <span className="w-1.5 h-1.5 bg-purple-500 rounded-full flex-shrink-0" />
                                           <span className="font-medium">{pest.name || pest.pesticideName || pest.materialName}</span>
                                           <span className="text-gray-400">-</span>
-                                          <span className="font-medium text-orange-700">
+                                          <span className="font-medium text-purple-700">
                                             {pest.quantity || pest.totalQuantity} {pest.unit || 'lít'}
                                           </span>
                                         </div>

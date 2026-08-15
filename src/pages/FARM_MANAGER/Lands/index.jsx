@@ -195,7 +195,14 @@ const LandsManagement = () => {
     {
       title: 'Diện tích',
       width: 120,
-      render: (_, record) => formatLandArea(record.area, record.areaUnit),
+      render: (_, record) => (
+        <span
+          className="block max-w-full truncate whitespace-nowrap"
+          title={formatLandArea(record.area, record.areaUnit)}
+        >
+          {formatLandArea(record.area, record.areaUnit)}
+        </span>
+      ),
     },
     {
       title: 'Trạng thái canh tác',

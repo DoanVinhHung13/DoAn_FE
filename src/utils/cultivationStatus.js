@@ -18,6 +18,7 @@ export const REVIEW_STATUS = {
   UNSUBMITTED: { color: 'default', label: 'Chưa nộp' },
   WAITING_APPROVAL: { color: 'gold', label: 'Chờ duyệt' },
   APPROVED: { color: 'success', label: 'Đã duyệt' },
+  COMPLETED: { color: 'success', label: 'Đã hoàn thành' },
   REJECTED: { color: 'error', label: 'Từ chối' },
   // legacy aliases
   DRAFT: { color: 'default', label: 'Chưa nộp' },
@@ -113,7 +114,6 @@ export const LOGBOOK_STATUS_FILTER_OPTIONS = [
 
 export const CLOSING_STATUS_FILTER_OPTIONS = [
   { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'WAITING_APPROVAL', label: 'Chờ duyệt' },
   { value: 'APPROVED', label: 'Đã duyệt' },
   { value: 'REJECTED', label: 'Từ chối' },
   { value: 'COMPLETED', label: 'Đã hoàn thành' },
@@ -123,13 +123,25 @@ export const getLogbookStatus = (status, systemKeyOptions) =>
   resolveStatusMeta(status, LOGBOOK_STATUS, systemKeyOptions)
 
 export const getReviewStatus = (status, systemKeyOptions) =>
-  resolveStatusMeta(status, REVIEW_STATUS, systemKeyOptions)
+  resolveStatusMeta(
+    ['WAITING_APPROVAL', 'PENDING_REVIEW'].includes(String(status).toUpperCase())
+      ? 'COMPLETED'
+      : status,
+    REVIEW_STATUS,
+    systemKeyOptions,
+  )
 
 export const getStageStatus = (status, systemKeyOptions) =>
   resolveStatusMeta(status, STAGE_STATUS, systemKeyOptions)
 
 export const getTaskStatus = (status, systemKeyOptions) =>
-  resolveStatusMeta(status, TASK_STATUS, systemKeyOptions)
+  resolveStatusMeta(
+    ['WAITING_APPROVAL', 'PENDING_REVIEW'].includes(String(status).toUpperCase())
+      ? 'COMPLETED'
+      : status,
+    TASK_STATUS,
+    systemKeyOptions,
+  )
 
 export const getHarvestBatchStatus = (status, systemKeyOptions) =>
   resolveStatusMeta(status, HARVEST_BATCH_STATUS, systemKeyOptions)

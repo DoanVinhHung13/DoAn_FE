@@ -123,7 +123,7 @@ const DailyLogCard = ({ log, index }) => {
             {status === 'APPROVED' ? 'Đã duyệt' : 'Hoàn thành'}
           </Tag>
         )}
-        {status === 'PENDING' && <Tag color="orange" className="text-xs m-0 px-2 py-0.5 rounded-md">Chờ duyệt</Tag>}
+        {status === 'PENDING' && <Tag color="green" icon={<CheckCircleOutlined />} className="text-xs m-0 px-2 py-0.5 rounded-md">Hoàn thành</Tag>}
       </div>
 
       <div className="p-4">
@@ -138,7 +138,7 @@ const DailyLogCard = ({ log, index }) => {
         {(getHarvestQuantity(log) != null || getHarvestArea(log) > 0) && (
           <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-800">
-              <><InboxOutlined className="mr-1 text-emerald-600" />Thu hoạch</>
+              <><InboxOutlined className="mr-1 text-emerald-600" />Sản lượng</>
             </p>
             <div className="flex flex-wrap items-center gap-2 text-sm">
               {getHarvestQuantity(log) != null && (
@@ -158,14 +158,14 @@ const DailyLogCard = ({ log, index }) => {
 
             {fertilizers.length > 0 && (
               <div className="mb-3">
-                <p className="mb-1.5 text-xs text-green-600 font-semibold">Phân bón:</p>
+                <p className="mb-1.5 text-xs text-blue-600 font-semibold">Phân bón:</p>
                 <div className="space-y-1.5 pl-1">
                   {fertilizers.map((fert, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0" />
+                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
                       <span className="font-medium">{fert.name || fert.fertilizerName || fert.materialName}</span>
                       <span className="text-gray-300">·</span>
-                      <span className="font-semibold text-green-700">{fert.quantity || fert.amount || fert.usedQuantity} {fert.unit || 'kg'}</span>
+                      <span className="font-semibold text-blue-700">{fert.quantity || fert.amount || fert.usedQuantity} {fert.unit || 'kg'}</span>
                       {fert.area && (
                         <>
                           <span className="text-gray-300">/</span>
@@ -180,14 +180,14 @@ const DailyLogCard = ({ log, index }) => {
 
             {pesticides.length > 0 && (
               <div>
-                <p className="mb-1.5 text-xs text-orange-600 font-semibold">Nông dược:</p>
+                <p className="mb-1.5 text-xs text-purple-600 font-semibold">Nông dược:</p>
                 <div className="space-y-1.5 pl-1">
                   {pesticides.map((pest, idx) => (
                     <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
-                      <div className="w-1.5 h-1.5 bg-orange-500 rounded-full flex-shrink-0" />
+                      <div className="w-1.5 h-1.5 bg-purple-500 rounded-full flex-shrink-0" />
                       <span className="font-medium">{pest.name || pest.pesticideName || pest.materialName}</span>
                       <span className="text-gray-300">·</span>
-                      <span className="font-semibold text-orange-700">{pest.quantity || pest.amount || pest.usedQuantity} {pest.unit || 'lít'}</span>
+                      <span className="font-semibold text-purple-700">{pest.quantity || pest.amount || pest.usedQuantity} {pest.unit || 'lít'}</span>
                       {pest.area && (
                         <>
                           <span className="text-gray-300">/</span>
