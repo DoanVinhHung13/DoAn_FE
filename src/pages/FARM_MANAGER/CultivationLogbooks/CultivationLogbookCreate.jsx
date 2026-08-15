@@ -332,7 +332,13 @@ const CultivationLogbookCreate = () => {
           endDate: stage.endDate ? parseDate(stage.endDate) : null,
         }))
 
-        const draftData = restoreDraft()?.data || {}
+        const draft = restoreDraft({
+          onRestore: ({ data }) => {
+            form.setFieldsValue(data)
+            setStages(data.__draftMeta?.stages || (normalizedStages.length ? normalizedStages : [createEmptyStage(1)]))
+          },
+        })
+        const draftData = draft?.data || {}
         form.setFieldsValue(draftData)
         setStages(draftData.__draftMeta?.stages || (normalizedStages.length ? normalizedStages : [createEmptyStage(1)]))
         draftReadyRef.current = true
@@ -347,7 +353,13 @@ const CultivationLogbookCreate = () => {
 
   useEffect(() => {
     if (isEdit) return
-    const draftData = restoreDraft()?.data || {}
+    const draft = restoreDraft({
+      onRestore: ({ data }) => {
+        form.setFieldsValue(data)
+        setStages(data.__draftMeta?.stages || [createEmptyStage(1)])
+      },
+    })
+    const draftData = draft?.data || {}
     form.setFieldsValue(draftData)
     setStages(draftData.__draftMeta?.stages || [createEmptyStage(1)])
     draftReadyRef.current = true

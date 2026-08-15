@@ -584,6 +584,14 @@ const DailyLog = () => {
   const isHarvestTask = isHarvestTaskData(task)
   const harvestedArea = dailyLogs.reduce((total, log) => total + Number(log.executedArea || 0), 0)
   const remainingHarvestArea = Math.max(0, Number(task.totalPlanArea || 0) - harvestedArea)
+  const harvestedQuantity = dailyLogs.reduce(
+    (total, log) => total + Number(getHarvestQuantity(log) || 0),
+    0,
+  )
+  const isHarvestCompleted =
+    isHarvestTask &&
+    Number(task.totalPlanArea || 0) > 0 &&
+    remainingHarvestArea <= 0.0001
 
   return (
     <div className="pb-20 space-y-4 duration-500 animate-in fade-in slide-in-from-bottom-4">
@@ -681,7 +689,42 @@ const DailyLog = () => {
             className="space-y-4"
             disabled={isViewOnly}
           >
-            <Card
+            {isHarvestCompleted ? (
+              <Card
+                bordered={false}
+                className="shadow-sm rounded-2xl border border-emerald-100 bg-emerald-50/60"
+                bodyStyle={{ padding: "24px" }}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="flex items-center justify-center w-12 h-12 mb-3 text-2xl rounded-full bg-emerald-100">
+                    ✅
+                  </div>
+                  <h3 className="m-0 text-lg font-bold text-emerald-800">
+                    Bạn đã hoàn thành thu hoạch
+                  </h3>
+                  <p className="mt-2 mb-0 text-sm text-emerald-700">
+                    Đã thu hoạch {harvestedArea} m²
+                    {harvestedQuantity > 0 ? ` với số lượng ${harvestedQuantity} ${HARVEST_UNIT}` : ""}.
+                  </p>
+                  <p className="mt-1 mb-0 text-sm text-gray-600">
+                    Không thể ghi thêm nhật ký cho công việc thu hoạch này.
+                    Hãy gửi bản tổng hợp cho giám sát nông trại.
+                  </p>
+                  {!isViewOnly && (
+                    <Button
+                      type="primary"
+                      icon={<SendOutlined />}
+                      onClick={openSummaryModal}
+                      className="h-10 px-5 mt-5 font-semibold bg-emerald-600 border-emerald-600 hover:!bg-emerald-700 hover:!border-emerald-700"
+                    >
+                      Gửi bản tổng hợp cho giám sát
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ) : (
+              <>
+              <Card
               bordered={false}
               className="h-full shadow-sm rounded-2xl"
               bodyStyle={{ padding: "20px" }}
@@ -843,9 +886,19 @@ const DailyLog = () => {
                     <Form.Item
                       name="executedArea"
                       label="Diện tích thu hoạch (m²)"
-                      rules={[{ required: true, type: "number", min: 0.0001, message: "Nhập diện tích hợp lệ" }]}
+                      rules={[
+                        { required: true, type: "number", min: 0.0001, message: "Nhập diện tích hợp lệ" },
+                        {
+                          validator: (_, value) => {
+                            if (value === undefined || value === null || value === "") return Promise.resolve()
+                            return Number(value) <= remainingHarvestArea + 0.0001
+                              ? Promise.resolve()
+                              : Promise.reject(new Error(`Không được vượt quá ${remainingHarvestArea} m² còn lại`))
+                          },
+                        },
+                      ]}
                     >
-                      <InputNumber min={0} className="w-full" placeholder="Diện tích" />
+                      <InputNumber min={0} max={remainingHarvestArea} className="w-full" placeholder="Diện tích" />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -1361,6 +1414,8 @@ const DailyLog = () => {
                   Lưu nhật ký
                 </Button>
               </div>
+            )}
+              </>
             )}
           </Form>
         </Col>

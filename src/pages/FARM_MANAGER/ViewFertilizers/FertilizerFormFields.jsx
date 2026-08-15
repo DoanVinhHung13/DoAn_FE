@@ -141,7 +141,13 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
   // ── Populate form on open ──────────────────────────────────────────────────
   React.useEffect(() => {
-    const draft = restoreDraft()
+    const draft = restoreDraft({
+      onRestore: ({ data }) => {
+        form.setFieldsValue(data)
+        setComponents(data.__draftMeta?.components || [])
+        setDosages(data.__draftMeta?.dosages || [{ ...DEFAULT_DOSAGE }])
+      },
+    })
     const draftData = draft?.data || {}
     if (isEdit) {
       const selectedUnit = getQuantityUnit(editingItem.unit, MEASUREMENT_UNITS.KILOGRAM)

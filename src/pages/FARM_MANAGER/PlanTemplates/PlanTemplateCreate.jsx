@@ -241,7 +241,12 @@ const PlanTemplateCreate = () => {
           description: template?.description || "",
           estimatedDurationDays: template?.estimatedDurationDays,
         }
-        const draft = restoreDraft()
+        const draft = restoreDraft({
+          onRestore: ({ data }) => {
+            form.setFieldsValue({ ...serverValues, ...data })
+            setSteps(data.__draftMeta?.steps || (mappedSteps.length ? mappedSteps : [createEmptyStep(1)]))
+          },
+        })
         const draftData = draft?.data || {}
         form.setFieldsValue({ ...serverValues, ...draftData })
 
@@ -274,7 +279,13 @@ const PlanTemplateCreate = () => {
 
   useEffect(() => {
     if (isEdit) return
-    const draftData = restoreDraft()?.data || {}
+    const draft = restoreDraft({
+      onRestore: ({ data }) => {
+        form.setFieldsValue(data)
+        setSteps(data.__draftMeta?.steps || [createEmptyStep(1)])
+      },
+    })
+    const draftData = draft?.data || {}
     form.setFieldsValue(draftData)
     setSteps(draftData.__draftMeta?.steps || [createEmptyStep(1)])
     draftReadyRef.current = true
