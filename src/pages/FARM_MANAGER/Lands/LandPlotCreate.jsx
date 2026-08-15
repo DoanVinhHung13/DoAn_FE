@@ -54,7 +54,6 @@ const LandPlotCreate = () => {
       const response = await LandPlotService.getLandPlots({ PageIndex: 1, PageSize: 100 })
       setExistingPlots(normalizeLandPlotResponse(response).items)
     } catch {
-      // Không ảnh hưởng UX chính
     }
   }, [canManage])
 
