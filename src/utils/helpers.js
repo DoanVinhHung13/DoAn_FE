@@ -125,11 +125,7 @@ export const EMAIL_RULES = [
 export const PASSWORD_RULES = [
   { required: true, message: 'Vui lòng nhập mật khẩu!' },
   { whitespace: true, message: 'Mật khẩu không được chứa khoảng trắng!' },
-  { min: 6, message: 'Mật khẩu phải từ 6 ký tự trở lên' },
-  {
-    pattern: /^\S+$/,
-    message: 'Mật khẩu không được chứa khoảng trắng!'
-  }
+  { min: 6, message: 'Mật khẩu phải từ 6 ký tự trở lên' }
 ];
 
 export const PHONE_RULES = [
