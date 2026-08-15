@@ -1,10 +1,10 @@
-import booleanOverlap from '@turf/boolean-overlap'
-import booleanContains from '@turf/boolean-contains'
-import { polygon as turfPolygon } from '@turf/helpers'
-import { formatAreaUnit } from 'src/constants/measurementUnits'
+import booleanContains from "@turf/boolean-contains"
+import booleanOverlap from "@turf/boolean-overlap"
+import { polygon as turfPolygon } from "@turf/helpers"
+import { formatAreaUnit } from "src/constants/measurementUnits"
 
 export function leafletLatLngsToGeoJSON(leafletLatLngs) {
-  return leafletLatLngs.map((latLng) => [latLng.lng, latLng.lat])
+  return leafletLatLngs.map(latLng => [latLng.lng, latLng.lat])
 }
 
 export function createGeoJSONPolygon(leafletLatLngs) {
@@ -16,7 +16,7 @@ export function createGeoJSONPolygon(leafletLatLngs) {
   const ring = isClosed ? geoJSONCoords : [...geoJSONCoords, firstPoint]
 
   return {
-    type: 'Polygon',
+    type: "Polygon",
     coordinates: [ring],
   }
 }
@@ -32,7 +32,7 @@ export function calculatePolygonArea(geoJSONCoords) {
     const [lng1, lat1] = ring[i]
     const [lng2, lat2] = ring[i + 1]
     area +=
-      ((lng2 - lng1) * Math.PI) / 180 *
+      (((lng2 - lng1) * Math.PI) / 180) *
       (2 + Math.sin((lat1 * Math.PI) / 180) + Math.sin((lat2 * Math.PI) / 180))
   }
 
@@ -40,7 +40,7 @@ export function calculatePolygonArea(geoJSONCoords) {
 }
 
 export function formatArea(areaM2) {
-  return `${Math.round(areaM2).toLocaleString('vi-VN')} ${formatAreaUnit()}`
+  return `${Math.round(areaM2).toLocaleString("vi-VN")} ${formatAreaUnit()}`
 }
 
 export function geoJSONToLeafletPositions(coordinates) {
@@ -49,7 +49,7 @@ export function geoJSONToLeafletPositions(coordinates) {
 
 export function parseBoundaryJson(boundaryJson) {
   if (!boundaryJson) return null
-  if (typeof boundaryJson === 'object') return boundaryJson
+  if (typeof boundaryJson === "object") return boundaryJson
   try {
     return JSON.parse(boundaryJson)
   } catch {
@@ -63,9 +63,11 @@ export function getPolygonCenter(geoJSON) {
 
   let sumLat = 0
   let sumLng = 0
-  const points = ring[ring.length - 1][0] === ring[0][0] && ring[ring.length - 1][1] === ring[0][1]
-    ? ring.slice(0, -1)
-    : ring
+  const points =
+    ring[ring.length - 1][0] === ring[0][0] &&
+    ring[ring.length - 1][1] === ring[0][1]
+      ? ring.slice(0, -1)
+      : ring
 
   points.forEach(([lng, lat]) => {
     sumLng += lng
@@ -91,7 +93,11 @@ export function toTurfPolygon(geoJSON) {
  * Kiểm tra polygon mới có chồng lấn với lô đất đã tồn tại hay không.
  * Chỉ chặn overlap thực sự (không chặn chạm cạnh).
  */
-export function findOverlappingPlot(newGeoJSON, existingPlots = [], excludePlotId = null) {
+export function findOverlappingPlot(
+  newGeoJSON,
+  existingPlots = [],
+  excludePlotId = null,
+) {
   if (!newGeoJSON?.coordinates) return null
 
   const newPoly = toTurfPolygon(newGeoJSON)
@@ -110,8 +116,7 @@ export function findOverlappingPlot(newGeoJSON, existingPlots = [], excludePlotI
     try {
       const overlaps =
         booleanOverlap(newPoly, existingPoly) ||
-        booleanContains(newPoly, existingPoly) ||
-        booleanContains(existingPoly, newPoly)
+        booleanContains(newPoly, existingPoly)
 
       if (overlaps) return plot
     } catch {
