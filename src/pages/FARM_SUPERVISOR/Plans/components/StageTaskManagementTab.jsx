@@ -140,7 +140,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       try {
         const res = await TaskCatalogService.getTaskCatalogs({
           PageIndex: 1,
-            PageSize: 100,
+          PageSize: 100,
           CropCatalogId: plan?.cropCatalogId,
           CropId: plan?.cropId,
         })
@@ -156,10 +156,10 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                 ),
             )
             .map(item => ({
-            value: item.id,
-            label: item.name,
-            description: item.description,
-            activityType: item.activityType,
+              value: item.id,
+              label: item.name,
+              description: item.description,
+              activityType: item.activityType,
             })),
         )
       } catch {
@@ -292,8 +292,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const availableTaskCatalogOptions = isFinalStage
     ? taskCatalogOptions
     : taskCatalogOptions.filter(
-        option => option.activityType !== "HARVESTING",
-      )
+      option => option.activityType !== "HARVESTING",
+    )
   const selectedTasks = selectedId ? tasks[selectedId] || [] : []
   const orderedSelectedTasks = orderTasks(selectedTasks)
   const selectedIdx = stages.findIndex(s => s.id === selectedId)
@@ -525,7 +525,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     message="Hướng dẫn giai đoạn"
                     description={selectedStage.note}
                     type="warning"
-                    showIcon
                     icon={<InfoCircleOutlined />}
                     className="mb-3 rounded-xl"
                   />
