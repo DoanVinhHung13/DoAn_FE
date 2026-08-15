@@ -388,7 +388,28 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
             </Form.Item>
           </div>
 
-          <Form.Item name="description" label="Mô tả">
+          <Form.Item
+            name="description"
+            label="Mô tả"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) {
+                    return Promise.reject(new Error('Mô tả không được chỉ chứa khoảng trắng.'));
+                  }
+                  if (trimmed.length > 500) {
+                    return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+                  }
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
+                    return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
             <Input.TextArea rows={3} placeholder="Nhập mô tả" />
           </Form.Item>
 

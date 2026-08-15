@@ -224,7 +224,6 @@ const LandPlotEdit = () => {
               excludePlotId={id}
               overlapPlots={existingPlots}
               onPolygonChange={handlePolygonChange}
-              onOverlapError={(msg) => setMapError(msg || '')}
               onAddressSelect={({ address }) => {
                 if (address) form.setFieldsValue({ address })
               }}

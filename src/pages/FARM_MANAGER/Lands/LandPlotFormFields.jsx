@@ -85,6 +85,9 @@ const LandPlotFormFields = ({
                 if (value <= 0) {
                   return Promise.reject(new Error('Diện tích phải lớn hơn 0'))
                 }
+                if (value > 300_000) {
+                  return Promise.reject(new Error('Diện tích không được vượt quá 300.000 m² (30 ha)'))
+                }
                 return Promise.resolve()
               },
             },
@@ -93,6 +96,8 @@ const LandPlotFormFields = ({
           <InputNumber
             disabled={disabled}
             className="w-full"
+            min={0.01}
+            max={300_000}
             step={0.01}
             placeholder={showAreaPlaceholder ? 'Tự động từ bản đồ' : undefined}
           />

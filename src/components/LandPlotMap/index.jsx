@@ -20,6 +20,7 @@ const DEFAULT_CENTER = [21.0285, 105.8542]
 const DEFAULT_ZOOM = 13
 const SEARCH_ZOOM = 16
 const MAP_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+const MAX_AREA_M2 = 300_000
 
 const LandPlotMap = ({
   mode = 'view',
@@ -98,6 +99,25 @@ const LandPlotMap = ({
 
   const validatePolygon = useCallback(
     (geoJSON, layer, { isDraw = false } = {}) => {
+      // Kiểm tra diện tích tối đa 30 ha = 300,000 m²
+      const areaM2 = calculatePolygonArea(geoJSON.coordinates)
+      if (areaM2 > MAX_AREA_M2) {
+        const message = `Diện tích vượt quá giới hạn cho phép (tối đa  ${MAX_AREA_M2.toLocaleString('vi-VN')} m²). Vui lòng vẽ lại nhỏ hơn.`
+        setOverlapError(message)
+        onOverlapErrorRef.current?.(message)
+
+        if (isDraw && layer && mapInstance.current) {
+          mapInstance.current.removeLayer(layer)
+          activeLayer.current = null
+          onPolygonChangeRef.current?.(null)
+        } else if (layer && lastValidGeoJSON.current) {
+          const positions = geoJSONToLeafletPositions(lastValidGeoJSON.current.coordinates)
+          layer.setLatLngs(positions)
+        }
+
+        return false
+      }
+
       const overlapping = findOverlappingPlot(
         geoJSON,
         overlapPlotsRef.current,

@@ -201,7 +201,9 @@ const CatalogEdit = () => {
                 validator: (_, value) => {
                   if (!value) return Promise.resolve();
                   const trimmed = value.trim();
-                  if (!trimmed) return Promise.resolve();
+                  if (!trimmed) {
+                    return Promise.reject(new Error('Mô tả không được chỉ chứa khoảng trắng.'));
+                  }
                   if (trimmed.length > 500) {
                     return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
                   }
