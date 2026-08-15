@@ -143,3 +143,69 @@ export async function searchAddress(query, { signal, limit = 10 } = {}) {
     longitude: null,
   }))
 }
+
+/**
+ * Reverse Geocoding: chuyển đổi tọa độ (lat, lng) thành chuỗi địa chỉ đọc được.
+ * Thử gọi API OpenMap (nếu có API Key), nếu không có hoặc lỗi thì fallback sang OpenStreetMap Nominatim reverse API.
+ * Trường hợp ngoại lệ trả về định dạng tọa độ `lat, lng`.
+ */
+export async function reverseGeocode(latitude, longitude, { signal } = {}) {
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return ''
+  }
+
+  // 1. Thử OpenMap reverse nếu có API Key
+  if (OPENMAP_API_KEY) {
+    try {
+      const params = new URLSearchParams({
+        lat: String(latitude),
+        lng: String(longitude),
+        apikey: OPENMAP_API_KEY,
+      })
+      const response = await fetch(`${OPENMAP_BASE}/reverse?${params}`, {
+        headers: { Accept: 'application/json' },
+        signal,
+      })
+      if (response.ok) {
+        const data = await response.json()
+        const label =
+          data?.features?.[0]?.properties?.label ||
+          data?.result?.address ||
+          data?.display_name
+        if (label) return label
+      }
+    } catch (err) {
+      if (isExternalAbortError(err)) throw err
+    }
+  }
+
+  // 2. Fallback sang OpenStreetMap Nominatim
+  try {
+    const params = new URLSearchParams({
+      format: 'json',
+      lat: String(latitude),
+      lon: String(longitude),
+      'accept-language': 'vi',
+      zoom: '18',
+    })
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'FarmManagerApp/1.0',
+      },
+      signal,
+    })
+    if (response.ok) {
+      const data = await response.json()
+      if (data?.display_name) {
+        return data.display_name
+      }
+    }
+  } catch (err) {
+    if (isExternalAbortError(err)) throw err
+  }
+
+  // 3. Fallback cuối cùng nếu cả 2 API đều không có thông tin
+  return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+}
+

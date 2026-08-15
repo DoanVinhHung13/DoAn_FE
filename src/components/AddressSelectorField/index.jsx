@@ -1,21 +1,27 @@
-import { useEffect, useState } from 'react'
-import LocationSelector, { formatAddress } from 'src/components/LocationSelector'
+import React from 'react'
+import PropTypes from 'prop-types'
+import { Input } from 'antd'
+import { EnvironmentOutlined } from '@ant-design/icons'
 
-const AddressSelectorField = ({ value = '', onChange, disabled = false }) => {
-  const [parts, setParts] = useState({ detailAddress: value })
+const AddressSelectorField = ({ value = '', onChange, disabled = false, placeholder = 'Nhập địa chỉ hoặc chọn/vẽ trên bản đồ' }) => {
+  return (
+    <Input
+      prefix={<EnvironmentOutlined className="text-gray-400" />}
+      placeholder={placeholder}
+      value={typeof value === 'string' ? value : (value?.detailAddress || '')}
+      onChange={(e) => onChange?.(e.target.value)}
+      disabled={disabled}
+      className="h-11 rounded-xl"
+    />
+  )
+}
 
-  useEffect(() => {
-    const current = formatAddress(parts)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (value !== current) setParts({ detailAddress: value || '' })
-  }, [value, parts])
-
-  const handleChange = (nextParts) => {
-    setParts(nextParts)
-    onChange?.(formatAddress(nextParts))
-  }
-
-  return <LocationSelector value={parts} onChange={handleChange} disabled={disabled} />
+AddressSelectorField.propTypes = {
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  onChange: PropTypes.func,
+  disabled: PropTypes.bool,
+  placeholder: PropTypes.string,
 }
 
 export default AddressSelectorField
+
