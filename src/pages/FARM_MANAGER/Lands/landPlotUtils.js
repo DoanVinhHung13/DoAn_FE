@@ -159,7 +159,10 @@ export const isOverlapApiError = (msgOrError) => {
 export const buildLandPlotPayload = (values, polygonData) => {
   const areaM2 = polygonData?.areaM2 || 0
   // Ưu tiên giá trị user nhập tay; fallback sang areaM2 từ polygon nếu form trống
-  const area = Number((values.area || areaM2 || 0).toFixed(2))
+  const area =
+    values.area !== undefined && values.area !== null && values.area !== ''
+      ? Number(Number(values.area).toFixed(2))
+      : Number((areaM2 || 0).toFixed(2))
 
   // Tính tọa độ trung tâm từ geoJSON
   const center = polygonData?.geoJSON || null
@@ -181,7 +184,7 @@ export const buildLandPlotPayload = (values, polygonData) => {
 
   return {
     name: values.name?.trim(),
-    area: area || 0.0001,
+    area: area,
     areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
     address: values.address?.trim() || null,
     soilTypeId: values.soilTypeId || null,
