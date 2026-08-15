@@ -12,9 +12,9 @@ export const apiCreateFertilizer = '/fertilizers'
 export const apiGetFertilizerById = (id) => `/fertilizers/${id}`
 export const apiUpdateFertilizer = (id) => `/fertilizers/${id}`
 export const apiDeleteFertilizer = (id) => `/fertilizers/${id}`
-export const apiToggleFertilizerStatus = (id) => `/fertilizers/${id}`
-export const apiDeactivateFertilizer = (id) => `/fertilizers/${id}/deactivate`
-export const apiReactivateFertilizer = (id) => `/fertilizers/${id}/reactivate`
+export const apiToggleFertilizerStatus = (id) => `/fertilizers/${id}/status`
+export const apiDeactivateFertilizer = apiToggleFertilizerStatus
+export const apiReactivateFertilizer = apiToggleFertilizerStatus
 
 // Swagger: GET /api/fertilizers/selection — Daily Log Select
 export const apiGetFertilizerSelection = '/fertilizers/selection'
