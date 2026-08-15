@@ -1,6 +1,7 @@
 import booleanContains from "@turf/boolean-contains"
 import booleanOverlap from "@turf/boolean-overlap"
 import { polygon as turfPolygon } from "@turf/helpers"
+import { formatAreaUnit } from "src/constants/measurementUnits"
 
 export function leafletLatLngsToGeoJSON(leafletLatLngs) {
   return leafletLatLngs.map(latLng => [latLng.lng, latLng.lat])
@@ -38,6 +39,9 @@ export function calculatePolygonArea(geoJSONCoords) {
   return Math.abs((area * R * R) / 2)
 }
 
+export function formatArea(areaM2) {
+  return `${Math.round(areaM2).toLocaleString("vi-VN")} ${formatAreaUnit()}`
+}
 
 export function geoJSONToLeafletPositions(coordinates) {
   return coordinates[0].map(([lng, lat]) => [lat, lng])

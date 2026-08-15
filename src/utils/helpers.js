@@ -1,4 +1,4 @@
-import { formatAreaUnit } from 'src/constants/measurementUnits';
+
 
 // Helper functions
 
@@ -32,11 +32,7 @@ export const getInitialAvatar = (name) => {
  * @param {string} phone - Số điện thoại
  * @returns {string} - Số điện thoại đã format
  */
-export const formatPhone = (phone) => {
-  if (!phone) return '';
-  // Format: 0912 345 678
-  return phone.replace(/(\d{4})(\d{3})(\d{3})/, '$1 $2 $3');
-};
+
 
 /**
  * Validate số điện thoại Việt Nam
@@ -63,15 +59,7 @@ export const isValidEmail = (email) => {
  */
 export const invalidCharsRegex = /[^\p{L}\d\s_@.-]/u;
 
-/**
- * Format diện tích
- * @param {number} area - Diện tích (m²)
- * @returns {string} - Diện tích đã format
- */
-export const formatArea = (area) => {
-  if (!area) return `0 ${formatAreaUnit()}`;
-  return `${area.toLocaleString()} ${formatAreaUnit()}`;
-};
+
 
 /**
  * Trim khoảng trắng thừa trong object data trước khi gửi API
