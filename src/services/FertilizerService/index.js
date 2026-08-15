@@ -65,9 +65,9 @@ const deleteFertilizer = (id) => http.delete(apiDeleteFertilizer(id))
  * NOTE: Swagger không có endpoint riêng cho status —
  *       dùng chung PUT với toàn bộ body update + trường isActive.
  */
-const toggleFertilizerStatus = (id, body) => http.put(apiToggleFertilizerStatus(id), body)
-const deactivateFertilizer = (id) => http.post(apiDeactivateFertilizer(id))
-const reactivateFertilizer = (id) => http.post(apiReactivateFertilizer(id))
+const toggleFertilizerStatus = (id) => http.patch(apiToggleFertilizerStatus(id))
+const deactivateFertilizer = (id) => toggleFertilizerStatus(id)
+const reactivateFertilizer = (id) => toggleFertilizerStatus(id)
 
 /** GET /fertilizers/selection — dùng cho Daily Log Select */
 const getFertilizerSelection = (params) =>

@@ -28,8 +28,8 @@ const updatePesticide = (id, body, config) => http.put(apiUpdatePesticide(id), b
 const deletePesticide = (id) => http.delete(apiDeletePesticide(id))
 
 const togglePesticideStatus = (id, body) => http.patch(apiTogglePesticideStatus(id), body)
-const deactivatePesticide = (id) => http.post(apiDeactivatePesticide(id))
-const reactivatePesticide = (id) => http.post(apiReactivatePesticide(id))
+const deactivatePesticide = (id) => togglePesticideStatus(id)
+const reactivatePesticide = (id) => togglePesticideStatus(id)
 
 /** GET /pesticides/selection — dùng cho Daily Log Select */
 const getPesticideSelection = (params) =>

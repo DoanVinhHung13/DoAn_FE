@@ -5,4 +5,4 @@ export const apiUpdateCropCatalog = (id) => `/crop-catalogs/${id}`;
 export const apiDeleteCropCatalog = (id) => `/crop-catalogs/${id}`;
 export const apiActivateCropCatalog = (id) => `/crop-catalogs/${id}/activate`;
 export const apiDeactivateCropCatalog = (id) => `/crop-catalogs/${id}/deactivate`;
-export const apiReactivateCropCatalog = (id) => `/crop-catalogs/${id}/reactivate`;
+export const apiReactivateCropCatalog = (id) => `/crop-catalogs/${id}/activate`;
