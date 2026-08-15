@@ -10,6 +10,16 @@ export const buildDataSentence = (summary) => {
   if (!summary) return 'Chưa có số liệu'
   const parts = []
 
+  const harvestQuantity = summary.totalHarvestQuantity
+  const harvestArea = Number(summary.totalHarvestedArea || 0)
+  if (harvestQuantity != null || harvestArea > 0) {
+    const quantityPart = harvestQuantity != null
+      ? `${harvestQuantity} ${summary.harvestUnit || 'kg'}`
+      : ''
+    const areaPart = harvestArea > 0 ? ` trên diện tích ${harvestArea} m²` : ''
+    parts.push(`Đã thu hoạch ${quantityPart}${areaPart}`.trim())
+  }
+
   if (Array.isArray(summary.materials) && summary.materials.length > 0) {
     summary.materials.forEach((m) => {
       const qty = m.quantity ?? m.totalQuantity ?? 0

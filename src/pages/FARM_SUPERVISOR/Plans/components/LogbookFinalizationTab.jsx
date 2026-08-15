@@ -370,6 +370,8 @@ const SummaryCompilePanel = ({
   }, [allMaterials])
 
   const images = leaderSummary?.images || []
+  const harvestQuantity = leaderSummary?.totalHarvestQuantity
+  const harvestArea = Number(leaderSummary?.totalHarvestedArea || 0)
 
   const handleSave = async () => {
     if (!description?.trim()) {
@@ -474,6 +476,26 @@ const SummaryCompilePanel = ({
                 })}
               </div>
             </Image.PreviewGroup>
+          </div>
+        )}
+
+        {(harvestQuantity != null || harvestArea > 0) && (
+          <div className="p-3 border border-emerald-100 rounded-xl bg-emerald-50/70">
+            <div className="mb-1 text-xs font-bold tracking-wide text-emerald-800 uppercase">
+              Số liệu thu hoạch
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {harvestQuantity != null && (
+                <span className="font-bold text-emerald-700">
+                  {harvestQuantity} {leaderSummary?.harvestUnit || 'kg'}
+                </span>
+              )}
+              {harvestArea > 0 && (
+                <span className="text-gray-600">
+                  · {harvestArea} m²
+                </span>
+              )}
+            </div>
           </div>
         )}
 
