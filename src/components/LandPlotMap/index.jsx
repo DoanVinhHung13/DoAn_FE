@@ -554,6 +554,7 @@ const LandPlotMap = ({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords
+        setSearchError('')
         mapInstance.current.flyTo([latitude, longitude], SEARCH_ZOOM)
         clearLocateMarker()
         locateMarkerRef.current = L.marker([latitude, longitude])
