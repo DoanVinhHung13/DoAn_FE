@@ -91,14 +91,43 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
 
       try {
         setLoading(true)
-        const response = await CultivationStageService.getStageLogs(selectedStageId, {
-          cultivationLogbookId: item?.id,
-        })
+        const [officialResponse, summaryResponse] = await Promise.all([
+          CultivationStageService.getStageLogs(selectedStageId, {
+            cultivationLogbookId: item?.id,
+          }),
+          CultivationStageService.getSummary(selectedStageId),
+        ])
 
-        if (response?.data) {
-          const logs = Array.isArray(response.data) ? response.data : response.data.data || response.data.items || []
-          setOfficialLogs(logs)
+        const officialLogs = Array.isArray(officialResponse?.data)
+          ? officialResponse.data
+          : officialResponse?.data?.data || officialResponse?.data?.items || []
+        if (officialLogs.length > 0) {
+          setOfficialLogs(officialLogs)
+          return
         }
+
+        const summaryData = summaryResponse?.data?.data || summaryResponse?.data || {}
+        const taskSummaries = Array.isArray(summaryData.taskSummaries)
+          ? summaryData.taskSummaries
+          : []
+        setOfficialLogs(taskSummaries.map(summary => ({
+          id: summary.submittedLogId || summary.taskId,
+          cultivationTaskId: summary.taskId,
+          taskName: summary.taskName,
+          description: summary.leaderSubmittedDescription || summary.descriptionSummary,
+          descriptionSummary: summary.descriptionSummary,
+          workStartDate: summary.workStartDate,
+          workEndDate: summary.workEndDate,
+          materialsText: summary.materialsText,
+          fertilizers: summary.fertilizers,
+          pesticides: summary.pesticides,
+          images: summary.images,
+          totalHarvestQuantity: summary.totalHarvestQuantity,
+          harvestUnit: summary.harvestUnit,
+          totalHarvestedArea: summary.totalHarvestedArea,
+          harvestAreaUnit: summary.harvestAreaUnit,
+          isTaskSummary: true,
+        })))
       } catch {
         setOfficialLogs([])
       } finally {
@@ -227,6 +256,10 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                         summary.totalHarvestedArea ?? task.totalHarvestedArea ?? task.executedArea
                       const isHarvestTask = [task.activityType, task.taskType]
                         .some(value => ['HARVESTING', 'HARVEST'].includes(String(value || '').trim().toUpperCase()))
+                        || [task.taskName, task.name, task.title]
+                          .some(value => String(value || '').trim().toLowerCase() === 'thu hoạch')
+                      const hasHarvestData = isHarvestTask &&
+                        (totalHarvestQuantity != null || Number(totalHarvestedArea || 0) > 0)
 
                       return (
                         <div key={task.id || logIndex} className="flex gap-3">
@@ -269,9 +302,9 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                             )}
 
                             {/* 4. Số liệu tổng hợp */}
-                            {(isHarvestTask && totalHarvestQuantity != null) || totalFertilizers.length > 0 || totalPesticides.length > 0 ? (
+                            {hasHarvestData || totalFertilizers.length > 0 || totalPesticides.length > 0 ? (
                               <div className="p-3 my-2 bg-gray-50 border border-gray-200 rounded-lg">
-                                {isHarvestTask && totalHarvestQuantity != null && (
+                                {hasHarvestData && (
                                   <div className="mb-2">
                                     <p className="mb-1 text-xs text-emerald-700 font-medium">
                                       <InboxOutlined className="mr-1" />
@@ -279,9 +312,9 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                                     </p>
                                     <p className="mb-0 text-xs leading-relaxed text-gray-700">
                                       Đã thu hoạch tổng cộng{' '}
-                                      <span className="font-semibold text-emerald-700">{totalHarvestQuantity} kg</span>
+                                       <span className="font-semibold text-emerald-700">{totalHarvestQuantity ?? '—'} {summary.harvestUnit || task.harvestUnit || 'kg'}</span>
                                       {Number(totalHarvestedArea || 0) > 0 && (
-                                        <> trên diện tích <span className="font-semibold text-emerald-700">{totalHarvestedArea} m²</span></>
+                                         <> trên diện tích <span className="font-semibold text-emerald-700">{totalHarvestedArea} {summary.harvestAreaUnit || task.harvestAreaUnit || 'm²'}</span></>
                                       )}.
                                     </p>
                                   </div>
