@@ -71,8 +71,6 @@ const TYPE_COLORS = {
 };
 
 const ROLE_OPTIONS = [
-  { value: 'FARMER', label: 'Nông dân' },
-  { value: 'FARM_MANAGER', label: 'Quản lý trang trại' },
   { value: 'FARM_SUPERVISOR', label: 'Giám sát trang trại' },
   { value: 'FARMER_LEADER', label: 'Tổ trưởng' },
 ];
@@ -111,6 +109,15 @@ const normalizeUsers = (response) => {
 };
 
 const getCategory = getNotificationTypeLabel;
+
+const getUserId = user => user?.id || user?._id || user?.userId;
+
+const getUserRoles = user => {
+  const roles = Array.isArray(user?.roles) ? user.roles : [user?.role];
+  return roles.filter(Boolean).map(role => String(role).toUpperCase());
+};
+
+const hasRole = (user, role) => getUserRoles(user).includes(role);
 
 const FarmManagerNotifications = () => {
   const queryClient = useQueryClient();
@@ -164,7 +171,11 @@ const FarmManagerNotifications = () => {
 
   const { data: usersData, isLoading: isUsersLoading } = useQuery({
     queryKey: ['all-users'],
-    queryFn: async () => normalizeUsers(await getAllUsers()),
+    queryFn: async () => normalizeUsers(await getAllUsers({
+      PageIndex: 1,
+      PageSize: 100,
+      HasAccount: true,
+    })),
     retry: false,
   });
 
@@ -182,8 +193,8 @@ const FarmManagerNotifications = () => {
         content: values.message.trim(),
         type: 'Announcement', // Mặc định là Announcement
         actionUrl: values.actionUrl?.trim() || null,
-        recipientUserIds: recipientType === RECIPIENT_TYPE.SPECIFIC_USERS ? (values.recipientUserIds || []) : [],
-        recipientRoles: recipientType === RECIPIENT_TYPE.BY_ROLE ? (values.recipientRoles || []) : [],
+        recipientUserIds: getRecipientUserIds(values),
+        recipientRoles: [],
         attachments: documents.map(doc => doc.url),
       };
       return createNotification(payload);
@@ -271,15 +282,39 @@ const FarmManagerNotifications = () => {
       { value: 'all', label: 'Tất cả danh mục' },
       ...categories,
     ];
-  }, [data?.items]);
+  }, []);
 
   const userOptions = useMemo(() => {
     if (!usersData) return [];
-    return usersData.map((user) => ({
-      value: user.id || user._id || user.userId,
-      label: `${user.fullName || user.name || 'Không tên'} (${user.email || user.username || ''})`,
-    }));
+    return usersData
+      .filter(user => getUserId(user) && !hasRole(user, 'FARM_MANAGER'))
+      .map((user) => ({
+      value: getUserId(user),
+      label: user.fullName || user.name || user.username || 'Không tên',
+      }));
   }, [usersData]);
+
+  const accountUsers = useMemo(
+    () => (usersData || [])
+      .filter(user => getUserId(user))
+      .filter(user => !hasRole(user, 'FARM_MANAGER')),
+    [usersData],
+  );
+
+  const getRecipientUserIds = values => {
+    if (recipientType === RECIPIENT_TYPE.SPECIFIC_USERS) {
+      return values.recipientUserIds || [];
+    }
+
+    if (recipientType === RECIPIENT_TYPE.BY_ROLE) {
+      const selectedRoles = values.recipientRoles || [];
+      return accountUsers
+        .filter(user => selectedRoles.some(role => hasRole(user, role)))
+        .map(getUserId);
+    }
+
+    return accountUsers.map(getUserId);
+  };
 
   const filteredNotifications = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLocaleLowerCase('vi');
@@ -539,7 +574,13 @@ const FarmManagerNotifications = () => {
           form={form}
           layout="vertical"
           className="pt-4"
-          onFinish={(values) => createMutation.mutate(values)}
+          onFinish={(values) => {
+            if (!getRecipientUserIds(values).length) {
+              message.error('Không tìm thấy người dùng có tài khoản phù hợp để nhận thông báo.');
+              return;
+            }
+            createMutation.mutate(values);
+          }}
           onFinishFailed={() => {}}
           scrollToFirstError
         >
