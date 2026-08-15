@@ -46,7 +46,6 @@ import { getTaskOrder, orderTasks } from "src/utils/cultivationOrdering"
 import { formatDate } from "src/utils/dateFormatters"
 import { getUserDisplayName } from "src/utils/userDisplayName"
 import { getActiveQuarantineWarnings } from "src/utils/quarantineValidation"
-import AssignTaskModal from "./AssignTaskModal"
 
 const { Text } = Typography
 
@@ -121,8 +120,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [taskForm] = Form.useForm()
   const [savingTask, setSavingTask] = useState(false)
-  const [assignModalOpen, setAssignModalOpen] = useState(false)
-  const [assignTaskData, setAssignTaskData] = useState(null)
   const [taskCatalogOptions, setTaskCatalogOptions] = useState([])
   const [leaders, setLeaders] = useState([])
   const [farmers, setFarmers] = useState([])
@@ -327,6 +324,11 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   }
 
   const handleAddTask = async () => {
+    if (hasHarvestTask) {
+      message.warning("Nhật ký đã có công việc thu hoạch, không thể thêm công việc khác.")
+      return
+    }
+
     try {
       const values = await taskForm.validateFields()
       const taskList = values.tasks || []
@@ -804,22 +806,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     </Button>
                                   </>
                                 )}
-                                {/* IN_PROGRESS / ACTIVE: đang thực hiện */}
-                                {(task.status === "IN_PROGRESS" ||
-                                  task.status === "ACTIVE") && (
-                                    <Button
-                                      type="default"
-                                      size="small"
-                                      className="text-blue-600 border-blue-200 rounded-lg hover:border-blue-400"
-                                      onClick={e => {
-                                        e.stopPropagation()
-                                        setAssignTaskData(task)
-                                        setAssignModalOpen(true)
-                                      }}
-                                    >
-                                      Cập nhật phân công
-                                    </Button>
-                                  )}
                               </div>
                             </div>
                           </Card>
@@ -836,23 +822,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                 )}
 
                 {/* Nút thêm công việc */}
-                {selectedStage.status !== "COMPLETED" && (
+                {selectedStage.status !== "COMPLETED" && !hasHarvestTask && (
                   <Button
                     type="dashed"
                     icon={<PlusOutlined />}
                     onClick={openAddTask}
-                    disabled={hasHarvestTask}
-                    title={
-                      hasHarvestTask
-                        ? "Nhật ký đã có công việc thu hoạch"
-                        : "Thêm công việc vào giai đoạn này"
-                    }
+                    title="Thêm công việc vào giai đoạn này"
                     block
                     className="mt-3 text-green-700 border-green-300 rounded-xl hover:border-green-500"
                   >
-                    {hasHarvestTask
-                      ? "Đã có công việc thu hoạch — không thể thêm task"
-                      : "Thêm công việc vào giai đoạn này"}
+                    Thêm công việc vào giai đoạn này
                   </Button>
                 )}
 
@@ -1204,15 +1183,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         </Form>
       </Modal>
 
-      <AssignTaskModal
-        open={assignModalOpen}
-        onCancel={() => setAssignModalOpen(false)}
-        onSuccess={() => {
-          setAssignModalOpen(false)
-          loadData() // Refresh parent data
-        }}
-        task={assignTaskData}
-      />
     </div>
   )
 }
