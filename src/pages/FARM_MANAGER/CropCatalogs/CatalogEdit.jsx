@@ -133,7 +133,7 @@ const CatalogEdit = () => {
           <TitleCustom className="!mb-0">Chỉnh sửa danh mục cây trồng</TitleCustom>
         </div>
         <Card>
-          <Alert showIcon type="warning" message={EMPTY_MESSAGE} />
+          <Alert type="warning" message={EMPTY_MESSAGE} />
         </Card>
       </div>
     );

@@ -149,7 +149,6 @@ const NotificationDetail = () => {
           </Button>
         </div>
         <Alert
-          showIcon
           type="error"
           message="Thông báo không tồn tại hoặc đã bị xóa."
           action={isError ? <Button size="small" onClick={() => refetch()}>Thử lại</Button> : null}

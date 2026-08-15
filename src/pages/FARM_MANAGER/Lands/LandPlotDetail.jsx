@@ -101,7 +101,6 @@ const LandPlotDetail = () => {
         </Button>
         <Alert
           type="error"
-          showIcon
           message="Không thể tải chi tiết vùng trồng."
           action={
             <Button size="small" onClick={fetchPlotDetail}>

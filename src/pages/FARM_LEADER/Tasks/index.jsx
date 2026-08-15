@@ -661,7 +661,6 @@ const FarmLeaderTasks = () => {
             ) : detailError ? (
               <Alert
                 type="error"
-                showIcon
                 message="Không thể tải chi tiết kế hoạch."
                 action={<Button size="small" onClick={loadLogbookDetail}>Thử lại</Button>}
                 className="rounded-xl"

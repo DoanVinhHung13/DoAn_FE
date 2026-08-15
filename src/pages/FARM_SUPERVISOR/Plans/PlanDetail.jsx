@@ -178,7 +178,6 @@ const FarmSupervisorPlanDetail = () => {
       <div className="space-y-4">
         <Alert
           type="error"
-          showIcon
           message="Không thể tải chi tiết kế hoạch."
           action={<Button size="small" onClick={() => loadData(true)}>Thử lại</Button>}
           className="rounded-xl"
@@ -287,7 +286,6 @@ const FarmSupervisorPlanDetail = () => {
           <Alert
             className="mt-4 rounded-xl"
             type="error"
-            showIcon
             message={
               <span className="font-semibold text-red-700">Lý do từ chối duyệt</span>
             }
@@ -352,7 +350,6 @@ const FarmSupervisorPlanDetail = () => {
         <Alert
           message="Bạn có chắc muốn gửi toàn bộ nhật ký canh tác lên quản lý nông trại để xét duyệt không?"
           type="warning"
-          showIcon
           className="rounded-xl"
         />
       </Modal>

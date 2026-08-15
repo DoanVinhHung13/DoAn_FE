@@ -390,7 +390,6 @@ const FarmSupervisorTaskDetail = () => {
                   <Alert
                     message={task.status === 'COMPLETED' ? 'Công việc đã hoàn thành' : 'Công việc đang được thực hiện'}
                     type={task.status === 'COMPLETED' ? 'success' : 'info'}
-                    showIcon
                     className="rounded-lg"
                   />
                 </div>
@@ -478,7 +477,6 @@ const FarmSupervisorTaskDetail = () => {
                 {(fertilizerRecommendations.length > 0 || pesticideRecommendations.length > 0) && (
                   <Alert
                     type="info"
-                    showIcon
                     className="mt-4 rounded-xl"
                     message="Khuyến nghị lượng sử dụng"
                     description={(
@@ -514,7 +512,7 @@ const FarmSupervisorTaskDetail = () => {
                   <div className="mt-4 rounded-xl bg-green-50 border border-green-200 p-4">
                     <Alert
                       message={`✅ Nhật ký chính thức đã biên soạn (${formatDate(task.officialLog.compiledAt)})`}
-                      type="success" showIcon
+                      type="success"
                       className="rounded-lg"
                     />
                     <div className="mt-3 text-sm">
@@ -572,7 +570,7 @@ const FarmSupervisorTaskDetail = () => {
         <Form form={compileForm} layout="vertical" className="space-y-4">
           <Alert
             message="⚠️ Lưu ý: Số liệu và ảnh không được phép sửa. Chỉ biên tập lại mô tả cho phù hợp với văn phong nhật ký."
-            type="warning" showIcon
+            type="warning"
             className="rounded-xl"
           />
 
@@ -588,7 +586,6 @@ const FarmSupervisorTaskDetail = () => {
           {(fertilizerRecommendations.length > 0 || pesticideRecommendations.length > 0) && (
             <Alert
               type="info"
-              showIcon
               className="rounded-xl"
               message="Khuyến nghị lượng sử dụng"
               description={(

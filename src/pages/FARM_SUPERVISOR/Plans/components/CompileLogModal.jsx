@@ -167,7 +167,6 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
               message="Chưa có nhật ký canh tác để biên soạn"
               description="Cần người phụ trách gửi bản tổng hợp trước. Hệ thống sẽ tạo nhật ký chờ xử lý để giám sát viên chỉnh mô tả."
               type="warning"
-              showIcon
               className="rounded-xl"
             />
           )}
@@ -175,7 +174,6 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
           <Alert
             message="Số liệu và ảnh không được phép sửa. Chỉ biên tập lại mô tả."
             type="info"
-            showIcon
             className="rounded-xl"
           />
 

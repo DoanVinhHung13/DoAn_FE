@@ -153,7 +153,6 @@ const LandPlotEdit = () => {
         </Button>
         <Alert
           type="error"
-          showIcon
           message="Không thể tải thông tin vùng trồng để chỉnh sửa."
           action={
             <Button size="small" onClick={fetchPlotDetail}>
@@ -200,7 +199,6 @@ const LandPlotEdit = () => {
               <Alert
                 className="mb-4"
                 type="warning"
-                showIcon
                 message="Không thể chỉnh sửa vùng trồng"
                 description="Vùng trồng đang thuộc nhật ký kế hoạch hoặc đang trồng. Chỉ có thể chỉnh sửa khi không còn nhật ký đang sử dụng."
               />

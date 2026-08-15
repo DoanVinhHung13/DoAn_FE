@@ -1062,7 +1062,6 @@ const DailyLog = () => {
                               return (
                                 <Alert
                                   type="warning"
-                                  showIcon
                                   className="mt-1 rounded-lg [&_.ant-alert-message]:text-[11px] [&_.ant-alert-description]:text-[11px] [&_.ant-alert-description]:leading-4"
                                   message={`Khuyến nghị lượng phân bón: ${recommendation.recommendationText}`}
                                   description="Tính theo liều lượng đã khai báo trong chi tiết phân bón."
@@ -1954,7 +1953,6 @@ const DailyLog = () => {
                   {rows.some(row => row.recommendation) && (
                     <Alert
                       type="warning"
-                      showIcon
                       className="mt-3 rounded-xl"
                       message="Khuyến nghị lượng sử dụng nông dược"
                       description={

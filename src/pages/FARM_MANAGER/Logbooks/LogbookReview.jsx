@@ -740,7 +740,6 @@ const LogbookReview = () => {
         <Alert
           className="mb-3 rounded-xl"
           type="warning"
-          showIcon
           message="Giám sát viên sẽ nhận lý do và chỉnh sửa lại."
         />
         <Input.TextArea

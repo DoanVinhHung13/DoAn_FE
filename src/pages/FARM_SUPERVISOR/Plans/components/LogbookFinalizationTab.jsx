@@ -493,7 +493,6 @@ const SummaryCompilePanel = ({
             {fertilizerRecommendations.length > 0 && (
               <Alert
                 type="warning"
-                showIcon
                 className="mt-2 rounded-lg px-3 py-2 [&_.ant-alert-message]:text-sm [&_.ant-alert-description]:text-xs"
                 message="Khuyến nghị lượng sử dụng phân bón"
                 description={(
@@ -526,7 +525,6 @@ const SummaryCompilePanel = ({
             {pesticideRecommendations.length > 0 && (
               <Alert
                 type="info"
-                showIcon
                 className="mt-3 rounded-xl"
                 message="Khuyến nghị lượng sử dụng nông dược"
                 description={(
@@ -805,7 +803,6 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
       {isWaitingApproval && (
         <Alert
           type="info"
-          showIcon
           className="mb-4 rounded-xl"
           message={
             <span className="font-semibold text-blue-700">
