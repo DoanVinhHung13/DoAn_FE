@@ -123,7 +123,6 @@ const LandPlotCreate = () => {
               layout="vertical"
             >
               <LandPlotFormFields
-                showAddressRequired
                 showAreaPlaceholder
               />
             </Form>

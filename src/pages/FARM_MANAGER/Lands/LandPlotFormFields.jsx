@@ -11,15 +11,24 @@ import AddressSelectorField from 'src/components/AddressSelectorField'
  * Lưu ý: Component này KHÔNG bọc <Form>, parent phải cung cấp form context.
  */
 const LandPlotFormFields = ({
-  showAddressRequired = false,
   showAreaPlaceholder = false,
   disabled = false,
-}) => (
-  <>
+}) => {
+  const requiredTextRule = (message) => ({
+    validator: (_, value) =>
+      typeof value === 'string' && value.trim()
+        ? Promise.resolve()
+        : Promise.reject(new Error(message)),
+  })
+
+  return <>
     <Form.Item
       label="Tên vùng trồng"
       name="name"
-      rules={[{ required: true, message: 'Vui lòng nhập tên vùng trồng' }]}
+      rules={[
+        { required: true, message: 'Vui lòng nhập tên vùng trồng' },
+        requiredTextRule('Tên vùng trồng không được để trống hoặc chỉ chứa khoảng trắng'),
+      ]}
     >
       <Input disabled={disabled} placeholder="Ví dụ: Lô A1" maxLength={200} />
     </Form.Item>
@@ -27,11 +36,10 @@ const LandPlotFormFields = ({
     <Form.Item
       label="Địa chỉ"
       name="address"
-      rules={
-        showAddressRequired
-          ? [{ required: true, message: 'Vui lòng nhập địa chỉ' }]
-          : undefined
-      }
+      rules={[
+        { required: true, message: 'Vui lòng nhập địa chỉ' },
+        requiredTextRule('Địa chỉ không được để trống hoặc chỉ chứa khoảng trắng'),
+      ]}
     >
       <AddressSelectorField disabled={disabled} />
     </Form.Item>
@@ -68,10 +76,9 @@ const LandPlotFormFields = ({
       <Input.TextArea disabled={disabled} rows={3} placeholder="Ghi chú thêm về vùng trồng" />
     </Form.Item>
   </>
-)
+}
 
 LandPlotFormFields.propTypes = {
-  showAddressRequired: PropTypes.bool,
   showAreaPlaceholder: PropTypes.bool,
   disabled: PropTypes.bool,
 }
