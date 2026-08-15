@@ -889,7 +889,17 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                   rules={[
                                     {
                                       required: true,
-                                      message: "Nhập tên công việc",
+                                      message: "Vui lòng nhập tên công việc.",
+                                    },
+                                    {
+                                      validator: (_, value) => {
+                                        if (!value) return Promise.resolve();
+                                        const trimmed = value.trim();
+                                        if (!trimmed) return Promise.reject(new Error("Tên công việc không được chỉ chứa khoảng trắng."));
+                                        if (trimmed.length > 100) return Promise.reject(new Error("Tên công việc không được vượt quá 100 ký tự."));
+                                        if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error("Tên công việc không được chứa nhiều khoảng trắng liên tiếp."));
+                                        return Promise.resolve();
+                                      },
                                     },
                                   ]}
                                   className="!mb-3"
@@ -940,6 +950,18 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                 <Form.Item
                                   {...restField}
                                   name={[name, "description"]}
+                                  rules={[
+                                    {
+                                      validator: (_, value) => {
+                                        if (!value) return Promise.resolve();
+                                        const trimmed = value.trim();
+                                        if (!trimmed) return Promise.resolve();
+                                        if (trimmed.length > 500) return Promise.reject(new Error("Mô tả công việc không được vượt quá 500 ký tự."));
+                                        if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error("Mô tả công việc không được chứa nhiều khoảng trắng liên tiếp."));
+                                        return Promise.resolve();
+                                      },
+                                    },
+                                  ]}
                                   className="!mb-3"
                                 >
                                   <Input.TextArea
@@ -1086,11 +1108,38 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           <Form.Item
             name="name"
             label="Tên công việc"
-            rules={[{ required: true, message: "Nhập tên công việc" }]}
+            rules={[
+              { required: true, message: "Vui lòng nhập tên công việc." },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.reject(new Error("Tên công việc không được chỉ chứa khoảng trắng."));
+                  if (trimmed.length > 100) return Promise.reject(new Error("Tên công việc không được vượt quá 100 ký tự."));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error("Tên công việc không được chứa nhiều khoảng trắng liên tiếp."));
+                  return Promise.resolve();
+                },
+              },
+            ]}
           >
             <Input placeholder="VD: Bón phân đón đòng..." />
           </Form.Item>
-          <Form.Item name="description" label="Mô tả chi tiết">
+          <Form.Item
+            name="description"
+            label="Mô tả chi tiết"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.resolve();
+                  if (trimmed.length > 500) return Promise.reject(new Error("Mô tả không được vượt quá 500 ký tự."));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error("Mô tả không được chứa nhiều khoảng trắng liên tiếp."));
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
             <Input.TextArea
               rows={3}
               placeholder="Mô tả công việc, liều lượng..."
