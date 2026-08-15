@@ -236,10 +236,13 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                 Tồn Kho tối thiểu
               </span>
             }
+            rules={[
+              { type: 'number', min: 1, message: 'Tồn kho tối thiểu phải là số dương (>= 1).' }
+            ]}
           >
             <InputNumber
-              min={0}
-              placeholder="0"
+              min={1}
+              placeholder="1"
               className="w-full h-10 rounded-xl"
             />
           </Form.Item>

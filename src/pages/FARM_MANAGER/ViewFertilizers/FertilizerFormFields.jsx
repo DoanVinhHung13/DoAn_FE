@@ -428,11 +428,11 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             }
             rules={[
               { required: true, message: 'Vui lòng nhập tồn kho tối thiểu.' },
-              { type: 'number', min: 0, message: 'Số lượng phải >= 0.' }
+              { type: 'number', min: 1, message: 'Tồn kho tối thiểu phải là số dương (>= 1).' }
             ]}
           >
             <InputNumber
-              min={0}
+              min={1}
               placeholder="Số"
               className="w-full h-10 rounded-lg"
               formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
