@@ -696,9 +696,6 @@ const DailyLog = () => {
                 bodyStyle={{ padding: "24px" }}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="flex items-center justify-center w-12 h-12 mb-3 text-2xl rounded-full bg-emerald-100">
-                    ✅
-                  </div>
                   <h3 className="m-0 text-lg font-bold text-emerald-800">
                     Bạn đã hoàn thành thu hoạch
                   </h3>
@@ -708,18 +705,7 @@ const DailyLog = () => {
                   </p>
                   <p className="mt-1 mb-0 text-sm text-gray-600">
                     Không thể ghi thêm nhật ký cho công việc thu hoạch này.
-                    Hãy gửi bản tổng hợp cho giám sát nông trại.
                   </p>
-                  {!isViewOnly && (
-                    <Button
-                      type="primary"
-                      icon={<SendOutlined />}
-                      onClick={openSummaryModal}
-                      className="h-10 px-5 mt-5 font-semibold bg-emerald-600 border-emerald-600 hover:!bg-emerald-700 hover:!border-emerald-700"
-                    >
-                      Gửi bản tổng hợp cho giám sát
-                    </Button>
-                  )}
                 </div>
               </Card>
             ) : (
