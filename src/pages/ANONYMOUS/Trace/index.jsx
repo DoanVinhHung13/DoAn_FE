@@ -178,68 +178,68 @@ const buildTimelineGroups = (traceData) => {
   const dailyLogs = Array.isArray(traceData.dailyLogs) ? traceData.dailyLogs : [];
   const rawEntries = officialLogs.length
     ? officialLogs.map((log, index) => {
-        const dailyLog = dailyLogs.find((item) => (
-          item?.date && log?.activityDate && parseDate(item.date).isSame(parseDate(log.activityDate), 'day')
-        )) || dailyLogs[index];
-        const materials = Array.isArray(log.materials) ? log.materials : [];
-        const materialsText = log.materialsText || materials
-          .map((material) => {
-            const name = getMaterialName(material);
-            const quantity = getMaterialQuantity(material);
-            const unit = getMaterialUnit(material);
-            return quantity == null ? name : `${name}: ${quantity} ${unit}`.trim();
-          })
-          .join('; ');
+      const dailyLog = dailyLogs.find((item) => (
+        item?.date && log?.activityDate && parseDate(item.date).isSame(parseDate(log.activityDate), 'day')
+      )) || dailyLogs[index];
+      const materials = Array.isArray(log.materials) ? log.materials : [];
+      const materialsText = log.materialsText || materials
+        .map((material) => {
+          const name = getMaterialName(material);
+          const quantity = getMaterialQuantity(material);
+          const unit = getMaterialUnit(material);
+          return quantity == null ? name : `${name}: ${quantity} ${unit}`.trim();
+        })
+        .join('; ');
 
-        return {
-          stage: log.cultivationStageName || dailyLog?.stage || log.stage || 'Giai đoạn canh tác',
-          stageOrder: log.stageOrder ?? dailyLog?.stageOrder,
-          taskName: log.cultivationTaskName || log.taskName || dailyLog?.activity || 'Hoạt động canh tác',
-          taskOrder: log.taskOrder ?? dailyLog?.taskOrder,
-          startDate: log.workStartDate || log.activityDate || dailyLog?.date,
-          endDate: log.workEndDate || log.activityDate || dailyLog?.date,
-          description: log.description || dailyLog?.activity || '',
-          updatedBy: getUserDisplayName(
-            log.supervisorEditorName,
-            log.editedByName,
-            log.editedBy,
-            log.updatedByName,
-            log.updatedBy,
-            log.editorName,
-            log.updatedByUser,
-            log.editor,
-            log.performedByName,
-            log.performedBy,
-          ),
-          materialsText: formatMaterialText(materialsText),
-          materials: materials.map((material) => normalizeMaterial(material, undefined, log.activityDate, log.cultivationTaskName || log.taskName)),
-          images: (Array.isArray(log.images) ? log.images : []).map(getImageUrl).filter(Boolean),
-        };
-      })
-    : dailyLogs.map((log) => ({
-        stage: log.stage || 'Giai đoạn canh tác',
-        stageOrder: log.stageOrder,
-        taskName: log.taskName || log.activity || 'Hoạt động canh tác',
-        taskOrder: log.taskOrder,
-        startDate: log.date,
-        endDate: log.date,
-        description: log.activity || log.notes || '',
+      return {
+        stage: log.cultivationStageName || dailyLog?.stage || log.stage || 'Giai đoạn canh tác',
+        stageOrder: log.stageOrder ?? dailyLog?.stageOrder,
+        taskName: log.cultivationTaskName || log.taskName || dailyLog?.activity || 'Hoạt động canh tác',
+        taskOrder: log.taskOrder ?? dailyLog?.taskOrder,
+        startDate: log.workStartDate || log.activityDate || dailyLog?.date,
+        endDate: log.workEndDate || log.activityDate || dailyLog?.date,
+        description: log.description || dailyLog?.activity || '',
         updatedBy: getUserDisplayName(
+          log.supervisorEditorName,
+          log.editedByName,
+          log.editedBy,
           log.updatedByName,
           log.updatedBy,
-          log.createdByName,
-          log.createdBy,
-          log.recordedByName,
-          log.recordedBy,
-          log.user,
-          log.author,
+          log.editorName,
+          log.updatedByUser,
+          log.editor,
           log.performedByName,
           log.performedBy,
         ),
-        materialsText: '',
-        materials: [],
-        images: [],
-      }));
+        materialsText: formatMaterialText(materialsText),
+        materials: materials.map((material) => normalizeMaterial(material, undefined, log.activityDate, log.cultivationTaskName || log.taskName)),
+        images: (Array.isArray(log.images) ? log.images : []).map(getImageUrl).filter(Boolean),
+      };
+    })
+    : dailyLogs.map((log) => ({
+      stage: log.stage || 'Giai đoạn canh tác',
+      stageOrder: log.stageOrder,
+      taskName: log.taskName || log.activity || 'Hoạt động canh tác',
+      taskOrder: log.taskOrder,
+      startDate: log.date,
+      endDate: log.date,
+      description: log.activity || log.notes || '',
+      updatedBy: getUserDisplayName(
+        log.updatedByName,
+        log.updatedBy,
+        log.createdByName,
+        log.createdBy,
+        log.recordedByName,
+        log.recordedBy,
+        log.user,
+        log.author,
+        log.performedByName,
+        log.performedBy,
+      ),
+      materialsText: '',
+      materials: [],
+      images: [],
+    }));
 
   return rawEntries.reduce((groups, entry) => {
     let group = groups.find((item) => item.stage === entry.stage && item.stageOrder === entry.stageOrder);
@@ -414,7 +414,7 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
         {/* ── 1. Thông tin cơ bản ── */}
         <Card className="trace-card overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
-              <div className="trace-section-icon w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+            <div className="trace-section-icon w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
               <Sprout className="w-5 h-5" />
             </div>
             <Title level={4} className="!mt-0 !mb-0 !text-base sm:!text-lg font-bold text-slate-800">
@@ -652,18 +652,6 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
           </Card>
         )}
 
-        {/* ── 6. Footer Xác thực ── */}
-        <div className="p-6 bg-gradient-to-br from-emerald-800 to-green-900 text-white rounded-2xl shadow-md text-center space-y-2">
-          <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mx-auto text-amber-300">
-            <CheckCircleOutlined className="text-2xl" />
-          </div>
-          <Title level={4} className="!text-white !mb-1 text-base sm:text-lg font-bold">
-            Sản phẩm an toàn — Minh bạch nguồn gốc
-          </Title>
-          <Paragraph className="text-emerald-100 text-xs sm:text-sm max-w-md mx-auto !mb-0">
-            Mọi dữ liệu nhật ký canh tác và vật tư đều được ghi nhận trực tiếp từ trang trại và xác thực bởi hệ thống truy xuất điện tử.
-          </Paragraph>
-        </div>
       </div>
     </div>
   );
