@@ -1,7 +1,6 @@
 import booleanContains from "@turf/boolean-contains"
 import booleanOverlap from "@turf/boolean-overlap"
 import { polygon as turfPolygon } from "@turf/helpers"
-import { formatAreaUnit } from "src/constants/measurementUnits"
 
 export function leafletLatLngsToGeoJSON(leafletLatLngs) {
   return leafletLatLngs.map(latLng => [latLng.lng, latLng.lat])
@@ -39,9 +38,6 @@ export function calculatePolygonArea(geoJSONCoords) {
   return Math.abs((area * R * R) / 2)
 }
 
-export function formatArea(areaM2) {
-  return `${Math.round(areaM2).toLocaleString("vi-VN")} ${formatAreaUnit()}`
-}
 
 export function geoJSONToLeafletPositions(coordinates) {
   return coordinates[0].map(([lng, lat]) => [lat, lng])
@@ -57,28 +53,6 @@ export function parseBoundaryJson(boundaryJson) {
   }
 }
 
-export function getPolygonCenter(geoJSON) {
-  const ring = geoJSON?.coordinates?.[0]
-  if (!ring?.length) return null
-
-  let sumLat = 0
-  let sumLng = 0
-  const points =
-    ring[ring.length - 1][0] === ring[0][0] &&
-    ring[ring.length - 1][1] === ring[0][1]
-      ? ring.slice(0, -1)
-      : ring
-
-  points.forEach(([lng, lat]) => {
-    sumLng += lng
-    sumLat += lat
-  })
-
-  return {
-    latitude: sumLat / points.length,
-    longitude: sumLng / points.length,
-  }
-}
 
 export function toTurfPolygon(geoJSON) {
   if (!geoJSON?.coordinates?.[0]?.length) return null

@@ -13,13 +13,6 @@ export const MSG_LM_25 =
 export const MSG_LM_26 =
   'Bạn có chắc chắn muốn thay đổi trạng thái hoạt động của lô đất này không?'
 
-// ── Constants: Options cho Select ────────────────────────────────────────────
-
-export const STATUS_OPTIONS = [
-  { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'Active', label: 'Hoạt động' },
-  { value: 'Inactive', label: 'Ngừng hoạt động' },
-]
 
 // ── API Response Normalizers ─────────────────────────────────────────────────
 
@@ -57,9 +50,6 @@ export const getItemId = (item) => item?.id
 /** Kiểm tra vùng trồng đang hoạt động hay không */
 export const isLandPlotActive = (item) => item?.isActive !== false
 
-/** Trả về label trạng thái */
-export const getStatusLabel = (item) =>
-  isLandPlotActive(item) ? 'Hoạt động' : 'Ngừng hoạt động'
 
 export const LAND_PLOT_CULTIVATION_STATUS = {
   AVAILABLE: {
