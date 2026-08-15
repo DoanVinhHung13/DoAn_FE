@@ -21,10 +21,25 @@ const LandPlotFormFields = ({
       normalize={(val) => (typeof val === 'string' ? val.replace(/^\s+/, '') : val)}
       rules={[
         { required: true, message: 'Vui lòng nhập tên vùng trồng' },
-        { whitespace: true, message: 'Tên vùng trồng không được chỉ chứa khoảng trắng' },
+        {
+          validator: (_, value) => {
+            if (!value) return Promise.resolve();
+            const trimmed = value.trim();
+            if (!trimmed) {
+              return Promise.reject(new Error('Tên vùng trồng không được chỉ chứa khoảng trắng'));
+            }
+            if (trimmed.length > 100) {
+              return Promise.reject(new Error('Tên vùng trồng không được vượt quá 100 ký tự.'));
+            }
+            if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
+              return Promise.reject(new Error('Tên vùng trồng không được chứa nhiều khoảng trắng liên tiếp.'));
+            }
+            return Promise.resolve();
+          },
+        },
       ]}
     >
-      <Input disabled={disabled} placeholder="Ví dụ: Lô A1" maxLength={200} />
+      <Input disabled={disabled} placeholder="Ví dụ: Lô A1" maxLength={100} />
     </Form.Item>
 
     <Form.Item
@@ -32,10 +47,25 @@ const LandPlotFormFields = ({
       name="address"
       rules={[
         { required: true, message: 'Vui lòng nhập địa chỉ' },
-        { whitespace: true, message: 'Địa chỉ không được chỉ chứa khoảng trắng' },
+        {
+          validator: (_, value) => {
+            if (!value) return Promise.resolve();
+            const trimmed = value.trim();
+            if (!trimmed) {
+              return Promise.reject(new Error('Địa chỉ không được chỉ chứa khoảng trắng'));
+            }
+            if (trimmed.length > 500) {
+              return Promise.reject(new Error('Địa chỉ không được vượt quá 500 ký tự.'));
+            }
+            if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
+              return Promise.reject(new Error('Địa chỉ không được chứa nhiều khoảng trắng liên tiếp.'));
+            }
+            return Promise.resolve();
+          },
+        },
       ]}
     >
-      <AddressSelectorField disabled={disabled} />
+      <AddressSelectorField disabled={disabled} maxLength={500} />
     </Form.Item>
 
     <Row gutter={12}>
@@ -66,8 +96,27 @@ const LandPlotFormFields = ({
       </Col>
     </Row>
 
-    <Form.Item label="Mô tả" name="description">
-      <Input.TextArea disabled={disabled} rows={3} placeholder="Ghi chú thêm về vùng trồng" />
+    <Form.Item 
+      label="Mô tả" 
+      name="description"
+      rules={[
+        {
+          validator: (_, value) => {
+            if (!value) return Promise.resolve();
+            const trimmed = value.trim();
+            if (!trimmed) return Promise.resolve();
+            if (trimmed.length > 500) {
+              return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+            }
+            if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
+              return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+            }
+            return Promise.resolve();
+          },
+        },
+      ]}
+    >
+      <Input.TextArea disabled={disabled} rows={3} placeholder="Ghi chú thêm về vùng trồng" maxLength={500} />
     </Form.Item>
   </>
 }

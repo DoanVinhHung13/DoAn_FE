@@ -667,9 +667,21 @@ const CultivationLogbookCreate = () => {
             <Col xs={24} md={12} lg={8}>
               <Form.Item
                 name="logbookName" label="Tên nhật ký"
-                rules={[{ required: true, message: 'Vui lòng nhập tên nhật ký' }]}
+                rules={[
+                  { required: true, message: 'Vui lòng nhập tên nhật ký' },
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.resolve();
+                      const trimmed = value.trim();
+                      if (!trimmed) return Promise.reject(new Error('Tên nhật ký không được chỉ chứa khoảng trắng.'));
+                      if (trimmed.length > 100) return Promise.reject(new Error('Tên nhật ký không được vượt quá 100 ký tự.'));
+                      if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Tên nhật ký không được chứa nhiều khoảng trắng liên tiếp.'));
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
               >
-                <Input placeholder="VD: Vụ Đông Xuân 2026 - Lúa ST25" disabled={!canEditGeneralInfo} />
+                <Input placeholder="VD: Vụ Đông Xuân 2026 - Lúa ST25" disabled={!canEditGeneralInfo} maxLength={100} />
               </Form.Item>
             </Col>
             <Col xs={24} md={12} lg={8}>
@@ -755,8 +767,23 @@ const CultivationLogbookCreate = () => {
               </Form.Item>
             </Col>
             <Col xs={24}>
-              <Form.Item name="description" label="Mô tả nhật ký">
-                <Input.TextArea rows={3} placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..." disabled={!canEditGeneralInfo} />
+              <Form.Item 
+                name="description" 
+                label="Mô tả nhật ký"
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.resolve();
+                      const trimmed = value.trim();
+                      if (!trimmed) return Promise.resolve();
+                      if (trimmed.length > 500) return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+                      if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+              >
+                <Input.TextArea rows={3} placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..." disabled={!canEditGeneralInfo} maxLength={500} showCount />
               </Form.Item>
             </Col>
           </Row>
@@ -793,6 +820,7 @@ const CultivationLogbookCreate = () => {
                       onChange={(e) => updateStage(index, 'title', e.target.value)}
                       placeholder="VD: Chuẩn bị đất & Xuống giống"
                       disabled={!canEditStages}
+                      maxLength={100}
                     />
                   </Form.Item>
                 </Col>
@@ -804,6 +832,7 @@ const CultivationLogbookCreate = () => {
                       rows={2}
                       placeholder="Mô tả chi tiết công việc cần thực hiện trong giai đoạn này..."
                       disabled={!canEditStages}
+                      maxLength={500}
                     />
                   </Form.Item>
                 </Col>

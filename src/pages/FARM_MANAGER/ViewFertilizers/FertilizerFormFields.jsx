@@ -396,7 +396,16 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             }
             rules={[
               { required: true, message: 'Vui lòng nhập tên phân bón.' },
-              { max: 100, message: 'Tên phân bón tối đa 100 ký tự.' },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.reject(new Error('Tên phân bón không được chỉ chứa khoảng trắng.'));
+                  if (trimmed.length > 100) return Promise.reject(new Error('Tên phân bón không được vượt quá 100 ký tự.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Tên phân bón không được chứa nhiều khoảng trắng liên tiếp.'));
+                  return Promise.resolve();
+                },
+              },
             ]}
           >
             <AgriculturalInputCatalogAutocomplete catalogType="FERTILIZER" value={Form.useWatch('name', form)} onChange={value => form.setFieldValue('name', value)} onSelectCatalog={applyCatalog} placeholder="Tên phân bón" allowCreate={!isEdit} />
@@ -412,8 +421,20 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 Nhà Sản Xuất
               </span>
             }
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.resolve();
+                  if (trimmed.length > 100) return Promise.reject(new Error('Nhà sản xuất không được vượt quá 100 ký tự.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Nhà sản xuất không được chứa nhiều khoảng trắng liên tiếp.'));
+                  return Promise.resolve();
+                },
+              },
+            ]}
           >
-            <Input placeholder="Nhà Sản Xuất" className="h-10 rounded-lg" />
+            <Input placeholder="Nhà Sản Xuất" className="h-10 rounded-lg" maxLength={100} />
           </Form.Item>
         </Col>
 
@@ -504,12 +525,24 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 Mô Tả
               </span>
             }
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.resolve();
+                  if (trimmed.length > 500) return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+                  return Promise.resolve();
+                },
+              },
+            ]}
           >
             <Input.TextArea
               rows={3}
               placeholder="Mô Tả"
               className="rounded-lg"
-              maxLength={1000}
+              maxLength={500}
               showCount
             />
           </Form.Item>
@@ -547,6 +580,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                   onChange={(e) => handleComponentChange(index, 'name', e.target.value)}
                   placeholder="Tên thành phần"
                   className="h-9 rounded-lg"
+                  maxLength={100}
                 />
               </div>
               <div style={{ flex: '1 1 100px' }}>

@@ -76,20 +76,50 @@ const CatalogCreate = () => {
               { required: true, message: 'Vui lòng nhập tên loại cây trồng.' },
               {
                 validator: (_, value) => {
-                  if (!value || value.trim()) return Promise.resolve();
-                  return Promise.reject(new Error('Tên loại cây trồng không được chỉ chứa khoảng trắng.'));
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) {
+                    return Promise.reject(new Error('Tên loại cây trồng không được chỉ chứa khoảng trắng.'));
+                  }
+                  if (trimmed.length > 100) {
+                    return Promise.reject(new Error('Tên loại cây trồng không được vượt quá 100 ký tự.'));
+                  }
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
+                    return Promise.reject(new Error('Tên loại cây trồng không được chứa nhiều khoảng trắng liên tiếp.'));
+                  }
+                  return Promise.resolve();
                 },
               },
             ]}
           >
-            <Input className="h-11 rounded-lg" placeholder="Nhập tên loại cây trồng" />
+            <Input className="h-11 rounded-lg" placeholder="Nhập tên loại cây trồng" maxLength={100} />
           </Form.Item>
 
-          <Form.Item name="description" label="Mô tả">
+          <Form.Item 
+            name="description" 
+            label="Mô tả"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.resolve();
+                  if (trimmed.length > 500) {
+                    return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+                  }
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
+                    return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
             <Input.TextArea
               rows={4}
               className="rounded-lg"
               placeholder="Nhập mô tả danh mục cây trồng"
+              maxLength={500}
             />
           </Form.Item>
 

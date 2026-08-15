@@ -155,23 +155,58 @@ const TaskFormFields = ({ form, isEdit = false, readOnly = false, showTaskType =
           label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Tên công việc</span>}
           rules={!readOnly ? [
             { required: true, message: 'Vui lòng nhập tên công việc.' },
-            { max: 200, message: 'Tên công việc tối đa 200 ký tự.' },
+            {
+              validator: (_, value) => {
+                if (!value) return Promise.resolve();
+                const trimmed = value.trim();
+                if (!trimmed) {
+                  return Promise.reject(new Error('Tên công việc không được chỉ chứa khoảng trắng.'));
+                }
+                if (trimmed.length > 100) {
+                  return Promise.reject(new Error('Tên công việc không được vượt quá 100 ký tự.'));
+                }
+                if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
+                  return Promise.reject(new Error('Tên công việc không được chứa nhiều khoảng trắng liên tiếp.'));
+                }
+                return Promise.resolve();
+              },
+            },
           ] : []}
         >
           <Input
             placeholder="VD: Tưới nước buổi sáng"
             className="h-10 rounded-lg"
             readOnly={readOnly}
+            maxLength={100}
           />
         </Form.Item>
       </Col>
       <Col xs={24}>
-        <Form.Item name="description" label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase"><FileTextOutlined className="mr-1" />Mô tả kỹ thuật</span>}>
+        <Form.Item 
+          name="description" 
+          label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase"><FileTextOutlined className="mr-1" />Mô tả kỹ thuật</span>}
+          rules={[
+            {
+              validator: (_, value) => {
+                if (!value) return Promise.resolve();
+                const trimmed = value.trim();
+                if (!trimmed) return Promise.resolve();
+                if (trimmed.length > 500) {
+                  return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+                }
+                if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
+                  return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
+        >
           <Input.TextArea
             rows={4}
             placeholder="Nhập mô tả chi tiết, quy trình thực hiện, yêu cầu kỹ thuật..."
             className="task-description-textarea rounded-lg"
-            maxLength={1000}
+            maxLength={500}
             showCount={!readOnly}
             readOnly={readOnly}
           />

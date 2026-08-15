@@ -209,7 +209,19 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                 Tên nông dược{" "}
               </span>
             }
-            rules={[{ required: true, message: "Bắt buộc" }]}
+            rules={[
+              { required: true, message: "Bắt buộc" },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.reject(new Error('Tên nông dược không được chỉ chứa khoảng trắng.'));
+                  if (trimmed.length > 100) return Promise.reject(new Error('Tên nông dược không được vượt quá 100 ký tự.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Tên nông dược không được chứa nhiều khoảng trắng liên tiếp.'));
+                  return Promise.resolve();
+                },
+              },
+            ]}
           >
             <AgriculturalInputCatalogAutocomplete catalogType="PESTICIDE" value={Form.useWatch("name", form)} onChange={value => form.setFieldValue("name", value)} onSelectCatalog={applyCatalog} placeholder="Nhập tên..." allowCreate={!isEdit} />
           </Form.Item>
@@ -221,10 +233,23 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             label={
               <span className="font-semibold text-gray-700">Nhà Sản Xuất</span>
             }
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.resolve();
+                  if (trimmed.length > 100) return Promise.reject(new Error('Nhà sản xuất không được vượt quá 100 ký tự.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Nhà sản xuất không được chứa nhiều khoảng trắng liên tiếp.'));
+                  return Promise.resolve();
+                },
+              },
+            ]}
           >
             <Input
               placeholder="Nhập nhà sản xuất..."
               className="h-10 rounded-xl"
+              maxLength={100}
             />
           </Form.Item>
         </Col>
@@ -282,11 +307,25 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             name="description"
             label={<span className="font-semibold text-gray-700">Mô Tả</span>}
             className="mt-4"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const trimmed = value.trim();
+                  if (!trimmed) return Promise.resolve();
+                  if (trimmed.length > 500) return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+                  return Promise.resolve();
+                },
+              },
+            ]}
           >
             <Input.TextArea
               rows={4}
               placeholder="Nhập mô tả chi tiết..."
               className="rounded-xl"
+              maxLength={500}
+              showCount
             />
           </Form.Item>
         </Col>

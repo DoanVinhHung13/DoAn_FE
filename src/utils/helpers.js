@@ -96,7 +96,16 @@ export const FULL_NAME_RULES = [
   {
     pattern: /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỮỰỲỴÝỶỸửữựỳỵỷỹ\s]+$/,
     message: 'Họ tên không được chứa số hoặc ký tự đặc biệt!'
-  }
+  },
+  {
+    validator: (_, value) => {
+      if (!value) return Promise.resolve();
+      const trimmed = value.trim();
+      if (trimmed.length > 100) return Promise.reject(new Error('Họ tên không được vượt quá 100 ký tự.'));
+      if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Họ tên không được chứa nhiều khoảng trắng liên tiếp.'));
+      return Promise.resolve();
+    },
+  },
 ];
 
 export const EMAIL_RULES = [
@@ -119,8 +128,13 @@ export const PASSWORD_RULES = [
 export const PHONE_RULES = [
   {
     validator: (_, value) => {
-      if (!value || isValidPhone(value)) return Promise.resolve();
-      return Promise.reject(new Error('Số điện thoại không hợp lệ'));
+      if (!value) return Promise.resolve();
+      const trimmed = value.trim();
+      if (!trimmed) return Promise.resolve();
+      if (trimmed.length > 100) return Promise.reject(new Error('Số điện thoại không được vượt quá 100 ký tự.'));
+      if (/\s/.test(trimmed)) return Promise.reject(new Error('Số điện thoại không được chứa khoảng trắng.'));
+      if (!isValidPhone(trimmed)) return Promise.reject(new Error('Số điện thoại không hợp lệ'));
+      return Promise.resolve();
     }
   }
 ];

@@ -317,20 +317,30 @@ const AccountInfo = () => {
                             message: "Vui lòng nhập họ và tên.",
                           },
                           {
-                            min: 2,
-                            max: 100,
-                            message: "Họ và tên phải có từ 2 đến 100 ký tự.",
-                          },
-                          {
-                            pattern: fullNamePattern,
-                            message:
-                              "Họ và tên không hợp lệ. Vui lòng chỉ nhập chữ cái và khoảng trắng.",
+                            validator: (_, value) => {
+                              if (!value) return Promise.resolve();
+                              const trimmed = value.trim();
+                              if (trimmed.length < 2) {
+                                return Promise.reject(new Error("Họ và tên phải có ít nhất 2 ký tự."));
+                              }
+                              if (trimmed.length > 100) {
+                                return Promise.reject(new Error("Họ và tên không được vượt quá 100 ký tự."));
+                              }
+                              if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                                return Promise.reject(new Error("Họ và tên không được chứa nhiều khoảng trắng liên tiếp."));
+                              }
+                              if (!fullNamePattern.test(trimmed)) {
+                                return Promise.reject(new Error("Họ và tên không hợp lệ. Vui lòng chỉ nhập chữ cái và khoảng trắng."));
+                              }
+                              return Promise.resolve();
+                            },
                           },
                         ]}
                       >
                         <Input
                           prefix={<UserOutlined className="text-gray-300" />}
                           className="h-11"
+                          maxLength={100}
                         />
                       </Form.Item>
                     </Col>
@@ -353,13 +363,19 @@ const AccountInfo = () => {
                         rules={[
                           {
                             validator: (_, value) => {
-                              if (!value?.trim() || isValidPhone(value.trim()))
-                                return Promise.resolve();
-                              return Promise.reject(
-                                new Error(
-                                  "Định dạng số điện thoại không hợp lệ. Vui lòng nhập số điện thoại hợp lệ."
-                                )
-                              );
+                              if (!value) return Promise.resolve();
+                              const trimmed = value.trim();
+                              if (!trimmed) return Promise.resolve();
+                              if (trimmed.length > 100) {
+                                return Promise.reject(new Error("Số điện thoại không được vượt quá 100 ký tự."));
+                              }
+                              if (/\s/.test(trimmed)) {
+                                return Promise.reject(new Error("Số điện thoại không được chứa khoảng trắng."));
+                              }
+                              if (!isValidPhone(trimmed)) {
+                                return Promise.reject(new Error("Định dạng số điện thoại không hợp lệ. Vui lòng nhập số điện thoại hợp lệ."));
+                              }
+                              return Promise.resolve();
                             },
                           },
                         ]}
@@ -367,6 +383,7 @@ const AccountInfo = () => {
                         <Input
                           prefix={<PhoneOutlined className="text-gray-300" />}
                           className="h-11"
+                          maxLength={100}
                         />
                       </Form.Item>
                     </Col>
@@ -442,23 +459,27 @@ const AccountInfo = () => {
                         rules={[
                           {
                             validator: (_, value) => {
-                              if (!value?.trim()) return Promise.resolve();
-                              const normalized = value.trim();
-                              if (
-                                normalized.length < 3 ||
-                                normalized.length > 200 ||
-                                !addressPattern.test(normalized)
-                              ) {
-                                return Promise.reject(
-                                  new Error("Địa chỉ chi tiết không hợp lệ.")
-                                );
+                              if (!value) return Promise.resolve();
+                              const trimmed = value.trim();
+                              if (!trimmed) return Promise.resolve();
+                              if (trimmed.length < 3) {
+                                return Promise.reject(new Error("Địa chỉ chi tiết phải có ít nhất 3 ký tự."));
+                              }
+                              if (trimmed.length > 500) {
+                                return Promise.reject(new Error("Địa chỉ chi tiết không được vượt quá 500 ký tự."));
+                              }
+                              if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                                return Promise.reject(new Error("Địa chỉ không được chứa nhiều khoảng trắng liên tiếp."));
+                              }
+                              if (!addressPattern.test(trimmed)) {
+                                return Promise.reject(new Error("Địa chỉ chi tiết không hợp lệ."));
                               }
                               return Promise.resolve();
                             },
                           },
                         ]}
                       >
-                        <AddressSelectorField />
+                        <AddressSelectorField maxLength={500} />
                       </Form.Item>
                     </Col>
                   </Row>

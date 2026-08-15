@@ -94,7 +94,7 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
             onChange={e => updateStep(index, "stepName", e.target.value)}
             onBlur={() => setTouched(true)}
             placeholder={`Tên bước ${index + 1} (bắt buộc)`}
-            maxLength={200}
+            maxLength={100}
             className={`font-semibold ${hasError ? "border-red-400 focus:border-red-500" : ""}`}
           />
           {hasError && (
@@ -121,6 +121,7 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
         value={step.description}
         onChange={e => updateStep(index, "description", e.target.value)}
         placeholder="Mô tả cách thực hiện bước này..."
+        maxLength={500}
       />
     </div>
   )
@@ -396,12 +397,28 @@ const PlanTemplateCreate = () => {
                   label="Tên mẫu quy trình"
                   rules={[
                     { required: true, message: "Vui lòng nhập tên mẫu." },
-                    { max: 200, message: "Tên mẫu tối đa 200 ký tự." },
+                    {
+                      validator: (_, value) => {
+                        if (!value) return Promise.resolve();
+                        const trimmed = value.trim();
+                        if (!trimmed) {
+                          return Promise.reject(new Error("Tên mẫu không được chỉ chứa khoảng trắng."));
+                        }
+                        if (trimmed.length > 100) {
+                          return Promise.reject(new Error("Tên mẫu không được vượt quá 100 ký tự."));
+                        }
+                        if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                          return Promise.reject(new Error("Tên mẫu không được chứa nhiều khoảng trắng liên tiếp."));
+                        }
+                        return Promise.resolve();
+                      },
+                    },
                   ]}
                 >
                   <Input
                     placeholder="Ví dụ: Quy trình trồng ngô ngọt"
                     className="h-10"
+                    maxLength={100}
                   />
                 </Form.Item>
               </Col>
@@ -473,10 +490,29 @@ const PlanTemplateCreate = () => {
                 </Form.Item>
               </Col> */}
               <Col span={24}>
-                <Form.Item name="description" label="Mô tả">
+                <Form.Item 
+                  name="description" 
+                  label="Mô tả"
+                  rules={[
+                    {
+                      validator: (_, value) => {
+                        if (!value) return Promise.resolve();
+                        const trimmed = value.trim();
+                        if (!trimmed) return Promise.resolve();
+                        if (trimmed.length > 500) {
+                          return Promise.reject(new Error("Mô tả không được vượt quá 500 ký tự."));
+                        }
+                        if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                          return Promise.reject(new Error("Mô tả không được chứa nhiều khoảng trắng liên tiếp."));
+                        }
+                        return Promise.resolve();
+                      },
+                    },
+                  ]}
+                >
                   <Input.TextArea
                     rows={3}
-                    maxLength={2000}
+                    maxLength={500}
                     showCount
                     placeholder="Mô tả mục tiêu và phạm vi áp dụng của mẫu..."
                   />
