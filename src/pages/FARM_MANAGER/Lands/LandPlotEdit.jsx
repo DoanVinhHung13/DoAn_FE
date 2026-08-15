@@ -20,6 +20,8 @@ import { useLandPlotAccess } from './useLandPlotAccess'
 import { useLandPlotForm } from './useLandPlotForm'
 import LandPlotFormFields from './LandPlotFormFields'
 import { MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
+import useFormDraft from 'src/hooks/useFormDraft'
+import { getFormDraftKey } from 'src/utils/formDraftKeys'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -28,6 +30,8 @@ const LandPlotEdit = () => {
   const navigate = useNavigate()
   const { canManage, routes } = useLandPlotAccess()
   const [form] = Form.useForm()
+  const storageKey = getFormDraftKey('land-plot', 'edit', id)
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
 
   // ── Hook: logic form chung ─────────────────────────────────────────────────
   const {
@@ -72,14 +76,16 @@ const LandPlotEdit = () => {
   // Điền sẵn giá trị form khi có dữ liệu
   useEffect(() => {
     if (!plot) return
-    form.setFieldsValue({
+    const serverValues = {
       name: plot.name,
       area: plot.area,
       areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
       address: plot.address,
       description: plot.description,
-    })
-  }, [plot, form])
+    }
+    const draft = restoreDraft()
+    form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) })
+  }, [plot, form, restoreDraft])
 
   // ── Fetch: vùng trồng khác (kiểm tra chồng lấn, loại trừ chính mình) ─────
   const fetchExistingPlots = useCallback(async () => {
@@ -129,6 +135,7 @@ const LandPlotEdit = () => {
         )
         await LandPlotService.updateLandPlot(id, payload)
 
+        clearDraft()
         navigate(routes.detail(id))
       } finally {
         setIsSubmitting(false)
@@ -205,7 +212,7 @@ const LandPlotEdit = () => {
                 description="Vùng trồng đang thuộc nhật ký kế hoạch hoặc đang trồng. Chỉ có thể chỉnh sửa khi không còn nhật ký đang sử dụng."
               />
             )}
-            <Form form={form} layout="vertical" onFieldsChange={handleFieldsChange}>
+            <Form form={form} layout="vertical" onFieldsChange={handleFieldsChange} onValuesChange={(_, allValues) => saveDraft(allValues)}>
               <LandPlotFormFields disabled={cultivationLocked} />
             </Form>
           </Card>

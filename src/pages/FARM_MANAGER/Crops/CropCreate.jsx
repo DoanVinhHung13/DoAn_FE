@@ -13,6 +13,8 @@ import UploadService from 'src/services/UploadService';
 import ROUTER from 'src/router/ROUTER';
 import { isActiveCropCatalog } from 'src/utils/cropCatalog';
 import { applyApiFieldErrors } from 'src/services/core/apiError';
+import useFormDraft from 'src/hooks/useFormDraft';
+import { getFormDraftKey } from 'src/utils/formDraftKeys';
 
 const CROP_FIELD_MAPPING = {
   Name: 'name', name: 'name', CropCatalogId: 'cropCatalogId', cropCatalogId: 'cropCatalogId',
@@ -39,11 +41,18 @@ const CropCreate = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const storageKey = getFormDraftKey('crop', 'create');
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey });
   
   const [uploadingCreate, setUploadingCreate] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   
   const watchedImageUrl = Form.useWatch('imageUrl', form);
+
+  React.useEffect(() => {
+    const draft = restoreDraft();
+    if (draft?.data) form.setFieldsValue(draft.data);
+  }, [form, restoreDraft]);
 
   const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
     queryKey: ['crop-catalogs-dropdown'],
@@ -142,6 +151,7 @@ const CropCreate = () => {
       });
     },
     onSuccess: () => {
+      clearDraft();
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       navigate(ROUTER.FM_CROPS);
     },
@@ -169,6 +179,7 @@ const CropCreate = () => {
         form={form}
         layout="vertical"
         onFinish={(values) => createMutation.mutate(values)}
+        onValuesChange={(_, allValues) => saveDraft(allValues)}
         onFinishFailed={() => {}}
         scrollToFirstError
       >

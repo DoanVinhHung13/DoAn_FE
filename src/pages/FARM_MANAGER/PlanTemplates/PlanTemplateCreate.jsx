@@ -17,7 +17,7 @@ import {
   Spin,
   Typography,
 } from "antd"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 
 import TitleCustom from "src/components/TitleCustom"
@@ -165,12 +165,17 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
 }
 
 import SectionTitle from "src/components/Common/SectionTitle"
+import useFormDraft from "src/hooks/useFormDraft"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
 
 const PlanTemplateCreate = () => {
   const navigate = useNavigate()
   const { id } = useParams()
   const isEdit = Boolean(id)
   const [form] = Form.useForm()
+  const storageKey = getFormDraftKey("process-template", isEdit ? "edit" : "create", id)
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
+  const draftReadyRef = useRef(false)
   const selectedCatalogId = Form.useWatch("cropCatalogId", form)
 
   const [steps, setSteps] = useState([createEmptyStep(1)])
@@ -229,13 +234,16 @@ const PlanTemplateCreate = () => {
             (first, second) => (first.stepOrder || 0) - (second.stepOrder || 0),
           )
 
-        form.setFieldsValue({
+        const serverValues = {
           name: template?.name,
           cropCatalogId: template?.cropCatalogId || template?.cropCatalog?.id,
           cropId: template?.cropId || template?.crop?.id,
           description: template?.description || "",
           estimatedDurationDays: template?.estimatedDurationDays,
-        })
+        }
+        const draft = restoreDraft()
+        const draftData = draft?.data || {}
+        form.setFieldsValue({ ...serverValues, ...draftData })
 
         const mappedSteps = templateSteps.map((step, index) => ({
           _key: `step-${step.id || index}`,
@@ -248,8 +256,9 @@ const PlanTemplateCreate = () => {
           requiredMaterialType: step.requiredMaterialType || "",
           note: step.note || "",
         }))
-        setSteps(mappedSteps.length ? mappedSteps : [createEmptyStep(1)])
+        setSteps(draftData.__draftMeta?.steps || (mappedSteps.length ? mappedSteps : [createEmptyStep(1)]))
         setOriginalSteps(mappedSteps)
+        draftReadyRef.current = true
       } catch {
         // axios interceptor handles error notification
       } finally {
@@ -261,7 +270,21 @@ const PlanTemplateCreate = () => {
     return () => {
       mounted = false
     }
-  }, [form, id, isEdit])
+  }, [form, id, isEdit, restoreDraft])
+
+  useEffect(() => {
+    if (isEdit) return
+    const draftData = restoreDraft()?.data || {}
+    form.setFieldsValue(draftData)
+    setSteps(draftData.__draftMeta?.steps || [createEmptyStep(1)])
+    draftReadyRef.current = true
+  }, [form, isEdit, restoreDraft])
+
+  useEffect(() => {
+    if (draftReadyRef.current) {
+      saveDraft({ ...form.getFieldsValue(true), __draftMeta: { steps } })
+    }
+  }, [form, saveDraft, steps])
 
   const catalogOptions = useMemo(
     () =>
@@ -415,6 +438,7 @@ const PlanTemplateCreate = () => {
       }
 
       await syncSteps(processTemplateId, normalizedSteps)
+      clearDraft()
       navigate(ROUTER.FM_PROCESS_TEMPLATES)
     } catch (error) {
       // API error handled by axios interceptor
@@ -446,7 +470,7 @@ const PlanTemplateCreate = () => {
         styles={{ body: { padding: 24 } }}
       >
         <Spin spinning={loadingDetail}>
-          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form form={form} layout="vertical" onFinish={handleSubmit} onValuesChange={(_, allValues) => saveDraft({ ...allValues, __draftMeta: { steps } })}>
             <SectionTitle>Thông tin mẫu quy trình</SectionTitle>
             <Row gutter={16}>
               <Col xs={24} md={12}>

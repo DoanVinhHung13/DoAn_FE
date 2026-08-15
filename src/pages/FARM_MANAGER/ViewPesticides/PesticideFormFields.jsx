@@ -20,6 +20,8 @@ import CatalogSuggestionService, { getCatalogPrefill } from "src/services/Catalo
 
 import SectionTitle from "src/components/Common/SectionTitle"
 import { useCropOptions } from "src/hooks/useCropOptions"
+import useFormDraft from "src/hooks/useFormDraft"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
 
 const PESTICIDE_FIELD_MAPPING = {
   Name: "name",
@@ -56,6 +58,8 @@ const getCropTargetKey = (target, cropOptions) => {
 
 const PesticideFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
+  const storageKey = getFormDraftKey("pesticide", isEdit ? "edit" : "create", editingItem?.id)
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
   const { cropOptions, isCropsLoading } = useCropOptions()
@@ -86,6 +90,8 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
   }
 
   React.useEffect(() => {
+    const draft = restoreDraft()
+    const draftData = draft?.data || {}
     if (isEdit) {
       const selectedUnit = getQuantityUnit(editingItem.unit, MEASUREMENT_UNITS.LITER)
       setQuantityUnit(selectedUnit)
@@ -111,6 +117,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                 }
               })
             : [{}],
+        ...draftData,
       })
     } else {
       setQuantityUnit(MEASUREMENT_UNITS.LITER)
@@ -119,9 +126,10 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
         unit: MEASUREMENT_UNITS.LITER,
         inventoryUnit: MEASUREMENT_UNITS.LITER,
         usages: [{}],
+        ...draftData,
       })
     }
-  }, [cropOptions, editingItem, isEdit, form])
+  }, [cropOptions, editingItem, isEdit, form, restoreDraft])
 
   const handleSubmit = async values => {
     try {
@@ -172,6 +180,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
         })
       }
 
+      clearDraft()
       navigate(ROUTER.FM_PESTICIDES)
     } catch (error) {
       applyApiFieldErrors(form, error, PESTICIDE_FIELD_MAPPING)
@@ -197,7 +206,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
   }
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleSubmit} className="">
+    <Form form={form} layout="vertical" onFinish={handleSubmit} onValuesChange={(_, allValues) => saveDraft(allValues)} className="">
       {/* ── Basic Info ── */}
       <SectionTitle>Thông Tin Cơ Bản</SectionTitle>
       <Row gutter={16}>

@@ -25,6 +25,7 @@
  *   AssignRolesRequest: { roles: string[] }
  */
 import http from "../01_axios"
+import { apiDeleteUser } from "./urls"
 
 // ─── Quản lý danh sách ─────────────────────────────────────
 
@@ -57,7 +58,7 @@ const createUser = (body, config) => http.post('/users', body, config)
 const updateUser = (id, body, config) => http.put(`/users/${id}`, body, config)
 
 /** DELETE /users/:id — xóa mềm, thu hồi refresh token (Farm Manager) */
-const deleteUser = id => http.delete(USER_URLS.byId(id))
+const deleteUser = id => http.delete(apiDeleteUser(id))
 
 /**
  * PUT /users/:id/status — đổi trạng thái isActive (Farm Manager)

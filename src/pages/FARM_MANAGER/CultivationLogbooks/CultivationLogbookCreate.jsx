@@ -27,7 +27,7 @@ import {
   Typography,
   Empty
 } from 'antd'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import TitleCustom from 'src/components/TitleCustom'
@@ -41,6 +41,8 @@ import { parseDate } from 'src/utils/dateFormatters'
 import UserService from 'src/services/UserService'
 import { ROLES } from 'src/constants/roles'
 import { applyApiFieldErrors } from 'src/services/core/apiError'
+import useFormDraft from 'src/hooks/useFormDraft'
+import { getFormDraftKey } from 'src/utils/formDraftKeys'
 
 import SectionTitle from 'src/components/Common/SectionTitle'
 import { isActiveCropCatalog } from 'src/utils/cropCatalog'
@@ -87,6 +89,9 @@ const CultivationLogbookCreate = () => {
   const isEdit = Boolean(id)
   const templateIdFromQuery = searchParams.get('templateId')
   const [form] = Form.useForm()
+  const storageKey = getFormDraftKey('cultivation-logbook', isEdit ? 'edit' : 'create', id)
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
+  const draftReadyRef = useRef(false)
   const selectedCatalogId = Form.useWatch('category', form)
   const selectedCropId = Form.useWatch('cropId', form)
 
@@ -327,7 +332,10 @@ const CultivationLogbookCreate = () => {
           endDate: stage.endDate ? parseDate(stage.endDate) : null,
         }))
 
-        setStages(normalizedStages.length ? normalizedStages : [createEmptyStage(1)])
+        const draftData = restoreDraft()?.data || {}
+        form.setFieldsValue(draftData)
+        setStages(draftData.__draftMeta?.stages || (normalizedStages.length ? normalizedStages : [createEmptyStage(1)]))
+        draftReadyRef.current = true
       } catch {
         // API error handled by axios interceptor
       }
@@ -335,7 +343,21 @@ const CultivationLogbookCreate = () => {
 
     loadCultivationLogbook()
     return () => { isMounted = false }
-  }, [id, isEdit, form])
+  }, [id, isEdit, form, restoreDraft])
+
+  useEffect(() => {
+    if (isEdit) return
+    const draftData = restoreDraft()?.data || {}
+    form.setFieldsValue(draftData)
+    setStages(draftData.__draftMeta?.stages || [createEmptyStage(1)])
+    draftReadyRef.current = true
+  }, [form, isEdit, restoreDraft])
+
+  useEffect(() => {
+    if (draftReadyRef.current) {
+      saveDraft({ ...form.getFieldsValue(true), __draftMeta: { stages } })
+    }
+  }, [form, saveDraft, stages])
 
   const landPlotOptions = [...(landsData || [])]
   selectedLandPlotOptions.forEach((selectedPlot) => {
@@ -635,6 +657,7 @@ const CultivationLogbookCreate = () => {
         })
       }
 
+      clearDraft()
       const createdPlanId = getCreatedPlanId(response)
       if (createdPlanId) {
         navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', createdPlanId))
@@ -684,7 +707,7 @@ const CultivationLogbookCreate = () => {
         </div>
       </div>
 
-      <Form form={form} onFinish={handleSubmit} layout="vertical" className="space-y-6">
+      <Form form={form} onFinish={handleSubmit} onValuesChange={(_, allValues) => saveDraft({ ...allValues, __draftMeta: { stages } })} layout="vertical" className="space-y-6">
         {/* Basic Info */}
         <Card bordered={false} className="shadow-sm rounded-2xl">
           <SectionTitle>Thông tin cơ bản</SectionTitle>

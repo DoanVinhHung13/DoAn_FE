@@ -7,6 +7,8 @@ import ROUTER from 'src/router/ROUTER'
 import TaskCatalogService from 'src/services/TaskCatalogService'
 import { applyApiFieldErrors, normalizeApiError } from 'src/services/core/apiError'
 import TaskFormFields from './TaskFormFields'
+import useFormDraft from 'src/hooks/useFormDraft'
+import { getFormDraftKey } from 'src/utils/formDraftKeys'
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res
 const normalizeTaskType = (data) => String(data?.taskType || '').toUpperCase() === 'HARVEST'
@@ -18,6 +20,8 @@ const TaskEdit = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
+  const storageKey = getFormDraftKey('task-catalog', 'edit', id)
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -26,14 +30,16 @@ const TaskEdit = () => {
         const res = await TaskCatalogService.getTaskCatalogById(id)
         const data = unwrap(res) || {}
 
-        form.setFieldsValue({
+        const serverValues = {
           cropCatalogId: data.cropCatalogId || '__ALL__',
           cropId: data.cropId || '__ALL__',
           taskType: normalizeTaskType(data),
           activityType: data.activityType || (normalizeTaskType(data) === 'HARVEST' ? 'HARVESTING' : 'OTHER'),
           name: data.name,
           description: data.description,
-        })
+        }
+        const draft = restoreDraft()
+        form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) })
       } catch {
         navigate(ROUTER.FM_TASK_CATALOGS)
       } finally {
@@ -41,7 +47,7 @@ const TaskEdit = () => {
       }
     }
     if (id) fetchDetail()
-  }, [id, form, navigate])
+  }, [id, form, navigate, restoreDraft])
 
   const handleSubmit = async (values) => {
     try {
@@ -61,6 +67,7 @@ const TaskEdit = () => {
         fieldErrorMapping: { CropCatalogId: 'cropCatalogId', CropId: 'cropId', Name: 'name', Description: 'description', TaskType: 'taskType', ActivityType: 'activityType' },
       })
 
+      clearDraft()
       navigate(ROUTER.FM_TASK_CATALOGS)
     } catch (error) {
       applyApiFieldErrors(form, normalizeApiError(error), {
@@ -89,7 +96,7 @@ const TaskEdit = () => {
         {initialLoading ? (
           <Skeleton active paragraph={{ rows: 6 }} />
         ) : (
-          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form form={form} layout="vertical" onFinish={handleSubmit} onValuesChange={(_, allValues) => saveDraft(allValues)}>
             <TaskFormFields form={form} isEdit={true} />
 
             <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">

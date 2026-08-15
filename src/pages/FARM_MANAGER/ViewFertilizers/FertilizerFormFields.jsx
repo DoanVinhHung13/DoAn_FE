@@ -94,10 +94,14 @@ const getCropTargetKey = (target, options) => {
 // ── Section header helper ─────────────────────────────────────────────────────
 import SectionTitle from 'src/components/Common/SectionTitle'
 import { useCropOptions } from 'src/hooks/useCropOptions'
+import useFormDraft from 'src/hooks/useFormDraft'
+import { getFormDraftKey } from 'src/utils/formDraftKeys'
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
+  const storageKey = getFormDraftKey('fertilizer', isEdit ? 'edit' : 'create', editingItem?.id)
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
   const navigate = useNavigate()
   const { getCombo } = useSystemKey()
   const { cropOptions, isCropsLoading } = useCropOptions()
@@ -137,6 +141,8 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
 
   // ── Populate form on open ──────────────────────────────────────────────────
   React.useEffect(() => {
+    const draft = restoreDraft()
+    const draftData = draft?.data || {}
     if (isEdit) {
       const selectedUnit = getQuantityUnit(editingItem.unit, MEASUREMENT_UNITS.KILOGRAM)
       setQuantityUnit(selectedUnit)
@@ -149,6 +155,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         unit: selectedUnit,
         type: editingItem.type || editingItem.fertilizerType || editingItem.category || undefined,
         description: editingItem.description || '',
+        ...draftData,
       })
       // Thành phần
       const incomingComps = editingItem.compositions?.length
@@ -171,20 +178,20 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           return c;
         };
 
-        setComponents(incomingComps.map(c => createFertilizerComponentRow(mapToDisplay(c))));
+        setComponents(draftData.__draftMeta?.components || incomingComps.map(c => createFertilizerComponentRow(mapToDisplay(c))));
       } else {
-        setComponents([]);
+        setComponents(draftData.__draftMeta?.components || []);
       }
       // Liều lượng
       setDosages(
-        editingItem.dosages?.length
+        draftData.__draftMeta?.dosages || (editingItem.dosages?.length
           ? editingItem.dosages.map(d => ({
               ...d,
               unit: selectedUnit,
               areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
               target: Array.isArray(d.target) ? d.target.join(', ') : (d.target || ''),
             }))
-          : [{ ...DEFAULT_DOSAGE, unit: selectedUnit }],
+          : [{ ...DEFAULT_DOSAGE, unit: selectedUnit }]),
       )
     } else {
       setQuantityUnit(MEASUREMENT_UNITS.KILOGRAM)
@@ -192,11 +199,16 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       form.setFieldsValue({
         unit: MEASUREMENT_UNITS.KILOGRAM,
         inventoryUnit: MEASUREMENT_UNITS.KILOGRAM,
+        ...draftData,
       })
-      setComponents([])
-      setDosages([{ ...DEFAULT_DOSAGE }])
+      setComponents(draftData.__draftMeta?.components || [])
+      setDosages(draftData.__draftMeta?.dosages || [{ ...DEFAULT_DOSAGE }])
     }
-  }, [editingItem, isEdit, form])
+  }, [editingItem, isEdit, form, restoreDraft])
+
+  React.useEffect(() => {
+    saveDraft({ ...form.getFieldsValue(true), __draftMeta: { components, dosages } })
+  }, [components, dosages, form, saveDraft])
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (values) => {
@@ -321,6 +333,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         })
       }
 
+      clearDraft()
       navigate(ROUTER.FM_FERTILIZERS)
     } catch (error) {
       applyApiFieldErrors(form, error, FERTILIZER_FIELD_MAPPING)
@@ -385,6 +398,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       form={form}
       layout="vertical"
       onFinish={handleSubmit}
+      onValuesChange={(_, allValues) => saveDraft({ ...allValues, __draftMeta: { components, dosages } })}
     >
       {/* ════════════════════════════════════════════════════════════════
             Section 1 – Thông Tin Cơ Bản

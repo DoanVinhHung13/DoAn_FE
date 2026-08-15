@@ -20,6 +20,8 @@ import { CropCatalogIcon } from 'src/assets/icon/menu/MenuIcons';
 import CropCatalogService from 'src/services/CropCatalogService';
 import { applyApiFieldErrors, isNotFoundError } from 'src/services/core/apiError';
 import ROUTER from 'src/router/ROUTER';
+import useFormDraft from 'src/hooks/useFormDraft';
+import { getFormDraftKey } from 'src/utils/formDraftKeys';
 
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin danh mục cây trồng.';
 const CROP_CATALOG_FIELD_MAPPING = {
@@ -31,6 +33,8 @@ const CatalogEdit = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
+  const storageKey = getFormDraftKey('crop-catalog', 'edit', id);
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey });
 
   const {
     data: catalogDetail,
@@ -50,12 +54,14 @@ const CatalogEdit = () => {
 
   useEffect(() => {
     if (catalogDetail) {
-      form.setFieldsValue({
+      const serverValues = {
         name: catalogDetail.name || catalogDetail.cropCatalogName || '',
         description: catalogDetail.description || '',
-      });
+      };
+      const draft = restoreDraft();
+      form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) });
     }
-  }, [catalogDetail, form]);
+  }, [catalogDetail, form, restoreDraft]);
 
   const updateMutation = useMutation({
     mutationFn: (values) => {
@@ -70,6 +76,7 @@ const CatalogEdit = () => {
       });
     },
     onSuccess: () => {
+      clearDraft();
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail', id] });
@@ -161,6 +168,7 @@ const CatalogEdit = () => {
           form={form}
           layout="vertical"
           onFinish={(values) => updateMutation.mutate(values)}
+          onValuesChange={(_, allValues) => saveDraft(allValues)}
           onFinishFailed={() => { }}
           scrollToFirstError
         >

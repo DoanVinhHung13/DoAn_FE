@@ -33,6 +33,8 @@ import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
 import { SYSTEM_KEY } from 'src/constants/systemKey';
 import { isActiveCropCatalog } from 'src/utils/cropCatalog';
+import useFormDraft from 'src/hooks/useFormDraft';
+import { getFormDraftKey } from 'src/utils/formDraftKeys';
 
 const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
 const CROP_FIELD_MAPPING = {
@@ -45,6 +47,8 @@ const CropEdit = () => {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
+  const storageKey = getFormDraftKey('crop', 'edit', id);
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey });
   const watchedImageUrl = Form.useWatch('imageUrl', form);
   const [previewImage, setPreviewImage] = useState(null); // State cho modal xem ảnh
   const [uploading, setUploading] = useState(false); // Loading state khi upload
@@ -121,7 +125,7 @@ const CropEdit = () => {
       const minData = calculateUnit(cropDetail.minHarvestDays);
       const maxData = calculateUnit(cropDetail.maxHarvestDays);
 
-      form.setFieldsValue({
+      const serverValues = {
         name: cropDetail.name || '',
         cropCatalogId: cropDetail.cropCatalogId || '',
         minHarvestDays: minData.value,
@@ -130,9 +134,11 @@ const CropEdit = () => {
         maxDurationUnit: maxData.unit,
         description: cropDetail.description || '',
         imageUrl: cropDetail.imageUrl || '',
-      });
+      };
+      const draft = restoreDraft();
+      form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) });
     }
-  }, [cropDetail, form]);
+  }, [cropDetail, form, restoreDraft]);
 
   const updateMutation = useMutation({
     mutationFn: (values) => {
@@ -166,6 +172,7 @@ const CropEdit = () => {
       });
     },
     onSuccess: () => {
+      clearDraft();
       queryClient.invalidateQueries({ queryKey: ['crops'] });
       queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
       navigate(ROUTER.FM_CROPS);
@@ -291,6 +298,7 @@ const CropEdit = () => {
         form={form}
         layout="vertical"
         onFinish={(values) => updateMutation.mutate(values)}
+        onValuesChange={(_, allValues) => saveDraft(allValues)}
         onFinishFailed={() => { }}
         scrollToFirstError
       >

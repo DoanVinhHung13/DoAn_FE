@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Form, Input, Select } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined, FileTextOutlined } from '@ant-design/icons';
@@ -10,6 +10,8 @@ import CropCatalogService from 'src/services/CropCatalogService';
 import { applyApiFieldErrors } from 'src/services/core/apiError';
 import ROUTER from 'src/router/ROUTER';
 import { useSystemKey } from 'src/hooks/useSystemKey';
+import useFormDraft from 'src/hooks/useFormDraft';
+import { getFormDraftKey } from 'src/utils/formDraftKeys';
 
 const CROP_CATALOG_FIELD_MAPPING = {
   Name: 'name', name: 'name', Description: 'description', description: 'description',
@@ -21,6 +23,13 @@ const CatalogCreate = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const { refetchSystemKey } = useSystemKey();
+  const storageKey = getFormDraftKey('crop-catalog', 'create');
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey });
+
+  useEffect(() => {
+    const draft = restoreDraft();
+    if (draft?.data) form.setFieldsValue({ isActive: true, ...draft.data });
+  }, [form, restoreDraft]);
 
   const createMutation = useMutation({
     mutationFn: (values) => {
@@ -35,6 +44,7 @@ const CatalogCreate = () => {
       });
     },
     onSuccess: async () => {
+      clearDraft();
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
       await refetchSystemKey();
@@ -66,6 +76,7 @@ const CatalogCreate = () => {
           layout="vertical"
           initialValues={{ isActive: true }}
           onFinish={(values) => createMutation.mutate(values)}
+          onValuesChange={(_, allValues) => saveDraft(allValues)}
           onFinishFailed={() => {}}
           scrollToFirstError
         >

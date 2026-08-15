@@ -7,11 +7,25 @@ import ROUTER from 'src/router/ROUTER'
 import TaskCatalogService from 'src/services/TaskCatalogService'
 import { applyApiFieldErrors, normalizeApiError } from 'src/services/core/apiError'
 import TaskFormFields from './TaskFormFields'
+import useFormDraft from 'src/hooks/useFormDraft'
+import { getFormDraftKey } from 'src/utils/formDraftKeys'
 
 const TaskCreate = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const storageKey = getFormDraftKey('task-catalog', 'create')
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
+
+  React.useEffect(() => {
+    const draft = restoreDraft()
+    if (draft?.data) {
+      form.setFieldsValue({
+        cropCatalogId: '__ALL__', cropId: '__ALL__', taskType: 'NORMAL', activityType: 'OTHER',
+        ...draft.data,
+      })
+    }
+  }, [form, restoreDraft])
 
   const handleSubmit = async (values) => {
     try {
@@ -30,6 +44,7 @@ const TaskCreate = () => {
         fieldErrorMapping: { CropCatalogId: 'cropCatalogId', CropId: 'cropId', Name: 'name', Description: 'description', TaskType: 'taskType', ActivityType: 'activityType' },
       })
 
+      clearDraft()
       navigate(ROUTER.FM_TASK_CATALOGS)
     } catch (error) {
       applyApiFieldErrors(form, normalizeApiError(error), {
@@ -65,6 +80,7 @@ const TaskCreate = () => {
           layout="vertical"
           initialValues={{ cropCatalogId: '__ALL__', cropId: '__ALL__', taskType: 'NORMAL', activityType: 'OTHER' }}
           onFinish={handleSubmit}
+          onValuesChange={(_, allValues) => saveDraft(allValues)}
         >
           <TaskFormFields form={form} isEdit={false} />
 

@@ -17,6 +17,8 @@ import {
 } from "./landPlotUtils"
 import { useLandPlotAccess } from "./useLandPlotAccess"
 import { useLandPlotForm } from "./useLandPlotForm"
+import useFormDraft from "src/hooks/useFormDraft"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -24,6 +26,8 @@ const LandPlotCreate = () => {
   const navigate = useNavigate()
   const { canManage, routes } = useLandPlotAccess()
   const [form] = Form.useForm()
+  const storageKey = getFormDraftKey("land-plot", "create")
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
 
   // ── Hook: logic form chung ─────────────────────────────────────────────────
   const {
@@ -44,6 +48,13 @@ const LandPlotCreate = () => {
     form.setFieldValue("areaUnit", MEASUREMENT_UNITS.SQUARE_METER)
   }, [form])
 
+  useEffect(() => {
+    const draft = restoreDraft()
+    if (draft?.data) {
+      form.setFieldsValue({ areaUnit: MEASUREMENT_UNITS.SQUARE_METER, ...draft.data })
+    }
+  }, [form, restoreDraft])
+
   // Nếu không có quyền thì về trang danh sách
   useEffect(() => {
     if (!canManage) navigate(routes.list, { replace: true })
@@ -58,7 +69,9 @@ const LandPlotCreate = () => {
         PageSize: 100,
       })
       setExistingPlots(normalizeLandPlotResponse(response).items)
-    } catch { }
+    } catch {
+      // Existing plots are best-effort data for overlap validation.
+    }
   }, [canManage])
 
   useEffect(() => {
@@ -84,6 +97,7 @@ const LandPlotCreate = () => {
         const payload = buildLandPlotPayload(values, polygonData)
         await LandPlotService.createLandPlot(payload)
 
+        clearDraft()
         navigate(routes.list)
       } finally {
         setIsSubmitting(false)
@@ -125,7 +139,7 @@ const LandPlotCreate = () => {
         {/* Cột trái: form thông tin */}
         <Col xs={24} xl={10}>
           <Card title="Thông tin vùng trồng">
-            <Form form={form} layout="vertical" onFieldsChange={handleFieldsChange}>
+            <Form form={form} layout="vertical" onFieldsChange={handleFieldsChange} onValuesChange={(_, allValues) => saveDraft(allValues)}>
               <LandPlotFormFields showAreaPlaceholder />
             </Form>
           </Card>
