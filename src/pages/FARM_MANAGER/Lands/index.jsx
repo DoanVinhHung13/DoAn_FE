@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import {
   Alert,
   Button,
-  Card,
   Input,
   Modal,
+  Popconfirm,
   Select,
   Tooltip,
-  message,
 } from 'antd'
 import {
   CheckCircleOutlined,
@@ -28,7 +27,6 @@ import { useSystemKey } from 'src/hooks/useSystemKey'
 import { SYSTEM_KEY } from 'src/constants/systemKey'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import { useListManagement } from 'src/hooks/useListManagement'
-import { Popconfirm } from 'antd'
 import {
   EMPTY_LAND_MESSAGE,
   MSG_LM_26,

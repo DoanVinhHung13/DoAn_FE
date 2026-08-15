@@ -13,7 +13,7 @@ import {
   parseBoundaryJson,
 } from 'src/utils/geoJsonUtils'
 import { MSG_LM_25 } from 'src/pages/FARM_MANAGER/Lands/landPlotUtils'
-import { getPlaceDetail, isExternalAbortError, searchAddress } from 'src/utils/geocodingUtils'
+import { getPlaceDetail, isExternalAbortError, reverseGeocode, searchAddress } from 'src/utils/geocodingUtils'
 import './styles.css'
 
 const DEFAULT_CENTER = [21.0285, 105.8542]
@@ -49,10 +49,12 @@ const LandPlotMap = ({
   const searchRequestIdRef = useRef(0)
   const debounceTimerRef = useRef(null)
   const detailControllerRef = useRef(null)
+  const reverseGeocodeControllerRef = useRef(null)
 
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searchLoading, setSearchLoading] = useState(false)
+  const [geocodingLoading, setGeocodingLoading] = useState(false)
   const [searchError, setSearchError] = useState('')
   const [overlapError, setOverlapError] = useState('')
   const [showResults, setShowResults] = useState(false)
@@ -81,6 +83,7 @@ const LandPlotMap = ({
   useEffect(() => () => {
     searchControllerRef.current?.abort()
     detailControllerRef.current?.abort()
+    reverseGeocodeControllerRef.current?.abort()
     clearTimeout(debounceTimerRef.current)
   }, [])
 
@@ -196,8 +199,48 @@ const LandPlotMap = ({
     mapInstance.current.getContainer().style.cursor = 'crosshair'
   }, [])
 
+  const handlePolygonGeocode = useCallback(async (layer) => {
+    if (!layer?.getBounds) return
+    const center = layer.getBounds().getCenter()
+    if (!center || !Number.isFinite(center.lat) || !Number.isFinite(center.lng)) return
+
+    const { lat, lng } = center
+
+    reverseGeocodeControllerRef.current?.abort()
+    const controller = new AbortController()
+    reverseGeocodeControllerRef.current = controller
+
+    setGeocodingLoading(true)
+    try {
+      const address = await reverseGeocode(lat, lng, { signal: controller.signal })
+      if (address) {
+        setSearchQuery(address)
+        onAddressSelectRef.current?.({
+          address,
+          latitude: lat,
+          longitude: lng,
+        })
+      }
+    } catch (error) {
+      if (!isExternalAbortError(error)) {
+        const fallbackAddr = `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+        setSearchQuery(fallbackAddr)
+        onAddressSelectRef.current?.({
+          address: fallbackAddr,
+          latitude: lat,
+          longitude: lng,
+        })
+      }
+    } finally {
+      if (reverseGeocodeControllerRef.current === controller) {
+        reverseGeocodeControllerRef.current = null
+        setGeocodingLoading(false)
+      }
+    }
+  }, [])
+
   const handleMapClick = useCallback(
-    (e) => {
+    async (e) => {
       if (!pickLocationMode) return
       const { lat, lng } = e.latlng
       setPickLocationMode(false)
@@ -210,11 +253,28 @@ const LandPlotMap = ({
         .bindPopup(`Vị trí đã chọn<br/>${lat.toFixed(6)}, ${lng.toFixed(6)}`)
         .openPopup()
 
-      onAddressSelectRef.current?.({
-        address: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-        latitude: lat,
-        longitude: lng,
-      })
+      setGeocodingLoading(true)
+      try {
+        const address = await reverseGeocode(lat, lng)
+        if (address) {
+          setSearchQuery(address)
+          onAddressSelectRef.current?.({
+            address,
+            latitude: lat,
+            longitude: lng,
+          })
+        }
+      } catch {
+        const fallbackAddr = `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+        setSearchQuery(fallbackAddr)
+        onAddressSelectRef.current?.({
+          address: fallbackAddr,
+          latitude: lat,
+          longitude: lng,
+        })
+      } finally {
+        setGeocodingLoading(false)
+      }
     },
     [pickLocationMode, clearSearchMarker],
   )
@@ -274,13 +334,19 @@ const LandPlotMap = ({
           if (!layer?.getLatLngs) return
           const latLngs = layer.getLatLngs()[0]
           const geoJSON = createGeoJSONPolygon(latLngs)
-          validatePolygon(geoJSON, layer)
+          const isValid = validatePolygon(geoJSON, layer)
+          if (isValid) {
+            handlePolygonGeocode(layer)
+          }
         })
         layer.on('pm:dragend', () => {
           if (!layer?.getLatLngs) return
           const latLngs = layer.getLatLngs()[0]
           const geoJSON = createGeoJSONPolygon(latLngs)
-          validatePolygon(geoJSON, layer)
+          const isValid = validatePolygon(geoJSON, layer)
+          if (isValid) {
+            handlePolygonGeocode(layer)
+          }
         })
       }
 
@@ -300,7 +366,10 @@ const LandPlotMap = ({
 
         const latLngs = layer.getLatLngs()[0]
         const geoJSON = createGeoJSONPolygon(latLngs)
-        validatePolygon(geoJSON, layer, { isDraw: true })
+        const isValid = validatePolygon(geoJSON, layer, { isDraw: true })
+        if (isValid) {
+          handlePolygonGeocode(layer)
+        }
       }
 
       const handleRemove = () => {
@@ -326,7 +395,7 @@ const LandPlotMap = ({
       searchMarkerRef.current = null
       locateMarkerRef.current = null
     }
-  }, [mode, color, clearActiveLayer, validatePolygon, handleMapClick])
+  }, [mode, color, clearActiveLayer, validatePolygon, handleMapClick, handlePolygonGeocode])
 
   useEffect(() => {
     if (!mapInstance.current) return
@@ -576,9 +645,9 @@ const LandPlotMap = ({
         </ul>
       )}
 
-      {showToolbar && searchLoading && (
+      {showToolbar && (searchLoading || geocodingLoading) && (
         <div className="land-plot-map__search-loading">
-          <Spin size="small" /> Đang tìm địa chỉ...
+          <Spin size="small" /> {geocodingLoading ? 'Đang tự động xác định địa chỉ...' : 'Đang tìm địa chỉ...'}
         </div>
       )}
 
