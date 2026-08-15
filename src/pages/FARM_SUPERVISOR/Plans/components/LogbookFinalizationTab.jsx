@@ -806,7 +806,7 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
           className="mb-4 rounded-xl"
           message={
             <span className="font-semibold text-blue-700">
-              Đã gửi nhật ký lên quản lý nông trại — Đang chờ duyệt
+              sảnnhật ký lên quản lý nông trại — Đang chờ duyệt
             </span>
           }
           description="Nhật ký canh tác đã được gửi thành công. Vui lòng chờ quản lý nông trại xem xét và phê duyệt."
