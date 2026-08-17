@@ -1,12 +1,4 @@
-/**
- * CultivationLogbooks — Danh sách Nhật ký Canh tác (Cultivation Logbooks)
- * Route: /farm-manager/cultivation-logbooks  (ROUTER.FM_CULTIVATION_LOGBOOKS)
- * API: GET /api/cultivation-logbooks
- *
- * List DTO: id, logbookName, cropName, supervisorName, startDate, status
- */
 import {
-  CalendarOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
@@ -14,39 +6,41 @@ import {
   SearchOutlined,
 } from '@ant-design/icons'
 import {
-  Alert,
   Button,
-  Card,
   Input,
-  message,
-  Modal,
+  Popconfirm,
   Select,
-  Space,
   Tooltip,
 } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { LogbookIcon } from 'src/assets/icon/menu/MenuIcons'
+import { UI } from 'src/constants/uiConfig'
 
+import CustomModal from 'src/components/Modal/CustomModal'
 import CustomTable from 'src/components/Table/CustomTable'
 import TitleCustom from 'src/components/TitleCustom'
-import { LogbookIcon } from 'src/assets/icon/menu/MenuIcons'
+import { createSTTColumn } from 'src/components/Table/columns.jsx'
+import { createPaginationConfig } from 'src/utils/tableUtils'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
 import ROUTER from 'src/router/ROUTER'
+import { formatDate } from 'src/utils/dateFormatters'
+
 import CultivationLogbookService from 'src/services/CultivationLogbookService'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
-import { formatDate } from 'src/utils/dateFormatters'
-import { invalidCharsRegex } from 'src/utils/helpers'
+import { useListManagement } from 'src/hooks/useListManagement'
 
 const AVATAR_COLORS = [
   'bg-green-500', 'bg-blue-500', 'bg-orange-500', 'bg-purple-500',
   'bg-pink-500', 'bg-teal-500', 'bg-indigo-500', 'bg-amber-500',
 ]
+
 const getAvatarColor = (name) => {
   if (!name) return AVATAR_COLORS[0]
   const code = name.charCodeAt(0) + (name.charCodeAt(1) || 0)
   return AVATAR_COLORS[code % AVATAR_COLORS.length]
 }
+
 const getInitials = (name) => {
   if (!name) return '?'
   return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
@@ -56,126 +50,87 @@ const CultivationLogbookList = () => {
   const navigate = useNavigate()
   const { getLogbookStatus, logbookFilterOptions } = useCultivationStatus()
 
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const {
+    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
+    page, setPage, pageSize, setPageSize,
+    filters, updateFilter,
+    listData, setListData, totalRecords, setTotalRecords,
+    loading, setLoading,
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { status: 'all' },
+  })
 
-  const [listData, setListData] = useState([])
-  const [totalRecords, setTotalRecords] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
+  const statusFilter = filters.status
+  const [deleteModal, setDeleteModal] = useState({ open: false, item: null })
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   const getList = useCallback(async () => {
     try {
       setLoading(true)
-      setLoadError(false)
       const params = {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
         Status: statusFilter === 'all' ? undefined : statusFilter,
       }
-      const res = await CultivationLogbookService.getAll(params, {
-        errorHandling: 'component',
-      })
+      const res = await CultivationLogbookService.getAll(params, { errorHandling: 'component' })
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
     } catch {
       setListData([])
       setTotalRecords(0)
-      setLoadError(true)
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, statusFilter])
+  }, [page, pageSize, search, statusFilter, setLoading, setListData, setTotalRecords])
 
   useEffect(() => {
     getList()
   }, [getList])
 
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      message.error('Ký tự tìm kiếm không hợp lệ')
-      return
+  const handleDelete = async () => {
+    if (!deleteModal.item) return
+    try {
+      setDeleteLoading(true)
+      await CultivationLogbookService.deleteById(deleteModal.item.id)
+      setDeleteModal({ open: false, item: null })
+      getList()
+    } finally {
+      setDeleteLoading(false)
     }
-    setSearch(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
-
-  const handleClearSearch = () => {
-    setSearchInput('')
-    setSearch('')
-    setPage(1)
   }
 
-  const handleDelete = useCallback((record) => {
-    Modal.confirm({
-      title: 'Xóa nhật ký canh tác?',
-      content: `Nhật ký “${record.logbookName || 'này'}” sẽ được xóa khỏi danh sách.`,
-      okText: 'Xóa',
-      cancelText: 'Hủy',
-      okButtonProps: { danger: true },
-      onOk: async () => {
-        await CultivationLogbookService.deleteById(record.id)
-        if (listData.length === 1 && page > 1) {
-          setPage(page - 1)
-        } else {
-          await getList()
-        }
-      },
-    })
-  }, [getList, listData.length, page])
-
   const columns = [
-    {
-      title: 'STT',
-      key: 'stt',
-      width: 56,
-      align: 'center',
-      render: (_, __, index) => (
-        <span className="text-sm font-medium text-gray-400">
-          {(page - 1) * pageSize + index + 1}
-        </span>
-      ),
-    },
+    createSTTColumn(page, pageSize),
     {
       title: 'Tên nhật ký',
       dataIndex: 'logbookName',
       key: 'logbookName',
-      render: (v) => (
-        <span className="font-medium text-gray-800">{v || '—'}</span>
-      ),
+      render: (v) => <span className="font-medium text-gray-800">{v || '—'}</span>,
     },
     {
       title: 'Cây trồng',
       dataIndex: 'cropName',
       key: 'cropName',
-      render: (v) => (
-        <span className="text-sm text-gray-700">{v || '—'}</span>
-      ),
+      render: (v) => <span className="text-sm text-gray-700">{v || '—'}</span>,
     },
     {
       title: 'Người giám sát',
       key: 'supervisor',
       render: (_, record) => {
-        const supervisorName = record.supervisorName
-        if (!supervisorName) {
-          return (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400">--</span>
-              <span className="text-xs text-gray-400 italic">Chưa chỉ định</span>
-            </div>
-          )
-        }
-        const color = getAvatarColor(supervisorName)
+        const name = record.supervisorName
+        if (!name) return (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400 italic">Chưa chỉ định</span>
+          </div>
+        )
         return (
           <div className="flex items-center gap-2">
-            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${color}`}>
-              {getInitials(supervisorName)}
+            <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-white ${getAvatarColor(name)}`}>
+              {getInitials(name)}
             </div>
-            <span className="text-sm text-gray-700">{supervisorName}</span>
+            <span className="text-sm text-gray-700">{name}</span>
           </div>
         )
       },
@@ -197,9 +152,7 @@ const CultivationLogbookList = () => {
       render: (_, record) => {
         const cfg = getLogbookStatus(record.status)
         return (
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${cfg.badgeClass}`}
-          >
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none ${cfg.badgeClass}`}>
             <span>{cfg.label}</span>
           </div>
         )
@@ -209,52 +162,52 @@ const CultivationLogbookList = () => {
       title: 'Hành động',
       key: 'actions',
       fixed: 'right',
-      width: 112,
+      width: 120,
       align: 'center',
-      render: (_, record) => (
-        <Space size={4}>
-          {String(record.status).toUpperCase() !== 'CANCELLED' && (
-            <Tooltip title="Sửa">
-              <Button
-                type="text"
-                size="small"
-                icon={<EditOutlined />}
-                disabled={String(record.status).toUpperCase() === 'COMPLETED'}
-                className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50 disabled:cursor-not-allowed disabled:text-gray-300 disabled:hover:bg-transparent"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  navigate(
-                    ROUTER.FM_CULTIVATION_LOGBOOK_EDIT.replace(':id', record.id)
-                  )
-                }}
-              />
-            </Tooltip>
-          )}
-          {['PLANNED', 'CANCELLED'].includes(String(record.status).toUpperCase()) && (
-            <Tooltip title="Xóa">
-              <Button
-                type="text"
-                size="small"
-                icon={<DeleteOutlined />}
-                className="!h-8 !w-8 rounded-lg text-red-500 hover:bg-red-50"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  handleDelete(record)
-                }}
-              />
-            </Tooltip>
-          )}
-        </Space>
-      ),
+      render: (_, record) => {
+        const status = String(record.status).toUpperCase()
+        const canEdit = status !== 'CANCELLED' && status !== 'COMPLETED'
+        const canDelete = ['PLANNED', 'CANCELLED'].includes(status)
+        return (
+          <div className={UI.rowActions}>
+            {canEdit && (
+              <Tooltip title="Chỉnh sửa">
+                <Button
+                  type="text"
+                  icon={<EditOutlined className="text-lg text-green-500" />}
+                  className={UI.btn.iconEdit}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate(ROUTER.FM_CULTIVATION_LOGBOOK_EDIT.replace(':id', record.id))
+                  }}
+                />
+              </Tooltip>
+            )}
+            {canDelete && (
+              <Tooltip title="Xóa">
+                <Button
+                  type="text"
+                  icon={<DeleteOutlined className="text-lg text-red-500" />}
+                  className={UI.btn.iconDelete}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setDeleteModal({ open: true, item: record })
+                  }}
+                />
+              </Tooltip>
+            )}
+          </div>
+        )
+      },
     },
   ]
 
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div className={UI.page.wrapper}>
+      <div className={UI.page.header}>
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <LogbookIcon style={{ fontSize: '24px', color: '#15803d' }} />
+            <LogbookIcon style={UI.menuIcon} />
             Nhật ký canh tác
           </TitleCustom>
         </div>
@@ -262,87 +215,97 @@ const CultivationLogbookList = () => {
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_CREATE)}
-          className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
+          className={UI.btn.primary}
         >
           Tạo nhật ký mới
         </Button>
       </div>
 
-      <div className="admin-filter-card rounded-lg shadow-sm">
-        <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <div className={UI.toolbar.card}>
+        <div className={UI.toolbar.inner}>
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
             placeholder="Tìm kiếm nhật ký canh tác..."
             prefix={<SearchOutlined className="text-gray-300" />}
-            className="w-64 h-10 rounded-xl"
+            className={UI.input.search}
             allowClear
             onClear={handleClearSearch}
           />
           <Select
             value={statusFilter}
-            onChange={(val) => {
-              setStatusFilter(val)
-              setPage(1)
-            }}
-            className="h-10 rounded-xl min-w-[160px]"
+            onChange={(val) => updateFilter('status', val)}
+            className={UI.input.select}
             options={logbookFilterOptions}
           />
-          <div className="flex gap-2 ml-auto">
-            <Button
-              onClick={handleSearch}
-              icon={<SearchOutlined />}
-              className="h-10 px-4 font-semibold rounded-xl bg-gray-50"
-            >
+          <div className={UI.toolbar.actions}>
+            <Button onClick={handleSearch} icon={<SearchOutlined />} className={UI.btn.search}>
               Tìm kiếm
             </Button>
             <Button
               icon={<ReloadOutlined />}
               onClick={() => getList()}
               loading={loading}
-              className="h-10 px-3 rounded-xl bg-gray-50"
+              className={UI.btn.reload}
             />
           </div>
         </div>
-
       </div>
 
-      {loadError ? (
-        <div className="p-5">
-          <Alert
-            type="error"
-            message="Không thể tải danh sách nhật ký canh tác."
-            action={<Button size="small" onClick={getList}>Thử lại</Button>}
-            className="rounded-xl"
-          />
+      <CustomTable
+        dataSource={listData}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        scroll={{ x: 1000 }}
+        onRow={(record) => ({
+          onClick: () => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', record.id)),
+          className: 'cursor-pointer',
+        })}
+        locale={{ emptyText: 'Chưa có nhật ký canh tác nào.' }}
+        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
+          setPage(p)
+          setPageSize(ps)
+        })}
+        rowClassName={UI.row}
+      />
+
+      <CustomModal
+        open={deleteModal.open}
+        onCancel={() => setDeleteModal({ open: false, item: null })}
+        title={
+          <div className={UI.modal.titleClass}>
+            <span className="font-bold">Xóa nhật ký canh tác</span>
+          </div>
+        }
+        footer={null}
+        width={420}
+      >
+        <div className={UI.modal.body}>
+          <p className="text-gray-600">
+            Bạn có chắc chắn muốn xóa nhật ký canh tác này? Thao tác này không thể hoàn tác.
+          </p>
+          {deleteModal.item && (
+            <p className="mt-2 text-sm font-semibold text-gray-800">
+              {deleteModal.item.logbookName}
+            </p>
+          )}
         </div>
-      ) : (
-        <CustomTable
-          dataSource={listData}
-          columns={columns}
-          rowKey="id"
-          loading={loading}
-          scroll={{ x: 1000 }}
-          onRow={(record) => ({
-            onClick: () => navigate(ROUTER.FM_CULTIVATION_LOGBOOK_DETAIL.replace(':id', record.id)),
-            className: 'cursor-pointer',
-          })}
-          locale={{ emptyText: 'Chưa có nhật ký canh tác nào.' }}
-          pagination={{
-            current: page,
-            pageSize,
-            total: totalRecords,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE,
-            onChange: (p, ps) => {
-              setPage(p)
-              setPageSize(ps)
-            },
-          }}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-        />
-      )}
+        <div className={UI.modal.footer}>
+          <Button onClick={() => setDeleteModal({ open: false, item: null })} className={UI.btn.cancel}>
+            Hủy
+          </Button>
+          <Button
+            type="primary"
+            loading={deleteLoading}
+            onClick={handleDelete}
+            className={UI.btn.confirm}
+          >
+            Xác nhận
+          </Button>
+        </div>
+      </CustomModal>
     </div>
   )
 }

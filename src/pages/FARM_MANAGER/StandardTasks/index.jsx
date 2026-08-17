@@ -19,10 +19,10 @@ import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 import ROUTER from 'src/router/ROUTER'
 
 import TaskCatalogService from 'src/services/TaskCatalogService'
-import { normalizeApiError } from 'src/services/core/apiError'
 import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
 import { useListManagement } from 'src/hooks/useListManagement'
+import { UI } from 'src/constants/uiConfig'
 
 const unwrapItems = (response) => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
@@ -66,14 +66,8 @@ const TasksManagement = () => {
       const res = await TaskCatalogService.getTaskCatalogs(params, { skipNotice: false })
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
-    } catch (error) {
-      const normalizedError = normalizeApiError(error)
-      console.error('Task catalog list error:', {
-        kind: normalizedError.kind,
-        code: normalizedError.code,
-        status: normalizedError.status,
-        traceId: normalizedError.traceId,
-      })
+    } catch {
+      // error handled by interceptor
     } finally {
       setLoading(false)
     }

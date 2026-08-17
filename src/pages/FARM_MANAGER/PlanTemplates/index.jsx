@@ -43,6 +43,7 @@ import ProcessTemplateService from 'src/services/ProcessTemplateService'
 import ProcessStepService from 'src/services/ProcessStepService'
 import { invalidCharsRegex } from 'src/utils/helpers'
 import { useListManagement } from 'src/hooks/useListManagement'
+import { UI } from 'src/constants/uiConfig'
 
 const normalizeItems = (response) => {
   const payload = response?.data ?? response ?? {}
@@ -295,9 +296,9 @@ const PlanTemplateList = () => {
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+    <div className={UI.page.wrapper}>
       {/* ── Header ── */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className={UI.page.header}>
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <TemplateLibraryIcon style={{ fontSize: '24px', color: '#15803d' }} />

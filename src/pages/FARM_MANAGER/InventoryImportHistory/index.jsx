@@ -18,6 +18,7 @@ import InventoryService from 'src/services/InventoryService'
 import { normalizeApiError } from 'src/services/core/apiError'
 import { formatDate as formatConfiguredDate } from 'src/utils/dateFormatters'
 import { useListManagement } from 'src/hooks/useListManagement'
+import { UI } from 'src/constants/uiConfig'
 
 const { RangePicker } = DatePicker
 
@@ -121,8 +122,7 @@ const InventoryImportHistory = () => {
     searchInput, setSearchInput, search, handleSearch, handleClearSearch,
     page, setPage, pageSize, setPageSize,
     filters, updateFilter,
-    listData: rows, setListData: setRows, totalRecords: total, setTotalRecords: setTotal,
-    loading, setLoading
+    listData: rows, setListData: setRows, totalRecords: total, setTotalRecords: setTotal,    loading, setLoading
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
     initialFilters: { typeFilter: 'all', dateRange: [] }
@@ -222,7 +222,7 @@ const InventoryImportHistory = () => {
   ]
 
   return (
-    <div className="admin-compact-list space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+    <div className={UI.page.wrapper}>
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <TitleCustom className="!mb-0 flex items-center gap-2" role="heading" aria-level={1}>
           <ImportHistoryIcon aria-hidden="true" style={{ fontSize: '24px', color: '#15803d' }} />

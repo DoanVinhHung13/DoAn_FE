@@ -3,43 +3,6 @@ import { message } from 'antd'
 import { invalidCharsRegex } from 'src/utils/helpers'
 import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
 
-/**
- * Custom hook for managing common list page state and handlers
- * 
- * Consolidates repeated patterns across list management pages:
- * - Search state (input + applied search)
- * - Pagination (page + pageSize)
- * - Filters (dynamic filters object including sort)
- * - Data (listData + totalRecords)
- * - Loading state
- * - Client-side filtering and sorting
- * 
- * Usage:
- * ```javascript
- * const {
- *   searchInput, setSearchInput, search, handleSearch, handleClearSearch,
- *   page, setPage, pageSize, setPageSize,
- *   filters, updateFilter, updateSort,
- *   listData, setListData, totalRecords, setTotalRecords,
- *   loading, setLoading,
- *   filteredData
- * } = useListManagement({ 
- *   initialPageSize: 20, 
- *   initialFilters: { status: 'all' },
- *   enableClientFilter: true,
- *   filterFn: (item) => item.isActive
- * })
- * ```
- * 
- * @param {Object} options - Configuration options
- * @param {number} options.initialPageSize - Initial page size (default: DEFAULT_PAGE_SIZE)
- * @param {Object} options.initialFilters - Initial filters object (default: {})
- * @param {string} options.initialSort - Initial sort value (default: '')
- * @param {boolean} options.enableClientFilter - Enable client-side filtering (default: false)
- * @param {Function} options.filterFn - Custom filter function for client-side filtering
- * @param {Function} options.sortFn - Custom sort function
- * @returns {Object} State and handlers for list management
- */
 export const useListManagement = (options = {}) => {
   const {
     initialPageSize = DEFAULT_PAGE_SIZE,

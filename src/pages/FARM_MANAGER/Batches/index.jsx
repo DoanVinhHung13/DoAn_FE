@@ -3,275 +3,198 @@ import {
   QrcodeOutlined,
   ReloadOutlined,
   SearchOutlined,
-} from "@ant-design/icons"
-import { useQuery } from "@tanstack/react-query"
-import { Button, Card, Input, Select, Tag, Tooltip, Typography } from "antd"
-import { Sprout } from "lucide-react"
-import { useCallback, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+} from '@ant-design/icons'
+import {
+  Button,
+  Input,
+  Select,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd'
+import { useCallback, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { UI } from 'src/constants/uiConfig'
 
+import CustomTable from 'src/components/Table/CustomTable'
+import TitleCustom from 'src/components/TitleCustom'
+import { createSTTColumn } from 'src/components/Table/columns.jsx'
+import { createPaginationConfig } from 'src/utils/tableUtils'
+import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
+import ROUTER from 'src/router/ROUTER'
+import { formatAreaUnit } from 'src/constants/measurementUnits'
+import { formatDate } from 'src/utils/dateFormatters'
 
-import CustomTable from "src/components/Table/CustomTable"
-import TitleCustom from "src/components/TitleCustom"
-import { formatAreaUnit } from "src/constants/measurementUnits"
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE } from "src/constants/pageSizeOptions"
-import ROUTER from "src/router/ROUTER"
-import HarvestBatchService from "src/services/HarvestBatchService"
-import { invalidCharsRegex } from "src/utils/helpers"
-import { useSystemKey } from "src/hooks/useSystemKey"
-import { SYSTEM_KEY } from "src/constants/systemKey"
-import { formatDate } from "src/utils/dateFormatters"
+import HarvestBatchService from 'src/services/HarvestBatchService'
+import { useSystemKey } from 'src/hooks/useSystemKey'
+import { SYSTEM_KEY } from 'src/constants/systemKey'
+import { useListManagement } from 'src/hooks/useListManagement'
 
 const { Text } = Typography
 
 const QR_STATUS = {
-  NOT_CREATED: {
-    label: "Chưa tạo QR",
-    bgColor: "bg-orange-100",
-    textColor: "text-orange-700",
-    borderColor: "border-orange-300",
-  },
-  CREATED: {
-    label: "Đã tạo QR",
-    bgColor: "bg-green-100",
-    textColor: "text-green-700",
-    borderColor: "border-green-300",
-  },
+  NOT_CREATED: { label: 'Chưa tạo QR', bgColor: 'bg-orange-100', textColor: 'text-orange-700', borderColor: 'border-orange-300' },
+  CREATED: { label: 'Đã tạo QR', bgColor: 'bg-green-100', textColor: 'text-green-700', borderColor: 'border-green-300' },
 }
 
-const FALLBACK_STATUS_OPTIONS = [
-  { value: "all", label: "Tất cả trạng thái" },
-  { value: "NOT_CREATED", label: "Chưa tạo QR" },
-  { value: "CREATED", label: "Đã tạo QR" },
-]
-
-const getQrStatus = batch => {
-  if (batch?.qrStatus === "CREATED" || batch?.qrStatus === "NOT_CREATED") {
-    return batch.qrStatus
-  }
-  return batch?.hasActiveQrCode === true ? "CREATED" : "NOT_CREATED"
+const getQrStatus = (batch) => {
+  if (batch?.qrStatus === 'CREATED' || batch?.qrStatus === 'NOT_CREATED') return batch.qrStatus
+  return batch?.hasActiveQrCode === true ? 'CREATED' : 'NOT_CREATED'
 }
 
 const Batches = () => {
   const navigate = useNavigate()
   const { getCombo, getDescription } = useSystemKey()
 
-  const statusOptions = useMemo(() => {
-    const systemKeyOptions = getCombo(SYSTEM_KEY.QR_STATUS)
-      .map(option => ({
-        value: option.codeValue ?? option.CodeValue,
-        label:
-          option.description ??
-          option.Description ??
-          option.label ??
-          option.Label,
-      }))
-      .filter(
-        option =>
-          (option.value === "NOT_CREATED" || option.value === "CREATED") &&
-          option.label,
-      )
-
-    return [
-      FALLBACK_STATUS_OPTIONS[0],
-      ...(systemKeyOptions.length
-        ? systemKeyOptions
-        : FALLBACK_STATUS_OPTIONS.slice(1)),
-    ]
-  }, [getCombo])
-
-  const [searchInput, setSearchInput] = useState("")
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-
   const {
-    data: batchesData,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ["batches", page, pageSize, search, statusFilter],
-    queryFn: async () => {
-      const response = await HarvestBatchService.getHarvestBatches({
+    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
+    page, setPage, pageSize, setPageSize,
+    filters, updateFilter,
+    listData, setListData, totalRecords, setTotalRecords,
+    loading, setLoading,
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { status: 'all' },
+  })
+
+  const statusFilter = filters.status
+
+  const systemKeyOptions = getCombo(SYSTEM_KEY.QR_STATUS)
+    .map(opt => ({ value: opt.codeValue ?? opt.CodeValue, label: opt.description ?? opt.label }))
+    .filter(opt => (opt.value === 'NOT_CREATED' || opt.value === 'CREATED') && opt.label)
+
+  const selectStatusOptions = [
+    { value: 'all', label: 'Tất cả trạng thái' },
+    ...(systemKeyOptions.length
+      ? systemKeyOptions
+      : [
+        { value: 'NOT_CREATED', label: 'Chưa tạo QR' },
+        { value: 'CREATED', label: 'Đã tạo QR' },
+      ]),
+  ]
+
+  const getList = useCallback(async () => {
+    try {
+      setLoading(true)
+      const params = {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
-        BatchCode: search || undefined,
-        QrEligible:
-          statusFilter === "all" ? undefined : statusFilter === "CREATED",
-      })
-
-      const innerData = response?.data?.data || response?.data || {}
-      const items = Array.isArray(innerData)
-        ? innerData
-        : innerData.items || []
-      const total = innerData.totalItems ?? innerData.totalCount ?? items.length
-
-      return { items, total }
-    },
-    retry: false,
-  })
-
-  const batches = batchesData?.items || []
-  const totalRecords = batchesData?.total || 0
-
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      return
+        QrEligible: statusFilter === 'all' ? undefined : statusFilter === 'CREATED',
+      }
+      const res = await HarvestBatchService.getHarvestBatches(params)
+      const innerData = res?.data?.data || res?.data || {}
+      const items = Array.isArray(innerData) ? innerData : (innerData.items || [])
+      setListData(items)
+      setTotalRecords(innerData.totalItems ?? innerData.totalCount ?? items.length)
+    } finally {
+      setLoading(false)
     }
-    setSearch(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
+  }, [page, pageSize, search, statusFilter, setLoading, setListData, setTotalRecords])
 
-  const handleClearSearch = () => {
-    setSearchInput("")
-    setSearch("")
-    setPage(1)
-  }
+  useEffect(() => {
+    getList()
+  }, [getList])
 
-  const goToQrManagement = batch => {
+  const goToQrManagement = (batch) => {
     navigate(
-      `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
+      `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
     )
   }
 
-  const getCropIcon = () => <Sprout className="w-8 h-8 text-green-600" />
-
-  const getStatusConfig = batch => {
+  const getStatusConfig = (batch) => {
     const status = getQrStatus(batch)
-    const fallbackConfig = QR_STATUS[status] || QR_STATUS.NOT_CREATED
-
-    return {
-      ...fallbackConfig,
-      label: getDescription(SYSTEM_KEY.QR_STATUS, status) || fallbackConfig.label,
-    }
+    const fallback = QR_STATUS[status] || QR_STATUS.NOT_CREATED
+    return { ...fallback, label: getDescription(SYSTEM_KEY.QR_STATUS, status) || fallback.label }
   }
 
   const columns = [
+    createSTTColumn(page, pageSize),
     {
-      title: "STT",
-      key: "stt",
-      width: 60,
-      align: "center",
-      render: (_, __, index) => (
-        <Text className="text-sm font-medium text-gray-500">
-          {(page - 1) * pageSize + index + 1}
-        </Text>
-      ),
-    },
-    {
-      title: "Mã lô",
-      dataIndex: "batchCode",
-      key: "batchCode",
+      title: 'Mã lô',
+      dataIndex: 'batchCode',
+      key: 'batchCode',
       width: 180,
       render: (text, record) => (
         <div>
-          <Text strong className="block text-sm text-green-700">
-            {text}
-          </Text>
+          <Text strong className="block text-sm text-green-700">{text}</Text>
           <Text className="text-xs text-gray-500">
-            Bắt đầu: {record.startDate ? formatDate(record.startDate) : "-"}
+            Bắt đầu: {record.startDate ? formatDate(record.startDate) : '—'}
           </Text>
         </div>
       ),
     },
     {
-      title: "Sản phẩm",
-      key: "product",
+      title: 'Sản phẩm',
+      key: 'product',
       width: 220,
       render: (_, record) => (
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 border rounded-lg bg-amber-50 border-amber-200">
-            {getCropIcon(record.cropName)}
+            <InboxOutlined className="text-lg text-green-600" />
           </div>
           <div>
             <Text className="block text-sm font-medium text-gray-800">
-              {record.productName || record.cropName || "N/A"}
+              {record.productName || record.cropName || 'N/A'}
             </Text>
-            <Text className="text-xs text-gray-400">{record.cropName || ""}</Text>
+            <Text className="text-xs text-gray-400">{record.cropName || ''}</Text>
           </div>
         </div>
       ),
     },
     {
-      title: "Số lượng",
-      key: "quantity",
+      title: 'Số lượng',
+      key: 'quantity',
       width: 120,
       render: (_, record) => (
         <Text className="text-sm font-semibold">
-          {record.quantity != null
-            ? `${record.quantity} ${record.unit || ""}`.trim()
-            : "-"}
+          {record.quantity != null ? `${record.quantity} ${record.unit || ''}`.trim() : '—'}
         </Text>
       ),
     },
     {
-      title: "Diện tích",
-      dataIndex: "area",
-      key: "area",
+      title: 'Diện tích',
+      dataIndex: 'area',
+      key: 'area',
       width: 120,
-      render: area => (
-        <Text className="text-sm font-semibold">{area ? `${area} ${formatAreaUnit()}` : "-"}</Text>
+      render: (area) => (
+        <Text className="text-sm font-semibold">{area ? `${area} ${formatAreaUnit()}` : '—'}</Text>
       ),
     },
     {
-      title: "Trạng thái",
-      key: "qrStatus",
+      title: 'Trạng thái',
+      key: 'qrStatus',
       width: 150,
       render: (_, record) => {
         const config = getStatusConfig(record)
         return (
-          <Tag
-            className={`${config.bgColor} ${config.textColor} ${config.borderColor} border px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap`}
-          >
+          <Tag className={`${config.bgColor} ${config.textColor} ${config.borderColor} border px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap`}>
             {config.label}
           </Tag>
         )
       },
     },
     {
-      title: "Thao tác",
-      key: "actions",
-      width: 150,
-      align: "center",
-      fixed: "right",
+      title: 'Thao tác',
+      key: 'actions',
+      width: 120,
+      align: 'center',
+      fixed: 'right',
       render: (_, record) => {
-        const canPreviewQr =
-          record.isQrEligible === true && record.hasActiveQrCode === false
+        const canPreviewQr = record.isQrEligible === true && record.hasActiveQrCode === false
         const hasQr = record.hasActiveQrCode === true
 
-        if (canPreviewQr) {
+        if (canPreviewQr || hasQr) {
           return (
             <Tooltip title="Quản lý mã QR">
               <Button
-                type="primary"
-                icon={<QrcodeOutlined />}
-                size="small"
-                aria-label="Quản lý mã QR"
-                onClick={event => {
-                  event.stopPropagation()
+                type="text"
+                icon={<QrcodeOutlined className={`text-lg ${hasQr ? 'text-blue-500' : 'text-green-500'}`} />}
+                className={`${UI.btn.icon} ${hasQr ? 'hover:bg-blue-50' : 'hover:bg-green-50'}`}
+                onClick={(e) => {
+                  e.stopPropagation()
                   goToQrManagement(record)
                 }}
-                className="bg-green-600 hover:bg-green-700"
-              />
-            </Tooltip>
-          )
-        }
-
-        if (hasQr) {
-          return (
-            <Tooltip title="Quản lý mã QR">
-              <Button
-                type="primary"
-                icon={<QrcodeOutlined />}
-                size="small"
-                aria-label="Quản lý mã QR"
-                onClick={event => {
-                  event.stopPropagation()
-                  goToQrManagement(record)
-                }}
-                className="bg-blue-500 hover:bg-blue-600"
               />
             </Tooltip>
           )
@@ -280,10 +203,10 @@ const Batches = () => {
         return (
           <Tooltip title="Lô chưa đủ điều kiện tạo QR">
             <Button
-              icon={<QrcodeOutlined />}
-              size="small"
-              aria-label="Lô chưa đủ điều kiện tạo QR"
+              type="text"
+              icon={<QrcodeOutlined className="text-lg text-gray-300" />}
               disabled
+              className={`${UI.btn.icon} opacity-40`}
             />
           </Tooltip>
         )
@@ -292,78 +215,64 @@ const Batches = () => {
   ]
 
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      <div>
-        <TitleCustom className="!mb-0" icon={<Sprout className="w-6 h-6" />}>
-          <InboxOutlined />
-          Quản lý Lô thu hoạch
-        </TitleCustom>
+    <div className={UI.page.wrapper}>
+      <div className={UI.page.header}>
+        <div>
+          <TitleCustom className="!mb-0 flex items-center gap-2">
+            <InboxOutlined style={UI.menuIcon} />
+            Quản lý Lô thu hoạch
+          </TitleCustom>
+        </div>
       </div>
 
-      <div className="admin-filter-card rounded-lg shadow-sm">
-        <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <div className={UI.toolbar.card}>
+        <div className={UI.toolbar.inner}>
           <Input
             value={searchInput}
-            onChange={event => setSearchInput(event.target.value)}
+            onChange={(e) => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
             placeholder="Tìm theo mã lô..."
             prefix={<SearchOutlined className="text-gray-300" />}
-            className="w-64 h-10 rounded-xl"
+            className={UI.input.search}
             allowClear
             onClear={handleClearSearch}
           />
           <Select
             value={statusFilter}
-            onChange={value => {
-              setStatusFilter(value)
-              setPage(1)
-            }}
-            className="h-10 rounded-xl min-w-[180px]"
-            options={statusOptions}
+            onChange={(val) => updateFilter('status', val)}
+            className={UI.input.select}
+            options={selectStatusOptions}
           />
-          <div className="flex gap-2 ml-auto">
-            <Button
-              onClick={handleSearch}
-              icon={<SearchOutlined />}
-              className="h-10 px-4 font-semibold rounded-xl bg-gray-50"
-            >
+          <div className={UI.toolbar.actions}>
+            <Button onClick={handleSearch} icon={<SearchOutlined />} className={UI.btn.search}>
               Tìm kiếm
             </Button>
             <Button
               icon={<ReloadOutlined />}
-              onClick={() => refetch()}
-              loading={isLoading}
-              className="h-10 px-3 rounded-xl bg-gray-50"
+              onClick={() => getList()}
+              loading={loading}
+              className={UI.btn.reload}
             />
           </div>
         </div>
-
       </div>
 
       <CustomTable
-        dataSource={batches}
+        dataSource={listData}
         columns={columns}
         rowKey="id"
-        loading={isLoading}
-        onRow={record => ({
-          onClick: event => {
-            if (event.target.closest("button")) return
-            navigate(ROUTER.FM_HARVEST_BATCH_DETAIL.replace(":id", record.id))
-          },
+        loading={loading}
+        scroll={{ x: 1050 }}
+        onRow={(record) => ({
+          onClick: () => navigate(ROUTER.FM_HARVEST_BATCH_DETAIL.replace(':id', record.id)),
+          className: 'cursor-pointer',
         })}
-        textEmpty="Không có lô thu hoạch nào"
-        pagination={{
-          current: page,
-          pageSize,
-          total: totalRecords,
-          showSizeChanger: true,
-          pageSizeOptions: PAGE_SIZE,
-          onChange: (nextPage, nextPageSize) => {
-            setPage(nextPage)
-            setPageSize(nextPageSize)
-          },
-        }}
-        rowClassName="hover:bg-green-50/50 transition-colors cursor-pointer"
+        locale={{ emptyText: 'Không có lô thu hoạch nào.' }}
+        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
+          setPage(p)
+          setPageSize(ps)
+        })}
+        rowClassName={UI.row}
       />
     </div>
   )

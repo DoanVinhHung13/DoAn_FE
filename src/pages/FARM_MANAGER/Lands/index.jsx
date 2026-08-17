@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Alert,
   Button,
   Input,
-  Modal,
   Popconfirm,
   Select,
   Tooltip,
@@ -18,9 +17,11 @@ import {
   StopOutlined,
   DeleteOutlined,
 } from '@ant-design/icons'
+import CustomModal from 'src/components/Modal/CustomModal'
 import TitleCustom from 'src/components/TitleCustom'
 import CustomTable from 'src/components/Table/CustomTable'
 import { createSTTColumn } from 'src/components/Table/columns.jsx'
+import { UI } from 'src/constants/uiConfig'
 import { createPaginationConfig } from 'src/utils/tableUtils'
 import LandPlotService from 'src/services/LandPlotService'
 import { useSystemKey } from 'src/hooks/useSystemKey'
@@ -55,7 +56,7 @@ const LandsManagement = () => {
     page, setPage, pageSize, setPageSize,
     filters, updateFilter,
     listData, setListData, totalRecords, setTotalRecords,
-    loading: listLoading, setLoading: setListLoading
+    loading, setLoading,
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
     initialFilters: { status: 'ACTIVE' }
@@ -63,7 +64,6 @@ const LandsManagement = () => {
 
   const status = filters.status
   const hasActiveFilters = Boolean(search.trim()) || status !== 'ACTIVE'
-  const [listError, setListError] = useState(null)
   const [weatherByPlotId, setWeatherByPlotId] = useState({})
   const [statusTarget, setStatusTarget] = useState(null) // plot đang chờ xác nhận
   const [statusLoading, setStatusLoading] = useState(false)
@@ -75,18 +75,17 @@ const LandsManagement = () => {
     Status: status === 'all' ? undefined : status,
   }), [page, pageSize, search, status])
 
-  const fetchLandPlots = useCallback(async () => {
-    setListLoading(true)
-    setListError(null)
+  const getList = useCallback(async () => {
+    setLoading(true)
     try {
       const response = await LandPlotService.getLandPlots(queryParams)
       const normalized = normalizeLandPlotResponse(response)
       setListData(normalized.items)
       setTotalRecords(normalized.total)
-    } catch (err) {
-      setListError(err)
+    } catch {
+      // axios interceptor handles error notification
     } finally {
-      setListLoading(false)
+      setLoading(false)
     }
   }, [queryParams])
 
@@ -113,8 +112,8 @@ const LandsManagement = () => {
   }, [])
 
   useEffect(() => {
-    fetchLandPlots()
-  }, [fetchLandPlots])
+    getList()
+  }, [getList])
 
   useEffect(() => {
     listData.forEach((plot) => loadWeatherForPlot(getItemId(plot)))
@@ -134,7 +133,7 @@ const LandsManagement = () => {
       }
 
       setStatusTarget(null)
-      fetchLandPlots()
+      getList()
     } catch {
       // axios interceptor handles error notification
     } finally {
@@ -145,7 +144,7 @@ const LandsManagement = () => {
   const handleDelete = async (id) => {
     try {
       await LandPlotService.deleteLandPlot(id)
-      fetchLandPlots()
+      getList()
     } catch {
       // axios interceptor handles error notification
     }
@@ -293,10 +292,10 @@ const LandsManagement = () => {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className={UI.page.wrapper}>
 
       {/* Tiêu đề trang + nút tạo mới */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className={UI.page.header}>
         <TitleCustom className="!mb-0 flex items-center gap-2" >
           <LandManagementIcon style={{ fontSize: '24px', color: '#15803d' }} />
           Quản lý vùng trồng
@@ -314,18 +313,6 @@ const LandsManagement = () => {
       </div>
 
       {/* Thông báo lỗi tải danh sách */}
-      {listError && (
-        <Alert
-          type="error"
-          message="Không thể tải danh sách vùng trồng."
-          description={listError?.message}
-          action={
-            <Button size="small" onClick={fetchLandPlots}>
-              Thử lại
-            </Button>
-          }
-        />
-      )}
 
       {/* Bảng danh sách + thanh công cụ */}
       <div className="admin-filter-card rounded-lg shadow-sm">
@@ -350,19 +337,15 @@ const LandsManagement = () => {
             onChange={(value) => updateFilter('status', value)}
           />
 
-          <div className="ml-auto flex gap-2">
-            <Button
-              icon={<SearchOutlined />}
-              onClick={handleSearch}
-              className="h-10 rounded-xl bg-gray-50 px-4 font-semibold"
-            >
+          <div className={UI.toolbar.actions}>
+            <Button icon={<SearchOutlined />} onClick={handleSearch} className={UI.btn.search}>
               Tìm kiếm
             </Button>
             <Button
               icon={<ReloadOutlined />}
-              onClick={fetchLandPlots}
-              loading={listLoading}
-              className="h-10 rounded-xl bg-gray-50 px-3"
+              onClick={getList}
+              loading={loading}
+              className={UI.btn.reload}
             />
           </div>
         </div>
@@ -372,7 +355,7 @@ const LandsManagement = () => {
       {/* Bảng dữ liệu */}
       <CustomTable
         rowKey={(record) => getItemId(record)}
-        loading={listLoading}
+        loading={loading}
         columns={columns}
         dataSource={listData}
         scroll={{ x: 1180 }}
@@ -380,45 +363,49 @@ const LandsManagement = () => {
           onClick: () => navigate(routes.detail(getItemId(record))),
           className: 'cursor-pointer',
         })}
-        rowClassName="hover:bg-green-50/30 transition-colors"
+        rowClassName={UI.row}
         pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
           setPage(p)
           setPageSize(ps)
         })}
-        textEmpty={
-          <div className="py-8 text-center">
-            <p className="mb-4 text-slate-500">{EMPTY_LAND_MESSAGE}</p>
-            {canManage && routes.create && !hasActiveFilters && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => navigate(routes.create)}
-              >
-                Tạo mới vùng đất
-              </Button>
-            )}
-          </div>
-        }
+        locale={{ emptyText: EMPTY_LAND_MESSAGE }}
       />
 
       {/* Modal xác nhận đổi trạng thái */}
       {canManage && (
-        <Modal
+        <CustomModal
           open={Boolean(statusTarget)}
-          title="Xác nhận thay đổi trạng thái"
-          okText="Xác nhận"
-          cancelText="Hủy"
-          confirmLoading={statusLoading}
-          onOk={handleConfirmChangeStatus}
           onCancel={() => setStatusTarget(null)}
+          title={
+            <div className={UI.modal.titleClass}>
+              <span className="font-bold">Thay đổi trạng thái</span>
+            </div>
+          }
+          footer={null}
+          width={420}
         >
-          <p>{MSG_LM_26}</p>
-          {statusTarget && (
-            <p className="mt-2 text-slate-500">
-              Vùng trồng: <strong>{statusTarget.name}</strong>
-            </p>
-          )}
-        </Modal>
+          <div className={UI.modal.body}>
+            <p className="text-gray-600">{MSG_LM_26}</p>
+            {statusTarget && (
+              <p className="mt-2 text-sm font-semibold text-gray-800">
+                {statusTarget.name}
+              </p>
+            )}
+          </div>
+          <div className={UI.modal.footer}>
+            <Button onClick={() => setStatusTarget(null)} className={UI.btn.cancel}>
+              Hủy
+            </Button>
+            <Button
+              type="primary"
+              loading={statusLoading}
+              onClick={handleConfirmChangeStatus}
+              className={UI.btn.confirm}
+            >
+              Xác nhận
+            </Button>
+          </div>
+        </CustomModal>
       )}
     </div>
   )
