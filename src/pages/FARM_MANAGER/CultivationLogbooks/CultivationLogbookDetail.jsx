@@ -127,15 +127,7 @@ const CultivationLogbookDetail = () => {
   )
 
   const tabItems = [
-    {
-      key: 'tasks',
-      label: (
-        <span className="flex items-center gap-2">
-          <AppstoreOutlined />
-          Quản lý công việc
-        </span>
-      ),
-    },
+
     {
       key: 'official',
       label: (
@@ -151,6 +143,15 @@ const CultivationLogbookDetail = () => {
         <span className="flex items-center gap-2">
           <HistoryOutlined />
           Lịch sử ghi nhật ký
+        </span>
+      ),
+    },
+    {
+      key: 'tasks',
+      label: (
+        <span className="flex items-center gap-2">
+          <AppstoreOutlined />
+          Quản lý công việc
         </span>
       ),
     },
@@ -288,6 +289,13 @@ const CultivationLogbookDetail = () => {
       </Card>
 
       {/* Tab content */}
+
+      {activeTab === 'official' && (
+        <OfficialLogbookTab item={item} stages={stages} />
+      )}
+      {activeTab === 'process' && (
+        <TaskLogHistoryTab stages={stages} tasks={tasksMap} />
+      )}
       {activeTab === 'tasks' && (
         <StageTaskManagementTab
           plan={item}
@@ -296,12 +304,6 @@ const CultivationLogbookDetail = () => {
           tasks={tasksMap}
           loadData={() => setReloadKey((key) => key + 1)}
         />
-      )}
-      {activeTab === 'official' && (
-        <OfficialLogbookTab item={item} stages={stages} />
-      )}
-      {activeTab === 'process' && (
-        <TaskLogHistoryTab stages={stages} tasks={tasksMap} />
       )}
     </div>
   )
