@@ -781,10 +781,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                       type="primary"
                                       size="small"
                                       className="bg-green-600 rounded-lg"
-                                      disabled={
-                                        !task.assignedLeaderId &&
-                                        !task.farmLeaderId
-                                      }
                                       onClick={e => {
                                         e.stopPropagation()
                                         handleActivateTask(task.id)

@@ -6,6 +6,7 @@ import {
   CheckCircleOutlined,
   HistoryOutlined,
   FileTextOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons'
 import {
   Alert,
@@ -27,6 +28,7 @@ import { getLandPlotsFromLogbook } from 'src/utils/helpers'
 
 // Import các Tab components
 import TaskLogHistoryTab from 'src/pages/FARM_SUPERVISOR/Plans/components/TaskLogHistoryTab'
+import StageTaskManagementTab from 'src/pages/FARM_SUPERVISOR/Plans/components/StageTaskManagementTab'
 import OfficialLogbookTab from './components/OfficialLogbookTab'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { formatDate } from 'src/utils/dateFormatters'
@@ -42,7 +44,7 @@ const CultivationLogbookDetail = () => {
   const [reloadKey, setReloadKey] = useState(0)
   const [item, setItem] = useState(null)
   const [stages, setStages] = useState([])
-  const [activeTab, setActiveTab] = useState('official')
+  const [activeTab, setActiveTab] = useState('tasks')
 
   useEffect(() => {
     let isMounted = true
@@ -125,6 +127,15 @@ const CultivationLogbookDetail = () => {
   )
 
   const tabItems = [
+    {
+      key: 'tasks',
+      label: (
+        <span className="flex items-center gap-2">
+          <AppstoreOutlined />
+          Quản lý công việc
+        </span>
+      ),
+    },
     {
       key: 'official',
       label: (
@@ -277,9 +288,19 @@ const CultivationLogbookDetail = () => {
       </Card>
 
       {/* Tab content */}
-      {activeTab === 'official' ? (
+      {activeTab === 'tasks' && (
+        <StageTaskManagementTab
+          plan={item}
+          planId={id}
+          stages={stages}
+          tasks={tasksMap}
+          loadData={() => setReloadKey((key) => key + 1)}
+        />
+      )}
+      {activeTab === 'official' && (
         <OfficialLogbookTab item={item} stages={stages} />
-      ) : (
+      )}
+      {activeTab === 'process' && (
         <TaskLogHistoryTab stages={stages} tasks={tasksMap} />
       )}
     </div>
