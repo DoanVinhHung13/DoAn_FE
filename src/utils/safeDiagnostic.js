@@ -8,5 +8,8 @@ const getSafeErrorMetadata = (error, metadata = {}) => ({
 
 export const logDevDiagnostic = (operation, error, metadata) => {
   if (!import.meta.env?.DEV) return
-  console.warn(`[${operation}] request failed`, getSafeErrorMetadata(error, metadata))
+  console.warn(
+    `[${operation}] request failed`,
+    getSafeErrorMetadata(error, metadata),
+  )
 }

@@ -1,98 +1,116 @@
-import React, { useState } from 'react';
-import { Badge, Popover, List, Typography, Button, Empty, Spin, Tag } from 'antd';
-import { BellOutlined, CheckOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { useState } from "react"
+import {
+  Badge,
+  Popover,
+  List,
+  Typography,
+  Button,
+  Empty,
+  Spin,
+  Tag,
+} from "antd"
+import { BellOutlined, CheckOutlined, LoadingOutlined } from "@ant-design/icons"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useNavigate } from "react-router-dom"
+import { useSelector } from "react-redux"
 import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
-} from 'src/services/NotificationService';
-import ROUTER from 'src/router/ROUTER';
-import { getNotificationTypeLabel, NOTIFICATION_TYPE_COLORS } from 'src/constants/notificationTypes';
-import { timeAgo } from 'src/utils/dateFormatters';
+} from "src/services/NotificationService"
+import ROUTER from "src/router/ROUTER"
+import {
+  getNotificationTypeLabel,
+  NOTIFICATION_TYPE_COLORS,
+} from "src/constants/notificationTypes"
+import { timeAgo } from "src/utils/dateFormatters"
 import {
   getNotificationActionUrl,
   getNotificationContext,
-} from 'src/utils/notificationUtils';
+} from "src/utils/notificationUtils"
 
-const { Text } = Typography;
+const { Text } = Typography
 
-const normalizeNotifications = (response) => {
-  const payload = response?.data ?? response ?? {};
-  const nestedPayload = payload?.data ?? payload;
+const normalizeNotifications = response => {
+  const payload = response?.data ?? response ?? {}
+  const nestedPayload = payload?.data ?? payload
   const items = Array.isArray(nestedPayload)
     ? nestedPayload
-    : nestedPayload?.notifications || nestedPayload?.items || payload?.notifications || [];
+    : nestedPayload?.notifications ||
+      nestedPayload?.items ||
+      payload?.notifications ||
+      []
   return {
     items,
     unreadCount:
       payload?.unreadCount ??
       nestedPayload?.unreadCount ??
-      items.filter((item) => !item.isRead).length,
-  };
-};
+      items.filter(item => !item.isRead).length,
+  }
+}
 
 const NotificationBell = () => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const { userInfo } = useSelector((state) => state.appGlobal);
-  const [visible, setVisible] = useState(false);
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const { userInfo } = useSelector(state => state.appGlobal)
+  const [visible, setVisible] = useState(false)
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ["notifications"],
     queryFn: async () => normalizeNotifications(await getNotifications()),
     staleTime: 30 * 1000,
     refetchInterval: 30 * 1000,
     refetchOnWindowFocus: true,
     retry: false,
-  });
+  })
 
   const markReadMutation = useMutation({
     mutationFn: markNotificationAsRead,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] }),
-  });
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+  })
 
   const markAllReadMutation = useMutation({
     mutationFn: markAllNotificationsAsRead,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
-  });
+  })
 
-  const handleOpenChange = (nextOpen) => {
-    setVisible(nextOpen);
+  const handleOpenChange = nextOpen => {
+    setVisible(nextOpen)
     if (nextOpen) {
-      refetch();
+      refetch()
     }
-  };
+  }
 
-  const handleNotificationClick = async (item) => {
-    setVisible(false);
-    const id = item._id || item.id;
+  const handleNotificationClick = async item => {
+    setVisible(false)
+    const id = item._id || item.id
     if (!item.isRead && id) {
-      await markReadMutation.mutateAsync(id).catch(() => undefined);
+      await markReadMutation.mutateAsync(id).catch(() => undefined)
     }
 
-    const actionUrl = getNotificationActionUrl(item);
-    if (actionUrl?.startsWith('/')) {
-      navigate(actionUrl);
-      return;
+    const actionUrl = getNotificationActionUrl(item)
+    if (actionUrl?.startsWith("/")) {
+      navigate(actionUrl)
+      return
     }
 
     const detailPath =
-      userInfo?.role === 'FARM_MANAGER'
+      userInfo?.role === "FARM_MANAGER"
         ? ROUTER.FM_NOTIFICATION_DETAIL
-        : ROUTER.NOTIFICATIONS_DETAIL;
-    navigate(detailPath.replace(':id', id));
-  };
+        : ROUTER.NOTIFICATIONS_DETAIL
+    navigate(detailPath.replace(":id", id))
+  }
 
   const content = (
     <div className="flex max-h-[500px] w-80 flex-col overflow-hidden md:w-[400px]">
       <div className="flex items-center justify-between border-b bg-white px-4 py-3">
         <div className="flex items-center gap-2">
-          <Text strong className="text-base">Thông báo</Text>
+          <Text strong className="text-base">
+            Thông báo
+          </Text>
           {!!data?.unreadCount && <Badge count={data.unreadCount} />}
         </div>
         {!!data?.unreadCount && (
@@ -116,29 +134,43 @@ const NotificationBell = () => {
         ) : data?.items?.length ? (
           <List
             dataSource={data.items}
-            renderItem={(item) => {
-              const context = getNotificationContext(item);
+            renderItem={item => {
+              const context = getNotificationContext(item)
 
               return (
                 <List.Item
-                  className={`cursor-pointer border-b border-gray-100 px-4 py-3 hover:bg-white ${item.isRead ? 'bg-white/50' : 'bg-green-50/50'
-                    }`}
+                  className={`cursor-pointer border-b border-gray-100 px-4 py-3 hover:bg-white ${
+                    item.isRead ? "bg-white/50" : "bg-green-50/50"
+                  }`}
                   onClick={() => handleNotificationClick(item)}
                 >
                   <div className="w-full">
                     <div className="mb-1 flex items-start justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Tag color={NOTIFICATION_TYPE_COLORS[item.type] || 'default'} className="!m-0">{getNotificationTypeLabel(item)}</Tag>
+                        <Tag
+                          color={
+                            NOTIFICATION_TYPE_COLORS[item.type] || "default"
+                          }
+                          className="!m-0"
+                        >
+                          {getNotificationTypeLabel(item)}
+                        </Tag>
                         <Text strong={!item.isRead} className="text-[13px]">
-                          {item.title || 'Thông báo'}
+                          {item.title || "Thông báo"}
                         </Text>
                       </div>
-                      <Text type="secondary" className="whitespace-nowrap text-[10px]">
+                      <Text
+                        type="secondary"
+                        className="whitespace-nowrap text-[10px]"
+                      >
                         {timeAgo(item.createdAt)}
                       </Text>
                     </div>
                     <div className="flex items-end justify-between gap-3">
-                      <Text type="secondary" className="line-clamp-2 flex-1 text-xs">
+                      <Text
+                        type="secondary"
+                        className="line-clamp-2 flex-1 text-xs"
+                      >
                         {item.message || item.content}
                       </Text>
                       {!item.isRead && (
@@ -146,17 +178,21 @@ const NotificationBell = () => {
                           type="text"
                           size="small"
                           icon={<CheckOutlined className="text-green-500" />}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            markReadMutation.mutate(item._id || item.id);
+                          onClick={event => {
+                            event.stopPropagation()
+                            markReadMutation.mutate(item._id || item.id)
                           }}
                         />
                       )}
                     </div>
                     {(context.logbookName || context.stageName) && (
                       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                        {context.logbookName && <span>Nhật ký: {context.logbookName}</span>}
-                        {context.stageName && <span>Giai đoạn: {context.stageName}</span>}
+                        {context.logbookName && (
+                          <span>Nhật ký: {context.logbookName}</span>
+                        )}
+                        {context.stageName && (
+                          <span>Giai đoạn: {context.stageName}</span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -165,7 +201,11 @@ const NotificationBell = () => {
             }}
           />
         ) : (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có thông báo nào" className="py-12" />
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="Không có thông báo nào"
+            className="py-12"
+          />
         )}
       </div>
 
@@ -176,19 +216,19 @@ const NotificationBell = () => {
           size="small"
           className="text-xs font-medium text-gray-500 hover:text-green-600"
           onClick={() => {
-            setVisible(false);
+            setVisible(false)
             navigate(
-              userInfo?.role === 'FARM_MANAGER'
+              userInfo?.role === "FARM_MANAGER"
                 ? ROUTER.FM_NOTIFICATIONS
-                : ROUTER.NOTIFICATIONS
-            );
+                : ROUTER.NOTIFICATIONS,
+            )
           }}
         >
           XEM TẤT CẢ THÔNG BÁO
         </Button>
       </div>
     </div>
-  );
+  )
 
   return (
     <Popover
@@ -199,13 +239,17 @@ const NotificationBell = () => {
       placement="bottomRight"
       contentStyle={{ padding: 0 }}
     >
-      <button type="button" aria-label="Mở thông báo" className="admin-icon-button relative">
+      <button
+        type="button"
+        aria-label="Mở thông báo"
+        className="admin-icon-button relative"
+      >
         <Badge count={data?.unreadCount || 0} size="small" offset={[-2, 2]}>
           <BellOutlined className="text-lg text-gray-400" />
         </Badge>
       </button>
     </Popover>
-  );
-};
+  )
+}
 
-export default NotificationBell;
+export default NotificationBell

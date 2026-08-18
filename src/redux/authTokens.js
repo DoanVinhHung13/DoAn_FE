@@ -2,16 +2,16 @@ import STORAGE, {
   SESSION_DURATION_MS,
   clearAuthStorage,
   getStorage,
-} from 'src/redux/storage'
+} from "src/redux/storage"
 
-const parseExpiryMs = (iso) => {
+const parseExpiryMs = iso => {
   if (!iso) return null
   const ts = new Date(iso).getTime()
   return Number.isNaN(ts) ? null : ts
 }
 
 /** Chuẩn hóa payload auth từ API login / refresh-token */
-export const normalizeAuthPayload = (data) => ({
+export const normalizeAuthPayload = data => ({
   accessToken: data?.accessToken || data?.token || null,
   refreshToken: data?.refreshToken || null,
   accessTokenExpiredAt: parseExpiryMs(data?.accessTokenExpiredAt),
@@ -26,7 +26,7 @@ const getRefreshExpiresAtMs = () => {
 }
 
 export const isRefreshTokenExpired = () => {
-  if (typeof window === 'undefined') return true
+  if (typeof window === "undefined") return true
   const expiresAt = getRefreshExpiresAtMs()
   if (!expiresAt) return false
   return Date.now() >= expiresAt
@@ -34,7 +34,7 @@ export const isRefreshTokenExpired = () => {
 
 /** accessToken hết hạn (có buffer để refresh trước khi BE từ chối) */
 export const isAccessTokenExpired = (bufferMs = 60_000) => {
-  if (typeof window === 'undefined') return false
+  if (typeof window === "undefined") return false
   const raw = localStorage.getItem(STORAGE.ACCESS_TOKEN_EXPIRES_AT)
   if (!raw) return false
   return Date.now() >= Number(raw) - bufferMs
@@ -45,7 +45,10 @@ export const isSessionExpired = isRefreshTokenExpired
 
 const setExpiryMeta = ({ accessTokenExpiredAt, refreshTokenExpiredAt }) => {
   if (accessTokenExpiredAt) {
-    localStorage.setItem(STORAGE.ACCESS_TOKEN_EXPIRES_AT, String(accessTokenExpiredAt))
+    localStorage.setItem(
+      STORAGE.ACCESS_TOKEN_EXPIRES_AT,
+      String(accessTokenExpiredAt),
+    )
   }
   const refreshExpiry =
     refreshTokenExpiredAt ?? Date.now() + SESSION_DURATION_MS
@@ -54,8 +57,8 @@ const setExpiryMeta = ({ accessTokenExpiredAt, refreshTokenExpiredAt }) => {
 }
 
 /** Lưu accessToken + refreshToken + thời hạn từ response API */
-export const persistAuthPayload = (data) => {
-  if (typeof window === 'undefined') return false
+export const persistAuthPayload = data => {
+  if (typeof window === "undefined") return false
 
   const {
     accessToken,

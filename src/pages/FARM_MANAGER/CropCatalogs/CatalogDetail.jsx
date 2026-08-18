@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   Alert,
   Button,
@@ -11,39 +11,41 @@ import {
   Space,
   Spin,
   Typography,
-} from 'antd';
+} from "antd"
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   EditOutlined,
   FileTextOutlined,
   StopOutlined,
-} from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
+} from "@ant-design/icons"
+import { useQuery } from "@tanstack/react-query"
 
-import TitleCustom from 'src/components/TitleCustom';
-import { CropCatalogIcon } from 'src/assets/icon/menu/MenuIcons';
-import CropCatalogService from 'src/services/CropCatalogService';
-import ROUTER from 'src/router/ROUTER';
+import TitleCustom from "src/components/TitleCustom"
+import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
+import CropCatalogService from "src/services/CropCatalogService"
+import ROUTER from "src/router/ROUTER"
 
-const { Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography
 
-const EMPTY_MESSAGE = 'Không tìm thấy thông tin danh mục cây trồng.';
+const EMPTY_MESSAGE = "Không tìm thấy thông tin danh mục cây trồng."
 
-const displayValue = (value) => value || 'Chưa cập nhật';
+const displayValue = value => value || "Chưa cập nhật"
 
-const isCatalogActive = (item) => {
-  if (typeof item?.isActive === 'boolean') return item.isActive;
-  const status = String(item?.status || '').toLowerCase();
-  return !['inactive', 'disabled', 'deleted', 'ngừng hoạt động'].includes(status);
-};
+const isCatalogActive = item => {
+  if (typeof item?.isActive === "boolean") return item.isActive
+  const status = String(item?.status || "").toLowerCase()
+  return !["inactive", "disabled", "deleted", "ngừng hoạt động"].includes(
+    status,
+  )
+}
 
-const getStatusLabel = (item) =>
-  isCatalogActive(item) ? 'Hoạt động' : 'Ngừng hoạt động';
+const getStatusLabel = item =>
+  isCatalogActive(item) ? "Hoạt động" : "Ngừng hoạt động"
 
 const CatalogDetail = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
+  const navigate = useNavigate()
+  const { id } = useParams()
 
   const {
     data: catalogDetail,
@@ -51,22 +53,24 @@ const CatalogDetail = () => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['crop-catalog-detail', id],
+    queryKey: ["crop-catalog-detail", id],
     queryFn: async () => {
-      const response = await CropCatalogService.getCropCatalogById(id, { errorHandling: 'component' });
-      const payload = response?.data ?? {};
-      return payload?.data ?? payload;
+      const response = await CropCatalogService.getCropCatalogById(id, {
+        errorHandling: "component",
+      })
+      const payload = response?.data ?? {}
+      return payload?.data ?? payload
     },
     enabled: !!id,
     retry: false,
-  });
+  })
 
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Spin size="large" />
       </div>
-    );
+    )
   }
 
   if (isError) {
@@ -80,7 +84,9 @@ const CatalogDetail = () => {
           >
             Quay lại
           </Button>
-          <TitleCustom className="!mb-0">Chi tiết danh mục cây trồng</TitleCustom>
+          <TitleCustom className="!mb-0">
+            Chi tiết danh mục cây trồng
+          </TitleCustom>
         </div>
         <Alert
           type="error"
@@ -92,7 +98,7 @@ const CatalogDetail = () => {
           }
         />
       </div>
-    );
+    )
   }
 
   if (!catalogDetail) {
@@ -106,7 +112,9 @@ const CatalogDetail = () => {
           >
             Quay lại
           </Button>
-          <TitleCustom className="!mb-0">Chi tiết danh mục cây trồng</TitleCustom>
+          <TitleCustom className="!mb-0">
+            Chi tiết danh mục cây trồng
+          </TitleCustom>
         </div>
         <Card>
           <Empty
@@ -115,10 +123,10 @@ const CatalogDetail = () => {
           />
         </Card>
       </div>
-    );
+    )
   }
 
-  const isActive = isCatalogActive(catalogDetail);
+  const isActive = isCatalogActive(catalogDetail)
 
   return (
     <div className="space-y-6">
@@ -133,7 +141,7 @@ const CatalogDetail = () => {
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <CropCatalogIcon style={{ fontSize: '24px', color: '#15803d' }} />
+            <CropCatalogIcon style={{ fontSize: "24px", color: "#15803d" }} />
             Chi tiết danh mục cây trồng
           </TitleCustom>
         </div>
@@ -163,15 +171,18 @@ const CatalogDetail = () => {
               <Descriptions column={1} size="large">
                 <Descriptions.Item label="Tên loại cây trồng">
                   <Text strong className="text-lg text-gray-900">
-                    {displayValue(catalogDetail.name || catalogDetail.cropCatalogName)}
+                    {displayValue(
+                      catalogDetail.name || catalogDetail.cropCatalogName,
+                    )}
                   </Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
                   <div
-                    className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${isActive
-                        ? 'bg-green-50 text-green-700'
-                        : 'bg-red-50 text-red-600'
-                      }`}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${
+                      isActive
+                        ? "bg-green-50 text-green-700"
+                        : "bg-red-50 text-red-600"
+                    }`}
                   >
                     {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
                     {getStatusLabel(catalogDetail)}
@@ -199,7 +210,7 @@ const CatalogDetail = () => {
         </Col>
       </Row>
     </div>
-  );
-};
+  )
+}
 
-export default CatalogDetail;
+export default CatalogDetail

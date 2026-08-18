@@ -5,12 +5,15 @@ export const normalizeFertilizerCatalogCompositions = compositions => {
     const name = item?.name ?? item?.Name
     const value = item?.value ?? item?.Value
     const unit = item?.unit ?? item?.Unit
-    const normalizedName = typeof name === 'string' ? name.trim() : ''
-    const normalizedUnit = typeof unit === 'string' ? unit.trim() : ''
+    const normalizedName = typeof name === "string" ? name.trim() : ""
+    const normalizedUnit = typeof unit === "string" ? unit.trim() : ""
     const normalizedValue = Number(value)
 
-    if (!normalizedName || !normalizedUnit || !Number.isFinite(normalizedValue)) return []
-    return [{ name: normalizedName, value: normalizedValue, unit: normalizedUnit }]
+    if (!normalizedName || !normalizedUnit || !Number.isFinite(normalizedValue))
+      return []
+    return [
+      { name: normalizedName, value: normalizedValue, unit: normalizedUnit },
+    ]
   })
 }
 
@@ -21,12 +24,16 @@ const createRowId = () => {
 
 export const createFertilizerComponentRow = (initialValues = {}) => ({
   id: initialValues.id ?? createRowId(),
-  name: initialValues.name ?? '',
+  name: initialValues.name ?? "",
   value: initialValues.value ?? null,
-  unit: initialValues.unit ?? '%',
+  unit: initialValues.unit ?? "%",
   ...(initialValues.base !== undefined ? { base: initialValues.base } : {}),
-  ...(initialValues.exponent !== undefined ? { exponent: initialValues.exponent } : {}),
+  ...(initialValues.exponent !== undefined
+    ? { exponent: initialValues.exponent }
+    : {}),
 })
 
 export const mapCatalogCompositionsToRows = compositions =>
-  normalizeFertilizerCatalogCompositions(compositions).map(createFertilizerComponentRow)
+  normalizeFertilizerCatalogCompositions(compositions).map(
+    createFertilizerComponentRow,
+  )

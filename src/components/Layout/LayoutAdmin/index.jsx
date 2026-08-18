@@ -1,24 +1,34 @@
-import React, { useState } from 'react'
-import { Layout, Menu, Button, Avatar, Dropdown, Space, Typography, Drawer, Grid } from 'antd'
-import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import { useAppDispatch } from 'src/redux/hooks'
-import { setUserInfo } from 'src/redux/slices/appGlobalSlice'
-import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers'
-import { clearAuthStorage } from 'src/redux/storage'
-import AuthService from 'src/services/AuthService'
-import NotificationBell from 'src/components/NotificationBell'
+import React, { useState } from "react"
+import {
+  Layout,
+  Menu,
+  Button,
+  Avatar,
+  Dropdown,
+  Space,
+  Typography,
+  Drawer,
+  Grid,
+} from "antd"
+import { Outlet, useNavigate, useLocation } from "react-router-dom"
+import { useSelector } from "react-redux"
+import { useAppDispatch } from "src/redux/hooks"
+import { setUserInfo } from "src/redux/slices/appGlobalSlice"
+import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers"
+import { clearAuthStorage } from "src/redux/storage"
+import AuthService from "src/services/AuthService"
+import NotificationBell from "src/components/NotificationBell"
 import {
   DownOutlined,
   MenuOutlined,
   LogoutOutlined,
   UserOutlined,
-} from '@ant-design/icons'
-import { getMenuByRole } from 'src/router/MenuItem'
-import ROUTER from 'src/router/ROUTER'
-import logoImg from 'src/assets/images/logo/logo-eapls.jpg'
-import { logDevDiagnostic } from 'src/utils/safeDiagnostic'
-import { getRoleLabel } from 'src/utils/roleLabels'
+} from "@ant-design/icons"
+import { getMenuByRole } from "src/router/MenuItem"
+import ROUTER from "src/router/ROUTER"
+import logoImg from "src/assets/images/logo/logo-eapls.jpg"
+import { logDevDiagnostic } from "src/utils/safeDiagnostic"
+import { getRoleLabel } from "src/utils/roleLabels"
 
 const { Header, Sider, Content } = Layout
 const { Text } = Typography
@@ -27,12 +37,12 @@ const { useBreakpoint } = Grid
 const LayoutAdmin = () => {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { userInfo: user } = useSelector((state) => state.appGlobal)
+  const { userInfo: user } = useSelector(state => state.appGlobal)
   const dispatch = useAppDispatch()
   const logout = () => {
     clearAuthStorage()
     dispatch(setUserInfo({}))
-    window.location.href = '/login'
+    window.location.href = "/login"
   }
   const navigate = useNavigate()
   const location = useLocation()
@@ -44,10 +54,10 @@ const LayoutAdmin = () => {
     try {
       await AuthService.logout()
     } catch (error) {
-      logDevDiagnostic('logout', error)
+      logDevDiagnostic("logout", error)
     } finally {
       logout()
-      navigate('/login')
+      navigate("/login")
     }
   }
 
@@ -56,37 +66,56 @@ const LayoutAdmin = () => {
 
   const selectedKey =
     menuItems
-      .flatMap((item) => (item.children ? [item, ...item.children] : [item]))
-      .filter((item) => item.key && location.pathname.startsWith(item.key))
+      .flatMap(item => (item.children ? [item, ...item.children] : [item]))
+      .filter(item => item.key && location.pathname.startsWith(item.key))
       .sort((a, b) => b.key.length - a.key.length)
       .at(0)?.key || location.pathname
 
   const dropdownItems = [
     {
-      key: 'user-header',
+      key: "user-header",
       label: (
         <div className="p-2 min-w-[160px]">
           <Text strong className="block text-gray-800">
-            {user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}
+            {user?.fullName || user?.email?.split("@")[0] || "Thành viên"}
           </Text>
-          <Text type="secondary" className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">
+          <Text
+            type="secondary"
+            className="text-[10px] uppercase font-bold text-gray-400 tracking-widest"
+          >
             {getRoleLabel(user?.role)}
           </Text>
         </div>
       ),
       disabled: true,
     },
-    { type: 'divider' },
-    { key: '1', icon: <UserOutlined />, label: 'Thông tin cá nhân', className: 'rounded-lg mb-1' },
-    { key: '2', icon: <LogoutOutlined />, label: 'Đổi mật khẩu', className: 'rounded-lg mb-1' },
-    { type: 'divider' },
-    { key: '3', danger: true, icon: <LogoutOutlined />, label: 'Đăng xuất', className: 'rounded-lg' },
+    { type: "divider" },
+    {
+      key: "1",
+      icon: <UserOutlined />,
+      label: "Thông tin cá nhân",
+      className: "rounded-lg mb-1",
+    },
+    {
+      key: "2",
+      icon: <LogoutOutlined />,
+      label: "Đổi mật khẩu",
+      className: "rounded-lg mb-1",
+    },
+    { type: "divider" },
+    {
+      key: "3",
+      danger: true,
+      icon: <LogoutOutlined />,
+      label: "Đăng xuất",
+      className: "rounded-lg",
+    },
   ]
 
   const handleMenuClick = ({ key }) => {
-    if (key === '1') navigate(ROUTER.ACCOUNT_INFO)
-    else if (key === '2') navigate(ROUTER.CHANGE_PASSWORD)
-    else if (key === '3') handleLogout()
+    if (key === "1") navigate(ROUTER.ACCOUNT_INFO)
+    else if (key === "2") navigate(ROUTER.CHANGE_PASSWORD)
+    else if (key === "3") handleLogout()
   }
 
   const handleNavItemClick = ({ key }) => {
@@ -102,19 +131,29 @@ const LayoutAdmin = () => {
         role="button"
         tabIndex={0}
         aria-label="Về trang chủ"
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') navigate(ROUTER.HOME)
+        onKeyDown={event => {
+          if (event.key === "Enter" || event.key === " ") navigate(ROUTER.HOME)
         }}
         onClick={() => navigate(ROUTER.HOME)}
       >
         {collapsed && !isMobile ? (
           <div className="w-10 h-10 flex items-center justify-center">
-            <img src={logoImg} alt="EAPLS" className="max-w-full max-h-full object-contain mix-blend-multiply" />
+            <img
+              src={logoImg}
+              alt="EAPLS"
+              className="max-w-full max-h-full object-contain mix-blend-multiply"
+            />
           </div>
         ) : (
           <div className="flex w-full items-center justify-center gap-2">
-            <img src={logoImg} alt="EAPLS" className="h-9 w-9 shrink-0 object-contain mix-blend-multiply" />
-            <span className="admin-brand-title text-green-600">NHẬT KÝ CANH TÁC</span>
+            <img
+              src={logoImg}
+              alt="EAPLS"
+              className="h-9 w-9 shrink-0 object-contain mix-blend-multiply"
+            />
+            <span className="admin-brand-title text-green-600">
+              NHẬT KÝ CANH TÁC
+            </span>
           </div>
         )}
       </div>
@@ -128,9 +167,15 @@ const LayoutAdmin = () => {
           items={menuItems}
           onClick={handleNavItemClick}
           className="admin-navigation border-r-0 px-3 py-4"
-          expandIcon={collapsed ? null : ({ isOpen }) => (
-            <DownOutlined className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-          )}
+          expandIcon={
+            collapsed
+              ? null
+              : ({ isOpen }) => (
+                  <DownOutlined
+                    className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  />
+                )
+          }
         />
       </div>
 
@@ -183,14 +228,22 @@ const LayoutAdmin = () => {
       <Layout>
         <Header
           className={`admin-header bg-white p-0 flex justify-between items-center z-10 sticky top-0 border-b border-gray-100 ${
-            isMobile ? 'px-4 h-16' : 'px-8 h-20'
+            isMobile ? "px-4 h-16" : "px-8 h-20"
           }`}
         >
           <Button
             type="text"
             icon={<MenuOutlined className="text-green-600 text-xl" />}
-            aria-label={isMobile ? 'Mở menu điều hướng' : collapsed ? 'Mở rộng menu điều hướng' : 'Thu gọn menu điều hướng'}
-            onClick={() => (isMobile ? setMobileMenuOpen(true) : setCollapsed(!collapsed))}
+            aria-label={
+              isMobile
+                ? "Mở menu điều hướng"
+                : collapsed
+                  ? "Mở rộng menu điều hướng"
+                  : "Thu gọn menu điều hướng"
+            }
+            onClick={() =>
+              isMobile ? setMobileMenuOpen(true) : setCollapsed(!collapsed)
+            }
             className="w-10 h-10 flex items-center justify-center hover:bg-green-50 rounded-lg"
           />
 
@@ -204,9 +257,9 @@ const LayoutAdmin = () => {
             <Dropdown
               menu={{ items: dropdownItems, onClick: handleMenuClick }}
               placement="bottomRight"
-              trigger={['click']}
+              trigger={["click"]}
               arrow={{ pointAtCenter: true }}
-              classNames={{ root: 'premium-auth-dropdown' }}
+              classNames={{ root: "premium-auth-dropdown" }}
             >
               <button
                 type="button"
@@ -218,12 +271,17 @@ const LayoutAdmin = () => {
                   src={getAvatarUrl(user?.avatarUrl)}
                   className="bg-green-50 text-green-600 border-2 border-green-200 group-hover:border-green-400 transition-all font-bold shadow-sm"
                 >
-                  {!user?.avatarUrl && getInitialAvatar(user?.fullName || user?.email?.split('@')[0] || 'U')}
+                  {!user?.avatarUrl &&
+                    getInitialAvatar(
+                      user?.fullName || user?.email?.split("@")[0] || "U",
+                    )}
                 </Avatar>
                 {!isMobile && (
                   <div className="text-left flex flex-col justify-center">
                     <Text className="font-bold text-gray-800 group-hover:text-green-600 transition-colors block text-sm leading-tight">
-                      {user?.fullName || user?.email?.split('@')[0] || 'Thành viên'}
+                      {user?.fullName ||
+                        user?.email?.split("@")[0] ||
+                        "Thành viên"}
                     </Text>
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
                       {getRoleLabel(user?.role)}
@@ -236,7 +294,9 @@ const LayoutAdmin = () => {
           </div>
         </Header>
 
-        <Content className={`admin-content ${isMobile ? 'p-4' : 'p-8'} min-h-[calc(100vh-80px)]`}>
+        <Content
+          className={`admin-content ${isMobile ? "p-4" : "p-8"} min-h-[calc(100vh-80px)]`}
+        >
           <div className="admin-page-shell">
             <Outlet />
           </div>

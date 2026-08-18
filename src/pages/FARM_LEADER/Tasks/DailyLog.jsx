@@ -65,9 +65,19 @@ import CultivationTaskService from "src/services/CultivationTaskService"
 import FertilizerService from "src/services/FertilizerService"
 import PesticideService from "src/services/PesticideService"
 import UploadService from "src/services/UploadService"
-import { applyApiFieldErrors, normalizeApiError } from "src/services/core/apiError"
-import { formatAreaUnit, getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
-import { CULTIVATION_TASK_TYPES, normalizeCultivationTaskType } from "src/constants/cultivationTask"
+import {
+  applyApiFieldErrors,
+  normalizeApiError,
+} from "src/services/core/apiError"
+import {
+  formatAreaUnit,
+  getQuantityUnit,
+  MEASUREMENT_UNITS,
+} from "src/constants/measurementUnits"
+import {
+  CULTIVATION_TASK_TYPES,
+  normalizeCultivationTaskType,
+} from "src/constants/cultivationTask"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate, getLocalNow } from "src/utils/dateFormatters"
 import { formatMeasurementValue } from "src/utils/materialRecommendations"
@@ -91,10 +101,7 @@ const unwrap = res => res?.data?.data ?? res?.data ?? res
 
 const getMaterialUnit = item =>
   getQuantityUnit(
-    item?.unit ||
-    item?.quantityUnit ||
-    item?.unitName ||
-    item?.materialUnit,
+    item?.unit || item?.quantityUnit || item?.unitName || item?.materialUnit,
     "",
   )
 
@@ -111,13 +118,18 @@ const toFiniteNumber = value => {
 const getHarvestQuantity = log =>
   toFiniteNumber(
     log?.harvestQuantity ??
-    log?.quantityHarvested ??
-    log?.harvestedQuantity ??
-    log?.HarvestQuantity,
+      log?.quantityHarvested ??
+      log?.harvestedQuantity ??
+      log?.HarvestQuantity,
   )
 
-const isHarvestTaskData = task => String(task?.taskType || '').trim().toUpperCase() === 'HARVEST'
-const isMaterialTaskData = task => normalizeCultivationTaskType(task?.taskType) === CULTIVATION_TASK_TYPES.MATERIAL
+const isHarvestTaskData = task =>
+  String(task?.taskType || "")
+    .trim()
+    .toUpperCase() === "HARVEST"
+const isMaterialTaskData = task =>
+  normalizeCultivationTaskType(task?.taskType) ===
+  CULTIVATION_TASK_TYPES.MATERIAL
 
 const toFertilizerOptions = list =>
   (list || []).map(item => {
@@ -145,7 +157,6 @@ const toPesticideOptions = list =>
     }
   })
 
-
 const DailyLog = () => {
   const { getTaskStatus } = useCultivationStatus()
   const { taskId } = useParams()
@@ -167,7 +178,6 @@ const DailyLog = () => {
   const [entryRecommendations, setEntryRecommendations] = useState({})
   const [remainingAreas, setRemainingAreas] = useState({})
   const [showImageError, setShowImageError] = useState(false)
-
 
   const loadRemainingArea = async (materialType, rowIndex, materialId) => {
     const key = `${materialType}-${rowIndex}`
@@ -211,7 +221,8 @@ const DailyLog = () => {
         materials: [
           {
             materialId,
-            fertilizerId: materialType === "FERTILIZER" ? selectedId : undefined,
+            fertilizerId:
+              materialType === "FERTILIZER" ? selectedId : undefined,
             pesticideId: materialType === "PESTICIDE" ? selectedId : undefined,
             materialType,
             area: areaValue,
@@ -219,7 +230,8 @@ const DailyLog = () => {
         ],
       })
       const result = unwrap(response)
-      const recommendations = result?.recommendations || result?.Recommendations || []
+      const recommendations =
+        result?.recommendations || result?.Recommendations || []
       setEntryRecommendations(previous => ({
         ...previous,
         [key]: recommendations[0] || null,
@@ -391,7 +403,12 @@ const DailyLog = () => {
 
       if (imageUrls.length === 0) {
         setShowImageError(true)
-        form.setFields([{ name: "images", errors: ["Vui lòng tải lên ít nhất 1 ảnh minh chứng."] }])
+        form.setFields([
+          {
+            name: "images",
+            errors: ["Vui lòng tải lên ít nhất 1 ảnh minh chứng."],
+          },
+        ])
         return
       }
 
@@ -483,11 +500,17 @@ const DailyLog = () => {
           ? leaderSummary.images
           : dailyLogs.flatMap(log => log.images || [])
       )
-        .map(img => typeof img === "string" ? img : img?.imageUrl || img?.url || img?.fileUrl)
+        .map(img =>
+          typeof img === "string"
+            ? img
+            : img?.imageUrl || img?.url || img?.fileUrl,
+        )
         .filter(Boolean)
 
       if (summaryImages.length === 0) {
-        message.warning("Công việc cần có ít nhất 1 ảnh minh chứng trong nhật ký trước khi gửi tổng kết.")
+        message.warning(
+          "Công việc cần có ít nhất 1 ảnh minh chứng trong nhật ký trước khi gửi tổng kết.",
+        )
         return
       }
 
@@ -520,18 +543,23 @@ const DailyLog = () => {
 
   const customUpload = async ({ file, onSuccess, onError }) => {
     try {
-      const existingBytes = fileList.reduce((total, item) => total + Number(item.size || 0), 0)
+      const existingBytes = fileList.reduce(
+        (total, item) => total + Number(item.size || 0),
+        0,
+      )
       if (fileList.length >= MAX_UPLOAD_FILES) {
-        throw new Error(`Mỗi nhật ký chỉ được tải tối đa ${MAX_UPLOAD_FILES} ảnh.`)
+        throw new Error(
+          `Mỗi nhật ký chỉ được tải tối đa ${MAX_UPLOAD_FILES} ảnh.`,
+        )
       }
-      if (!String(file.type || '').startsWith('image/')) {
-        throw new Error('Chỉ được tải tệp hình ảnh.')
+      if (!String(file.type || "").startsWith("image/")) {
+        throw new Error("Chỉ được tải tệp hình ảnh.")
       }
       if (file.size > MAX_UPLOAD_IMAGE_BYTES) {
-        throw new Error('Mỗi ảnh không được vượt quá 5 MB.')
+        throw new Error("Mỗi ảnh không được vượt quá 5 MB.")
       }
       if (existingBytes + file.size > MAX_UPLOAD_TOTAL_BYTES) {
-        throw new Error('Tổng dung lượng ảnh không được vượt quá 100 MB.')
+        throw new Error("Tổng dung lượng ảnh không được vượt quá 100 MB.")
       }
       const formData = new FormData()
       formData.append("file", file)
@@ -563,7 +591,7 @@ const DailyLog = () => {
       })
     } catch (err) {
       onError?.(err)
-      message.error(err?.message || 'Không thể tải ảnh lên.')
+      message.error(err?.message || "Không thể tải ảnh lên.")
       const normalizedError = normalizeApiError(err)
       console.error("DailyLog upload error:", {
         kind: normalizedError.kind,
@@ -599,8 +627,14 @@ const DailyLog = () => {
   const isViewOnly = !canWriteDailyLog(task.status)
   const isHarvestTask = isHarvestTaskData(task)
   const isMaterialTask = isMaterialTaskData(task)
-  const harvestedArea = dailyLogs.reduce((total, log) => total + Number(log.executedArea || 0), 0)
-  const remainingHarvestArea = Math.max(0, Number(task.totalPlanArea || 0) - harvestedArea)
+  const harvestedArea = dailyLogs.reduce(
+    (total, log) => total + Number(log.executedArea || 0),
+    0,
+  )
+  const remainingHarvestArea = Math.max(
+    0,
+    Number(task.totalPlanArea || 0) - harvestedArea,
+  )
   const harvestedQuantity = dailyLogs.reduce(
     (total, log) => total + Number(getHarvestQuantity(log) || 0),
     0,
@@ -661,11 +695,28 @@ const DailyLog = () => {
               </div>
             )}
             <div className="grid gap-2 mt-3 text-xs text-gray-600 sm:grid-cols-2 lg:grid-cols-5">
-              <span><strong>Bắt đầu dự kiến:</strong> {task.plannedStartDate ? formatDate(task.plannedStartDate) : '—'}</span>
-              <span><strong>Kết thúc dự kiến:</strong> {task.plannedEndDate ? formatDate(task.plannedEndDate) : '—'}</span>
-              <span><strong>Bắt đầu thực tế:</strong> {task.workStartDate ? formatDate(task.workStartDate) : '—'}</span>
-              <span><strong>Kết thúc thực tế:</strong> {task.workEndDate ? formatDate(task.workEndDate) : '—'}</span>
-              <span><strong>Hoàn thành:</strong> {task.completedDate ? formatDate(task.completedDate) : '—'}</span>
+              <span>
+                <strong>Bắt đầu dự kiến:</strong>{" "}
+                {task.plannedStartDate
+                  ? formatDate(task.plannedStartDate)
+                  : "—"}
+              </span>
+              <span>
+                <strong>Kết thúc dự kiến:</strong>{" "}
+                {task.plannedEndDate ? formatDate(task.plannedEndDate) : "—"}
+              </span>
+              <span>
+                <strong>Bắt đầu thực tế:</strong>{" "}
+                {task.workStartDate ? formatDate(task.workStartDate) : "—"}
+              </span>
+              <span>
+                <strong>Kết thúc thực tế:</strong>{" "}
+                {task.workEndDate ? formatDate(task.workEndDate) : "—"}
+              </span>
+              <span>
+                <strong>Hoàn thành:</strong>{" "}
+                {task.completedDate ? formatDate(task.completedDate) : "—"}
+              </span>
             </div>
             {task.isActivationWarning === true && (
               <Alert
@@ -733,7 +784,10 @@ const DailyLog = () => {
                   </h3>
                   <p className="mt-2 mb-0 text-sm text-emerald-700">
                     Đã thu hoạch {harvestedArea} m²
-                    {harvestedQuantity > 0 ? ` với số lượng ${harvestedQuantity} ${HARVEST_UNIT}` : ""}.
+                    {harvestedQuantity > 0
+                      ? ` với số lượng ${harvestedQuantity} ${HARVEST_UNIT}`
+                      : ""}
+                    .
                   </p>
                   <p className="mt-1 mb-0 text-sm text-gray-600">
                     Không thể ghi thêm nhật ký cho công việc thu hoạch này.
@@ -742,303 +796,773 @@ const DailyLog = () => {
               </Card>
             ) : (
               <>
-              <Card
-              bordered={false}
-              className="h-full shadow-sm rounded-2xl"
-              bodyStyle={{ padding: "20px" }}
-            >
-              <div className="flex items-center gap-2 mb-4 text-base font-bold text-gray-800">
-                <FormOutlined className="text-green-600" />
-                Nội dung thực hiện
-              </div>
-              <Row gutter={16} align="top">
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    name="date"
-                    label="Ngày ghi nhận"
-                    rules={[{ required: true, message: "Chọn ngày" }]}
-                  >
-                    <DatePicker
-                      className="w-full"
-                      format="DD/MM/YYYY"
-                      disabled
-                    />
-                  </Form.Item>
-                </Col>
-
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    name="images"
-                    label="Ảnh minh chứng"
-                    rules={[
-                      {
-                        validator: () => {
-                          const imageUrls = (fileList || [])
-                            .map(file => file.url || file.response?.url || file.response?.data?.url)
-                            .filter(Boolean)
-                          if (showImageError && imageUrls.length === 0) {
-                            return Promise.reject(new Error("Vui lòng tải lên ít nhất 1 ảnh minh chứng."))
-                          }
-                          return Promise.resolve()
-                        },
-                      },
-                    ]}
-                  >
-                    <Image.PreviewGroup>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {fileList.map((file, idx) => (
-                          <div
-                            key={file.uid || idx}
-                            className="group relative h-14 w-14 shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-xs hover:shadow-md transition-all [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
-                          >
-                            <Image
-                              src={file.url}
-                              alt={file.name || "Ảnh minh chứng"}
-                              preview={{
-                                mask: (
-                                  <div className="flex items-center justify-center text-white text-[10px]">
-                                    <EyeOutlined />
-                                  </div>
-                                ),
-                              }}
-                            />
-                            {!isViewOnly && (
-                              <button
-                                type="button"
-                                onClick={e => {
-                                  e.stopPropagation()
-                                  setFileList(prev => {
-                                    const next = prev.filter(item => item.uid !== file.uid)
-                                    form.setFieldsValue({ images: next })
-                                    return next
-                                  })
-                                }}
-                                className="absolute z-20 flex items-center justify-center w-4 h-4 text-white transition-colors rounded-full shadow-xs top-1 right-1 bg-black/70 hover:bg-red-600 opacity-90 group-hover:opacity-100"
-                                title="Xóa ảnh"
-                              >
-                                <DeleteOutlined className="text-[8px]" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-
-                        {!isViewOnly && (
-                          <Upload
-                            {...uploadProps}
-                            accept="image/*"
-                            showUploadList={false}
-                          >
-                            <div className="flex flex-col items-center justify-center text-green-700 transition-all border border-green-400 border-dashed cursor-pointer h-14 w-14 shrink-0 rounded-xl bg-green-50/50 hover:bg-green-100/70 hover:border-green-600 group">
-                              <CameraOutlined className="text-base text-green-600 group-hover:scale-110 transition-transform mb-0.5" />
-                              <span className="text-[10px] font-semibold text-green-700">
-                                Thêm ảnh
-                              </span>
-                            </div>
-                          </Upload>
-                        )}
-
-                        {isViewOnly && fileList.length === 0 && (
-                          <span className="text-xs italic text-gray-400">
-                            Chưa có ảnh
-                          </span>
-                        )}
-                      </div>
-                    </Image.PreviewGroup>
-                  </Form.Item>
-                </Col>
-
-                <Col span={24}>
-                  <Form.Item
-                    name="description"
-                    label="Chi tiết công việc"
-                    rules={[
-                      { required: true, message: "Nhập mô tả" },
-                      {
-                        validator: (_, value) => {
-                          const text = typeof value === "string" ? value.trim() : ""
-                          if (!text) return Promise.reject(new Error("Chi tiết công việc không được để trống hoặc chỉ chứa khoảng trắng."))
-                          if (text.length > 200) return Promise.reject(new Error("Chi tiết công việc không được vượt quá 200 ký tự."))
-                          return Promise.resolve()
-                        },
-                      },
-                    ]}
-                  >
-                    <TextArea
-                      rows={3}
-                      maxLength={200}
-                      showCount
-                      placeholder="Mô tả tình hình cây trồng, vấn đề phát sinh..."
-                      disabled={isViewOnly}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-            </Card>
-
-            {isHarvestTask && remainingHarvestArea > 0 && (
-              <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: "20px" }}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="text-base font-bold text-emerald-800">Dữ liệu thu hoạch</div>
-                  <Tag color="green">Còn lại: {remainingHarvestArea} m²</Tag>
-                </div>
-                <Row gutter={12}>
-                  <Col xs={24} md={10}>
-                    <Form.Item
-                      name="harvestQuantity"
-                      label="Số lượng thu hoạch"
-                      rules={[{ required: true, type: "number", min: 0.0001, message: "Nhập số lượng thu hoạch" }]}
-                    >
-                      <InputNumber min={0} className="w-full" placeholder="Số lượng" />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={6}>
-                    <Form.Item
-                      name="harvestUnit"
-                      label="Đơn vị"
-                      rules={[{ required: true, message: "Chọn đơn vị" }]}
-                    >
-                      <Select disabled options={[{ value: HARVEST_UNIT, label: HARVEST_UNIT }]} />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={8}>
-                    <Form.Item
-                      name="executedArea"
-                      label="Diện tích thu hoạch (m²)"
-                      rules={[
-                        { required: true, type: "number", min: 0.0001, message: "Nhập diện tích hợp lệ" },
-                        {
-                          validator: (_, value) => {
-                            if (value === undefined || value === null || value === "") return Promise.resolve()
-                            return Number(value) <= remainingHarvestArea + 0.0001
-                              ? Promise.resolve()
-                              : Promise.reject(new Error(`Không được vượt quá ${remainingHarvestArea} m² còn lại`))
-                          },
-                        },
-                      ]}
-                    >
-                      <InputNumber min={0} max={remainingHarvestArea} className="w-full" placeholder="Diện tích" />
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Card>
-            )}
-
-            {isMaterialTask && (
-              <>
                 <Card
                   bordered={false}
-                  className="shadow-sm rounded-2xl"
+                  className="h-full shadow-sm rounded-2xl"
                   bodyStyle={{ padding: "20px" }}
                 >
-                  <div className="mb-4 text-base font-bold text-gray-800">
-                    Phân bón
+                  <div className="flex items-center gap-2 mb-4 text-base font-bold text-gray-800">
+                    <FormOutlined className="text-green-600" />
+                    Nội dung thực hiện
                   </div>
-                  <Form.List name="fertilizers">
-                    {(fields, { add, remove }) => (
-                      <div className="space-y-3">
-                        {fields.map(field => (
-                          <div
-                            key={field.key}
-                            className="p-3 border border-gray-100 rounded-xl bg-gray-50"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-semibold text-gray-700">
-                                Loại {field.name + 1}
-                              </span>
-                              {!isViewOnly && (
-                                <Button
-                                  type="text"
-                                  danger
-                                  size="small"
-                                  onClick={() => remove(field.name)}
-                                  icon={<DeleteOutlined />}
+                  <Row gutter={16} align="top">
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        name="date"
+                        label="Ngày ghi nhận"
+                        rules={[{ required: true, message: "Chọn ngày" }]}
+                      >
+                        <DatePicker
+                          className="w-full"
+                          format="DD/MM/YYYY"
+                          disabled
+                        />
+                      </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <Form.Item
+                        name="images"
+                        label="Ảnh minh chứng"
+                        rules={[
+                          {
+                            validator: () => {
+                              const imageUrls = (fileList || [])
+                                .map(
+                                  file =>
+                                    file.url ||
+                                    file.response?.url ||
+                                    file.response?.data?.url,
+                                )
+                                .filter(Boolean)
+                              if (showImageError && imageUrls.length === 0) {
+                                return Promise.reject(
+                                  new Error(
+                                    "Vui lòng tải lên ít nhất 1 ảnh minh chứng.",
+                                  ),
+                                )
+                              }
+                              return Promise.resolve()
+                            },
+                          },
+                        ]}
+                      >
+                        <Image.PreviewGroup>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {fileList.map((file, idx) => (
+                              <div
+                                key={file.uid || idx}
+                                className="group relative h-14 w-14 shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-xs hover:shadow-md transition-all [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
+                              >
+                                <Image
+                                  src={file.url}
+                                  alt={file.name || "Ảnh minh chứng"}
+                                  preview={{
+                                    mask: (
+                                      <div className="flex items-center justify-center text-white text-[10px]">
+                                        <EyeOutlined />
+                                      </div>
+                                    ),
+                                  }}
                                 />
-                              )}
-                            </div>
-                            <Row gutter={12}>
-                              <Col xs={24} md={8}>
-                                <Form.Item
-                                  {...field}
-                                  name={[field.name, "fertilizerId"]}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: "Chọn loại phân bón",
-                                    },
-                                  ]}
-                                >
-                                  <Select
-                                    showSearch
-                                    optionFilterProp="label"
-                                    placeholder="Chọn phân bón"
-                                    options={fertilizerOptions}
-                                    disabled={isViewOnly}
-                                    onChange={(value, option) => {
-                                      const opt =
-                                        option ||
-                                        fertilizerOptions.find(
-                                          o => o.value === value,
+                                {!isViewOnly && (
+                                  <button
+                                    type="button"
+                                    onClick={e => {
+                                      e.stopPropagation()
+                                      setFileList(prev => {
+                                        const next = prev.filter(
+                                          item => item.uid !== file.uid,
                                         )
-                                      const selectedMaterial = opt?.raw || opt
-                                      const unitFromApi = getMaterialUnit(selectedMaterial)
-                                      form.setFieldValue(
-                                        ["fertilizers", field.name, "materialId"],
-                                        opt?.materialId || value,
-                                      )
-                                      form.setFieldValue(
-                                        ["fertilizers", field.name, "quantityUnit"],
-                                        unitFromApi,
-                                      )
-                                      if (
-                                        !form.getFieldValue([
-                                          "fertilizers",
-                                          field.name,
-                                          "areaUnit",
-                                        ])
-                                      ) {
-                                        form.setFieldValue(
-                                          ["fertilizers", field.name, "areaUnit"],
-                                          MEASUREMENT_UNITS.SQUARE_METER,
-                                        )
-                                      }
-
-                                      loadEntryRecommendation(
-                                        "FERTILIZER",
-                                        field.name,
-                                        opt?.materialId || value,
-                                        value,
-                                        form.getFieldValue([
-                                          "fertilizers",
-                                          field.name,
-                                          "area",
-                                        ]),
-                                      )
-                                      loadRemainingArea(
-                                        "FERTILIZER",
-                                        field.name,
-                                        opt?.materialId || value,
-                                      )
-
+                                        form.setFieldsValue({ images: next })
+                                        return next
+                                      })
                                     }}
-                                  />
-                                </Form.Item>
+                                    className="absolute z-20 flex items-center justify-center w-4 h-4 text-white transition-colors rounded-full shadow-xs top-1 right-1 bg-black/70 hover:bg-red-600 opacity-90 group-hover:opacity-100"
+                                    title="Xóa ảnh"
+                                  >
+                                    <DeleteOutlined className="text-[8px]" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+
+                            {!isViewOnly && (
+                              <Upload
+                                {...uploadProps}
+                                accept="image/*"
+                                showUploadList={false}
+                              >
+                                <div className="flex flex-col items-center justify-center text-green-700 transition-all border border-green-400 border-dashed cursor-pointer h-14 w-14 shrink-0 rounded-xl bg-green-50/50 hover:bg-green-100/70 hover:border-green-600 group">
+                                  <CameraOutlined className="text-base text-green-600 group-hover:scale-110 transition-transform mb-0.5" />
+                                  <span className="text-[10px] font-semibold text-green-700">
+                                    Thêm ảnh
+                                  </span>
+                                </div>
+                              </Upload>
+                            )}
+
+                            {isViewOnly && fileList.length === 0 && (
+                              <span className="text-xs italic text-gray-400">
+                                Chưa có ảnh
+                              </span>
+                            )}
+                          </div>
+                        </Image.PreviewGroup>
+                      </Form.Item>
+                    </Col>
+
+                    <Col span={24}>
+                      <Form.Item
+                        name="description"
+                        label="Chi tiết công việc"
+                        rules={[
+                          { required: true, message: "Nhập mô tả" },
+                          {
+                            validator: (_, value) => {
+                              const text =
+                                typeof value === "string" ? value.trim() : ""
+                              if (!text)
+                                return Promise.reject(
+                                  new Error(
+                                    "Chi tiết công việc không được để trống hoặc chỉ chứa khoảng trắng.",
+                                  ),
+                                )
+                              if (text.length > 200)
+                                return Promise.reject(
+                                  new Error(
+                                    "Chi tiết công việc không được vượt quá 200 ký tự.",
+                                  ),
+                                )
+                              return Promise.resolve()
+                            },
+                          },
+                        ]}
+                      >
+                        <TextArea
+                          rows={3}
+                          maxLength={200}
+                          showCount
+                          placeholder="Mô tả tình hình cây trồng, vấn đề phát sinh..."
+                          disabled={isViewOnly}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                </Card>
+
+                {isHarvestTask && remainingHarvestArea > 0 && (
+                  <Card
+                    bordered={false}
+                    className="shadow-sm rounded-2xl"
+                    bodyStyle={{ padding: "20px" }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-base font-bold text-emerald-800">
+                        Dữ liệu thu hoạch
+                      </div>
+                      <Tag color="green">
+                        Còn lại: {remainingHarvestArea} m²
+                      </Tag>
+                    </div>
+                    <Row gutter={12}>
+                      <Col xs={24} md={10}>
+                        <Form.Item
+                          name="harvestQuantity"
+                          label="Số lượng thu hoạch"
+                          rules={[
+                            {
+                              required: true,
+                              type: "number",
+                              min: 0.0001,
+                              message: "Nhập số lượng thu hoạch",
+                            },
+                          ]}
+                        >
+                          <InputNumber
+                            min={0}
+                            className="w-full"
+                            placeholder="Số lượng"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={6}>
+                        <Form.Item
+                          name="harvestUnit"
+                          label="Đơn vị"
+                          rules={[{ required: true, message: "Chọn đơn vị" }]}
+                        >
+                          <Select
+                            disabled
+                            options={[
+                              { value: HARVEST_UNIT, label: HARVEST_UNIT },
+                            ]}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          name="executedArea"
+                          label="Diện tích thu hoạch (m²)"
+                          rules={[
+                            {
+                              required: true,
+                              type: "number",
+                              min: 0.0001,
+                              message: "Nhập diện tích hợp lệ",
+                            },
+                            {
+                              validator: (_, value) => {
+                                if (
+                                  value === undefined ||
+                                  value === null ||
+                                  value === ""
+                                )
+                                  return Promise.resolve()
+                                return Number(value) <=
+                                  remainingHarvestArea + 0.0001
+                                  ? Promise.resolve()
+                                  : Promise.reject(
+                                      new Error(
+                                        `Không được vượt quá ${remainingHarvestArea} m² còn lại`,
+                                      ),
+                                    )
+                              },
+                            },
+                          ]}
+                        >
+                          <InputNumber
+                            min={0}
+                            max={remainingHarvestArea}
+                            className="w-full"
+                            placeholder="Diện tích"
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+                )}
+
+                {isMaterialTask && (
+                  <>
+                    <Card
+                      bordered={false}
+                      className="shadow-sm rounded-2xl"
+                      bodyStyle={{ padding: "20px" }}
+                    >
+                      <div className="mb-4 text-base font-bold text-gray-800">
+                        Phân bón
+                      </div>
+                      <Form.List name="fertilizers">
+                        {(fields, { add, remove }) => (
+                          <div className="space-y-3">
+                            {fields.map(field => (
+                              <div
+                                key={field.key}
+                                className="p-3 border border-gray-100 rounded-xl bg-gray-50"
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-sm font-semibold text-gray-700">
+                                    Loại {field.name + 1}
+                                  </span>
+                                  {!isViewOnly && (
+                                    <Button
+                                      type="text"
+                                      danger
+                                      size="small"
+                                      onClick={() => remove(field.name)}
+                                      icon={<DeleteOutlined />}
+                                    />
+                                  )}
+                                </div>
+                                <Row gutter={12}>
+                                  <Col xs={24} md={8}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "fertilizerId"]}
+                                      rules={[
+                                        {
+                                          required: true,
+                                          message: "Chọn loại phân bón",
+                                        },
+                                      ]}
+                                    >
+                                      <Select
+                                        showSearch
+                                        optionFilterProp="label"
+                                        placeholder="Chọn phân bón"
+                                        options={fertilizerOptions}
+                                        disabled={isViewOnly}
+                                        onChange={(value, option) => {
+                                          const opt =
+                                            option ||
+                                            fertilizerOptions.find(
+                                              o => o.value === value,
+                                            )
+                                          const selectedMaterial =
+                                            opt?.raw || opt
+                                          const unitFromApi =
+                                            getMaterialUnit(selectedMaterial)
+                                          form.setFieldValue(
+                                            [
+                                              "fertilizers",
+                                              field.name,
+                                              "materialId",
+                                            ],
+                                            opt?.materialId || value,
+                                          )
+                                          form.setFieldValue(
+                                            [
+                                              "fertilizers",
+                                              field.name,
+                                              "quantityUnit",
+                                            ],
+                                            unitFromApi,
+                                          )
+                                          if (
+                                            !form.getFieldValue([
+                                              "fertilizers",
+                                              field.name,
+                                              "areaUnit",
+                                            ])
+                                          ) {
+                                            form.setFieldValue(
+                                              [
+                                                "fertilizers",
+                                                field.name,
+                                                "areaUnit",
+                                              ],
+                                              MEASUREMENT_UNITS.SQUARE_METER,
+                                            )
+                                          }
+
+                                          loadEntryRecommendation(
+                                            "FERTILIZER",
+                                            field.name,
+                                            opt?.materialId || value,
+                                            value,
+                                            form.getFieldValue([
+                                              "fertilizers",
+                                              field.name,
+                                              "area",
+                                            ]),
+                                          )
+                                          loadRemainingArea(
+                                            "FERTILIZER",
+                                            field.name,
+                                            opt?.materialId || value,
+                                          )
+                                        }}
+                                      />
+                                    </Form.Item>
+                                    <Form.Item
+                                      noStyle
+                                      shouldUpdate={(
+                                        previousValues,
+                                        currentValues,
+                                      ) =>
+                                        previousValues?.fertilizers?.[
+                                          field.name
+                                        ]?.fertilizerId !==
+                                        currentValues?.fertilizers?.[field.name]
+                                          ?.fertilizerId
+                                      }
+                                    >
+                                      {({ getFieldValue }) => {
+                                        const selectedId = getFieldValue([
+                                          "fertilizers",
+                                          field.name,
+                                          "fertilizerId",
+                                        ])
+                                        const remainingArea =
+                                          remainingAreas[
+                                            `FERTILIZER-${field.name}`
+                                          ]
+
+                                        if (!selectedId) return null
+
+                                        return (
+                                          <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-700">
+                                            <span className="font-medium">
+                                              Diện tích còn lại:
+                                            </span>
+                                            <span className="font-bold">
+                                              {remainingArea
+                                                ? `${formatMeasurementValue(remainingArea.remainingArea)} ${formatAreaUnit(remainingArea.areaUnit)}`
+                                                : "—"}
+                                            </span>
+                                          </div>
+                                        )
+                                      }}
+                                    </Form.Item>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "materialId"]}
+                                      hidden
+                                    >
+                                      <Input />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={12} md={5}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "quantity"]}
+                                    >
+                                      <InputNumber
+                                        min={0}
+                                        className="w-full"
+                                        placeholder="Lượng"
+                                        disabled={isViewOnly}
+                                      />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={12} md={3}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "quantityUnit"]}
+                                      hidden
+                                    >
+                                      <Input />
+                                    </Form.Item>
+                                    <Form.Item
+                                      noStyle
+                                      shouldUpdate={(
+                                        previousValues,
+                                        currentValues,
+                                      ) =>
+                                        previousValues?.fertilizers?.[
+                                          field.name
+                                        ]?.quantityUnit !==
+                                        currentValues?.fertilizers?.[field.name]
+                                          ?.quantityUnit
+                                      }
+                                    >
+                                      {({ getFieldValue }) => (
+                                        <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                                          {getQuantityUnit(
+                                            getFieldValue([
+                                              "fertilizers",
+                                              field.name,
+                                              "quantityUnit",
+                                            ]),
+                                            "",
+                                          )}
+                                        </span>
+                                      )}
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={12} md={5}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "area"]}
+                                    >
+                                      <InputNumber
+                                        min={0}
+                                        className="w-full"
+                                        placeholder="Diện tích"
+                                        disabled={isViewOnly}
+                                        onChange={value =>
+                                          loadEntryRecommendation(
+                                            "FERTILIZER",
+                                            field.name,
+                                            form.getFieldValue([
+                                              "fertilizers",
+                                              field.name,
+                                              "materialId",
+                                            ]),
+                                            form.getFieldValue([
+                                              "fertilizers",
+                                              field.name,
+                                              "fertilizerId",
+                                            ]),
+                                            value,
+                                          )
+                                        }
+                                      />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={12} md={3}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "areaUnit"]}
+                                      hidden
+                                    >
+                                      <Input />
+                                    </Form.Item>
+                                    <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                                      {MEASUREMENT_UNITS.SQUARE_METER}
+                                    </span>
+                                  </Col>
+                                </Row>
+                                {entryRecommendations[
+                                  `FERTILIZER-${field.name}`
+                                ] &&
+                                  (() => {
+                                    const recommendation =
+                                      entryRecommendations[
+                                        `FERTILIZER-${field.name}`
+                                      ]
+
+                                    return (
+                                      <Alert
+                                        type="warning"
+                                        className="mt-1 rounded-lg [&_.ant-alert-message]:text-[11px] [&_.ant-alert-description]:text-[11px] [&_.ant-alert-description]:leading-4"
+                                        message={`Khuyến nghị lượng phân bón: ${recommendation.recommendationText}`}
+                                        description="Tính theo liều lượng đã khai báo trong chi tiết phân bón."
+                                      />
+                                    )
+                                  })()}
+                              </div>
+                            ))}
+                            {!isViewOnly && (
+                              <Button
+                                type="dashed"
+                                onClick={() =>
+                                  add({
+                                    quantityUnit: "",
+                                    areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                                  })
+                                }
+                                icon={<PlusOutlined />}
+                                className="w-full text-green-700 border-green-300"
+                              >
+                                Thêm phân bón
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </Form.List>
+                    </Card>
+
+                    <Card
+                      bordered={false}
+                      className="shadow-sm rounded-2xl"
+                      bodyStyle={{ padding: "20px" }}
+                    >
+                      <div className="mb-4 text-base font-bold text-gray-800">
+                        Nông dược
+                      </div>
+                      <Form.List name="pesticides">
+                        {(fields, { add, remove }) => (
+                          <div className="space-y-3">
+                            {fields.map(field => (
+                              <div
+                                key={field.key}
+                                className="p-3 border border-gray-100 rounded-xl bg-gray-50"
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-sm font-semibold text-gray-700">
+                                    Loại {field.name + 1}
+                                  </span>
+                                  {!isViewOnly && (
+                                    <Button
+                                      type="text"
+                                      danger
+                                      size="small"
+                                      onClick={() => remove(field.name)}
+                                      icon={<DeleteOutlined />}
+                                    />
+                                  )}
+                                </div>
+                                <Row gutter={12}>
+                                  <Col xs={24} md={8}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "pesticideId"]}
+                                      rules={[
+                                        {
+                                          required: true,
+                                          message: "Chọn loại nông dược",
+                                        },
+                                      ]}
+                                    >
+                                      <Select
+                                        showSearch
+                                        optionFilterProp="label"
+                                        placeholder="Chọn nông dược"
+                                        options={pesticideOptions}
+                                        disabled={isViewOnly}
+                                        onChange={(value, option) => {
+                                          const opt =
+                                            option ||
+                                            pesticideOptions.find(
+                                              o => o.value === value,
+                                            )
+                                          const selectedMaterial =
+                                            opt?.raw || opt
+                                          // usageUnit takes priority for pesticides
+                                          const unitFromApi =
+                                            getMaterialUnit(selectedMaterial)
+                                          form.setFieldValue(
+                                            [
+                                              "pesticides",
+                                              field.name,
+                                              "materialId",
+                                            ],
+                                            opt?.materialId || value,
+                                          )
+                                          form.setFieldValue(
+                                            [
+                                              "pesticides",
+                                              field.name,
+                                              "quantityUnit",
+                                            ],
+                                            unitFromApi,
+                                          )
+                                          if (
+                                            !form.getFieldValue([
+                                              "pesticides",
+                                              field.name,
+                                              "areaUnit",
+                                            ])
+                                          ) {
+                                            form.setFieldValue(
+                                              [
+                                                "pesticides",
+                                                field.name,
+                                                "areaUnit",
+                                              ],
+                                              MEASUREMENT_UNITS.SQUARE_METER,
+                                            )
+                                          }
+
+                                          loadEntryRecommendation(
+                                            "PESTICIDE",
+                                            field.name,
+                                            opt?.materialId || value,
+                                            value,
+                                            form.getFieldValue([
+                                              "pesticides",
+                                              field.name,
+                                              "area",
+                                            ]),
+                                          )
+                                          loadRemainingArea(
+                                            "PESTICIDE",
+                                            field.name,
+                                            opt?.materialId || value,
+                                          )
+                                        }}
+                                      />
+                                    </Form.Item>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "materialId"]}
+                                      hidden
+                                    >
+                                      <Input />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={12} md={5}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "quantity"]}
+                                    >
+                                      <InputNumber
+                                        min={0}
+                                        className="w-full"
+                                        placeholder="Lượng"
+                                        disabled={isViewOnly}
+                                      />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={12} md={3}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "quantityUnit"]}
+                                      hidden
+                                    >
+                                      <Input />
+                                    </Form.Item>
+                                    <Form.Item
+                                      noStyle
+                                      shouldUpdate={(
+                                        previousValues,
+                                        currentValues,
+                                      ) =>
+                                        previousValues?.pesticides?.[field.name]
+                                          ?.quantityUnit !==
+                                        currentValues?.pesticides?.[field.name]
+                                          ?.quantityUnit
+                                      }
+                                    >
+                                      {({ getFieldValue }) => (
+                                        <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                                          {getQuantityUnit(
+                                            getFieldValue([
+                                              "pesticides",
+                                              field.name,
+                                              "quantityUnit",
+                                            ]),
+                                            "",
+                                          )}
+                                        </span>
+                                      )}
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={12} md={5}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "area"]}
+                                    >
+                                      <InputNumber
+                                        min={0}
+                                        className="w-full"
+                                        placeholder="Diện tích"
+                                        disabled={isViewOnly}
+                                        onChange={value =>
+                                          loadEntryRecommendation(
+                                            "PESTICIDE",
+                                            field.name,
+                                            form.getFieldValue([
+                                              "pesticides",
+                                              field.name,
+                                              "materialId",
+                                            ]),
+                                            form.getFieldValue([
+                                              "pesticides",
+                                              field.name,
+                                              "pesticideId",
+                                            ]),
+                                            value,
+                                          )
+                                        }
+                                      />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={12} md={3}>
+                                    <Form.Item
+                                      {...field}
+                                      name={[field.name, "areaUnit"]}
+                                      hidden
+                                    >
+                                      <Input />
+                                    </Form.Item>
+                                    <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
+                                      {MEASUREMENT_UNITS.SQUARE_METER}
+                                    </span>
+                                  </Col>
+                                </Row>
                                 <Form.Item
                                   noStyle
-                                  shouldUpdate={(previousValues, currentValues) =>
-                                    previousValues?.fertilizers?.[field.name]
-                                      ?.fertilizerId !==
-                                    currentValues?.fertilizers?.[field.name]
-                                      ?.fertilizerId
+                                  shouldUpdate={(
+                                    previousValues,
+                                    currentValues,
+                                  ) =>
+                                    previousValues?.pesticides?.[field.name]
+                                      ?.pesticideId !==
+                                    currentValues?.pesticides?.[field.name]
+                                      ?.pesticideId
                                   }
                                 >
-                                  {({ getFieldValue }) => {
-                                    const selectedId = getFieldValue([
-                                      "fertilizers",
+                                  {() => {
+                                    const selectedId = form.getFieldValue([
+                                      "pesticides",
                                       field.name,
-                                      "fertilizerId",
+                                      "pesticideId",
                                     ])
                                     const remainingArea =
-                                      remainingAreas[`FERTILIZER-${field.name}`]
+                                      remainingAreas[`PESTICIDE-${field.name}`]
 
                                     if (!selectedId) return null
 
@@ -1056,383 +1580,66 @@ const DailyLog = () => {
                                     )
                                   }}
                                 </Form.Item>
-                                <Form.Item
-                                  {...field}
-                                  name={[field.name, "materialId"]}
-                                  hidden
-                                >
-                                  <Input />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={12} md={5}>
-                                <Form.Item
-                                  {...field}
-                                  name={[field.name, "quantity"]}
-                                >
-                                  <InputNumber
-                                    min={0}
-                                    className="w-full"
-                                    placeholder="Lượng"
-                                    disabled={isViewOnly}
-                                  />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={12} md={3}>
-                                <Form.Item {...field} name={[field.name, "quantityUnit"]} hidden>
-                                  <Input />
-                                </Form.Item>
-                                <Form.Item
-                                  noStyle
-                                  shouldUpdate={(previousValues, currentValues) =>
-                                    previousValues?.fertilizers?.[field.name]?.quantityUnit !==
-                                    currentValues?.fertilizers?.[field.name]?.quantityUnit
-                                  }
-                                >
-                                  {({ getFieldValue }) => (
-                                    <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
-                                      {getQuantityUnit(
-                                        getFieldValue([
-                                          "fertilizers",
-                                          field.name,
-                                          "quantityUnit",
-                                        ]),
-                                        "",
-                                      )}
-                                    </span>
-                                  )}
-                                </Form.Item>
-                              </Col>
-                              <Col xs={12} md={5}>
-                                <Form.Item {...field} name={[field.name, "area"]}>
-                                  <InputNumber
-                                    min={0}
-                                    className="w-full"
-                                    placeholder="Diện tích"
-                                    disabled={isViewOnly}
-                                    onChange={value =>
-                                      loadEntryRecommendation(
-                                        "FERTILIZER",
-                                        field.name,
-                                        form.getFieldValue([
-                                          "fertilizers",
-                                          field.name,
-                                          "materialId",
-                                        ]),
-                                        form.getFieldValue([
-                                          "fertilizers",
-                                          field.name,
-                                          "fertilizerId",
-                                        ]),
-                                        value,
-                                      )
-                                    }
-                                  />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={12} md={3}>
-                                <Form.Item {...field} name={[field.name, "areaUnit"]} hidden>
-                                  <Input />
-                                </Form.Item>
-                                <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
-                                  {MEASUREMENT_UNITS.SQUARE_METER}
-                                </span>
-                              </Col>
-                            </Row>
-                            {entryRecommendations[`FERTILIZER-${field.name}`] && (() => {
-                              const recommendation =
-                                entryRecommendations[`FERTILIZER-${field.name}`]
+                                {entryRecommendations[
+                                  `PESTICIDE-${field.name}`
+                                ] &&
+                                  (() => {
+                                    const recommendation =
+                                      entryRecommendations[
+                                        `PESTICIDE-${field.name}`
+                                      ]
 
-                              return (
-                                <Alert
-                                  type="warning"
-                                  className="mt-1 rounded-lg [&_.ant-alert-message]:text-[11px] [&_.ant-alert-description]:text-[11px] [&_.ant-alert-description]:leading-4"
-                                  message={`Khuyến nghị lượng phân bón: ${recommendation.recommendationText}`}
-                                  description="Tính theo liều lượng đã khai báo trong chi tiết phân bón."
-                                />
-                              )
-                            })()}
+                                    return (
+                                      <Alert
+                                        type="warning"
+                                        className="mt-1 rounded-lg [&_.ant-alert-message]:text-[11px] [&_.ant-alert-description]:text-[11px] [&_.ant-alert-description]:leading-4"
+                                        message={`Khuyến nghị lượng nông dược: ${recommendation.recommendationText}`}
+                                        description="Tính theo liều lượng đã khai báo trong chi tiết nông dược."
+                                      />
+                                    )
+                                  })()}
+                              </div>
+                            ))}
+                            {!isViewOnly && (
+                              <Button
+                                type="dashed"
+                                onClick={() =>
+                                  add({
+                                    quantityUnit: "",
+                                    areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                                  })
+                                }
+                                icon={<PlusOutlined />}
+                                className="w-full text-green-700 border-green-300"
+                              >
+                                Thêm nông dược
+                              </Button>
+                            )}
                           </div>
-                        ))}
-                        {!isViewOnly && (
-                          <Button
-                            type="dashed"
-                            onClick={() => add({
-                              quantityUnit: "",
-                              areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-                            })}
-                            icon={<PlusOutlined />}
-                            className="w-full text-green-700 border-green-300"
-                          >
-                            Thêm phân bón
-                          </Button>
                         )}
-                      </div>
-                    )}
-                  </Form.List>
-                </Card>
+                      </Form.List>
+                    </Card>
+                  </>
+                )}
 
-                <Card
-                  bordered={false}
-                  className="shadow-sm rounded-2xl"
-                  bodyStyle={{ padding: "20px" }}
-                >
-                  <div className="mb-4 text-base font-bold text-gray-800">
-                    Nông dược
+                {!isViewOnly && (
+                  <div className="flex flex-wrap justify-end gap-3 pt-2 pb-6">
+                    <Button
+                      onClick={() => navigate(ROUTER.FL_TASKS)}
+                      className="h-10 px-6 font-semibold rounded-xl"
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      type="primary"
+                      onClick={handleSave}
+                      loading={saving}
+                      className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
+                    >
+                      Lưu nhật ký
+                    </Button>
                   </div>
-                  <Form.List name="pesticides">
-                    {(fields, { add, remove }) => (
-                      <div className="space-y-3">
-                        {fields.map(field => (
-                          <div
-                            key={field.key}
-                            className="p-3 border border-gray-100 rounded-xl bg-gray-50"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-semibold text-gray-700">
-                                Loại {field.name + 1}
-                              </span>
-                              {!isViewOnly && (
-                                <Button
-                                  type="text"
-                                  danger
-                                  size="small"
-                                  onClick={() => remove(field.name)}
-                                  icon={<DeleteOutlined />}
-                                />
-                              )}
-                            </div>
-                            <Row gutter={12}>
-                              <Col xs={24} md={8}>
-                                <Form.Item
-                                  {...field}
-                                  name={[field.name, "pesticideId"]}
-                                  rules={[
-                                    { required: true, message: "Chọn loại nông dược" },
-                                  ]}
-                                >
-                                  <Select
-                                    showSearch
-                                    optionFilterProp="label"
-                                    placeholder="Chọn nông dược"
-                                    options={pesticideOptions}
-                                    disabled={isViewOnly}
-                                    onChange={(value, option) => {
-                                      const opt =
-                                        option ||
-                                        pesticideOptions.find(
-                                          o => o.value === value,
-                                        )
-                                      const selectedMaterial = opt?.raw || opt
-                                      // usageUnit takes priority for pesticides
-                                      const unitFromApi = getMaterialUnit(selectedMaterial)
-                                      form.setFieldValue(
-                                        ["pesticides", field.name, "materialId"],
-                                        opt?.materialId || value,
-                                      )
-                                      form.setFieldValue(
-                                        ["pesticides", field.name, "quantityUnit"],
-                                        unitFromApi,
-                                      )
-                                      if (
-                                        !form.getFieldValue([
-                                          "pesticides",
-                                          field.name,
-                                          "areaUnit",
-                                        ])
-                                      ) {
-                                        form.setFieldValue(
-                                          ["pesticides", field.name, "areaUnit"],
-                                          MEASUREMENT_UNITS.SQUARE_METER,
-                                        )
-                                      }
-
-                                      loadEntryRecommendation(
-                                        "PESTICIDE",
-                                        field.name,
-                                        opt?.materialId || value,
-                                        value,
-                                        form.getFieldValue([
-                                          "pesticides",
-                                          field.name,
-                                          "area",
-                                        ]),
-                                      )
-                                      loadRemainingArea(
-                                        "PESTICIDE",
-                                        field.name,
-                                        opt?.materialId || value,
-                                      )
-
-                                    }}
-                                  />
-                                </Form.Item>
-                                <Form.Item
-                                  {...field}
-                                  name={[field.name, "materialId"]}
-                                  hidden
-                                >
-                                  <Input />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={12} md={5}>
-                                <Form.Item
-                                  {...field}
-                                  name={[field.name, "quantity"]}
-                                >
-                                  <InputNumber
-                                    min={0}
-                                    className="w-full"
-                                    placeholder="Lượng"
-                                    disabled={isViewOnly}
-                                  />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={12} md={3}>
-                                <Form.Item {...field} name={[field.name, "quantityUnit"]} hidden>
-                                  <Input />
-                                </Form.Item>
-                                <Form.Item
-                                  noStyle
-                                  shouldUpdate={(previousValues, currentValues) =>
-                                    previousValues?.pesticides?.[field.name]?.quantityUnit !==
-                                    currentValues?.pesticides?.[field.name]?.quantityUnit
-                                  }
-                                >
-                                  {({ getFieldValue }) => (
-                                    <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
-                                      {getQuantityUnit(
-                                        getFieldValue([
-                                          "pesticides",
-                                          field.name,
-                                          "quantityUnit",
-                                        ]),
-                                        "",
-                                      )}
-                                    </span>
-                                  )}
-                                </Form.Item>
-                              </Col>
-                              <Col xs={12} md={5}>
-                                <Form.Item {...field} name={[field.name, "area"]}>
-                                  <InputNumber
-                                    min={0}
-                                    className="w-full"
-                                    placeholder="Diện tích"
-                                    disabled={isViewOnly}
-                                    onChange={value =>
-                                      loadEntryRecommendation(
-                                        "PESTICIDE",
-                                        field.name,
-                                        form.getFieldValue([
-                                          "pesticides",
-                                          field.name,
-                                          "materialId",
-                                        ]),
-                                        form.getFieldValue([
-                                          "pesticides",
-                                          field.name,
-                                          "pesticideId",
-                                        ]),
-                                        value,
-                                      )
-                                    }
-                                  />
-                                </Form.Item>
-                              </Col>
-                              <Col xs={12} md={3}>
-                                <Form.Item {...field} name={[field.name, "areaUnit"]} hidden>
-                                  <Input />
-                                </Form.Item>
-                                <span className="inline-flex h-8 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-semibold text-gray-600">
-                                  {MEASUREMENT_UNITS.SQUARE_METER}
-                                </span>
-                              </Col>
-                            </Row>
-                            <Form.Item
-                              noStyle
-                              shouldUpdate={(previousValues, currentValues) =>
-                                previousValues?.pesticides?.[field.name]?.pesticideId !==
-                                currentValues?.pesticides?.[field.name]?.pesticideId
-                              }
-                            >
-                              {() => {
-                                const selectedId = form.getFieldValue([
-                                  "pesticides",
-                                  field.name,
-                                  "pesticideId",
-                                ])
-                                const remainingArea =
-                                  remainingAreas[`PESTICIDE-${field.name}`]
-
-                                if (!selectedId) return null
-
-                                return (
-                                  <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-700">
-                                    <span className="font-medium">
-                                      Diện tích còn lại:
-                                    </span>
-                                    <span className="font-bold">
-                                      {remainingArea
-                                        ? `${formatMeasurementValue(remainingArea.remainingArea)} ${formatAreaUnit(remainingArea.areaUnit)}`
-                                        : "—"}
-                                    </span>
-                                  </div>
-                                )
-                              }}
-                            </Form.Item>
-                            {entryRecommendations[`PESTICIDE-${field.name}`] && (() => {
-                              const recommendation =
-                                entryRecommendations[`PESTICIDE-${field.name}`]
-
-                              return (
-                                <Alert
-                                  type="warning"
-                                  className="mt-1 rounded-lg [&_.ant-alert-message]:text-[11px] [&_.ant-alert-description]:text-[11px] [&_.ant-alert-description]:leading-4"
-                                  message={`Khuyến nghị lượng nông dược: ${recommendation.recommendationText}`}
-                                  description="Tính theo liều lượng đã khai báo trong chi tiết nông dược."
-                                />
-                              )
-                            })()}
-                          </div>
-                        ))}
-                        {!isViewOnly && (
-                          <Button
-                            type="dashed"
-                            onClick={() => add({
-                              quantityUnit: "",
-                              areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-                            })}
-                            icon={<PlusOutlined />}
-                            className="w-full text-green-700 border-green-300"
-                          >
-                            Thêm nông dược
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </Form.List>
-                </Card>
-              </>
-            )}
-
-            {!isViewOnly && (
-              <div className="flex flex-wrap justify-end gap-3 pt-2 pb-6">
-                <Button
-                  onClick={() => navigate(ROUTER.FL_TASKS)}
-                  className="h-10 px-6 font-semibold rounded-xl"
-                >
-                  Hủy
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={handleSave}
-                  loading={saving}
-                  className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
-                >
-                  Lưu nhật ký
-                </Button>
-              </div>
-            )}
+                )}
               </>
             )}
           </Form>
@@ -1513,7 +1720,11 @@ const DailyLog = () => {
                                 </span>
                                 {Number(log.executedArea || 0) > 0 && (
                                   <span className="text-gray-500 text-[11px]">
-                                    ({log.executedArea} {formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)})
+                                    ({log.executedArea}{" "}
+                                    {formatAreaUnit(
+                                      MEASUREMENT_UNITS.SQUARE_METER,
+                                    )}
+                                    )
                                   </span>
                                 )}
                               </div>
@@ -1531,9 +1742,14 @@ const DailyLog = () => {
                                 const name =
                                   f.name || f.materialName || "Phân bón"
                                 const qty = f.quantity
-                                const unit = getQuantityUnit(f.quantityUnit || f.unit, "")
+                                const unit = getQuantityUnit(
+                                  f.quantityUnit || f.unit,
+                                  "",
+                                )
                                 const area = f.area
-                                const areaUnit = formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)
+                                const areaUnit = formatAreaUnit(
+                                  MEASUREMENT_UNITS.SQUARE_METER,
+                                )
 
                                 return (
                                   <div
@@ -1572,9 +1788,14 @@ const DailyLog = () => {
                                 const name =
                                   p.name || p.materialName || "Nông dược"
                                 const qty = p.quantity
-                                const unit = getQuantityUnit(p.quantityUnit || p.unit, "")
+                                const unit = getQuantityUnit(
+                                  p.quantityUnit || p.unit,
+                                  "",
+                                )
                                 const area = p.area
-                                const areaUnit = formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)
+                                const areaUnit = formatAreaUnit(
+                                  MEASUREMENT_UNITS.SQUARE_METER,
+                                )
 
                                 return (
                                   <div
@@ -1606,12 +1827,19 @@ const DailyLog = () => {
                           {log.images?.length > 0 && (
                             <Image.PreviewGroup
                               items={log.images
-                                .map(img => typeof img === 'string' ? img : (img.url ?? null))
+                                .map(img =>
+                                  typeof img === "string"
+                                    ? img
+                                    : (img.url ?? null),
+                                )
                                 .filter(Boolean)}
                             >
                               <div className="flex flex-wrap gap-1.5 mt-2.5">
                                 {log.images.map((img, i) => {
-                                  const src = typeof img === 'string' ? img : (img.url ?? null)
+                                  const src =
+                                    typeof img === "string"
+                                      ? img
+                                      : (img.url ?? null)
                                   return (
                                     <div
                                       key={i}
@@ -1679,8 +1907,7 @@ const DailyLog = () => {
             task.status === "WAITING_APPROVAL"
               ? ""
               : "bg-green-600 border-green-600",
-          disabled:
-            summaryLoading,
+          disabled: summaryLoading,
         }}
         width={780}
       >
@@ -1688,8 +1915,12 @@ const DailyLog = () => {
           <div className="py-1 space-y-5 text-sm">
             {/* ── Thống kê thời gian thực tế ── */}
             {(() => {
-              const formattedStartDate = task?.workStartDate ? formatDate(task.workStartDate) : "—"
-              const formattedEndDate = task?.workEndDate ? formatDate(task.workEndDate) : "—"
+              const formattedStartDate = task?.workStartDate
+                ? formatDate(task.workStartDate)
+                : "—"
+              const formattedEndDate = task?.workEndDate
+                ? formatDate(task.workEndDate)
+                : "—"
 
               return (
                 <div className="p-4 border border-green-100 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50/40">
@@ -1720,80 +1951,95 @@ const DailyLog = () => {
               )
             })()}
 
-            {isHarvestTask && (() => {
-              const harvestRows = dailyLogs
-                .map((log, index) => ({
-                  key: log.id || `harvest-${index}`,
-                  date: log.date,
-                  quantity: getHarvestQuantity(log),
-                  area: Number(log.executedArea || 0),
-                }))
-                .filter(row => row.quantity !== null || row.area > 0)
+            {isHarvestTask &&
+              (() => {
+                const harvestRows = dailyLogs
+                  .map((log, index) => ({
+                    key: log.id || `harvest-${index}`,
+                    date: log.date,
+                    quantity: getHarvestQuantity(log),
+                    area: Number(log.executedArea || 0),
+                  }))
+                  .filter(row => row.quantity !== null || row.area > 0)
 
-              const totalQuantity = harvestRows.reduce(
-                (total, row) => total + Number(row.quantity || 0),
-                0,
-              )
-              const totalArea = harvestRows.reduce((total, row) => total + row.area, 0)
+                const totalQuantity = harvestRows.reduce(
+                  (total, row) => total + Number(row.quantity || 0),
+                  0,
+                )
+                const totalArea = harvestRows.reduce(
+                  (total, row) => total + row.area,
+                  0,
+                )
 
-              if (harvestRows.length === 0) return null
+                if (harvestRows.length === 0) return null
 
-              return (
-                <div>
-                  <div className="flex items-center gap-2 mb-2 font-semibold text-emerald-800">
-                    <InboxOutlined className="text-emerald-600" />
-                    Tổng hợp thu hoạch
+                return (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2 font-semibold text-emerald-800">
+                      <InboxOutlined className="text-emerald-600" />
+                      Tổng hợp thu hoạch
+                    </div>
+                    <Table
+                      columns={[
+                        {
+                          title: "Ngày",
+                          dataIndex: "date",
+                          key: "date",
+                          render: (value, record) =>
+                            record.key === "harvest-total" ? (
+                              <span className="font-bold">Tổng hợp</span>
+                            ) : value ? (
+                              formatDate(value)
+                            ) : (
+                              "—"
+                            ),
+                        },
+                        {
+                          title: "Số lượng thu hoạch",
+                          dataIndex: "quantity",
+                          key: "quantity",
+                          align: "right",
+                          render: value => (
+                            <span className="font-semibold text-emerald-700">
+                              {value ?? "—"} {value != null ? HARVEST_UNIT : ""}
+                            </span>
+                          ),
+                        },
+                        {
+                          title: "Diện tích",
+                          dataIndex: "area",
+                          key: "area",
+                          align: "right",
+                          render: value => (
+                            <span className="font-semibold text-gray-700">
+                              {value > 0
+                                ? `${value} ${formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}`
+                                : "—"}
+                            </span>
+                          ),
+                        },
+                      ]}
+                      dataSource={[
+                        ...harvestRows,
+                        {
+                          key: "harvest-total",
+                          date: "Tổng hợp",
+                          quantity: totalQuantity,
+                          area: totalArea,
+                        },
+                      ]}
+                      rowClassName={record =>
+                        record.key === "harvest-total"
+                          ? "font-bold bg-emerald-50"
+                          : ""
+                      }
+                      size="small"
+                      pagination={false}
+                      className="overflow-hidden border border-emerald-100 rounded-xl"
+                    />
                   </div>
-                  <Table
-                    columns={[
-                      {
-                        title: "Ngày",
-                        dataIndex: "date",
-                        key: "date",
-                        render: (value, record) => record.key === "harvest-total"
-                          ? <span className="font-bold">Tổng hợp</span>
-                          : value ? formatDate(value) : "—",
-                      },
-                      {
-                        title: "Số lượng thu hoạch",
-                        dataIndex: "quantity",
-                        key: "quantity",
-                        align: "right",
-                        render: value => (
-                          <span className="font-semibold text-emerald-700">
-                            {value ?? "—"} {value != null ? HARVEST_UNIT : ""}
-                          </span>
-                        ),
-                      },
-                      {
-                        title: "Diện tích",
-                        dataIndex: "area",
-                        key: "area",
-                        align: "right",
-                        render: value => (
-                          <span className="font-semibold text-gray-700">
-                            {value > 0 ? `${value} ${formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}` : "—"}
-                          </span>
-                        ),
-                      },
-                    ]}
-                    dataSource={[
-                      ...harvestRows,
-                      {
-                        key: "harvest-total",
-                        date: "Tổng hợp",
-                        quantity: totalQuantity,
-                        area: totalArea,
-                      },
-                    ]}
-                    rowClassName={record => record.key === "harvest-total" ? "font-bold bg-emerald-50" : ""}
-                    size="small"
-                    pagination={false}
-                    className="overflow-hidden border border-emerald-100 rounded-xl"
-                  />
-                </div>
-              )
-            })()}
+                )
+              })()}
 
             {/* ── Bảng phân bón ── */}
             {(() => {
@@ -1801,29 +2047,29 @@ const DailyLog = () => {
               const rows =
                 leaderSummary?.fertilizers?.length > 0
                   ? leaderSummary.fertilizers.map((f, i) => ({
-                    key: i,
-                    name:
-                      f.name ||
-                      f.fertilizerName ||
-                      f.materialName ||
-                      `Phân ${i + 1}`,
-                    totalQuantity: f.totalQuantity ?? f.quantity ?? 0,
-                    unit: f.unit ?? "",
-                    totalArea: f.totalArea ?? f.area ?? 0,
-                    areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-                    recommendation: f.recommendationText,
-                    days: f.days ?? "—",
-                  }))
+                      key: i,
+                      name:
+                        f.name ||
+                        f.fertilizerName ||
+                        f.materialName ||
+                        `Phân ${i + 1}`,
+                      totalQuantity: f.totalQuantity ?? f.quantity ?? 0,
+                      unit: f.unit ?? "",
+                      totalArea: f.totalArea ?? f.area ?? 0,
+                      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                      recommendation: f.recommendationText,
+                      days: f.days ?? "—",
+                    }))
                   : aggregateFromLogs.fertilizers.map((f, i) => ({
-                    key: i,
-                    name: f.name,
-                    totalQuantity: f.totalQuantity,
-                    unit: f.unit,
-                    totalArea: f.totalArea,
-                    areaUnit: f.areaUnit,
-                    recommendation: f.recommendationText,
-                    days: f.days,
-                  }))
+                      key: i,
+                      name: f.name,
+                      totalQuantity: f.totalQuantity,
+                      unit: f.unit,
+                      totalArea: f.totalArea,
+                      areaUnit: f.areaUnit,
+                      recommendation: f.recommendationText,
+                      days: f.days,
+                    }))
 
               if (!rows.some(row => Number(row.totalQuantity) > 0)) return null
 
@@ -1857,7 +2103,9 @@ const DailyLog = () => {
                     r.totalArea > 0 ? (
                       <span>
                         {r.totalArea}{" "}
-                        <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
+                        <span className="text-gray-500">
+                          {formatAreaUnit(r.areaUnit)}
+                        </span>
                       </span>
                     ) : (
                       <span className="text-gray-300">—</span>
@@ -1919,29 +2167,29 @@ const DailyLog = () => {
               const rows =
                 leaderSummary?.pesticides?.length > 0
                   ? leaderSummary.pesticides.map((p, i) => ({
-                    key: i,
-                    name:
-                      p.name ||
-                      p.pesticideName ||
-                      p.materialName ||
-                      `Nông dược ${i + 1}`,
-                    totalQuantity: p.totalQuantity ?? p.quantity ?? 0,
-                    unit: p.unit ?? "",
-                    totalArea: p.totalArea ?? p.area ?? 0,
-                    areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-                    recommendation: p.recommendationText,
-                    days: p.days ?? "—",
-                  }))
+                      key: i,
+                      name:
+                        p.name ||
+                        p.pesticideName ||
+                        p.materialName ||
+                        `Nông dược ${i + 1}`,
+                      totalQuantity: p.totalQuantity ?? p.quantity ?? 0,
+                      unit: p.unit ?? "",
+                      totalArea: p.totalArea ?? p.area ?? 0,
+                      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                      recommendation: p.recommendationText,
+                      days: p.days ?? "—",
+                    }))
                   : aggregateFromLogs.pesticides.map((p, i) => ({
-                    key: i,
-                    name: p.name,
-                    totalQuantity: p.totalQuantity,
-                    unit: p.unit,
-                    totalArea: p.totalArea,
-                    areaUnit: p.areaUnit,
-                    recommendation: p.recommendationText,
-                    days: p.days,
-                  }))
+                      key: i,
+                      name: p.name,
+                      totalQuantity: p.totalQuantity,
+                      unit: p.unit,
+                      totalArea: p.totalArea,
+                      areaUnit: p.areaUnit,
+                      recommendation: p.recommendationText,
+                      days: p.days,
+                    }))
 
               if (!rows.some(row => Number(row.totalQuantity) > 0)) return null
 
@@ -1975,7 +2223,9 @@ const DailyLog = () => {
                     r.totalArea > 0 ? (
                       <span>
                         {r.totalArea}{" "}
-                        <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
+                        <span className="text-gray-500">
+                          {formatAreaUnit(r.areaUnit)}
+                        </span>
                       </span>
                     ) : (
                       <span className="text-gray-300">—</span>
@@ -2101,21 +2351,32 @@ const DailyLog = () => {
                   </span>
                 }
                 rules={
-                    task.status !== "WAITING_APPROVAL"
+                  task.status !== "WAITING_APPROVAL"
                     ? [
-                      {
-                        required: true,
-                        message: "Vui lòng viết mô tả tổng kết",
-                      },
-                      {
-                        validator: (_, value) => {
-                          const text = typeof value === "string" ? value.trim() : ""
-                          if (!text) return Promise.reject(new Error("Mô tả tổng kết không được để trống hoặc chỉ chứa khoảng trắng."))
-                          if (text.length > 200) return Promise.reject(new Error("Mô tả tổng kết không được vượt quá 200 ký tự."))
-                          return Promise.resolve()
+                        {
+                          required: true,
+                          message: "Vui lòng viết mô tả tổng kết",
                         },
-                      },
-                    ]
+                        {
+                          validator: (_, value) => {
+                            const text =
+                              typeof value === "string" ? value.trim() : ""
+                            if (!text)
+                              return Promise.reject(
+                                new Error(
+                                  "Mô tả tổng kết không được để trống hoặc chỉ chứa khoảng trắng.",
+                                ),
+                              )
+                            if (text.length > 200)
+                              return Promise.reject(
+                                new Error(
+                                  "Mô tả tổng kết không được vượt quá 200 ký tự.",
+                                ),
+                              )
+                            return Promise.resolve()
+                          },
+                        },
+                      ]
                     : []
                 }
               >

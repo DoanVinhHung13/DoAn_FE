@@ -42,7 +42,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 import TitleCustom from "src/components/TitleCustom"
-import { MyTaskIcon } from 'src/assets/icon/menu/MenuIcons'
+import { MyTaskIcon } from "src/assets/icon/menu/MenuIcons"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import ROUTER from "src/router/ROUTER"
 import CultivationTaskService from "src/services/CultivationTaskService"
@@ -66,8 +66,7 @@ const orderTasks = tasks =>
     .sort(
       (a, b) =>
         taskOrderValue(a.task, Number.MAX_SAFE_INTEGER) -
-        taskOrderValue(b.task, Number.MAX_SAFE_INTEGER) ||
-        a.index - b.index,
+          taskOrderValue(b.task, Number.MAX_SAFE_INTEGER) || a.index - b.index,
     )
     .map(({ task }) => task)
 
@@ -172,7 +171,8 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
               {task.plannedStartDate ? formatDate(task.plannedStartDate) : "—"}
             </Text>
             <Text type="secondary" className="block mt-1 text-xs">
-              Kết thúc dự kiến: {task.plannedEndDate ? formatDate(task.plannedEndDate) : "—"}
+              Kết thúc dự kiến:{" "}
+              {task.plannedEndDate ? formatDate(task.plannedEndDate) : "—"}
             </Text>
             {task.completedDate && (
               <Text className="block mt-1 text-xs text-green-600">
@@ -190,24 +190,25 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
             />
           )}
 
-          {Array.isArray(task.inlineQuarantineWarnings) && task.inlineQuarantineWarnings.map((warning, index) => (
-            <Alert
-              key={`${warning.pesticideName}-${warning.eligibleDate}-${index}`}
-              type="warning"
-              icon={<WarningOutlined />}
-              className="!rounded-xl !border-amber-200 !bg-amber-50/80 !px-3 !py-2"
-              message={
-                <span className="text-xs font-semibold text-amber-800">
-                  Chưa đủ thời gian cách ly: {warning.pesticideName}.
-                </span>
-              }
-              description={
-                <span className="text-xs text-amber-700">
-                  Thời gian cách ly đến: {formatDate(warning.eligibleDate)}.
-                </span>
-              }
-            />
-          ))}
+          {Array.isArray(task.inlineQuarantineWarnings) &&
+            task.inlineQuarantineWarnings.map((warning, index) => (
+              <Alert
+                key={`${warning.pesticideName}-${warning.eligibleDate}-${index}`}
+                type="warning"
+                icon={<WarningOutlined />}
+                className="!rounded-xl !border-amber-200 !bg-amber-50/80 !px-3 !py-2"
+                message={
+                  <span className="text-xs font-semibold text-amber-800">
+                    Chưa đủ thời gian cách ly: {warning.pesticideName}.
+                  </span>
+                }
+                description={
+                  <span className="text-xs text-amber-700">
+                    Thời gian cách ly đến: {formatDate(warning.eligibleDate)}.
+                  </span>
+                }
+              />
+            ))}
 
           {/* Team Assignment */}
           <div className="space-y-1.5 pt-0.5">
@@ -310,9 +311,12 @@ const FarmLeaderTasks = () => {
     try {
       setLoadingSummaries(true)
       setSummariesError(false)
-      const res = await CultivationTaskService.getMyLogbookSummaries(undefined, {
-        errorHandling: "component",
-      })
+      const res = await CultivationTaskService.getMyLogbookSummaries(
+        undefined,
+        {
+          errorHandling: "component",
+        },
+      )
       const data = unwrap(res)
       const list = Array.isArray(data) ? data : data?.items || []
       setLogbookSummaries(list)
@@ -354,7 +358,9 @@ const FarmLeaderTasks = () => {
       const plan = data?.plan ?? data
       const stagesArr = Array.isArray(data?.stages) ? data.stages : []
       // Flatten all tasks for stats computation
-      const flatTasks = stagesArr.flatMap(s => Array.isArray(s.tasks) ? s.tasks : [])
+      const flatTasks = stagesArr.flatMap(s =>
+        Array.isArray(s.tasks) ? s.tasks : [],
+      )
       setLogbookDetail(plan)
       setStages(stagesArr)
       setTasks(flatTasks)
@@ -369,7 +375,9 @@ const FarmLeaderTasks = () => {
         )
         const allData = unwrap(allRes)
         const allStages = Array.isArray(allData?.stages) ? allData.stages : []
-        setWarningTasks(allStages.flatMap(s => Array.isArray(s.tasks) ? s.tasks : []))
+        setWarningTasks(
+          allStages.flatMap(s => (Array.isArray(s.tasks) ? s.tasks : [])),
+        )
       }
     } catch {
       setDetailError(true)
@@ -405,8 +413,9 @@ const FarmLeaderTasks = () => {
             <div className="flex items-center justify-between w-full gap-2 pt-3 pb-1 pr-1">
               <div className="flex flex-col min-w-0">
                 <span
-                  className={`text-xs font-semibold truncate ${isSelected ? "text-emerald-700" : "text-slate-800"
-                    }`}
+                  className={`text-xs font-semibold truncate ${
+                    isSelected ? "text-emerald-700" : "text-slate-800"
+                  }`}
                   title={name}
                 >
                   {name}
@@ -447,7 +456,8 @@ const FarmLeaderTasks = () => {
     logbookSummaries.forEach(lb => {
       totalTasks += lb.totalTasks ?? 0
       activeTasks += lb.inProgressTasks ?? 0
-      completedTasks += (lb.completedTasks ?? 0) + (lb.waitingApprovalTasks ?? 0)
+      completedTasks +=
+        (lb.completedTasks ?? 0) + (lb.waitingApprovalTasks ?? 0)
     })
 
     return { totalPlans, totalTasks, activeTasks, completedTasks }
@@ -455,17 +465,22 @@ const FarmLeaderTasks = () => {
 
   // ── Selected plan stats from logbookDetail (right panel) ──────────────────
   const planStats = useMemo(() => {
-    if (!logbookDetail)
-    return { total: 0, completed: 0, pct: 0, active: 0 }
+    if (!logbookDetail) return { total: 0, completed: 0, pct: 0, active: 0 }
     // Prefer pre-computed values from plan object (API already computes these)
     const total = logbookDetail.totalTasks ?? tasks.length
-    const completed = logbookDetail.completedTasks ?? tasks.filter(t => t.status === "COMPLETED").length
-    const active = logbookDetail.inProgressTasks ?? tasks.filter(t =>
-      t.status === "IN_PROGRESS",
-    ).length
-    const waiting = logbookDetail.pendingApprovalTasks ?? tasks.filter(t => t.status === "WAITING_APPROVAL").length
+    const completed =
+      logbookDetail.completedTasks ??
+      tasks.filter(t => t.status === "COMPLETED").length
+    const active =
+      logbookDetail.inProgressTasks ??
+      tasks.filter(t => t.status === "IN_PROGRESS").length
+    const waiting =
+      logbookDetail.pendingApprovalTasks ??
+      tasks.filter(t => t.status === "WAITING_APPROVAL").length
     const displayedCompleted = completed + waiting
-    const pct = logbookDetail.overallProgress ?? (total > 0 ? Math.round((displayedCompleted / total) * 100) : 0)
+    const pct =
+      logbookDetail.overallProgress ??
+      (total > 0 ? Math.round((displayedCompleted / total) * 100) : 0)
     return { total, completed: displayedCompleted, pct, active }
   }, [logbookDetail, tasks])
 
@@ -478,11 +493,14 @@ const FarmLeaderTasks = () => {
           id: s.stageId,
           name: s.stageName,
           filteredTasks: orderTasks(
-            (Array.isArray(s.tasks) ? s.tasks : []).filter(task =>
-              statusFilter === "all" ||
-              (["WAITING_APPROVAL", "PENDING_REVIEW"].includes(String(task.status).toUpperCase())
-                ? "COMPLETED"
-                : task.status) === statusFilter,
+            (Array.isArray(s.tasks) ? s.tasks : []).filter(
+              task =>
+                statusFilter === "all" ||
+                (["WAITING_APPROVAL", "PENDING_REVIEW"].includes(
+                  String(task.status).toUpperCase(),
+                )
+                  ? "COMPLETED"
+                  : task.status) === statusFilter,
             ),
           ),
         }))
@@ -492,20 +510,23 @@ const FarmLeaderTasks = () => {
     if (!tasks.length) return []
     const stageMap = new Map()
     tasks
-      .filter(task =>
-        statusFilter === "all" ||
-        (["WAITING_APPROVAL", "PENDING_REVIEW"].includes(String(task.status).toUpperCase())
-          ? "COMPLETED"
-          : task.status) === statusFilter,
+      .filter(
+        task =>
+          statusFilter === "all" ||
+          (["WAITING_APPROVAL", "PENDING_REVIEW"].includes(
+            String(task.status).toUpperCase(),
+          )
+            ? "COMPLETED"
+            : task.status) === statusFilter,
       )
       .forEach(t => {
-      const stId = t.cultivationStageId || t.stageId || "default"
-      const stName = t.cultivationStageName || t.stageName || "Giai đoạn"
-      if (!stageMap.has(stId)) {
-        stageMap.set(stId, { id: stId, name: stName, filteredTasks: [] })
-      }
-      stageMap.get(stId).filteredTasks.push(t)
-    })
+        const stId = t.cultivationStageId || t.stageId || "default"
+        const stName = t.cultivationStageName || t.stageName || "Giai đoạn"
+        if (!stageMap.has(stId)) {
+          stageMap.set(stId, { id: stId, name: stName, filteredTasks: [] })
+        }
+        stageMap.get(stId).filteredTasks.push(t)
+      })
     return Array.from(stageMap.values()).map(stage => ({
       ...stage,
       filteredTasks: orderTasks(stage.filteredTasks),
@@ -525,7 +546,10 @@ const FarmLeaderTasks = () => {
   const loading = loadingSummaries
   const isDetailLoading = loadingDetail
   const quarantineWarnings = useMemo(
-    () => warningTasks.flatMap(task => Array.isArray(task.quarantineWarnings) ? task.quarantineWarnings : []),
+    () =>
+      warningTasks.flatMap(task =>
+        Array.isArray(task.quarantineWarnings) ? task.quarantineWarnings : [],
+      ),
     [warningTasks],
   )
 
@@ -551,7 +575,8 @@ const FarmLeaderTasks = () => {
       <div className="flex flex-col justify-between gap-4 p-5 bg-white border shadow-xs lg:flex-row lg:items-center rounded-2xl border-slate-200/80">
         <div>
           <TitleCustom className="!mb-1 text-xl md:text-2xl flex items-center gap-2">
-            <MyTaskIcon style={{ fontSize: '24px', color: '#15803d' }} /> Công việc của tôi
+            <MyTaskIcon style={{ fontSize: "24px", color: "#15803d" }} /> Công
+            việc của tôi
           </TitleCustom>
         </div>
 
@@ -603,7 +628,11 @@ const FarmLeaderTasks = () => {
         <Alert
           type="error"
           message="Không thể tải danh sách kế hoạch."
-          action={<Button size="small" onClick={loadLogbookSummaries}>Thử lại</Button>}
+          action={
+            <Button size="small" onClick={loadLogbookSummaries}>
+              Thử lại
+            </Button>
+          }
           className="rounded-xl"
         />
       ) : logbookSummaries.length === 0 ? (
@@ -677,7 +706,11 @@ const FarmLeaderTasks = () => {
               <Alert
                 type="error"
                 message="Không thể tải chi tiết kế hoạch."
-                action={<Button size="small" onClick={loadLogbookDetail}>Thử lại</Button>}
+                action={
+                  <Button size="small" onClick={loadLogbookDetail}>
+                    Thử lại
+                  </Button>
+                }
                 className="rounded-xl"
               />
             ) : logbookDetail ? (
@@ -699,10 +732,14 @@ const FarmLeaderTasks = () => {
                         <h2
                           className="mb-0 text-xl font-bold text-white sm:text-2xl"
                           title={
-                            logbookDetail.planName || logbookDetail.name || logbookDetail.logbookName
+                            logbookDetail.planName ||
+                            logbookDetail.name ||
+                            logbookDetail.logbookName
                           }
                         >
-                          {logbookDetail.planName || logbookDetail.name || logbookDetail.logbookName}
+                          {logbookDetail.planName ||
+                            logbookDetail.name ||
+                            logbookDetail.logbookName}
                         </h2>
                       </div>
 
@@ -748,7 +785,9 @@ const FarmLeaderTasks = () => {
                           <span
                             className="block font-bold text-white truncate"
                             title={
-                              logbookDetail.cropVariety || logbookDetail.cropName || logbookDetail.crop?.name
+                              logbookDetail.cropVariety ||
+                              logbookDetail.cropName ||
+                              logbookDetail.crop?.name
                             }
                           >
                             {logbookDetail.cropVariety ||

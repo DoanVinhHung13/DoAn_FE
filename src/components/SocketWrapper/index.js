@@ -2,19 +2,19 @@ import {
   HubConnectionBuilder,
   HubConnectionState,
   LogLevel,
-} from '@microsoft/signalr'
-import STORAGE, { getStorage } from 'src/redux/storage'
-import { refreshAccessToken } from 'src/services/tokenRefresh'
-import { logDevDiagnostic } from 'src/utils/safeDiagnostic'
+} from "@microsoft/signalr"
+import STORAGE, { getStorage } from "src/redux/storage"
+import { refreshAccessToken } from "src/services/tokenRefresh"
+import { logDevDiagnostic } from "src/utils/safeDiagnostic"
 
 const getHubUrl = () => {
   const apiRoot =
-    (typeof window !== 'undefined' && window.env?.API_ROOT) ||
+    (typeof window !== "undefined" && window.env?.API_ROOT) ||
     import.meta.env.VITE_API_ROOT ||
     import.meta.env.VITE_API_URL ||
-    (typeof window !== 'undefined' ? window.location.origin : '')
+    (typeof window !== "undefined" ? window.location.origin : "")
 
-  return `${apiRoot.replace(/\/+$/, '').replace(/\/api$/, '')}/hubs/realtime`
+  return `${apiRoot.replace(/\/+$/, "").replace(/\/api$/, "")}/hubs/realtime`
 }
 
 class SignalRService {
@@ -49,7 +49,7 @@ class SignalRService {
       .build()
 
     connection.onreconnecting(error => {
-      logDevDiagnostic('signalr-reconnecting', error)
+      logDevDiagnostic("signalr-reconnecting", error)
     })
 
     connection.onreconnected(() => {
@@ -58,7 +58,7 @@ class SignalRService {
 
     connection.onclose(error => {
       if (this.connection === connection) this.connection = null
-      if (error) logDevDiagnostic('signalr-closed', error)
+      if (error) logDevDiagnostic("signalr-closed", error)
       this.closeListeners.forEach(listener => listener(error))
     })
 
@@ -106,7 +106,8 @@ class SignalRService {
   }
 
   invoke = (methodName, ...args) => {
-    if (!this.connection) return Promise.reject(new Error('SignalR is not connected.'))
+    if (!this.connection)
+      return Promise.reject(new Error("SignalR is not connected."))
     return this.connection.invoke(methodName, ...args)
   }
 

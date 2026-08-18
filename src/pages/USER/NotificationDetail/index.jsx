@@ -1,129 +1,140 @@
-import React, { useEffect } from 'react';
-import { Alert, Button, Card, Skeleton, Tag, Typography } from 'antd';
+import React, { useEffect } from "react"
+import { Alert, Button, Card, Skeleton, Tag, Typography } from "antd"
 import {
   ArrowLeftOutlined,
   BellOutlined,
   CalendarOutlined,
   UserOutlined,
   PaperClipOutlined,
-} from '@ant-design/icons';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+} from "@ant-design/icons"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useNavigate, useParams, useLocation } from "react-router-dom"
+import { useSelector } from "react-redux"
 import {
   getNotifications,
   getNotificationById,
   markNotificationAsRead,
   getSentNotifications,
-} from 'src/services/NotificationService';
-import ROUTER from 'src/router/ROUTER';
-import { getNotificationTypeLabel } from 'src/constants/notificationTypes';
-import { formatDateTime, parseDate } from 'src/utils/dateFormatters';
-import { getNotificationContext } from 'src/utils/notificationUtils';
+} from "src/services/NotificationService"
+import ROUTER from "src/router/ROUTER"
+import { getNotificationTypeLabel } from "src/constants/notificationTypes"
+import { formatDateTime, parseDate } from "src/utils/dateFormatters"
+import { getNotificationContext } from "src/utils/notificationUtils"
 
-const { Paragraph, Text, Title } = Typography;
+const { Paragraph, Text, Title } = Typography
 
-const normalizeItems = (response) => {
-  const payload = response?.data ?? response ?? {};
-  const nestedPayload = payload?.data ?? payload;
-  if (Array.isArray(nestedPayload)) return nestedPayload;
+const normalizeItems = response => {
+  const payload = response?.data ?? response ?? {}
+  const nestedPayload = payload?.data ?? payload
+  if (Array.isArray(nestedPayload)) return nestedPayload
   return (
     nestedPayload?.notifications ||
     nestedPayload?.items ||
     nestedPayload?.results ||
     payload?.notifications ||
     []
-  );
-};
+  )
+}
 
 const ROLE_LABELS = {
-  FARM_MANAGER: 'Quản lý nông trại',
-  FARM_SUPERVISOR: 'Giám sát nông trại',
-  FARMER_LEADER: 'Tổ trưởng',
-  FARMER: 'Nông dân',
-};
+  FARM_MANAGER: "Quản lý nông trại",
+  FARM_SUPERVISOR: "Giám sát nông trại",
+  FARMER_LEADER: "Tổ trưởng",
+  FARMER: "Nông dân",
+}
 
-const getSenderName = (notification) => {
+const getSenderName = notification => {
   // Ưu tiên lấy từ object sender
   const sender =
     notification?.sender ||
     notification?.createdBy ||
     notification?.from ||
-    notification?.author;
-  
+    notification?.author
+
   if (sender) {
-    if (typeof sender === 'string') {
+    if (typeof sender === "string") {
       // Nếu là role, chuyển thành label tiếng Việt
-      return ROLE_LABELS[sender] || sender;
+      return ROLE_LABELS[sender] || sender
     }
-    const name = 
+    const name =
       sender?.fullName ||
       sender?.fullname ||
       sender?.name ||
       sender?.displayName ||
       sender?.username ||
-      sender?.email;
+      sender?.email
     if (name) {
       // Nếu name là role, chuyển thành label
-      return ROLE_LABELS[name] || name;
+      return ROLE_LABELS[name] || name
     }
   }
-  
+
   // Fallback sang các field trực tiếp
-  const fallbackName = 
+  const fallbackName =
     notification?.senderName ||
     notification?.senderFullName ||
     notification?.createdByName ||
     notification?.fromName ||
     notification?.senderRole ||
-    'Hệ thống';
-  
+    "Hệ thống"
+
   // Nếu fallback là role, chuyển thành label
-  return ROLE_LABELS[fallbackName] || fallbackName;
-};
+  return ROLE_LABELS[fallbackName] || fallbackName
+}
 
 const NotificationDetail = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isSent = location.state?.isSent;
-  const queryClient = useQueryClient();
-  const { userInfo } = useSelector((state) => state.appGlobal);
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const isSent = location.state?.isSent
+  const queryClient = useQueryClient()
+  const { userInfo } = useSelector(state => state.appGlobal)
   const listPath =
-    userInfo?.role === 'FARM_MANAGER' ? ROUTER.FM_NOTIFICATIONS : ROUTER.NOTIFICATIONS;
+    userInfo?.role === "FARM_MANAGER"
+      ? ROUTER.FM_NOTIFICATIONS
+      : ROUTER.NOTIFICATIONS
 
-  const { data: notification, isLoading, isError, refetch } = useQuery({
-    queryKey: ['notification-detail', id],
+  const {
+    data: notification,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["notification-detail", id],
     queryFn: async () => {
       if (location.state?.notificationItem) {
-        return location.state.notificationItem;
+        return location.state.notificationItem
       }
-      
+
       // Thử gọi API chi tiết trước (có đầy đủ attachments)
       try {
-        const res = await getNotificationById(id);
-        const payload = res?.data ?? res ?? {};
-        const item = payload?.data ?? payload;
-        if (item && (item.id || item._id)) return item;
+        const res = await getNotificationById(id)
+        const payload = res?.data ?? res ?? {}
+        const item = payload?.data ?? payload
+        if (item && (item.id || item._id)) return item
       } catch {
         // API /notifications/:id chưa có hoặc lỗi, fallback sang tìm trong danh sách
       }
       // Fallback: tìm trong danh sách
-      const fetchList = isSent ? getSentNotifications : getNotifications;
-      const items = normalizeItems(await fetchList());
-      return items.find((item) => String(item._id || item.id) === String(id)) || null;
+      const fetchList = isSent ? getSentNotifications : getNotifications
+      const items = normalizeItems(await fetchList())
+      return (
+        items.find(item => String(item._id || item.id) === String(id)) || null
+      )
     },
     retry: false,
-  });
+  })
 
-  const notification_id = notification?._id || notification?.id;
+  const notification_id = notification?._id || notification?.id
 
   useEffect(() => {
-    if (!notification || notification.isRead || isSent) return;
+    if (!notification || notification.isRead || isSent) return
     markNotificationAsRead(notification_id)
       .catch(() => undefined)
-      .finally(() => queryClient.invalidateQueries({ queryKey: ['notifications'] }));
-  }, [notification, notification_id, queryClient, isSent]);
+      .finally(() =>
+        queryClient.invalidateQueries({ queryKey: ["notifications"] }),
+      )
+  }, [notification, notification_id, queryClient, isSent])
 
   if (isLoading) {
     return (
@@ -132,7 +143,7 @@ const NotificationDetail = () => {
           <Skeleton active paragraph={{ rows: 8 }} />
         </Card>
       </div>
-    );
+    )
   }
 
   if (isError || !notification) {
@@ -151,23 +162,30 @@ const NotificationDetail = () => {
         <Alert
           type="error"
           message="Thông báo không tồn tại hoặc đã bị xóa."
-          action={isError ? <Button size="small" onClick={() => refetch()}>Thử lại</Button> : null}
+          action={
+            isError ? (
+              <Button size="small" onClick={() => refetch()}>
+                Thử lại
+              </Button>
+            ) : null
+          }
         />
       </div>
-    );
+    )
   }
 
-  const content = notification.content || notification.message || notification.body || '';
+  const content =
+    notification.content || notification.message || notification.body || ""
   const sentTime =
     notification.sentAt ||
     notification.sentTime ||
     notification.createdAt ||
     notification.timestamp ||
     notification.date ||
-    notification.time;
+    notification.time
 
-  const category = getNotificationTypeLabel(notification);
-  const context = getNotificationContext(notification);
+  const category = getNotificationTypeLabel(notification)
+  const context = getNotificationContext(notification)
 
   return (
     <div className="space-y-6">
@@ -182,7 +200,10 @@ const NotificationDetail = () => {
         </Button>
       </div>
 
-      <Card variant="borderless" className="overflow-hidden rounded-lg shadow-sm">
+      <Card
+        variant="borderless"
+        className="overflow-hidden rounded-lg shadow-sm"
+      >
         <div className="border-b border-gray-100 pb-6">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-xl bg-gradient-to-br from-green-50 to-green-100 text-3xl text-green-600 shadow-sm">
             <BellOutlined />
@@ -203,7 +224,7 @@ const NotificationDetail = () => {
             )}
           </div>
           <Title level={1} className="!mb-0 !text-3xl !font-bold">
-            {notification.title || 'Thông báo'}
+            {notification.title || "Thông báo"}
           </Title>
           {(context.logbookName || context.stageName || context.taskName) && (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -230,7 +251,12 @@ const NotificationDetail = () => {
                 </Text>
               </div>
               <Text strong className="!text-base">
-                {isSent ? userInfo?.fullName || userInfo?.displayName || userInfo?.email || 'Bạn' : getSenderName(notification)}
+                {isSent
+                  ? userInfo?.fullName ||
+                    userInfo?.displayName ||
+                    userInfo?.email ||
+                    "Bạn"
+                  : getSenderName(notification)}
               </Text>
             </div>
             <div>
@@ -242,8 +268,8 @@ const NotificationDetail = () => {
               </div>
               <Text strong className="!text-base">
                 {sentTime && parseDate(sentTime)?.isValid()
-                  ? formatDateTime(sentTime, 'HH:mm, DD/MM/YYYY')
-                  : 'Không rõ thời gian'}
+                  ? formatDateTime(sentTime, "HH:mm, DD/MM/YYYY")
+                  : "Không rõ thời gian"}
               </Text>
             </div>
           </div>
@@ -257,23 +283,29 @@ const NotificationDetail = () => {
             </Text>
           </div>
           <Paragraph className="!mb-0 min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] !text-[15px] !leading-7 text-gray-700">
-            {content || 'Thông báo này không có nội dung.'}
+            {content || "Thông báo này không có nội dung."}
           </Paragraph>
         </div>
 
         {(() => {
-          let attachs = notification.attachments || notification.attachmentUrls || notification.fileUrls || notification.documents || notification.files || [];
-          if (typeof attachs === 'string') {
+          let attachs =
+            notification.attachments ||
+            notification.attachmentUrls ||
+            notification.fileUrls ||
+            notification.documents ||
+            notification.files ||
+            []
+          if (typeof attachs === "string") {
             try {
-              attachs = JSON.parse(attachs);
+              attachs = JSON.parse(attachs)
             } catch {
-              attachs = [attachs];
+              attachs = [attachs]
             }
           }
-          if (!Array.isArray(attachs)) attachs = [attachs];
-          attachs = attachs.filter(Boolean);
+          if (!Array.isArray(attachs)) attachs = [attachs]
+          attachs = attachs.filter(Boolean)
 
-          if (attachs.length === 0) return null;
+          if (attachs.length === 0) return null
 
           return (
             <div className="border-t border-gray-100 py-6">
@@ -285,40 +317,53 @@ const NotificationDetail = () => {
               </div>
               <div className="flex flex-col gap-3">
                 {attachs.map((file, index) => {
-                  const url = typeof file === 'string' ? file : (file.url || file.link || file.path);
-                  if (!url) return null;
-                  const fileName = typeof file === 'string' ? url.split('/').pop() : (file.name || file.fileName || url.split('/').pop());
-                  
+                  const url =
+                    typeof file === "string"
+                      ? file
+                      : file.url || file.link || file.path
+                  if (!url) return null
+                  const fileName =
+                    typeof file === "string"
+                      ? url.split("/").pop()
+                      : file.name || file.fileName || url.split("/").pop()
+
                   return (
-                    <div key={index} className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition-colors">
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition-colors"
+                    >
                       <div className="flex h-10 w-10 items-center justify-center rounded bg-blue-50 text-blue-600">
                         <PaperClipOutlined />
                       </div>
                       <div className="flex flex-1 flex-col overflow-hidden">
-                        <Text ellipsis className="!font-medium" title={fileName}>
+                        <Text
+                          ellipsis
+                          className="!font-medium"
+                          title={fileName}
+                        >
                           {fileName}
                         </Text>
                       </div>
-                      <Button 
-                        type="primary" 
-                        ghost 
-                        href={url} 
-                        target="_blank" 
+                      <Button
+                        type="primary"
+                        ghost
+                        href={url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         size="small"
                       >
                         Tải xuống
                       </Button>
                     </div>
-                  );
+                  )
                 })}
               </div>
             </div>
-          );
+          )
         })()}
       </Card>
     </div>
-  );
-};
+  )
+}
 
-export default NotificationDetail;
+export default NotificationDetail

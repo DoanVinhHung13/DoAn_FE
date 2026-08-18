@@ -11,12 +11,18 @@ import {
 } from "antd"
 import React from "react"
 import { useNavigate } from "react-router-dom"
-import { getQuantityUnit, formatAreaUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
+import {
+  getQuantityUnit,
+  formatAreaUnit,
+  MEASUREMENT_UNITS,
+} from "src/constants/measurementUnits"
 import ROUTER from "src/router/ROUTER"
 import PesticideService from "src/services/PesticideService"
 import { applyApiFieldErrors } from "src/services/core/apiError"
 import AgriculturalInputCatalogAutocomplete from "src/components/AgriculturalInputCatalogAutocomplete"
-import CatalogSuggestionService, { getCatalogPrefill } from "src/services/CatalogSuggestionService"
+import CatalogSuggestionService, {
+  getCatalogPrefill,
+} from "src/services/CatalogSuggestionService"
 
 import SectionTitle from "src/components/Common/SectionTitle"
 import { useCropOptions } from "src/hooks/useCropOptions"
@@ -35,22 +41,27 @@ const resolveCropValue = (target, cropOptions) => {
   const rawTarget = Array.isArray(target) ? target[0] : target
   const normalizedTarget = String(rawTarget).trim().toLowerCase()
   const option = cropOptions.find(item =>
-    [item.value, item.label].some(value =>
-      String(value).trim().toLowerCase() === normalizedTarget,
+    [item.value, item.label].some(
+      value => String(value).trim().toLowerCase() === normalizedTarget,
     ),
   )
 
   return option?.value || rawTarget
 }
 
-const normalizeCropTarget = value => String(value ?? "").trim().toLowerCase()
+const normalizeCropTarget = value =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
 
 const getCropTargetKey = (target, cropOptions) => {
   const normalizedTarget = normalizeCropTarget(target)
   if (!normalizedTarget) return ""
 
   const option = cropOptions.find(item =>
-    [item.value, item.label].some(value => normalizeCropTarget(value) === normalizedTarget),
+    [item.value, item.label].some(
+      value => normalizeCropTarget(value) === normalizedTarget,
+    ),
   )
 
   return normalizeCropTarget(option?.value ?? target)
@@ -58,8 +69,15 @@ const getCropTargetKey = (target, cropOptions) => {
 
 const PesticideFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
-  const storageKey = getFormDraftKey("pesticide", isEdit ? "edit" : "create", editingItem?.id)
-  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
+  const storageKey = getFormDraftKey(
+    "pesticide",
+    isEdit ? "edit" : "create",
+    editingItem?.id,
+  )
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
+    form,
+    storageKey,
+  })
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
   const { cropOptions, isCropsLoading } = useCropOptions()
@@ -69,22 +87,33 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
     { value: MEASUREMENT_UNITS.LITER, label: MEASUREMENT_UNITS.LITER },
     { value: MEASUREMENT_UNITS.KILOGRAM, label: MEASUREMENT_UNITS.KILOGRAM },
   ]
-  const [quantityUnit, setQuantityUnit] = React.useState(MEASUREMENT_UNITS.LITER)
+  const [quantityUnit, setQuantityUnit] = React.useState(
+    MEASUREMENT_UNITS.LITER,
+  )
   const prefillRequestRef = React.useRef(0)
   const applyCatalog = async catalog => {
     const requestId = ++prefillRequestRef.current
     try {
-      const item = getCatalogPrefill(await CatalogSuggestionService.pesticidePrefill({ id: catalog.id })) || {}
+      const item =
+        getCatalogPrefill(
+          await CatalogSuggestionService.pesticidePrefill({ id: catalog.id }),
+        ) || {}
       if (requestId !== prefillRequestRef.current) return
       const values = { name: item.name || catalog.name }
-      if (item.manufacturer?.trim()) values.manufacturer = item.manufacturer.trim()
+      if (item.manufacturer?.trim())
+        values.manufacturer = item.manufacturer.trim()
       if (item.description?.trim()) values.description = item.description.trim()
-      if (item.unit?.trim()) { values.unit = item.unit.trim(); setQuantityUnit(item.unit.trim()) }
+      if (item.unit?.trim()) {
+        values.unit = item.unit.trim()
+        setQuantityUnit(item.unit.trim())
+      }
       if (item.type?.trim()) values.type = item.type.trim()
       form.setFieldsValue(values)
     } catch {
       if (requestId === prefillRequestRef.current) {
-        message.warning("Không thể tải dữ liệu từ danh mục. Bạn vẫn có thể nhập thủ công.")
+        message.warning(
+          "Không thể tải dữ liệu từ danh mục. Bạn vẫn có thể nhập thủ công.",
+        )
       }
     }
   }
@@ -93,7 +122,10 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
     const draft = restoreDraft()
     const draftData = draft?.data || {}
     if (isEdit) {
-      const selectedUnit = getQuantityUnit(editingItem.unit, MEASUREMENT_UNITS.LITER)
+      const selectedUnit = getQuantityUnit(
+        editingItem.unit,
+        MEASUREMENT_UNITS.LITER,
+      )
       setQuantityUnit(selectedUnit)
       form.setFieldsValue({
         name: editingItem.name || "",
@@ -108,7 +140,10 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             ? editingItem.usages.map(u => {
                 return {
                   ...u,
-                  targetCrop: resolveCropValue(u.targetCrop ?? u.target, cropOptions),
+                  targetCrop: resolveCropValue(
+                    u.targetCrop ?? u.target,
+                    cropOptions,
+                  ),
                   dosage: u.dosage,
                   dosageUnit: selectedUnit,
                   area: 1,
@@ -160,7 +195,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             areaUnitId: MEASUREMENT_UNITS.SQUARE_METER,
             targetCrop: Array.isArray(u.targetCrop)
               ? u.targetCrop.join(", ")
-              : (u.targetCrop || u.target || ""),
+              : u.targetCrop || u.target || "",
             quarantineDays: u.isolationDays || 0,
           }
           if (isEdit && u.id) usageObj.id = u.id
@@ -190,7 +225,10 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
   }
 
   const getUsageCropOptions = index => {
-    const currentTargetKey = getCropTargetKey(usages[index]?.targetCrop, cropOptions)
+    const currentTargetKey = getCropTargetKey(
+      usages[index]?.targetCrop,
+      cropOptions,
+    )
     const targetsInOtherRows = new Set(
       usages
         .filter((_, usageIndex) => usageIndex !== index)
@@ -199,14 +237,24 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
     )
 
     return cropOptions.filter(option => {
-      const optionKeys = [option.value, option.label].map(normalizeCropTarget).filter(Boolean)
-      return optionKeys.includes(currentTargetKey) ||
+      const optionKeys = [option.value, option.label]
+        .map(normalizeCropTarget)
+        .filter(Boolean)
+      return (
+        optionKeys.includes(currentTargetKey) ||
         !optionKeys.some(optionKey => targetsInOtherRows.has(optionKey))
+      )
     })
   }
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleSubmit} onValuesChange={(_, allValues) => saveDraft(allValues)} className="">
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={handleSubmit}
+      onValuesChange={(_, allValues) => saveDraft(allValues)}
+      className=""
+    >
       {/* ── Basic Info ── */}
       <SectionTitle>Thông Tin Cơ Bản</SectionTitle>
       <Row gutter={16}>
@@ -222,17 +270,37 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
               { required: true, message: "Bắt buộc" },
               {
                 validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  const trimmed = value.trim();
-                  if (!trimmed) return Promise.reject(new Error('Tên nông dược không được chỉ chứa khoảng trắng.'));
-                  if (trimmed.length > 100) return Promise.reject(new Error('Tên nông dược không được vượt quá 100 ký tự.'));
-                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Tên nông dược không được chứa nhiều khoảng trắng liên tiếp.'));
-                  return Promise.resolve();
+                  if (!value) return Promise.resolve()
+                  const trimmed = value.trim()
+                  if (!trimmed)
+                    return Promise.reject(
+                      new Error(
+                        "Tên nông dược không được chỉ chứa khoảng trắng.",
+                      ),
+                    )
+                  if (trimmed.length > 100)
+                    return Promise.reject(
+                      new Error("Tên nông dược không được vượt quá 100 ký tự."),
+                    )
+                  if (trimmed !== trimmed.replace(/\s+/g, " "))
+                    return Promise.reject(
+                      new Error(
+                        "Tên nông dược không được chứa nhiều khoảng trắng liên tiếp.",
+                      ),
+                    )
+                  return Promise.resolve()
                 },
               },
             ]}
           >
-            <AgriculturalInputCatalogAutocomplete catalogType="PESTICIDE" value={Form.useWatch("name", form)} onChange={value => form.setFieldValue("name", value)} onSelectCatalog={applyCatalog} placeholder="Nhập tên..." allowCreate={!isEdit} />
+            <AgriculturalInputCatalogAutocomplete
+              catalogType="PESTICIDE"
+              value={Form.useWatch("name", form)}
+              onChange={value => form.setFieldValue("name", value)}
+              onSelectCatalog={applyCatalog}
+              placeholder="Nhập tên..."
+              allowCreate={!isEdit}
+            />
           </Form.Item>
         </Col>
 
@@ -245,12 +313,20 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             rules={[
               {
                 validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  const trimmed = value.trim();
-                  if (!trimmed) return Promise.resolve();
-                  if (trimmed.length > 100) return Promise.reject(new Error('Nhà sản xuất không được vượt quá 100 ký tự.'));
-                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Nhà sản xuất không được chứa nhiều khoảng trắng liên tiếp.'));
-                  return Promise.resolve();
+                  if (!value) return Promise.resolve()
+                  const trimmed = value.trim()
+                  if (!trimmed) return Promise.resolve()
+                  if (trimmed.length > 100)
+                    return Promise.reject(
+                      new Error("Nhà sản xuất không được vượt quá 100 ký tự."),
+                    )
+                  if (trimmed !== trimmed.replace(/\s+/g, " "))
+                    return Promise.reject(
+                      new Error(
+                        "Nhà sản xuất không được chứa nhiều khoảng trắng liên tiếp.",
+                      ),
+                    )
+                  return Promise.resolve()
                 },
               },
             ]}
@@ -270,7 +346,11 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
               </span>
             }
             rules={[
-              { type: 'number', min: 1, message: 'Tồn kho tối thiểu phải là số dương (>= 1).' }
+              {
+                type: "number",
+                min: 1,
+                message: "Tồn kho tối thiểu phải là số dương (>= 1).",
+              },
             ]}
           >
             <InputNumber
@@ -283,7 +363,9 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
         <Col xs={24} md={8}>
           {isEdit ? (
             <>
-              <Form.Item name="unit" hidden><Input /></Form.Item>
+              <Form.Item name="unit" hidden>
+                <Input />
+              </Form.Item>
               <Form.Item label="Đơn vị tính (Kho)">
                 <span className="inline-flex h-10 items-center rounded-xl bg-gray-50 px-3 font-semibold text-gray-700">
                   {quantityUnit}
@@ -291,20 +373,27 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
               </Form.Item>
             </>
           ) : (
-            <Form.Item name="unit" label="Đơn vị tính (Kho)" rules={[{ required: true, message: "Bắt buộc" }]}>
+            <Form.Item
+              name="unit"
+              label="Đơn vị tính (Kho)"
+              rules={[{ required: true, message: "Bắt buộc" }]}
+            >
               <Select
                 options={UNIT_OPTIONS}
                 placeholder="Chọn..."
                 className="h-10 rounded-xl"
-                onChange={(value) => {
+                onChange={value => {
                   setQuantityUnit(value)
                   form.setFieldValue("inventoryUnit", value)
                   const usages = form.getFieldValue("usages") || []
-                  form.setFieldValue("usages", usages.map(u => ({
-                    ...u,
-                    dosageUnit: value,
-                    areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-                  })))
+                  form.setFieldValue(
+                    "usages",
+                    usages.map(u => ({
+                      ...u,
+                      dosageUnit: value,
+                      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                    })),
+                  )
                 }}
               />
             </Form.Item>
@@ -318,12 +407,20 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             rules={[
               {
                 validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  const trimmed = value.trim();
-                  if (!trimmed) return Promise.resolve();
-                  if (trimmed.length > 500) return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
-                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
-                  return Promise.resolve();
+                  if (!value) return Promise.resolve()
+                  const trimmed = value.trim()
+                  if (!trimmed) return Promise.resolve()
+                  if (trimmed.length > 500)
+                    return Promise.reject(
+                      new Error("Mô tả không được vượt quá 500 ký tự."),
+                    )
+                  if (trimmed !== trimmed.replace(/\s+/g, " "))
+                    return Promise.reject(
+                      new Error(
+                        "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
+                      ),
+                    )
+                  return Promise.resolve()
                 },
               },
             ]}
@@ -366,7 +463,12 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                         {...restField}
                         name={[name, "targetCrop"]}
                         label={<>Cây trồng</>}
-                        rules={[{ required: true, message: "Vui lòng chọn cây trồng" }]}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Vui lòng chọn cây trồng",
+                          },
+                        ]}
                         className="mb-3"
                       >
                         <Select
@@ -381,93 +483,103 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                       </Form.Item>
                     </Col>
                     <div className="hidden">
-                    <Col xs={24} sm={12} md={6}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "legacyTargetCrop"]}
-                        label={<>Đối tượng SD </>}
-                        className="mb-3"
-                      >
-                        <Select
-                          mode="multiple"
-                          options={cropOptions}
-                          loading={isCropsLoading}
-                          placeholder="Chọn cây trồng..."
-                          className="w-full text-sm min-h-[36px]"
-                          allowClear
-                          showSearch
-                          optionFilterProp="label"
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={24} sm={12} md={6}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "targetPest"]}
-                        label={<>Đối tượng DT </>}
-                        className="mb-3"
-                      >
-                        <Input
-                          placeholder="Rầy nâu..."
-                          className="text-sm rounded-lg h-9"
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col xs={24} sm={24} md={12}>
-                      <Form.Item
-                        label={<>Lượng nước pha loãng (Tỉ lệ nông dược : nước) </>}
-                        className="mb-3"
-                      >
-                        <div className="flex items-center gap-3">
-                          {/* Nông dược */}
-                          <div className="flex items-center flex-1 gap-2">
-                            <Form.Item
-                              {...restField}
-                              name={[name, "chemicalRatio"]}
-                              className="flex-1 mb-0"
-                            >
-                              <InputNumber
-                                min={0}
-                                placeholder="Số"
-                                className="w-full text-sm rounded-lg h-9"
-                              />
-                            </Form.Item>
-                            <Form.Item {...restField} name={[name, "chemicalUnit"]} hidden>
-                              <Input />
-                            </Form.Item>
-                            <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
-                              %
-                            </span>
-                          </div>
+                      <Col xs={24} sm={12} md={6}>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "legacyTargetCrop"]}
+                          label={<>Đối tượng SD </>}
+                          className="mb-3"
+                        >
+                          <Select
+                            mode="multiple"
+                            options={cropOptions}
+                            loading={isCropsLoading}
+                            placeholder="Chọn cây trồng..."
+                            className="w-full text-sm min-h-[36px]"
+                            allowClear
+                            showSearch
+                            optionFilterProp="label"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={12} md={6}>
+                        <Form.Item
+                          {...restField}
+                          name={[name, "targetPest"]}
+                          label={<>Đối tượng DT </>}
+                          className="mb-3"
+                        >
+                          <Input
+                            placeholder="Rầy nâu..."
+                            className="text-sm rounded-lg h-9"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={24} md={12}>
+                        <Form.Item
+                          label={
+                            <>Lượng nước pha loãng (Tỉ lệ nông dược : nước) </>
+                          }
+                          className="mb-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Nông dược */}
+                            <div className="flex items-center flex-1 gap-2">
+                              <Form.Item
+                                {...restField}
+                                name={[name, "chemicalRatio"]}
+                                className="flex-1 mb-0"
+                              >
+                                <InputNumber
+                                  min={0}
+                                  placeholder="Số"
+                                  className="w-full text-sm rounded-lg h-9"
+                                />
+                              </Form.Item>
+                              <Form.Item
+                                {...restField}
+                                name={[name, "chemicalUnit"]}
+                                hidden
+                              >
+                                <Input />
+                              </Form.Item>
+                              <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
+                                %
+                              </span>
+                            </div>
 
-                          {/* Dấu hai chấm */}
-                          <span className="pb-1 text-lg font-bold leading-none text-gray-400">
-                            :
-                          </span>
-
-                          {/* Nước */}
-                          <div className="flex items-center flex-1 gap-2">
-                            <Form.Item
-                              {...restField}
-                              name={[name, "waterRatio"]}
-                              className="flex-1 mb-0"
-                            >
-                              <InputNumber
-                                min={0}
-                                placeholder="Số"
-                                className="w-full text-sm rounded-lg h-9"
-                              />
-                            </Form.Item>
-                            <Form.Item {...restField} name={[name, "waterUnit"]} hidden>
-                              <Input />
-                            </Form.Item>
-                            <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
-                              {MEASUREMENT_UNITS.LITER}
+                            {/* Dấu hai chấm */}
+                            <span className="pb-1 text-lg font-bold leading-none text-gray-400">
+                              :
                             </span>
+
+                            {/* Nước */}
+                            <div className="flex items-center flex-1 gap-2">
+                              <Form.Item
+                                {...restField}
+                                name={[name, "waterRatio"]}
+                                className="flex-1 mb-0"
+                              >
+                                <InputNumber
+                                  min={0}
+                                  placeholder="Số"
+                                  className="w-full text-sm rounded-lg h-9"
+                                />
+                              </Form.Item>
+                              <Form.Item
+                                {...restField}
+                                name={[name, "waterUnit"]}
+                                hidden
+                              >
+                                <Input />
+                              </Form.Item>
+                              <span className="inline-flex h-9 w-[90px] items-center justify-center rounded-lg bg-white text-sm text-gray-700">
+                                {MEASUREMENT_UNITS.LITER}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </Form.Item>
-                    </Col>
+                        </Form.Item>
+                      </Col>
                     </div>
                     <Col xs={24} sm={12} md={6}>
                       <Form.Item label={<>Liều lượng </>} className="mb-0">
@@ -476,7 +588,12 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                             {...restField}
                             name={[name, "dosage"]}
                             className="flex-1 mb-0"
-                            rules={[{ required: true, message: "Vui lòng nhập liều lượng" }]}
+                            rules={[
+                              {
+                                required: true,
+                                message: "Vui lòng nhập liều lượng",
+                              },
+                            ]}
                           >
                             <InputNumber
                               min={0}
@@ -484,17 +601,25 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                               className="w-full text-sm rounded-lg h-9"
                             />
                           </Form.Item>
-                          <Form.Item {...restField} name={[name, "dosageUnit"]} hidden>
+                          <Form.Item
+                            {...restField}
+                            name={[name, "dosageUnit"]}
+                            hidden
+                          >
                             <Input />
                           </Form.Item>
                         </div>
                       </Form.Item>
                     </Col>
                     <Col xs={24} sm={12} md={6}>
-                      <Form.Item label={<>Đơn vị tính / Diện tích</>} className="mb-0">
+                      <Form.Item
+                        label={<>Đơn vị tính / Diện tích</>}
+                        className="mb-0"
+                      >
                         <div className="flex items-center gap-2">
                           <span className="inline-flex h-9 w-full items-center px-3 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-700">
-                            {quantityUnit}/{formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}
+                            {quantityUnit}/
+                            {formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}
                           </span>
                         </div>
                       </Form.Item>
@@ -505,7 +630,12 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
                         name={[name, "isolationDays"]}
                         label={<>Cách ly (Ngày) </>}
                         className="mb-0"
-                        rules={[{ required: true, message: "Vui lòng nhập số ngày cách ly" }]}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Vui lòng nhập số ngày cách ly",
+                          },
+                        ]}
                       >
                         <InputNumber
                           min={0}
@@ -522,12 +652,14 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             <Button
               type="dashed"
               icon={<PlusOutlined />}
-              onClick={() => add({
-                chemicalUnit: "%",
-                waterUnit: MEASUREMENT_UNITS.LITER,
-                dosageUnit: quantityUnit,
-                areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-              })}
+              onClick={() =>
+                add({
+                  chemicalUnit: "%",
+                  waterUnit: MEASUREMENT_UNITS.LITER,
+                  dosageUnit: quantityUnit,
+                  areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+                })
+              }
               className="w-full mb-5 text-green-700 border-green-400 rounded-lg hover:border-green-500"
             >
               Thêm Liều lượng

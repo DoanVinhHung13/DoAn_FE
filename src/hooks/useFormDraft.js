@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Modal } from 'antd'
-import dayjs from 'dayjs'
+import { useCallback, useEffect, useRef, useState } from "react"
+import { Modal } from "antd"
+import dayjs from "dayjs"
 import {
   loadFormDraft,
   removeFormDraft,
   saveFormDraft,
-} from 'src/utils/formDraftStorage'
+} from "src/utils/formDraftStorage"
 
 export const RECENT_DRAFT_THRESHOLD_MS = 5 * 1000
 
-const formatSavedAt = (savedAt) => dayjs(savedAt).format('HH:mm, DD/MM/YYYY')
+const formatSavedAt = savedAt => dayjs(savedAt).format("HH:mm, DD/MM/YYYY")
 
 const useFormDraft = ({
   form,
@@ -30,46 +30,53 @@ const useFormDraft = ({
     }
   }, [])
 
-  const restoreDraft = useCallback((options = {}) => {
-    if (!enabled || !storageKey) return null
-    const draft = loadFormDraft(storageKey)
-    setDraftInfo(draft)
-    if (!draft) return null
+  const restoreDraft = useCallback(
+    (options = {}) => {
+      if (!enabled || !storageKey) return null
+      const draft = loadFormDraft(storageKey)
+      setDraftInfo(draft)
+      if (!draft) return null
 
-    const draftAge = Date.now() - Date.parse(draft.savedAt)
-    if (draftAge <= recentDraftThresholdMs) return draft
+      const draftAge = Date.now() - Date.parse(draft.savedAt)
+      if (draftAge <= recentDraftThresholdMs) return draft
 
-    if (promptedKeyRef.current === storageKey) return null
-    promptedKeyRef.current = storageKey
+      if (promptedKeyRef.current === storageKey) return null
+      promptedKeyRef.current = storageKey
 
-    Modal.confirm({
-      title: 'Đã tìm thấy dữ liệu chưa hoàn thành',
-      content: `Được lưu lúc ${formatSavedAt(draft.savedAt)}`,
-      okText: 'Khôi phục bản nháp',
-      cancelText: 'Bỏ bản nháp',
-      centered: true,
-      onOk: () => {
-        setDraftInfo(draft)
-        if (options.onRestore || onRestore) (options.onRestore || onRestore)(draft)
-        else form?.setFieldsValue(draft.data)
-      },
-      onCancel: () => {
-        removeFormDraft(storageKey)
-        setDraftInfo(null)
-      },
-    })
+      Modal.confirm({
+        title: "Đã tìm thấy dữ liệu chưa hoàn thành",
+        content: `Được lưu lúc ${formatSavedAt(draft.savedAt)}`,
+        okText: "Khôi phục bản nháp",
+        cancelText: "Bỏ bản nháp",
+        centered: true,
+        onOk: () => {
+          setDraftInfo(draft)
+          if (options.onRestore || onRestore)
+            (options.onRestore || onRestore)(draft)
+          else form?.setFieldsValue(draft.data)
+        },
+        onCancel: () => {
+          removeFormDraft(storageKey)
+          setDraftInfo(null)
+        },
+      })
 
-    return null
-  }, [enabled, form, onRestore, recentDraftThresholdMs, storageKey])
+      return null
+    },
+    [enabled, form, onRestore, recentDraftThresholdMs, storageKey],
+  )
 
-  const saveDraft = useCallback((values) => {
-    if (!enabled || !storageKey) return
-    cancelPendingSave()
-    timerRef.current = window.setTimeout(() => {
-      saveFormDraft(storageKey, values)
-      timerRef.current = null
-    }, debounceMs)
-  }, [cancelPendingSave, debounceMs, enabled, storageKey])
+  const saveDraft = useCallback(
+    values => {
+      if (!enabled || !storageKey) return
+      cancelPendingSave()
+      timerRef.current = window.setTimeout(() => {
+        saveFormDraft(storageKey, values)
+        timerRef.current = null
+      }, debounceMs)
+    },
+    [cancelPendingSave, debounceMs, enabled, storageKey],
+  )
 
   const clearDraft = useCallback(() => {
     cancelPendingSave()

@@ -1,9 +1,12 @@
-import React from 'react'
-import { Form, Select, Button, Typography } from 'antd'
-import { SafetyCertificateOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
-import CustomModal from 'src/components/Modal/CustomModal'
-import UserService from 'src/services/UserService'
-import { ROLE_CONFIG } from './roleConfig'
+import React from "react"
+import { Form, Select, Button, Typography } from "antd"
+import {
+  SafetyCertificateOutlined,
+  ExclamationCircleOutlined,
+} from "@ant-design/icons"
+import CustomModal from "src/components/Modal/CustomModal"
+import UserService from "src/services/UserService"
+import { ROLE_CONFIG } from "./roleConfig"
 
 const { Text } = Typography
 const { Option } = Select
@@ -23,7 +26,7 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
     }
   }, [open, user, form])
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async values => {
     try {
       setLoading(true)
       await UserService.assignRoles(user.id, { roles: [values.role] })
@@ -45,18 +48,31 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
           </div>
           <div>
             <div className="font-bold text-gray-800">Phân quyền người dùng</div>
-            <div className="text-[11px] text-gray-400 font-normal">{user?.fullName}</div>
+            <div className="text-[11px] text-gray-400 font-normal">
+              {user?.fullName}
+            </div>
           </div>
         </div>
       }
       footer={null}
       width={440}
     >
-      <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        className="mt-4"
+      >
         <Form.Item
           name="role"
-          label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Vai trò được gán</span>}
-          rules={[{ required: true, message: 'Phải chọn ít nhất một vai trò!' }]}
+          label={
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Vai trò được gán
+            </span>
+          }
+          rules={[
+            { required: true, message: "Phải chọn ít nhất một vai trò!" },
+          ]}
         >
           <Select
             placeholder="Chọn vai trò"
@@ -74,12 +90,15 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
         <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-6 flex gap-2 items-start">
           <ExclamationCircleOutlined className="text-amber-500 mt-0.5 flex-shrink-0" />
           <Text className="text-xs text-amber-700">
-            Thay đổi vai trò sẽ <strong>thay thế hoàn toàn</strong> danh sách hiện tại. Mọi phiên đăng nhập của tài khoản này sẽ bị ảnh hưởng.
+            Thay đổi vai trò sẽ <strong>thay thế hoàn toàn</strong> danh sách
+            hiện tại. Mọi phiên đăng nhập của tài khoản này sẽ bị ảnh hưởng.
           </Text>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-          <Button onClick={onClose} className="h-10 px-6 rounded-xl">Hủy</Button>
+          <Button onClick={onClose} className="h-10 px-6 rounded-xl">
+            Hủy
+          </Button>
           <Button
             type="primary"
             htmlType="submit"

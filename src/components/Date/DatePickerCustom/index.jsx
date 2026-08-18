@@ -7,7 +7,13 @@ const typeMap = {
   ranger: RangePicker,
   default: DatePicker,
 }
-const DatePickerCustom = ({ children, style, type, size = "middle", ...rest }) => {
+const DatePickerCustom = ({
+  children,
+  style,
+  type,
+  size = "middle",
+  ...rest
+}) => {
   const Component = typeMap[type] || DatePicker
   return (
     <Component {...rest} size={size} style={{ width: "100%", ...style }}>

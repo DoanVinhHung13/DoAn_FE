@@ -27,7 +27,10 @@ const LandPlotCreate = () => {
   const { canManage, routes } = useLandPlotAccess()
   const [form] = Form.useForm()
   const storageKey = getFormDraftKey("land-plot", "create")
-  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
+    form,
+    storageKey,
+  })
 
   // ── Hook: logic form chung ─────────────────────────────────────────────────
   const {
@@ -51,7 +54,10 @@ const LandPlotCreate = () => {
   useEffect(() => {
     const draft = restoreDraft()
     if (draft?.data) {
-      form.setFieldsValue({ areaUnit: MEASUREMENT_UNITS.SQUARE_METER, ...draft.data })
+      form.setFieldsValue({
+        areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+        ...draft.data,
+      })
     }
   }, [form, restoreDraft])
 
@@ -139,7 +145,12 @@ const LandPlotCreate = () => {
         {/* Cột trái: form thông tin */}
         <Col xs={24} xl={10}>
           <Card title="Thông tin vùng trồng">
-            <Form form={form} layout="vertical" onFieldsChange={handleFieldsChange} onValuesChange={(_, allValues) => saveDraft(allValues)}>
+            <Form
+              form={form}
+              layout="vertical"
+              onFieldsChange={handleFieldsChange}
+              onValuesChange={(_, allValues) => saveDraft(allValues)}
+            >
               <LandPlotFormFields showAreaPlaceholder />
             </Form>
           </Card>
@@ -155,11 +166,7 @@ const LandPlotCreate = () => {
             }
           >
             {mapError && (
-              <Alert
-                className="mb-3"
-                type="error"
-                message={mapError}
-              />
+              <Alert className="mb-3" type="error" message={mapError} />
             )}
             <LandPlotMap
               mode="draw"
@@ -167,7 +174,8 @@ const LandPlotCreate = () => {
               overlapPlots={existingPlots}
               onPolygonChange={handlePolygonChange}
               onAddressSelect={({ address, latitude, longitude }) => {
-                if (address) form.setFieldsValue({ address, latitude, longitude })
+                if (address)
+                  form.setFieldsValue({ address, latitude, longitude })
               }}
             />
           </Card>

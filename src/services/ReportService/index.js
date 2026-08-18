@@ -1,4 +1,4 @@
-import http from '../01_axios'
+import http from "../01_axios"
 import {
   apiGetDashboardOverview,
   apiGetCultivatedAreaReport,
@@ -9,34 +9,32 @@ import {
   apiGetQrScanReport,
   apiExportReportExcel,
   apiExportReportPdf,
-} from './urls'
+} from "./urls"
 
-const getDashboardOverview = (params) =>
+const getDashboardOverview = params =>
   http.get(apiGetDashboardOverview, { params })
 
-const getCultivatedAreaReport = (params) =>
+const getCultivatedAreaReport = params =>
   http.get(apiGetCultivatedAreaReport, { params })
 
-const getMaterialUsageReport = (params) =>
+const getMaterialUsageReport = params =>
   http.get(apiGetMaterialUsageReport, { params })
 
-const getTaskProgressReport = (params) =>
+const getTaskProgressReport = params =>
   http.get(apiGetTaskProgressReport, { params })
 
-const getLaborReport = (params) =>
-  http.get(apiGetLaborReport, { params })
+const getLaborReport = params => http.get(apiGetLaborReport, { params })
 
-const getHarvestYieldReport = (params) =>
+const getHarvestYieldReport = params =>
   http.get(apiGetHarvestYieldReport, { params })
 
-const getQrScanReport = (params) =>
-  http.get(apiGetQrScanReport, { params })
+const getQrScanReport = params => http.get(apiGetQrScanReport, { params })
 
-const exportReportExcel = (params) =>
-  http.get(apiExportReportExcel, { params, responseType: 'blob' })
+const exportReportExcel = params =>
+  http.get(apiExportReportExcel, { params, responseType: "blob" })
 
-const exportReportPdf = (params) =>
-  http.get(apiExportReportPdf, { params, responseType: 'blob' })
+const exportReportPdf = params =>
+  http.get(apiExportReportPdf, { params, responseType: "blob" })
 
 const ReportService = {
   getDashboardOverview,

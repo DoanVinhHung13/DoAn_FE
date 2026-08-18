@@ -6,8 +6,8 @@ import {
   PhoneOutlined,
   SaveOutlined,
   UserOutlined,
-} from "@ant-design/icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+} from "@ant-design/icons"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Avatar,
   Button,
@@ -21,29 +21,29 @@ import {
   Select,
   Typography,
   Upload,
-} from "antd";
-import dayjs from "dayjs";
-import { useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import TitleCustom from "src/components/TitleCustom";
-import AddressSelectorField from "src/components/AddressSelectorField";
-import { SYSTEM_KEY } from "src/constants/systemKey";
-import { useSystemKey } from "src/hooks/useSystemKey";
-import { useAppDispatch } from "src/redux/hooks";
-import authSession from "src/redux/authSession";
-import { setUserInfo } from "src/redux/slices/appGlobalSlice";
-import UserService from "src/services/UserService";
-import { getRoleLabel } from "src/utils/roleLabels";
-import { applyApiFieldErrors, getApiMessage } from "src/services/core/apiError";
-import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers";
+} from "antd"
+import dayjs from "dayjs"
+import { useEffect, useMemo, useState } from "react"
+import { useSelector } from "react-redux"
+import TitleCustom from "src/components/TitleCustom"
+import AddressSelectorField from "src/components/AddressSelectorField"
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { useAppDispatch } from "src/redux/hooks"
+import authSession from "src/redux/authSession"
+import { setUserInfo } from "src/redux/slices/appGlobalSlice"
+import UserService from "src/services/UserService"
+import { getRoleLabel } from "src/utils/roleLabels"
+import { applyApiFieldErrors, getApiMessage } from "src/services/core/apiError"
+import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers"
 import {
   formatDate,
   formatDateForApi,
   getLocalNow,
   parseDate,
-} from "src/utils/dateFormatters";
+} from "src/utils/dateFormatters"
 
-const { Text, Title } = Typography;
+const { Text, Title } = Typography
 
 const PROFILE_FIELD_MAPPING = {
   FullName: "fullName",
@@ -51,29 +51,29 @@ const PROFILE_FIELD_MAPPING = {
   DateOfBirth: "dateOfBirth",
   Gender: "gender",
   Address: "address",
-};
+}
 
-const displayValue = (value) => value || "Chưa cập nhật";
+const displayValue = value => value || "Chưa cập nhật"
 
-const fullNamePattern = /^[\p{L}\s]+$/u;
-const addressPattern = /^[\p{L}\p{N}\s,.\-/]+$/u;
+const fullNamePattern = /^[\p{L}\s]+$/u
+const addressPattern = /^[\p{L}\p{N}\s,.\-/]+$/u
 
-const isValidPhone = (phone) => {
-  const cleaned = phone.replace(/[\s\-()]/g, "");
-  return /^(\+84|84|0)[0-9]{9,10}$/.test(cleaned);
-};
+const isValidPhone = phone => {
+  const cleaned = phone.replace(/[\s\-()]/g, "")
+  return /^(\+84|84|0)[0-9]{9,10}$/.test(cleaned)
+}
 
 const AccountInfo = () => {
-  const { userInfo: user } = useSelector((state) => state.appGlobal);
-  const dispatch = useAppDispatch();
-  const queryClient = useQueryClient();
-  const { getCombo, getDescription } = useSystemKey();
-  const genderOptions = getCombo(SYSTEM_KEY.GENDER);
-  const [form] = Form.useForm();
-  const [editing, setEditing] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
-  const [uploadError, setUploadError] = useState("");
-  const watchedName = Form.useWatch("fullName", form);
+  const { userInfo: user } = useSelector(state => state.appGlobal)
+  const dispatch = useAppDispatch()
+  const queryClient = useQueryClient()
+  const { getCombo, getDescription } = useSystemKey()
+  const genderOptions = getCombo(SYSTEM_KEY.GENDER)
+  const [form] = Form.useForm()
+  const [editing, setEditing] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "")
+  const [uploadError, setUploadError] = useState("")
+  const watchedName = Form.useWatch("fullName", form)
 
   const initialValues = useMemo(
     () => ({
@@ -84,93 +84,97 @@ const AccountInfo = () => {
       gender: user?.gender || undefined,
       address: user?.address || "",
     }),
-    [user]
-  );
+    [user],
+  )
 
   useEffect(() => {
-    form.setFieldsValue(initialValues);
-  }, [form, initialValues]);
+    form.setFieldsValue(initialValues)
+  }, [form, initialValues])
 
   const updateMutation = useMutation({
-    mutationFn: async (values) => {
+    mutationFn: async values => {
       const payload = {
         fullName: values.fullName.trim().replace(/\s+/g, " "),
         phoneNumber: values.phoneNumber?.trim() || null,
         dateOfBirth: formatDateForApi(values.dateOfBirth),
         gender: values.gender || null,
         address: values.address?.trim().replace(/\s+/g, " ") || null,
-      };
+      }
       return await UserService.updateMyProfile(payload, {
         errorHandling: "form",
         fieldErrorMapping: PROFILE_FIELD_MAPPING,
-      });
+      })
     },
     onSuccess: (response, values) => {
-      const updated = response?.data || {};
+      const updated = response?.data || {}
       const nextUser = {
         ...user,
         fullName: values.fullName?.trim(),
         phoneNumber: values.phoneNumber?.trim() || null,
         gender: values.gender || null,
-        dateOfBirth: values.dateOfBirth ? values.dateOfBirth.format("YYYY-MM-DD") : null,
+        dateOfBirth: values.dateOfBirth
+          ? values.dateOfBirth.format("YYYY-MM-DD")
+          : null,
         ...updated,
-      };
-      dispatch(setUserInfo(nextUser));
-      authSession.updateUser(nextUser);
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      setEditing(false);
+      }
+      dispatch(setUserInfo(nextUser))
+      authSession.updateUser(nextUser)
+      queryClient.invalidateQueries({ queryKey: ["users"] })
+      setEditing(false)
     },
-    onError: (error) => {
+    onError: error => {
       applyApiFieldErrors(form, error, PROFILE_FIELD_MAPPING)
     },
-  });
+  })
 
   const handleCancel = () => {
-    form.setFieldsValue(initialValues);
-    form.setFields([]);
-    setEditing(false);
-  };
+    form.setFieldsValue(initialValues)
+    form.setFields([])
+    setEditing(false)
+  }
 
   const handleAvatarUpload = async ({ file, onSuccess, onError }) => {
-    const formData = new FormData();
-    formData.append("file", file);
+    const formData = new FormData()
+    formData.append("file", file)
 
     try {
-      const response = await UserService.uploadMyAvatar(formData);
-      const payload = response?.data?.data || response?.data || {};
-      const newAvatarUrl = payload.avatarUrl || payload.avatar || payload.url;
+      const response = await UserService.uploadMyAvatar(formData)
+      const payload = response?.data?.data || response?.data || {}
+      const newAvatarUrl = payload.avatarUrl || payload.avatar || payload.url
 
-      setAvatarUrl(newAvatarUrl);
-      const nextUser = { ...user, avatarUrl: newAvatarUrl };
-      dispatch(setUserInfo(nextUser));
-      authSession.updateUser(nextUser);
-      onSuccess(response);
+      setAvatarUrl(newAvatarUrl)
+      const nextUser = { ...user, avatarUrl: newAvatarUrl }
+      dispatch(setUserInfo(nextUser))
+      authSession.updateUser(nextUser)
+      onSuccess(response)
     } catch (error) {
-      const errorMsg = getApiMessage(error?.responseData || error);
+      const errorMsg = getApiMessage(error?.responseData || error)
       if (errorMsg) {
-        setUploadError(errorMsg);
+        setUploadError(errorMsg)
       }
-      onError(error);
+      onError(error)
     }
-  };
+  }
 
-  const beforeAvatarUpload = (file) => {
-    setUploadError("");
-    const validType = ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+  const beforeAvatarUpload = file => {
+    setUploadError("")
+    const validType = ["image/jpeg", "image/png", "image/webp"].includes(
+      file.type,
+    )
     if (!validType) {
-      setUploadError("Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.");
-      return Upload.LIST_IGNORE;
+      setUploadError("Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP.")
+      return Upload.LIST_IGNORE
     }
     if (file.size / 1024 / 1024 > 5) {
-      setUploadError("Dung lượng ảnh không được vượt quá 5MB.");
-      return Upload.LIST_IGNORE;
+      setUploadError("Dung lượng ảnh không được vượt quá 5MB.")
+      return Upload.LIST_IGNORE
     }
-    return true;
-  };
+    return true
+  }
 
-  const previewName = editing ? watchedName || user?.fullName : user?.fullName;
-  const role = getRoleLabel(user?.role || user?.roles?.[0], "");
-  const addressText = [user?.address].filter(Boolean).join(", ");
+  const previewName = editing ? watchedName || user?.fullName : user?.fullName
+  const role = getRoleLabel(user?.role || user?.roles?.[0], "")
+  const addressText = [user?.address].filter(Boolean).join(", ")
 
   const summaryRow = (icon, label, value) => (
     <div className="flex items-start gap-3">
@@ -186,12 +190,12 @@ const AccountInfo = () => {
         </Text>
       </div>
     </div>
-  );
+  )
 
   return (
     <div className="mx-auto max-w-[1180px] space-y-6">
       <TitleCustom className="!mb-0 flex items-center gap-2">
-        <UserOutlined style={{ fontSize: '24px', color: '#15803d' }} />
+        <UserOutlined style={{ fontSize: "24px", color: "#15803d" }} />
         Thông tin cá nhân
       </TitleCustom>
 
@@ -271,7 +275,8 @@ const AccountInfo = () => {
                   <Text type="secondary">Giới tính</Text>
                   <Text strong>
                     {displayValue(
-                      getDescription(SYSTEM_KEY.GENDER, user?.gender) || user?.gender
+                      getDescription(SYSTEM_KEY.GENDER, user?.gender) ||
+                        user?.gender,
                     )}
                   </Text>
 
@@ -300,7 +305,7 @@ const AccountInfo = () => {
                 <Form
                   form={form}
                   layout="vertical"
-                  onFinish={(values) => updateMutation.mutate(values)}
+                  onFinish={values => updateMutation.mutate(values)}
                   onFinishFailed={() => {}}
                   scrollToFirstError
                 >
@@ -317,24 +322,44 @@ const AccountInfo = () => {
                           },
                           {
                             validator: (_, value) => {
-                              if (!value) return Promise.resolve();
-                              const trimmed = value.trim();
+                              if (!value) return Promise.resolve()
+                              const trimmed = value.trim()
                               if (!trimmed) {
-                                return Promise.reject(new Error("Họ và tên không được chỉ chứa khoảng trắng."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Họ và tên không được chỉ chứa khoảng trắng.",
+                                  ),
+                                )
                               }
                               if (trimmed.length < 2) {
-                                return Promise.reject(new Error("Họ và tên phải có ít nhất 2 ký tự."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Họ và tên phải có ít nhất 2 ký tự.",
+                                  ),
+                                )
                               }
                               if (trimmed.length > 100) {
-                                return Promise.reject(new Error("Họ và tên không được vượt quá 100 ký tự."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Họ và tên không được vượt quá 100 ký tự.",
+                                  ),
+                                )
                               }
                               if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                                return Promise.reject(new Error("Họ và tên không được chứa nhiều khoảng trắng liên tiếp."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Họ và tên không được chứa nhiều khoảng trắng liên tiếp.",
+                                  ),
+                                )
                               }
                               if (!fullNamePattern.test(trimmed)) {
-                                return Promise.reject(new Error("Họ và tên không hợp lệ. Vui lòng chỉ nhập chữ cái và khoảng trắng."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Họ và tên không hợp lệ. Vui lòng chỉ nhập chữ cái và khoảng trắng.",
+                                  ),
+                                )
                               }
-                              return Promise.resolve();
+                              return Promise.resolve()
                             },
                           },
                         ]}
@@ -364,19 +389,31 @@ const AccountInfo = () => {
                         rules={[
                           {
                             validator: (_, value) => {
-                              if (!value) return Promise.resolve();
-                              const trimmed = value.trim();
-                              if (!trimmed) return Promise.resolve();
+                              if (!value) return Promise.resolve()
+                              const trimmed = value.trim()
+                              if (!trimmed) return Promise.resolve()
                               if (trimmed.length > 100) {
-                                return Promise.reject(new Error("Số điện thoại không được vượt quá 100 ký tự."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Số điện thoại không được vượt quá 100 ký tự.",
+                                  ),
+                                )
                               }
                               if (/\s/.test(trimmed)) {
-                                return Promise.reject(new Error("Số điện thoại không được chứa khoảng trắng."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Số điện thoại không được chứa khoảng trắng.",
+                                  ),
+                                )
                               }
                               if (!isValidPhone(trimmed)) {
-                                return Promise.reject(new Error("Định dạng số điện thoại không hợp lệ. Vui lòng nhập số điện thoại hợp lệ."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Định dạng số điện thoại không hợp lệ. Vui lòng nhập số điện thoại hợp lệ.",
+                                  ),
+                                )
                               }
-                              return Promise.resolve();
+                              return Promise.resolve()
                             },
                           },
                         ]}
@@ -394,19 +431,27 @@ const AccountInfo = () => {
                         label="Ngày sinh"
                         required
                         rules={[
-                          { required: true, message: "Vui lòng chọn ngày sinh." },
+                          {
+                            required: true,
+                            message: "Vui lòng chọn ngày sinh.",
+                          },
                           {
                             validator: (_, value) => {
-                              if (!value) return Promise.resolve();
-                              if (!dayjs(value).isValid() || value.isAfter(getLocalNow(), "day")) {
-                                return Promise.reject(new Error("Ngày sinh không hợp lệ."));
+                              if (!value) return Promise.resolve()
+                              if (
+                                !dayjs(value).isValid() ||
+                                value.isAfter(getLocalNow(), "day")
+                              ) {
+                                return Promise.reject(
+                                  new Error("Ngày sinh không hợp lệ."),
+                                )
                               }
                               if (getLocalNow().diff(value, "year") < 15) {
                                 return Promise.reject(
-                                  new Error("Người dùng phải từ đủ 15 tuổi.")
-                                );
+                                  new Error("Người dùng phải từ đủ 15 tuổi."),
+                                )
                               }
-                              return Promise.resolve();
+                              return Promise.resolve()
                             },
                           },
                         ]}
@@ -415,7 +460,7 @@ const AccountInfo = () => {
                           format="DD/MM/YYYY"
                           placeholder="Chọn ngày sinh"
                           className="h-11 w-full"
-                          disabledDate={(current) =>
+                          disabledDate={current =>
                             current && current > getLocalNow().endOf("day")
                           }
                         />
@@ -430,7 +475,7 @@ const AccountInfo = () => {
                           className="h-11"
                           options={
                             genderOptions?.length > 0
-                              ? genderOptions.map((opt) => ({
+                              ? genderOptions.map(opt => ({
                                   value: opt.codeValue || opt.CodeValue,
                                   label: opt.description || opt.Description,
                                 }))
@@ -459,22 +504,36 @@ const AccountInfo = () => {
                         rules={[
                           {
                             validator: (_, value) => {
-                              if (!value) return Promise.resolve();
-                              const trimmed = value.trim();
-                              if (!trimmed) return Promise.resolve();
+                              if (!value) return Promise.resolve()
+                              const trimmed = value.trim()
+                              if (!trimmed) return Promise.resolve()
                               if (trimmed.length < 3) {
-                                return Promise.reject(new Error("Địa chỉ chi tiết phải có ít nhất 3 ký tự."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Địa chỉ chi tiết phải có ít nhất 3 ký tự.",
+                                  ),
+                                )
                               }
                               if (trimmed.length > 500) {
-                                return Promise.reject(new Error("Địa chỉ chi tiết không được vượt quá 500 ký tự."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Địa chỉ chi tiết không được vượt quá 500 ký tự.",
+                                  ),
+                                )
                               }
                               if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                                return Promise.reject(new Error("Địa chỉ không được chứa nhiều khoảng trắng liên tiếp."));
+                                return Promise.reject(
+                                  new Error(
+                                    "Địa chỉ không được chứa nhiều khoảng trắng liên tiếp.",
+                                  ),
+                                )
                               }
                               if (!addressPattern.test(trimmed)) {
-                                return Promise.reject(new Error("Địa chỉ chi tiết không hợp lệ."));
+                                return Promise.reject(
+                                  new Error("Địa chỉ chi tiết không hợp lệ."),
+                                )
                               }
-                              return Promise.resolve();
+                              return Promise.resolve()
                             },
                           },
                         ]}
@@ -485,7 +544,10 @@ const AccountInfo = () => {
                   </Row>
 
                   <div className="flex justify-end gap-3 pt-3">
-                    <Button onClick={handleCancel} className="h-10 px-5 font-semibold">
+                    <Button
+                      onClick={handleCancel}
+                      className="h-10 px-5 font-semibold"
+                    >
                       Hủy
                     </Button>
                     <Button
@@ -505,7 +567,7 @@ const AccountInfo = () => {
         </Col>
       </Row>
     </div>
-  );
-};
+  )
+}
 
-export default AccountInfo;
+export default AccountInfo

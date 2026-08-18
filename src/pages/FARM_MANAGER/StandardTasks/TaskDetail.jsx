@@ -1,24 +1,28 @@
-import { ArrowLeftOutlined, CheckSquareOutlined, EditOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Skeleton, Tag } from 'antd'
-import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import TitleCustom from 'src/components/TitleCustom'
-import ROUTER from 'src/router/ROUTER'
-import TaskCatalogService from 'src/services/TaskCatalogService'
-import TaskFormFields from './TaskFormFields'
+import {
+  ArrowLeftOutlined,
+  CheckSquareOutlined,
+  EditOutlined,
+} from "@ant-design/icons"
+import { Button, Card, Form, Skeleton, Tag } from "antd"
+import React, { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import TitleCustom from "src/components/TitleCustom"
+import ROUTER from "src/router/ROUTER"
+import TaskCatalogService from "src/services/TaskCatalogService"
+import TaskFormFields from "./TaskFormFields"
 import {
   CULTIVATION_TASK_TYPES,
   getCultivationTaskTypeLabel,
   normalizeCultivationTaskType,
-} from 'src/constants/cultivationTask'
+} from "src/constants/cultivationTask"
 
-const unwrap = (res) => res?.data?.data ?? res?.data ?? res
+const unwrap = res => res?.data?.data ?? res?.data ?? res
 const TaskDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const [initialLoading, setInitialLoading] = useState(true)
-  const taskType = Form.useWatch('taskType', form)
+  const taskType = Form.useWatch("taskType", form)
   const taskTypeLabel = getCultivationTaskTypeLabel(taskType)
 
   useEffect(() => {
@@ -28,10 +32,16 @@ const TaskDetail = () => {
         const res = await TaskCatalogService.getTaskCatalogById(id)
         const data = unwrap(res) || {}
         form.setFieldsValue({
-          cropCatalogId: data.cropCatalogId || '__ALL__',
-          cropId: data.cropId || '__ALL__',
-          taskType: normalizeCultivationTaskType(data.taskType) || CULTIVATION_TASK_TYPES.NON_MATERIAL,
-          activityType: data.activityType || (data.taskType === CULTIVATION_TASK_TYPES.HARVEST ? 'HARVESTING' : 'OTHER'),
+          cropCatalogId: data.cropCatalogId || "__ALL__",
+          cropId: data.cropId || "__ALL__",
+          taskType:
+            normalizeCultivationTaskType(data.taskType) ||
+            CULTIVATION_TASK_TYPES.NON_MATERIAL,
+          activityType:
+            data.activityType ||
+            (data.taskType === CULTIVATION_TASK_TYPES.HARVEST
+              ? "HARVESTING"
+              : "OTHER"),
           name: data.name,
           description: data.description,
         })
@@ -48,7 +58,10 @@ const TaskDetail = () => {
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_TASK_CATALOGS)}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTER.FM_TASK_CATALOGS)}
+          >
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
@@ -58,14 +71,19 @@ const TaskDetail = () => {
         </div>
         <div className="flex items-center gap-3">
           {!initialLoading && (
-            <Tag color={taskType === 'HARVEST' ? 'gold' : 'blue'} className="m-0 rounded-full px-3 py-1">
+            <Tag
+              color={taskType === "HARVEST" ? "gold" : "blue"}
+              className="m-0 rounded-full px-3 py-1"
+            >
               {taskTypeLabel}
             </Tag>
           )}
           <Button
             type="primary"
             icon={<EditOutlined />}
-            onClick={() => navigate(ROUTER.FM_TASK_CATALOG_EDIT.replace(':id', id))}
+            onClick={() =>
+              navigate(ROUTER.FM_TASK_CATALOG_EDIT.replace(":id", id))
+            }
             className="h-10 rounded-xl border-0 bg-blue-600 px-5 font-bold shadow-lg shadow-blue-100"
           >
             Chỉnh sửa
@@ -73,7 +91,11 @@ const TaskDetail = () => {
         </div>
       </div>
 
-      <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: '24px' }}>
+      <Card
+        bordered={false}
+        className="shadow-sm rounded-2xl"
+        bodyStyle={{ padding: "24px" }}
+      >
         {initialLoading ? (
           <Skeleton active paragraph={{ rows: 6 }} />
         ) : (

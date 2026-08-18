@@ -1,5 +1,6 @@
 const FALLBACK_MESSAGES = {
-  network: "Không thể kết nối đến hệ thống. Vui lòng kiểm tra đường truyền và thử lại.",
+  network:
+    "Không thể kết nối đến hệ thống. Vui lòng kiểm tra đường truyền và thử lại.",
   timeout: "Yêu cầu đã hết thời gian chờ. Vui lòng thử lại.",
   unknown: "Yêu cầu thất bại. Vui lòng thử lại sau.",
 }
@@ -9,7 +10,9 @@ const GENERIC_MESSAGES = new Set(["success", "ok", "thành công", "thành công
 const asText = value => (typeof value === "string" ? value.trim() : "")
 
 const asFieldMessage = value =>
-  Array.isArray(value) ? asText(value.find(item => asText(item))) : asText(value)
+  Array.isArray(value)
+    ? asText(value.find(item => asText(item)))
+    : asText(value)
 
 const isApiResponse = body =>
   Boolean(body) &&
@@ -40,7 +43,9 @@ const toFormFieldName = field => {
 
   return field
     .split(".")
-    .map(part => (part ? `${part.charAt(0).toLowerCase()}${part.slice(1)}` : part))
+    .map(part =>
+      part ? `${part.charAt(0).toLowerCase()}${part.slice(1)}` : part,
+    )
 }
 
 const hasMappedFieldErrors = (error, fieldMapping) =>
@@ -72,7 +77,11 @@ export const shouldShowGlobalApiError = (error, config = {}) => {
 }
 
 export const applyApiFieldErrors = (form, error, fieldMapping) => {
-  if (error?.kind !== "api" || !Array.isArray(error?.fieldErrors) || !form?.setFields) {
+  if (
+    error?.kind !== "api" ||
+    !Array.isArray(error?.fieldErrors) ||
+    !form?.setFields
+  ) {
     return 0
   }
 
@@ -80,9 +89,9 @@ export const applyApiFieldErrors = (form, error, fieldMapping) => {
   const fieldErrors = error.fieldErrors.reduce((result, fieldError) => {
     const backendField = fieldError?.field
     const name = fieldMapping
-      ? (Object.prototype.hasOwnProperty.call(fieldMapping, backendField)
-          ? fieldMapping[backendField]
-          : null)
+      ? Object.prototype.hasOwnProperty.call(fieldMapping, backendField)
+        ? fieldMapping[backendField]
+        : null
       : toFormFieldName(backendField)
     const message = asFieldMessage(fieldError?.message)
 
@@ -106,7 +115,11 @@ export const createApiError = ({
   fallbackMessage,
   noticeShown = false,
 } = {}) => {
-  const message = getApiMessage(body) || fallbackMessage || FALLBACK_MESSAGES[kind] || FALLBACK_MESSAGES.unknown
+  const message =
+    getApiMessage(body) ||
+    fallbackMessage ||
+    FALLBACK_MESSAGES[kind] ||
+    FALLBACK_MESSAGES.unknown
   const error = new Error(message, { cause })
   error.name = "ApiError"
   error.isApiError = true
@@ -133,18 +146,42 @@ export const normalizeApiError = (error, { noticeShown = false } = {}) => {
   const body = error?.response?.data
   const status = error?.response?.status
   if (isApiResponse(body)) {
-    return createApiError({ body, status, config: error?.config, cause: error, noticeShown })
+    return createApiError({
+      body,
+      status,
+      config: error?.config,
+      cause: error,
+      noticeShown,
+    })
   }
 
   if (error?.code === "ECONNABORTED" || error?.code === "ETIMEDOUT") {
-    return createApiError({ status, config: error?.config, cause: error, kind: "timeout", noticeShown })
+    return createApiError({
+      status,
+      config: error?.config,
+      cause: error,
+      kind: "timeout",
+      noticeShown,
+    })
   }
 
   if (!error?.response) {
-    return createApiError({ status, config: error?.config, cause: error, kind: "network", noticeShown })
+    return createApiError({
+      status,
+      config: error?.config,
+      cause: error,
+      kind: "network",
+      noticeShown,
+    })
   }
 
-  return createApiError({ status, config: error?.config, cause: error, kind: "unknown", noticeShown })
+  return createApiError({
+    status,
+    config: error?.config,
+    cause: error,
+    kind: "unknown",
+    noticeShown,
+  })
 }
 
 export const isApiError = error => Boolean(error?.isApiError)

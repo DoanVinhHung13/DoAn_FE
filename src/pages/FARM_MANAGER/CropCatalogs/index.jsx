@@ -7,48 +7,60 @@ import {
   SearchOutlined,
   StopOutlined,
   DeleteOutlined,
-} from '@ant-design/icons'
+} from "@ant-design/icons"
+import { Button, Input, Popconfirm, Select, Tooltip } from "antd"
+import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
+import { UI } from "src/constants/uiConfig"
+
+import CustomModal from "src/components/Modal/CustomModal"
+import CustomTable from "src/components/Table/CustomTable"
+import TitleCustom from "src/components/TitleCustom"
 import {
-  Button,
-  Input,
-  Popconfirm,
-  Select,
-  Tooltip,
-} from 'antd'
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { CropCatalogIcon } from 'src/assets/icon/menu/MenuIcons'
-import { UI } from 'src/constants/uiConfig'
+  createSTTColumn,
+  createStatusColumn,
+} from "src/components/Table/columns.jsx"
+import { createPaginationConfig } from "src/utils/tableUtils"
+import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
+import ROUTER from "src/router/ROUTER"
 
-import CustomModal from 'src/components/Modal/CustomModal'
-import CustomTable from 'src/components/Table/CustomTable'
-import TitleCustom from 'src/components/TitleCustom'
-import { createSTTColumn, createStatusColumn } from 'src/components/Table/columns.jsx'
-import { createPaginationConfig } from 'src/utils/tableUtils'
-import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import ROUTER from 'src/router/ROUTER'
+import CropCatalogService from "src/services/CropCatalogService"
+import { useListManagement } from "src/hooks/useListManagement"
 
-import CropCatalogService from 'src/services/CropCatalogService'
-import { useListManagement } from 'src/hooks/useListManagement'
-
-const unwrapItems = (response) => {
+const unwrapItems = response => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
-  const data = Array.isArray(payload) ? payload : (payload.items || [])
-  return { items: data, total: payload?.totalItems ?? payload?.totalCount ?? data.length }
+  const data = Array.isArray(payload) ? payload : payload.items || []
+  return {
+    items: data,
+    total: payload?.totalItems ?? payload?.totalCount ?? data.length,
+  }
 }
 
 const CropCatalogs = () => {
   const navigate = useNavigate()
 
   const {
-    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
-    page, setPage, pageSize, setPageSize,
-    filters, updateFilter,
-    listData, setListData, totalRecords, setTotalRecords,
-    loading, setLoading,
+    searchInput,
+    setSearchInput,
+    search,
+    handleSearch,
+    handleClearSearch,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    filters,
+    updateFilter,
+    listData,
+    setListData,
+    totalRecords,
+    setTotalRecords,
+    loading,
+    setLoading,
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
-    initialFilters: { status: 'ACTIVE' },
+    initialFilters: { status: "ACTIVE" },
   })
 
   const statusFilter = filters.status
@@ -57,9 +69,9 @@ const CropCatalogs = () => {
   const [statusModal, setStatusModal] = useState({ open: false, item: null })
 
   const selectStatusOptions = [
-    { value: 'all', label: 'Tất cả trạng thái' },
-    { value: 'ACTIVE', label: 'Hoạt động' },
-    { value: 'INACTIVE', label: 'Ngừng hoạt động' },
+    { value: "all", label: "Tất cả trạng thái" },
+    { value: "ACTIVE", label: "Hoạt động" },
+    { value: "INACTIVE", label: "Ngừng hoạt động" },
   ]
 
   const getList = useCallback(async () => {
@@ -69,7 +81,7 @@ const CropCatalogs = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
-        Status: statusFilter === 'all' ? undefined : statusFilter,
+        Status: statusFilter === "all" ? undefined : statusFilter,
       }
       const res = await CropCatalogService.getCropCatalogs(params)
       const { items, total } = unwrapItems(res)
@@ -78,7 +90,15 @@ const CropCatalogs = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, statusFilter, setLoading, setListData, setTotalRecords])
+  }, [
+    page,
+    pageSize,
+    search,
+    statusFilter,
+    setLoading,
+    setListData,
+    setTotalRecords,
+  ])
 
   useEffect(() => {
     getList()
@@ -89,9 +109,10 @@ const CropCatalogs = () => {
     const { item } = statusModal
     try {
       setStatusLoading(true)
-      const toggle = item.isActive !== false
-        ? CropCatalogService.deactivateCropCatalog
-        : CropCatalogService.reactivateCropCatalog
+      const toggle =
+        item.isActive !== false
+          ? CropCatalogService.deactivateCropCatalog
+          : CropCatalogService.reactivateCropCatalog
       await toggle(item.id)
       setStatusModal({ open: false, item: null })
       getList()
@@ -100,7 +121,7 @@ const CropCatalogs = () => {
     }
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async id => {
     try {
       await CropCatalogService.deleteCropCatalog(id)
       getList()
@@ -112,27 +133,29 @@ const CropCatalogs = () => {
   const columns = [
     createSTTColumn(page, pageSize),
     {
-      title: 'Tên loại cây trồng',
-      dataIndex: 'name',
-      key: 'name',
-      render: (v) => <span className="font-semibold text-gray-800">{v || '—'}</span>,
+      title: "Tên loại cây trồng",
+      dataIndex: "name",
+      key: "name",
+      render: v => (
+        <span className="font-semibold text-gray-800">{v || "—"}</span>
+      ),
     },
     {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
       ellipsis: true,
-      render: (v) => <span className="text-sm text-gray-500">{v || '—'}</span>,
+      render: v => <span className="text-sm text-gray-500">{v || "—"}</span>,
     },
     createStatusColumn({
-      getLabel: (isActive) => isActive ? 'Hoạt động' : 'Ngừng hoạt động',
+      getLabel: isActive => (isActive ? "Hoạt động" : "Ngừng hoạt động"),
     }),
     {
-      title: 'Hành động',
-      key: 'actions',
-      fixed: 'right',
+      title: "Hành động",
+      key: "actions",
+      fixed: "right",
       width: 140,
-      align: 'center',
+      align: "center",
       render: (_, record) => {
         const active = record.isActive !== false
         return (
@@ -142,7 +165,7 @@ const CropCatalogs = () => {
                 type="text"
                 icon={<EditOutlined className="text-lg text-green-500" />}
                 className={UI.btn.iconEdit}
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   navigate(`${ROUTER.FM_CROP_CATALOGS}/${record.id}/edit`)
                 }}
@@ -153,22 +176,24 @@ const CropCatalogs = () => {
                 type="text"
                 icon={<EyeOutlined className="text-lg text-blue-500" />}
                 className={UI.btn.iconImport}
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   navigate(`${ROUTER.FM_CROP_CATALOGS}/${record.id}`)
                 }}
               />
             </Tooltip>
-            <Tooltip title={active ? 'Vô hiệu hóa' : 'Kích hoạt'}>
+            <Tooltip title={active ? "Vô hiệu hóa" : "Kích hoạt"}>
               <Button
                 type="text"
                 icon={
-                  active
-                    ? <StopOutlined className="text-lg text-red-500" />
-                    : <CheckCircleOutlined className="text-lg text-green-500" />
+                  active ? (
+                    <StopOutlined className="text-lg text-red-500" />
+                  ) : (
+                    <CheckCircleOutlined className="text-lg text-green-500" />
+                  )
                 }
                 className={active ? UI.btn.iconDeactivate : UI.btn.iconActivate}
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   setStatusModal({ open: true, item: record })
                 }}
@@ -178,11 +203,11 @@ const CropCatalogs = () => {
               <Popconfirm
                 title="Xóa danh mục cây trồng"
                 description="Bạn có chắc chắn muốn xóa danh mục cây trồng này không?"
-                onConfirm={(e) => {
+                onConfirm={e => {
                   e.stopPropagation()
                   return handleDelete(record.id)
                 }}
-                onCancel={(e) => e.stopPropagation()}
+                onCancel={e => e.stopPropagation()}
                 okText="Đồng ý"
                 cancelText="Hủy"
               >
@@ -191,7 +216,7 @@ const CropCatalogs = () => {
                     type="text"
                     icon={<DeleteOutlined className="text-lg text-red-500" />}
                     className={UI.btn.iconDelete}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
                   />
                 </Tooltip>
               </Popconfirm>
@@ -225,7 +250,7 @@ const CropCatalogs = () => {
         <div className={UI.toolbar.inner}>
           <Input
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={e => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
             placeholder="Tìm theo tên loại cây trồng..."
             prefix={<SearchOutlined className="text-gray-300" />}
@@ -235,12 +260,16 @@ const CropCatalogs = () => {
           />
           <Select
             value={statusFilter}
-            onChange={(val) => updateFilter('status', val)}
+            onChange={val => updateFilter("status", val)}
             className={UI.input.select}
             options={selectStatusOptions}
           />
           <div className={UI.toolbar.actions}>
-            <Button onClick={handleSearch} icon={<SearchOutlined />} className={UI.btn.search}>
+            <Button
+              onClick={handleSearch}
+              icon={<SearchOutlined />}
+              className={UI.btn.search}
+            >
               Tìm kiếm
             </Button>
             <Button
@@ -259,15 +288,20 @@ const CropCatalogs = () => {
         rowKey="id"
         loading={loading}
         scroll={{ x: 900 }}
-        onRow={(record) => ({
+        onRow={record => ({
           onClick: () => navigate(`${ROUTER.FM_CROP_CATALOGS}/${record.id}`),
-          className: 'cursor-pointer',
+          className: "cursor-pointer",
         })}
-        locale={{ emptyText: 'Không có dữ liệu danh mục cây trồng.' }}
-        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
-          setPage(p)
-          setPageSize(ps)
-        })}
+        locale={{ emptyText: "Không có dữ liệu danh mục cây trồng." }}
+        pagination={createPaginationConfig(
+          page,
+          pageSize,
+          totalRecords,
+          (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        )}
         rowClassName={UI.row}
       />
 
@@ -284,7 +318,8 @@ const CropCatalogs = () => {
       >
         <div className={UI.modal.body}>
           <p className="text-gray-600">
-            Bạn có chắc chắn muốn thay đổi trạng thái của danh mục cây trồng này?
+            Bạn có chắc chắn muốn thay đổi trạng thái của danh mục cây trồng
+            này?
           </p>
           {statusModal.item && (
             <p className="mt-2 text-sm font-semibold text-gray-800">
@@ -293,7 +328,10 @@ const CropCatalogs = () => {
           )}
         </div>
         <div className={UI.modal.footer}>
-          <Button onClick={() => setStatusModal({ open: false, item: null })} className={UI.btn.cancel}>
+          <Button
+            onClick={() => setStatusModal({ open: false, item: null })}
+            className={UI.btn.cancel}
+          >
             Hủy
           </Button>
           <Button

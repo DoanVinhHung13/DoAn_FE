@@ -1,9 +1,13 @@
-import STORAGE, { getStorage, setStorage, clearAuthStorage } from 'src/redux/storage'
+import STORAGE, {
+  getStorage,
+  setStorage,
+  clearAuthStorage,
+} from "src/redux/storage"
 import {
   persistAuthPayload,
   purgeExpiredAuth,
   isRefreshTokenExpired,
-} from 'src/redux/authTokens'
+} from "src/redux/authTokens"
 
 /**
  * authSession — Quản lý auth state không reactive.
@@ -21,7 +25,7 @@ const authSession = {
   },
 
   getUser() {
-    return JSON.parse(getStorage(STORAGE.USER_INFO) || 'null')
+    return JSON.parse(getStorage(STORAGE.USER_INFO) || "null")
   },
 
   /** Lưu phiên từ response API login hoặc refresh-token */
@@ -30,7 +34,13 @@ const authSession = {
   },
 
   /** @deprecated dùng persistAuth(apiData) */
-  persistLoginSession({ token, refreshToken, refreshTokenExpiredAt, accessTokenExpiredAt, user }) {
+  persistLoginSession({
+    token,
+    refreshToken,
+    refreshTokenExpiredAt,
+    accessTokenExpiredAt,
+    user,
+  }) {
     const ok = persistAuthPayload({
       accessToken: token,
       refreshToken,
@@ -41,8 +51,20 @@ const authSession = {
     return ok
   },
 
-  setSessionTokens({ token, user, refreshToken, refreshTokenExpiredAt, accessTokenExpiredAt }) {
-    this.persistLoginSession({ token, refreshToken, refreshTokenExpiredAt, accessTokenExpiredAt, user })
+  setSessionTokens({
+    token,
+    user,
+    refreshToken,
+    refreshTokenExpiredAt,
+    accessTokenExpiredAt,
+  }) {
+    this.persistLoginSession({
+      token,
+      refreshToken,
+      refreshTokenExpiredAt,
+      accessTokenExpiredAt,
+      user,
+    })
   },
 
   updateUser(user) {

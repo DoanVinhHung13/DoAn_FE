@@ -1,4 +1,4 @@
-const SectionTitle = ({ children, extra, className = '' }) => (
+const SectionTitle = ({ children, extra, className = "" }) => (
   <div
     className={`section-title mb-4 px-3 py-2 flex items-center justify-between ${className}`}
   >

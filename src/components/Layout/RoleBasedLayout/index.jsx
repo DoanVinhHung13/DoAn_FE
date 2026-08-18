@@ -1,25 +1,46 @@
 // src/components/Layout/RoleBasedLayout/index.jsx
 // Đọc role từ Redux store và render Layout tương ứng.
-import { useSelector } from 'react-redux'
-import { Navigate } from 'react-router-dom'
-import authSession from 'src/redux/authSession'
-import { ROLES } from 'src/constants/roles'
-import ROUTER from 'src/router/ROUTER'
-import LayoutAdmin from 'src/components/Layout/LayoutAdmin'
+import { useSelector } from "react-redux"
+import { Navigate } from "react-router-dom"
+import authSession from "src/redux/authSession"
+import { ROLES } from "src/constants/roles"
+import ROUTER from "src/router/ROUTER"
+import LayoutAdmin from "src/components/Layout/LayoutAdmin"
 
 const LoadingScreen = () => (
-  <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ffffff' }}>
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+  <div
+    style={{
+      height: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "#ffffff",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 16,
+      }}
+    >
       <div className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin" />
-      <span style={{ color: '#9ca3af', fontSize: 13, fontWeight: 600 }}>Đang tải hệ thống...</span>
+      <span style={{ color: "#9ca3af", fontSize: 13, fontWeight: 600 }}>
+        Đang tải hệ thống...
+      </span>
     </div>
   </div>
 )
 
-const validRoles = [ROLES.FARM_MANAGER, ROLES.FARM_SUPERVISOR, ROLES.FARMER_LEADER]
+const validRoles = [
+  ROLES.FARM_MANAGER,
+  ROLES.FARM_SUPERVISOR,
+  ROLES.FARMER_LEADER,
+]
 
 const RoleBasedLayout = () => {
-  const { userInfo } = useSelector((state) => state.appGlobal)
+  const { userInfo } = useSelector(state => state.appGlobal)
   const role = userInfo?.role
 
   // Chưa login (không có token)

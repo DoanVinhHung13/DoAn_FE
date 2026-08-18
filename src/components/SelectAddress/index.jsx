@@ -41,43 +41,45 @@ const SelectAddress = (
       .finally(onLoadingSuccuss)
   }, [onBeforeLoading, onLoadingSuccuss])
 
-  const onChangeProvince = useCallback((e, province) => {
-    form.resetFields([`districtId`, `wardId`])
-    if (!e) return setListDistrict([])
-    setSelected(pre => ({ ...pre, province }))
-    onBeforeLoading()
-    RegionService.getByRegionId({ regionId: e })
-      .then(res => {
-        if (res?.isError) return
-        const lstDistrict = res?.Object?.filter(i => i.ParentID === e)
-        setListDistrict(lstDistrict)
-      })
-      .finally(onLoadingSuccuss)
-  }, [form, onBeforeLoading, onLoadingSuccuss])
-
-  const onChangeDistrict = useCallback((e, district) => {
-    form.resetFields([`wardId`])
-    if (!e) return setlistWard([])
-    setSelected(pre => ({ ...pre, district }))
-
-    onBeforeLoading()
-    RegionService.getByRegionId({ regionId: e })
-      .then(res => {
-        if (res?.isError) return
-        const lstWard = res?.Object?.filter(i => i.ParentID === e)
-        setlistWard(lstWard)
-      })
-      .finally(onLoadingSuccuss)
-  }, [form, onBeforeLoading, onLoadingSuccuss])
-  useImperativeHandle(
-    ref,
-    () => {
-      return {
-        address: selected,
-      }
+  const onChangeProvince = useCallback(
+    (e, province) => {
+      form.resetFields([`districtId`, `wardId`])
+      if (!e) return setListDistrict([])
+      setSelected(pre => ({ ...pre, province }))
+      onBeforeLoading()
+      RegionService.getByRegionId({ regionId: e })
+        .then(res => {
+          if (res?.isError) return
+          const lstDistrict = res?.Object?.filter(i => i.ParentID === e)
+          setListDistrict(lstDistrict)
+        })
+        .finally(onLoadingSuccuss)
     },
-    [selected],
+    [form, onBeforeLoading, onLoadingSuccuss],
   )
+
+  const onChangeDistrict = useCallback(
+    (e, district) => {
+      form.resetFields([`wardId`])
+      if (!e) return setlistWard([])
+      setSelected(pre => ({ ...pre, district }))
+
+      onBeforeLoading()
+      RegionService.getByRegionId({ regionId: e })
+        .then(res => {
+          if (res?.isError) return
+          const lstWard = res?.Object?.filter(i => i.ParentID === e)
+          setlistWard(lstWard)
+        })
+        .finally(onLoadingSuccuss)
+    },
+    [form, onBeforeLoading, onLoadingSuccuss],
+  )
+  useImperativeHandle(ref, () => {
+    return {
+      address: selected,
+    }
+  }, [selected])
 
   useEffect(() => {
     getListProvinceVN()
@@ -95,14 +97,16 @@ const SelectAddress = (
       const province = listProvince?.find(
         i => i?.RegionID === initValue?.provinceId,
       )
-      queueMicrotask(() => setSelected(pre => ({
-        ...pre,
-        province: {
-          key: province?.ParentID,
-          value: province?.ParentID,
-          children: province?.RegionName,
-        },
-      })))
+      queueMicrotask(() =>
+        setSelected(pre => ({
+          ...pre,
+          province: {
+            key: province?.ParentID,
+            value: province?.ParentID,
+            children: province?.RegionName,
+          },
+        })),
+      )
     }
     if (
       initValue?.districtId &&
@@ -112,32 +116,38 @@ const SelectAddress = (
       const district = listDistrict?.find(
         i => i?.RegionID === initValue?.districtId,
       )
-      queueMicrotask(() => setSelected(pre => ({
-        ...pre,
-        district: {
-          key: district?.ParentID,
-          value: district?.ParentID,
-          children: district?.RegionName,
-        },
-      })))
+      queueMicrotask(() =>
+        setSelected(pre => ({
+          ...pre,
+          district: {
+            key: district?.ParentID,
+            value: district?.ParentID,
+            children: district?.RegionName,
+          },
+        })),
+      )
     }
 
     if (initValue?.provinceId && listWard?.length && !selected?.ward?.key) {
       const ward = listWard?.find(i => i?.RegionID === initValue?.wardId)
-      queueMicrotask(() => setSelected(pre => ({
-        ...pre,
-        ward: {
-          key: ward?.ParentID,
-          value: ward?.ParentID,
-          children: ward?.RegionName,
-        },
-      })))
+      queueMicrotask(() =>
+        setSelected(pre => ({
+          ...pre,
+          ward: {
+            key: ward?.ParentID,
+            value: ward?.ParentID,
+            children: ward?.RegionName,
+          },
+        })),
+      )
     }
   }, [initValue, listProvince, listDistrict, listWard, selected])
 
   useEffect(() => {
-    if (initValue?.provinceId) queueMicrotask(() => onChangeProvince(initValue?.provinceId))
-    if (initValue?.districtId) queueMicrotask(() => onChangeDistrict(initValue.districtId))
+    if (initValue?.provinceId)
+      queueMicrotask(() => onChangeProvince(initValue?.provinceId))
+    if (initValue?.districtId)
+      queueMicrotask(() => onChangeDistrict(initValue.districtId))
     if (initValue?.provinceId)
       form?.setFieldsValue({
         provinceId: initValue?.provinceId ? initValue?.provinceId : undefined,

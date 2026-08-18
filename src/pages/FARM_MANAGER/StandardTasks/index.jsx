@@ -1,31 +1,30 @@
-
 import {
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
-} from '@ant-design/icons'
-import { Button, Input, Popconfirm, Select, Tooltip } from 'antd'
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+} from "@ant-design/icons"
+import { Button, Input, Popconfirm, Select, Tooltip } from "antd"
+import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
-import CustomTable from 'src/components/Table/CustomTable'
-import TitleCustom from 'src/components/TitleCustom'
-import { createSTTColumn } from 'src/components/Table/columns.jsx'
-import { createPaginationConfig } from 'src/utils/tableUtils'
-import { TaskCatalogIcon } from 'src/assets/icon/menu/MenuIcons'
-import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import ROUTER from 'src/router/ROUTER'
+import CustomTable from "src/components/Table/CustomTable"
+import TitleCustom from "src/components/TitleCustom"
+import { createSTTColumn } from "src/components/Table/columns.jsx"
+import { createPaginationConfig } from "src/utils/tableUtils"
+import { TaskCatalogIcon } from "src/assets/icon/menu/MenuIcons"
+import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
+import ROUTER from "src/router/ROUTER"
 
-import TaskCatalogService from 'src/services/TaskCatalogService'
-import CropCatalogService from 'src/services/CropCatalogService'
-import CropManagementService from 'src/services/CropManagementService'
-import { useListManagement } from 'src/hooks/useListManagement'
-import { getCultivationTaskTypeLabel } from 'src/constants/cultivationTask'
-import { normalizeApiError } from 'src/services/core/apiError'
+import TaskCatalogService from "src/services/TaskCatalogService"
+import CropCatalogService from "src/services/CropCatalogService"
+import CropManagementService from "src/services/CropManagementService"
+import { useListManagement } from "src/hooks/useListManagement"
+import { getCultivationTaskTypeLabel } from "src/constants/cultivationTask"
+import { normalizeApiError } from "src/services/core/apiError"
 
-const unwrapItems = (response) => {
+const unwrapItems = response => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
   return Array.isArray(payload) ? payload : payload.items || []
 }
@@ -36,14 +35,26 @@ const TasksManagement = () => {
 
   // ── Use List Management Hook ────────────────────────────────────────────────
   const {
-    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
-    page, setPage, pageSize, setPageSize,
-    filters, updateFilter,
-    listData, setListData, totalRecords, setTotalRecords,
-    loading, setLoading
+    searchInput,
+    setSearchInput,
+    search,
+    handleSearch,
+    handleClearSearch,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    filters,
+    updateFilter,
+    listData,
+    setListData,
+    totalRecords,
+    setTotalRecords,
+    loading,
+    setLoading,
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
-    initialFilters: { cropCatalogId: undefined, cropId: undefined }
+    initialFilters: { cropCatalogId: undefined, cropId: undefined },
   })
 
   const cropCatalogId = filters.cropCatalogId
@@ -64,7 +75,9 @@ const TasksManagement = () => {
         CropCatalogId: cropCatalogId || undefined,
         CropId: cropId || undefined,
       }
-      const res = await TaskCatalogService.getTaskCatalogs(params, { skipNotice: false })
+      const res = await TaskCatalogService.getTaskCatalogs(params, {
+        skipNotice: false,
+      })
       setListData(res?.data?.items || [])
       setTotalRecords(res?.data?.totalItems || 0)
     } catch {
@@ -72,16 +85,37 @@ const TasksManagement = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, cropCatalogId, cropId, setListData, setTotalRecords, setLoading])
+  }, [
+    page,
+    pageSize,
+    search,
+    cropCatalogId,
+    cropId,
+    setListData,
+    setTotalRecords,
+    setLoading,
+  ])
 
   useEffect(() => {
     const loadCropOptions = async () => {
       const [catalogResponse, cropResponse] = await Promise.all([
-        CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE' }),
-        CropManagementService.getCrops({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE' }),
+        CropCatalogService.getCropCatalogs({
+          PageIndex: 1,
+          PageSize: 100,
+          Status: "ACTIVE",
+        }),
+        CropManagementService.getCrops({
+          PageIndex: 1,
+          PageSize: 100,
+          Status: "ACTIVE",
+        }),
       ])
-      setCropCatalogOptions(unwrapItems(catalogResponse).filter(item => item.isActive !== false))
-      setCropOptions(unwrapItems(cropResponse).filter(item => item.isActive !== false))
+      setCropCatalogOptions(
+        unwrapItems(catalogResponse).filter(item => item.isActive !== false),
+      )
+      setCropOptions(
+        unwrapItems(cropResponse).filter(item => item.isActive !== false),
+      )
     }
 
     loadCropOptions().catch(() => {
@@ -95,31 +129,37 @@ const TasksManagement = () => {
   }, [getList])
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
-  const handleCatalogChange = (value) => {
-    updateFilter('cropCatalogId', value)
+  const handleCatalogChange = value => {
+    updateFilter("cropCatalogId", value)
     if (value && cropId) {
       const selectedCrop = cropOptions.find(item => item.id === cropId)
-      if (selectedCrop && String(selectedCrop.cropCatalogId) !== String(value)) {
-        updateFilter('cropId', undefined)
+      if (
+        selectedCrop &&
+        String(selectedCrop.cropCatalogId) !== String(value)
+      ) {
+        updateFilter("cropId", undefined)
       }
     }
   }
 
-  const filteredCropOptions = cropOptions.filter(item =>
-    !cropCatalogId || String(item.cropCatalogId || item.cropCatalog?.id) === String(cropCatalogId),
+  const filteredCropOptions = cropOptions.filter(
+    item =>
+      !cropCatalogId ||
+      String(item.cropCatalogId || item.cropCatalog?.id) ===
+        String(cropCatalogId),
   )
 
-  const handleOpenEdit = (record) => {
-    navigate(ROUTER.FM_TASK_CATALOG_EDIT.replace(':id', record.id))
+  const handleOpenEdit = record => {
+    navigate(ROUTER.FM_TASK_CATALOG_EDIT.replace(":id", record.id))
   }
 
-  const handleDelete = async (record) => {
+  const handleDelete = async record => {
     try {
       await TaskCatalogService.deleteTaskCatalog(record.id)
       getList()
     } catch (error) {
       const normalizedError = normalizeApiError(error)
-      console.error('Task catalog delete error:', {
+      console.error("Task catalog delete error:", {
         kind: normalizedError.kind,
         code: normalizedError.code,
         status: normalizedError.status,
@@ -130,53 +170,57 @@ const TasksManagement = () => {
 
   // ── Table columns ─────────────────────────────────────────────────────────────
   const columns = [
-    createSTTColumn(page, pageSize, { width: '5%' }),
+    createSTTColumn(page, pageSize, { width: "5%" }),
     {
-      title: 'Tên công việc',
-      dataIndex: 'name',
-      key: 'name',
-      width: '18%',
-      render: (v) => (
-        <span className="text-sm font-medium text-gray-800">{v || '—'}</span>
+      title: "Tên công việc",
+      dataIndex: "name",
+      key: "name",
+      width: "18%",
+      render: v => (
+        <span className="text-sm font-medium text-gray-800">{v || "—"}</span>
       ),
     },
     {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
-      width: '32%',
-      render: (v) => (
-        <span className="text-sm text-gray-600">{v || '—'}</span>
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
+      width: "32%",
+      render: v => <span className="text-sm text-gray-600">{v || "—"}</span>,
+    },
+    {
+      title: "Loại công việc",
+      dataIndex: "taskType",
+      key: "taskType",
+      width: "13%",
+      render: value => (
+        <span className="text-sm text-gray-600">
+          {getCultivationTaskTypeLabel(value)}
+        </span>
       ),
     },
     {
-      title: 'Loại công việc',
-      dataIndex: 'taskType',
-      key: 'taskType',
-      width: '13%',
-      render: (value) => <span className="text-sm text-gray-600">{getCultivationTaskTypeLabel(value)}</span>,
+      title: "Danh mục cây trồng",
+      dataIndex: "cropCatalogName",
+      key: "cropCatalogName",
+      width: "17%",
+      render: v => <span className="text-sm text-gray-600">{v || "—"}</span>,
     },
     {
-      title: 'Danh mục cây trồng',
-      dataIndex: 'cropCatalogName',
-      key: 'cropCatalogName',
-      width: '17%',
-      render: (v) => <span className="text-sm text-gray-600">{v || '—'}</span>,
+      title: "Cây trồng",
+      dataIndex: "cropName",
+      key: "cropName",
+      width: "11%",
+      render: v => (
+        <span className="text-sm font-semibold text-gray-700">{v || "—"}</span>
+      ),
     },
     {
-      title: 'Cây trồng',
-      dataIndex: 'cropName',
-      key: 'cropName',
-      width: '11%',
-      render: (v) => <span className="text-sm font-semibold text-gray-700">{v || '—'}</span>,
-    },
-    {
-      title: 'Hành động',
-      key: 'actions',
+      title: "Hành động",
+      key: "actions",
       width: 96,
-      align: 'center',
-      className: 'task-catalog-actions-column',
-      onHeaderCell: () => ({ className: 'task-catalog-actions-column' }),
+      align: "center",
+      className: "task-catalog-actions-column",
+      onHeaderCell: () => ({ className: "task-catalog-actions-column" }),
       render: (_, record) => {
         return (
           <div className="flex items-center justify-center gap-2">
@@ -185,7 +229,7 @@ const TasksManagement = () => {
                 type="text"
                 icon={<EditOutlined className="text-lg text-blue-500" />}
                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-blue-50"
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   handleOpenEdit(record)
                 }}
@@ -194,11 +238,11 @@ const TasksManagement = () => {
             <Popconfirm
               title="Xóa công việc"
               description="Bạn có chắc chắn muốn xóa công việc này không?"
-              onConfirm={(e) => {
+              onConfirm={e => {
                 e.stopPropagation()
                 handleDelete(record)
               }}
-              onCancel={(e) => e.stopPropagation()}
+              onCancel={e => e.stopPropagation()}
               okText="Đồng ý"
               cancelText="Hủy"
               okButtonProps={{ danger: true }}
@@ -208,7 +252,7 @@ const TasksManagement = () => {
                   type="text"
                   icon={<DeleteOutlined className="text-lg text-red-500" />}
                   className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={e => e.stopPropagation()}
                 />
               </Tooltip>
             </Popconfirm>
@@ -225,7 +269,7 @@ const TasksManagement = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <TaskCatalogIcon style={{ fontSize: '24px', color: '#15803d' }} />
+            <TaskCatalogIcon style={{ fontSize: "24px", color: "#15803d" }} />
             Danh mục công việc
           </TitleCustom>
         </div>
@@ -243,7 +287,7 @@ const TasksManagement = () => {
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={e => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
             placeholder="Tìm theo mã, tên công việc..."
             prefix={<SearchOutlined className="text-gray-300" />}
@@ -257,7 +301,10 @@ const TasksManagement = () => {
             optionFilterProp="label"
             value={cropCatalogId}
             onChange={handleCatalogChange}
-            options={cropCatalogOptions.map(item => ({ value: item.id, label: item.name }))}
+            options={cropCatalogOptions.map(item => ({
+              value: item.id,
+              label: item.name,
+            }))}
             placeholder="Lọc theo danh mục"
             className="min-w-[190px] h-10"
           />
@@ -265,8 +312,11 @@ const TasksManagement = () => {
             allowClear
             showSearch
             optionFilterProp="label"
-            onChange={(value) => updateFilter('cropId', value)}
-            options={filteredCropOptions.map(item => ({ value: item.id, label: item.name }))}
+            onChange={value => updateFilter("cropId", value)}
+            options={filteredCropOptions.map(item => ({
+              value: item.id,
+              label: item.name,
+            }))}
             placeholder="Lọc theo cây trồng"
             className="min-w-[180px] h-10"
           />
@@ -286,7 +336,6 @@ const TasksManagement = () => {
             />
           </div>
         </div>
-
       </div>
 
       {/* Table */}
@@ -297,15 +346,21 @@ const TasksManagement = () => {
         rowKey="id"
         loading={loading}
         scroll={{}}
-        onRow={(record) => ({
-          onClick: () => navigate(ROUTER.FM_TASK_CATALOG_DETAIL.replace(':id', record.id)),
-          className: 'cursor-pointer',
+        onRow={record => ({
+          onClick: () =>
+            navigate(ROUTER.FM_TASK_CATALOG_DETAIL.replace(":id", record.id)),
+          className: "cursor-pointer",
         })}
-        locale={{ emptyText: 'Chưa có công việc mẫu nào.' }}
-        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
-          setPage(p)
-          setPageSize(ps)
-        })}
+        locale={{ emptyText: "Chưa có công việc mẫu nào." }}
+        pagination={createPaginationConfig(
+          page,
+          pageSize,
+          totalRecords,
+          (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        )}
         rowClassName="hover:bg-blue-50/30 transition-colors"
       />
     </div>

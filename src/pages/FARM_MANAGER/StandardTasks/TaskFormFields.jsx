@@ -1,37 +1,38 @@
-import { FileTextOutlined } from '@ant-design/icons'
-import { Col, Form, Input, Row, Segmented, Select } from 'antd'
-import React, { useEffect, useMemo, useState } from 'react'
-import useDebouncedValue from 'src/hooks/useDebouncedValue'
-import CropCatalogService from 'src/services/CropCatalogService'
-import CropManagementService from 'src/services/CropManagementService'
+import { FileTextOutlined } from "@ant-design/icons"
+import { Col, Form, Input, Row, Segmented, Select } from "antd"
+import React, { useEffect, useMemo, useState } from "react"
+import useDebouncedValue from "src/hooks/useDebouncedValue"
+import CropCatalogService from "src/services/CropCatalogService"
+import CropManagementService from "src/services/CropManagementService"
 import {
   CULTIVATION_TASK_TYPE_OPTIONS,
   normalizeCultivationTaskType,
-} from 'src/constants/cultivationTask'
+} from "src/constants/cultivationTask"
 
-const ALL_OPTION_VALUE = '__ALL__'
+const ALL_OPTION_VALUE = "__ALL__"
 
-const unwrapItems = (response) => {
+const unwrapItems = response => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
   return Array.isArray(payload) ? payload : payload.items || []
 }
 
-const getCropCatalogId = (crop) => crop.cropCatalogId || crop.cropCatalog?.id
+const getCropCatalogId = crop => crop.cropCatalogId || crop.cropCatalog?.id
 
 const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
   const [catalogs, setCatalogs] = useState([])
   const [crops, setCrops] = useState([])
   const [catalogLoading, setCatalogLoading] = useState(false)
   const [cropLoading, setCropLoading] = useState(false)
-  const [catalogSearch, setCatalogSearch] = useState('')
-  const [cropSearch, setCropSearch] = useState('')
-  const selectedCatalogId = Form.useWatch('cropCatalogId', form)
-  const selectedTaskType = Form.useWatch('taskType', form)
+  const [catalogSearch, setCatalogSearch] = useState("")
+  const [cropSearch, setCropSearch] = useState("")
+  const selectedCatalogId = Form.useWatch("cropCatalogId", form)
+  const selectedTaskType = Form.useWatch("taskType", form)
   const debouncedCatalogSearch = useDebouncedValue(catalogSearch, 400)
   const debouncedCropSearch = useDebouncedValue(cropSearch, 400)
-  const selectedCatalogFilter = selectedCatalogId && selectedCatalogId !== ALL_OPTION_VALUE
-    ? selectedCatalogId
-    : null
+  const selectedCatalogFilter =
+    selectedCatalogId && selectedCatalogId !== ALL_OPTION_VALUE
+      ? selectedCatalogId
+      : null
 
   useEffect(() => {
     let active = true
@@ -41,10 +42,13 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
         const response = await CropCatalogService.getCropCatalogs({
           PageIndex: 1,
           PageSize: 100,
-          Status: 'ACTIVE',
+          Status: "ACTIVE",
           SearchKeyword: debouncedCatalogSearch || undefined,
         })
-        if (active) setCatalogs(unwrapItems(response).filter(item => item.isActive !== false))
+        if (active)
+          setCatalogs(
+            unwrapItems(response).filter(item => item.isActive !== false),
+          )
       } catch {
         if (active) setCatalogs([])
       } finally {
@@ -52,7 +56,9 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
       }
     }
     loadCatalogs()
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [debouncedCatalogSearch])
 
   useEffect(() => {
@@ -68,11 +74,14 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
         const response = await CropManagementService.getCrops({
           PageIndex: 1,
           PageSize: 100,
-          Status: 'ACTIVE',
+          Status: "ACTIVE",
           CropCatalogId: selectedCatalogFilter,
           SearchKeyword: debouncedCropSearch || undefined,
         })
-        if (active) setCrops(unwrapItems(response).filter(item => item.isActive !== false))
+        if (active)
+          setCrops(
+            unwrapItems(response).filter(item => item.isActive !== false),
+          )
       } catch {
         if (active) setCrops([])
       } finally {
@@ -80,24 +89,35 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
       }
     }
     loadCrops()
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [debouncedCropSearch, selectedCatalogFilter])
 
-  const catalogOptions = useMemo(() => [
-    { value: ALL_OPTION_VALUE, label: 'Tất cả' },
-    ...catalogs.map(item => ({ value: item.id, label: item.name })),
-  ], [catalogs])
+  const catalogOptions = useMemo(
+    () => [
+      { value: ALL_OPTION_VALUE, label: "Tất cả" },
+      ...catalogs.map(item => ({ value: item.id, label: item.name })),
+    ],
+    [catalogs],
+  )
 
-  const cropOptions = useMemo(() => [
-    { value: ALL_OPTION_VALUE, label: 'Tất cả' },
-    ...crops
-      .filter(item => String(getCropCatalogId(item)) === String(selectedCatalogFilter))
-      .map(item => ({ value: item.id, label: item.name })),
-  ], [crops, selectedCatalogFilter])
+  const cropOptions = useMemo(
+    () => [
+      { value: ALL_OPTION_VALUE, label: "Tất cả" },
+      ...crops
+        .filter(
+          item =>
+            String(getCropCatalogId(item)) === String(selectedCatalogFilter),
+        )
+        .map(item => ({ value: item.id, label: item.name })),
+    ],
+    [crops, selectedCatalogFilter],
+  )
 
-  const handleCatalogChange = (value) => {
-    form?.setFieldValue('cropId', ALL_OPTION_VALUE)
-    form?.setFieldValue('cropCatalogId', value)
+  const handleCatalogChange = value => {
+    form?.setFieldValue("cropId", ALL_OPTION_VALUE)
+    form?.setFieldValue("cropCatalogId", value)
   }
 
   return (
@@ -137,14 +157,23 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
             name="taskType"
             label="Loại công việc"
             normalize={normalizeCultivationTaskType}
-            rules={!readOnly ? [{ required: true, message: 'Vui lòng chọn loại công việc.' }] : []}
+            rules={
+              !readOnly
+                ? [{ required: true, message: "Vui lòng chọn loại công việc." }]
+                : []
+            }
           >
             <Segmented
               block
               className="task-type-segmented"
               disabled={readOnly}
               value={normalizeCultivationTaskType(selectedTaskType)}
-              onChange={(value) => form?.setFieldValue('taskType', normalizeCultivationTaskType(value))}
+              onChange={value =>
+                form?.setFieldValue(
+                  "taskType",
+                  normalizeCultivationTaskType(value),
+                )
+              }
               options={CULTIVATION_TASK_TYPE_OPTIONS}
             />
           </Form.Item>
@@ -153,26 +182,46 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
       <Col xs={24}>
         <Form.Item
           name="name"
-          label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Tên công việc</span>}
-          rules={!readOnly ? [
-            { required: true, message: 'Vui lòng nhập tên công việc.' },
-            {
-              validator: (_, value) => {
-                if (!value) return Promise.resolve();
-                const trimmed = value.trim();
-                if (!trimmed) {
-                  return Promise.reject(new Error('Tên công việc không được chỉ chứa khoảng trắng.'));
-                }
-                if (trimmed.length > 100) {
-                  return Promise.reject(new Error('Tên công việc không được vượt quá 100 ký tự.'));
-                }
-                if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
-                  return Promise.reject(new Error('Tên công việc không được chứa nhiều khoảng trắng liên tiếp.'));
-                }
-                return Promise.resolve();
-              },
-            },
-          ] : []}
+          label={
+            <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+              Tên công việc
+            </span>
+          }
+          rules={
+            !readOnly
+              ? [
+                  { required: true, message: "Vui lòng nhập tên công việc." },
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.resolve()
+                      const trimmed = value.trim()
+                      if (!trimmed) {
+                        return Promise.reject(
+                          new Error(
+                            "Tên công việc không được chỉ chứa khoảng trắng.",
+                          ),
+                        )
+                      }
+                      if (trimmed.length > 100) {
+                        return Promise.reject(
+                          new Error(
+                            "Tên công việc không được vượt quá 100 ký tự.",
+                          ),
+                        )
+                      }
+                      if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                        return Promise.reject(
+                          new Error(
+                            "Tên công việc không được chứa nhiều khoảng trắng liên tiếp.",
+                          ),
+                        )
+                      }
+                      return Promise.resolve()
+                    },
+                  },
+                ]
+              : []
+          }
         >
           <Input
             placeholder="VD: Tưới nước buổi sáng"
@@ -182,22 +231,33 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
         </Form.Item>
       </Col>
       <Col xs={24}>
-        <Form.Item 
-          name="description" 
-          label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase"><FileTextOutlined className="mr-1" />Mô tả kỹ thuật</span>}
+        <Form.Item
+          name="description"
+          label={
+            <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+              <FileTextOutlined className="mr-1" />
+              Mô tả kỹ thuật
+            </span>
+          }
           rules={[
             {
               validator: (_, value) => {
-                if (!value) return Promise.resolve();
-                const trimmed = value.trim();
-                if (!trimmed) return Promise.resolve();
+                if (!value) return Promise.resolve()
+                const trimmed = value.trim()
+                if (!trimmed) return Promise.resolve()
                 if (trimmed.length > 500) {
-                  return Promise.reject(new Error('Mô tả không được vượt quá 500 ký tự.'));
+                  return Promise.reject(
+                    new Error("Mô tả không được vượt quá 500 ký tự."),
+                  )
                 }
-                if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
-                  return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+                if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                  return Promise.reject(
+                    new Error(
+                      "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
+                    ),
+                  )
                 }
-                return Promise.resolve();
+                return Promise.resolve()
               },
             },
           ]}

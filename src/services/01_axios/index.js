@@ -1,6 +1,10 @@
 import axios from "axios"
 import notice from "src/components/Notice"
-import STORAGE, { clearAuthStorage, deleteStorage, getStorage } from "src/redux/storage"
+import STORAGE, {
+  clearAuthStorage,
+  deleteStorage,
+  getStorage,
+} from "src/redux/storage"
 import { refreshAccessToken } from "src/services/tokenRefresh"
 import { getMsgClient } from "src/utils/stringsUtils"
 import { trimData } from "src/utils/helpers"
@@ -24,20 +28,32 @@ const handleEaplsBody = (resData, config, status) => {
   const msg = getEaplsMessage(resData)
 
   if (resData.success === false) {
-    const shouldShowNotice = shouldShowGlobalApiError({
-      kind: "api",
-      code: resData.code,
-      fieldErrors: resData.fieldErrors,
-    }, config) && Boolean(msg)
-    const apiError = normalizeApiError({
-      response: { data: resData, status },
-      config,
-    }, { noticeShown: shouldShowNotice })
+    const shouldShowNotice =
+      shouldShowGlobalApiError(
+        {
+          kind: "api",
+          code: resData.code,
+          fieldErrors: resData.fieldErrors,
+        },
+        config,
+      ) && Boolean(msg)
+    const apiError = normalizeApiError(
+      {
+        response: { data: resData, status },
+        config,
+      },
+      { noticeShown: shouldShowNotice },
+    )
     if (apiError.noticeShown) notice({ msg, isSuccess: false })
     return Promise.reject(apiError)
   }
 
-  if (!config?.skipNotice && msg && method !== "get" && !isGenericApiMessage(msg)) {
+  if (
+    !config?.skipNotice &&
+    msg &&
+    method !== "get" &&
+    !isGenericApiMessage(msg)
+  ) {
     notice({ msg, isSuccess: true })
   }
 
@@ -53,16 +69,20 @@ const isPublicAuthUrl = (url = "") =>
 export function parseBody(response) {
   const resData = response.data
   if (+response?.status >= 500) {
-    return Promise.reject(normalizeApiError({
-      response,
-      config: response.config,
-    }))
+    return Promise.reject(
+      normalizeApiError({
+        response,
+        config: response.config,
+      }),
+    )
   }
   if (+response?.status >= 400 && +response?.status < 500) {
-    return Promise.reject(normalizeApiError({
-      response,
-      config: response.config,
-    }))
+    return Promise.reject(
+      normalizeApiError({
+        response,
+        config: response.config,
+      }),
+    )
   }
 
   if (+response?.status >= 200 && +response?.status < 300) {
@@ -92,10 +112,12 @@ export function parseBody(response) {
     }
     return resData
   }
-  return Promise.reject(normalizeApiError({
-    response,
-    config: response?.config,
-  }))
+  return Promise.reject(
+    normalizeApiError({
+      response,
+      config: response?.config,
+    }),
+  )
 }
 
 /**
@@ -115,15 +137,19 @@ const instance = axios.create({
 instance.interceptors.request.use(
   async config => {
     const BASE_URL = import.meta.env.DEV
-      ? '/api'
-      : ((typeof window !== "undefined" && window.env?.API_ROOT) || import.meta.env.VITE_API_ROOT || 'https://api.eapls.io.vn/api')
+      ? "/api"
+      : (typeof window !== "undefined" && window.env?.API_ROOT) ||
+        import.meta.env.VITE_API_ROOT ||
+        "https://api.eapls.io.vn/api"
     config.params = { ...config.params }
     if (config.data) {
       config.data =
         config.data instanceof FormData ? config.data : trimData(config.data)
     }
 
-    const isRefreshCall = String(config.url || "").includes("/auth/refresh-token")
+    const isRefreshCall = String(config.url || "").includes(
+      "/auth/refresh-token",
+    )
     if (!isRefreshCall && getStorage(STORAGE.TOKEN)) {
       await refreshAccessToken()
     }
@@ -136,8 +162,13 @@ instance.interceptors.request.use(
       }
     }
     config.baseURL = BASE_URL
-    if (config.url && config.url.startsWith('/api/') && BASE_URL && (BASE_URL.endsWith('/api') || BASE_URL.endsWith('/api/'))) {
-      config.url = config.url.replace(/^\/api\//, '/')
+    if (
+      config.url &&
+      config.url.startsWith("/api/") &&
+      BASE_URL &&
+      (BASE_URL.endsWith("/api") || BASE_URL.endsWith("/api/"))
+    ) {
+      config.url = config.url.replace(/^\/api\//, "/")
     }
     // config.onUploadProgress = (progressEvent: any) => {
     // let percentCompleted = Math.floor(
@@ -170,11 +201,18 @@ instance.interceptors.response.use(
     const requestUrl = String(originalRequest?.url || "")
 
     // BE trả 4xx + body EAPLS (vd: login sai → 401 + success:false)
-    if (errorData && typeof errorData.success === "boolean" && errorData.success === false) {
+    if (
+      errorData &&
+      typeof errorData.success === "boolean" &&
+      errorData.success === false
+    ) {
       return Promise.reject(showApiError(normalizeApiError(error)))
     }
 
-    const isPublicUrl = requestUrl.includes('/traceability') || requestUrl.includes('/trace') || isPublicAuthUrl(requestUrl)
+    const isPublicUrl =
+      requestUrl.includes("/traceability") ||
+      requestUrl.includes("/trace") ||
+      isPublicAuthUrl(requestUrl)
 
     if (
       error.response?.status === 401 &&

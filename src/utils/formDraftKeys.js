@@ -1,5 +1,5 @@
-import authSession from 'src/redux/authSession'
-import { buildFormDraftKey } from 'src/utils/formDraftStorage'
+import authSession from "src/redux/authSession"
+import { buildFormDraftKey } from "src/utils/formDraftStorage"
 
 export const getCurrentUserId = () => {
   try {
@@ -10,9 +10,10 @@ export const getCurrentUserId = () => {
   }
 }
 
-export const getFormDraftKey = (module, mode, entityId) => buildFormDraftKey({
-  userId: getCurrentUserId(),
-  module,
-  mode,
-  entityId,
-})
+export const getFormDraftKey = (module, mode, entityId) =>
+  buildFormDraftKey({
+    userId: getCurrentUserId(),
+    module,
+    mode,
+    entityId,
+  })

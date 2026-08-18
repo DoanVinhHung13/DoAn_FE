@@ -13,21 +13,23 @@
  *
  * Lưu ý: Các API /users/* đã chuyển sang UserService
  */
-import http from '../01_axios'
-import { getRefreshToken } from 'src/redux/authTokens'
+import http from "../01_axios"
+import { getRefreshToken } from "src/redux/authTokens"
 
 // ─── Methods ───────────────────────────────────────────────
-const login          = (body) => http.post('/auth/login', body)
-const register       = (body) => http.post('/auth/register', body)
-const logout         = ()     => http.post('/auth/logout', { refreshToken: getRefreshToken() })
-const refreshToken   = (body) => http.post('/auth/refresh-token', body)
-const verifyOTP      = (body) => http.post('/auth/verify-otp', body)
-const forgotPassword = (body) => http.post('/auth/forgot-password', body)
-const resetPassword  = (body) => http.post('/auth/reset-password', body)
-const changePassword = (body, config) => http.post('/auth/change-password', body, config)
+const login = body => http.post("/auth/login", body)
+const register = body => http.post("/auth/register", body)
+const logout = () =>
+  http.post("/auth/logout", { refreshToken: getRefreshToken() })
+const refreshToken = body => http.post("/auth/refresh-token", body)
+const verifyOTP = body => http.post("/auth/verify-otp", body)
+const forgotPassword = body => http.post("/auth/forgot-password", body)
+const resetPassword = body => http.post("/auth/reset-password", body)
+const changePassword = (body, config) =>
+  http.post("/auth/change-password", body, config)
 
 /** GET /auth/me — thông tin user đang đăng nhập */
-const getProfile = () => http.get('/auth/me')
+const getProfile = () => http.get("/auth/me")
 
 const AuthService = {
   login,

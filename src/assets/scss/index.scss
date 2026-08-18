@@ -1,6 +1,6 @@
 /* Chỉ @forward các file scss thực sự có nội dung */
-@forward './checkbox/index.scss';
-@forward './upload/index.scss';
+@forward "./checkbox/index.scss";
+@forward "./upload/index.scss";
 
 /* Các file dưới đây được giữ lại cấu trúc thư mục cho tương lai,
    hiện tại không có nội dung nên không forward để tránh compile overhead. */

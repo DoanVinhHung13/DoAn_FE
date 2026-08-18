@@ -19,7 +19,16 @@ TableCustom.defaultProps = {
 }
 
 function TableCustom(props) {
-  const { isPrimary, isStickyScrroll, textEmpty, dataSource, scroll, onRow, pagination, ...rest } = props
+  const {
+    isPrimary,
+    isStickyScrroll,
+    textEmpty,
+    dataSource,
+    scroll,
+    onRow,
+    pagination,
+    ...rest
+  } = props
   return (
     <>
       <TableCustomStyled

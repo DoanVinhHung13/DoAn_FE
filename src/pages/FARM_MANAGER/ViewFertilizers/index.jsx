@@ -29,7 +29,7 @@ import {
   StopOutlined,
   SearchOutlined,
   DeleteOutlined,
-} from '@ant-design/icons'
+} from "@ant-design/icons"
 import {
   Alert,
   Button,
@@ -39,24 +39,27 @@ import {
   Tag,
   Tooltip,
   Popconfirm,
-} from 'antd'
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import ROUTER from 'src/router/ROUTER'
+} from "antd"
+import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import ROUTER from "src/router/ROUTER"
 
-import CustomModal from 'src/components/Modal/CustomModal'
-import CustomTable from 'src/components/Table/CustomTable'
-import TitleCustom from 'src/components/TitleCustom'
-import { createSTTColumn, createStatusColumn } from 'src/components/Table/columns.jsx'
-import { createPaginationConfig } from 'src/utils/tableUtils'
-import { FertilizerIcon } from 'src/assets/icon/menu/MenuIcons'
-import InventoryImportModal from 'src/components/Inventory/InventoryImportModal'
-import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
+import CustomModal from "src/components/Modal/CustomModal"
+import CustomTable from "src/components/Table/CustomTable"
+import TitleCustom from "src/components/TitleCustom"
+import {
+  createSTTColumn,
+  createStatusColumn,
+} from "src/components/Table/columns.jsx"
+import { createPaginationConfig } from "src/utils/tableUtils"
+import { FertilizerIcon } from "src/assets/icon/menu/MenuIcons"
+import InventoryImportModal from "src/components/Inventory/InventoryImportModal"
+import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
 
-import FertilizerService from 'src/services/FertilizerService'
-import { useSystemKey } from 'src/hooks/useSystemKey'
-import { SYSTEM_KEY } from 'src/constants/systemKey'
-import { useListManagement } from 'src/hooks/useListManagement'
+import FertilizerService from "src/services/FertilizerService"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import { useListManagement } from "src/hooks/useListManagement"
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const ViewFertilizers = () => {
@@ -65,14 +68,26 @@ const ViewFertilizers = () => {
 
   // ── Use List Management Hook ────────────────────────────────────────────────
   const {
-    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
-    page, setPage, pageSize, setPageSize,
-    filters, updateFilter,
-    listData, setListData, totalRecords, setTotalRecords,
-    loading, setLoading
+    searchInput,
+    setSearchInput,
+    search,
+    handleSearch,
+    handleClearSearch,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    filters,
+    updateFilter,
+    listData,
+    setListData,
+    totalRecords,
+    setTotalRecords,
+    loading,
+    setLoading,
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
-    initialFilters: { category: 'all', status: 'ACTIVE' }
+    initialFilters: { category: "all", status: "ACTIVE" },
   })
 
   const categoryFilter = filters.category
@@ -87,7 +102,7 @@ const ViewFertilizers = () => {
   // ── Options ─────────────────────────────────────────────────────────────────
   const statusOptions = getCombo(SYSTEM_KEY.STATUS)
   const selectStatusOptions = [
-    { value: 'all', label: 'Tất cả trạng thái' },
+    { value: "all", label: "Tất cả trạng thái" },
     ...statusOptions.map(opt => ({
       value: opt.codeValue || opt.value,
       label: opt.label || opt.description,
@@ -96,7 +111,7 @@ const ViewFertilizers = () => {
 
   const fertilizerTypeOptions = getCombo(SYSTEM_KEY.FERTILIZER_TYPE)
   const selectCategoryOptions = [
-    { value: 'all', label: 'Tất cả loại' },
+    { value: "all", label: "Tất cả loại" },
     ...fertilizerTypeOptions.map(opt => ({
       value: opt.codeValue || opt.value,
       label: opt.label || opt.description,
@@ -111,8 +126,8 @@ const ViewFertilizers = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
-        Type: categoryFilter === 'all' ? undefined : categoryFilter,
-        Status: statusFilter === 'all' ? undefined : statusFilter,
+        Type: categoryFilter === "all" ? undefined : categoryFilter,
+        Status: statusFilter === "all" ? undefined : statusFilter,
       }
       const res = await FertilizerService.getFertilizers(params)
       setListData(res?.data?.items || [])
@@ -120,7 +135,16 @@ const ViewFertilizers = () => {
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, categoryFilter, statusFilter, setLoading, setListData, setTotalRecords])
+  }, [
+    page,
+    pageSize,
+    search,
+    categoryFilter,
+    statusFilter,
+    setLoading,
+    setListData,
+    setTotalRecords,
+  ])
 
   useEffect(() => {
     getList()
@@ -129,17 +153,17 @@ const ViewFertilizers = () => {
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   // Kiểm tra BR_FER_02 trước khi mở modal Sửa
-  const handleOpenEdit = (record) => {
+  const handleOpenEdit = record => {
     if (record.isInActiveUse) {
       setInUseAlert(true)
       setTimeout(() => setInUseAlert(false), 5000)
       return
     }
-    navigate(ROUTER.FM_FERTILIZER_EDIT.replace(':id', record.id))
+    navigate(ROUTER.FM_FERTILIZER_EDIT.replace(":id", record.id))
   }
 
   // Kiểm tra BR_FER_02 trước khi mở confirm toggle
-  const handleSwitchClick = (record) => {
+  const handleSwitchClick = record => {
     if (record.isInActiveUse) {
       setInUseAlert(true)
       setTimeout(() => setInUseAlert(false), 5000)
@@ -165,7 +189,7 @@ const ViewFertilizers = () => {
     }
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async id => {
     try {
       await FertilizerService.deleteFertilizer(id)
       getList()
@@ -178,81 +202,80 @@ const ViewFertilizers = () => {
   const columns = [
     createSTTColumn(page, pageSize),
     {
-      title: 'Tên phân bón',
-      dataIndex: 'name',
-      key: 'name',
-      render: (v) => (
-        <span className="">{v || '—'}</span>
-      ),
+      title: "Tên phân bón",
+      dataIndex: "name",
+      key: "name",
+      render: v => <span className="">{v || "—"}</span>,
     },
 
     {
-      title: 'Loại Phân Bón',
-      dataIndex: 'type',
-      key: 'type',
+      title: "Loại Phân Bón",
+      dataIndex: "type",
+      key: "type",
       width: 170,
       render: (v, record) => {
         const typeVal = v || record.category
         return typeVal ? (
-          <Tag>
-            {typeVal}
-          </Tag>
+          <Tag>{typeVal}</Tag>
         ) : (
           <span className="text-gray-300">—</span>
         )
       },
     },
     {
-      title: 'Tồn kho thực tế',
-      dataIndex: 'inventoryQuantity',
-      key: 'inventoryQuantity',
+      title: "Tồn kho thực tế",
+      dataIndex: "inventoryQuantity",
+      key: "inventoryQuantity",
       width: 165,
-      align: 'right',
+      align: "right",
       render: (v, record) => {
-        const qty = Number(v || 0);
-        const minStock = Number(record.minimumStock || 0);
-        let colorClass = 'text-blue-600';
+        const qty = Number(v || 0)
+        const minStock = Number(record.minimumStock || 0)
+        let colorClass = "text-blue-600"
         if (minStock > 0) {
-          if (qty <= minStock) colorClass = 'text-red-500';
-          else if (qty <= minStock * 1.5) colorClass = 'text-orange-500';
+          if (qty <= minStock) colorClass = "text-red-500"
+          else if (qty <= minStock * 1.5) colorClass = "text-orange-500"
         } else if (qty === 0) {
-          colorClass = 'text-red-500';
+          colorClass = "text-red-500"
         }
         return (
           <span className={`text-sm font-semibold ${colorClass}`}>
             {v != null
-              ? `${qty.toLocaleString('vi-VN')} ${record.inventoryUnit || record.unit || ''}`
-              : '0'}
+              ? `${qty.toLocaleString("vi-VN")} ${record.inventoryUnit || record.unit || ""}`
+              : "0"}
           </span>
-        );
+        )
       },
     },
     {
-      title: 'Tồn kho tối thiểu',
-      dataIndex: 'minimumStock',
-      key: 'minimumStock',
+      title: "Tồn kho tối thiểu",
+      dataIndex: "minimumStock",
+      key: "minimumStock",
       width: 165,
-      align: 'right',
+      align: "right",
       render: (v, record) => (
         <span className="text-sm font-semibold text-gray-700">
           {v != null
-            ? `${Number(v).toLocaleString('vi-VN')} ${record.unit || ''}`
-            : '—'}
+            ? `${Number(v).toLocaleString("vi-VN")} ${record.unit || ""}`
+            : "—"}
         </span>
       ),
     },
     createStatusColumn({
-      getLabel: (isActive) => {
-        const sysVal = isActive ? 'ACTIVE' : 'INACTIVE'
-        return getDescription(SYSTEM_KEY.STATUS, sysVal) || (isActive ? 'Hoạt động' : 'Vô hiệu')
-      }
+      getLabel: isActive => {
+        const sysVal = isActive ? "ACTIVE" : "INACTIVE"
+        return (
+          getDescription(SYSTEM_KEY.STATUS, sysVal) ||
+          (isActive ? "Hoạt động" : "Vô hiệu")
+        )
+      },
     }),
     {
-      title: 'Hành động',
-      key: 'actions',
-      fixed: 'right',
+      title: "Hành động",
+      key: "actions",
+      fixed: "right",
       width: 150,
-      align: 'center',
+      align: "center",
       render: (_, record) => {
         const locked = record.isInActiveUse
         const active = record.isActive !== false
@@ -263,7 +286,7 @@ const ViewFertilizers = () => {
                 type="text"
                 icon={<InboxOutlined className="text-lg text-blue-600" />}
                 className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-blue-50"
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   setImportModal({ open: true, item: record })
                 }}
@@ -272,21 +295,22 @@ const ViewFertilizers = () => {
             <Tooltip
               title={
                 locked
-                  ? 'Phân bón đang được sử dụng, không thể chỉnh sửa'
-                  : 'Chỉnh sửa'
+                  ? "Phân bón đang được sử dụng, không thể chỉnh sửa"
+                  : "Chỉnh sửa"
               }
             >
               <Button
                 type="text"
                 icon={
                   <EditOutlined
-                    className={`text-lg ${locked ? 'text-gray-300' : 'text-green-500'}`}
+                    className={`text-lg ${locked ? "text-gray-300" : "text-green-500"}`}
                   />
                 }
                 disabled={locked}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : 'hover:bg-green-50'
-                  }`}
-                onClick={(e) => {
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                  locked ? "opacity-40" : "hover:bg-green-50"
+                }`}
+                onClick={e => {
                   e.stopPropagation()
                   handleOpenEdit(record)
                 }}
@@ -295,51 +319,70 @@ const ViewFertilizers = () => {
             <Tooltip
               title={
                 locked
-                  ? 'Phân bón đang được sử dụng'
+                  ? "Phân bón đang được sử dụng"
                   : active
-                    ? 'Vô hiệu hóa'
-                    : 'Kích hoạt'
+                    ? "Vô hiệu hóa"
+                    : "Kích hoạt"
               }
             >
               <Button
                 type="text"
                 icon={
                   active ? (
-                    <StopOutlined className={`text-lg ${locked ? 'text-gray-300' : 'text-red-500'}`} />
+                    <StopOutlined
+                      className={`text-lg ${locked ? "text-gray-300" : "text-red-500"}`}
+                    />
                   ) : (
-                    <CheckCircleOutlined className={`text-lg ${locked ? 'text-gray-300' : 'text-green-500'}`} />
+                    <CheckCircleOutlined
+                      className={`text-lg ${locked ? "text-gray-300" : "text-green-500"}`}
+                    />
                   )
                 }
                 disabled={locked}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : active ? 'hover:bg-red-50' : 'hover:bg-green-50'
-                  }`}
-                onClick={(e) => {
+                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
+                  locked
+                    ? "opacity-40"
+                    : active
+                      ? "hover:bg-red-50"
+                      : "hover:bg-green-50"
+                }`}
+                onClick={e => {
                   e.stopPropagation()
                   handleSwitchClick(record)
                 }}
               />
             </Tooltip>
-            {!active && <Popconfirm
-              title="Xóa phân bón"
-              description="Bạn có chắc chắn muốn xóa phân bón này không?"
-              onConfirm={(e) => {
-                e.stopPropagation()
-                return handleDelete(record.id)
-              }}
-              onCancel={(e) => e.stopPropagation()}
-              okText="Đồng ý"
-              cancelText="Hủy"
-            >
-              <Tooltip title={locked ? 'Phân bón đang được sử dụng, không thể xóa' : 'Xóa'}>
-                <Button
-                  type="text"
-                  disabled={locked}
-                  icon={<DeleteOutlined className={`text-lg ${locked ? 'text-gray-300' : 'text-red-500'}`} />}
-                  className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? 'opacity-40' : 'hover:bg-red-50'}`}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </Tooltip>
-            </Popconfirm>}
+            {!active && (
+              <Popconfirm
+                title="Xóa phân bón"
+                description="Bạn có chắc chắn muốn xóa phân bón này không?"
+                onConfirm={e => {
+                  e.stopPropagation()
+                  return handleDelete(record.id)
+                }}
+                onCancel={e => e.stopPropagation()}
+                okText="Đồng ý"
+                cancelText="Hủy"
+              >
+                <Tooltip
+                  title={
+                    locked ? "Phân bón đang được sử dụng, không thể xóa" : "Xóa"
+                  }
+                >
+                  <Button
+                    type="text"
+                    disabled={locked}
+                    icon={
+                      <DeleteOutlined
+                        className={`text-lg ${locked ? "text-gray-300" : "text-red-500"}`}
+                      />
+                    }
+                    className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? "opacity-40" : "hover:bg-red-50"}`}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
           </div>
         )
       },
@@ -353,7 +396,7 @@ const ViewFertilizers = () => {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <FertilizerIcon style={{ fontSize: '24px', color: '#15803d' }} />
+            <FertilizerIcon style={{ fontSize: "24px", color: "#15803d" }} />
             Quản lý phân bón
           </TitleCustom>
         </div>
@@ -385,7 +428,7 @@ const ViewFertilizers = () => {
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={e => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
             placeholder="Tìm theo mã, tên phân bón..."
             prefix={<SearchOutlined className="text-gray-300" />}
@@ -395,13 +438,13 @@ const ViewFertilizers = () => {
           />
           <Select
             value={categoryFilter}
-            onChange={(val) => updateFilter('category', val)}
+            onChange={val => updateFilter("category", val)}
             className="h-10 rounded-xl min-w-[160px]"
             options={selectCategoryOptions}
           />
           <Select
             value={statusFilter}
-            onChange={(val) => updateFilter('status', val)}
+            onChange={val => updateFilter("status", val)}
             className="h-10 rounded-xl min-w-[160px]"
             options={selectStatusOptions}
           />
@@ -421,7 +464,6 @@ const ViewFertilizers = () => {
             />
           </div>
         </div>
-
       </div>
 
       {/* Table */}
@@ -431,15 +473,21 @@ const ViewFertilizers = () => {
         rowKey="id"
         loading={loading}
         scroll={{ x: 1120 }}
-        onRow={(record) => ({
-          onClick: () => navigate(ROUTER.FM_FERTILIZER_DETAIL.replace(':id', record.id)),
-          className: 'cursor-pointer',
+        onRow={record => ({
+          onClick: () =>
+            navigate(ROUTER.FM_FERTILIZER_DETAIL.replace(":id", record.id)),
+          className: "cursor-pointer",
         })}
-        locale={{ emptyText: 'Không có dữ liệu phân bón.' }}
-        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
-          setPage(p)
-          setPageSize(ps)
-        })}
+        locale={{ emptyText: "Không có dữ liệu phân bón." }}
+        pagination={createPaginationConfig(
+          page,
+          pageSize,
+          totalRecords,
+          (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        )}
         rowClassName="hover:bg-green-50/30 transition-colors"
       />
 

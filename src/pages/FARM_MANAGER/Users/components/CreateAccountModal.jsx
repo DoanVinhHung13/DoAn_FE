@@ -1,6 +1,12 @@
 import React from "react"
 import { Button, Form, Input, message, Select } from "antd"
-import { KeyOutlined, LockOutlined, MailOutlined, PhoneOutlined, UserOutlined } from "@ant-design/icons"
+import {
+  KeyOutlined,
+  LockOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  UserOutlined,
+} from "@ant-design/icons"
 import CustomModal from "src/components/Modal/CustomModal"
 import { ROLES } from "src/constants/roles"
 import { SYSTEM_KEY } from "src/constants/systemKey"
@@ -43,7 +49,12 @@ const CreateAccountModal = ({
   const allowedRoles = Object.values(ROLES)
   const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option => {
     const role = option.codeValue || option.value
-    if (!allowedRoles.includes(role) || role === ROLES.FARM_MANAGER || role === ROLES.FARMER) return false
+    if (
+      !allowedRoles.includes(role) ||
+      role === ROLES.FARM_MANAGER ||
+      role === ROLES.FARMER
+    )
+      return false
     return canCreateSupervisor || role !== ROLES.FARM_SUPERVISOR
   })
 
@@ -61,7 +72,9 @@ const CreateAccountModal = ({
   }, [open, form])
 
   const handleUserChange = userId => {
-    const selectedUser = users.find(user => String(getUserId(user)) === String(userId))
+    const selectedUser = users.find(
+      user => String(getUserId(user)) === String(userId),
+    )
     form.setFieldsValue({
       email: selectedUser?.email || "",
       phoneNumber: selectedUser?.phoneNumber || selectedUser?.phone || "",
@@ -76,15 +89,19 @@ const CreateAccountModal = ({
 
     try {
       setLoading(true)
-      await UserService.createAccount(values.userId, {
-        password: values.password,
-        roles: [values.role],
-        email: values.email?.trim() || null,
-        phoneNumber: values.phoneNumber?.trim() || null,
-      }, {
-        errorHandling: "form",
-        fieldErrorMapping: CREATE_ACCOUNT_FIELD_MAPPING,
-      })
+      await UserService.createAccount(
+        values.userId,
+        {
+          password: values.password,
+          roles: [values.role],
+          email: values.email?.trim() || null,
+          phoneNumber: values.phoneNumber?.trim() || null,
+        },
+        {
+          errorHandling: "form",
+          fieldErrorMapping: CREATE_ACCOUNT_FIELD_MAPPING,
+        },
+      )
 
       onClose()
       onSuccess?.()
@@ -115,10 +132,19 @@ const CreateAccountModal = ({
       footer={null}
       width={520}
     >
-      <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        className="mt-4"
+      >
         <Form.Item
           name="userId"
-          label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Nhân viên</span>}
+          label={
+            <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+              Nhân viên
+            </span>
+          }
           rules={[{ required: true, message: "Vui lòng chọn nhân viên!" }]}
         >
           <Select
@@ -139,7 +165,11 @@ const CreateAccountModal = ({
           <Form.Item
             name="email"
             dependencies={["phoneNumber"]}
-            label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Email</span>}
+            label={
+              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                Email
+              </span>
+            }
             rules={[...OPTIONAL_EMAIL_RULES, contactRequiredRule]}
             required
           >
@@ -155,7 +185,11 @@ const CreateAccountModal = ({
           <Form.Item
             name="phoneNumber"
             dependencies={["email"]}
-            label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Số điện thoại</span>}
+            label={
+              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+                Số điện thoại
+              </span>
+            }
             rules={[...PHONE_RULES, contactRequiredRule]}
             required
           >
@@ -171,7 +205,11 @@ const CreateAccountModal = ({
 
         <Form.Item
           name="password"
-          label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Mật khẩu</span>}
+          label={
+            <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+              Mật khẩu
+            </span>
+          }
           rules={PASSWORD_RULES}
         >
           <Input.Password
@@ -184,13 +222,18 @@ const CreateAccountModal = ({
 
         <Form.Item
           name="confirmPassword"
-          label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Xác nhận mật khẩu</span>}
+          label={
+            <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+              Xác nhận mật khẩu
+            </span>
+          }
           dependencies={["password"]}
           rules={[
             { required: true, message: "Vui lòng xác nhận mật khẩu!" },
             ({ getFieldValue }) => ({
               validator(_, value) {
-                if (!value || getFieldValue("password") === value) return Promise.resolve()
+                if (!value || getFieldValue("password") === value)
+                  return Promise.resolve()
                 return Promise.reject(new Error("Mật khẩu không khớp!"))
               },
             }),
@@ -206,7 +249,11 @@ const CreateAccountModal = ({
 
         <Form.Item
           name="role"
-          label={<span className="text-xs font-bold tracking-wider text-gray-500 uppercase">Vai trò</span>}
+          label={
+            <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
+              Vai trò
+            </span>
+          }
           rules={[{ required: true, message: "Vui lòng chọn một vai trò!" }]}
         >
           <Select
@@ -223,7 +270,11 @@ const CreateAccountModal = ({
         )}
 
         <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
-          <Button onClick={onClose} className="h-10 px-6 rounded-xl" disabled={loading}>
+          <Button
+            onClick={onClose}
+            className="h-10 px-6 rounded-xl"
+            disabled={loading}
+          >
             Hủy
           </Button>
           <Button

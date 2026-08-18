@@ -12,7 +12,9 @@ export default function CustomModal(props) {
       width={1024}
       style={{ top: 120 }}
       {...props}
-      className={[className, tilteStart ? styles.titleFlexStart : ''].filter(Boolean).join(' ')}
+      className={[className, tilteStart ? styles.titleFlexStart : ""]
+        .filter(Boolean)
+        .join(" ")}
       hiddenScroll={hiddenScroll}
       maskTransitionName=""
     >

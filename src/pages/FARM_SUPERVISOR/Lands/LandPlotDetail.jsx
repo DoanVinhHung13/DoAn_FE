@@ -1,1 +1,1 @@
-export { default } from '../../FARM_MANAGER/Lands/LandPlotDetail'
+export { default } from "../../FARM_MANAGER/Lands/LandPlotDetail"

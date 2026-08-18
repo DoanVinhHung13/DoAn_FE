@@ -1,9 +1,9 @@
-import http from '../01_axios'
+import http from "../01_axios"
 import {
   canReorderStageTasks,
   canReorderTask,
   canReorderTaskList,
-} from 'src/utils/cultivationStatus'
+} from "src/utils/cultivationStatus"
 import {
   apiCreateCultivationTask,
   apiCreateCultivationTaskBulk,
@@ -20,21 +20,19 @@ import {
   apiSubmitTaskSummary,
   apiGetMyLogbookSummaries,
   apiGetLogbookById,
-} from './urls'
+} from "./urls"
 
 const silentConfig = { skipNotice: true }
 
-const getAll = (params) =>
+const getAll = params =>
   http.get(apiGetCultivationTasks, { params, skipNotice: true })
 
-const getMyTasks = (params) =>
+const getMyTasks = params =>
   http.get(apiGetMyCultivationTasks, { params, skipNotice: true })
 
-const getById = (id) =>
-  http.get(apiGetCultivationTaskById(id), silentConfig)
+const getById = id => http.get(apiGetCultivationTaskById(id), silentConfig)
 
-const create = (body) =>
-  http.post(apiCreateCultivationTask, body)
+const create = body => http.post(apiCreateCultivationTask, body)
 
 const createBulk = (body, config = {}) =>
   http.post(apiCreateCultivationTaskBulk, body, config)
@@ -46,34 +44,29 @@ const reorder = (body, context = {}) => {
     !canReorderTaskList(context.tasks)
   ) {
     return Promise.reject(
-      new Error('Task order can only be changed before the stage starts.'),
+      new Error("Task order can only be changed before the stage starts."),
     )
   }
 
   return http.put(apiReorderCultivationTasks, body)
 }
 
-const update = (id, body) =>
-  http.put(apiUpdateCultivationTask(id), body)
+const update = (id, body) => http.put(apiUpdateCultivationTask(id), body)
 
 const assign = (id, body, config = {}) =>
   http.post(apiAssignCultivationTask(id), body, config)
 
-const remove = (id) =>
-  http.delete(apiDeleteCultivationTask(id))
+const remove = id => http.delete(apiDeleteCultivationTask(id))
 
-const start = (id) =>
-  http.post(apiStartCultivationTask(id))
+const start = id => http.post(apiStartCultivationTask(id))
 
 const cancel = (id, config = {}) =>
   http.post(apiCancelCultivationTask(id), null, config)
 
-const getLeaderSummary = (id) =>
-  http.get(apiGetLeaderSummary(id), silentConfig)
+const getLeaderSummary = id => http.get(apiGetLeaderSummary(id), silentConfig)
 
 /** Body: { descriptionSummary, completedDate } */
-const submitSummary = (id, body) =>
-  http.post(apiSubmitTaskSummary(id), body)
+const submitSummary = (id, body) => http.post(apiSubmitTaskSummary(id), body)
 
 // Farm Leader: left tree panel - logbook list with task counts
 const getMyLogbookSummaries = (params, config = {}) =>

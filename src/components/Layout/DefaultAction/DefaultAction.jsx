@@ -1,17 +1,17 @@
-import { useEffect } from 'react'
-import { useSelector } from 'react-redux'
-import { useAppDispatch } from 'src/redux/hooks'
-import { setUserInfo, getListSystemKey } from 'src/redux/slices/appGlobalSlice'
-import authSession from 'src/redux/authSession'
-import AuthService from 'src/services/AuthService'
-import CommonService from 'src/services/CommonService'
-import { refreshAccessToken } from 'src/services/tokenRefresh'
-import { normalizeRole } from 'src/constants/roles'
-import { logDevDiagnostic } from 'src/utils/safeDiagnostic'
+import { useEffect } from "react"
+import { useSelector } from "react-redux"
+import { useAppDispatch } from "src/redux/hooks"
+import { setUserInfo, getListSystemKey } from "src/redux/slices/appGlobalSlice"
+import authSession from "src/redux/authSession"
+import AuthService from "src/services/AuthService"
+import CommonService from "src/services/CommonService"
+import { refreshAccessToken } from "src/services/tokenRefresh"
+import { normalizeRole } from "src/constants/roles"
+import { logDevDiagnostic } from "src/utils/safeDiagnostic"
 
 const DefaultAction = ({ children }) => {
   const dispatch = useAppDispatch()
-  const userInfo = useSelector((state) => state.appGlobal.userInfo)
+  const userInfo = useSelector(state => state.appGlobal.userInfo)
   useEffect(() => {
     if (!userInfo?.id) return
 
@@ -23,7 +23,7 @@ const DefaultAction = ({ children }) => {
           dispatch(getListSystemKey(data))
         }
       } catch (error) {
-        logDevDiagnostic('load-system-key', error)
+        logDevDiagnostic("load-system-key", error)
       }
     }
     fetchSystemKey()
@@ -75,7 +75,7 @@ const DefaultAction = ({ children }) => {
         authSession.updateUser(userData)
         dispatch(setUserInfo(userData))
       } catch (error) {
-        logDevDiagnostic('restore-user', error)
+        logDevDiagnostic("restore-user", error)
       }
     }
 

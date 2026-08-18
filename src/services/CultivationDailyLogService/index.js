@@ -1,4 +1,4 @@
-import http from '../01_axios'
+import http from "../01_axios"
 import {
   apiCreateCultivationDailyLog,
   apiGetDailyLogsByTask,
@@ -6,25 +6,26 @@ import {
   apiGetDailyLogsByStage,
   apiGetDailyLogTaskSummary,
   apiGetMaterialRecommendations,
-} from './urls'
+} from "./urls"
 
 const silentConfig = { skipNotice: true }
 
-const create = (body, config = {}) => http.post(apiCreateCultivationDailyLog, body, config)
+const create = (body, config = {}) =>
+  http.post(apiCreateCultivationDailyLog, body, config)
 
-const getByTask = (taskId) =>
+const getByTask = taskId =>
   http.get(apiGetDailyLogsByTask(taskId), silentConfig)
 
 const getRemainingArea = (taskId, materialId) =>
   http.get(apiGetMaterialRemainingArea(taskId, materialId), silentConfig)
 
-const getByStage = (stageId) =>
+const getByStage = stageId =>
   http.get(apiGetDailyLogsByStage(stageId), silentConfig)
 
-const getTaskSummary = (taskId) =>
+const getTaskSummary = taskId =>
   http.get(apiGetDailyLogTaskSummary(taskId), silentConfig)
 
-const getRecommendations = (body) =>
+const getRecommendations = body =>
   http.post(apiGetMaterialRecommendations, body, silentConfig)
 
 const CultivationDailyLogService = {

@@ -157,7 +157,8 @@ const fertColumns = [
     render: (_, r) =>
       r.totalArea > 0 ? (
         <span>
-          {r.totalArea} <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
+          {r.totalArea}{" "}
+          <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
         </span>
       ) : (
         <span className="text-gray-300">—</span>
@@ -199,7 +200,8 @@ const pestColumns = [
     render: (_, r) =>
       r.totalArea > 0 ? (
         <span>
-          {r.totalArea} <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
+          {r.totalArea}{" "}
+          <span className="text-gray-500">{formatAreaUnit(r.areaUnit)}</span>
         </span>
       ) : (
         <span className="text-gray-300">—</span>
@@ -237,12 +239,7 @@ const otherColumns = [
 ]
 
 /** Expand: thông tin Summary (ảnh, phân, thuốc, mô tả) + textarea Supervisor */
-const SummaryCompilePanel = ({
-  task,
-  stageId,
-  onSaved,
-  readOnly = false,
-}) => {
+const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [leaderSummary, setLeaderSummary] = useState(null)
@@ -394,7 +391,11 @@ const SummaryCompilePanel = ({
         return
       }
 
-      await saveCompiledDescription(targetStageId, taskId, normalizedDescription)
+      await saveCompiledDescription(
+        targetStageId,
+        taskId,
+        normalizedDescription,
+      )
       onSaved?.()
     } catch {
       // axios interceptor handles error notification
@@ -434,10 +435,10 @@ const SummaryCompilePanel = ({
                   typeof img === "string"
                     ? img
                     : img.url ||
-                    img.imageUrl ||
-                    img.fileUrl ||
-                    img.path ||
-                    img.src,
+                      img.imageUrl ||
+                      img.fileUrl ||
+                      img.path ||
+                      img.src,
                 )
                 .filter(Boolean)}
             >
@@ -447,10 +448,10 @@ const SummaryCompilePanel = ({
                     typeof img === "string"
                       ? img
                       : img.url ||
-                      img.imageUrl ||
-                      img.fileUrl ||
-                      img.path ||
-                      img.src
+                        img.imageUrl ||
+                        img.fileUrl ||
+                        img.path ||
+                        img.src
                   const label = typeof img === "object" ? img.label : null
                   if (!src) return null
                   return (
@@ -493,13 +494,11 @@ const SummaryCompilePanel = ({
             <div className="flex flex-wrap items-center gap-2 text-sm">
               {harvestQuantity != null && (
                 <span className="font-bold text-emerald-700">
-                  {harvestQuantity} {leaderSummary?.harvestUnit || 'kg'}
+                  {harvestQuantity} {leaderSummary?.harvestUnit || "kg"}
                 </span>
               )}
               {harvestArea > 0 && (
-                <span className="text-gray-600">
-                  · {harvestArea} m²
-                </span>
+                <span className="text-gray-600">· {harvestArea} m²</span>
               )}
             </div>
           </div>
@@ -523,7 +522,7 @@ const SummaryCompilePanel = ({
                 type="warning"
                 className="mt-2 rounded-lg px-3 py-2 [&_.ant-alert-message]:text-sm [&_.ant-alert-description]:text-xs"
                 message="Khuyến nghị lượng sử dụng phân bón"
-                description={(
+                description={
                   <div className="space-y-0.5 leading-5">
                     {fertilizerRecommendations.map(item => (
                       <div key={item.key}>
@@ -531,7 +530,7 @@ const SummaryCompilePanel = ({
                       </div>
                     ))}
                   </div>
-                )}
+                }
               />
             )}
           </div>
@@ -555,7 +554,7 @@ const SummaryCompilePanel = ({
                 type="info"
                 className="mt-3 rounded-xl"
                 message="Khuyến nghị lượng sử dụng nông dược"
-                description={(
+                description={
                   <div className="space-y-1">
                     {pesticideRecommendations.map(item => (
                       <div key={item.key}>
@@ -563,7 +562,7 @@ const SummaryCompilePanel = ({
                       </div>
                     ))}
                   </div>
-                )}
+                }
               />
             )}
           </div>
@@ -624,7 +623,11 @@ const SummaryCompilePanel = ({
             Viết lại mô tả (giám sát viên)
           </Text>
           {readOnly && (
-            <Tag icon={<LockOutlined />} color="warning" className="rounded-full ml-auto">
+            <Tag
+              icon={<LockOutlined />}
+              color="warning"
+              className="rounded-full ml-auto"
+            >
               Đã gửi — không thể chỉnh sửa
             </Tag>
           )}
@@ -658,7 +661,8 @@ const SummaryCompilePanel = ({
 }
 
 const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
-  const isPlanCompleted = plan?.status === 'COMPLETED' || plan?.reviewStatus === 'WAITING_APPROVAL'
+  const isPlanCompleted =
+    plan?.status === "COMPLETED" || plan?.reviewStatus === "WAITING_APPROVAL"
   const isReadOnly = isPlanCompleted
   const { getStageStatus, getReviewStatus } = useCultivationStatus()
   const [selectedId, setSelectedId] = useState(null)
@@ -689,7 +693,9 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
       const logId = editModal.log.id
       const newDesc = editModal.description?.trim() || ""
       if (!newDesc) {
-        message.error("Mô tả nhật ký không được để trống hoặc chỉ chứa khoảng trắng.")
+        message.error(
+          "Mô tả nhật ký không được để trống hoặc chỉ chứa khoảng trắng.",
+        )
         return
       }
       if (newDesc.length > 200) {
@@ -838,14 +844,17 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
       bordered={false}
       className="duration-500 shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-4"
     >
-      {!isReadOnly && selectedStage?.status !== 'COMPLETED' && (
+      {!isReadOnly && selectedStage?.status !== "COMPLETED" && (
         <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
           <Button
             type="primary"
             icon={<SendOutlined />}
             loading={submitting}
             onClick={handleCompleteStage}
-            disabled={!selectedId || !["ACTIVE", "IN_PROGRESS"].includes(selectedStage?.status)}
+            disabled={
+              !selectedId ||
+              !["ACTIVE", "IN_PROGRESS"].includes(selectedStage?.status)
+            }
             className="font-semibold bg-green-600 rounded-lg h-9"
           >
             Hoàn tất giai đoạn
@@ -1011,8 +1020,9 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                         log.description ||
                         log.descriptionSummary ||
                         "Chưa có mô tả"
-                      const materialsText = log.materialsText || ''
-                      const isHarvestMaterialsText = /(?:sản lượng|thu hoạch)/i.test(materialsText)
+                      const materialsText = log.materialsText || ""
+                      const isHarvestMaterialsText =
+                        /(?:sản lượng|thu hoạch)/i.test(materialsText)
                       const materials =
                         log.materials || log.summary?.materials || []
                       const fertilizers =
@@ -1122,22 +1132,35 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                           {/* Vật tư dạng text (materialsText) */}
                           {materialsText && (
                             <div
-                              className={`p-3 mb-3 rounded-lg ${isHarvestMaterialsText
-                                ? 'border border-emerald-100 bg-emerald-50/70'
-                                : 'border border-blue-100 bg-blue-50/50'
-                                }`}
+                              className={`p-3 mb-3 rounded-lg ${
+                                isHarvestMaterialsText
+                                  ? "border border-emerald-100 bg-emerald-50/70"
+                                  : "border border-blue-100 bg-blue-50/50"
+                              }`}
                             >
-                              <div className={`text-[11px] font-bold uppercase mb-1.5 flex items-center gap-1 ${isHarvestMaterialsText ? 'text-emerald-800' : 'text-blue-800'
-                                }`}>
+                              <div
+                                className={`text-[11px] font-bold uppercase mb-1.5 flex items-center gap-1 ${
+                                  isHarvestMaterialsText
+                                    ? "text-emerald-800"
+                                    : "text-blue-800"
+                                }`}
+                              >
                                 {isHarvestMaterialsText ? (
                                   <InboxOutlined className="text-emerald-600" />
                                 ) : (
                                   <ExperimentOutlined className="text-blue-600" />
-                                )}{' '}
-                                {isHarvestMaterialsText ? 'Sản lượng:' : 'Vật tư sử dụng:'}
+                                )}{" "}
+                                {isHarvestMaterialsText
+                                  ? "Sản lượng:"
+                                  : "Vật tư sử dụng:"}
                               </div>
-                              <p className={`m-0 min-w-0 max-w-full text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${isHarvestMaterialsText ? 'text-emerald-700' : 'text-gray-700'
-                                }`}>
+                              <p
+                                className={`m-0 min-w-0 max-w-full text-sm leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere] ${
+                                  isHarvestMaterialsText
+                                    ? "text-emerald-700"
+                                    : "text-gray-700"
+                                }`}
+                              >
                                 {materialsText}
                               </p>
                             </div>
@@ -1146,62 +1169,62 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                           {/* Vật tư: Phân bón & Nông dược */}
                           {(fertilizers.length > 0 ||
                             pesticides.length > 0) && (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-3">
-                                {fertilizers.length > 0 && (
-                                  <div className="bg-blue-50/50 rounded-lg p-2.5 border border-blue-100 text-xs">
-                                    <div className="flex items-center gap-1 mb-1 font-bold text-blue-800">
-                                      <ExperimentOutlined className="text-blue-600" />{" "}
-                                      Phân bón:
-                                    </div>
-                                    <div className="space-y-1">
-                                      {fertilizers.map((f, i) => (
-                                        <div
-                                          key={i}
-                                          className="flex items-center justify-between px-2 py-1 rounded bg-white/70"
-                                        >
-                                          <span className="font-medium text-gray-800">
-                                            {f.name ||
-                                              f.fertilizerName ||
-                                              f.materialName}
-                                          </span>
-                                          <span className="font-bold text-blue-700">
-                                            {f.quantity || f.totalQuantity}{" "}
-                                            {f.unit || f.quantityUnit || "kg"}
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-3">
+                              {fertilizers.length > 0 && (
+                                <div className="bg-blue-50/50 rounded-lg p-2.5 border border-blue-100 text-xs">
+                                  <div className="flex items-center gap-1 mb-1 font-bold text-blue-800">
+                                    <ExperimentOutlined className="text-blue-600" />{" "}
+                                    Phân bón:
                                   </div>
-                                )}
+                                  <div className="space-y-1">
+                                    {fertilizers.map((f, i) => (
+                                      <div
+                                        key={i}
+                                        className="flex items-center justify-between px-2 py-1 rounded bg-white/70"
+                                      >
+                                        <span className="font-medium text-gray-800">
+                                          {f.name ||
+                                            f.fertilizerName ||
+                                            f.materialName}
+                                        </span>
+                                        <span className="font-bold text-blue-700">
+                                          {f.quantity || f.totalQuantity}{" "}
+                                          {f.unit || f.quantityUnit || "kg"}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
 
-                                {pesticides.length > 0 && (
-                                  <div className="bg-purple-50/50 rounded-lg p-2.5 border border-purple-100 text-xs">
-                                    <div className="flex items-center gap-1 mb-1 font-bold text-purple-800">
-                                      <ExperimentOutlined className="text-purple-600" />{" "}
-                                      Nông dược:
-                                    </div>
-                                    <div className="space-y-1">
-                                      {pesticides.map((p, i) => (
-                                        <div
-                                          key={i}
-                                          className="flex items-center justify-between px-2 py-1 rounded bg-white/70"
-                                        >
-                                          <span className="font-medium text-gray-800">
-                                            {p.name ||
-                                              p.pesticideName ||
-                                              p.materialName}
-                                          </span>
-                                          <span className="font-bold text-purple-700">
-                                            {p.quantity || p.totalQuantity}{" "}
-                                            {p.unit || p.quantityUnit || "lít"}
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
+                              {pesticides.length > 0 && (
+                                <div className="bg-purple-50/50 rounded-lg p-2.5 border border-purple-100 text-xs">
+                                  <div className="flex items-center gap-1 mb-1 font-bold text-purple-800">
+                                    <ExperimentOutlined className="text-purple-600" />{" "}
+                                    Nông dược:
                                   </div>
-                                )}
-                              </div>
-                            )}
+                                  <div className="space-y-1">
+                                    {pesticides.map((p, i) => (
+                                      <div
+                                        key={i}
+                                        className="flex items-center justify-between px-2 py-1 rounded bg-white/70"
+                                      >
+                                        <span className="font-medium text-gray-800">
+                                          {p.name ||
+                                            p.pesticideName ||
+                                            p.materialName}
+                                        </span>
+                                        <span className="font-bold text-purple-700">
+                                          {p.quantity || p.totalQuantity}{" "}
+                                          {p.unit || p.quantityUnit || "lít"}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
 
                           {/* Ảnh minh chứng */}
                           {images.length > 0 && (
@@ -1215,10 +1238,10 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                                     typeof img === "string"
                                       ? img
                                       : img.url ||
-                                      img.imageUrl ||
-                                      img.path ||
-                                      img.src ||
-                                      img.fileUrl,
+                                        img.imageUrl ||
+                                        img.path ||
+                                        img.src ||
+                                        img.fileUrl,
                                   )
                                   .filter(Boolean)}
                               >
@@ -1228,10 +1251,10 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
                                       typeof img === "string"
                                         ? img
                                         : img.url ||
-                                        img.imageUrl ||
-                                        img.path ||
-                                        img.src ||
-                                        img.fileUrl
+                                          img.imageUrl ||
+                                          img.path ||
+                                          img.src ||
+                                          img.fileUrl
                                     if (!src) return null
                                     return (
                                       <div

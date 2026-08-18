@@ -3,25 +3,19 @@ import {
   EditOutlined,
   FileTextOutlined,
   ProfileOutlined,
-} from '@ant-design/icons'
-import {
-  Button,
-  Card,
-  Empty,
-  Skeleton,
-  Typography,
-} from 'antd'
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+} from "@ant-design/icons"
+import { Button, Card, Empty, Skeleton, Typography } from "antd"
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 
-import TitleCustom from 'src/components/TitleCustom'
-import ROUTER from 'src/router/ROUTER'
-import ProcessTemplateService from 'src/services/ProcessTemplateService'
-import ProcessStepService from 'src/services/ProcessStepService'
+import TitleCustom from "src/components/TitleCustom"
+import ROUTER from "src/router/ROUTER"
+import ProcessTemplateService from "src/services/ProcessTemplateService"
+import ProcessStepService from "src/services/ProcessStepService"
 
 const { Text } = Typography
 
-const normalizeItems = (response) => {
+const normalizeItems = response => {
   const payload = response?.data ?? response ?? {}
   const data = payload?.data ?? payload
   return Array.isArray(data)
@@ -39,7 +33,7 @@ const InfoItem = ({ label, value, helper, icon }) => (
         {label}
       </p>
       <p className="m-0 truncate text-sm font-semibold text-gray-800">
-        {value || '—'}
+        {value || "—"}
       </p>
       <p className="mb-0 mt-0.5 truncate text-xs text-gray-400">{helper}</p>
     </div>
@@ -68,12 +62,10 @@ const PlanTemplateDetail = () => {
         const template = templateResponse?.data ?? templateResponse
         const templateSteps = normalizeItems(stepsResponse)
           .filter(
-            (step) =>
-              (step.processTemplateId || step.processTemplate?.id) === id
+            step => (step.processTemplateId || step.processTemplate?.id) === id,
           )
           .sort(
-            (first, second) =>
-              (first.stepOrder || 0) - (second.stepOrder || 0)
+            (first, second) => (first.stepOrder || 0) - (second.stepOrder || 0),
           )
 
         setItem(template)
@@ -106,7 +98,7 @@ const PlanTemplateDetail = () => {
   if (!item) return null
 
   const catalogName =
-    item.cropCatalogName || item.cropCatalog?.name || 'Chưa xác định'
+    item.cropCatalogName || item.cropCatalog?.name || "Chưa xác định"
   const cropName = item.cropName || item.crop?.name
 
   return (
@@ -129,7 +121,7 @@ const PlanTemplateDetail = () => {
           type="primary"
           icon={<EditOutlined />}
           onClick={() =>
-            navigate(ROUTER.FM_PROCESS_TEMPLATE_EDIT.replace(':id', id))
+            navigate(ROUTER.FM_PROCESS_TEMPLATE_EDIT.replace(":id", id))
           }
           className="h-10 rounded-xl border-0 bg-green-600 px-5 font-bold shadow-lg shadow-green-100"
         >
@@ -144,13 +136,13 @@ const PlanTemplateDetail = () => {
       >
         <div
           className="border-l-4 border-green-600 px-6 py-5 md:px-7"
-          style={{ backgroundColor: '#f0fdf4' }}
+          style={{ backgroundColor: "#f0fdf4" }}
         >
           <h1 className="mb-1 text-xl font-bold leading-tight text-gray-900 md:text-2xl">
             {item.name}
           </h1>
           <p className="m-0 max-w-5xl text-sm leading-6 text-gray-600">
-            {item.description || 'Mẫu quy trình chưa có mô tả tổng quan.'}
+            {item.description || "Mẫu quy trình chưa có mô tả tổng quan."}
           </p>
         </div>
 
@@ -162,7 +154,7 @@ const PlanTemplateDetail = () => {
           />
           <InfoItem
             label="Cây trồng"
-            value={cropName || 'Cả danh mục'}
+            value={cropName || "Cả danh mục"}
             icon={<FileTextOutlined />}
           />
           {/* <InfoItem
@@ -240,7 +232,7 @@ const PlanTemplateDetail = () => {
                     </div>
 
                     <p className="m-0 min-w-0 max-w-full whitespace-pre-line break-words [overflow-wrap:anywhere] text-sm leading-5 text-gray-600">
-                      {step.description || 'Chưa có mô tả công việc.'}
+                      {step.description || "Chưa có mô tả công việc."}
                     </p>
 
                     {/* {step.note && (

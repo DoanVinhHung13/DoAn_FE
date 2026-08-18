@@ -1,18 +1,18 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { Provider } from 'react-redux'
-import { store } from 'src/redux/store'
-import StoreProvider from 'src/contexts'
-import GlobalThemeConfig from 'src/theme/GlobalThemeConfig'
-import { ThemeStyledComponent } from 'src/theme/ThemeStyledComponent'
-import { ThemeProvider } from 'styled-components'
-import RealtimeSync from 'src/components/RealtimeSync'
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+import { Provider } from "react-redux"
+import { store } from "src/redux/store"
+import StoreProvider from "src/contexts"
+import GlobalThemeConfig from "src/theme/GlobalThemeConfig"
+import { ThemeStyledComponent } from "src/theme/ThemeStyledComponent"
+import { ThemeProvider } from "styled-components"
+import RealtimeSync from "src/components/RealtimeSync"
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,  // 5 phút dữ liệu "tươi"
-      gcTime:    1000 * 60 * 30,  // giữ cache 30 phút
+      staleTime: 1000 * 60 * 5, // 5 phút dữ liệu "tươi"
+      gcTime: 1000 * 60 * 30, // giữ cache 30 phút
       retry: 2,
     },
   },

@@ -1,14 +1,17 @@
-import React, { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from 'antd'
-import { BookOutlined, SearchOutlined } from '@ant-design/icons'
-import CatalogService from 'src/services/CatalogService'
-import TableCustom from 'src/components/Table/CustomTable'
-import { FERTILIZER_TYPE_OPTIONS, normalizeFertilizerType } from 'src/constants/fertilizerTypes'
+import React, { useMemo, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from "antd"
+import { BookOutlined, SearchOutlined } from "@ant-design/icons"
+import CatalogService from "src/services/CatalogService"
+import TableCustom from "src/components/Table/CustomTable"
+import {
+  FERTILIZER_TYPE_OPTIONS,
+  normalizeFertilizerType,
+} from "src/constants/fertilizerTypes"
 
 const { Title, Text } = Typography
 
-const getCatalogItems = (response) => {
+const getCatalogItems = response => {
   let payload = response
 
   if (payload?.data !== undefined) payload = payload.data
@@ -16,23 +19,41 @@ const getCatalogItems = (response) => {
 
   if (Array.isArray(payload)) return payload
 
-  return payload?.items || payload?.results || payload?.records || payload?.catalogs || []
+  return (
+    payload?.items ||
+    payload?.results ||
+    payload?.records ||
+    payload?.catalogs ||
+    []
+  )
 }
 
-const textValue = (...values) => values.find(value => typeof value === 'string' && value.trim()) || ''
+const textValue = (...values) =>
+  values.find(value => typeof value === "string" && value.trim()) || ""
 
 const getDescriptionPart = (description, label) => {
-  if (!description) return ''
+  if (!description) return ""
 
-  const match = description.match(new RegExp(`${label}:\\s*([^.]*)`, 'i'))
-  return match?.[1]?.trim() || ''
+  const match = description.match(new RegExp(`${label}:\\s*([^.]*)`, "i"))
+  return match?.[1]?.trim() || ""
 }
 
 const normalizeFertilizer = (item, index) => ({
   id: item.id || item._id || item.code || `fertilizer-${index}`,
   code: textValue(item.code),
-  name: textValue(item.name, item.fertilizerName, item.productName, item.tradeName),
-  category: textValue(item.type, item.category, item.fertilizerType, item.classification, getDescriptionPart(item.description, 'Loại')),
+  name: textValue(
+    item.name,
+    item.fertilizerName,
+    item.productName,
+    item.tradeName,
+  ),
+  category: textValue(
+    item.type,
+    item.category,
+    item.fertilizerType,
+    item.classification,
+    getDescriptionPart(item.description, "Loại"),
+  ),
   unit: textValue(item.unit, item.usageUnit),
   ingredients: textValue(
     item.description,
@@ -40,7 +61,7 @@ const normalizeFertilizer = (item, index) => ({
     item.composition,
     item.activeIngredient,
     item.ingredient,
-    getDescriptionPart(item.description, 'Thành phần'),
+    getDescriptionPart(item.description, "Thành phần"),
   ),
   company: textValue(
     item.company,
@@ -54,15 +75,22 @@ const normalizeFertilizer = (item, index) => ({
 })
 
 const FertilizerList = () => {
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
-  const [selectedType, setSelectedType] = useState('all')
-  const [selectedUnit, setSelectedUnit] = useState('all')
+  const [selectedType, setSelectedType] = useState("all")
+  const [selectedUnit, setSelectedUnit] = useState("all")
 
-  const { data: fertilizerResponse, isLoading, isError } = useQuery({
-    queryKey: ['license-catalog-fertilizers', searchText.trim()],
-    queryFn: () => CatalogService.getCatalogFertilizers({ search: searchText.trim() || undefined }),
+  const {
+    data: fertilizerResponse,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["license-catalog-fertilizers", searchText.trim()],
+    queryFn: () =>
+      CatalogService.getCatalogFertilizers({
+        search: searchText.trim() || undefined,
+      }),
     staleTime: 60_000,
   })
 
@@ -72,69 +100,85 @@ const FertilizerList = () => {
   )
 
   const filteredData = useMemo(
-    () => fertilizerData.filter(item =>
-      (selectedType === 'all' || normalizeFertilizerType(item.category) === selectedType) &&
-      (selectedUnit === 'all' || normalizeFertilizerType(item.unit) === selectedUnit),
-    ),
+    () =>
+      fertilizerData.filter(
+        item =>
+          (selectedType === "all" ||
+            normalizeFertilizerType(item.category) === selectedType) &&
+          (selectedUnit === "all" ||
+            normalizeFertilizerType(item.unit) === selectedUnit),
+      ),
     [fertilizerData, selectedType, selectedUnit],
   )
 
   const paginatedData = useMemo(
-    () => filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    () =>
+      filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize),
     [currentPage, filteredData, pageSize],
   )
 
   const columns = [
     {
-      title: 'STT',
-      key: 'stt',
+      title: "STT",
+      key: "stt",
       width: 65,
-      align: 'center',
+      align: "center",
       render: (_, __, index) => (
-        <Text className="font-bold text-gray-400">{(currentPage - 1) * pageSize + index + 1}</Text>
+        <Text className="font-bold text-gray-400">
+          {(currentPage - 1) * pageSize + index + 1}
+        </Text>
       ),
     },
     {
-      title: 'Tên phân bón',
-      dataIndex: 'name',
-      key: 'name',
+      title: "Tên phân bón",
+      dataIndex: "name",
+      key: "name",
       width: 220,
-      render: (text) => <Text className="font-bold text-gray-800">{text || '—'}</Text>,
+      render: text => (
+        <Text className="font-bold text-gray-800">{text || "—"}</Text>
+      ),
     },
     {
-      title: 'Loại phân',
-      dataIndex: 'category',
-      key: 'category',
+      title: "Loại phân",
+      dataIndex: "category",
+      key: "category",
       width: 160,
-      render: (text) => {
+      render: text => {
         const colorMap = {
-          'Phân hữu cơ': 'green',
-          'Phân hữu cơ khoáng': 'lime',
-          'Phân hữu cơ sinh học': 'cyan',
-          'Phân hữu cơ vi sinh': 'teal',
-          'Phân vi sinh vật': 'blue',
-          'Phân bón lá': 'orange',
-          'Phân bón chứa chất tăng hiệu suất': 'purple',
+          "Phân hữu cơ": "green",
+          "Phân hữu cơ khoáng": "lime",
+          "Phân hữu cơ sinh học": "cyan",
+          "Phân hữu cơ vi sinh": "teal",
+          "Phân vi sinh vật": "blue",
+          "Phân bón lá": "orange",
+          "Phân bón chứa chất tăng hiệu suất": "purple",
         }
         return (
-          <Tag color={colorMap[text] || 'default'} className="font-medium rounded border-0 whitespace-normal leading-5">
-            {text || '—'}
+          <Tag
+            color={colorMap[text] || "default"}
+            className="font-medium rounded border-0 whitespace-normal leading-5"
+          >
+            {text || "—"}
           </Tag>
         )
       },
     },
     {
-      title: 'Thành phần, hàm lượng đăng ký',
-      dataIndex: 'ingredients',
-      key: 'ingredients',
-      render: (text) => <Text className="text-gray-600 text-sm">{text || '—'}</Text>,
+      title: "Thành phần, hàm lượng đăng ký",
+      dataIndex: "ingredients",
+      key: "ingredients",
+      render: text => (
+        <Text className="text-gray-600 text-sm">{text || "—"}</Text>
+      ),
     },
     {
-      title: 'Tổ chức, cá nhân đăng ký',
-      dataIndex: 'company',
-      key: 'company',
+      title: "Tổ chức, cá nhân đăng ký",
+      dataIndex: "company",
+      key: "company",
       width: 220,
-      render: (text) => <Text className="text-gray-600 text-sm">{text || '—'}</Text>,
+      render: text => (
+        <Text className="text-gray-600 text-sm">{text || "—"}</Text>
+      ),
     },
   ]
 
@@ -143,9 +187,9 @@ const FertilizerList = () => {
       <div className="space-y-3">
         <Breadcrumb
           items={[
-            { title: 'Trang chủ' },
-            { title: 'Tra cứu cấp phép' },
-            { title: 'Danh mục Phân bón' },
+            { title: "Trang chủ" },
+            { title: "Tra cứu cấp phép" },
+            { title: "Danh mục Phân bón" },
           ]}
         />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -154,7 +198,9 @@ const FertilizerList = () => {
               <BookOutlined className="text-3xl" />
             </div>
             <div>
-              <Title level={4} className="!mb-1 font-bold">Danh mục Phân bón cấp phép</Title>
+              <Title level={4} className="!mb-1 font-bold">
+                Danh mục Phân bón cấp phép
+              </Title>
               <Text className="text-gray-500">
                 Danh sách phân bón đang hoạt động từ hệ thống EAPLS.
               </Text>
@@ -163,7 +209,12 @@ const FertilizerList = () => {
           <Badge
             count={filteredData.length.toLocaleString()}
             overflowCount={99999}
-            style={{ backgroundColor: '#16a34a', fontSize: 13, padding: '0 10px', borderRadius: 20 }}
+            style={{
+              backgroundColor: "#16a34a",
+              fontSize: 13,
+              padding: "0 10px",
+              borderRadius: 20,
+            }}
           />
         </div>
       </div>
@@ -176,7 +227,7 @@ const FertilizerList = () => {
             size="large"
             prefix={<SearchOutlined className="text-gray-400" />}
             allowClear
-            onChange={(e) => {
+            onChange={e => {
               setSearchText(e.target.value)
               setCurrentPage(1)
             }}
@@ -184,15 +235,31 @@ const FertilizerList = () => {
           />
           <Select
             value={selectedType}
-            onChange={(value) => { setSelectedType(value); setCurrentPage(1) }}
-            options={[{ value: 'all', label: 'Tất cả loại phân bón' }, ...FERTILIZER_TYPE_OPTIONS.map(option => ({ ...option, value: normalizeFertilizerType(option.value) }))]}
+            onChange={value => {
+              setSelectedType(value)
+              setCurrentPage(1)
+            }}
+            options={[
+              { value: "all", label: "Tất cả loại phân bón" },
+              ...FERTILIZER_TYPE_OPTIONS.map(option => ({
+                ...option,
+                value: normalizeFertilizerType(option.value),
+              })),
+            ]}
             size="large"
             className="rounded-xl min-w-[240px] h-10"
           />
           <Select
             value={selectedUnit}
-            onChange={(value) => { setSelectedUnit(value); setCurrentPage(1) }}
-            options={[{ value: 'all', label: 'Tất cả đơn vị' }, { value: 'KG', label: 'kg' }, { value: 'LÍT', label: 'lít' }]}
+            onChange={value => {
+              setSelectedUnit(value)
+              setCurrentPage(1)
+            }}
+            options={[
+              { value: "all", label: "Tất cả đơn vị" },
+              { value: "KG", label: "kg" },
+              { value: "LÍT", label: "lít" },
+            ]}
             size="large"
             className="rounded-xl min-w-[160px] h-10"
           />
@@ -215,13 +282,13 @@ const FertilizerList = () => {
         scroll={{ x: 1000 }}
         rowClassName="hover:bg-green-50/30 transition-colors"
         className="custom-tcvn-table"
-        locale={{ emptyText: 'Không tìm thấy phân bón phù hợp.' }}
+        locale={{ emptyText: "Không tìm thấy phân bón phù hợp." }}
         pagination={{
           current: currentPage,
           pageSize,
           total: filteredData.length,
           showSizeChanger: true,
-          pageSizeOptions: ['10', '20', '50', '100'],
+          pageSizeOptions: ["10", "20", "50", "100"],
           onChange: (page, size) => {
             setCurrentPage(page)
             setPageSize(size)
@@ -234,9 +301,12 @@ const FertilizerList = () => {
           <BookOutlined className="text-lg" />
         </div>
         <div>
-          <Text className="block font-bold text-gray-800 mb-1">Nguồn dữ liệu:</Text>
+          <Text className="block font-bold text-gray-800 mb-1">
+            Nguồn dữ liệu:
+          </Text>
           <Text className="text-gray-600 text-[13px]">
-            Dữ liệu lấy trực tiếp từ API danh mục phân bón đang hoạt động của EAPLS.
+            Dữ liệu lấy trực tiếp từ API danh mục phân bón đang hoạt động của
+            EAPLS.
           </Text>
         </div>
       </div>

@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { getNotifications } from 'src/services/NotificationService'
-import STORAGE, { getStorage } from 'src/redux/storage'
+import { useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { getNotifications } from "src/services/NotificationService"
+import STORAGE, { getStorage } from "src/redux/storage"
 
 const EMPTY_BADGE_COUNTS = {
   joinRequest: 0,
@@ -29,7 +29,7 @@ const normalizeNotifications = response => {
 export const useBadgeCounts = () => {
   const isAuthenticated = Boolean(getStorage(STORAGE.TOKEN))
   const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ["notifications"],
     queryFn: async () => normalizeNotifications(await getNotifications()),
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000,

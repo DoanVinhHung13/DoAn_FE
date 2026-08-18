@@ -78,7 +78,9 @@
   color: #4b5563;
   padding: 6px 14px;
   border-radius: 8px;
-  transition: background 0.18s, color 0.18s;
+  transition:
+    background 0.18s,
+    color 0.18s;
   font-family: inherit;
 
   &:hover {
@@ -160,7 +162,9 @@
   justify-content: center;
   font-size: 18px;
   color: #6b7280;
-  transition: background 0.18s, color 0.18s;
+  transition:
+    background 0.18s,
+    color 0.18s;
   font-family: inherit;
 
   &:hover {
@@ -178,7 +182,9 @@
   padding: 4px 10px 4px 4px;
   border-radius: 40px;
   border: 1.5px solid transparent;
-  transition: background 0.18s, border-color 0.18s;
+  transition:
+    background 0.18s,
+    border-color 0.18s;
 
   &:hover {
     background: #f0fdf4;
@@ -237,7 +243,10 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  transition:
+    background 0.18s,
+    border-color 0.18s,
+    color 0.18s;
   font-family: inherit;
 
   &:hover {

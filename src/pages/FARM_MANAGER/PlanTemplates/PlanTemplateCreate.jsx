@@ -33,11 +33,16 @@ import { applyApiFieldErrors } from "src/services/core/apiError"
 const { Text } = Typography
 
 const PLAN_TEMPLATE_FIELD_MAPPING = {
-  CropCatalogId: "cropCatalogId", cropCatalogId: "cropCatalogId",
-  CropId: "cropId", cropId: "cropId",
-  Name: "name", name: "name",
-  Description: "description", description: "description",
-  EstimatedDurationDays: "estimatedDurationDays", estimatedDurationDays: "estimatedDurationDays",
+  CropCatalogId: "cropCatalogId",
+  cropCatalogId: "cropCatalogId",
+  CropId: "cropId",
+  cropId: "cropId",
+  Name: "name",
+  name: "name",
+  Description: "description",
+  description: "description",
+  EstimatedDurationDays: "estimatedDurationDays",
+  estimatedDurationDays: "estimatedDurationDays",
 }
 
 const normalizeItems = response => {
@@ -75,19 +80,25 @@ const createEmptyStep = order => ({
 
 const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
   const [touched, setTouched] = useState(false)
-  const trimmedName = step.stepName?.trim() || ''
-  const trimmedDesc = step.description?.trim() || ''
+  const trimmedName = step.stepName?.trim() || ""
+  const trimmedDesc = step.description?.trim() || ""
 
   const hasEmptyNameError = touched && !trimmedName
   const hasNameLengthError = trimmedName.length > 100
-  const hasNameSpaceError = Boolean(trimmedName && trimmedName !== trimmedName.replace(/\s+/g, ' '))
+  const hasNameSpaceError = Boolean(
+    trimmedName && trimmedName !== trimmedName.replace(/\s+/g, " "),
+  )
 
   const hasEmptyDescError = touched && !trimmedDesc
   const hasDescLengthError = trimmedDesc.length > 200
-  const hasDescSpaceError = Boolean(trimmedDesc && trimmedDesc !== trimmedDesc.replace(/\s+/g, ' '))
+  const hasDescSpaceError = Boolean(
+    trimmedDesc && trimmedDesc !== trimmedDesc.replace(/\s+/g, " "),
+  )
 
-  const hasNameError = hasEmptyNameError || hasNameLengthError || hasNameSpaceError
-  const hasDescError = hasEmptyDescError || hasDescLengthError || hasDescSpaceError
+  const hasNameError =
+    hasEmptyNameError || hasNameLengthError || hasNameSpaceError
+  const hasDescError =
+    hasEmptyDescError || hasDescLengthError || hasDescSpaceError
 
   return (
     <div
@@ -152,7 +163,7 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
       )}
       {hasDescLengthError && (
         <p className="mt-0.5 mb-0 text-xs text-red-500">
-        Mô tả công việc không được vượt quá 200 ký tự.
+          Mô tả công việc không được vượt quá 200 ký tự.
         </p>
       )}
       {hasDescSpaceError && !hasDescLengthError && (
@@ -173,8 +184,15 @@ const PlanTemplateCreate = () => {
   const { id } = useParams()
   const isEdit = Boolean(id)
   const [form] = Form.useForm()
-  const storageKey = getFormDraftKey("process-template", isEdit ? "edit" : "create", id)
-  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
+  const storageKey = getFormDraftKey(
+    "process-template",
+    isEdit ? "edit" : "create",
+    id,
+  )
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
+    form,
+    storageKey,
+  })
   const draftReadyRef = useRef(false)
   const selectedCatalogId = Form.useWatch("cropCatalogId", form)
 
@@ -192,7 +210,11 @@ const PlanTemplateCreate = () => {
       try {
         setLoadingOptions(true)
         const [catalogResponse, cropResponse] = await Promise.all([
-          CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100, Status: true }),
+          CropCatalogService.getCropCatalogs({
+            PageIndex: 1,
+            PageSize: 100,
+            Status: true,
+          }),
           CropManagementService.getCrops({
             PageIndex: 1,
             PageSize: 100,
@@ -244,7 +266,10 @@ const PlanTemplateCreate = () => {
         const draft = restoreDraft({
           onRestore: ({ data }) => {
             form.setFieldsValue({ ...serverValues, ...data })
-            setSteps(data.__draftMeta?.steps || (mappedSteps.length ? mappedSteps : [createEmptyStep(1)]))
+            setSteps(
+              data.__draftMeta?.steps ||
+                (mappedSteps.length ? mappedSteps : [createEmptyStep(1)]),
+            )
           },
         })
         const draftData = draft?.data || {}
@@ -261,7 +286,10 @@ const PlanTemplateCreate = () => {
           requiredMaterialType: step.requiredMaterialType || "",
           note: step.note || "",
         }))
-        setSteps(draftData.__draftMeta?.steps || (mappedSteps.length ? mappedSteps : [createEmptyStep(1)]))
+        setSteps(
+          draftData.__draftMeta?.steps ||
+            (mappedSteps.length ? mappedSteps : [createEmptyStep(1)]),
+        )
         setOriginalSteps(mappedSteps)
         draftReadyRef.current = true
       } catch {
@@ -396,8 +424,8 @@ const PlanTemplateCreate = () => {
     const normalizedSteps = steps.map((step, index) => ({
       ...step,
       stepOrder: index + 1,
-      stepName: step.stepName?.trim() || '',
-      description: step.description?.trim() || '',
+      stepName: step.stepName?.trim() || "",
+      description: step.description?.trim() || "",
     }))
     if (normalizedSteps.some(step => !step.stepName)) {
       message.error("Vui lòng nhập tên cho tất cả các bước quy trình.")
@@ -407,12 +435,20 @@ const PlanTemplateCreate = () => {
       message.error("Tên bước quy trình không được vượt quá 100 ký tự.")
       return
     }
-    if (normalizedSteps.some(step => step.stepName !== step.stepName.replace(/\s+/g, ' '))) {
-      message.error("Tên bước quy trình không được chứa nhiều khoảng trắng liên tiếp.")
+    if (
+      normalizedSteps.some(
+        step => step.stepName !== step.stepName.replace(/\s+/g, " "),
+      )
+    ) {
+      message.error(
+        "Tên bước quy trình không được chứa nhiều khoảng trắng liên tiếp.",
+      )
       return
     }
     if (normalizedSteps.some(step => !step.description)) {
-      message.error("Vui lòng nhập mô tả công việc cho tất cả các bước quy trình.")
+      message.error(
+        "Vui lòng nhập mô tả công việc cho tất cả các bước quy trình.",
+      )
       return
     }
     if (normalizedSteps.some(step => step.description.length > 200)) {
@@ -423,8 +459,14 @@ const PlanTemplateCreate = () => {
       message.error("Mô tả bước quy trình không được chỉ chứa khoảng trắng.")
       return
     }
-    if (normalizedSteps.some(step => step.description !== step.description.replace(/\s+/g, ' '))) {
-      message.error("Mô tả bước quy trình không được chứa nhiều khoảng trắng liên tiếp.")
+    if (
+      normalizedSteps.some(
+        step => step.description !== step.description.replace(/\s+/g, " "),
+      )
+    ) {
+      message.error(
+        "Mô tả bước quy trình không được chứa nhiều khoảng trắng liên tiếp.",
+      )
       return
     }
 
@@ -439,9 +481,13 @@ const PlanTemplateCreate = () => {
     try {
       setSubmitting(true)
       const response = isEdit
-        ? await ProcessTemplateService.updateProcessTemplate(id, templatePayload, {
-            skipNotice: true,
-          })
+        ? await ProcessTemplateService.updateProcessTemplate(
+            id,
+            templatePayload,
+            {
+              skipNotice: true,
+            },
+          )
         : await ProcessTemplateService.createProcessTemplate(templatePayload, {
             skipNotice: true,
           })
@@ -485,7 +531,14 @@ const PlanTemplateCreate = () => {
         styles={{ body: { padding: 24 } }}
       >
         <Spin spinning={loadingDetail}>
-          <Form form={form} layout="vertical" onFinish={handleSubmit} onValuesChange={(_, allValues) => saveDraft({ ...allValues, __draftMeta: { steps } })}>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            onValuesChange={(_, allValues) =>
+              saveDraft({ ...allValues, __draftMeta: { steps } })
+            }
+          >
             <SectionTitle>Thông tin mẫu quy trình</SectionTitle>
             <Row gutter={16}>
               <Col xs={24} md={12}>
@@ -496,18 +549,28 @@ const PlanTemplateCreate = () => {
                     { required: true, message: "Vui lòng nhập tên mẫu." },
                     {
                       validator: (_, value) => {
-                        if (!value) return Promise.resolve();
-                        const trimmed = value.trim();
+                        if (!value) return Promise.resolve()
+                        const trimmed = value.trim()
                         if (!trimmed) {
-                          return Promise.reject(new Error("Tên mẫu không được chỉ chứa khoảng trắng."));
+                          return Promise.reject(
+                            new Error(
+                              "Tên mẫu không được chỉ chứa khoảng trắng.",
+                            ),
+                          )
                         }
                         if (trimmed.length > 100) {
-                          return Promise.reject(new Error("Tên mẫu không được vượt quá 100 ký tự."));
+                          return Promise.reject(
+                            new Error("Tên mẫu không được vượt quá 100 ký tự."),
+                          )
                         }
                         if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                          return Promise.reject(new Error("Tên mẫu không được chứa nhiều khoảng trắng liên tiếp."));
+                          return Promise.reject(
+                            new Error(
+                              "Tên mẫu không được chứa nhiều khoảng trắng liên tiếp.",
+                            ),
+                          )
                         }
-                        return Promise.resolve();
+                        return Promise.resolve()
                       },
                     },
                   ]}
@@ -588,22 +651,33 @@ const PlanTemplateCreate = () => {
                 </Form.Item>
               </Col> */}
               <Col span={24}>
-                <Form.Item 
-                  name="description" 
+                <Form.Item
+                  name="description"
                   label="Mô tả"
                   rules={[
                     {
                       validator: (_, value) => {
-                        if (!value) return Promise.resolve();
-                        const trimmed = value.trim();
-                        if (!trimmed) return Promise.reject(new Error("Mô tả không được chỉ chứa khoảng trắng."));
+                        if (!value) return Promise.resolve()
+                        const trimmed = value.trim()
+                        if (!trimmed)
+                          return Promise.reject(
+                            new Error(
+                              "Mô tả không được chỉ chứa khoảng trắng.",
+                            ),
+                          )
                         if (trimmed.length > 200) {
-                          return Promise.reject(new Error("Mô tả không được vượt quá 200 ký tự."));
+                          return Promise.reject(
+                            new Error("Mô tả không được vượt quá 200 ký tự."),
+                          )
                         }
                         if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                          return Promise.reject(new Error("Mô tả không được chứa nhiều khoảng trắng liên tiếp."));
+                          return Promise.reject(
+                            new Error(
+                              "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
+                            ),
+                          )
                         }
-                        return Promise.resolve();
+                        return Promise.resolve()
                       },
                     },
                   ]}

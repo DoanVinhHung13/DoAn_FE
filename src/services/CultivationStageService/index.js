@@ -1,4 +1,4 @@
-import http from '../01_axios'
+import http from "../01_axios"
 import {
   apiGetCultivationStages,
   apiCreateCultivationStage,
@@ -10,17 +10,17 @@ import {
   apiGetCultivationStageSummary,
   apiCreateOfficialLogs,
   apiCompleteCultivationStage,
-} from './urls'
+} from "./urls"
 
-const getAll = (params) => {
+const getAll = params => {
   return http.get(apiGetCultivationStages, { params })
 }
 
-const getById = (id) => {
+const getById = id => {
   return http.get(apiGetCultivationStageById(id))
 }
 
-const getByLogbookId = (logbookId) => {
+const getByLogbookId = logbookId => {
   return http.get(apiGetStagesByLogbook(logbookId))
 }
 
@@ -36,18 +36,17 @@ const update = (id, body, config) => {
   return http.put(apiUpdateCultivationStage(id), body, config)
 }
 
-const deleteById = (id) => {
+const deleteById = id => {
   return http.delete(apiDeleteCultivationStage(id))
 }
 
-const getSummary = (id) =>
+const getSummary = id =>
   http.get(apiGetCultivationStageSummary(id), { skipNotice: true })
 
 const createOfficialLogs = (id, body) =>
   http.post(apiCreateOfficialLogs(id), body)
 
-const complete = (id) =>
-  http.post(apiCompleteCultivationStage(id))
+const complete = id => http.post(apiCompleteCultivationStage(id))
 
 const CultivationStageService = {
   getAll,

@@ -1,19 +1,22 @@
-import { useCallback } from 'react'
-import { useSelector } from 'react-redux'
-import { useAppDispatch } from 'src/redux/hooks'
-import { getListComboByKey, getSystemKeyDescription } from 'src/utils/systemKeyUtils'
-import CommonService from 'src/services/CommonService'
-import { getListSystemKey as setListSystemKey } from 'src/redux/slices/appGlobalSlice'
+import { useCallback } from "react"
+import { useSelector } from "react-redux"
+import { useAppDispatch } from "src/redux/hooks"
+import {
+  getListComboByKey,
+  getSystemKeyDescription,
+} from "src/utils/systemKeyUtils"
+import CommonService from "src/services/CommonService"
+import { getListSystemKey as setListSystemKey } from "src/redux/slices/appGlobalSlice"
 
 export const useSystemKey = () => {
   const dispatch = useAppDispatch()
   const listSystemKey = useSelector(state => state.appGlobal.listSystemKey)
 
-  const getCombo = (key) => {
+  const getCombo = key => {
     return getListComboByKey(key, listSystemKey)
   }
 
-  const getOptions = (key) => {
+  const getOptions = key => {
     const list = getListComboByKey(key, listSystemKey)
     return list.map(opt => ({
       value: opt.codeValue || opt.value,
@@ -34,7 +37,7 @@ export const useSystemKey = () => {
         dispatch(setListSystemKey(data))
       }
     } catch (error) {
-      console.error(' [useSystemKey] refetchSystemKey failed:', error)
+      console.error(" [useSystemKey] refetchSystemKey failed:", error)
     }
   }, [dispatch])
 

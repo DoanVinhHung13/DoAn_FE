@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   Alert,
   Button,
@@ -12,50 +12,62 @@ import {
   Upload,
   Row,
   Col,
-} from 'antd';
+} from "antd"
 import {
   ArrowLeftOutlined,
   DeleteOutlined,
   EyeOutlined,
   SaveOutlined,
   UploadOutlined,
-} from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Sprout } from 'lucide-react';
+} from "@ant-design/icons"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Sprout } from "lucide-react"
 
-import TitleCustom from 'src/components/TitleCustom';
-import { CropIcon } from 'src/assets/icon/menu/MenuIcons';
-import CropManagementService from 'src/services/CropManagementService';
-import { applyApiFieldErrors, isNotFoundError } from 'src/services/core/apiError';
-import CropCatalogService from 'src/services/CropCatalogService';
-import UploadService from 'src/services/UploadService';
-import ROUTER from 'src/router/ROUTER';
-import { useSystemKey } from 'src/hooks/useSystemKey';
-import { SYSTEM_KEY } from 'src/constants/systemKey';
-import { isActiveCropCatalog } from 'src/utils/cropCatalog';
-import useFormDraft from 'src/hooks/useFormDraft';
-import { getFormDraftKey } from 'src/utils/formDraftKeys';
+import TitleCustom from "src/components/TitleCustom"
+import { CropIcon } from "src/assets/icon/menu/MenuIcons"
+import CropManagementService from "src/services/CropManagementService"
+import {
+  applyApiFieldErrors,
+  isNotFoundError,
+} from "src/services/core/apiError"
+import CropCatalogService from "src/services/CropCatalogService"
+import UploadService from "src/services/UploadService"
+import ROUTER from "src/router/ROUTER"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import { isActiveCropCatalog } from "src/utils/cropCatalog"
+import useFormDraft from "src/hooks/useFormDraft"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
 
-const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
+const EMPTY_MESSAGE = "Không tìm thấy thông tin cây trồng."
 const CROP_FIELD_MAPPING = {
-  Name: 'name', name: 'name', CropCatalogId: 'cropCatalogId', cropCatalogId: 'cropCatalogId',
-  Description: 'description', description: 'description', ImageUrl: 'imageUrl', imageUrl: 'imageUrl',
-};
+  Name: "name",
+  name: "name",
+  CropCatalogId: "cropCatalogId",
+  cropCatalogId: "cropCatalogId",
+  Description: "description",
+  description: "description",
+  ImageUrl: "imageUrl",
+  imageUrl: "imageUrl",
+}
 
 const CropEdit = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const queryClient = useQueryClient();
-  const [form] = Form.useForm();
-  const storageKey = getFormDraftKey('crop', 'edit', id);
-  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey });
-  const watchedImageUrl = Form.useWatch('imageUrl', form);
-  const [previewImage, setPreviewImage] = useState(null); // State cho modal xem ảnh
-  const [uploading, setUploading] = useState(false); // Loading state khi upload
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const queryClient = useQueryClient()
+  const [form] = Form.useForm()
+  const storageKey = getFormDraftKey("crop", "edit", id)
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
+    form,
+    storageKey,
+  })
+  const watchedImageUrl = Form.useWatch("imageUrl", form)
+  const [previewImage, setPreviewImage] = useState(null) // State cho modal xem ảnh
+  const [uploading, setUploading] = useState(false) // Loading state khi upload
 
   // SystemKey hook
-  const { getCombo } = useSystemKey();
-  const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE);
+  const { getCombo } = useSystemKey()
+  const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE)
 
   const {
     data: cropDetail,
@@ -63,172 +75,184 @@ const CropEdit = () => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['crop-detail', id],
+    queryKey: ["crop-detail", id],
     queryFn: async () => {
-      const response = await CropManagementService.getCropById(id, { errorHandling: 'component' });
-      const payload = response?.data ?? {};
-      return payload?.data ?? payload;
+      const response = await CropManagementService.getCropById(id, {
+        errorHandling: "component",
+      })
+      const payload = response?.data ?? {}
+      return payload?.data ?? payload
     },
     enabled: !!id,
     retry: false,
-  });
+  })
 
   // Query to get crop catalogs for the dropdown
   const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
-    queryKey: ['crop-catalogs-dropdown'],
+    queryKey: ["crop-catalogs-dropdown"],
     queryFn: async () => {
       try {
-        const response = await CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100, Status: 'ACTIVE' });
-        const payload = response?.data ?? response ?? {};
-        const data = payload?.data ?? payload;
+        const response = await CropCatalogService.getCropCatalogs({
+          PageIndex: 1,
+          PageSize: 100,
+          Status: "ACTIVE",
+        })
+        const payload = response?.data ?? response ?? {}
+        const data = payload?.data ?? payload
         const items = Array.isArray(data)
           ? data
           : data?.items ||
-          data?.results ||
-          data?.crops ||
-          data?.cropCatalogs ||
-          payload?.items ||
-          payload?.results ||
-          [];
-        return items.filter(isActiveCropCatalog);
+            data?.results ||
+            data?.crops ||
+            data?.cropCatalogs ||
+            payload?.items ||
+            payload?.results ||
+            []
+        return items.filter(isActiveCropCatalog)
       } catch {
-        return [];
+        return []
       }
     },
     retry: false,
-  });
+  })
 
   const cropCatalogOptions = useMemo(() => {
     if (!cropCatalogsData || cropCatalogsData.length === 0) {
-      return [];
+      return []
     }
-    return cropCatalogsData.filter(isActiveCropCatalog).map((catalog) => ({
+    return cropCatalogsData.filter(isActiveCropCatalog).map(catalog => ({
       value: catalog.id || catalog.cropCatalogId,
       label: catalog.name || catalog.cropCatalogName,
-    }));
-  }, [cropCatalogsData]);
+    }))
+  }, [cropCatalogsData])
 
   // Dùng Crop Catalogs data
   const cropTypeFormOptions = useMemo(() => {
-    return cropCatalogOptions || [];
-  }, [cropCatalogOptions]);
+    return cropCatalogOptions || []
+  }, [cropCatalogOptions])
 
-  const calculateUnit = (days) => {
-    if (!days) return { value: null, unit: 'days' };
-    if (days % 365 === 0) return { value: days / 365, unit: 'years' };
-    if (days % 30 === 0) return { value: days / 30, unit: 'months' };
-    return { value: days, unit: 'days' };
-  };
+  const calculateUnit = days => {
+    if (!days) return { value: null, unit: "days" }
+    if (days % 365 === 0) return { value: days / 365, unit: "years" }
+    if (days % 30 === 0) return { value: days / 30, unit: "months" }
+    return { value: days, unit: "days" }
+  }
 
   useEffect(() => {
     if (cropDetail) {
-      const minData = calculateUnit(cropDetail.minHarvestDays);
-      const maxData = calculateUnit(cropDetail.maxHarvestDays);
+      const minData = calculateUnit(cropDetail.minHarvestDays)
+      const maxData = calculateUnit(cropDetail.maxHarvestDays)
 
       const serverValues = {
-        name: cropDetail.name || '',
-        cropCatalogId: cropDetail.cropCatalogId || '',
+        name: cropDetail.name || "",
+        cropCatalogId: cropDetail.cropCatalogId || "",
         minHarvestDays: minData.value,
         minDurationUnit: minData.unit,
         maxHarvestDays: maxData.value,
         maxDurationUnit: maxData.unit,
-        description: cropDetail.description || '',
-        imageUrl: cropDetail.imageUrl || '',
-      };
-      const draft = restoreDraft();
-      form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) });
+        description: cropDetail.description || "",
+        imageUrl: cropDetail.imageUrl || "",
+      }
+      const draft = restoreDraft()
+      form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) })
     }
-  }, [cropDetail, form, restoreDraft]);
+  }, [cropDetail, form, restoreDraft])
 
   const updateMutation = useMutation({
-    mutationFn: (values) => {
+    mutationFn: values => {
       const unitToDays = {
         days: 1,
         months: 30,
         years: 365,
-      };
+      }
 
       const minDays = values.minHarvestDays
-        ? values.minHarvestDays * unitToDays[values.minDurationUnit || 'days']
-        : null;
+        ? values.minHarvestDays * unitToDays[values.minDurationUnit || "days"]
+        : null
 
       const maxDays = values.maxHarvestDays
-        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || 'days']
-        : null;
+        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || "days"]
+        : null
 
       const payload = {
-        name: values.name.trim().replace(/\s+/g, ' '),
+        name: values.name.trim().replace(/\s+/g, " "),
         cropCatalogId: values.cropCatalogId || null,
         minHarvestDays: minDays,
         maxHarvestDays: maxDays,
-        description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        imageUrl: values.imageUrl?.trim() || '',
-        isActive: typeof cropDetail?.isActive === 'boolean' ? cropDetail.isActive : true,
-      };
+        description: values.description?.trim().replace(/\s+/g, " ") || null,
+        imageUrl: values.imageUrl?.trim() || "",
+        isActive:
+          typeof cropDetail?.isActive === "boolean"
+            ? cropDetail.isActive
+            : true,
+      }
 
       return CropManagementService.updateCrop(id, payload, {
-        errorHandling: 'form',
+        errorHandling: "form",
         fieldErrorMapping: CROP_FIELD_MAPPING,
-      });
+      })
     },
     onSuccess: () => {
-      clearDraft();
-      queryClient.invalidateQueries({ queryKey: ['crops'] });
-      queryClient.invalidateQueries({ queryKey: ['crop-detail', id] });
-      navigate(ROUTER.FM_CROPS);
+      clearDraft()
+      queryClient.invalidateQueries({ queryKey: ["crops"] })
+      queryClient.invalidateQueries({ queryKey: ["crop-detail", id] })
+      navigate(ROUTER.FM_CROPS)
     },
-    onError: (error) => {
+    onError: error => {
       if (isNotFoundError(error)) {
-        navigate(ROUTER.FM_CROPS);
-        return;
+        navigate(ROUTER.FM_CROPS)
+        return
       }
-      applyApiFieldErrors(form, error, CROP_FIELD_MAPPING);
+      applyApiFieldErrors(form, error, CROP_FIELD_MAPPING)
     },
-  });
+  })
 
-  const beforeCropImageUpload = (file) => {
-    const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/webp';
-    const isLt5M = file.size / 1024 / 1024 < 5;
-    return isJpgOrPng && isLt5M;
-  };
+  const beforeCropImageUpload = file => {
+    const isJpgOrPng =
+      file.type === "image/jpeg" ||
+      file.type === "image/png" ||
+      file.type === "image/webp"
+    const isLt5M = file.size / 1024 / 1024 < 5
+    return isJpgOrPng && isLt5M
+  }
 
   const handleCropImageUpload = async ({ file, onSuccess, onError }) => {
-    setUploading(true);
+    setUploading(true)
 
-    const formData = new FormData();
-    formData.append('file', file);
+    const formData = new FormData()
+    formData.append("file", file)
 
     try {
-      const response = await UploadService.uploadImage(formData);
+      const response = await UploadService.uploadImage(formData)
 
-      const payload = response?.data?.data || response?.data || {};
+      const payload = response?.data?.data || response?.data || {}
 
       const imageUrl =
         payload.imageUrl ||
         payload.url ||
         payload.secureUrl ||
         payload.fileUrl ||
-        payload.path;
+        payload.path
 
       if (!imageUrl) {
-        throw new Error('Không nhận được đường dẫn ảnh sau khi upload.');
+        throw new Error("Không nhận được đường dẫn ảnh sau khi upload.")
       }
 
-      form.setFieldsValue({ imageUrl });
-      onSuccess(response);
+      form.setFieldsValue({ imageUrl })
+      onSuccess(response)
     } catch (error) {
-      onError(error);
+      onError(error)
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Spin size="large" />
       </div>
-    );
+    )
   }
 
   if (isError) {
@@ -254,7 +278,7 @@ const CropEdit = () => {
           }
         />
       </div>
-    );
+    )
   }
 
   if (!cropDetail) {
@@ -274,7 +298,7 @@ const CropEdit = () => {
           <Alert type="warning" message={EMPTY_MESSAGE} />
         </Card>
       </div>
-    );
+    )
   }
 
   return (
@@ -289,7 +313,7 @@ const CropEdit = () => {
           Quay lại
         </Button>
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <CropIcon style={{ fontSize: '24px', color: '#15803d' }} />
+          <CropIcon style={{ fontSize: "24px", color: "#15803d" }} />
           Chỉnh sửa cây trồng
         </TitleCustom>
       </div>
@@ -297,9 +321,9 @@ const CropEdit = () => {
       <Form
         form={form}
         layout="vertical"
-        onFinish={(values) => updateMutation.mutate(values)}
+        onFinish={values => updateMutation.mutate(values)}
         onValuesChange={(_, allValues) => saveDraft(allValues)}
-        onFinishFailed={() => { }}
+        onFinishFailed={() => {}}
         scrollToFirstError
       >
         <Row gutter={[24, 24]}>
@@ -308,59 +332,95 @@ const CropEdit = () => {
               {/* Basic Information Card */}
               <Card
                 className="rounded-lg shadow-sm"
-                title={<span className="text-lg font-semibold text-green-600">Thông tin cơ bản</span>}
+                title={
+                  <span className="text-lg font-semibold text-green-600">
+                    Thông tin cơ bản
+                  </span>
+                }
               >
                 <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
                   <Form.Item
                     name="name"
                     label="Tên cây trồng"
                     rules={[
-                      { required: true, message: 'Vui lòng nhập tên cây trồng.' },
+                      {
+                        required: true,
+                        message: "Vui lòng nhập tên cây trồng.",
+                      },
                       {
                         validator: (_, value) => {
-                          if (!value) return Promise.resolve();
-                          const trimmed = value.trim();
+                          if (!value) return Promise.resolve()
+                          const trimmed = value.trim()
                           if (!trimmed) {
-                            return Promise.reject(new Error('Tên cây trồng không được chỉ chứa khoảng trắng.'));
+                            return Promise.reject(
+                              new Error(
+                                "Tên cây trồng không được chỉ chứa khoảng trắng.",
+                              ),
+                            )
                           }
                           if (trimmed.length > 100) {
-                            return Promise.reject(new Error('Tên cây trồng không được vượt quá 100 ký tự.'));
+                            return Promise.reject(
+                              new Error(
+                                "Tên cây trồng không được vượt quá 100 ký tự.",
+                              ),
+                            )
                           }
-                          if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
-                            return Promise.reject(new Error('Tên cây trồng không được chứa nhiều khoảng trắng liên tiếp.'));
+                          if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                            return Promise.reject(
+                              new Error(
+                                "Tên cây trồng không được chứa nhiều khoảng trắng liên tiếp.",
+                              ),
+                            )
                           }
-                          return Promise.resolve();
+                          return Promise.resolve()
                         },
                       },
                     ]}
                   >
-                    <Input className="h-11 rounded-lg" placeholder="Nhập tên cây trồng" />
+                    <Input
+                      className="h-11 rounded-lg"
+                      placeholder="Nhập tên cây trồng"
+                    />
                   </Form.Item>
 
                   <Form.Item
                     name="cropCatalogId"
                     label="Danh mục cây trồng"
-                    rules={[{ required: true, message: 'Vui lòng chọn danh mục.' }]}
+                    rules={[
+                      { required: true, message: "Vui lòng chọn danh mục." },
+                    ]}
                   >
                     <Select
                       className="h-11"
-                      placeholder={cropTypeOptions?.length > 0 ? "Chọn danh mục" : "Chọn danh mục từ danh sách"}
+                      placeholder={
+                        cropTypeOptions?.length > 0
+                          ? "Chọn danh mục"
+                          : "Chọn danh mục từ danh sách"
+                      }
                       loading={isCatalogsLoading && !cropTypeOptions?.length}
                       options={cropTypeFormOptions}
                       showSearch
-                      filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
-                      disabled={!cropTypeFormOptions || cropTypeFormOptions.length === 0}
+                      filterOption={(input, option) =>
+                        (option?.label ?? "")
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
+                      disabled={
+                        !cropTypeFormOptions || cropTypeFormOptions.length === 0
+                      }
                     />
                   </Form.Item>
-
-
                 </div>
               </Card>
 
               {/* Detailed Information Card */}
               <Card
                 className="rounded-lg shadow-sm"
-                title={<span className="text-lg font-semibold text-green-600">Thông tin chi tiết</span>}
+                title={
+                  <span className="text-lg font-semibold text-green-600">
+                    Thông tin chi tiết
+                  </span>
+                }
               >
                 <Form.Item
                   name="description"
@@ -368,18 +428,28 @@ const CropEdit = () => {
                   rules={[
                     {
                       validator: (_, value) => {
-                        if (!value) return Promise.resolve();
-                        const trimmed = value.trim();
+                        if (!value) return Promise.resolve()
+                        const trimmed = value.trim()
                         if (!trimmed) {
-                          return Promise.reject(new Error('Mô tả không được chỉ chứa khoảng trắng.'));
+                          return Promise.reject(
+                            new Error(
+                              "Mô tả không được chỉ chứa khoảng trắng.",
+                            ),
+                          )
                         }
                         if (trimmed.length > 200) {
-                          return Promise.reject(new Error('Mô tả không được vượt quá 200 ký tự.'));
+                          return Promise.reject(
+                            new Error("Mô tả không được vượt quá 200 ký tự."),
+                          )
                         }
-                        if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
-                          return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+                        if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                          return Promise.reject(
+                            new Error(
+                              "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
+                            ),
+                          )
                         }
-                        return Promise.resolve();
+                        return Promise.resolve()
                       },
                     },
                   ]}
@@ -393,8 +463,6 @@ const CropEdit = () => {
                   />
                 </Form.Item>
               </Card>
-
-
             </div>
           </Col>
 
@@ -403,7 +471,11 @@ const CropEdit = () => {
               {/* Image Upload Card */}
               <Card
                 className="rounded-lg shadow-sm"
-                title={<span className="text-lg font-semibold text-green-600">Ảnh minh họa</span>}
+                title={
+                  <span className="text-lg font-semibold text-green-600">
+                    Ảnh minh họa
+                  </span>
+                }
               >
                 <Form.Item name="imageUrl" className="mb-0">
                   <div className="flex flex-col items-center space-y-4">
@@ -426,7 +498,9 @@ const CropEdit = () => {
                             type="text"
                             icon={<DeleteOutlined />}
                             className="!h-10 !w-10 !text-white hover:!bg-white/20"
-                            onClick={() => form.setFieldsValue({ imageUrl: '' })}
+                            onClick={() =>
+                              form.setFieldsValue({ imageUrl: "" })
+                            }
                           />
                         </div>
                       </div>
@@ -443,14 +517,18 @@ const CropEdit = () => {
                       accept="image/png,image/jpeg,image/webp"
                       showUploadList={false}
                       beforeUpload={beforeCropImageUpload}
-                      customRequest={(options) => handleCropImageUpload(options)}
+                      customRequest={options => handleCropImageUpload(options)}
                     >
                       <Button
                         icon={<UploadOutlined />}
                         loading={uploading}
                         className="h-11 rounded-lg w-full"
                       >
-                        {uploading ? 'Đang tải...' : (watchedImageUrl ? 'Đổi ảnh khác' : 'Tải ảnh lên')}
+                        {uploading
+                          ? "Đang tải..."
+                          : watchedImageUrl
+                            ? "Đổi ảnh khác"
+                            : "Tải ảnh lên"}
                       </Button>
                     </Upload>
                   </div>
@@ -508,12 +586,12 @@ const CropEdit = () => {
             src={previewImage}
             alt="Xem ảnh"
             className="max-h-[80vh] max-w-full rounded-lg object-contain"
-            style={{ display: 'block' }}
+            style={{ display: "block" }}
           />
         </div>
       </Modal>
     </div>
-  );
-};
+  )
+}
 
-export default CropEdit;
+export default CropEdit

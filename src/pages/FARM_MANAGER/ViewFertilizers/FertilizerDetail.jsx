@@ -14,15 +14,25 @@ import {
   ExperimentOutlined,
   ShopOutlined,
   TagOutlined,
-} from '@ant-design/icons'
-import { Badge, Button, Card, Descriptions, Empty, Skeleton, Table, Tag, Typography } from 'antd'
-import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import TitleCustom from 'src/components/TitleCustom'
-import ROUTER from 'src/router/ROUTER'
-import FertilizerService from 'src/services/FertilizerService'
-import { formatAreaUnit } from 'src/constants/measurementUnits'
-import { formatDateTime } from 'src/utils/dateFormatters'
+} from "@ant-design/icons"
+import {
+  Badge,
+  Button,
+  Card,
+  Descriptions,
+  Empty,
+  Skeleton,
+  Table,
+  Tag,
+  Typography,
+} from "antd"
+import React, { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import TitleCustom from "src/components/TitleCustom"
+import ROUTER from "src/router/ROUTER"
+import FertilizerService from "src/services/FertilizerService"
+import { formatAreaUnit } from "src/constants/measurementUnits"
+import { formatDateTime } from "src/utils/dateFormatters"
 
 const { Text } = Typography
 
@@ -30,21 +40,21 @@ const { Text } = Typography
 
 const componentColumns = [
   {
-    title: 'Tên thành Phần',
-    dataIndex: 'name',
-    key: 'name',
-    render: (v) => <Text strong>{v || '—'}</Text>,
+    title: "Tên thành Phần",
+    dataIndex: "name",
+    key: "name",
+    render: v => <Text strong>{v || "—"}</Text>,
   },
   {
-    title: 'Hàm Lượng',
-    dataIndex: 'value',
-    key: 'value',
-    align: 'center',
+    title: "Hàm Lượng",
+    dataIndex: "value",
+    key: "value",
+    align: "center",
     width: 110,
     render: (v, record) => {
-      if (v == null || v === '') return <Text>—</Text>
-      
-      if (record.unit === 'CFU/g') {
+      if (v == null || v === "") return <Text>—</Text>
+
+      if (record.unit === "CFU/g") {
         const val = Number(v)
         if (val > 0) {
           const exponent = Math.floor(Math.log10(val))
@@ -60,37 +70,44 @@ const componentColumns = [
     },
   },
   {
-    title: 'Đơn vị Tính (%, ppm, CFU/g)',
-    dataIndex: 'unit',
-    key: 'unit',
-    align: 'center',
+    title: "Đơn vị Tính (%, ppm, CFU/g)",
+    dataIndex: "unit",
+    key: "unit",
+    align: "center",
     width: 190,
-    render: (v) => v ? <Tag color="green" className="rounded-full font-medium">{v}</Tag> : '—',
+    render: v =>
+      v ? (
+        <Tag color="green" className="rounded-full font-medium">
+          {v}
+        </Tag>
+      ) : (
+        "—"
+      ),
   },
 ]
 
 const dosageColumns = [
   {
-    title: 'Đối tượng',
-    dataIndex: 'target',
-    key: 'target',
-    render: (v) => <Text strong>{v || '—'}</Text>,
+    title: "Đối tượng",
+    dataIndex: "target",
+    key: "target",
+    render: v => <Text strong>{v || "—"}</Text>,
   },
   {
-    title: 'Liều lượng',
-    dataIndex: 'amount',
-    key: 'amount',
-    align: 'center',
+    title: "Liều lượng",
+    dataIndex: "amount",
+    key: "amount",
+    align: "center",
     width: 100,
-    render: (v) => <Text>{v != null && v !== '' ? v : '—'}</Text>,
+    render: v => <Text>{v != null && v !== "" ? v : "—"}</Text>,
   },
   {
-    title: 'Đơn vị tính / diện tích',
-    key: 'unitPerArea',
-    align: 'center',
+    title: "Đơn vị tính / diện tích",
+    key: "unitPerArea",
+    align: "center",
     width: 200,
     render: (_, record) => (
-      <Text>{`${record.unit || 'kg'}/${formatAreaUnit(record.areaUnit)}`}</Text>
+      <Text>{`${record.unit || "kg"}/${formatAreaUnit(record.areaUnit)}`}</Text>
     ),
   },
 ]
@@ -125,7 +142,11 @@ const FertilizerDetail = () => {
           <ExperimentOutlined className="text-emerald-600" />
           Chi tiết phân bón
         </TitleCustom>
-        <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: '24px' }}>
+        <Card
+          bordered={false}
+          className="shadow-sm rounded-2xl"
+          bodyStyle={{ padding: "24px" }}
+        >
           <Skeleton active paragraph={{ rows: 8 }} />
         </Card>
       </div>
@@ -142,7 +163,10 @@ const FertilizerDetail = () => {
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_FERTILIZERS)}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTER.FM_FERTILIZERS)}
+          >
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
@@ -155,22 +179,22 @@ const FertilizerDetail = () => {
       <Card
         bordered={false}
         className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: '24px' }}
+        bodyStyle={{ padding: "24px" }}
       >
         <div className="space-y-6">
-
           {/* ════════════════════════════════════════════════════════════════
             Header: mã + trạng thái
         ═══════════════════════════════════════════════════════════════════ */}
           <div className="flex items-center justify-end">
             <Badge
-              status={isActive ? 'success' : 'error'}
+              status={isActive ? "success" : "error"}
               text={
                 <span
-                  className={`text-sm font-semibold ${isActive ? 'text-green-600' : 'text-red-500'
-                    }`}
+                  className={`text-sm font-semibold ${
+                    isActive ? "text-green-600" : "text-red-500"
+                  }`}
                 >
-                  {isActive ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                  {isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
                 </span>
               }
             />
@@ -182,7 +206,11 @@ const FertilizerDetail = () => {
           <div>
             <div
               className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
-              style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
+              style={{
+                background: "#f0fdf4",
+                borderLeft: "3px solid #16a34a",
+                fontSize: 13,
+              }}
             >
               Thông Tin Cơ Bản
             </div>
@@ -192,12 +220,12 @@ const FertilizerDetail = () => {
               size="small"
               labelStyle={{
                 fontWeight: 600,
-                color: '#6b7280',
+                color: "#6b7280",
                 fontSize: 12,
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
               }}
-              contentStyle={{ color: '#1f2937', fontSize: 14 }}
+              contentStyle={{ color: "#1f2937", fontSize: 14 }}
             >
               {/* Tên phân bón – span 2 */}
               <Descriptions.Item
@@ -208,14 +236,16 @@ const FertilizerDetail = () => {
                 }
                 span={2}
               >
-                <span className="font-semibold">{item.name || '—'}</span>
+                <span className="font-semibold">{item.name || "—"}</span>
               </Descriptions.Item>
 
               {/* Loại Phân Bón */}
               <Descriptions.Item label="Loại Phân Bón" span={2}>
-                {(item.type)
-                  ? (item.type)
-                  : <span className="text-gray-400">—</span>}
+                {item.type ? (
+                  item.type
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
               </Descriptions.Item>
 
               {/* Nhà Sản Xuất */}
@@ -239,8 +269,8 @@ const FertilizerDetail = () => {
               >
                 <span className="font-semibold text-blue-600">
                   {item.inventoryQuantity != null
-                    ? `${Number(item.inventoryQuantity).toLocaleString('vi-VN')} ${item.inventoryUnit || item.unit || ''}`
-                    : '—'}
+                    ? `${Number(item.inventoryQuantity).toLocaleString("vi-VN")} ${item.inventoryUnit || item.unit || ""}`
+                    : "—"}
                 </span>
               </Descriptions.Item>
 
@@ -254,8 +284,8 @@ const FertilizerDetail = () => {
               >
                 <span className="font-semibold text-emerald-600">
                   {item.minimumStock != null
-                    ? `${Number(item.minimumStock).toLocaleString('vi-VN')} ${item.unit || ''}`
-                    : '—'}
+                    ? `${Number(item.minimumStock).toLocaleString("vi-VN")} ${item.unit || ""}`
+                    : "—"}
                 </span>
               </Descriptions.Item>
 
@@ -265,8 +295,6 @@ const FertilizerDetail = () => {
                   ? <Tag color="blue" className="font-medium rounded-full">{item.unit}</Tag>
                   : <span className="text-gray-400">—</span>}
               </Descriptions.Item> */}
-
-
 
               {/* Ngày tạo */}
               {item.createdAt && (
@@ -278,7 +306,7 @@ const FertilizerDetail = () => {
                   }
                   span={2}
                 >
-                  {formatDateTime(item.createdAt, 'HH:mm - DD/MM/YYYY')}
+                  {formatDateTime(item.createdAt, "HH:mm - DD/MM/YYYY")}
                 </Descriptions.Item>
               )}
             </Descriptions>
@@ -302,7 +330,11 @@ const FertilizerDetail = () => {
           <div>
             <div
               className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
-              style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
+              style={{
+                background: "#f0fdf4",
+                borderLeft: "3px solid #16a34a",
+                fontSize: 13,
+              }}
             >
               Thành Phần
             </div>
@@ -332,7 +364,11 @@ const FertilizerDetail = () => {
           <div>
             <div
               className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
-              style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
+              style={{
+                background: "#f0fdf4",
+                borderLeft: "3px solid #16a34a",
+                fontSize: 13,
+              }}
             >
               Liều Lượng
             </div>
@@ -340,7 +376,10 @@ const FertilizerDetail = () => {
             {dosages.length > 0 ? (
               <Table
                 rowKey={(_, i) => i}
-                dataSource={dosages.map((dosage) => ({ ...dosage, unit: item.unit || dosage.unit }))}
+                dataSource={dosages.map(dosage => ({
+                  ...dosage,
+                  unit: item.unit || dosage.unit,
+                }))}
                 columns={dosageColumns}
                 pagination={false}
                 size="small"

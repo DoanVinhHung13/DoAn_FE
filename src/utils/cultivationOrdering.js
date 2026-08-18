@@ -44,10 +44,14 @@ const getTaskName = item =>
   item?.task?.name ||
   item?.task?.taskName
 
-const normalizeTaskName = value => String(value || '').trim().toLowerCase()
+const normalizeTaskName = value =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
 
 const getCreatedTime = item => {
-  const value = item?.createdAt || item?.createdDate || item?.date || item?.workStartDate
+  const value =
+    item?.createdAt || item?.createdDate || item?.date || item?.workStartDate
   if (!value) return null
 
   const timestamp = new Date(value).getTime()
@@ -119,12 +123,18 @@ export const getOrderedStageLogs = (logs, stageTasks = []) => {
 
 export const getStageTaskName = (log, stageTasks = []) => {
   const taskId = getLogTaskId(log)
-  const matchingTask = orderTasks(stageTasks).find(task => {
-    const taskIdForStage = getTaskId(task)
-    return taskId && taskIdForStage && String(taskId) === String(taskIdForStage)
-  }) || orderTasks(stageTasks).find(task =>
-    normalizeTaskName(getTaskName(task)) === normalizeTaskName(getTaskName(log)),
-  )
+  const matchingTask =
+    orderTasks(stageTasks).find(task => {
+      const taskIdForStage = getTaskId(task)
+      return (
+        taskId && taskIdForStage && String(taskId) === String(taskIdForStage)
+      )
+    }) ||
+    orderTasks(stageTasks).find(
+      task =>
+        normalizeTaskName(getTaskName(task)) ===
+        normalizeTaskName(getTaskName(log)),
+    )
 
   return getTaskName(matchingTask) || getTaskName(log)
 }

@@ -117,7 +117,7 @@ export const TableCustomStyled = styled.div`
   }
 
   .ant-table-row {
-    cursor: ${({ $hasRowClick }) => ($hasRowClick ? 'pointer' : 'default')};
+    cursor: ${({ $hasRowClick }) => ($hasRowClick ? "pointer" : "default")};
   }
   .ant-table-tbody > tr:hover {
     .float-action__wrapper {

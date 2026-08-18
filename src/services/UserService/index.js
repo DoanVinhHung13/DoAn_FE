@@ -40,7 +40,8 @@ const normalizeListParams = (params = {}) => ({
 })
 
 /** GET /users with canonical camelCase query parameters. */
-const getUsers = params => http.get('/users', { params: normalizeListParams(params) })
+const getUsers = params =>
+  http.get("/users", { params: normalizeListParams(params) })
 
 /** GET /user/:id */
 const getUserById = id => http.get(`/users/${id}`)
@@ -49,7 +50,7 @@ const getUserById = id => http.get(`/users/${id}`)
  * POST /users — tạo tài khoản nội bộ (Farm Manager only)
  * Body: { fullName, email, password, roles? }
  */
-const createUser = (body, config) => http.post('/users', body, config)
+const createUser = (body, config) => http.post("/users", body, config)
 
 /**
  * PUT /users/:id — cập nhật hồ sơ người dùng khác (Farm Manager)
@@ -74,7 +75,8 @@ const changeUserStatus = (id, body) => http.put(`/users/${id}/status`, body)
 const assignRoles = (id, body) => http.put(`/users/${id}/roles`, body)
 
 /** POST /users/:id/account — cấp mật khẩu và vai trò cho nhân viên đã tồn tại */
-const createAccount = (id, body, config) => http.post(`/users/${id}/account`, body, config)
+const createAccount = (id, body, config) =>
+  http.post(`/users/${id}/account`, body, config)
 
 /** PUT /users/:id/password — đổi mật khẩu người dùng khác (Farm Manager) */
 const changeUserPassword = (id, body) => http.put(`/users/${id}/password`, body)
@@ -86,14 +88,15 @@ const changeUserPassword = (id, body) => http.put(`/users/${id}/password`, body)
  * Body: { fullName: string (required), phoneNumber?, dateOfBirth?, gender?, address? }
  * Response: UserDto đã cập nhật
  */
-const updateMyProfile = (body, config) => http.put('/users/me/profile', body, config)
+const updateMyProfile = (body, config) =>
+  http.put("/users/me/profile", body, config)
 
 /**
  * POST /users/me/avatar — upload avatar lên Cloudinary
  * Body: FormData với field "file" (ảnh)
  */
 const uploadMyAvatar = formData =>
-  http.post('/users/me/avatar', formData, {
+  http.post("/users/me/avatar", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   })
 

@@ -5,21 +5,36 @@ import {
   FileTextOutlined,
   InboxOutlined,
   UserOutlined,
-} from '@ant-design/icons'
-import { Alert, Card, Col, Empty, Image, Row, Spin, Tag, Tree, Typography } from 'antd'
-import { useState } from 'react'
-import CultivationLogService from 'src/services/CultivationLogService'
-import { formatAreaUnit } from 'src/constants/measurementUnits'
-import { formatDate } from 'src/utils/dateFormatters'
-import { getUserDisplayName } from 'src/utils/userDisplayName'
-import { orderTasks } from 'src/utils/cultivationOrdering'
+} from "@ant-design/icons"
+import {
+  Alert,
+  Card,
+  Col,
+  Empty,
+  Image,
+  Row,
+  Spin,
+  Tag,
+  Tree,
+  Typography,
+} from "antd"
+import { useState } from "react"
+import CultivationLogService from "src/services/CultivationLogService"
+import { formatAreaUnit } from "src/constants/measurementUnits"
+import { formatDate } from "src/utils/dateFormatters"
+import { getUserDisplayName } from "src/utils/userDisplayName"
+import { orderTasks } from "src/utils/cultivationOrdering"
 
 const { Text, Title } = Typography
 
 const getHarvestQuantity = log =>
-  log?.harvestQuantity ?? log?.quantityHarvested ?? log?.harvestedQuantity ?? log?.HarvestQuantity
+  log?.harvestQuantity ??
+  log?.quantityHarvested ??
+  log?.harvestedQuantity ??
+  log?.HarvestQuantity
 
-const getHarvestArea = log => Number(log?.executedArea ?? log?.harvestedArea ?? 0)
+const getHarvestArea = log =>
+  Number(log?.executedArea ?? log?.harvestedArea ?? 0)
 
 const TaskLogHistoryTab = ({ stages, tasks }) => {
   const [selectedTask, setSelectedTask] = useState(null)
@@ -27,10 +42,14 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
   const [loading, setLoading] = useState(false)
 
   const treeData = stages.map((stage, index) => ({
-    title: <Text strong>{stage.stageName || stage.name || `Giai đoạn ${index + 1}`}</Text>,
+    title: (
+      <Text strong>
+        {stage.stageName || stage.name || `Giai đoạn ${index + 1}`}
+      </Text>
+    ),
     key: stage.id,
     selectable: false,
-    children: orderTasks(tasks[stage.id] || []).map((task) => ({
+    children: orderTasks(tasks[stage.id] || []).map(task => ({
       title: task.name || task.taskName,
       key: task.id,
       isLeaf: true,
@@ -38,7 +57,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
     })),
   }))
 
-  const fetchTaskLogs = async (taskId) => {
+  const fetchTaskLogs = async taskId => {
     setLoading(true)
     try {
       const res = await CultivationLogService.getDailyLogsByTask(taskId)
@@ -63,10 +82,18 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
   }
 
   return (
-    <Card bordered={false} className="shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <Card
+      bordered={false}
+      className="shadow-sm rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-500"
+    >
       <Row gutter={[24, 24]} className="min-h-[520px]">
         {/* Cột trái: Tree */}
-        <Col xs={24} lg={8} xl={6} className="border-b lg:border-b-0 lg:border-r border-gray-100 lg:pr-6 pb-6 lg:pb-0">
+        <Col
+          xs={24}
+          lg={8}
+          xl={6}
+          className="border-b lg:border-b-0 lg:border-r border-gray-100 lg:pr-6 pb-6 lg:pb-0"
+        >
           <p className="mb-3 text-xs font-semibold tracking-wide text-gray-500 uppercase">
             Cấu trúc Kế hoạch
           </p>
@@ -89,7 +116,9 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
           {!selectedTask ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 py-20">
               <FileTextOutlined className="text-4xl mb-3 opacity-50" />
-              <p>Chọn một công việc bên trái để xem lịch sử ghi nhận hằng ngày</p>
+              <p>
+                Chọn một công việc bên trái để xem lịch sử ghi nhận hằng ngày
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -118,17 +147,20 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                         <div className="flex items-center gap-2">
                           <CalendarOutlined className="text-green-600 text-base" />
                           <span className="font-bold text-gray-800 text-base">
-                            {log.date ? formatDate(log.date) : 'Chưa rõ ngày'}
+                            {log.date ? formatDate(log.date) : "Chưa rõ ngày"}
                           </span>
                           {log.progress != null && (
-                            <Tag color="blue" className="rounded-full font-semibold m-0">
+                            <Tag
+                              color="blue"
+                              className="rounded-full font-semibold m-0"
+                            >
                               Tiến độ {log.progress}%
                             </Tag>
                           )}
                         </div>
                         <span className="text-xs text-gray-500 flex items-center gap-1">
                           <UserOutlined className="text-gray-400" />
-                          Cập nhật bởi:{' '}
+                          Cập nhật bởi:{" "}
                           <span className="font-semibold text-gray-700">
                             {getUserDisplayName(
                               log.updatedByName,
@@ -152,10 +184,13 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                           {log.description}
                         </div>
                       ) : (
-                        <div className="text-sm text-gray-400 italic mb-3">Không có ghi chú</div>
+                        <div className="text-sm text-gray-400 italic mb-3">
+                          Không có ghi chú
+                        </div>
                       )}
 
-                      {(getHarvestQuantity(log) != null || getHarvestArea(log) > 0) && (
+                      {(getHarvestQuantity(log) != null ||
+                        getHarvestArea(log) > 0) && (
                         <div className="mb-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
                           <div className="mb-2 flex items-center gap-1.5 text-xs font-bold text-emerald-800">
                             <InboxOutlined className="text-emerald-600" />
@@ -169,7 +204,7 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                             )}
                             {getHarvestArea(log) > 0 && (
                               <span className="text-gray-500">
-                                · {getHarvestArea(log)} {formatAreaUnit('m2')}
+                                · {getHarvestArea(log)} {formatAreaUnit("m2")}
                               </span>
                             )}
                           </div>
@@ -177,7 +212,8 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                       )}
 
                       {/* Vật tư: Phân bón & Nông dược */}
-                      {(log.fertilizers?.length > 0 || log.pesticides?.length > 0) && (
+                      {(log.fertilizers?.length > 0 ||
+                        log.pesticides?.length > 0) && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                           {/* Phân bón */}
                           {log.fertilizers?.length > 0 && (
@@ -188,9 +224,10 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                               </div>
                               <div className="space-y-1.5">
                                 {log.fertilizers.map((f, i) => {
-                                  const name = f.name || f.materialName || 'Phân bón'
+                                  const name =
+                                    f.name || f.materialName || "Phân bón"
                                   const qty = f.quantity
-                                  const unit = f.quantityUnit || f.unit || 'kg'
+                                  const unit = f.quantityUnit || f.unit || "kg"
                                   const area = f.area
                                   const areaUnit = formatAreaUnit(f.areaUnit)
 
@@ -199,11 +236,17 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                                       key={i}
                                       className="text-xs text-gray-700 flex flex-wrap items-center justify-between bg-white/80 px-2.5 py-1.5 rounded-lg border border-blue-100/60 shadow-2xs"
                                     >
-                                      <span className="font-semibold text-gray-800">{name}</span>
+                                      <span className="font-semibold text-gray-800">
+                                        {name}
+                                      </span>
                                       <div className="flex items-center gap-1.5">
-                                        <span className="font-bold text-blue-700">{qty} {unit}</span>
+                                        <span className="font-bold text-blue-700">
+                                          {qty} {unit}
+                                        </span>
                                         {area > 0 && (
-                                          <span className="text-[11px] text-gray-500">({area} {areaUnit})</span>
+                                          <span className="text-[11px] text-gray-500">
+                                            ({area} {areaUnit})
+                                          </span>
                                         )}
                                       </div>
                                     </div>
@@ -222,9 +265,10 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                               </div>
                               <div className="space-y-1.5">
                                 {log.pesticides.map((p, i) => {
-                                  const name = p.name || p.materialName || 'Nông dược'
+                                  const name =
+                                    p.name || p.materialName || "Nông dược"
                                   const qty = p.quantity
-                                  const unit = p.quantityUnit || p.unit || 'lít'
+                                  const unit = p.quantityUnit || p.unit || "lít"
                                   const area = p.area
                                   const areaUnit = formatAreaUnit(p.areaUnit)
 
@@ -233,11 +277,17 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                                       key={i}
                                       className="text-xs text-gray-700 flex flex-wrap items-center justify-between bg-white/80 px-2.5 py-1.5 rounded-lg border border-purple-100/60 shadow-2xs"
                                     >
-                                      <span className="font-semibold text-gray-800">{name}</span>
+                                      <span className="font-semibold text-gray-800">
+                                        {name}
+                                      </span>
                                       <div className="flex items-center gap-1.5">
-                                        <span className="font-bold text-purple-700">{qty} {unit}</span>
+                                        <span className="font-bold text-purple-700">
+                                          {qty} {unit}
+                                        </span>
                                         {area > 0 && (
-                                          <span className="text-[11px] text-gray-500">({area} {areaUnit})</span>
+                                          <span className="text-[11px] text-gray-500">
+                                            ({area} {areaUnit})
+                                          </span>
                                         )}
                                       </div>
                                     </div>
@@ -252,13 +302,24 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                       {/* Ảnh minh chứng */}
                       {log.images?.length > 0 && (
                         <div>
-                          <div className="text-xs font-semibold text-gray-500 mb-2">Ảnh minh chứng:</div>
+                          <div className="text-xs font-semibold text-gray-500 mb-2">
+                            Ảnh minh chứng:
+                          </div>
                           <Image.PreviewGroup
-                            items={log.images.map((img) => typeof img === 'string' ? img : (img.url ?? null)).filter(Boolean)}
+                            items={log.images
+                              .map(img =>
+                                typeof img === "string"
+                                  ? img
+                                  : (img.url ?? null),
+                              )
+                              .filter(Boolean)}
                           >
                             <div className="flex flex-wrap gap-2">
                               {log.images.map((img, i) => {
-                                const src = typeof img === 'string' ? img : (img.url ?? null)
+                                const src =
+                                  typeof img === "string"
+                                    ? img
+                                    : (img.url ?? null)
                                 return (
                                   <div
                                     key={i}

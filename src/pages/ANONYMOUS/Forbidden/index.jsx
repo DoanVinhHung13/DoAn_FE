@@ -1,21 +1,21 @@
-import React from 'react';
-import { Button, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import ROUTER from 'src/router/ROUTER';
+import React from "react"
+import { Button, Typography } from "antd"
+import { useNavigate } from "react-router-dom"
+import { useSelector } from "react-redux"
+import ROUTER from "src/router/ROUTER"
 
-const { Text } = Typography;
+const { Text } = Typography
 
 const Forbidden = () => {
-  const navigate = useNavigate();
-  const userInfo = useSelector((state) => state.appGlobal);
-  const user = userInfo;
+  const navigate = useNavigate()
+  const userInfo = useSelector(state => state.appGlobal)
+  const user = userInfo
 
   const handleGoHome = () => {
-    if (!user) navigate(ROUTER.LOGIN);
-    else if (user.role === 'Admin') navigate(ROUTER.FM_DASHBOARD);
-    else navigate(ROUTER.FM_DASHBOARD);
-  };
+    if (!user) navigate(ROUTER.LOGIN)
+    else if (user.role === "Admin") navigate(ROUTER.FM_DASHBOARD)
+    else navigate(ROUTER.FM_DASHBOARD)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-8">
@@ -29,13 +29,11 @@ const Forbidden = () => {
           <span className="text-[180px] font-black text-transparent bg-clip-text bg-gradient-to-b from-green-400 to-green-100 select-none leading-none block">
             403
           </span>
-
         </div>
 
         <Text className="text-gray-400 text-lg block mb-3 leading-relaxed">
           Bạn không có quyền truy cập vào trang này.
         </Text>
-
 
         <div className="flex gap-4 justify-center">
           <Button
@@ -71,7 +69,7 @@ const Forbidden = () => {
         </Text>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Forbidden;
+export default Forbidden

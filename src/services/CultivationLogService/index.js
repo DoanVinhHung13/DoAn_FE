@@ -1,4 +1,4 @@
-import http from '../01_axios'
+import http from "../01_axios"
 import {
   apiGetCultivationLogs,
   apiCreateCultivationLog,
@@ -16,13 +16,13 @@ import {
   apiGetDailyLogsByStage,
   apiGetDailyLogsByTask,
   apiPatchLogDescription,
-} from './urls'
+} from "./urls"
 
-const getAll = (params) => {
+const getAll = params => {
   return http.get(apiGetCultivationLogs, { params })
 }
 
-const getById = (id) => {
+const getById = id => {
   return http.get(apiGetCultivationLogById(id))
 }
 
@@ -34,7 +34,7 @@ const update = (id, body, config) => {
   return http.put(apiUpdateCultivationLog(id), body, config)
 }
 
-const deleteById = (id) => {
+const deleteById = id => {
   return http.delete(apiDeleteCultivationLog(id))
 }
 
@@ -50,34 +50,34 @@ const saveInspectionDraft = (id, body) => {
   return http.post(apiSaveInspectionDraft(id), body)
 }
 
-const getLogbookLogs = (logbookId) => {
+const getLogbookLogs = logbookId => {
   return http.get(apiGetLogbookLogs(logbookId))
 }
 
-const getLandPlotLogs = (landPlotId) => {
+const getLandPlotLogs = landPlotId => {
   return http.get(apiGetLandPlotLogs(landPlotId))
 }
 
-const getDailyLogsByStage = (stageId) => {
+const getDailyLogsByStage = stageId => {
   return http.get(apiGetDailyLogsByStage(stageId))
 }
 
-const getDailyLogsByTask = (taskId) => {
+const getDailyLogsByTask = taskId => {
   return http.get(apiGetDailyLogsByTask(taskId))
 }
 
-const getQualityInspections = (params) => {
+const getQualityInspections = params => {
   return http.get(apiGetQualityInspections, { params })
 }
 
-const getQualityInspectionById = (id) => {
+const getQualityInspectionById = id => {
   return http.get(apiGetQualityInspectionById(id))
 }
 
 const uploadImages = (id, formData) => {
   return http.post(apiUploadLogImages(id), formData, {
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
     },
   })
 }

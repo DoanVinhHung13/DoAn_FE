@@ -1,21 +1,21 @@
-import ROUTER from 'src/router/ROUTER'
+import ROUTER from "src/router/ROUTER"
 
 const FINALIZATION_NOTIFICATION_TYPES = new Set([
-  'CULTIVATION_TASK_SUMMARY_SUBMITTED',
-  'CULTIVATION_TASK_SUMMARY_REJECTED',
-  'CULTIVATION_STAGE_COMPLETED',
-  'CULTIVATION_STAGE_REVIEW_SUBMITTED',
-  'CULTIVATION_STAGE_REVIEW_APPROVED',
-  'CULTIVATION_STAGE_REVIEW_REJECTED',
+  "CULTIVATION_TASK_SUMMARY_SUBMITTED",
+  "CULTIVATION_TASK_SUMMARY_REJECTED",
+  "CULTIVATION_STAGE_COMPLETED",
+  "CULTIVATION_STAGE_REVIEW_SUBMITTED",
+  "CULTIVATION_STAGE_REVIEW_APPROVED",
+  "CULTIVATION_STAGE_REVIEW_REJECTED",
 ])
 
 const parseObject = value => {
-  if (value && typeof value === 'object' && !Array.isArray(value)) return value
-  if (typeof value !== 'string') return null
+  if (value && typeof value === "object" && !Array.isArray(value)) return value
+  if (typeof value !== "string") return null
 
   try {
     const parsed = JSON.parse(value)
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
       ? parsed
       : null
   } catch {
@@ -25,9 +25,9 @@ const parseObject = value => {
 
 const firstNonEmpty = (...values) => {
   for (const value of values) {
-    if (typeof value === 'string' && value.trim()) return value.trim()
+    if (typeof value === "string" && value.trim()) return value.trim()
   }
-  return ''
+  return ""
 }
 
 const getMetadata = notification =>
@@ -39,11 +39,14 @@ const getMetadata = notification =>
   {}
 
 const getNotificationType = notification =>
-  String(notification?.type || notification?.notificationType || '').toUpperCase()
+  String(
+    notification?.type || notification?.notificationType || "",
+  ).toUpperCase()
 
 export const getNotificationContext = notification => {
   const metadata = getMetadata(notification)
-  const task = parseObject(notification?.task) || parseObject(metadata.task) || {}
+  const task =
+    parseObject(notification?.task) || parseObject(metadata.task) || {}
   const stage =
     parseObject(notification?.stage) ||
     parseObject(notification?.cultivationStage) ||
@@ -113,9 +116,10 @@ const getPlanId = notification =>
 
 const addFinalizationTab = actionUrl => {
   try {
-    const url = new URL(actionUrl, 'http://localhost')
-    if (!url.pathname.startsWith('/farm-supervisor/cultivation-logbooks/')) return actionUrl
-    url.searchParams.set('tab', 'finalization')
+    const url = new URL(actionUrl, "http://localhost")
+    if (!url.pathname.startsWith("/farm-supervisor/cultivation-logbooks/"))
+      return actionUrl
+    url.searchParams.set("tab", "finalization")
     return `${url.pathname}${url.search}${url.hash}`
   } catch {
     return actionUrl
@@ -139,9 +143,8 @@ export const getNotificationActionUrl = notification => {
 
   const planId = getPlanId(notification)
   if (shouldOpenFinalization && planId) {
-    return `${ROUTER.FS_CULTIVATION_LOGBOOK_DETAIL.replace(':planId', planId)}?tab=finalization`
+    return `${ROUTER.FS_CULTIVATION_LOGBOOK_DETAIL.replace(":planId", planId)}?tab=finalization`
   }
 
-  return ''
+  return ""
 }
-

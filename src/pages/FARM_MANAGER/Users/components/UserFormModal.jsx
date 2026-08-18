@@ -56,7 +56,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = React.useState(false)
   const currentUser = useSelector(state => state.appGlobal.userInfo)
-  const currentRoles = currentUser?.roles?.length ? currentUser.roles : [currentUser?.role]
+  const currentRoles = currentUser?.roles?.length
+    ? currentUser.roles
+    : [currentUser?.role]
   const navigate = useNavigate()
   const isEdit = !!editingUser
   const { getOptions } = useSystemKey()
@@ -67,7 +69,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   )
   const allowedRoleOptions = currentRoles.includes(ROLES.FARM_MANAGER)
     ? roleOptions
-    : roleOptions.filter(option => (option.codeValue || option.value) !== ROLES.FARM_MANAGER)
+    : roleOptions.filter(
+        option => (option.codeValue || option.value) !== ROLES.FARM_MANAGER,
+      )
 
   const [avatarFile, setAvatarFile] = React.useState(null)
   const [previewAvatar, setPreviewAvatar] = React.useState("")
@@ -139,19 +143,23 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
       }
       if (isEdit) {
         // Cập nhật thông tin cơ bản
-        await UserService.updateUser(editingUser.id, {
-          fullName: values.fullName,
-          phoneNumber: values.phoneNumber || null,
-          gender: values.gender || null,
-          dateOfBirth: values.dateOfBirth
-            ? formatDateForApi(values.dateOfBirth)
-            : null,
-          avatarUrl: uploadedUrl || null,
-          isActive: editingUser.isActive,
-        }, {
-          errorHandling: "form",
-          fieldErrorMapping: USER_FIELD_MAPPING,
-        })
+        await UserService.updateUser(
+          editingUser.id,
+          {
+            fullName: values.fullName,
+            phoneNumber: values.phoneNumber || null,
+            gender: values.gender || null,
+            dateOfBirth: values.dateOfBirth
+              ? formatDateForApi(values.dateOfBirth)
+              : null,
+            avatarUrl: uploadedUrl || null,
+            isActive: editingUser.isActive,
+          },
+          {
+            errorHandling: "form",
+            fieldErrorMapping: USER_FIELD_MAPPING,
+          },
+        )
 
         // Cập nhật vai trò (gọi API assignRoles)
         if (values.roles && values.roles !== editingUser.roles?.[0]) {
@@ -161,20 +169,23 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         }
       } else {
         // Thêm người dùng mới
-        await UserService.createUser({
-          fullName: values.fullName,
-          email: values.email?.trim() || null,
-          phoneNumber: values.phoneNumber || null,
-          gender: values.gender || null,
-          dateOfBirth: values.dateOfBirth
-            ? formatDateForApi(values.dateOfBirth)
-            : null,
-          avatarUrl: uploadedUrl || null,
-          roles: [ROLES.FARMER],
-        }, {
-          errorHandling: "form",
-          fieldErrorMapping: USER_FIELD_MAPPING,
-        })
+        await UserService.createUser(
+          {
+            fullName: values.fullName,
+            email: values.email?.trim() || null,
+            phoneNumber: values.phoneNumber || null,
+            gender: values.gender || null,
+            dateOfBirth: values.dateOfBirth
+              ? formatDateForApi(values.dateOfBirth)
+              : null,
+            avatarUrl: uploadedUrl || null,
+            roles: [ROLES.FARMER],
+          },
+          {
+            errorHandling: "form",
+            fieldErrorMapping: USER_FIELD_MAPPING,
+          },
+        )
       }
 
       onClose()
@@ -285,7 +296,9 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                   Số điện thoại
                 </span>
               }
-              rules={isEdit ? PHONE_RULES : [...PHONE_RULES, CONTACT_REQUIRED_RULE]}
+              rules={
+                isEdit ? PHONE_RULES : [...PHONE_RULES, CONTACT_REQUIRED_RULE]
+              }
               required
             >
               <Input

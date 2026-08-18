@@ -88,11 +88,7 @@ const AUDIT_ACTION_LABELS = {
 
 const getAuditAction = item =>
   String(
-    item?.action ??
-    item?.Action ??
-    item?.eventType ??
-    item?.EventType ??
-    "",
+    item?.action ?? item?.Action ?? item?.eventType ?? item?.EventType ?? "",
   )
     .trim()
     .toUpperCase()
@@ -135,7 +131,11 @@ const isDuplicateAuditPair = (genericItem, detailedItem) => {
 
   const genericEntityId = getAuditEntityId(genericItem)
   const detailedEntityId = getAuditEntityId(detailedItem)
-  if (genericEntityId && detailedEntityId && genericEntityId !== detailedEntityId) {
+  if (
+    genericEntityId &&
+    detailedEntityId &&
+    genericEntityId !== detailedEntityId
+  ) {
     return false
   }
 
@@ -154,8 +154,10 @@ const normalizeAuditLogs = logs => {
     if (!action.endsWith("_COMPLETION")) return
 
     logs.forEach((candidate, candidateIndex) => {
-      if (candidateIndex === index || duplicateIndexes.has(candidateIndex)) return
-      if (isDuplicateAuditPair(candidate, item)) duplicateIndexes.add(candidateIndex)
+      if (candidateIndex === index || duplicateIndexes.has(candidateIndex))
+        return
+      if (isDuplicateAuditPair(candidate, item))
+        duplicateIndexes.add(candidateIndex)
     })
   })
 
@@ -182,7 +184,9 @@ const LogEntry = ({ log }) => {
     log.summaryDescription ||
     log.finalDescription
   const materialsText = summary.materialsText || log.materialsText
-  const isHarvestMaterialsText = /(?:sản lượng|thu hoạch)/i.test(materialsText || '')
+  const isHarvestMaterialsText = /(?:sản lượng|thu hoạch)/i.test(
+    materialsText || "",
+  )
   const workStartDate =
     log.workStartDate || summary.workStartDate || log.startDate
   const workEndDate = log.workEndDate || summary.workEndDate || log.endDate
@@ -208,15 +212,15 @@ const LogEntry = ({ log }) => {
   const editedAt = summary.editedAt || log.editedAt || log.updatedAt
   const totalFertilizers = asList(
     summary.totalFertilizers ||
-    summary.fertilizers ||
-    log.totalFertilizers ||
-    log.fertilizers,
+      summary.fertilizers ||
+      log.totalFertilizers ||
+      log.fertilizers,
   )
   const totalPesticides = asList(
     summary.totalPesticides ||
-    summary.pesticides ||
-    log.totalPesticides ||
-    log.pesticides,
+      summary.pesticides ||
+      log.totalPesticides ||
+      log.pesticides,
   )
   const summaryImages = asList(summary.images)
   const rawImages = summaryImages.length
@@ -272,21 +276,30 @@ const LogEntry = ({ log }) => {
         )}
 
         {materialsText && (
-          <div className={`p-3 mb-3 rounded-lg ${isHarvestMaterialsText
-            ? 'border border-emerald-100 bg-emerald-50/70'
-            : 'border border-blue-100 bg-blue-50/50'
-            }`}>
-            <div className={`mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase ${isHarvestMaterialsText ? 'text-emerald-800' : 'text-blue-800'
-              }`}>
+          <div
+            className={`p-3 mb-3 rounded-lg ${
+              isHarvestMaterialsText
+                ? "border border-emerald-100 bg-emerald-50/70"
+                : "border border-blue-100 bg-blue-50/50"
+            }`}
+          >
+            <div
+              className={`mb-1.5 flex items-center gap-1 text-[11px] font-bold uppercase ${
+                isHarvestMaterialsText ? "text-emerald-800" : "text-blue-800"
+              }`}
+            >
               {isHarvestMaterialsText ? (
                 <InboxOutlined className="text-emerald-600" />
               ) : (
                 <ExperimentOutlined className="text-blue-600" />
               )}
-              {isHarvestMaterialsText ? 'Sản lượng:' : 'Vật tư sử dụng:'}
+              {isHarvestMaterialsText ? "Sản lượng:" : "Vật tư sử dụng:"}
             </div>
-            <Paragraph className={`!mb-0 !mt-0 min-w-0 max-w-full text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed ${isHarvestMaterialsText ? 'text-emerald-700' : 'text-gray-700'
-              }`}>
+            <Paragraph
+              className={`!mb-0 !mt-0 min-w-0 max-w-full text-sm whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-relaxed ${
+                isHarvestMaterialsText ? "text-emerald-700" : "text-gray-700"
+              }`}
+            >
               {materialsText}
             </Paragraph>
           </div>
@@ -302,14 +315,18 @@ const LogEntry = ({ log }) => {
                 </p>
                 <div className="space-y-1">
                   {totalFertilizers.map((fert, index) => (
-                    <div key={index} className="flex items-center gap-2 text-xs text-gray-700">
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 text-xs text-gray-700"
+                    >
                       <span className="w-1.5 h-1.5 bg-blue-500 rounded-full shrink-0" />
                       <span className="font-medium">
                         {fert.name || fert.fertilizerName || fert.materialName}
                       </span>
                       <span className="text-gray-400">-</span>
                       <span className="font-medium text-blue-700">
-                        {fert.quantity || fert.totalQuantity} {fert.unit || fert.quantityUnit || "kg"}
+                        {fert.quantity || fert.totalQuantity}{" "}
+                        {fert.unit || fert.quantityUnit || "kg"}
                       </span>
                     </div>
                   ))}
@@ -324,14 +341,18 @@ const LogEntry = ({ log }) => {
                 </p>
                 <div className="space-y-1">
                   {totalPesticides.map((pest, index) => (
-                    <div key={index} className="flex items-center gap-2 text-xs text-gray-700">
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 text-xs text-gray-700"
+                    >
                       <span className="w-1.5 h-1.5 bg-purple-500 rounded-full shrink-0" />
                       <span className="font-medium">
                         {pest.name || pest.pesticideName || pest.materialName}
                       </span>
                       <span className="text-gray-400">-</span>
                       <span className="font-medium text-purple-700">
-                        {pest.quantity || pest.totalQuantity} {pest.unit || pest.quantityUnit || "lít"}
+                        {pest.quantity || pest.totalQuantity}{" "}
+                        {pest.unit || pest.quantityUnit || "lít"}
                       </span>
                     </div>
                   ))}
@@ -370,7 +391,12 @@ const getLogDate = (log, type) => {
   const summary = log?.summary || log?.officialLog || {}
   const dateKey = type === "start" ? "workStartDate" : "workEndDate"
   const fallbackKey = type === "start" ? "startDate" : "endDate"
-  return log?.[dateKey] || summary?.[dateKey] || log?.[fallbackKey] || summary?.[fallbackKey]
+  return (
+    log?.[dateKey] ||
+    summary?.[dateKey] ||
+    log?.[fallbackKey] ||
+    summary?.[fallbackKey]
+  )
 }
 
 const StageSectionHeader = ({ stage, index, stageLogs }) => {
@@ -378,7 +404,8 @@ const StageSectionHeader = ({ stage, index, stageLogs }) => {
 
   const firstLog = stageLogs[0]
   const lastLog = stageLogs[stageLogs.length - 1]
-  const stageName = stage.stageName || stage.name || stage.title || `Giai đoạn ${index + 1}`
+  const stageName =
+    stage.stageName || stage.name || stage.title || `Giai đoạn ${index + 1}`
   const plannedStart = stage.startDate || stage.plannedStartDate
   const plannedEnd = stage.endDate || stage.plannedEndDate
   const actualStart = stage.actualStartDate || getLogDate(firstLog, "start")
@@ -393,10 +420,17 @@ const StageSectionHeader = ({ stage, index, stageLogs }) => {
         <h3 className="mb-1 text-base font-bold text-gray-800">{stageName}</h3>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
           <span className="text-gray-500">
-            Kế hoạch: {plannedStart ? formatDate(plannedStart) : "Chưa xác định"} - {plannedEnd ? formatDate(plannedEnd) : "Chưa xác định"}
+            Kế hoạch:{" "}
+            {plannedStart ? formatDate(plannedStart) : "Chưa xác định"} -{" "}
+            {plannedEnd ? formatDate(plannedEnd) : "Chưa xác định"}
           </span>
           <span className="font-medium text-green-600">
-            Thực tế: {actualStart ? formatDate(actualStart) : "Chưa bắt đầu"} - {actualEnd ? formatDate(actualEnd) : actualStart ? "Đang thực hiện" : "Chưa xác định"}
+            Thực tế: {actualStart ? formatDate(actualStart) : "Chưa bắt đầu"} -{" "}
+            {actualEnd
+              ? formatDate(actualEnd)
+              : actualStart
+                ? "Đang thực hiện"
+                : "Chưa xác định"}
           </span>
         </div>
       </div>
@@ -424,7 +458,11 @@ const LogbookReview = () => {
       const [detailRes, logsRes, auditRes, stagesRes] = await Promise.all([
         CultivationLogbookService.getById(id),
         CultivationLogService.getLogbookLogs(id),
-        AuditLogService.getAll({ PageIndex: 1, PageSize: 50, SearchKeyword: id }),
+        AuditLogService.getAll({
+          PageIndex: 1,
+          PageSize: 50,
+          SearchKeyword: id,
+        }),
         CultivationStageService.getByLogbookId(id).catch(() => null),
       ])
 
@@ -440,9 +478,12 @@ const LogbookReview = () => {
           if (!stageId) return { stage, logs: [] }
 
           try {
-            const stageLogsRes = await CultivationStageService.getStageLogs(stageId, {
-              cultivationLogbookId: id,
-            })
+            const stageLogsRes = await CultivationStageService.getStageLogs(
+              stageId,
+              {
+                cultivationLogbookId: id,
+              },
+            )
             return {
               stage,
               logs: getOrderedStageLogs(
@@ -455,18 +496,20 @@ const LogbookReview = () => {
           }
         }),
       )
-      const hasStageLogs = fetchedStageGroups.some(group => group.logs.length > 0)
+      const hasStageLogs = fetchedStageGroups.some(
+        group => group.logs.length > 0,
+      )
       const fallbackStageGroups = stages.length
         ? stages.map((stage, index) => ({
-          stage,
-          logs:
-            index === 0
-              ? getOrderedStageLogs(
-                fallbackLogs,
-                stage.tasks || stage.cultivationTasks || [],
-              )
-              : [],
-        }))
+            stage,
+            logs:
+              index === 0
+                ? getOrderedStageLogs(
+                    fallbackLogs,
+                    stage.tasks || stage.cultivationTasks || [],
+                  )
+                : [],
+          }))
         : fallbackLogs.length
           ? [{ stage: null, logs: fallbackLogs }]
           : []
@@ -551,7 +594,9 @@ const LogbookReview = () => {
     ? getReviewStatus(logbook.reviewStatus)
     : null
   const showApprove = canApproveClosing(logbook)
-  const harvestTask = (logbook.tasks || []).find(task => task.activityType === "HARVESTING")
+  const harvestTask = (logbook.tasks || []).find(
+    task => task.activityType === "HARVESTING",
+  )
 
   return (
     <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
@@ -713,7 +758,10 @@ const LogbookReview = () => {
         }
       >
         {auditLogs.length === 0 ? (
-          <Empty description="Chưa có lịch sử chỉnh sửa" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Empty
+            description="Chưa có lịch sử chỉnh sửa"
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+          />
         ) : (
           <Timeline
             items={auditLogs.map((item, index) => ({
@@ -808,9 +856,19 @@ const LogbookReview = () => {
           message="Thông tin thu hoạch đã được tổng hợp từ công việc thu hoạch."
         />
         <div className="space-y-3 rounded-xl border border-green-100 bg-green-50 p-4">
-          <div><strong>Công việc:</strong> {harvestTask?.name || "Thu hoạch"}</div>
-          <div><strong>Trạng thái:</strong> {harvestTask?.status === "COMPLETED" ? "Đã hoàn thành" : "Chưa hoàn thành"}</div>
-          <div className="text-sm text-gray-600">Số lượng, đơn vị và diện tích được tổng hợp tự động từ các nhật ký của công việc thu hoạch.</div>
+          <div>
+            <strong>Công việc:</strong> {harvestTask?.name || "Thu hoạch"}
+          </div>
+          <div>
+            <strong>Trạng thái:</strong>{" "}
+            {harvestTask?.status === "COMPLETED"
+              ? "Đã hoàn thành"
+              : "Chưa hoàn thành"}
+          </div>
+          <div className="text-sm text-gray-600">
+            Số lượng, đơn vị và diện tích được tổng hợp tự động từ các nhật ký
+            của công việc thu hoạch.
+          </div>
         </div>
       </Modal>
     </div>

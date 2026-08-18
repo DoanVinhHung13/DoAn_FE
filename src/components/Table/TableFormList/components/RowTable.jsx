@@ -28,8 +28,8 @@ export const RowTable = ({
                     minWidth: item?.minWidth
                       ? item?.minWidth
                       : item?.width
-                      ? item?.width
-                      : 120,
+                        ? item?.width
+                        : 120,
                     maxWidth: item?.width,
                   }}
                 >
@@ -75,8 +75,8 @@ export const RowTable = ({
                     minWidth: item?.minWidth
                       ? item?.minWidth
                       : item?.width
-                      ? item?.width
-                      : 120,
+                        ? item?.width
+                        : 120,
                     maxWidth: item?.width,
                   }}
                   key={`${formTableName}_cell${idx}_${idxCol}`}

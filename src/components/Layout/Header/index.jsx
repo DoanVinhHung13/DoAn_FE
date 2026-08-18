@@ -3,7 +3,7 @@ import {
   LogoutOutlined,
   MenuOutlined,
   UserOutlined,
-} from "@ant-design/icons";
+} from "@ant-design/icons"
 import {
   Divider as AntdDivider,
   Avatar,
@@ -11,32 +11,32 @@ import {
   Drawer,
   Dropdown,
   Space,
-} from "antd";
-import { useState } from "react";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import logo from "src/assets/images/logo/logo-eapls.jpg";
-import { clearAuthStorage } from "src/redux/storage";
-import { getAvatarUrl } from "src/utils/helpers";
-import { useAppDispatch } from "src/redux/hooks";
-import { setUserInfo } from "src/redux/slices/appGlobalSlice";
-import ROUTER from "src/router/ROUTER";
-import { getDashboardPathByRole } from "src/router/roleRedirects";
+} from "antd"
+import { useState } from "react"
+import { useSelector } from "react-redux"
+import { useNavigate } from "react-router-dom"
+import logo from "src/assets/images/logo/logo-eapls.jpg"
+import { clearAuthStorage } from "src/redux/storage"
+import { getAvatarUrl } from "src/utils/helpers"
+import { useAppDispatch } from "src/redux/hooks"
+import { setUserInfo } from "src/redux/slices/appGlobalSlice"
+import ROUTER from "src/router/ROUTER"
+import { getDashboardPathByRole } from "src/router/roleRedirects"
 
 const PublicNavbar = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   // Dùng Redux làm nguồn duy nhất — không cần isLoginContext từ Context
-  const { userInfo: user } = useSelector((state) => state.appGlobal);
-  const isLoginContext = Boolean(user?._id);
-  const dashboardPath = getDashboardPathByRole(user?.role);
-  const dispatch = useAppDispatch();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { userInfo: user } = useSelector(state => state.appGlobal)
+  const isLoginContext = Boolean(user?._id)
+  const dashboardPath = getDashboardPathByRole(user?.role)
+  const dispatch = useAppDispatch()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
-    clearAuthStorage();
-    dispatch(setUserInfo({}));
-    navigate(ROUTER.HOME);
-  };
+    clearAuthStorage()
+    dispatch(setUserInfo({}))
+    navigate(ROUTER.HOME)
+  }
 
   const userMenuItems = [
     {
@@ -61,7 +61,7 @@ const PublicNavbar = () => {
       danger: true,
       onClick: handleLogout,
     },
-  ];
+  ]
 
   return (
     <nav className="fixed top-0 z-50 flex justify-center w-full border-b border-gray-100 glass-card">
@@ -203,7 +203,7 @@ const PublicNavbar = () => {
         </Drawer>
       </div>
     </nav>
-  );
-};
+  )
+}
 
-export default PublicNavbar;
+export default PublicNavbar

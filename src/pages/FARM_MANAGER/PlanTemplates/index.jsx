@@ -16,46 +16,38 @@ import {
   ProfileOutlined,
   ReloadOutlined,
   SearchOutlined,
-} from '@ant-design/icons'
-import {
-  Button,
-  Card,
-  Input,
-  message,
-  Tag,
-  Tooltip,
-  Select,
-} from 'antd'
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+} from "@ant-design/icons"
+import { Button, Card, Input, message, Tag, Tooltip, Select } from "antd"
+import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
-import CustomModal from 'src/components/Modal/CustomModal'
-import CustomTable from 'src/components/Table/CustomTable'
-import TitleCustom from 'src/components/TitleCustom'
-import { createSTTColumn } from 'src/components/Table/columns.jsx'
-import { createPaginationConfig } from 'src/utils/tableUtils'
-import { TemplateLibraryIcon } from 'src/assets/icon/menu/MenuIcons'
-import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import ROUTER from 'src/router/ROUTER'
-import CropCatalogService from 'src/services/CropCatalogService'
-import CropManagementService from 'src/services/CropManagementService'
-import ProcessTemplateService from 'src/services/ProcessTemplateService'
-import ProcessStepService from 'src/services/ProcessStepService'
-import { invalidCharsRegex } from 'src/utils/helpers'
-import { useListManagement } from 'src/hooks/useListManagement'
-import { UI } from 'src/constants/uiConfig'
+import CustomModal from "src/components/Modal/CustomModal"
+import CustomTable from "src/components/Table/CustomTable"
+import TitleCustom from "src/components/TitleCustom"
+import { createSTTColumn } from "src/components/Table/columns.jsx"
+import { createPaginationConfig } from "src/utils/tableUtils"
+import { TemplateLibraryIcon } from "src/assets/icon/menu/MenuIcons"
+import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
+import ROUTER from "src/router/ROUTER"
+import CropCatalogService from "src/services/CropCatalogService"
+import CropManagementService from "src/services/CropManagementService"
+import ProcessTemplateService from "src/services/ProcessTemplateService"
+import ProcessStepService from "src/services/ProcessStepService"
+import { invalidCharsRegex } from "src/utils/helpers"
+import { useListManagement } from "src/hooks/useListManagement"
+import { UI } from "src/constants/uiConfig"
 
-const normalizeItems = (response) => {
+const normalizeItems = response => {
   const payload = response?.data ?? response ?? {}
   const data = payload?.data ?? payload
   return Array.isArray(data)
     ? data
     : data?.items ||
-    data?.results ||
-    data?.processSteps ||
-    data?.crops ||
-    data?.cropCatalogs ||
-    []
+        data?.results ||
+        data?.processSteps ||
+        data?.crops ||
+        data?.cropCatalogs ||
+        []
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -64,14 +56,26 @@ const PlanTemplateList = () => {
 
   // ── Use List Management Hook ────────────────────────────────────────────────
   const {
-    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
-    page, setPage, pageSize, setPageSize,
-    filters, updateFilter,
-    listData, setListData, totalRecords, setTotalRecords,
-    loading, setLoading
+    searchInput,
+    setSearchInput,
+    search,
+    handleSearch,
+    handleClearSearch,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    filters,
+    updateFilter,
+    listData,
+    setListData,
+    totalRecords,
+    setTotalRecords,
+    loading,
+    setLoading,
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
-    initialFilters: { cropCatalogId: undefined, cropId: undefined }
+    initialFilters: { cropCatalogId: undefined, cropId: undefined },
   })
 
   const cropCatalogId = filters.cropCatalogId
@@ -107,26 +111,34 @@ const PlanTemplateList = () => {
           const processTemplateId =
             step.processTemplateId || step.processTemplate?.id
           if (processTemplateId) {
-            counts[processTemplateId] =
-              (counts[processTemplateId] || 0) + 1
+            counts[processTemplateId] = (counts[processTemplateId] || 0) + 1
           }
           return counts
         },
-        {}
+        {},
       )
-      const templateItems = normalizeItems(templateResponse).map((template) => ({
+      const templateItems = normalizeItems(templateResponse).map(template => ({
         ...template,
         _stepCount: stepCountByTemplate[template.id] || 0,
       }))
 
       setListData(templateItems)
       setTotalRecords(
-        templateResponse?.data?.totalItems || templateItems.length
+        templateResponse?.data?.totalItems || templateItems.length,
       )
     } finally {
       setLoading(false)
     }
-  }, [cropCatalogId, cropId, page, pageSize, search, setListData, setTotalRecords, setLoading])
+  }, [
+    cropCatalogId,
+    cropId,
+    page,
+    pageSize,
+    search,
+    setListData,
+    setTotalRecords,
+    setLoading,
+  ])
 
   useEffect(() => {
     getList()
@@ -154,22 +166,22 @@ const PlanTemplateList = () => {
         if (!mounted) return
 
         const options = normalizeItems(cropResponse)
-          .filter((crop) => crop.isActive !== false)
-          .map((crop) => ({
+          .filter(crop => crop.isActive !== false)
+          .map(crop => ({
             value: crop.id || crop._id || crop.cropId,
             label: crop.name || crop.cropName,
           }))
-          .filter((option) => option.value && option.label)
+          .filter(option => option.value && option.label)
 
         setCropOptions(options)
         setCropCatalogOptions(
           normalizeItems(catalogResponse)
-            .filter((catalog) => catalog.isActive !== false)
-            .map((catalog) => ({
+            .filter(catalog => catalog.isActive !== false)
+            .map(catalog => ({
               value: catalog.id || catalog._id || catalog.cropCatalogId,
               label: catalog.name || catalog.catalogName,
             }))
-            .filter((option) => option.value && option.label)
+            .filter(option => option.value && option.label),
         )
       } finally {
         if (mounted) {
@@ -203,16 +215,14 @@ const PlanTemplateList = () => {
   const columns = [
     createSTTColumn(page, pageSize),
     {
-      title: 'Tên mẫu quy trình',
-      dataIndex: 'name',
-      key: 'name',
-      render: (v) => (
-        <span className="">{v || '—'}</span>
-      ),
+      title: "Tên mẫu quy trình",
+      dataIndex: "name",
+      key: "name",
+      render: v => <span className="">{v || "—"}</span>,
     },
     {
-      title: 'Cây trồng áp dụng',
-      key: 'targetCrop',
+      title: "Cây trồng áp dụng",
+      key: "targetCrop",
       width: 180,
       render: (_, record) => {
         const label =
@@ -227,10 +237,10 @@ const PlanTemplateList = () => {
       },
     },
     {
-      title: 'Số bước',
-      key: 'stepCount',
+      title: "Số bước",
+      key: "stepCount",
       width: 120,
-      align: 'center',
+      align: "center",
       render: (_, record) => (
         <span className="text-sm font-semibold text-gray-700">
           {record._stepCount}
@@ -238,20 +248,18 @@ const PlanTemplateList = () => {
       ),
     },
     {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
       ellipsis: true,
-      render: (v) => (
-        <span className="text-sm text-gray-500">{v || '—'}</span>
-      ),
+      render: v => <span className="text-sm text-gray-500">{v || "—"}</span>,
     },
     {
-      title: 'Hành động',
-      key: 'actions',
-      fixed: 'right',
+      title: "Hành động",
+      key: "actions",
+      fixed: "right",
       width: 130,
-      align: 'center',
+      align: "center",
       render: (_, record) => (
         <div className="flex items-center justify-center gap-2">
           <Tooltip title="Áp dụng mẫu">
@@ -259,9 +267,11 @@ const PlanTemplateList = () => {
               type="text"
               icon={<PlayCircleOutlined className="text-lg text-green-500" />}
               className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation()
-                navigate(`${ROUTER.FM_CULTIVATION_LOGBOOK_CREATE}?templateId=${record.id}`)
+                navigate(
+                  `${ROUTER.FM_CULTIVATION_LOGBOOK_CREATE}?templateId=${record.id}`,
+                )
               }}
             />
           </Tooltip>
@@ -270,10 +280,10 @@ const PlanTemplateList = () => {
               type="text"
               icon={<EditOutlined className="text-lg text-green-500" />}
               className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation()
                 navigate(
-                  ROUTER.FM_PROCESS_TEMPLATE_EDIT.replace(':id', record.id)
+                  ROUTER.FM_PROCESS_TEMPLATE_EDIT.replace(":id", record.id),
                 )
               }}
             />
@@ -283,7 +293,7 @@ const PlanTemplateList = () => {
               type="text"
               icon={<DeleteOutlined className="text-lg text-red-500" />}
               className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation()
                 setDeleteModal({ open: true, item: record })
               }}
@@ -301,7 +311,9 @@ const PlanTemplateList = () => {
       <div className={UI.page.header}>
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <TemplateLibraryIcon style={{ fontSize: '24px', color: '#15803d' }} />
+            <TemplateLibraryIcon
+              style={{ fontSize: "24px", color: "#15803d" }}
+            />
             Thư viện mẫu quy trình
           </TitleCustom>
         </div>
@@ -321,7 +333,7 @@ const PlanTemplateList = () => {
         <div className="admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Input
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={e => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
             placeholder="Tìm theo tên mẫu quy trình..."
             prefix={<SearchOutlined className="text-gray-300" />}
@@ -336,9 +348,9 @@ const PlanTemplateList = () => {
             allowClear
             showSearch
             optionFilterProp="label"
-            onChange={(value) => {
-              updateFilter('cropCatalogId', value)
-              if (!value) updateFilter('cropId', undefined)
+            onChange={value => {
+              updateFilter("cropCatalogId", value)
+              if (!value) updateFilter("cropId", undefined)
             }}
             placeholder="Lọc theo danh mục cây trồng"
             className="w-64 h-10"
@@ -351,7 +363,7 @@ const PlanTemplateList = () => {
             allowClear
             showSearch
             optionFilterProp="label"
-            onChange={(value) => updateFilter('cropId', value)}
+            onChange={value => updateFilter("cropId", value)}
             placeholder="Lọc theo cây trồng"
             className="w-64 h-10"
             aria-label="Lọc mẫu theo cây trồng"
@@ -372,7 +384,6 @@ const PlanTemplateList = () => {
             />
           </div>
         </div>
-
       </div>
 
       {/* Table */}
@@ -382,15 +393,23 @@ const PlanTemplateList = () => {
         rowKey="id"
         loading={loading}
         scroll={{ x: 900 }}
-        onRow={(record) => ({
-          onClick: () => navigate(ROUTER.FM_PROCESS_TEMPLATE_DETAIL.replace(':id', record.id)),
-          className: 'cursor-pointer',
+        onRow={record => ({
+          onClick: () =>
+            navigate(
+              ROUTER.FM_PROCESS_TEMPLATE_DETAIL.replace(":id", record.id),
+            ),
+          className: "cursor-pointer",
         })}
-        locale={{ emptyText: 'Chưa có mẫu quy trình nào.' }}
-        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
-          setPage(p)
-          setPageSize(ps)
-        })}
+        locale={{ emptyText: "Chưa có mẫu quy trình nào." }}
+        pagination={createPaginationConfig(
+          page,
+          pageSize,
+          totalRecords,
+          (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        )}
         rowClassName="hover:bg-green-50/30 transition-colors"
       />
 
@@ -408,7 +427,8 @@ const PlanTemplateList = () => {
       >
         <div className="mt-4 mb-6 ml-4">
           <p className="text-gray-600">
-            Bạn có chắc chắn muốn xóa mẫu quy trình này? Thao tác này không thể hoàn tác.
+            Bạn có chắc chắn muốn xóa mẫu quy trình này? Thao tác này không thể
+            hoàn tác.
           </p>
           {deleteModal.item && (
             <p className="mt-2 text-sm font-semibold text-gray-800">

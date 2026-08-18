@@ -66,9 +66,9 @@ const getAllTasks = taskMap => Object.values(taskMap).flat()
 
 const taskStatusIcon = s =>
   s === "COMPLETED" ||
-    s === "WAITING_APPROVAL" ||
-    s === "IN_PROGRESS" ||
-    s === "ASSIGNED" ? (
+  s === "WAITING_APPROVAL" ||
+  s === "IN_PROGRESS" ||
+  s === "ASSIGNED" ? (
     <CheckCircleOutlined />
   ) : (
     <ClockCircleOutlined />
@@ -108,7 +108,11 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
         }
         description={
           <div className="flex flex-col mt-1 ">
-            <Tag color={cfg.color} className="supervisor-stage-status" style={{ margin: 0, fontSize: 10 }}>
+            <Tag
+              color={cfg.color}
+              className="supervisor-stage-status"
+              style={{ margin: 0, fontSize: 10 }}
+            >
               {cfg.label}
             </Tag>
           </div>
@@ -153,17 +157,19 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             .filter(
               item =>
                 !(
-                  String(item.name || "").trim().toLowerCase() === "thu hoạch" &&
+                  String(item.name || "")
+                    .trim()
+                    .toLowerCase() === "thu hoạch" &&
                   item.activityType !== "HARVESTING"
                 ),
             )
             .map(item => ({
               value: item.id,
               label: item.name,
-               description: item.description,
-               activityType: item.activityType,
-               taskType: item.taskType,
-             })),
+              description: item.description,
+              activityType: item.activityType,
+              taskType: item.taskType,
+            })),
         )
       } catch {
         setTaskCatalogOptions([])
@@ -226,22 +232,32 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     const taskToActivate = Object.values(tasks)
       .flat()
       .find(task => task.id === taskId)
-    const quarantineWarnings = Object.values(tasks)
-      .flatMap(taskList => taskList.flatMap(task => (
-        Array.isArray(task.quarantineWarnings) ? task.quarantineWarnings : []
-      )))
+    const quarantineWarnings = Object.values(tasks).flatMap(taskList =>
+      taskList.flatMap(task =>
+        Array.isArray(task.quarantineWarnings) ? task.quarantineWarnings : [],
+      ),
+    )
 
     if (isHarvestTask(taskToActivate)) {
       const allTasks = getAllTasks(tasks)
-      const unfinishedTasks = allTasks.filter(task => !isHarvestTask(task) && task.status !== "COMPLETED")
-      const unfinishedStages = stages.filter(stage => stage.id !== finalStage?.id && stage.status !== "COMPLETED")
-      const activeQuarantineWarnings = getActiveQuarantineWarnings(quarantineWarnings)
+      const unfinishedTasks = allTasks.filter(
+        task => !isHarvestTask(task) && task.status !== "COMPLETED",
+      )
+      const unfinishedStages = stages.filter(
+        stage => stage.id !== finalStage?.id && stage.status !== "COMPLETED",
+      )
+      const activeQuarantineWarnings =
+        getActiveQuarantineWarnings(quarantineWarnings)
       if (unfinishedTasks.length > 0 || unfinishedStages.length > 0) {
-      message.warning("Chỉ được kích hoạt thu hoạch sau khi các công việc và giai đoạn trước đã hoàn thành.")
+        message.warning(
+          "Chỉ được kích hoạt thu hoạch sau khi các công việc và giai đoạn trước đã hoàn thành.",
+        )
         return
       }
       if (activeQuarantineWarnings.length > 0) {
-        message.warning("Không thể kích hoạt công việc thu hoạch khi cây trồng vẫn còn thời gian cách ly nông dược.")
+        message.warning(
+          "Không thể kích hoạt công việc thu hoạch khi cây trồng vẫn còn thời gian cách ly nông dược.",
+        )
         return
       }
     }
@@ -288,16 +304,13 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const selectedStage = stages.find(s => s.id === selectedId) ?? null
   const finalStage = [...stages]
     .filter(stage => !stage.isDeleted)
-    .sort(
-      (left, right) =>
-        (right.stageOrder || 0) - (left.stageOrder || 0),
-    )[0]
-  const isFinalStage = Boolean(selectedStage && selectedStage.id === finalStage?.id)
+    .sort((left, right) => (right.stageOrder || 0) - (left.stageOrder || 0))[0]
+  const isFinalStage = Boolean(
+    selectedStage && selectedStage.id === finalStage?.id,
+  )
   const availableTaskCatalogOptions = isFinalStage
     ? taskCatalogOptions
-    : taskCatalogOptions.filter(
-      option => option.activityType !== "HARVESTING",
-    )
+    : taskCatalogOptions.filter(option => option.activityType !== "HARVESTING")
   const selectedTasks = selectedId ? tasks[selectedId] || [] : []
   const orderedSelectedTasks = orderTasks(selectedTasks)
   const hasHarvestTask = getAllTasks(tasks).some(isHarvestTask)
@@ -309,7 +322,9 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   // ── Handlers ──────────────────────────────────────────────────────────────
   const openAddTask = () => {
     if (hasHarvestTask) {
-      message.warning("Sau khi tạo công việc thu hoạch, không thể tạo thêm công việc nào trong nhật ký này.")
+      message.warning(
+        "Sau khi tạo công việc thu hoạch, không thể tạo thêm công việc nào trong nhật ký này.",
+      )
       return
     }
     if (selectedStage?.status === "COMPLETED") {
@@ -326,8 +341,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           leaderId: null,
           farmerIds: [],
           taskType: null,
-          plannedStartDate: getLocalNow().startOf('day'),
-          plannedEndDate: getLocalNow().startOf('day').add(1, 'day'),
+          plannedStartDate: getLocalNow().startOf("day"),
+          plannedEndDate: getLocalNow().startOf("day").add(1, "day"),
         },
       ],
     })
@@ -335,7 +350,9 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
   const handleAddTask = async () => {
     if (hasHarvestTask) {
-      message.warning("Nhật ký đã có công việc thu hoạch, không thể thêm công việc khác.")
+      message.warning(
+        "Nhật ký đã có công việc thu hoạch, không thể thêm công việc khác.",
+      )
       return
     }
 
@@ -368,7 +385,11 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             taskType: catalog?.taskType || task.taskType || null,
             plannedStartDate: toTaskApiDateTime(task.plannedStartDate),
             plannedEndDate: toTaskApiDateTime(task.plannedEndDate),
-            activityType: catalog?.activityType || (task.taskType === CULTIVATION_TASK_TYPES.HARVEST ? "HARVESTING" : "OTHER"),
+            activityType:
+              catalog?.activityType ||
+              (task.taskType === CULTIVATION_TASK_TYPES.HARVEST
+                ? "HARVESTING"
+                : "OTHER"),
           }
         })
         .filter(task => task.name)
@@ -384,24 +405,39 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         return
       }
 
-      if (validTasks.some(task => !task.plannedStartDate || !task.plannedEndDate || task.plannedStartDate >= task.plannedEndDate)) {
-        message.warning("Ngày bắt đầu dự kiến phải trước ngày kết thúc dự kiến.")
+      if (
+        validTasks.some(
+          task =>
+            !task.plannedStartDate ||
+            !task.plannedEndDate ||
+            task.plannedStartDate >= task.plannedEndDate,
+        )
+      ) {
+        message.warning(
+          "Ngày bắt đầu dự kiến phải trước ngày kết thúc dự kiến.",
+        )
         return
       }
 
       const harvestFlags = validTasks.map(isHarvestTask)
       const firstHarvestIndex = harvestFlags.findIndex(Boolean)
-      if (firstHarvestIndex >= 0 && harvestFlags.slice(firstHarvestIndex + 1).some(flag => !flag)) {
+      if (
+        firstHarvestIndex >= 0 &&
+        harvestFlags.slice(firstHarvestIndex + 1).some(flag => !flag)
+      ) {
         message.warning("Công việc thu hoạch phải ở cuối cùng.")
         setSavingTask(false)
         return
       }
 
-      await CultivationTaskService.createBulk({
-        cultivationLogbookId: planId,
-        cultivationStageId: selectedId,
-        tasks: validTasks,
-      }, { errorHandling: 'component' })
+      await CultivationTaskService.createBulk(
+        {
+          cultivationLogbookId: planId,
+          cultivationStageId: selectedId,
+          tasks: validTasks,
+        },
+        { errorHandling: "component" },
+      )
 
       setEditingTaskId(null)
       taskForm.resetFields()
@@ -419,14 +455,22 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const handleMoveTask = async (taskId, direction) => {
     const task = orderedSelectedTasks.find(item => item.id === taskId)
     if (!canReorderSelectedStage || !canReorderTask(task)) {
-      message.warning("Chỉ có thể đổi thứ tự công việc ở giai đoạn chưa bắt đầu.")
+      message.warning(
+        "Chỉ có thể đổi thứ tự công việc ở giai đoạn chưa bắt đầu.",
+      )
       return
     }
 
-    const currentIndex = orderedSelectedTasks.findIndex(task => task.id === taskId)
+    const currentIndex = orderedSelectedTasks.findIndex(
+      task => task.id === taskId,
+    )
     const targetIndex = currentIndex + direction
 
-    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= orderedSelectedTasks.length) {
+    if (
+      currentIndex < 0 ||
+      targetIndex < 0 ||
+      targetIndex >= orderedSelectedTasks.length
+    ) {
       return
     }
 
@@ -538,20 +582,20 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     {/* Ngày thực tế của giai đoạn */}
                     {(selectedStage.actualStartDate ||
                       selectedStage.actualEndDate) && (
-                        <Text type="secondary" className="text-sm block mt-0.5">
-                          <CheckCircleOutlined className="mr-1 text-green-600" />
-                          <span className="font-medium text-green-700">
-                            Thực tế:
-                          </span>{" "}
-                          {selectedStage.actualStartDate
-                            ? formatDate(selectedStage.actualStartDate)
-                            : "—"}{" "}
-                          –{" "}
-                          {selectedStage.actualEndDate
-                            ? formatDate(selectedStage.actualEndDate)
-                            : "Chưa kết thúc"}
-                        </Text>
-                      )}
+                      <Text type="secondary" className="text-sm block mt-0.5">
+                        <CheckCircleOutlined className="mr-1 text-green-600" />
+                        <span className="font-medium text-green-700">
+                          Thực tế:
+                        </span>{" "}
+                        {selectedStage.actualStartDate
+                          ? formatDate(selectedStage.actualStartDate)
+                          : "—"}{" "}
+                        –{" "}
+                        {selectedStage.actualEndDate
+                          ? formatDate(selectedStage.actualEndDate)
+                          : "Chưa kết thúc"}
+                      </Text>
+                    )}
                   </div>
                   <Tag
                     color={getStageStatus(selectedStage.status).color}
@@ -626,7 +670,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         icon={<ArrowUpOutlined />}
                                         aria-label="Đưa công việc lên trước"
                                         title={
-                                          canReorderSelectedStage && canReorderTask(task)
+                                          canReorderSelectedStage &&
+                                          canReorderTask(task)
                                             ? "Đưa công việc lên trước"
                                             : "Thứ tự đã được khóa"
                                         }
@@ -647,13 +692,15 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         icon={<ArrowDownOutlined />}
                                         aria-label="Đưa công việc xuống sau"
                                         title={
-                                          canReorderSelectedStage && canReorderTask(task)
+                                          canReorderSelectedStage &&
+                                          canReorderTask(task)
                                             ? "Đưa công việc xuống sau"
                                             : "Thứ tự đã được khóa"
                                         }
                                         disabled={
                                           savingOrder ||
-                                          taskIndex === orderedSelectedTasks.length - 1 ||
+                                          taskIndex ===
+                                            orderedSelectedTasks.length - 1 ||
                                           !canReorderSelectedStage ||
                                           !canReorderTask(task)
                                         }
@@ -666,9 +713,14 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                   </div>
                                   <div
                                     className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg
-                                      ${["COMPLETED", "WAITING_APPROVAL", "PENDING_REVIEW"].includes(task.status)
-                                        ? "bg-green-100 text-green-700"
-                                         : task.status === "IN_PROGRESS"
+                                      ${
+                                        [
+                                          "COMPLETED",
+                                          "WAITING_APPROVAL",
+                                          "PENDING_REVIEW",
+                                        ].includes(task.status)
+                                          ? "bg-green-100 text-green-700"
+                                          : task.status === "IN_PROGRESS"
                                             ? "bg-blue-100 text-blue-700"
                                             : "bg-gray-100 text-gray-500"
                                       }`}
@@ -679,60 +731,79 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     <Text className="text-sm font-semibold text-gray-800 line-clamp-2">
                                       {task.name || task.taskName}
                                     </Text>
-                                     {task.description && (
+                                    {task.description && (
                                       <Text
                                         type="secondary"
                                         className="text-xs line-clamp-1 mt-0.5"
                                       >
                                         {task.description}
-                                       </Text>
-                                     )}
-                                     <Tag color="blue" className="mt-1 text-xs">
-                                       {getCultivationTaskTypeLabel(task.taskType)}
-                                     </Tag>
-                                     {task.isActivationWarning === true && (
-                                       <Alert
-                                         type="warning"
-                                         showIcon
-                                         className="mt-2 rounded-lg"
-                                         message="Công việc đã đến ngày dự kiến kích hoạt nhưng hiện chưa được kích hoạt."
-                                       />
-                                     )}
-                                     {/* Ngày dự kiến và hoàn thành của task */}
-                                     <div className="flex flex-wrap mt-1 gap-x-3">
-                                       {task.plannedStartDate && (
-                                         <Text
-                                           type="secondary"
-                                           className="text-xs"
-                                         >
-                                           <CalendarOutlined className="mr-1" />
-                                           Dự kiến: {formatDate(task.plannedStartDate)}
-                                         </Text>
-                                       )}
-                                       {task.plannedEndDate && (
-                                         <Text type="secondary" className="text-xs">
-                                           Kết thúc dự kiến: {formatDate(task.plannedEndDate)}
-                                         </Text>
-                                       )}
-                                       {task.workStartDate && (
-                                         <Text type="secondary" className="text-xs">
-                                           Thực tế bắt đầu: {formatDate(task.workStartDate)}
-                                         </Text>
-                                       )}
-                                       {task.workEndDate && (
-                                         <Text type="secondary" className="text-xs">
-                                           Thực tế kết thúc: {formatDate(task.workEndDate)}
-                                         </Text>
-                                       )}
-                                       {task.completedDate && (
+                                      </Text>
+                                    )}
+                                    <Tag color="blue" className="mt-1 text-xs">
+                                      {getCultivationTaskTypeLabel(
+                                        task.taskType,
+                                      )}
+                                    </Tag>
+                                    {task.isActivationWarning === true && (
+                                      <Alert
+                                        type="warning"
+                                        showIcon
+                                        className="mt-2 rounded-lg"
+                                        message="Công việc đã đến ngày dự kiến kích hoạt nhưng hiện chưa được kích hoạt."
+                                      />
+                                    )}
+                                    {/* Ngày dự kiến và hoàn thành của task */}
+                                    <div className="flex flex-wrap mt-1 gap-x-3">
+                                      {task.plannedStartDate && (
+                                        <Text
+                                          type="secondary"
+                                          className="text-xs"
+                                        >
+                                          <CalendarOutlined className="mr-1" />
+                                          Dự kiến:{" "}
+                                          {formatDate(task.plannedStartDate)}
+                                        </Text>
+                                      )}
+                                      {task.plannedEndDate && (
+                                        <Text
+                                          type="secondary"
+                                          className="text-xs"
+                                        >
+                                          Kết thúc dự kiến:{" "}
+                                          {formatDate(task.plannedEndDate)}
+                                        </Text>
+                                      )}
+                                      {task.workStartDate && (
+                                        <Text
+                                          type="secondary"
+                                          className="text-xs"
+                                        >
+                                          Thực tế bắt đầu:{" "}
+                                          {formatDate(task.workStartDate)}
+                                        </Text>
+                                      )}
+                                      {task.workEndDate && (
+                                        <Text
+                                          type="secondary"
+                                          className="text-xs"
+                                        >
+                                          Thực tế kết thúc:{" "}
+                                          {formatDate(task.workEndDate)}
+                                        </Text>
+                                      )}
+                                      {task.completedDate && (
                                         <Text className="text-xs text-green-600">
                                           <CheckCircleOutlined className="mr-1" />
                                           Xong: {formatDate(task.completedDate)}
                                         </Text>
                                       )}
                                     </div>
-                                    <Text type="secondary" className="block mt-1 text-xs">
-                                      Cập nhật bởi: {getUserDisplayName(
+                                    <Text
+                                      type="secondary"
+                                      className="block mt-1 text-xs"
+                                    >
+                                      Cập nhật bởi:{" "}
+                                      {getUserDisplayName(
                                         task.updatedByName,
                                         task.updatedBy,
                                         task.editedByName,
@@ -754,55 +825,57 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                               {/* Assignments */}
                               {(task.assignedLeaderName ||
                                 task.assignments?.length > 0) && (
-                                  <div className="flex flex-col gap-2 p-3 mt-1 border border-gray-100 rounded-xl bg-gray-50">
-                                    {task.assignedLeaderName && (
-                                      <div className="flex items-center gap-2">
-                                        <UserOutlined className="text-green-600" />
-                                        <Text className="text-xs">
-                                          <span className="font-semibold">
-                                            Người phụ trách:
-                                          </span>{" "}
-                                          {task.assignedLeaderName}
+                                <div className="flex flex-col gap-2 p-3 mt-1 border border-gray-100 rounded-xl bg-gray-50">
+                                  {task.assignedLeaderName && (
+                                    <div className="flex items-center gap-2">
+                                      <UserOutlined className="text-green-600" />
+                                      <Text className="text-xs">
+                                        <span className="font-semibold">
+                                          Người phụ trách:
+                                        </span>{" "}
+                                        {task.assignedLeaderName}
+                                      </Text>
+                                    </div>
+                                  )}
+                                  {task.assignments?.filter(f => !f.isLeader)
+                                    .length > 0 && (
+                                    <div className="flex items-start gap-2">
+                                      <TeamOutlined className="mt-1 text-blue-600" />
+                                      <div className="flex-1">
+                                        <Text className="block mb-1 text-xs font-semibold">
+                                          Người hỗ trợ (
+                                          {
+                                            task.assignments.filter(
+                                              f => !f.isLeader,
+                                            ).length
+                                          }
+                                          ):
                                         </Text>
-                                      </div>
-                                    )}
-                                    {task.assignments?.filter(f => !f.isLeader)
-                                      .length > 0 && (
-                                        <div className="flex items-start gap-2">
-                                          <TeamOutlined className="mt-1 text-blue-600" />
-                                          <div className="flex-1">
-                                            <Text className="block mb-1 text-xs font-semibold">
-                                              Người hỗ trợ (
-                                              {
-                                                task.assignments.filter(
-                                                  f => !f.isLeader,
-                                                ).length
-                                              }
-                                              ):
-                                            </Text>
-                                            <div className="flex flex-wrap gap-1">
-                                              {task.assignments
-                                                .filter(f => !f.isLeader)
-                                                .map(f => (
-                                                  <Tag
-                                                    key={f.userId || f.id}
-                                                    color="blue"
-                                                    bordered={false}
-                                                    className="m-0 rounded-md"
-                                                  >
-                                                    {f.fullName || f.name}
-                                                  </Tag>
-                                                ))}
-                                            </div>
-                                          </div>
+                                        <div className="flex flex-wrap gap-1">
+                                          {task.assignments
+                                            .filter(f => !f.isLeader)
+                                            .map(f => (
+                                              <Tag
+                                                key={f.userId || f.id}
+                                                color="blue"
+                                                bordered={false}
+                                                className="m-0 rounded-md"
+                                              >
+                                                {f.fullName || f.name}
+                                              </Tag>
+                                            ))}
                                         </div>
-                                      )}
-                                  </div>
-                                )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
 
                               {/* Actions */}
                               <div className="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
-                                {["PENDING", "ASSIGNED"].includes(task.status) && (
+                                {["PENDING", "ASSIGNED"].includes(
+                                  task.status,
+                                ) && (
                                   <>
                                     <Button
                                       type="primary"
@@ -813,8 +886,12 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         editTaskForm.setFieldsValue({
                                           name: task.name || task.taskName,
                                           description: task.description || "",
-                                          plannedStartDate: parseDate(task.plannedStartDate),
-                                          plannedEndDate: parseDate(task.plannedEndDate),
+                                          plannedStartDate: parseDate(
+                                            task.plannedStartDate,
+                                          ),
+                                          plannedEndDate: parseDate(
+                                            task.plannedEndDate,
+                                          ),
                                           leaderId:
                                             task.assignedLeaderId || null,
                                           farmerIds:
@@ -903,8 +980,10 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                             taskType: null,
                             name: "",
                             description: "",
-                            plannedStartDate: getLocalNow().startOf('day'),
-                            plannedEndDate: getLocalNow().startOf('day').add(1, 'day'),
+                            plannedStartDate: getLocalNow().startOf("day"),
+                            plannedEndDate: getLocalNow()
+                              .startOf("day")
+                              .add(1, "day"),
                           },
                         ],
                       }}
@@ -947,23 +1026,43 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     },
                                     {
                                       validator: (_, value) => {
-                                        if (!value) return Promise.resolve();
-                                        const trimmed = value.trim();
-                                        if (!trimmed) return Promise.reject(new Error("Tên công việc không được chỉ chứa khoảng trắng."));
-                                        if (trimmed.length > 100) return Promise.reject(new Error("Tên công việc không được vượt quá 100 ký tự."));
-                                        if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error("Tên công việc không được chứa nhiều khoảng trắng liên tiếp."));
-                                        return Promise.resolve();
+                                        if (!value) return Promise.resolve()
+                                        const trimmed = value.trim()
+                                        if (!trimmed)
+                                          return Promise.reject(
+                                            new Error(
+                                              "Tên công việc không được chỉ chứa khoảng trắng.",
+                                            ),
+                                          )
+                                        if (trimmed.length > 100)
+                                          return Promise.reject(
+                                            new Error(
+                                              "Tên công việc không được vượt quá 100 ký tự.",
+                                            ),
+                                          )
+                                        if (
+                                          trimmed !==
+                                          trimmed.replace(/\s+/g, " ")
+                                        )
+                                          return Promise.reject(
+                                            new Error(
+                                              "Tên công việc không được chứa nhiều khoảng trắng liên tiếp.",
+                                            ),
+                                          )
+                                        return Promise.resolve()
                                       },
                                     },
                                   ]}
                                   className="!mb-3"
                                 >
                                   <AutoComplete
-                                    options={availableTaskCatalogOptions.map(catalog => ({
-                                      value: catalog.label,
-                                      label: catalog.label,
-                                      catalog,
-                                    }))}
+                                    options={availableTaskCatalogOptions.map(
+                                      catalog => ({
+                                        value: catalog.label,
+                                        label: catalog.label,
+                                        catalog,
+                                      }),
+                                    )}
                                     filterOption={(inputValue, option) =>
                                       option?.value
                                         ?.toLowerCase()
@@ -976,11 +1075,11 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                       )
                                       const list =
                                         taskForm.getFieldValue("tasks") || []
-                                       list[name] = {
-                                         ...list[name],
-                                         taskCatalogId: catalog?.value || null,
-                                         taskType: catalog?.taskType || null,
-                                       }
+                                      list[name] = {
+                                        ...list[name],
+                                        taskCatalogId: catalog?.value || null,
+                                        taskType: catalog?.taskType || null,
+                                      }
                                       taskForm.setFieldsValue({
                                         tasks: [...list],
                                       })
@@ -992,10 +1091,10 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         taskForm.getFieldValue("tasks") || []
                                       list[name] = {
                                         ...list[name],
-                                         name: catalog.label,
-                                         taskCatalogId: catalog.value,
-                                         taskType: catalog.taskType,
-                                         description: catalog.description || "",
+                                        name: catalog.label,
+                                        taskCatalogId: catalog.value,
+                                        taskType: catalog.taskType,
+                                        description: catalog.description || "",
                                       }
                                       taskForm.setFieldsValue({
                                         tasks: [...list],
@@ -1009,12 +1108,25 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                   rules={[
                                     {
                                       validator: (_, value) => {
-                                        if (!value) return Promise.resolve();
-                                        const trimmed = value.trim();
-                                        if (!trimmed) return Promise.resolve();
-                                        if (trimmed.length > 500) return Promise.reject(new Error("Mô tả công việc không được vượt quá 500 ký tự."));
-                                        if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error("Mô tả công việc không được chứa nhiều khoảng trắng liên tiếp."));
-                                        return Promise.resolve();
+                                        if (!value) return Promise.resolve()
+                                        const trimmed = value.trim()
+                                        if (!trimmed) return Promise.resolve()
+                                        if (trimmed.length > 500)
+                                          return Promise.reject(
+                                            new Error(
+                                              "Mô tả công việc không được vượt quá 500 ký tự.",
+                                            ),
+                                          )
+                                        if (
+                                          trimmed !==
+                                          trimmed.replace(/\s+/g, " ")
+                                        )
+                                          return Promise.reject(
+                                            new Error(
+                                              "Mô tả công việc không được chứa nhiều khoảng trắng liên tiếp.",
+                                            ),
+                                          )
+                                        return Promise.resolve()
                                       },
                                     },
                                   ]}
@@ -1027,20 +1139,38 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                 </Form.Item>
                                 <Row gutter={12}>
                                   <Col xs={24} md={8}>
-                                    <Form.Item noStyle shouldUpdate={(prev, next) => (
-                                      prev.tasks?.[name]?.taskCatalogId !== next.tasks?.[name]?.taskCatalogId
-                                    )}>
+                                    <Form.Item
+                                      noStyle
+                                      shouldUpdate={(prev, next) =>
+                                        prev.tasks?.[name]?.taskCatalogId !==
+                                        next.tasks?.[name]?.taskCatalogId
+                                      }
+                                    >
                                       {() => (
                                         <Form.Item
                                           {...restField}
                                           name={[name, "taskType"]}
                                           label="Loại công việc"
-                                          rules={[{ required: true, message: "Vui lòng chọn loại công việc." }]}
+                                          rules={[
+                                            {
+                                              required: true,
+                                              message:
+                                                "Vui lòng chọn loại công việc.",
+                                            },
+                                          ]}
                                         >
                                           <Select
-                                            options={CULTIVATION_TASK_TYPE_OPTIONS}
+                                            options={
+                                              CULTIVATION_TASK_TYPE_OPTIONS
+                                            }
                                             placeholder="Chọn loại công việc"
-                                            disabled={Boolean(taskForm.getFieldValue(["tasks", name, "taskCatalogId"]))}
+                                            disabled={Boolean(
+                                              taskForm.getFieldValue([
+                                                "tasks",
+                                                name,
+                                                "taskCatalogId",
+                                              ]),
+                                            )}
                                           />
                                         </Form.Item>
                                       )}
@@ -1052,17 +1182,38 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                       name={[name, "plannedStartDate"]}
                                       label="Bắt đầu dự kiến"
                                       rules={[
-                                        { required: true, message: "Vui lòng chọn ngày bắt đầu dự kiến." },
+                                        {
+                                          required: true,
+                                          message:
+                                            "Vui lòng chọn ngày bắt đầu dự kiến.",
+                                        },
                                         ({ getFieldValue }) => ({
                                           validator: (_, value) => {
-                                            const end = getFieldValue(["tasks", name, "plannedEndDate"])
-                                            if (!value || !end || value.isBefore(end)) return Promise.resolve()
-                                            return Promise.reject(new Error("Ngày bắt đầu phải trước ngày kết thúc."))
+                                            const end = getFieldValue([
+                                              "tasks",
+                                              name,
+                                              "plannedEndDate",
+                                            ])
+                                            if (
+                                              !value ||
+                                              !end ||
+                                              value.isBefore(end)
+                                            )
+                                              return Promise.resolve()
+                                            return Promise.reject(
+                                              new Error(
+                                                "Ngày bắt đầu phải trước ngày kết thúc.",
+                                              ),
+                                            )
                                           },
                                         }),
                                       ]}
                                     >
-                                      <DatePicker showTime format="DD/MM/YYYY HH:mm" className="w-full" />
+                                      <DatePicker
+                                        showTime
+                                        format="DD/MM/YYYY HH:mm"
+                                        className="w-full"
+                                      />
                                     </Form.Item>
                                   </Col>
                                   <Col xs={24} md={8}>
@@ -1071,17 +1222,38 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                       name={[name, "plannedEndDate"]}
                                       label="Kết thúc dự kiến"
                                       rules={[
-                                        { required: true, message: "Vui lòng chọn ngày kết thúc dự kiến." },
+                                        {
+                                          required: true,
+                                          message:
+                                            "Vui lòng chọn ngày kết thúc dự kiến.",
+                                        },
                                         ({ getFieldValue }) => ({
                                           validator: (_, value) => {
-                                            const start = getFieldValue(["tasks", name, "plannedStartDate"])
-                                            if (!value || !start || start.isBefore(value)) return Promise.resolve()
-                                            return Promise.reject(new Error("Ngày kết thúc phải sau ngày bắt đầu."))
+                                            const start = getFieldValue([
+                                              "tasks",
+                                              name,
+                                              "plannedStartDate",
+                                            ])
+                                            if (
+                                              !value ||
+                                              !start ||
+                                              start.isBefore(value)
+                                            )
+                                              return Promise.resolve()
+                                            return Promise.reject(
+                                              new Error(
+                                                "Ngày kết thúc phải sau ngày bắt đầu.",
+                                              ),
+                                            )
                                           },
                                         }),
                                       ]}
                                     >
-                                      <DatePicker showTime format="DD/MM/YYYY HH:mm" className="w-full" />
+                                      <DatePicker
+                                        showTime
+                                        format="DD/MM/YYYY HH:mm"
+                                        className="w-full"
+                                      />
                                     </Form.Item>
                                   </Col>
                                 </Row>
@@ -1136,13 +1308,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                               type="dashed"
                               onClick={() =>
                                 add({
-                                   taskCatalogId: null,
-                                   taskType: null,
-                                   name: "",
-                                   description: "",
-                                   plannedStartDate: getLocalNow().startOf('day'),
-                                   plannedEndDate: getLocalNow().startOf('day').add(1, 'day'),
-                                   leaderId: null,
+                                  taskCatalogId: null,
+                                  taskType: null,
+                                  name: "",
+                                  description: "",
+                                  plannedStartDate:
+                                    getLocalNow().startOf("day"),
+                                  plannedEndDate: getLocalNow()
+                                    .startOf("day")
+                                    .add(1, "day"),
+                                  leaderId: null,
                                   farmerIds: [],
                                 })
                               }
@@ -1179,7 +1354,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     </Form>
                   </Card>
                 )}
-
               </div>
             )}
           </Col>
@@ -1236,12 +1410,25 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
               { required: true, message: "Vui lòng nhập tên công việc." },
               {
                 validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  const trimmed = value.trim();
-                  if (!trimmed) return Promise.reject(new Error("Tên công việc không được chỉ chứa khoảng trắng."));
-                  if (trimmed.length > 100) return Promise.reject(new Error("Tên công việc không được vượt quá 100 ký tự."));
-                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error("Tên công việc không được chứa nhiều khoảng trắng liên tiếp."));
-                  return Promise.resolve();
+                  if (!value) return Promise.resolve()
+                  const trimmed = value.trim()
+                  if (!trimmed)
+                    return Promise.reject(
+                      new Error(
+                        "Tên công việc không được chỉ chứa khoảng trắng.",
+                      ),
+                    )
+                  if (trimmed.length > 100)
+                    return Promise.reject(
+                      new Error("Tên công việc không được vượt quá 100 ký tự."),
+                    )
+                  if (trimmed !== trimmed.replace(/\s+/g, " "))
+                    return Promise.reject(
+                      new Error(
+                        "Tên công việc không được chứa nhiều khoảng trắng liên tiếp.",
+                      ),
+                    )
+                  return Promise.resolve()
                 },
               },
             ]}
@@ -1254,12 +1441,20 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             rules={[
               {
                 validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  const trimmed = value.trim();
-                  if (!trimmed) return Promise.resolve();
-                  if (trimmed.length > 500) return Promise.reject(new Error("Mô tả không được vượt quá 500 ký tự."));
-                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) return Promise.reject(new Error("Mô tả không được chứa nhiều khoảng trắng liên tiếp."));
-                  return Promise.resolve();
+                  if (!value) return Promise.resolve()
+                  const trimmed = value.trim()
+                  if (!trimmed) return Promise.resolve()
+                  if (trimmed.length > 500)
+                    return Promise.reject(
+                      new Error("Mô tả không được vượt quá 500 ký tự."),
+                    )
+                  if (trimmed !== trimmed.replace(/\s+/g, " "))
+                    return Promise.reject(
+                      new Error(
+                        "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
+                      ),
+                    )
+                  return Promise.resolve()
                 },
               },
             ]}
@@ -1275,17 +1470,27 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                 name="plannedStartDate"
                 label="Bắt đầu dự kiến"
                 rules={[
-                  { required: true, message: "Vui lòng chọn ngày bắt đầu dự kiến." },
+                  {
+                    required: true,
+                    message: "Vui lòng chọn ngày bắt đầu dự kiến.",
+                  },
                   ({ getFieldValue }) => ({
                     validator: (_, value) => {
                       const end = getFieldValue("plannedEndDate")
-                      if (!value || !end || value.isBefore(end)) return Promise.resolve()
-                      return Promise.reject(new Error("Ngày bắt đầu phải trước ngày kết thúc."))
+                      if (!value || !end || value.isBefore(end))
+                        return Promise.resolve()
+                      return Promise.reject(
+                        new Error("Ngày bắt đầu phải trước ngày kết thúc."),
+                      )
                     },
                   }),
                 ]}
               >
-                <DatePicker showTime format="DD/MM/YYYY HH:mm" className="w-full" />
+                <DatePicker
+                  showTime
+                  format="DD/MM/YYYY HH:mm"
+                  className="w-full"
+                />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
@@ -1293,17 +1498,27 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                 name="plannedEndDate"
                 label="Kết thúc dự kiến"
                 rules={[
-                  { required: true, message: "Vui lòng chọn ngày kết thúc dự kiến." },
+                  {
+                    required: true,
+                    message: "Vui lòng chọn ngày kết thúc dự kiến.",
+                  },
                   ({ getFieldValue }) => ({
                     validator: (_, value) => {
                       const start = getFieldValue("plannedStartDate")
-                      if (!value || !start || start.isBefore(value)) return Promise.resolve()
-                      return Promise.reject(new Error("Ngày kết thúc phải sau ngày bắt đầu."))
+                      if (!value || !start || start.isBefore(value))
+                        return Promise.resolve()
+                      return Promise.reject(
+                        new Error("Ngày kết thúc phải sau ngày bắt đầu."),
+                      )
                     },
                   }),
                 ]}
               >
-                <DatePicker showTime format="DD/MM/YYYY HH:mm" className="w-full" />
+                <DatePicker
+                  showTime
+                  format="DD/MM/YYYY HH:mm"
+                  className="w-full"
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -1344,7 +1559,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           </Row>
         </Form>
       </Modal>
-
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import http from '../01_axios'
+import http from "../01_axios"
 import {
   apiGetCultivationLogbooks,
   apiCreateCultivationLogbook,
@@ -12,7 +12,7 @@ import {
   apiStartLogbook,
   apiCompleteLogbook,
   apiGetClosingReviews,
-} from './urls'
+} from "./urls"
 
 const getAll = (params, config = {}) => {
   return http.get(apiGetCultivationLogbooks, { ...config, params })
@@ -29,30 +29,24 @@ const create = (body, config) => {
 const update = (id, body, config) =>
   http.put(apiUpdateCultivationLogbook(id), body, config)
 
-const deleteById = (id) =>
-  http.delete(apiDeleteCultivationLogbook(id))
+const deleteById = id => http.delete(apiDeleteCultivationLogbook(id))
 
-const submitCompletion = (id) =>
-  http.post(apiSubmitCompletion(id))
+const submitCompletion = id => http.post(apiSubmitCompletion(id))
 
 const approveCompletion = (id, body) =>
   http.post(apiApproveCompletion(id), body, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   })
 
-const rejectCompletion = (id, body) =>
-  http.post(apiRejectCompletion(id), body)
+const rejectCompletion = (id, body) => http.post(apiRejectCompletion(id), body)
 
-const plan = (id) =>
-  http.post(apiPlanLogbook(id))
+const plan = id => http.post(apiPlanLogbook(id))
 
-const start = (id) =>
-  http.post(apiStartLogbook(id))
+const start = id => http.post(apiStartLogbook(id))
 
-const complete = (id) =>
-  http.post(apiCompleteLogbook(id))
+const complete = id => http.post(apiCompleteLogbook(id))
 
-const getClosingReviews = (params) =>
+const getClosingReviews = params =>
   http.get(apiGetClosingReviews, { params, skipNotice: true })
 
 const CultivationLogbookService = {

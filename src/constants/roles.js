@@ -6,9 +6,9 @@ export const ROLES = {
   FARMER: "FARMER",
 }
 
-export const normalizeRole = (apiRole) => {
+export const normalizeRole = apiRole => {
   if (!apiRole) return null
-  const normalized = String(apiRole).toUpperCase().replace(/[\s_]/g, '')
+  const normalized = String(apiRole).toUpperCase().replace(/[\s_]/g, "")
   if (normalized === "FARMMANAGER") return ROLES.FARM_MANAGER
   if (normalized === "FARMSUPERVISOR") return ROLES.FARM_SUPERVISOR
   if (normalized === "FARMERLEADER") return ROLES.FARMER_LEADER

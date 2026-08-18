@@ -1,26 +1,49 @@
-import React, { useState, useEffect } from 'react'
-import { Button, Avatar, Typography, Tag, Card, Row, Col, Spin, Divider } from 'antd'
+import React, { useState, useEffect } from "react"
 import {
-  UserOutlined, CheckCircleOutlined, StopOutlined, ArrowLeftOutlined,
-  MailOutlined, PhoneOutlined, CalendarOutlined, ClockCircleOutlined,
-  InfoCircleOutlined
-} from '@ant-design/icons'
-import { useParams, useNavigate } from 'react-router-dom'
-import UserService from 'src/services/UserService'
-import { formatDate, formatDateTime } from 'src/utils/dateFormatters'
-import { getAvatarUrl, getInitialAvatar } from 'src/utils/helpers'
-import { ROLE_CONFIG } from '../components/roleConfig'
-import TitleCustom from 'src/components/TitleCustom'
+  Button,
+  Avatar,
+  Typography,
+  Tag,
+  Card,
+  Row,
+  Col,
+  Spin,
+  Divider,
+} from "antd"
+import {
+  UserOutlined,
+  CheckCircleOutlined,
+  StopOutlined,
+  ArrowLeftOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  InfoCircleOutlined,
+} from "@ant-design/icons"
+import { useParams, useNavigate } from "react-router-dom"
+import UserService from "src/services/UserService"
+import { formatDate, formatDateTime } from "src/utils/dateFormatters"
+import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers"
+import { ROLE_CONFIG } from "../components/roleConfig"
+import TitleCustom from "src/components/TitleCustom"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import { getRoleLabel } from "src/utils/roleLabels"
 
 const { Text, Title } = Typography
 
-const getRoleTag = (role) => {
-  const cfg = ROLE_CONFIG[role] || { label: getRoleLabel(role), color: 'default' }
+const getRoleTag = role => {
+  const cfg = ROLE_CONFIG[role] || {
+    label: getRoleLabel(role),
+    color: "default",
+  }
   return (
-    <Tag key={role} color={cfg.color} className="rounded-full font-semibold text-[11px] border-0 m-0">
+    <Tag
+      key={role}
+      color={cfg.color}
+      className="rounded-full font-semibold text-[11px] border-0 m-0"
+    >
       {cfg.label}
     </Tag>
   )
@@ -53,7 +76,9 @@ const UserDetail = () => {
       }
     }
     fetchUser()
-    return () => { isMounted = false }
+    return () => {
+      isMounted = false
+    }
   }, [id])
 
   if (isLoading) {
@@ -67,14 +92,20 @@ const UserDetail = () => {
   if (isError || !user) {
     return (
       <div className="text-center py-20">
-        <Title level={4} type="danger">Lỗi khi tải thông tin người dùng</Title>
-        <Button onClick={() => navigate(-1)} className="mt-4">Quay lại</Button>
+        <Title level={4} type="danger">
+          Lỗi khi tải thông tin người dùng
+        </Title>
+        <Button onClick={() => navigate(-1)} className="mt-4">
+          Quay lại
+        </Button>
       </div>
     )
   }
 
-  const displayName = user?.fullName || user?.email || '---';
-  const displayGender = user?.gender ? (getDescription(SYSTEM_KEY.GENDER, user.gender) || user.gender) : '—';
+  const displayName = user?.fullName || user?.email || "---"
+  const displayGender = user?.gender
+    ? getDescription(SYSTEM_KEY.GENDER, user.gender) || user.gender
+    : "—"
 
   return (
     <div>
@@ -92,7 +123,10 @@ const UserDetail = () => {
       <Row gutter={[24, 24]} align="stretch">
         {/* Cột trái: Thẻ tóm tắt giống AccountInfo */}
         <Col span={24} lg={8} className="flex">
-          <Card bordered={false} className="shadow-sm rounded-[24px] text-center p-4 w-full h-full flex flex-col">
+          <Card
+            bordered={false}
+            className="shadow-sm rounded-[24px] text-center p-4 w-full h-full flex flex-col"
+          >
             <div className="relative inline-block mb-4">
               <Avatar
                 size={100}
@@ -104,7 +138,9 @@ const UserDetail = () => {
               </Avatar>
             </div>
 
-            <Title level={4} className="!mb-0">{displayName}</Title>
+            <Title level={4} className="!mb-0">
+              {displayName}
+            </Title>
 
             <div className="flex justify-center flex-wrap gap-1 mt-2">
               {(user.roles || []).map(r => getRoleTag(r))}
@@ -115,11 +151,23 @@ const UserDetail = () => {
             <div className="space-y-4 text-left px-2">
               <div className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <Text type="secondary" className="text-[10px] uppercase font-bold block">Trạng thái</Text>
-                  {user.isActive
-                    ? <span className="text-green-600 font-bold text-sm"><CheckCircleOutlined className="mr-1" />Hoạt động</span>
-                    : <span className="text-red-500 font-bold text-sm"><StopOutlined className="mr-1" />Vô hiệu hóa</span>
-                  }
+                  <Text
+                    type="secondary"
+                    className="text-[10px] uppercase font-bold block"
+                  >
+                    Trạng thái
+                  </Text>
+                  {user.isActive ? (
+                    <span className="text-green-600 font-bold text-sm">
+                      <CheckCircleOutlined className="mr-1" />
+                      Hoạt động
+                    </span>
+                  ) : (
+                    <span className="text-red-500 font-bold text-sm">
+                      <StopOutlined className="mr-1" />
+                      Vô hiệu hóa
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -128,7 +176,10 @@ const UserDetail = () => {
 
         {/* Cột phải: Thông tin chi tiết */}
         <Col span={24} lg={16} className="flex">
-          <Card bordered={false} className="shadow-sm rounded-[24px] p-4 w-full h-full flex flex-col">
+          <Card
+            bordered={false}
+            className="shadow-sm rounded-[24px] p-4 w-full h-full flex flex-col"
+          >
             <Title level={5} className="mb-6 flex items-center gap-2">
               <UserOutlined className="text-green-500" />
               Thông tin liên hệ & Hệ thống
@@ -138,49 +189,73 @@ const UserDetail = () => {
               <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <MailOutlined className="text-gray-400" />
-                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Email</Text>
+                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">
+                    Email
+                  </Text>
                 </div>
-                <div className="text-base font-medium text-gray-800 break-all">{user.email}</div>
+                <div className="text-base font-medium text-gray-800 break-all">
+                  {user.email}
+                </div>
               </div>
 
               <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <PhoneOutlined className="text-gray-400" />
-                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Số điện thoại</Text>
+                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">
+                    Số điện thoại
+                  </Text>
                 </div>
-                <div className="text-base font-medium text-gray-800">{user.phoneNumber || '—'}</div>
+                <div className="text-base font-medium text-gray-800">
+                  {user.phoneNumber || "—"}
+                </div>
               </div>
 
               <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <InfoCircleOutlined className="text-gray-400" />
-                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Giới tính</Text>
+                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">
+                    Giới tính
+                  </Text>
                 </div>
-                <div className="text-base font-medium text-gray-800">{displayGender}</div>
+                <div className="text-base font-medium text-gray-800">
+                  {displayGender}
+                </div>
               </div>
 
               <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <CalendarOutlined className="text-gray-400" />
-                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Ngày sinh</Text>
+                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">
+                    Ngày sinh
+                  </Text>
                 </div>
-                <div className="text-base font-medium text-gray-800">{user.dateOfBirth ? formatDate(user.dateOfBirth) : '—'}</div>
+                <div className="text-base font-medium text-gray-800">
+                  {user.dateOfBirth ? formatDate(user.dateOfBirth) : "—"}
+                </div>
               </div>
 
               <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <CalendarOutlined className="text-gray-400" />
-                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Ngày tạo tài khoản</Text>
+                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">
+                    Ngày tạo tài khoản
+                  </Text>
                 </div>
-                <div className="text-base font-medium text-gray-800">{formatDate(user.createdAt)}</div>
+                <div className="text-base font-medium text-gray-800">
+                  {formatDate(user.createdAt)}
+                </div>
               </div>
 
               <div className="bg-gray-50/50 rounded-xl p-4 border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
                   <ClockCircleOutlined className="text-gray-400" />
-                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">Đăng nhập lần cuối</Text>
+                  <Text className="text-[11px] uppercase tracking-wider font-bold text-gray-500">
+                    Đăng nhập lần cuối
+                  </Text>
                 </div>
-                <div className="text-base font-medium text-gray-800">{formatDateTime(user.lastLoginAt)}</div>
+                <div className="text-base font-medium text-gray-800">
+                  {formatDateTime(user.lastLoginAt)}
+                </div>
               </div>
             </div>
           </Card>

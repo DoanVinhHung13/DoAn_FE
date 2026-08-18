@@ -1,35 +1,42 @@
-const hasValue = (value) => value !== undefined && value !== null && value !== ''
+const hasValue = value => value !== undefined && value !== null && value !== ""
 
 const firstValue = (...values) => values.find(hasValue)
 
-const valueFromArrayOrObject = (value) => {
+const valueFromArrayOrObject = value => {
   if (Array.isArray(value)) return valueFromArrayOrObject(value[0])
-  if (value && typeof value === 'object') {
+  if (value && typeof value === "object") {
     return firstValue(value.value, value.text, value.description, value.name)
   }
   return value
 }
 
-const unwrapWeatherResponse = (response) => response?.data?.data ?? response?.data ?? response
+const unwrapWeatherResponse = response =>
+  response?.data?.data ?? response?.data ?? response
 
-export const normalizeWeather = (response) => {
+export const normalizeWeather = response => {
   const payload = unwrapWeatherResponse(response)
-  const current = payload?.currentWeather || payload?.current || payload?.weather?.current
-    || payload?.current_condition?.[0] || payload
+  const current =
+    payload?.currentWeather ||
+    payload?.current ||
+    payload?.weather?.current ||
+    payload?.current_condition?.[0] ||
+    payload
 
-  if (!current || typeof current !== 'object') return null
+  if (!current || typeof current !== "object") return null
 
-  const condition = valueFromArrayOrObject(firstValue(
-    current.weatherCondition,
-    current.condition,
-    current.description,
-    current.conditionDescription,
-    current.weatherDescription,
-    current.weatherDesc,
-    current.currentCondition,
-    current.lang_vi,
-    current.weatherText,
-  ))
+  const condition = valueFromArrayOrObject(
+    firstValue(
+      current.weatherCondition,
+      current.condition,
+      current.description,
+      current.conditionDescription,
+      current.weatherDescription,
+      current.weatherDesc,
+      current.currentCondition,
+      current.lang_vi,
+      current.weatherText,
+    ),
+  )
 
   return {
     temperature: firstValue(
@@ -45,8 +52,12 @@ export const normalizeWeather = (response) => {
       current.apparentTemperature,
       current.apparent_temperature,
     ),
-    condition: condition || 'Chưa cập nhật',
-    humidity: firstValue(current.humidity, current.humidityPercent, current.relativeHumidity),
+    condition: condition || "Chưa cập nhật",
+    humidity: firstValue(
+      current.humidity,
+      current.humidityPercent,
+      current.relativeHumidity,
+    ),
     windSpeed: firstValue(
       current.windSpeed,
       current.windSpeedKmph,
@@ -54,7 +65,11 @@ export const normalizeWeather = (response) => {
       current.windspeedKmph,
       current.wind_speed,
     ),
-    windDirection: firstValue(current.windDirection, current.winddir16Point, current.windDirectionText),
+    windDirection: firstValue(
+      current.windDirection,
+      current.winddir16Point,
+      current.windDirectionText,
+    ),
     updatedAt: firstValue(
       current.updatedAt,
       current.observationTime,

@@ -57,7 +57,6 @@ export function parseBoundaryJson(boundaryJson) {
   }
 }
 
-
 export function toTurfPolygon(geoJSON) {
   if (!geoJSON?.coordinates?.[0]?.length) return null
   try {

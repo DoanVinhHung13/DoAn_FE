@@ -1,1 +1,1 @@
-export { default as InventoryImportModal } from './InventoryImportModal'
+export { default as InventoryImportModal } from "./InventoryImportModal"

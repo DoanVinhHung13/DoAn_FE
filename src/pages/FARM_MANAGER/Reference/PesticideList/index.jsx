@@ -1,25 +1,29 @@
-import React, { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from 'antd'
-import { FilterOutlined, SafetyCertificateOutlined, SearchOutlined } from '@ant-design/icons'
-import CatalogService from 'src/services/CatalogService'
-import TableCustom from 'src/components/Table/CustomTable'
+import React, { useMemo, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from "antd"
+import {
+  FilterOutlined,
+  SafetyCertificateOutlined,
+  SearchOutlined,
+} from "@ant-design/icons"
+import CatalogService from "src/services/CatalogService"
+import TableCustom from "src/components/Table/CustomTable"
 
 const { Title, Text } = Typography
 
 const CATEGORY_COLOR = {
-  'Thuốc trừ sâu': 'red',
-  'Thuốc trừ bệnh': 'orange',
-  'Thuốc trừ cỏ': 'green',
-  'Thuốc trừ chuột': 'purple',
-  'Thuốc điều hòa sinh trưởng': 'blue',
-  'Thuốc trừ ốc': 'cyan',
-  'Chất dẫn dụ côn trùng': 'gold',
-  'THUỐC SỬ DỤNG TRONG LÂM NGHIỆP': 'lime',
-  'THUỐC SỬ DỤNG CHO MỤC ĐÍCH KHÁC': 'geekblue',
+  "Thuốc trừ sâu": "red",
+  "Thuốc trừ bệnh": "orange",
+  "Thuốc trừ cỏ": "green",
+  "Thuốc trừ chuột": "purple",
+  "Thuốc điều hòa sinh trưởng": "blue",
+  "Thuốc trừ ốc": "cyan",
+  "Chất dẫn dụ côn trùng": "gold",
+  "THUỐC SỬ DỤNG TRONG LÂM NGHIỆP": "lime",
+  "THUỐC SỬ DỤNG CHO MỤC ĐÍCH KHÁC": "geekblue",
 }
 
-const getCatalogItems = (response) => {
+const getCatalogItems = response => {
   let payload = response
 
   if (payload?.data !== undefined) payload = payload.data
@@ -27,15 +31,27 @@ const getCatalogItems = (response) => {
 
   if (Array.isArray(payload)) return payload
 
-  return payload?.items || payload?.results || payload?.records || payload?.catalogs || []
+  return (
+    payload?.items ||
+    payload?.results ||
+    payload?.records ||
+    payload?.catalogs ||
+    []
+  )
 }
 
-const textValue = (...values) => values.find(value => typeof value === 'string' && value.trim()) || ''
+const textValue = (...values) =>
+  values.find(value => typeof value === "string" && value.trim()) || ""
 
 const normalizePesticide = (item, index) => ({
   id: item.id || item._id || item.code || `pesticide-${index}`,
   code: textValue(item.code),
-  tradeName: textValue(item.tradeName, item.name, item.pesticideName, item.productName),
+  tradeName: textValue(
+    item.tradeName,
+    item.name,
+    item.pesticideName,
+    item.productName,
+  ),
   category: textValue(item.category, item.type, item.pesticideType, item.group),
   applicant: textValue(
     item.applicant,
@@ -48,14 +64,21 @@ const normalizePesticide = (item, index) => ({
 })
 
 const PesticideList = () => {
-  const [searchText, setSearchText] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [searchText, setSearchText] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
 
-  const { data: pesticideResponse, isLoading, isError } = useQuery({
-    queryKey: ['license-catalog-pesticides', searchText.trim()],
-    queryFn: () => CatalogService.getCatalogPesticides({ search: searchText.trim() || undefined }),
+  const {
+    data: pesticideResponse,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["license-catalog-pesticides", searchText.trim()],
+    queryFn: () =>
+      CatalogService.getCatalogPesticides({
+        search: searchText.trim() || undefined,
+      }),
     staleTime: 60_000,
   })
 
@@ -65,67 +88,82 @@ const PesticideList = () => {
   )
 
   const categoryOptions = useMemo(() => {
-    const categories = [...new Set(pesticideData.map(item => item.category).filter(Boolean))]
+    const categories = [
+      ...new Set(pesticideData.map(item => item.category).filter(Boolean)),
+    ]
 
     return [
-      { value: 'all', label: 'Tất cả nhóm nông dược' },
+      { value: "all", label: "Tất cả nhóm nông dược" },
       ...categories.map(category => ({ value: category, label: category })),
     ]
   }, [pesticideData])
 
   const filteredData = useMemo(
-    () => pesticideData.filter(item => selectedCategory === 'all' || item.category === selectedCategory),
+    () =>
+      pesticideData.filter(
+        item =>
+          selectedCategory === "all" || item.category === selectedCategory,
+      ),
     [pesticideData, selectedCategory],
   )
 
   const paginatedData = useMemo(
-    () => filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    () =>
+      filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize),
     [currentPage, filteredData, pageSize],
   )
 
   const columns = [
     {
-      title: 'STT',
-      key: 'stt',
+      title: "STT",
+      key: "stt",
       width: 80,
-      align: 'center',
+      align: "center",
       render: (_, __, index) => (
-        <Text className="font-bold text-gray-400">{(currentPage - 1) * pageSize + index + 1}</Text>
+        <Text className="font-bold text-gray-400">
+          {(currentPage - 1) * pageSize + index + 1}
+        </Text>
       ),
     },
     {
-      title: 'Tên',
-      dataIndex: 'tradeName',
-      key: 'tradeName',
+      title: "Tên",
+      dataIndex: "tradeName",
+      key: "tradeName",
       width: 200,
-      render: (text) => <Text className="font-bold text-gray-800">{text || '—'}</Text>,
+      render: text => (
+        <Text className="font-bold text-gray-800">{text || "—"}</Text>
+      ),
     },
     {
-      title: 'Loại nông dược',
-      dataIndex: 'category',
-      key: 'category',
+      title: "Loại nông dược",
+      dataIndex: "category",
+      key: "category",
       width: 160,
-      render: (text) => (
+      render: text => (
         <Tag
-          color={CATEGORY_COLOR[text] || 'default'}
+          color={CATEGORY_COLOR[text] || "default"}
           className="font-medium rounded border-0 whitespace-normal"
         >
-          {text || '—'}
+          {text || "—"}
         </Tag>
       ),
     },
     {
-      title: 'Mô tả',
-      dataIndex: 'description',
-      key: 'description',
-      render: (text) => <Text className="text-gray-600 text-sm">{text || '—'}</Text>,
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
+      render: text => (
+        <Text className="text-gray-600 text-sm">{text || "—"}</Text>
+      ),
     },
     {
-      title: 'Nhà sản xuất',
-      dataIndex: 'applicant',
-      key: 'applicant',
+      title: "Nhà sản xuất",
+      dataIndex: "applicant",
+      key: "applicant",
       width: 220,
-      render: (text) => <Text className="text-gray-600 text-sm">{text || '—'}</Text>,
+      render: text => (
+        <Text className="text-gray-600 text-sm">{text || "—"}</Text>
+      ),
     },
   ]
 
@@ -134,9 +172,9 @@ const PesticideList = () => {
       <div className="space-y-3">
         <Breadcrumb
           items={[
-            { title: 'Trang chủ' },
-            { title: 'Tra cứu cấp phép' },
-            { title: 'Danh mục nông dược' },
+            { title: "Trang chủ" },
+            { title: "Tra cứu cấp phép" },
+            { title: "Danh mục nông dược" },
           ]}
         />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -145,7 +183,9 @@ const PesticideList = () => {
               <SafetyCertificateOutlined className="text-3xl" />
             </div>
             <div>
-              <Title level={4} className="!mb-1 font-bold">Danh mục nông dược</Title>
+              <Title level={4} className="!mb-1 font-bold">
+                Danh mục nông dược
+              </Title>
               <Text className="text-gray-500">
                 Danh sách nông dược đang hoạt động từ hệ thống EAPLS.
               </Text>
@@ -154,7 +194,12 @@ const PesticideList = () => {
           <Badge
             count={filteredData.length.toLocaleString()}
             overflowCount={99999}
-            style={{ backgroundColor: '#16a34a', fontSize: 13, padding: '0 10px', borderRadius: 20 }}
+            style={{
+              backgroundColor: "#16a34a",
+              fontSize: 13,
+              padding: "0 10px",
+              borderRadius: 20,
+            }}
           />
         </div>
       </div>
@@ -167,16 +212,16 @@ const PesticideList = () => {
             size="large"
             prefix={<SearchOutlined className="text-gray-400" />}
             allowClear
-            onChange={(e) => {
+            onChange={e => {
               setSearchText(e.target.value)
-              setSelectedCategory('all')
+              setSelectedCategory("all")
               setCurrentPage(1)
             }}
             className="rounded-xl h-10 border-gray-200"
           />
           <Select
             value={selectedCategory}
-            onChange={(value) => {
+            onChange={value => {
               setSelectedCategory(value)
               setCurrentPage(1)
             }}
@@ -205,13 +250,13 @@ const PesticideList = () => {
         scroll={{ x: 1000 }}
         rowClassName="hover:bg-green-50/30 transition-colors"
         className="custom-tcvn-table"
-        locale={{ emptyText: 'Không tìm thấy nông dược phù hợp.' }}
+        locale={{ emptyText: "Không tìm thấy nông dược phù hợp." }}
         pagination={{
           current: currentPage,
           pageSize,
           total: filteredData.length,
           showSizeChanger: true,
-          pageSizeOptions: ['10', '20', '50', '100'],
+          pageSizeOptions: ["10", "20", "50", "100"],
           onChange: (page, size) => {
             setCurrentPage(page)
             setPageSize(size)
@@ -224,9 +269,12 @@ const PesticideList = () => {
           <SafetyCertificateOutlined className="text-lg" />
         </div>
         <div>
-          <Text className="block font-bold text-gray-800 mb-1">Nguồn dữ liệu:</Text>
+          <Text className="block font-bold text-gray-800 mb-1">
+            Nguồn dữ liệu:
+          </Text>
           <Text className="text-gray-600 text-[13px]">
-            Dữ liệu lấy trực tiếp từ API danh mục nông dược đang hoạt động của EAPLS.
+            Dữ liệu lấy trực tiếp từ API danh mục nông dược đang hoạt động của
+            EAPLS.
           </Text>
         </div>
       </div>

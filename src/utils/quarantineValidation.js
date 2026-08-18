@@ -9,7 +9,11 @@ const toDateOnly = value => {
   const text = String(value).trim()
   const vietnameseDate = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/)
   const date = vietnameseDate
-    ? new Date(Number(vietnameseDate[3]), Number(vietnameseDate[2]) - 1, Number(vietnameseDate[1]))
+    ? new Date(
+        Number(vietnameseDate[3]),
+        Number(vietnameseDate[2]) - 1,
+        Number(vietnameseDate[1]),
+      )
     : new Date(text)
 
   if (Number.isNaN(date.getTime())) return null
@@ -21,11 +25,14 @@ const getQuarantineEndDate = warning => {
   const explicitEndDate = warning?.eligibleDate || warning?.quarantineUntil
   if (explicitEndDate) return toDateOnly(explicitEndDate)
 
-  const lastUsedDate = warning?.lastUsedDate ||
+  const lastUsedDate =
+    warning?.lastUsedDate ||
     warning?.lastApplicationDate ||
     warning?.usageDate ||
     warning?.date
-  const isolationDays = Number(warning?.isolationDays ?? warning?.quarantineDays)
+  const isolationDays = Number(
+    warning?.isolationDays ?? warning?.quarantineDays,
+  )
   const endDate = toDateOnly(lastUsedDate)
 
   if (!endDate || !Number.isFinite(isolationDays)) return null

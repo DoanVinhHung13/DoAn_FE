@@ -1,6 +1,6 @@
-import { Card, Pagination } from 'antd'
+import { Card, Pagination } from "antd"
 
-const AdminPaginationCard = ({ pagination, className = '' }) => {
+const AdminPaginationCard = ({ pagination, className = "" }) => {
   if (!pagination || pagination === false) return null
 
   const { className: paginationClassName, ...paginationProps } = pagination
@@ -18,10 +18,13 @@ const AdminPaginationCard = ({ pagination, className = '' }) => {
       variant="borderless"
       bordered={false}
       className={`admin-pagination-card rounded-lg shadow-none ${className}`.trim()}
-      styles={{ body: { padding: '0px' } }}
-      style={{ border: 'none' }}
+      styles={{ body: { padding: "0px" } }}
+      style={{ border: "none" }}
     >
-      <Pagination {...normalizedPaginationProps} className={paginationClassName} />
+      <Pagination
+        {...normalizedPaginationProps}
+        className={paginationClassName}
+      />
     </Card>
   )
 }

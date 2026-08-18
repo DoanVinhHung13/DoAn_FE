@@ -13,7 +13,9 @@ export const useLandPlotForm = form => {
   const isSaving = isSubmitting
 
   const handleFieldsChange = useCallback((_, allFields) => {
-    const hasErrors = allFields.some(field => field.errors && field.errors.length > 0)
+    const hasErrors = allFields.some(
+      field => field.errors && field.errors.length > 0,
+    )
     setHasFormErrors(hasErrors)
   }, [])
 
@@ -30,12 +32,15 @@ export const useLandPlotForm = form => {
           area: Number(data.areaM2.toFixed(2)),
           areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
         })
-        form.validateFields(['area']).then(() => {
-          const errors = form.getFieldsError().some(f => f.errors?.length > 0)
-          setHasFormErrors(errors)
-        }).catch(() => {
-          setHasFormErrors(true)
-        })
+        form
+          .validateFields(["area"])
+          .then(() => {
+            const errors = form.getFieldsError().some(f => f.errors?.length > 0)
+            setHasFormErrors(errors)
+          })
+          .catch(() => {
+            setHasFormErrors(true)
+          })
       }
     },
     [form],

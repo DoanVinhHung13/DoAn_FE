@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import React, { useCallback, useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   Alert,
   Button,
@@ -10,22 +10,22 @@ import {
   Row,
   Spin,
   Tooltip,
-} from 'antd'
-import { ArrowLeftOutlined, EditOutlined } from '@ant-design/icons'
+} from "antd"
+import { ArrowLeftOutlined, EditOutlined } from "@ant-design/icons"
 
-import LandPlotMap from 'src/components/LandPlotMap'
-import TitleCustom from 'src/components/TitleCustom'
-import LandPlotService from 'src/services/LandPlotService'
+import LandPlotMap from "src/components/LandPlotMap"
+import TitleCustom from "src/components/TitleCustom"
+import LandPlotService from "src/services/LandPlotService"
 import {
   displayValue,
   formatLandArea,
   isLandPlotCultivationLocked,
   normalizeApiDetail,
-} from './landPlotUtils'
-import { useLandPlotAccess } from './useLandPlotAccess'
-import LandPlotWeather from './LandPlotWeather'
-import { normalizeWeather } from './landPlotWeatherUtils'
-import LandPlotCultivationStatus from './LandPlotCultivationStatus'
+} from "./landPlotUtils"
+import { useLandPlotAccess } from "./useLandPlotAccess"
+import LandPlotWeather from "./LandPlotWeather"
+import { normalizeWeather } from "./landPlotWeatherUtils"
+import LandPlotCultivationStatus from "./LandPlotCultivationStatus"
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -73,7 +73,6 @@ const LandPlotDetail = () => {
     fetchPlotDetail()
   }, [fetchPlotDetail])
 
-
   useEffect(() => {
     fetchPlotWeather()
     const intervalId = window.setInterval(fetchPlotWeather, 10 * 60 * 1000)
@@ -96,7 +95,10 @@ const LandPlotDetail = () => {
   if (error) {
     return (
       <div className="space-y-6">
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(routes.list)}>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(routes.list)}
+        >
           Quay lại
         </Button>
         <Alert
@@ -116,7 +118,10 @@ const LandPlotDetail = () => {
   if (!plot) {
     return (
       <div className="space-y-6">
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(routes.list)}>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(routes.list)}
+        >
           Quay lại
         </Button>
         <Card>
@@ -129,11 +134,13 @@ const LandPlotDetail = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-
       {/* Tiêu đề & nút chỉnh sửa */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(routes.list)}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(routes.list)}
+          >
             Quay lại
           </Button>
           <div>
@@ -143,9 +150,11 @@ const LandPlotDetail = () => {
 
         {canManage && routes.edit && (
           <Tooltip
-            title={cultivationLocked
-              ? 'Không thể chỉnh sửa khi vùng trồng đang có nhật ký kế hoạch hoặc đang trồng'
-              : ''}
+            title={
+              cultivationLocked
+                ? "Không thể chỉnh sửa khi vùng trồng đang có nhật ký kế hoạch hoặc đang trồng"
+                : ""
+            }
           >
             <Button
               type="primary"
@@ -160,7 +169,6 @@ const LandPlotDetail = () => {
       </div>
 
       <Row gutter={[16, 16]}>
-
         {/* Cột trái: thông tin vùng trồng và thời tiết */}
         <Col xs={24} xl={10}>
           <div className="space-y-4">
@@ -211,7 +219,6 @@ const LandPlotDetail = () => {
             />
           </Card>
         </Col>
-
       </Row>
     </div>
   )

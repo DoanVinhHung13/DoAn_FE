@@ -3,43 +3,47 @@ import {
   QrcodeOutlined,
   ReloadOutlined,
   SearchOutlined,
-} from '@ant-design/icons'
-import {
-  Button,
-  Input,
-  Select,
-  Tag,
-  Tooltip,
-  Typography,
-} from 'antd'
-import { useCallback, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { UI } from 'src/constants/uiConfig'
+} from "@ant-design/icons"
+import { Button, Input, Select, Tag, Tooltip, Typography } from "antd"
+import { useCallback, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { UI } from "src/constants/uiConfig"
 
-import CustomTable from 'src/components/Table/CustomTable'
-import TitleCustom from 'src/components/TitleCustom'
-import { createSTTColumn } from 'src/components/Table/columns.jsx'
-import { createPaginationConfig } from 'src/utils/tableUtils'
-import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
-import ROUTER from 'src/router/ROUTER'
-import { formatAreaUnit } from 'src/constants/measurementUnits'
-import { formatDate } from 'src/utils/dateFormatters'
+import CustomTable from "src/components/Table/CustomTable"
+import TitleCustom from "src/components/TitleCustom"
+import { createSTTColumn } from "src/components/Table/columns.jsx"
+import { createPaginationConfig } from "src/utils/tableUtils"
+import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
+import ROUTER from "src/router/ROUTER"
+import { formatAreaUnit } from "src/constants/measurementUnits"
+import { formatDate } from "src/utils/dateFormatters"
 
-import HarvestBatchService from 'src/services/HarvestBatchService'
-import { useSystemKey } from 'src/hooks/useSystemKey'
-import { SYSTEM_KEY } from 'src/constants/systemKey'
-import { useListManagement } from 'src/hooks/useListManagement'
+import HarvestBatchService from "src/services/HarvestBatchService"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import { useListManagement } from "src/hooks/useListManagement"
 
 const { Text } = Typography
 
 const QR_STATUS = {
-  NOT_CREATED: { label: 'Chưa tạo QR', bgColor: 'bg-orange-100', textColor: 'text-orange-700', borderColor: 'border-orange-300' },
-  CREATED: { label: 'Đã tạo QR', bgColor: 'bg-green-100', textColor: 'text-green-700', borderColor: 'border-green-300' },
+  NOT_CREATED: {
+    label: "Chưa tạo QR",
+    bgColor: "bg-orange-100",
+    textColor: "text-orange-700",
+    borderColor: "border-orange-300",
+  },
+  CREATED: {
+    label: "Đã tạo QR",
+    bgColor: "bg-green-100",
+    textColor: "text-green-700",
+    borderColor: "border-green-300",
+  },
 }
 
-const getQrStatus = (batch) => {
-  if (batch?.qrStatus === 'CREATED' || batch?.qrStatus === 'NOT_CREATED') return batch.qrStatus
-  return batch?.hasActiveQrCode === true ? 'CREATED' : 'NOT_CREATED'
+const getQrStatus = batch => {
+  if (batch?.qrStatus === "CREATED" || batch?.qrStatus === "NOT_CREATED")
+    return batch.qrStatus
+  return batch?.hasActiveQrCode === true ? "CREATED" : "NOT_CREATED"
 }
 
 const Batches = () => {
@@ -47,30 +51,48 @@ const Batches = () => {
   const { getCombo, getDescription } = useSystemKey()
 
   const {
-    searchInput, setSearchInput, search, handleSearch, handleClearSearch,
-    page, setPage, pageSize, setPageSize,
-    filters, updateFilter,
-    listData, setListData, totalRecords, setTotalRecords,
-    loading, setLoading,
+    searchInput,
+    setSearchInput,
+    search,
+    handleSearch,
+    handleClearSearch,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    filters,
+    updateFilter,
+    listData,
+    setListData,
+    totalRecords,
+    setTotalRecords,
+    loading,
+    setLoading,
   } = useListManagement({
     initialPageSize: DEFAULT_PAGE_SIZE,
-    initialFilters: { status: 'all' },
+    initialFilters: { status: "all" },
   })
 
   const statusFilter = filters.status
 
   const systemKeyOptions = getCombo(SYSTEM_KEY.QR_STATUS)
-    .map(opt => ({ value: opt.codeValue ?? opt.CodeValue, label: opt.description ?? opt.label }))
-    .filter(opt => (opt.value === 'NOT_CREATED' || opt.value === 'CREATED') && opt.label)
+    .map(opt => ({
+      value: opt.codeValue ?? opt.CodeValue,
+      label: opt.description ?? opt.label,
+    }))
+    .filter(
+      opt =>
+        (opt.value === "NOT_CREATED" || opt.value === "CREATED") && opt.label,
+    )
 
   const selectStatusOptions = [
-    { value: 'all', label: 'Tất cả trạng thái' },
+    { value: "all", label: "Tất cả trạng thái" },
     ...(systemKeyOptions.length
       ? systemKeyOptions
       : [
-        { value: 'NOT_CREATED', label: 'Chưa tạo QR' },
-        { value: 'CREATED', label: 'Đã tạo QR' },
-      ]),
+          { value: "NOT_CREATED", label: "Chưa tạo QR" },
+          { value: "CREATED", label: "Đã tạo QR" },
+        ]),
   ]
 
   const getList = useCallback(async () => {
@@ -80,53 +102,69 @@ const Batches = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
-        QrEligible: statusFilter === 'all' ? undefined : statusFilter === 'CREATED',
+        QrEligible:
+          statusFilter === "all" ? undefined : statusFilter === "CREATED",
       }
       const res = await HarvestBatchService.getHarvestBatches(params)
       const innerData = res?.data?.data || res?.data || {}
-      const items = Array.isArray(innerData) ? innerData : (innerData.items || [])
+      const items = Array.isArray(innerData) ? innerData : innerData.items || []
       setListData(items)
-      setTotalRecords(innerData.totalItems ?? innerData.totalCount ?? items.length)
+      setTotalRecords(
+        innerData.totalItems ?? innerData.totalCount ?? items.length,
+      )
     } finally {
       setLoading(false)
     }
-  }, [page, pageSize, search, statusFilter, setLoading, setListData, setTotalRecords])
+  }, [
+    page,
+    pageSize,
+    search,
+    statusFilter,
+    setLoading,
+    setListData,
+    setTotalRecords,
+  ])
 
   useEffect(() => {
     getList()
   }, [getList])
 
-  const goToQrManagement = (batch) => {
+  const goToQrManagement = batch => {
     navigate(
-      `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || '')}`
+      `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
     )
   }
 
-  const getStatusConfig = (batch) => {
+  const getStatusConfig = batch => {
     const status = getQrStatus(batch)
     const fallback = QR_STATUS[status] || QR_STATUS.NOT_CREATED
-    return { ...fallback, label: getDescription(SYSTEM_KEY.QR_STATUS, status) || fallback.label }
+    return {
+      ...fallback,
+      label: getDescription(SYSTEM_KEY.QR_STATUS, status) || fallback.label,
+    }
   }
 
   const columns = [
     createSTTColumn(page, pageSize),
     {
-      title: 'Mã lô',
-      dataIndex: 'batchCode',
-      key: 'batchCode',
+      title: "Mã lô",
+      dataIndex: "batchCode",
+      key: "batchCode",
       width: 180,
       render: (text, record) => (
         <div>
-          <Text strong className="block text-sm text-green-700">{text}</Text>
+          <Text strong className="block text-sm text-green-700">
+            {text}
+          </Text>
           <Text className="text-xs text-gray-500">
-            Bắt đầu: {record.startDate ? formatDate(record.startDate) : '—'}
+            Bắt đầu: {record.startDate ? formatDate(record.startDate) : "—"}
           </Text>
         </div>
       ),
     },
     {
-      title: 'Sản phẩm',
-      key: 'product',
+      title: "Sản phẩm",
+      key: "product",
       width: 220,
       render: (_, record) => (
         <div className="flex items-center gap-2">
@@ -135,53 +173,62 @@ const Batches = () => {
           </div>
           <div>
             <Text className="block text-sm font-medium text-gray-800">
-              {record.productName || record.cropName || 'N/A'}
+              {record.productName || record.cropName || "N/A"}
             </Text>
-            <Text className="text-xs text-gray-400">{record.cropName || ''}</Text>
+            <Text className="text-xs text-gray-400">
+              {record.cropName || ""}
+            </Text>
           </div>
         </div>
       ),
     },
     {
-      title: 'Số lượng',
-      key: 'quantity',
+      title: "Số lượng",
+      key: "quantity",
       width: 120,
       render: (_, record) => (
         <Text className="text-sm font-semibold">
-          {record.quantity != null ? `${record.quantity} ${record.unit || ''}`.trim() : '—'}
+          {record.quantity != null
+            ? `${record.quantity} ${record.unit || ""}`.trim()
+            : "—"}
         </Text>
       ),
     },
     {
-      title: 'Diện tích',
-      dataIndex: 'area',
-      key: 'area',
+      title: "Diện tích",
+      dataIndex: "area",
+      key: "area",
       width: 120,
-      render: (area) => (
-        <Text className="text-sm font-semibold">{area ? `${area} ${formatAreaUnit()}` : '—'}</Text>
+      render: area => (
+        <Text className="text-sm font-semibold">
+          {area ? `${area} ${formatAreaUnit()}` : "—"}
+        </Text>
       ),
     },
     {
-      title: 'Trạng thái',
-      key: 'qrStatus',
+      title: "Trạng thái",
+      key: "qrStatus",
       width: 150,
       render: (_, record) => {
         const config = getStatusConfig(record)
         return (
-          <Tag className={`${config.bgColor} ${config.textColor} ${config.borderColor} border px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap`}>
+          <Tag
+            className={`${config.bgColor} ${config.textColor} ${config.borderColor} border px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap`}
+          >
             {config.label}
           </Tag>
         )
       },
     },
     {
-      title: 'Thao tác',
-      key: 'actions',
+      title: "Thao tác",
+      key: "actions",
       width: 120,
-      align: 'center',
-      fixed: 'right',
+      align: "center",
+      fixed: "right",
       render: (_, record) => {
-        const canPreviewQr = record.isQrEligible === true && record.hasActiveQrCode === false
+        const canPreviewQr =
+          record.isQrEligible === true && record.hasActiveQrCode === false
         const hasQr = record.hasActiveQrCode === true
 
         if (canPreviewQr || hasQr) {
@@ -189,9 +236,13 @@ const Batches = () => {
             <Tooltip title="Quản lý mã QR">
               <Button
                 type="text"
-                icon={<QrcodeOutlined className={`text-lg ${hasQr ? 'text-blue-500' : 'text-green-500'}`} />}
-                className={`${UI.btn.icon} ${hasQr ? 'hover:bg-blue-50' : 'hover:bg-green-50'}`}
-                onClick={(e) => {
+                icon={
+                  <QrcodeOutlined
+                    className={`text-lg ${hasQr ? "text-blue-500" : "text-green-500"}`}
+                  />
+                }
+                className={`${UI.btn.icon} ${hasQr ? "hover:bg-blue-50" : "hover:bg-green-50"}`}
+                onClick={e => {
                   e.stopPropagation()
                   goToQrManagement(record)
                 }}
@@ -229,7 +280,7 @@ const Batches = () => {
         <div className={UI.toolbar.inner}>
           <Input
             value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
+            onChange={e => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
             placeholder="Tìm theo mã lô..."
             prefix={<SearchOutlined className="text-gray-300" />}
@@ -239,12 +290,16 @@ const Batches = () => {
           />
           <Select
             value={statusFilter}
-            onChange={(val) => updateFilter('status', val)}
+            onChange={val => updateFilter("status", val)}
             className={UI.input.select}
             options={selectStatusOptions}
           />
           <div className={UI.toolbar.actions}>
-            <Button onClick={handleSearch} icon={<SearchOutlined />} className={UI.btn.search}>
+            <Button
+              onClick={handleSearch}
+              icon={<SearchOutlined />}
+              className={UI.btn.search}
+            >
               Tìm kiếm
             </Button>
             <Button
@@ -263,15 +318,21 @@ const Batches = () => {
         rowKey="id"
         loading={loading}
         scroll={{ x: 1050 }}
-        onRow={(record) => ({
-          onClick: () => navigate(ROUTER.FM_HARVEST_BATCH_DETAIL.replace(':id', record.id)),
-          className: 'cursor-pointer',
+        onRow={record => ({
+          onClick: () =>
+            navigate(ROUTER.FM_HARVEST_BATCH_DETAIL.replace(":id", record.id)),
+          className: "cursor-pointer",
         })}
-        locale={{ emptyText: 'Không có lô thu hoạch nào.' }}
-        pagination={createPaginationConfig(page, pageSize, totalRecords, (p, ps) => {
-          setPage(p)
-          setPageSize(ps)
-        })}
+        locale={{ emptyText: "Không có lô thu hoạch nào." }}
+        pagination={createPaginationConfig(
+          page,
+          pageSize,
+          totalRecords,
+          (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        )}
         rowClassName={UI.row}
       />
     </div>

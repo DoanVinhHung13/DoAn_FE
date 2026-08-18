@@ -1,21 +1,21 @@
-import { useState, useCallback, useMemo } from 'react'
-import { message } from 'antd'
-import { invalidCharsRegex } from 'src/utils/helpers'
-import { DEFAULT_PAGE_SIZE } from 'src/constants/constants'
+import { useState, useCallback, useMemo } from "react"
+import { message } from "antd"
+import { invalidCharsRegex } from "src/utils/helpers"
+import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
 
 export const useListManagement = (options = {}) => {
   const {
     initialPageSize = DEFAULT_PAGE_SIZE,
     initialFilters = {},
-    initialSort = '',
+    initialSort = "",
     enableClientFilter = false,
     filterFn = null,
     sortFn = null,
   } = options
 
   // ── Search State ────────────────────────────────────────────────────────
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const [searchInput, setSearchInput] = useState("")
+  const [search, setSearch] = useState("")
 
   // ── Pagination ──────────────────────────────────────────────────────────
   const [page, setPage] = useState(1)
@@ -40,7 +40,7 @@ export const useListManagement = (options = {}) => {
    */
   const handleSearch = useCallback(() => {
     if (invalidCharsRegex.test(searchInput)) {
-      message.error('Ký tự tìm kiếm không hợp lệ')
+      message.error("Ký tự tìm kiếm không hợp lệ")
       return
     }
     setSearch(searchInput.trim())
@@ -51,8 +51,8 @@ export const useListManagement = (options = {}) => {
    * Clear search input and applied search
    */
   const handleClearSearch = useCallback(() => {
-    setSearchInput('')
-    setSearch('')
+    setSearchInput("")
+    setSearch("")
     setPage(1)
   }, [])
 
@@ -78,7 +78,7 @@ export const useListManagement = (options = {}) => {
   /**
    * Update sort value and reset to page 1
    */
-  const updateSort = useCallback((value) => {
+  const updateSort = useCallback(value => {
     setSortBy(value)
     setPage(1)
   }, [])

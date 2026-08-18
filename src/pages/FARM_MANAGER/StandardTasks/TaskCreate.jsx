@@ -1,55 +1,80 @@
-import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Card, Form } from 'antd'
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import TitleCustom from 'src/components/TitleCustom'
-import ROUTER from 'src/router/ROUTER'
-import TaskCatalogService from 'src/services/TaskCatalogService'
-import { applyApiFieldErrors, normalizeApiError } from 'src/services/core/apiError'
-import TaskFormFields from './TaskFormFields'
-import useFormDraft from 'src/hooks/useFormDraft'
-import { getFormDraftKey } from 'src/utils/formDraftKeys'
-import { CULTIVATION_TASK_TYPES } from 'src/constants/cultivationTask'
+import { ArrowLeftOutlined, PlusOutlined } from "@ant-design/icons"
+import { Button, Card, Form } from "antd"
+import React, { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import TitleCustom from "src/components/TitleCustom"
+import ROUTER from "src/router/ROUTER"
+import TaskCatalogService from "src/services/TaskCatalogService"
+import {
+  applyApiFieldErrors,
+  normalizeApiError,
+} from "src/services/core/apiError"
+import TaskFormFields from "./TaskFormFields"
+import useFormDraft from "src/hooks/useFormDraft"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { CULTIVATION_TASK_TYPES } from "src/constants/cultivationTask"
 
 const TaskCreate = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const storageKey = getFormDraftKey('task-catalog', 'create')
-  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey })
+  const storageKey = getFormDraftKey("task-catalog", "create")
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
+    form,
+    storageKey,
+  })
 
   React.useEffect(() => {
     const draft = restoreDraft()
     if (draft?.data) {
       form.setFieldsValue({
-        cropCatalogId: '__ALL__', cropId: '__ALL__', taskType: CULTIVATION_TASK_TYPES.NON_MATERIAL, activityType: 'OTHER',
+        cropCatalogId: "__ALL__",
+        cropId: "__ALL__",
+        taskType: CULTIVATION_TASK_TYPES.NON_MATERIAL,
+        activityType: "OTHER",
         ...draft.data,
       })
     }
   }, [form, restoreDraft])
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async values => {
     try {
       setLoading(true)
       const body = {
-        cropCatalogId: values.cropCatalogId === '__ALL__' ? null : values.cropCatalogId,
-        cropId: values.cropId === '__ALL__' ? null : values.cropId,
+        cropCatalogId:
+          values.cropCatalogId === "__ALL__" ? null : values.cropCatalogId,
+        cropId: values.cropId === "__ALL__" ? null : values.cropId,
         name: values.name?.trim(),
         description: values.description?.trim() || null,
         taskType: values.taskType,
-        activityType: values.taskType === CULTIVATION_TASK_TYPES.HARVEST ? 'HARVESTING' : (values.activityType || 'OTHER'),
+        activityType:
+          values.taskType === CULTIVATION_TASK_TYPES.HARVEST
+            ? "HARVESTING"
+            : values.activityType || "OTHER",
       }
 
       await TaskCatalogService.createTaskCatalog(body, {
-        errorHandling: 'form',
-        fieldErrorMapping: { CropCatalogId: 'cropCatalogId', CropId: 'cropId', Name: 'name', Description: 'description', TaskType: 'taskType', ActivityType: 'activityType' },
+        errorHandling: "form",
+        fieldErrorMapping: {
+          CropCatalogId: "cropCatalogId",
+          CropId: "cropId",
+          Name: "name",
+          Description: "description",
+          TaskType: "taskType",
+          ActivityType: "activityType",
+        },
       })
 
       clearDraft()
       navigate(ROUTER.FM_TASK_CATALOGS)
     } catch (error) {
       applyApiFieldErrors(form, normalizeApiError(error), {
-        CropCatalogId: 'cropCatalogId', CropId: 'cropId', Name: 'name', Description: 'description', TaskType: 'taskType', ActivityType: 'activityType',
+        CropCatalogId: "cropCatalogId",
+        CropId: "cropId",
+        Name: "name",
+        Description: "description",
+        TaskType: "taskType",
+        ActivityType: "activityType",
       })
     } finally {
       setLoading(false)
@@ -61,7 +86,10 @@ const TaskCreate = () => {
       {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_TASK_CATALOGS)}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTER.FM_TASK_CATALOGS)}
+          >
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
@@ -74,12 +102,17 @@ const TaskCreate = () => {
       <Card
         bordered={false}
         className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: '24px' }}
+        bodyStyle={{ padding: "24px" }}
       >
         <Form
           form={form}
           layout="vertical"
-          initialValues={{ cropCatalogId: '__ALL__', cropId: '__ALL__', taskType: CULTIVATION_TASK_TYPES.NON_MATERIAL, activityType: 'OTHER' }}
+          initialValues={{
+            cropCatalogId: "__ALL__",
+            cropId: "__ALL__",
+            taskType: CULTIVATION_TASK_TYPES.NON_MATERIAL,
+            activityType: "OTHER",
+          }}
           onFinish={handleSubmit}
           onValuesChange={(_, allValues) => saveDraft(allValues)}
         >

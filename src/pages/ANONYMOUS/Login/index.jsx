@@ -1,10 +1,5 @@
 import { LockOutlined, UserOutlined } from "@ant-design/icons"
-import {
-  Button,
-  Checkbox,
-  Form,
-  Input,
-} from "antd"
+import { Button, Checkbox, Form, Input } from "antd"
 import React, { useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import STORAGE from "src/redux/storage"
@@ -19,7 +14,6 @@ import logo from "src/assets/images/logo/logo-eapls.jpg"
 import AuthService from "src/services/AuthService"
 import { LOGIN_IDENTIFIER_RULES, PASSWORD_RULES } from "src/utils/helpers"
 import { logDevDiagnostic } from "src/utils/safeDiagnostic"
-
 
 const Login = () => {
   const navigate = useNavigate()
@@ -40,7 +34,7 @@ const Login = () => {
     }
   }, [form])
 
-  const onFinish = async (values) => {
+  const onFinish = async values => {
     try {
       setLoading(true)
 
@@ -50,7 +44,10 @@ const Login = () => {
       })
 
       if (values.remember) {
-        localStorage.setItem(STORAGE.REMEMBERED_IDENTIFIER, values.identifier.trim())
+        localStorage.setItem(
+          STORAGE.REMEMBERED_IDENTIFIER,
+          values.identifier.trim(),
+        )
       } else {
         localStorage.removeItem(STORAGE.REMEMBERED_IDENTIFIER)
       }
@@ -89,7 +86,7 @@ const Login = () => {
       dispatch(setUserInfo(userData))
       navigate(getDashboardPathByRole(userRole))
     } catch (error) {
-      logDevDiagnostic('login', error)
+      logDevDiagnostic("login", error)
       // Lỗi API: axios đã hiện notice — không toast trùng
     } finally {
       setLoading(false)
@@ -127,7 +124,7 @@ const Login = () => {
         <div className="relative overflow-hidden bg-white shadow-2xl rounded-[20px]">
           {/* Gradient Top Border */}
           <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-green-500 to-blue-500"></div>
-          
+
           <div className="p-8">
             {/* Welcome Header */}
             <div className="mb-6">
@@ -210,7 +207,7 @@ const Login = () => {
                   block
                   className="h-12 text-base font-semibold bg-emerald-600 hover:bg-emerald-700 border-0 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]"
                 >
-                  {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                  {loading ? "Đang đăng nhập..." : "Đăng nhập"}
                 </Button>
               </Form.Item>
             </Form>

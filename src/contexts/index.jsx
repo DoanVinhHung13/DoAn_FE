@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from "react"
 
 // This module intentionally exports both the provider and its context for the
 // application's single context entry point.
@@ -23,15 +23,11 @@ function StoreProvider({ children }) {
   const [routerBeforeLogin, setRouterBeforeLogin] = useState(null)
 
   const store = {
-    themeStore:        { isDarkMode, setIsDarkMode },
+    themeStore: { isDarkMode, setIsDarkMode },
     routerBeforeStore: { routerBeforeLogin, setRouterBeforeLogin },
   }
 
-  return (
-    <StoreContext.Provider value={store}>
-      {children}
-    </StoreContext.Provider>
-  )
+  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }
 
 export default StoreProvider

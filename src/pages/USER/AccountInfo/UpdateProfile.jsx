@@ -13,14 +13,15 @@ import { getLocalNow } from "src/utils/dateFormatters"
 const fullNamePattern = /^[\p{L}\s]+$/u
 const addressPattern = /^[\p{L}\d\s,./#()-]+$/u
 
-const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => {
+const UpdateProfile = ({
+  form,
+  onFinish,
+  onCancel,
+  loading,
+  genderOptions,
+}) => {
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      onFinish={onFinish}
-      scrollToFirstError
-    >
+    <Form form={form} layout="vertical" onFinish={onFinish} scrollToFirstError>
       <Row gutter={16}>
         <Col xs={24} md={12}>
           <Form.Item
@@ -71,9 +72,7 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
                   if (!value?.trim() || isValidPhone(value.trim()))
                     return Promise.resolve()
                   return Promise.reject(
-                    new Error(
-                      "Định dạng số điện thoại không hợp lệ.",
-                    ),
+                    new Error("Định dạng số điện thoại không hợp lệ."),
                   )
                 },
               },
@@ -98,11 +97,16 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
               {
                 validator: (_, value) => {
                   if (!value) return Promise.resolve()
-                  if (!dayjs(value).isValid() || value.isAfter(getLocalNow(), "day")) {
+                  if (
+                    !dayjs(value).isValid() ||
+                    value.isAfter(getLocalNow(), "day")
+                  ) {
                     return Promise.reject(new Error("Ngày sinh không hợp lệ."))
                   }
                   if (getLocalNow().diff(value, "year") < 15) {
-                    return Promise.reject(new Error("Người dùng phải từ đủ 15 tuổi."))
+                    return Promise.reject(
+                      new Error("Người dùng phải từ đủ 15 tuổi."),
+                    )
                   }
                   return Promise.resolve()
                 },
@@ -113,7 +117,9 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
               format="DD/MM/YYYY"
               placeholder="Chọn ngày sinh"
               className="w-full h-11"
-              disabledDate={current => current && current > getLocalNow().endOf("day")}
+              disabledDate={current =>
+                current && current > getLocalNow().endOf("day")
+              }
             />
           </Form.Item>
         </Col>
@@ -144,7 +150,9 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
                     normalized.length > 200 ||
                     !addressPattern.test(normalized)
                   ) {
-                    return Promise.reject(new Error("Địa chỉ chi tiết không hợp lệ."))
+                    return Promise.reject(
+                      new Error("Địa chỉ chi tiết không hợp lệ."),
+                    )
                   }
                   return Promise.resolve()
                 },

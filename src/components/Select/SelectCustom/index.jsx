@@ -3,7 +3,12 @@ import { Select } from "antd"
 import PropTypes from "prop-types"
 const SelectCustom = ({ label, children, style, size = "middle", ...rest }) => {
   return (
-    <Select size={size} placeholder={label} style={{ width: "100%", ...style }} {...rest}>
+    <Select
+      size={size}
+      placeholder={label}
+      style={{ width: "100%", ...style }}
+      {...rest}
+    >
       {children}
     </Select>
   )

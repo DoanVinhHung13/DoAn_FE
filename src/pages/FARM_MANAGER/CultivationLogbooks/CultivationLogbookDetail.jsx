@@ -7,32 +7,23 @@ import {
   HistoryOutlined,
   FileTextOutlined,
   AppstoreOutlined,
-} from '@ant-design/icons'
-import {
-  Alert,
-  Button,
-  Card,
-  Skeleton,
-  Tag,
-  Tabs,
-} from 'antd'
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+} from "@ant-design/icons"
+import { Alert, Button, Card, Skeleton, Tag, Tabs } from "antd"
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 
-import TitleCustom from 'src/components/TitleCustom'
-import ROUTER from 'src/router/ROUTER'
-import CultivationLogbookService from 'src/services/CultivationLogbookService'
-import { isNotFoundError } from 'src/services/core/apiError'
-import { getLandPlotsFromLogbook } from 'src/utils/helpers'
-
+import TitleCustom from "src/components/TitleCustom"
+import ROUTER from "src/router/ROUTER"
+import CultivationLogbookService from "src/services/CultivationLogbookService"
+import { isNotFoundError } from "src/services/core/apiError"
+import { getLandPlotsFromLogbook } from "src/utils/helpers"
 
 // Import các Tab components
-import TaskLogHistoryTab from 'src/pages/FARM_SUPERVISOR/Plans/components/TaskLogHistoryTab'
-import StageTaskManagementTab from 'src/pages/FARM_SUPERVISOR/Plans/components/StageTaskManagementTab'
-import OfficialLogbookTab from './components/OfficialLogbookTab'
-import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
-import { formatDate } from 'src/utils/dateFormatters'
-
+import TaskLogHistoryTab from "src/pages/FARM_SUPERVISOR/Plans/components/TaskLogHistoryTab"
+import StageTaskManagementTab from "src/pages/FARM_SUPERVISOR/Plans/components/StageTaskManagementTab"
+import OfficialLogbookTab from "./components/OfficialLogbookTab"
+import { useCultivationStatus } from "src/hooks/useCultivationStatus"
+import { formatDate } from "src/utils/dateFormatters"
 
 const CultivationLogbookDetail = () => {
   const navigate = useNavigate()
@@ -44,7 +35,7 @@ const CultivationLogbookDetail = () => {
   const [reloadKey, setReloadKey] = useState(0)
   const [item, setItem] = useState(null)
   const [stages, setStages] = useState([])
-  const [activeTab, setActiveTab] = useState('tasks')
+  const [activeTab, setActiveTab] = useState("tasks")
 
   useEffect(() => {
     let isMounted = true
@@ -55,7 +46,7 @@ const CultivationLogbookDetail = () => {
         setLoadError(false)
 
         const response = await CultivationLogbookService.getById(id, {
-          errorHandling: 'component',
+          errorHandling: "component",
         })
         if (!response?.data) {
           navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)
@@ -64,12 +55,13 @@ const CultivationLogbookDetail = () => {
 
         const plan = response.data
         const planTasks = plan.tasks || plan.cultivationTasks || []
-        const planStages = Array.isArray(plan.cultivationStages) ? plan.cultivationStages : []
+        const planStages = Array.isArray(plan.cultivationStages)
+          ? plan.cultivationStages
+          : []
 
         if (!isMounted) return
         setItem({ ...plan, tasks: planTasks })
         setStages(planStages)
-
       } catch (error) {
         if (isNotFoundError(error)) {
           navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)
@@ -111,10 +103,16 @@ const CultivationLogbookDetail = () => {
         <Alert
           type="error"
           message="Không thể tải chi tiết nhật ký canh tác."
-          action={<Button size="small" onClick={() => setReloadKey((key) => key + 1)}>Thử lại</Button>}
+          action={
+            <Button size="small" onClick={() => setReloadKey(key => key + 1)}>
+              Thử lại
+            </Button>
+          }
           className="rounded-xl"
         />
-        <Button onClick={() => navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)}>Quay lại</Button>
+        <Button onClick={() => navigate(ROUTER.FM_CULTIVATION_LOGBOOKS)}>
+          Quay lại
+        </Button>
       </div>
     )
   }
@@ -123,13 +121,15 @@ const CultivationLogbookDetail = () => {
 
   // Build tasksMap từ stages (mỗi stage có array tasks)
   const tasksMap = Object.fromEntries(
-    stages.map((stage) => [stage.id, Array.isArray(stage.tasks) ? stage.tasks : []])
+    stages.map(stage => [
+      stage.id,
+      Array.isArray(stage.tasks) ? stage.tasks : [],
+    ]),
   )
 
   const tabItems = [
-
     {
-      key: 'official',
+      key: "official",
       label: (
         <span className="flex items-center gap-2">
           <CheckCircleOutlined />
@@ -138,7 +138,7 @@ const CultivationLogbookDetail = () => {
       ),
     },
     {
-      key: 'process',
+      key: "process",
       label: (
         <span className="flex items-center gap-2">
           <HistoryOutlined />
@@ -147,7 +147,7 @@ const CultivationLogbookDetail = () => {
       ),
     },
     {
-      key: 'tasks',
+      key: "tasks",
       label: (
         <span className="flex items-center gap-2">
           <AppstoreOutlined />
@@ -179,19 +179,19 @@ const CultivationLogbookDetail = () => {
       <Card bordered={true} className="border-gray-200 shadow-sm rounded-2xl">
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
           <div className="min-w-0 flex-1">
-
             <div className="flex items-center gap-3 mb-2">
               <h1 className="max-w-4xl m-0 text-xl font-bold leading-tight text-gray-800">
                 {item.logbookName}
               </h1>
-              {item.status && (() => {
-                const cfg = getLogbookStatus(item.status)
-                return (
-                  <Tag color={cfg.color} className="m-0">
-                    {cfg.label}
-                  </Tag>
-                )
-              })()}
+              {item.status &&
+                (() => {
+                  const cfg = getLogbookStatus(item.status)
+                  return (
+                    <Tag color={cfg.color} className="m-0">
+                      {cfg.label}
+                    </Tag>
+                  )
+                })()}
             </div>
 
             {(item.description || item.note) && (
@@ -204,9 +204,9 @@ const CultivationLogbookDetail = () => {
               <div className="flex items-center gap-2">
                 <FileTextOutlined className="text-gray-400" />
                 <span>
-                  <span className="text-gray-500">Danh mục:</span>{' '}
+                  <span className="text-gray-500">Danh mục:</span>{" "}
                   <span className="font-medium text-gray-800">
-                    {item.cropCatalogName || 'Chưa cập nhật'}
+                    {item.cropCatalogName || "Chưa cập nhật"}
                   </span>
                 </span>
               </div>
@@ -214,9 +214,9 @@ const CultivationLogbookDetail = () => {
               <div className="flex items-center gap-2">
                 <FileTextOutlined className="text-gray-400" />
                 <span>
-                  <span className="text-gray-500">Cây trồng:</span>{' '}
+                  <span className="text-gray-500">Cây trồng:</span>{" "}
                   <span className="font-medium text-gray-800">
-                    {item.cropName || 'Chưa cập nhật'}
+                    {item.cropName || "Chưa cập nhật"}
                   </span>
                 </span>
               </div>
@@ -224,27 +224,45 @@ const CultivationLogbookDetail = () => {
               <div className="flex items-[baseline] gap-2">
                 <EnvironmentOutlined className="text-gray-400 mt-1" />
                 <span>
-                  <span className="text-gray-500">Vùng trồng:</span>{' '}
+                  <span className="text-gray-500">Vùng trồng:</span>{" "}
                   {(() => {
                     const landPlots = getLandPlotsFromLogbook(item)
                     if (!landPlots.length) {
-                      return <span className="font-medium text-gray-800">Chưa cập nhật</span>
+                      return (
+                        <span className="font-medium text-gray-800">
+                          Chưa cập nhật
+                        </span>
+                      )
                     }
                     return (
                       <span className="inline-flex flex-wrap items-center gap-1.5">
                         {landPlots.map((plot, idx) => (
-                          <span key={plot.id || idx} className="inline-flex items-center">
+                          <span
+                            key={plot.id || idx}
+                            className="inline-flex items-center"
+                          >
                             {plot.id ? (
                               <button
-                                onClick={() => navigate(ROUTER.FM_LAND_DETAIL.replace(':id', plot.id))}
+                                onClick={() =>
+                                  navigate(
+                                    ROUTER.FM_LAND_DETAIL.replace(
+                                      ":id",
+                                      plot.id,
+                                    ),
+                                  )
+                                }
                                 className="font-medium text-green-600 hover:text-green-700 hover:underline"
                               >
                                 {plot.name}
                               </button>
                             ) : (
-                              <span className="font-medium text-gray-800">{plot.name}</span>
+                              <span className="font-medium text-gray-800">
+                                {plot.name}
+                              </span>
                             )}
-                            {idx < landPlots.length - 1 && <span className="text-gray-400 ml-1">,</span>}
+                            {idx < landPlots.length - 1 && (
+                              <span className="text-gray-400 ml-1">,</span>
+                            )}
                           </span>
                         ))}
                       </span>
@@ -256,9 +274,12 @@ const CultivationLogbookDetail = () => {
               <div className="flex items-center gap-2">
                 <CalendarOutlined className="text-gray-400" />
                 <span>
-                  <span className="text-gray-500">Thời gian:</span>{' '}
+                  <span className="text-gray-500">Thời gian:</span>{" "}
                   <span className="font-medium text-gray-800">
-                    {item.startDate ? formatDate(item.startDate) : '...'} - {item.expectedEndDate || item.endDate ? formatDate(item.expectedEndDate || item.endDate) : '...'}
+                    {item.startDate ? formatDate(item.startDate) : "..."} -{" "}
+                    {item.expectedEndDate || item.endDate
+                      ? formatDate(item.expectedEndDate || item.endDate)
+                      : "..."}
                   </span>
                 </span>
               </div>
@@ -266,9 +287,9 @@ const CultivationLogbookDetail = () => {
               <div className="flex items-center gap-2 sm:col-span-2">
                 <TeamOutlined className="text-gray-400" />
                 <span>
-                  <span className="text-gray-500">Người giám sát:</span>{' '}
+                  <span className="text-gray-500">Người giám sát:</span>{" "}
                   <span className="font-medium text-gray-800">
-                    {item.supervisorName || 'Chưa chỉ định'}
+                    {item.supervisorName || "Chưa chỉ định"}
                   </span>
                 </span>
               </div>
@@ -290,19 +311,19 @@ const CultivationLogbookDetail = () => {
 
       {/* Tab content */}
 
-      {activeTab === 'official' && (
+      {activeTab === "official" && (
         <OfficialLogbookTab item={item} stages={stages} />
       )}
-      {activeTab === 'process' && (
+      {activeTab === "process" && (
         <TaskLogHistoryTab stages={stages} tasks={tasksMap} />
       )}
-      {activeTab === 'tasks' && (
+      {activeTab === "tasks" && (
         <StageTaskManagementTab
           plan={item}
           planId={id}
           stages={stages}
           tasks={tasksMap}
-          loadData={() => setReloadKey((key) => key + 1)}
+          loadData={() => setReloadKey(key => key + 1)}
         />
       )}
     </div>

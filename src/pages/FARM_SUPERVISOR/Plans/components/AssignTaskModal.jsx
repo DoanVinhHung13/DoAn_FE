@@ -8,19 +8,14 @@ import useDebouncedValue from "src/hooks/useDebouncedValue"
 import { getTaskSchedulingErrorMessage } from "src/constants/cultivationTask"
 import { normalizeApiError } from "src/services/core/apiError"
 
-const AssignTaskModal = ({
-  open,
-  onCancel,
-  onSuccess,
-  task,
-}) => {
+const AssignTaskModal = ({ open, onCancel, onSuccess, task }) => {
   const [form] = Form.useForm()
   const [leaders, setLeaders] = useState([])
   const [farmers, setFarmers] = useState([])
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [leaderSearch, setLeaderSearch] = useState('')
-  const [farmerSearch, setFarmerSearch] = useState('')
+  const [leaderSearch, setLeaderSearch] = useState("")
+  const [farmerSearch, setFarmerSearch] = useState("")
   const debouncedLeaderSearch = useDebouncedValue(leaderSearch, 400)
   const debouncedFarmerSearch = useDebouncedValue(farmerSearch, 400)
 
@@ -112,7 +107,9 @@ const AssignTaskModal = ({
         farmerIds: values.farmerIds || [],
       }
 
-      await CultivationTaskService.assign(task.id, payload, { errorHandling: 'component' })
+      await CultivationTaskService.assign(task.id, payload, {
+        errorHandling: "component",
+      })
       onSuccess()
     } catch (err) {
       if (!err?.errorFields) {

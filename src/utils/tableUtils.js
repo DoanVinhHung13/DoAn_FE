@@ -1,20 +1,20 @@
 /**
  * Table utility functions
- * 
+ *
  * Helper functions for common table operations
  */
 
-import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
+import { PAGE_SIZE } from "src/constants/pageSizeOptions"
 
 /**
  * Create pagination configuration for Ant Design Table
- * 
+ *
  * @param {number} page - Current page number
  * @param {number} pageSize - Current page size
  * @param {number} totalRecords - Total number of records
  * @param {Function} onChange - Callback when page or pageSize changes
  * @returns {Object} Ant Design Table pagination config
- * 
+ *
  * @example
  * <CustomTable
  *   dataSource={listData}
@@ -25,7 +25,12 @@ import { PAGE_SIZE } from 'src/constants/pageSizeOptions'
  *   })}
  * />
  */
-export const createPaginationConfig = (page, pageSize, totalRecords, onChange) => ({
+export const createPaginationConfig = (
+  page,
+  pageSize,
+  totalRecords,
+  onChange,
+) => ({
   current: page,
   pageSize,
   total: totalRecords,

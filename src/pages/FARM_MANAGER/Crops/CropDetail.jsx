@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   Alert,
   Button,
@@ -12,63 +12,65 @@ import {
   Spin,
   Tag,
   Typography,
-} from 'antd';
+} from "antd"
 import {
   ArrowLeftOutlined,
   CheckCircleOutlined,
   EditOutlined,
   StopOutlined,
-} from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
-import { Sprout } from 'lucide-react';
+} from "@ant-design/icons"
+import { useQuery } from "@tanstack/react-query"
+import { Sprout } from "lucide-react"
 
-import TitleCustom from 'src/components/TitleCustom';
-import { CropIcon } from 'src/assets/icon/menu/MenuIcons';
-import CropCatalogService from 'src/services/CropCatalogService';
-import CropManagementService from 'src/services/CropManagementService';
-import CropVarietiesModal from './CropVarietiesModal';
-import ROUTER from 'src/router/ROUTER';
+import TitleCustom from "src/components/TitleCustom"
+import { CropIcon } from "src/assets/icon/menu/MenuIcons"
+import CropCatalogService from "src/services/CropCatalogService"
+import CropManagementService from "src/services/CropManagementService"
+import CropVarietiesModal from "./CropVarietiesModal"
+import ROUTER from "src/router/ROUTER"
 
-const { Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography
 
-const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
+const EMPTY_MESSAGE = "Không tìm thấy thông tin cây trồng."
 
-const displayValue = (value) => value || 'Chưa cập nhật';
+const displayValue = value => value || "Chưa cập nhật"
 
-const isCropActive = (item) => {
-  if (typeof item?.isActive === 'boolean') return item.isActive;
-  const status = String(item?.status || '').toLowerCase();
-  return !['inactive', 'disabled', 'deleted', 'ngừng hoạt động'].includes(status);
-};
+const isCropActive = item => {
+  if (typeof item?.isActive === "boolean") return item.isActive
+  const status = String(item?.status || "").toLowerCase()
+  return !["inactive", "disabled", "deleted", "ngừng hoạt động"].includes(
+    status,
+  )
+}
 
-const getStatusLabel = (item) =>
-  isCropActive(item) ? 'Hoạt động' : 'Ngừng hoạt động';
+const getStatusLabel = item =>
+  isCropActive(item) ? "Hoạt động" : "Ngừng hoạt động"
 
 const CATEGORY_TAG_COLORS = [
-  { bg: '#dcfce7', text: '#15803d' },
-  { bg: '#dbeafe', text: '#1d4ed8' },
-  { bg: '#fef3c7', text: '#b45309' },
-  { bg: '#fce7f3', text: '#be185d' },
-  { bg: '#ede9fe', text: '#6d28d9' },
-  { bg: '#ccfbf1', text: '#0f766e' },
-  { bg: '#fee2e2', text: '#b91c1c' },
-  { bg: '#e0f2fe', text: '#0369a1' },
-];
+  { bg: "#dcfce7", text: "#15803d" },
+  { bg: "#dbeafe", text: "#1d4ed8" },
+  { bg: "#fef3c7", text: "#b45309" },
+  { bg: "#fce7f3", text: "#be185d" },
+  { bg: "#ede9fe", text: "#6d28d9" },
+  { bg: "#ccfbf1", text: "#0f766e" },
+  { bg: "#fee2e2", text: "#b91c1c" },
+  { bg: "#e0f2fe", text: "#0369a1" },
+]
 
-const getCategoryTagStyle = (value) => {
-  const text = displayValue(value);
-  const hash = [...text].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const color = CATEGORY_TAG_COLORS[hash % CATEGORY_TAG_COLORS.length];
+const getCategoryTagStyle = value => {
+  const text = displayValue(value)
+  const hash = [...text].reduce((sum, char) => sum + char.charCodeAt(0), 0)
+  const color = CATEGORY_TAG_COLORS[hash % CATEGORY_TAG_COLORS.length]
   return {
     backgroundColor: color.bg,
     color: color.text,
-  };
-};
+  }
+}
 
 const CropDetail = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const [isVarietiesModalOpen, setIsVarietiesModalOpen] = useState(false);
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const [isVarietiesModalOpen, setIsVarietiesModalOpen] = useState(false)
 
   const {
     data: cropDetail,
@@ -76,52 +78,59 @@ const CropDetail = () => {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ['crop-detail', id],
+    queryKey: ["crop-detail", id],
     queryFn: async () => {
-      const response = await CropManagementService.getCropById(id, { errorHandling: 'component' });
-      const payload = response?.data ?? {};
-      return payload?.data ?? payload;
+      const response = await CropManagementService.getCropById(id, {
+        errorHandling: "component",
+      })
+      const payload = response?.data ?? {}
+      return payload?.data ?? payload
     },
     enabled: !!id,
     retry: false,
-  });
+  })
 
   const { data: cropCatalogsData } = useQuery({
-    queryKey: ['crop-catalogs-dropdown'],
+    queryKey: ["crop-catalogs-dropdown"],
     queryFn: async () => {
       try {
-        const response = await CropCatalogService.getCropCatalogs({ PageIndex: 1, PageSize: 100 });
-        const payload = response?.data ?? response ?? {};
-        const data = payload?.data ?? payload;
+        const response = await CropCatalogService.getCropCatalogs({
+          PageIndex: 1,
+          PageSize: 100,
+        })
+        const payload = response?.data ?? response ?? {}
+        const data = payload?.data ?? payload
         const items = Array.isArray(data)
           ? data
           : data?.items ||
-          data?.results ||
-          data?.crops ||
-          data?.cropCatalogs ||
-          payload?.items ||
-          payload?.results ||
-          [];
-        return items;
+            data?.results ||
+            data?.crops ||
+            data?.cropCatalogs ||
+            payload?.items ||
+            payload?.results ||
+            []
+        return items
       } catch {
-        return [];
+        return []
       }
     },
     retry: false,
-  });
+  })
 
-  const getCropCatalogName = (id) => {
-    if (!cropCatalogsData || !id) return id;
-    const catalog = cropCatalogsData.find(c => c.id === id || c.cropCatalogId === id);
-    return catalog ? (catalog.name || catalog.cropCatalogName) : id;
-  };
+  const getCropCatalogName = id => {
+    if (!cropCatalogsData || !id) return id
+    const catalog = cropCatalogsData.find(
+      c => c.id === id || c.cropCatalogId === id,
+    )
+    return catalog ? catalog.name || catalog.cropCatalogName : id
+  }
 
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Spin size="large" />
       </div>
-    );
+    )
   }
 
   if (isError) {
@@ -147,7 +156,7 @@ const CropDetail = () => {
           }
         />
       </div>
-    );
+    )
   }
 
   if (!cropDetail) {
@@ -170,10 +179,10 @@ const CropDetail = () => {
           />
         </Card>
       </div>
-    );
+    )
   }
 
-  const isActive = isCropActive(cropDetail);
+  const isActive = isCropActive(cropDetail)
 
   return (
     <div className="space-y-6">
@@ -188,7 +197,7 @@ const CropDetail = () => {
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <CropIcon style={{ fontSize: '24px', color: '#15803d' }} />
+            <CropIcon style={{ fontSize: "24px", color: "#15803d" }} />
             Chi tiết cây trồng
           </TitleCustom>
         </div>
@@ -238,10 +247,11 @@ const CropDetail = () => {
 
               <div className="flex items-center gap-3">
                 <div
-                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${isActive
-                      ? 'bg-green-50 text-green-700'
-                      : 'bg-red-50 text-red-600'
-                    }`}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${
+                    isActive
+                      ? "bg-green-50 text-green-700"
+                      : "bg-red-50 text-red-600"
+                  }`}
                 >
                   {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
                   {getStatusLabel(cropDetail)}
@@ -250,7 +260,9 @@ const CropDetail = () => {
                 {cropDetail.cropCatalogId && (
                   <Tag
                     className="!m-0 rounded-full border-0 px-4 py-1.5 text-sm font-semibold"
-                    style={getCategoryTagStyle(getCropCatalogName(cropDetail.cropCatalogId))}
+                    style={getCategoryTagStyle(
+                      getCropCatalogName(cropDetail.cropCatalogId),
+                    )}
                   >
                     {getCropCatalogName(cropDetail.cropCatalogId)}
                   </Tag>
@@ -273,12 +285,14 @@ const CropDetail = () => {
               }
               className="rounded-lg shadow-sm"
             >
-              <Descriptions column={1} size="middle" className="[&_.ant-descriptions-item-label]:w-[260px]">
+              <Descriptions
+                column={1}
+                size="middle"
+                className="[&_.ant-descriptions-item-label]:w-[260px]"
+              >
                 <Descriptions.Item label="Danh mục">
                   {displayValue(getCropCatalogName(cropDetail.cropCatalogId))}
                 </Descriptions.Item>
-
-
               </Descriptions>
             </Card>
 
@@ -294,10 +308,9 @@ const CropDetail = () => {
               className="rounded-lg shadow-sm"
             >
               <Paragraph className="mb-0 min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-gray-700">
-                {cropDetail.description || 'Chưa có mô tả cho cây trồng này'}
+                {cropDetail.description || "Chưa có mô tả cho cây trồng này"}
               </Paragraph>
             </Card>
-
           </Space>
         </Col>
       </Row>
@@ -310,7 +323,7 @@ const CropDetail = () => {
         cropName={cropDetail.name}
       />
     </div>
-  );
-};
+  )
+}
 
-export default CropDetail;
+export default CropDetail

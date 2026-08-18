@@ -35,7 +35,9 @@ const MainLayout = props => {
   const isUser = type === "isUser"
   const navigate = useNavigate()
   const location = useLocation()
-  const selectedKey = [location?.pathname || getStorage(STORAGE.KEY_MENU_ACTIVE) || "/"]
+  const selectedKey = [
+    location?.pathname || getStorage(STORAGE.KEY_MENU_ACTIVE) || "/",
+  ]
   const { userInfo } = useSelector(state => state?.appGlobal)
   // Dùng Redux làm nguồn duy nhất — không cần isLoginContext từ Context
   const isLoginContext = Boolean(userInfo?._id)
@@ -46,7 +48,8 @@ const MainLayout = props => {
   }
 
   const menuAdmin = useMemo(
-    () => (isLoginContext ? setShowListMenu(MenuItemAdmin(badgeCounts)) : undefined),
+    () =>
+      isLoginContext ? setShowListMenu(MenuItemAdmin(badgeCounts)) : undefined,
     [badgeCounts, isLoginContext],
   )
   const menuUser = useMemo(

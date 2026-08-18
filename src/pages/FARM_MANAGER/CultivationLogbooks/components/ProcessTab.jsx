@@ -4,38 +4,57 @@ import {
   CheckCircleOutlined,
   FileImageOutlined,
   InboxOutlined,
-} from '@ant-design/icons'
-import { Card, Empty, Image, Tag, Spin, List, Avatar, Typography, Alert, Divider, Badge } from 'antd'
-import { useEffect, useState } from 'react'
-import { formatDate } from 'src/utils/dateFormatters'
-import { formatAreaUnit } from 'src/constants/measurementUnits'
-import CultivationLogService from 'src/services/CultivationLogService'
-import SectionTitle from 'src/components/Common/SectionTitle'
-import { getUserDisplayName } from 'src/utils/userDisplayName'
-import { getOrderedStageLogs } from 'src/utils/cultivationOrdering'
+} from "@ant-design/icons"
+import {
+  Card,
+  Empty,
+  Image,
+  Tag,
+  Spin,
+  List,
+  Avatar,
+  Typography,
+  Alert,
+  Divider,
+  Badge,
+} from "antd"
+import { useEffect, useState } from "react"
+import { formatDate } from "src/utils/dateFormatters"
+import { formatAreaUnit } from "src/constants/measurementUnits"
+import CultivationLogService from "src/services/CultivationLogService"
+import SectionTitle from "src/components/Common/SectionTitle"
+import { getUserDisplayName } from "src/utils/userDisplayName"
+import { getOrderedStageLogs } from "src/utils/cultivationOrdering"
 
 const { Text } = Typography
 
 const formatKnownDateRange = (startDate, endDate) =>
-  [startDate, endDate].filter(Boolean).map(formatDate).join(' — ')
+  [startDate, endDate].filter(Boolean).map(formatDate).join(" — ")
 
 const getHarvestQuantity = log =>
-  log?.harvestQuantity ?? log?.quantityHarvested ?? log?.harvestedQuantity ?? log?.HarvestQuantity
+  log?.harvestQuantity ??
+  log?.quantityHarvested ??
+  log?.harvestedQuantity ??
+  log?.HarvestQuantity
 
-const getHarvestArea = log => Number(log?.executedArea ?? log?.harvestedArea ?? 0)
+const getHarvestArea = log =>
+  Number(log?.executedArea ?? log?.harvestedArea ?? 0)
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
 const StageListItem = ({ stage, index, isActive, onClick }) => {
   const plannedPeriod = formatKnownDateRange(stage.startDate, stage.endDate)
-  const actualPeriod = formatKnownDateRange(stage.actualStartDate, stage.actualEndDate)
+  const actualPeriod = formatKnownDateRange(
+    stage.actualStartDate,
+    stage.actualEndDate,
+  )
 
   return (
     <List.Item
       onClick={onClick}
       className="mb-2 cursor-pointer rounded-xl px-3 py-2 transition-colors"
       style={{
-        border: isActive ? '1px solid #22c55e' : '1px solid #e5e7eb',
-        background: isActive ? '#f0fdf4' : '#fff',
+        border: isActive ? "1px solid #22c55e" : "1px solid #e5e7eb",
+        background: isActive ? "#f0fdf4" : "#fff",
       }}
     >
       <List.Item.Meta
@@ -43,8 +62,8 @@ const StageListItem = ({ stage, index, isActive, onClick }) => {
           <Avatar
             size={32}
             style={{
-              backgroundColor: isActive ? '#16a34a' : '#f3f4f6',
-              color: isActive ? '#fff' : '#6b7280',
+              backgroundColor: isActive ? "#16a34a" : "#f3f4f6",
+              color: isActive ? "#fff" : "#6b7280",
               fontWeight: 700,
             }}
           >
@@ -52,7 +71,13 @@ const StageListItem = ({ stage, index, isActive, onClick }) => {
           </Avatar>
         }
         title={
-          <Text strong style={{ color: isActive ? '#15803d' : '#1f2937', whiteSpace: 'normal' }}>
+          <Text
+            strong
+            style={{
+              color: isActive ? "#15803d" : "#1f2937",
+              whiteSpace: "normal",
+            }}
+          >
             {stage.stageName || stage.name || `Giai đoạn ${index + 1}`}
           </Text>
         }
@@ -65,7 +90,7 @@ const StageListItem = ({ stage, index, isActive, onClick }) => {
                 </Text>
               )}
               {actualPeriod && (
-                <Text style={{ fontSize: 11, color: '#16a34a' }}>
+                <Text style={{ fontSize: 11, color: "#16a34a" }}>
                   Thực tế: {actualPeriod}
                 </Text>
               )}
@@ -110,7 +135,7 @@ const DailyLogCard = ({ log, index }) => {
           </div>
           <div>
             <p className="mb-0 text-sm font-bold text-gray-800">
-              {logDate ? formatDate(logDate) : 'Chưa có ngày'}
+              {logDate ? formatDate(logDate) : "Chưa có ngày"}
             </p>
             <p className="mb-0 text-xs text-gray-500">
               <UserOutlined className="mr-1" />
@@ -118,34 +143,57 @@ const DailyLogCard = ({ log, index }) => {
             </p>
           </div>
         </div>
-        {(status === 'APPROVED' || status === 'COMPLETED') && (
-          <Tag color="green" icon={<CheckCircleOutlined />} className="text-xs m-0 px-2 py-0.5 rounded-md">
-            {status === 'APPROVED' ? 'Đã duyệt' : 'Hoàn thành'}
+        {(status === "APPROVED" || status === "COMPLETED") && (
+          <Tag
+            color="green"
+            icon={<CheckCircleOutlined />}
+            className="text-xs m-0 px-2 py-0.5 rounded-md"
+          >
+            {status === "APPROVED" ? "Đã duyệt" : "Hoàn thành"}
           </Tag>
         )}
-        {status === 'PENDING' && <Tag color="green" icon={<CheckCircleOutlined />} className="text-xs m-0 px-2 py-0.5 rounded-md">Hoàn thành</Tag>}
+        {status === "PENDING" && (
+          <Tag
+            color="green"
+            icon={<CheckCircleOutlined />}
+            className="text-xs m-0 px-2 py-0.5 rounded-md"
+          >
+            Hoàn thành
+          </Tag>
+        )}
       </div>
 
       <div className="p-4">
         {/* Mô tả công việc */}
         {description && (
           <div className="mb-4">
-            <p className="mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">Nội dung công việc</p>
-            <p className="min-w-0 max-w-full text-sm text-gray-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere] mb-0 bg-gray-50 p-3 rounded-lg border border-gray-100">{description}</p>
+            <p className="mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              Nội dung công việc
+            </p>
+            <p className="min-w-0 max-w-full text-sm text-gray-700 whitespace-pre-wrap break-words [overflow-wrap:anywhere] mb-0 bg-gray-50 p-3 rounded-lg border border-gray-100">
+              {description}
+            </p>
           </div>
         )}
 
         {(getHarvestQuantity(log) != null || getHarvestArea(log) > 0) && (
           <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-800">
-              <><InboxOutlined className="mr-1 text-emerald-600" />Sản lượng</>
+              <>
+                <InboxOutlined className="mr-1 text-emerald-600" />
+                Sản lượng
+              </>
             </p>
             <div className="flex flex-wrap items-center gap-2 text-sm">
               {getHarvestQuantity(log) != null && (
-                <span className="font-bold text-emerald-700">{getHarvestQuantity(log)} kg</span>
+                <span className="font-bold text-emerald-700">
+                  {getHarvestQuantity(log)} kg
+                </span>
               )}
               {getHarvestArea(log) > 0 && (
-                <span className="text-gray-500">· {getHarvestArea(log)} {formatAreaUnit('m2')}</span>
+                <span className="text-gray-500">
+                  · {getHarvestArea(log)} {formatAreaUnit("m2")}
+                </span>
               )}
             </div>
           </div>
@@ -154,22 +202,36 @@ const DailyLogCard = ({ log, index }) => {
         {/* Vật tư sử dụng (Phân bón & Nông dược) */}
         {(fertilizers.length > 0 || pesticides.length > 0) && (
           <div className="mb-4 p-3 bg-gray-50/50 rounded-lg border border-gray-100">
-            <p className="mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vật tư sử dụng</p>
+            <p className="mb-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Vật tư sử dụng
+            </p>
 
             {fertilizers.length > 0 && (
               <div className="mb-3">
-                <p className="mb-1.5 text-xs text-blue-600 font-semibold">Phân bón:</p>
+                <p className="mb-1.5 text-xs text-blue-600 font-semibold">
+                  Phân bón:
+                </p>
                 <div className="space-y-1.5 pl-1">
                   {fertilizers.map((fert, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 text-sm text-gray-700"
+                    >
                       <div className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
-                      <span className="font-medium">{fert.name || fert.fertilizerName || fert.materialName}</span>
+                      <span className="font-medium">
+                        {fert.name || fert.fertilizerName || fert.materialName}
+                      </span>
                       <span className="text-gray-300">·</span>
-                      <span className="font-semibold text-blue-700">{fert.quantity || fert.amount || fert.usedQuantity} {fert.unit || 'kg'}</span>
+                      <span className="font-semibold text-blue-700">
+                        {fert.quantity || fert.amount || fert.usedQuantity}{" "}
+                        {fert.unit || "kg"}
+                      </span>
                       {fert.area && (
                         <>
                           <span className="text-gray-300">/</span>
-                          <span className="text-gray-500">{fert.area} {formatAreaUnit(fert.areaUnit)}</span>
+                          <span className="text-gray-500">
+                            {fert.area} {formatAreaUnit(fert.areaUnit)}
+                          </span>
                         </>
                       )}
                     </div>
@@ -180,18 +242,30 @@ const DailyLogCard = ({ log, index }) => {
 
             {pesticides.length > 0 && (
               <div>
-                <p className="mb-1.5 text-xs text-purple-600 font-semibold">Nông dược:</p>
+                <p className="mb-1.5 text-xs text-purple-600 font-semibold">
+                  Nông dược:
+                </p>
                 <div className="space-y-1.5 pl-1">
                   {pesticides.map((pest, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 text-sm text-gray-700"
+                    >
                       <div className="w-1.5 h-1.5 bg-purple-500 rounded-full flex-shrink-0" />
-                      <span className="font-medium">{pest.name || pest.pesticideName || pest.materialName}</span>
+                      <span className="font-medium">
+                        {pest.name || pest.pesticideName || pest.materialName}
+                      </span>
                       <span className="text-gray-300">·</span>
-                      <span className="font-semibold text-purple-700">{pest.quantity || pest.amount || pest.usedQuantity} {pest.unit || 'lít'}</span>
+                      <span className="font-semibold text-purple-700">
+                        {pest.quantity || pest.amount || pest.usedQuantity}{" "}
+                        {pest.unit || "lít"}
+                      </span>
                       {pest.area && (
                         <>
                           <span className="text-gray-300">/</span>
-                          <span className="text-gray-500">{pest.area} {formatAreaUnit(pest.areaUnit)}</span>
+                          <span className="text-gray-500">
+                            {pest.area} {formatAreaUnit(pest.areaUnit)}
+                          </span>
                         </>
                       )}
                     </div>
@@ -212,7 +286,10 @@ const DailyLogCard = ({ log, index }) => {
             <Image.PreviewGroup>
               <div className="flex flex-wrap gap-2">
                 {images.map((img, idx) => (
-                  <div key={idx} className="overflow-hidden rounded-lg border border-gray-200 cursor-pointer">
+                  <div
+                    key={idx}
+                    className="overflow-hidden rounded-lg border border-gray-200 cursor-pointer"
+                  >
                     <Image
                       src={img.url || img.imageUrl || img.filePath || img}
                       alt={img.description || img.caption || `Ảnh ${idx + 1}`}
@@ -233,7 +310,8 @@ const DailyLogCard = ({ log, index }) => {
 }
 
 const ProcessTab = ({ item }) => {
-  const stages = item.cultivationStages || item.productionStages || item.stages || []
+  const stages =
+    item.cultivationStages || item.productionStages || item.stages || []
   const [dailyLogs, setDailyLogs] = useState([])
   const [loading, setLoading] = useState(false)
   const [selectedStageId, setSelectedStageId] = useState(null)
@@ -252,10 +330,13 @@ const ProcessTab = ({ item }) => {
 
       try {
         setLoading(true)
-        const response = await CultivationLogService.getDailyLogsByStage(selectedStageId)
+        const response =
+          await CultivationLogService.getDailyLogsByStage(selectedStageId)
 
         if (response?.data) {
-          const logs = Array.isArray(response.data) ? response.data : response.data.data || response.data.items || []
+          const logs = Array.isArray(response.data)
+            ? response.data
+            : response.data.data || response.data.items || []
           setDailyLogs(logs)
         }
       } catch {
@@ -276,14 +357,19 @@ const ProcessTab = ({ item }) => {
     )
   }
 
-  const selectedIndex = stages.findIndex((s, idx) => (s.id ?? idx) === selectedStageId)
+  const selectedIndex = stages.findIndex(
+    (s, idx) => (s.id ?? idx) === selectedStageId,
+  )
   const selectedStage = selectedIndex >= 0 ? stages[selectedIndex] : null
   const selectedPlannedPeriod = selectedStage
     ? formatKnownDateRange(selectedStage.startDate, selectedStage.endDate)
-    : ''
+    : ""
   const selectedActualPeriod = selectedStage
-    ? formatKnownDateRange(selectedStage.actualStartDate, selectedStage.actualEndDate)
-    : ''
+    ? formatKnownDateRange(
+        selectedStage.actualStartDate,
+        selectedStage.actualEndDate,
+      )
+    : ""
 
   const stageLogs = getOrderedStageLogs(
     dailyLogs,
@@ -325,22 +411,30 @@ const ProcessTab = ({ item }) => {
                   {/* Header giai đoạn */}
                   <div className="mb-4 flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <Text strong style={{ fontSize: 16 }} className="block text-gray-800 mb-1">
-                        {selectedStage.stageName || selectedStage.name || `Giai đoạn ${selectedIndex + 1}`}
+                      <Text
+                        strong
+                        style={{ fontSize: 16 }}
+                        className="block text-gray-800 mb-1"
+                      >
+                        {selectedStage.stageName ||
+                          selectedStage.name ||
+                          `Giai đoạn ${selectedIndex + 1}`}
                       </Text>
                       {(selectedPlannedPeriod || selectedActualPeriod) && (
                         <div className="flex flex-col gap-0.5">
                           {selectedPlannedPeriod && (
                             <Text type="secondary" style={{ fontSize: 13 }}>
                               <CalendarOutlined className="mr-1" />
-                              <span className="font-medium">Kế hoạch:</span>{' '}
+                              <span className="font-medium">
+                                Kế hoạch:
+                              </span>{" "}
                               {selectedPlannedPeriod}
                             </Text>
                           )}
                           {selectedActualPeriod && (
-                            <Text style={{ fontSize: 13, color: '#16a34a' }}>
+                            <Text style={{ fontSize: 13, color: "#16a34a" }}>
                               <CalendarOutlined className="mr-1" />
-                              <span className="font-medium">Thực tế:</span>{' '}
+                              <span className="font-medium">Thực tế:</span>{" "}
                               {selectedActualPeriod}
                             </Text>
                           )}
@@ -353,7 +447,9 @@ const ProcessTab = ({ item }) => {
                   {(selectedStage.description || selectedStage.note) && (
                     <Alert
                       message="Mô tả giai đoạn"
-                      description={selectedStage.description || selectedStage.note}
+                      description={
+                        selectedStage.description || selectedStage.note
+                      }
                       type="info"
                       className="mb-5 rounded-xl border-blue-100 bg-blue-50/50"
                     />
@@ -365,12 +461,21 @@ const ProcessTab = ({ item }) => {
                     <Text className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                       Nhật ký hàng ngày của Tổ trưởng
                     </Text>
-                    <Badge count={stageLogs.length} color="#16a34a" showZero className="ml-2" />
+                    <Badge
+                      count={stageLogs.length}
+                      color="#16a34a"
+                      showZero
+                      className="ml-2"
+                    />
                   </div>
 
                   {stageLogs.length > 0 ? (
                     stageLogs.map((log, logIndex) => (
-                      <DailyLogCard key={log.id || logIndex} log={log} index={logIndex} />
+                      <DailyLogCard
+                        key={log.id || logIndex}
+                        log={log}
+                        index={logIndex}
+                      />
                     ))
                   ) : (
                     <Empty
@@ -381,7 +486,10 @@ const ProcessTab = ({ item }) => {
                   )}
                 </>
               ) : (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chọn một giai đoạn để xem chi tiết" />
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="Chọn một giai đoạn để xem chi tiết"
+                />
               )}
             </div>
           </div>

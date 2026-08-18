@@ -1,57 +1,69 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Input, Select } from 'antd';
-import { ArrowLeftOutlined, SaveOutlined, FileTextOutlined } from '@ant-design/icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { Button, Card, Form, Input, Select } from "antd"
+import {
+  ArrowLeftOutlined,
+  SaveOutlined,
+  FileTextOutlined,
+} from "@ant-design/icons"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import TitleCustom from 'src/components/TitleCustom';
-import { CropCatalogIcon } from 'src/assets/icon/menu/MenuIcons';
-import CropCatalogService from 'src/services/CropCatalogService';
-import { applyApiFieldErrors } from 'src/services/core/apiError';
-import ROUTER from 'src/router/ROUTER';
-import { useSystemKey } from 'src/hooks/useSystemKey';
-import useFormDraft from 'src/hooks/useFormDraft';
-import { getFormDraftKey } from 'src/utils/formDraftKeys';
+import TitleCustom from "src/components/TitleCustom"
+import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
+import CropCatalogService from "src/services/CropCatalogService"
+import { applyApiFieldErrors } from "src/services/core/apiError"
+import ROUTER from "src/router/ROUTER"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import useFormDraft from "src/hooks/useFormDraft"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
 
 const CROP_CATALOG_FIELD_MAPPING = {
-  Name: 'name', name: 'name', Description: 'description', description: 'description',
-  IsActive: 'isActive', isActive: 'isActive',
-};
+  Name: "name",
+  name: "name",
+  Description: "description",
+  description: "description",
+  IsActive: "isActive",
+  isActive: "isActive",
+}
 
 const CatalogCreate = () => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const [form] = Form.useForm();
-  const { refetchSystemKey } = useSystemKey();
-  const storageKey = getFormDraftKey('crop-catalog', 'create');
-  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({ form, storageKey });
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const [form] = Form.useForm()
+  const { refetchSystemKey } = useSystemKey()
+  const storageKey = getFormDraftKey("crop-catalog", "create")
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
+    form,
+    storageKey,
+  })
 
   useEffect(() => {
-    const draft = restoreDraft();
-    if (draft?.data) form.setFieldsValue({ isActive: true, ...draft.data });
-  }, [form, restoreDraft]);
+    const draft = restoreDraft()
+    if (draft?.data) form.setFieldsValue({ isActive: true, ...draft.data })
+  }, [form, restoreDraft])
 
   const createMutation = useMutation({
-    mutationFn: (values) => {
+    mutationFn: values => {
       const payload = {
-        name: values.name.trim().replace(/\s+/g, ' '),
-        description: values.description?.trim().replace(/\s+/g, ' ') || null,
+        name: values.name.trim().replace(/\s+/g, " "),
+        description: values.description?.trim().replace(/\s+/g, " ") || null,
         isActive: values.isActive ?? true,
-      };
+      }
       return CropCatalogService.createCropCatalog(payload, {
-        errorHandling: 'form',
+        errorHandling: "form",
         fieldErrorMapping: CROP_CATALOG_FIELD_MAPPING,
-      });
+      })
     },
     onSuccess: async () => {
-      clearDraft();
-      queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
-      queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
-      await refetchSystemKey();
-      navigate(ROUTER.FM_CROP_CATALOGS);
+      clearDraft()
+      queryClient.invalidateQueries({ queryKey: ["crop-catalogs"] })
+      queryClient.invalidateQueries({ queryKey: ["crop-catalogs-dropdown"] })
+      await refetchSystemKey()
+      navigate(ROUTER.FM_CROP_CATALOGS)
     },
-    onError: (error) => applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING),
-  });
+    onError: error =>
+      applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING),
+  })
 
   return (
     <div className="space-y-6">
@@ -65,7 +77,7 @@ const CatalogCreate = () => {
           Quay lại
         </Button>
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <CropCatalogIcon style={{ fontSize: '24px', color: '#15803d' }} />
+          <CropCatalogIcon style={{ fontSize: "24px", color: "#15803d" }} />
           Thêm danh mục cây trồng
         </TitleCustom>
       </div>
@@ -75,7 +87,7 @@ const CatalogCreate = () => {
           form={form}
           layout="vertical"
           initialValues={{ isActive: true }}
-          onFinish={(values) => createMutation.mutate(values)}
+          onFinish={values => createMutation.mutate(values)}
           onValuesChange={(_, allValues) => saveDraft(allValues)}
           onFinishFailed={() => {}}
           scrollToFirstError
@@ -84,46 +96,69 @@ const CatalogCreate = () => {
             name="name"
             label="Tên loại cây trồng"
             rules={[
-              { required: true, message: 'Vui lòng nhập tên loại cây trồng.' },
+              { required: true, message: "Vui lòng nhập tên loại cây trồng." },
               {
                 validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  const trimmed = value.trim();
+                  if (!value) return Promise.resolve()
+                  const trimmed = value.trim()
                   if (!trimmed) {
-                    return Promise.reject(new Error('Tên loại cây trồng không được chỉ chứa khoảng trắng.'));
+                    return Promise.reject(
+                      new Error(
+                        "Tên loại cây trồng không được chỉ chứa khoảng trắng.",
+                      ),
+                    )
                   }
                   if (trimmed.length > 100) {
-                    return Promise.reject(new Error('Tên loại cây trồng không được vượt quá 100 ký tự.'));
+                    return Promise.reject(
+                      new Error(
+                        "Tên loại cây trồng không được vượt quá 100 ký tự.",
+                      ),
+                    )
                   }
-                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
-                    return Promise.reject(new Error('Tên loại cây trồng không được chứa nhiều khoảng trắng liên tiếp.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                    return Promise.reject(
+                      new Error(
+                        "Tên loại cây trồng không được chứa nhiều khoảng trắng liên tiếp.",
+                      ),
+                    )
                   }
-                  return Promise.resolve();
+                  return Promise.resolve()
                 },
               },
             ]}
           >
-            <Input className="h-11 rounded-lg" placeholder="Nhập tên loại cây trồng" />
+            <Input
+              className="h-11 rounded-lg"
+              placeholder="Nhập tên loại cây trồng"
+            />
           </Form.Item>
 
-          <Form.Item 
-            name="description" 
+          <Form.Item
+            name="description"
             label="Mô tả"
             rules={[
               {
                 validator: (_, value) => {
-                  if (!value) return Promise.resolve();
-                  const trimmed = value.trim();
+                  if (!value) return Promise.resolve()
+                  const trimmed = value.trim()
                   if (!trimmed) {
-                    return Promise.reject(new Error('Mô tả không được chỉ chứa khoảng trắng.'));
+                    return Promise.reject(
+                      new Error("Mô tả không được chỉ chứa khoảng trắng."),
+                    )
                   }
                   if (trimmed.length > 200) {
-                    return Promise.reject(new Error('Mô tả không được vượt quá 200 ký tự.'));
+                    return Promise.reject(
+                      new Error("Mô tả không được vượt quá 200 ký tự."),
+                    )
                   }
-                  if (trimmed !== trimmed.replace(/\s+/g, ' ')) {
-                    return Promise.reject(new Error('Mô tả không được chứa nhiều khoảng trắng liên tiếp.'));
+                  if (trimmed !== trimmed.replace(/\s+/g, " ")) {
+                    return Promise.reject(
+                      new Error(
+                        "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
+                      ),
+                    )
                   }
-                  return Promise.resolve();
+                  return Promise.resolve()
                 },
               },
             ]}
@@ -141,8 +176,8 @@ const CatalogCreate = () => {
             <Select
               className="h-11"
               options={[
-                { value: true, label: 'Hoạt động' },
-                { value: false, label: 'Ngừng hoạt động' },
+                { value: true, label: "Hoạt động" },
+                { value: false, label: "Ngừng hoạt động" },
               ]}
             />
           </Form.Item>
@@ -167,7 +202,7 @@ const CatalogCreate = () => {
         </Form>
       </Card>
     </div>
-  );
-};
+  )
+}
 
-export default CatalogCreate;
+export default CatalogCreate

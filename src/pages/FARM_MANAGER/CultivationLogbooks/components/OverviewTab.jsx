@@ -4,11 +4,11 @@ import {
   EnvironmentOutlined,
   FileTextOutlined,
   TeamOutlined,
-} from '@ant-design/icons'
-import { Card, Empty } from 'antd'
-import { formatDate } from 'src/utils/dateFormatters'
-import { getLandPlotNamesDisplay } from 'src/utils/helpers'
-import SectionTitle from 'src/components/Common/SectionTitle'
+} from "@ant-design/icons"
+import { Card, Empty } from "antd"
+import { formatDate } from "src/utils/dateFormatters"
+import { getLandPlotNamesDisplay } from "src/utils/helpers"
+import SectionTitle from "src/components/Common/SectionTitle"
 
 const EmptyValue = ({ children }) =>
   children || <span className="text-gray-400">Chưa cập nhật</span>
@@ -16,10 +16,11 @@ const EmptyValue = ({ children }) =>
 const getStageName = (stage, index) =>
   stage.stageName || stage.title || stage.name || `Giai đoạn ${index + 1}`
 
-const getStageNote = (stage) => stage.note || stage.description
+const getStageNote = stage => stage.note || stage.description
 
 const OverviewTab = ({ item }) => {
-  const stages = item.cultivationStages || item.productionStages || item.stages || []
+  const stages =
+    item.cultivationStages || item.productionStages || item.stages || []
   const landPlotNames = getLandPlotNamesDisplay(item, null)
 
   return (
@@ -30,41 +31,45 @@ const OverviewTab = ({ item }) => {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
-              label: 'Cây trồng',
+              label: "Cây trồng",
               value: item.cropName,
               icon: <FileTextOutlined />,
             },
             {
-              label: 'Vùng trồng',
+              label: "Vùng trồng",
               value: landPlotNames,
               icon: <EnvironmentOutlined />,
             },
             {
-              label: 'Người giám sát',
+              label: "Người giám sát",
               value: item.supervisorName,
               icon: <TeamOutlined />,
             },
             {
-              label: 'Nông dân thực hiện',
+              label: "Nông dân thực hiện",
               value:
-                item.farmerNames?.join?.(', ') ||
+                item.farmerNames?.join?.(", ") ||
                 item.farmers
-                  ?.map((farmer) => farmer.fullName || farmer.name || farmer.email)
+                  ?.map(
+                    farmer => farmer.fullName || farmer.name || farmer.email,
+                  )
                   .filter(Boolean)
-                  .join(', '),
+                  .join(", "),
               icon: <TeamOutlined />,
             },
             {
-              label: 'Ngày bắt đầu',
+              label: "Ngày bắt đầu",
               value: item.startDate ? formatDate(item.startDate) : null,
               icon: <CalendarOutlined />,
             },
             {
-              label: 'Kết thúc thực tế',
-              value: item.actualEndDate ? formatDate(item.actualEndDate) : 'Chưa hoàn thành',
+              label: "Kết thúc thực tế",
+              value: item.actualEndDate
+                ? formatDate(item.actualEndDate)
+                : "Chưa hoàn thành",
               icon: <ClockCircleOutlined />,
             },
-          ].map((field) => (
+          ].map(field => (
             <div
               key={field.label}
               className="flex min-w-0 gap-3 p-4 border border-gray-100 rounded-2xl bg-gray-50/70"
@@ -108,7 +113,10 @@ const OverviewTab = ({ item }) => {
                   {(stage.startDate || stage.endDate) && (
                     <p className="text-xs text-gray-500 mb-2">
                       <CalendarOutlined className="mr-1" />
-                      {stage.startDate ? formatDate(stage.startDate) : '...'} - {stage.endDate ? formatDate(stage.endDate) : '...'}
+                      {stage.startDate
+                        ? formatDate(stage.startDate)
+                        : "..."} -{" "}
+                      {stage.endDate ? formatDate(stage.endDate) : "..."}
                     </p>
                   )}
                   {getStageNote(stage) && (

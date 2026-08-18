@@ -16,10 +16,30 @@ function notice({ msg = "", desc = "", place, isSuccess = true, type }) {
   const severity = type || (isSuccess ? "success" : "error")
   const isPositive = severity === "success"
   const palette = {
-    success: { background: "#E5F5EB", border: "#86efac", text: "#15803d", desc: "#166534" },
-    error: { background: "#FCCED4", border: "#fca5a5", text: "#b91c1c", desc: "#991b1b" },
-    warning: { background: "#FFF7E6", border: "#facc15", text: "#a16207", desc: "#854d0e" },
-    info: { background: "#E6F4FF", border: "#93c5fd", text: "#1d4ed8", desc: "#1e40af" },
+    success: {
+      background: "#E5F5EB",
+      border: "#86efac",
+      text: "#15803d",
+      desc: "#166534",
+    },
+    error: {
+      background: "#FCCED4",
+      border: "#fca5a5",
+      text: "#b91c1c",
+      desc: "#991b1b",
+    },
+    warning: {
+      background: "#FFF7E6",
+      border: "#facc15",
+      text: "#a16207",
+      desc: "#854d0e",
+    },
+    info: {
+      background: "#E6F4FF",
+      border: "#93c5fd",
+      text: "#1d4ed8",
+      desc: "#1e40af",
+    },
   }[severity] || {
     background: "#E6F4FF",
     border: "#93c5fd",

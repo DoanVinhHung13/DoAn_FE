@@ -6,26 +6,28 @@
  * Bắt buộc phải có VITE_OPENMAP_API_KEY để sử dụng.
  */
 
-const OPENMAP_BASE = 'https://mapapis.openmap.vn/v1'
+const OPENMAP_BASE = "https://mapapis.openmap.vn/v1"
 const OPENMAP_API_KEY = import.meta.env.VITE_OPENMAP_API_KEY
 
-const GEOCODING_ERROR_MESSAGE = 'Không thể tìm kiếm vị trí lúc này. Vui lòng thử lại.'
-const MISSING_API_KEY_MESSAGE = 'Chưa cấu hình API key cho OpenMap.vn. Vui lòng liên hệ quản trị viên.'
+const GEOCODING_ERROR_MESSAGE =
+  "Không thể tìm kiếm vị trí lúc này. Vui lòng thử lại."
+const MISSING_API_KEY_MESSAGE =
+  "Chưa cấu hình API key cho OpenMap.vn. Vui lòng liên hệ quản trị viên."
 
-export const isExternalAbortError = (error) =>
-  error?.name === 'AbortError' || error?.code === 'ABORT_ERR'
+export const isExternalAbortError = error =>
+  error?.name === "AbortError" || error?.code === "ABORT_ERR"
 
 const createGeocodingError = () => {
   const error = new Error(GEOCODING_ERROR_MESSAGE)
-  error.type = 'external-service'
-  error.service = 'openmap'
+  error.type = "external-service"
+  error.service = "openmap"
   return error
 }
 
 const createMissingApiKeyError = () => {
   const error = new Error(MISSING_API_KEY_MESSAGE)
-  error.type = 'missing-config'
-  error.service = 'openmap'
+  error.type = "missing-config"
+  error.service = "openmap"
   return error
 }
 
@@ -35,7 +37,10 @@ const createMissingApiKeyError = () => {
  * Autocomplete: trả về danh sách gợi ý địa chỉ (chưa có tọa độ).
  * Mỗi item có: { place_id, description, mainText, secondaryText }
  */
-export async function autocompleteAddress(query, { signal, location, limit = 10 } = {}) {
+export async function autocompleteAddress(
+  query,
+  { signal, location, limit = 10 } = {},
+) {
   if (!OPENMAP_API_KEY) throw createMissingApiKeyError()
 
   const keyword = query?.trim()
@@ -43,17 +48,17 @@ export async function autocompleteAddress(query, { signal, location, limit = 10 
 
   const params = new URLSearchParams({
     input: keyword,
-    admin_v2: 'true',
+    admin_v2: "true",
     apikey: OPENMAP_API_KEY,
     limit: String(limit),
   })
 
   if (location) {
-    params.set('location', `${location.lat},${location.lng}`)
+    params.set("location", `${location.lat},${location.lng}`)
   }
 
   const response = await fetch(`${OPENMAP_BASE}/autocomplete?${params}`, {
-    headers: { Accept: 'application/json' },
+    headers: { Accept: "application/json" },
     signal,
   })
 
@@ -66,13 +71,13 @@ export async function autocompleteAddress(query, { signal, location, limit = 10 
     throw createGeocodingError()
   }
 
-  if (data?.status !== 'OK' || !Array.isArray(data?.predictions)) return []
+  if (data?.status !== "OK" || !Array.isArray(data?.predictions)) return []
 
-  return data.predictions.map((item) => ({
+  return data.predictions.map(item => ({
     place_id: item.place_id,
     description: item.description,
     mainText: item.structured_formatting?.main_text ?? item.description,
-    secondaryText: item.structured_formatting?.secondary_text ?? '',
+    secondaryText: item.structured_formatting?.secondary_text ?? "",
   }))
 }
 
@@ -85,12 +90,12 @@ export async function getPlaceDetail(placeId, { signal } = {}) {
 
   const params = new URLSearchParams({
     ids: placeId,
-    admin_v2: 'true',
+    admin_v2: "true",
     apikey: OPENMAP_API_KEY,
   })
 
   const response = await fetch(`${OPENMAP_BASE}/place?${params}`, {
-    headers: { Accept: 'application/json' },
+    headers: { Accept: "application/json" },
     signal,
   })
 
@@ -107,9 +112,10 @@ export async function getPlaceDetail(placeId, { signal } = {}) {
   if (!feature) throw createGeocodingError()
 
   const [lng, lat] = feature.geometry?.coordinates ?? []
-  const label = feature.properties?.label ?? ''
+  const label = feature.properties?.label ?? ""
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw createGeocodingError()
+  if (!Number.isFinite(lat) || !Number.isFinite(lng))
+    throw createGeocodingError()
 
   return { latitude: lat, longitude: lng, label }
 }
@@ -133,7 +139,7 @@ export async function searchAddress(query, { signal, limit = 10 } = {}) {
 
   const suggestions = await autocompleteAddress(keyword, { signal, limit })
 
-  return suggestions.map((s) => ({
+  return suggestions.map(s => ({
     id: s.place_id,
     place_id: s.place_id,
     label: s.description,
@@ -151,7 +157,7 @@ export async function searchAddress(query, { signal, limit = 10 } = {}) {
  */
 export async function reverseGeocode(latitude, longitude, { signal } = {}) {
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    return ''
+    return ""
   }
 
   // 1. Thử OpenMap reverse nếu có API Key
@@ -163,7 +169,7 @@ export async function reverseGeocode(latitude, longitude, { signal } = {}) {
         apikey: OPENMAP_API_KEY,
       })
       const response = await fetch(`${OPENMAP_BASE}/reverse?${params}`, {
-        headers: { Accept: 'application/json' },
+        headers: { Accept: "application/json" },
         signal,
       })
       if (response.ok) {
@@ -182,19 +188,22 @@ export async function reverseGeocode(latitude, longitude, { signal } = {}) {
   // 2. Fallback sang OpenStreetMap Nominatim
   try {
     const params = new URLSearchParams({
-      format: 'json',
+      format: "json",
       lat: String(latitude),
       lon: String(longitude),
-      'accept-language': 'vi',
-      zoom: '18',
+      "accept-language": "vi",
+      zoom: "18",
     })
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'FarmManagerApp/1.0',
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?${params}`,
+      {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "FarmManagerApp/1.0",
+        },
+        signal,
       },
-      signal,
-    })
+    )
     if (response.ok) {
       const data = await response.json()
       if (data?.display_name) {
@@ -208,4 +217,3 @@ export async function reverseGeocode(latitude, longitude, { signal } = {}) {
   // 3. Fallback cuối cùng nếu cả 2 API đều không có thông tin
   return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
 }
-

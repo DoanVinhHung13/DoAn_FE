@@ -10,7 +10,14 @@ const typeMap = {
   default: Input,
 }
 
-const InputCustom = ({ label, type, floating = false, className, size = 'middle', ...rest }) => {
+const InputCustom = ({
+  label,
+  type,
+  floating = false,
+  className,
+  size = "middle",
+  ...rest
+}) => {
   const Component = typeMap[type] || Input
   const style = {
     textarea: { minHeight: "80px", overflow: "hidden auto" },
@@ -21,7 +28,9 @@ const InputCustom = ({ label, type, floating = false, className, size = 'middle'
       placeholder={label}
       size={size}
       style={style[type] ? style[type] : {}}
-      className={[floating ? "floating-label" : "", className].filter(Boolean).join(" ")}
+      className={[floating ? "floating-label" : "", className]
+        .filter(Boolean)
+        .join(" ")}
       enterButton={type === "search"}
       {...rest}
     />

@@ -3,13 +3,13 @@ import {
   CloseCircleOutlined,
   EditOutlined,
   UserOutlined,
-} from '@ant-design/icons'
-import { Card, Empty, Timeline, Tag } from 'antd'
-import { useEffect, useState } from 'react'
-import { formatDateTime } from 'src/utils/dateFormatters'
-import SectionTitle from 'src/components/Common/SectionTitle'
-import { getUserDisplayName } from 'src/utils/userDisplayName'
-import { getRoleLabel } from 'src/utils/roleLabels'
+} from "@ant-design/icons"
+import { Card, Empty, Timeline, Tag } from "antd"
+import { useEffect, useState } from "react"
+import { formatDateTime } from "src/utils/dateFormatters"
+import SectionTitle from "src/components/Common/SectionTitle"
+import { getUserDisplayName } from "src/utils/userDisplayName"
+import { getRoleLabel } from "src/utils/roleLabels"
 
 const ReviewHistoryTab = ({ item }) => {
   const [reviewHistory, setReviewHistory] = useState([])
@@ -22,22 +22,32 @@ const ReviewHistoryTab = ({ item }) => {
       // 1. Tạo kế hoạch
       if (item.createdAt) {
         history.push({
-          action: 'CREATED',
-          actor: getRoleLabel('FARM_MANAGER'),
-          actorName: getUserDisplayName(item.createdByName, item.createdBy, item.managerName, item.manager),
+          action: "CREATED",
+          actor: getRoleLabel("FARM_MANAGER"),
+          actorName: getUserDisplayName(
+            item.createdByName,
+            item.createdBy,
+            item.managerName,
+            item.manager,
+          ),
           timestamp: item.createdAt,
-          description: 'Tạo kế hoạch sản xuất và phân công cho giám sát viên',
+          description: "Tạo kế hoạch sản xuất và phân công cho giám sát viên",
         })
       }
 
       // 2. Gửi duyệt
       if (item.submittedAt) {
         history.push({
-          action: 'SUBMITTED_FOR_REVIEW',
-          actor: getRoleLabel('FARM_SUPERVISOR'),
-          actorName: getUserDisplayName(item.submittedByName, item.submittedBy, item.supervisorName, item.supervisor),
+          action: "SUBMITTED_FOR_REVIEW",
+          actor: getRoleLabel("FARM_SUPERVISOR"),
+          actorName: getUserDisplayName(
+            item.submittedByName,
+            item.submittedBy,
+            item.supervisorName,
+            item.supervisor,
+          ),
           timestamp: item.submittedAt,
-          description: 'Gửi yêu cầu phê duyệt nhật ký',
+          description: "Gửi yêu cầu phê duyệt nhật ký",
         })
       }
 
@@ -45,15 +55,25 @@ const ReviewHistoryTab = ({ item }) => {
       if (item.editHistory && Array.isArray(item.editHistory)) {
         item.editHistory.forEach(edit => {
           history.push({
-            action: 'EDITED',
-            actor: getRoleLabel(edit.role, getRoleLabel('FARM_SUPERVISOR')),
-            actorName: getUserDisplayName(edit.editorName, edit.userName, edit.editor, edit.updatedBy, edit.createdBy),
+            action: "EDITED",
+            actor: getRoleLabel(edit.role, getRoleLabel("FARM_SUPERVISOR")),
+            actorName: getUserDisplayName(
+              edit.editorName,
+              edit.userName,
+              edit.editor,
+              edit.updatedBy,
+              edit.createdBy,
+            ),
             timestamp: edit.editedAt || edit.timestamp,
-            description: edit.description || `Biên tập mô tả của công việc "${edit.taskName || 'công việc'}"`,
-            changes: edit.changes ? {
-              before: edit.changes.before || edit.changes.oldValue,
-              after: edit.changes.after || edit.changes.newValue,
-            } : null,
+            description:
+              edit.description ||
+              `Biên tập mô tả của công việc "${edit.taskName || "công việc"}"`,
+            changes: edit.changes
+              ? {
+                  before: edit.changes.before || edit.changes.oldValue,
+                  after: edit.changes.after || edit.changes.newValue,
+                }
+              : null,
           })
         })
       }
@@ -61,64 +81,75 @@ const ReviewHistoryTab = ({ item }) => {
       // 4. Phê duyệt hoặc Từ chối
       if (item.reviewedAt) {
         history.push({
-          action: item.reviewStatus === 'APPROVED' ? 'APPROVED' : item.reviewStatus === 'REJECTED' ? 'REJECTED' : 'REVIEWED',
-          actor: getRoleLabel('FARM_MANAGER'),
-          actorName: getUserDisplayName(item.reviewedByName, item.reviewerName, item.reviewedBy, item.reviewer),
+          action:
+            item.reviewStatus === "APPROVED"
+              ? "APPROVED"
+              : item.reviewStatus === "REJECTED"
+                ? "REJECTED"
+                : "REVIEWED",
+          actor: getRoleLabel("FARM_MANAGER"),
+          actorName: getUserDisplayName(
+            item.reviewedByName,
+            item.reviewerName,
+            item.reviewedBy,
+            item.reviewer,
+          ),
           timestamp: item.reviewedAt,
-          description: item.reviewStatus === 'APPROVED' 
-            ? 'Phê duyệt nhật ký và cho phép tạo mã QR truy xuất nguồn gốc'
-            : item.reviewStatus === 'REJECTED'
-            ? 'Từ chối nhật ký và yêu cầu chỉnh sửa lại'
-            : 'Xét duyệt nhật ký',
+          description:
+            item.reviewStatus === "APPROVED"
+              ? "Phê duyệt nhật ký và cho phép tạo mã QR truy xuất nguồn gốc"
+              : item.reviewStatus === "REJECTED"
+                ? "Từ chối nhật ký và yêu cầu chỉnh sửa lại"
+                : "Xét duyệt nhật ký",
           reason: item.rejectionReason,
         })
       }
 
       // Sort by timestamp
       history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-      
+
       setReviewHistory(history)
     }
 
     parseReviewHistory()
   }, [item])
 
-  const getTimelineColor = (action) => {
+  const getTimelineColor = action => {
     switch (action) {
-      case 'APPROVED':
-        return 'green'
-      case 'REJECTED':
-        return 'red'
-      case 'SUBMITTED_FOR_REVIEW':
-        return 'blue'
-      case 'EDITED':
-        return 'orange'
+      case "APPROVED":
+        return "green"
+      case "REJECTED":
+        return "red"
+      case "SUBMITTED_FOR_REVIEW":
+        return "blue"
+      case "EDITED":
+        return "orange"
       default:
-        return 'gray'
+        return "gray"
     }
   }
 
-  const getTimelineIcon = (action) => {
+  const getTimelineIcon = action => {
     switch (action) {
-      case 'APPROVED':
+      case "APPROVED":
         return <CheckCircleOutlined />
-      case 'REJECTED':
+      case "REJECTED":
         return <CloseCircleOutlined />
-      case 'EDITED':
+      case "EDITED":
         return <EditOutlined />
       default:
         return <UserOutlined />
     }
   }
 
-  const getActionLabel = (action) => {
+  const getActionLabel = action => {
     const labels = {
-      CREATED: 'Tạo kế hoạch',
-      SUBMITTED_FOR_REVIEW: 'Gửi duyệt',
-      EDITED: 'Chỉnh sửa',
-      APPROVED: 'Phê duyệt',
-      REJECTED: 'Từ chối',
-      REVIEWED: 'Xét duyệt',
+      CREATED: "Tạo kế hoạch",
+      SUBMITTED_FOR_REVIEW: "Gửi duyệt",
+      EDITED: "Chỉnh sửa",
+      APPROVED: "Phê duyệt",
+      REJECTED: "Từ chối",
+      REVIEWED: "Xét duyệt",
     }
     return labels[action] || action
   }
@@ -131,13 +162,16 @@ const ReviewHistoryTab = ({ item }) => {
         {reviewHistory.length > 0 ? (
           <Timeline
             mode="left"
-            items={reviewHistory.map((history) => ({
+            items={reviewHistory.map(history => ({
               color: getTimelineColor(history.action),
               dot: getTimelineIcon(history.action),
               children: (
                 <div className="pb-4">
                   <div className="flex items-center gap-3 mb-2">
-                    <Tag color={getTimelineColor(history.action)} className="font-semibold">
+                    <Tag
+                      color={getTimelineColor(history.action)}
+                      className="font-semibold"
+                    >
                       {getActionLabel(history.action)}
                     </Tag>
                     <span className="text-sm font-medium text-gray-800">
@@ -182,7 +216,7 @@ const ReviewHistoryTab = ({ item }) => {
                   )}
 
                   {/* Lý do từ chối nếu có */}
-                  {history.action === 'REJECTED' && history.reason && (
+                  {history.action === "REJECTED" && history.reason && (
                     <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                       <p className="text-xs font-semibold text-red-700 mb-1">
                         Lý do từ chối:
@@ -211,27 +245,42 @@ const ReviewHistoryTab = ({ item }) => {
           <div className="flex items-center justify-between gap-3 pb-4 border-b border-gray-100">
             <span className="text-sm text-gray-500">Trạng thái</span>
             <Tag
-              color={item.reviewStatus === 'APPROVED' ? 'green' : item.reviewStatus === 'REJECTED' ? 'red' : 'gold'}
+              color={
+                item.reviewStatus === "APPROVED"
+                  ? "green"
+                  : item.reviewStatus === "REJECTED"
+                    ? "red"
+                    : "gold"
+              }
               className="px-3 py-1 font-semibold"
             >
-              {item.reviewStatus === 'APPROVED' ? 'Đã duyệt' : item.reviewStatus === 'REJECTED' ? 'Bị từ chối' : 'Đã hoàn thành'}
+              {item.reviewStatus === "APPROVED"
+                ? "Đã duyệt"
+                : item.reviewStatus === "REJECTED"
+                  ? "Bị từ chối"
+                  : "Đã hoàn thành"}
             </Tag>
           </div>
-          
+
           {[
             {
-              label: 'Gửi duyệt',
-              value: item.submittedAt ? formatDateTime(item.submittedAt) : 'Chưa gửi duyệt',
+              label: "Gửi duyệt",
+              value: item.submittedAt
+                ? formatDateTime(item.submittedAt)
+                : "Chưa gửi duyệt",
             },
             {
-              label: 'Xét duyệt',
-              value: item.reviewedAt ? formatDateTime(item.reviewedAt) : 'Chưa xét duyệt',
+              label: "Xét duyệt",
+              value: item.reviewedAt
+                ? formatDateTime(item.reviewedAt)
+                : "Chưa xét duyệt",
             },
             {
-              label: 'Người xét duyệt',
-              value: item.reviewedByName || item.reviewerName || 'Chưa chỉ định',
+              label: "Người xét duyệt",
+              value:
+                item.reviewedByName || item.reviewerName || "Chưa chỉ định",
             },
-          ].map((field) => (
+          ].map(field => (
             <div key={field.label}>
               <p className="mb-1 text-xs font-semibold tracking-wide text-gray-400 uppercase">
                 {field.label}

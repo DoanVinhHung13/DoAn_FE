@@ -7,14 +7,14 @@
  *   GET  /cultivation-tasks/{id}
  *   POST /api/cultivation-logs/{id}/approve         — Phê duyệt nhật ký chính thức với modifiedDescription
  */
-import React, { useEffect, useState } from 'react'
-import { Modal, Form, Input, Image, Alert, Collapse, message, Spin } from 'antd'
-import { EditOutlined } from '@ant-design/icons'
+import React, { useEffect, useState } from "react"
+import { Modal, Form, Input, Image, Alert, Collapse, message, Spin } from "antd"
+import { EditOutlined } from "@ant-design/icons"
 import {
   buildDataSentence,
   loadLeaderCompileData,
   saveCompiledDescription,
-} from './compileLogHelpers'
+} from "./compileLogHelpers"
 
 const { TextArea } = Input
 
@@ -38,18 +38,26 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
     const load = async () => {
       setLoading(true)
       try {
-        const { summary, leaderSubmittedDescription, submittedLogId: logId, isApproved: approved } =
-          await loadLeaderCompileData(task.id)
+        const {
+          summary,
+          leaderSubmittedDescription,
+          submittedLogId: logId,
+          isApproved: approved,
+        } = await loadLeaderCompileData(task.id)
         setLeaderSummary(summary)
         setOfficialLogId(logId)
         setIsApproved(approved)
         form.setFieldsValue({
-          supervisorDescription: leaderSubmittedDescription || summary?.descriptionSummary || summary?.description || '',
+          supervisorDescription:
+            leaderSubmittedDescription ||
+            summary?.descriptionSummary ||
+            summary?.description ||
+            "",
         })
       } catch {
         setLeaderSummary(null)
         form.setFieldsValue({
-          supervisorDescription: '',
+          supervisorDescription: "",
         })
       } finally {
         setLoading(false)
@@ -67,13 +75,20 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
       setSaving(true)
 
       const targetStageId = task?.cultivationStageId || task?.stageId
-      const taskId = task?.taskId || task?.cultivationTaskId || task?.workTaskId || task?.id
+      const taskId =
+        task?.taskId || task?.cultivationTaskId || task?.workTaskId || task?.id
       if (!taskId) {
-        message.error('Không xác định được công việc cần biên soạn bản tổng hợp.')
+        message.error(
+          "Không xác định được công việc cần biên soạn bản tổng hợp.",
+        )
         return
       }
 
-      await saveCompiledDescription(targetStageId, taskId, values.supervisorDescription)
+      await saveCompiledDescription(
+        targetStageId,
+        taskId,
+        values.supervisorDescription,
+      )
 
       onSuccess?.()
     } catch {
@@ -91,14 +106,18 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
       onCancel={onCancel}
       title={
         <div className="flex items-center gap-2">
-          <EditOutlined className="text-green-600" /> Biên soạn nhật ký chính thức
+          <EditOutlined className="text-green-600" /> Biên soạn nhật ký chính
+          thức
         </div>
       }
       onOk={handleCompile}
       okText="Lưu & Duyệt nhật ký"
       cancelText="Hủy"
       confirmLoading={saving}
-      okButtonProps={{ className: 'bg-green-600', disabled: isApproved || !officialLogId }}
+      okButtonProps={{
+        className: "bg-green-600",
+        disabled: isApproved || !officialLogId,
+      }}
       width={720}
       destroyOnClose
     >
@@ -112,11 +131,15 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
             <div className="mb-4">
               <Collapse
                 bordered={false}
-                defaultActiveKey={['data']}
+                defaultActiveKey={["data"]}
                 className="bg-transparent border border-green-100 rounded-xl overflow-hidden"
               >
                 <Collapse.Panel
-                  header={<span className="font-semibold text-green-700">Báo cáo hoàn thành từ người phụ trách</span>}
+                  header={
+                    <span className="font-semibold text-green-700">
+                      Báo cáo hoàn thành từ người phụ trách
+                    </span>
+                  }
                   key="data"
                 >
                   <div className="space-y-3">
@@ -134,7 +157,11 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
                             {leaderSummary.images.map((img, idx) => (
                               <Image
                                 key={img.id || idx}
-                                src={typeof img === 'string' ? img : (img.url ?? null)}
+                                src={
+                                  typeof img === "string"
+                                    ? img
+                                    : (img.url ?? null)
+                                }
                                 width={80}
                                 height={80}
                                 className="rounded-lg object-cover"
@@ -151,9 +178,15 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
                       </div>
                     )}
 
-                    {(leaderSummary.leaderSubmittedDescription || leaderSummary.descriptionSummary || leaderSummary.description) && (
+                    {(leaderSummary.leaderSubmittedDescription ||
+                      leaderSummary.descriptionSummary ||
+                      leaderSummary.description) && (
                       <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-sm italic text-blue-900">
-                        "{leaderSummary.leaderSubmittedDescription || leaderSummary.descriptionSummary || leaderSummary.description}"
+                        "
+                        {leaderSummary.leaderSubmittedDescription ||
+                          leaderSummary.descriptionSummary ||
+                          leaderSummary.description}
+                        "
                       </div>
                     )}
                   </div>
@@ -181,7 +214,7 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
             <Form.Item
               name="supervisorDescription"
               label="Mô tả (giám sát viên biên tập)"
-              rules={[{ required: true, message: 'Nhập mô tả nhật ký' }]}
+              rules={[{ required: true, message: "Nhập mô tả nhật ký" }]}
               extra="Viết lại theo văn phong chuẩn nhật ký canh tác."
             >
               <TextArea
@@ -195,12 +228,12 @@ const CompileLogModal = ({ open, onCancel, onSuccess, task }) => {
               <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
                 Preview nhật ký cuối
               </div>
-              <Form.Item noStyle dependencies={['supervisorDescription']}>
+              <Form.Item noStyle dependencies={["supervisorDescription"]}>
                 {({ getFieldValue }) => (
                   <div className="rounded-xl bg-green-50 border border-green-100 p-4 text-sm text-green-900">
                     <span className="font-mono">{dataSentence}</span>
-                    {getFieldValue('supervisorDescription') && (
-                      <span> — {getFieldValue('supervisorDescription')}</span>
+                    {getFieldValue("supervisorDescription") && (
+                      <span> — {getFieldValue("supervisorDescription")}</span>
                     )}
                   </div>
                 )}

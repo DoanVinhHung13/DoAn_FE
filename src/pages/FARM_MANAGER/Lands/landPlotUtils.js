@@ -1,18 +1,20 @@
-import { formatAreaUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
+import {
+  formatAreaUnit,
+  MEASUREMENT_UNITS,
+} from "src/constants/measurementUnits"
 
 // ── Constants: Messages ──────────────────────────────────────────────────────
 
 /** Thông báo khi danh sách vùng trồng rỗng */
-export const EMPTY_LAND_MESSAGE = 'Ko tìm thấy dữ liệu'
+export const EMPTY_LAND_MESSAGE = "Ko tìm thấy dữ liệu"
 
 /** Thông báo ranh giới bị chồng lấn */
 export const MSG_LM_25 =
-  'Ranh giới lô đất bị chồng lấn với lô đất đã tồn tại trong hệ thống.'
+  "Ranh giới lô đất bị chồng lấn với lô đất đã tồn tại trong hệ thống."
 
 /** Thông báo xác nhận đổi trạng thái */
 export const MSG_LM_26 =
-  'Bạn có chắc chắn muốn thay đổi trạng thái hoạt động của lô đất này không?'
-
+  "Bạn có chắc chắn muốn thay đổi trạng thái hoạt động của lô đất này không?"
 
 // ── API Response Normalizers ─────────────────────────────────────────────────
 
@@ -23,7 +25,7 @@ export const MSG_LM_26 =
  * @param {Object} response - Raw response từ axios/service
  * @returns {Object} Dữ liệu chi tiết đã unwrap
  */
-export const normalizeApiDetail = (response) => {
+export const normalizeApiDetail = response => {
   const payload = response?.data ?? response ?? {}
   return payload?.data ?? payload
 }
@@ -35,9 +37,9 @@ export const normalizeApiDetail = (response) => {
  * @param {Object} response - Raw response từ axios/service
  * @returns {{ items: Array, total: number }}
  */
-export const normalizeLandPlotResponse = (response) => {
+export const normalizeLandPlotResponse = response => {
   const data = response?.data?.data ?? response?.data ?? response
-  const items = Array.isArray(data) ? data : (data?.items || [])
+  const items = Array.isArray(data) ? data : data?.items || []
   const total = data?.totalItems ?? data?.totalCount ?? items.length
   return { items, total }
 }
@@ -45,19 +47,25 @@ export const normalizeLandPlotResponse = (response) => {
 // ── Status Helpers ───────────────────────────────────────────────────────────
 
 /** Lấy ID từ item */
-export const getItemId = (item) => item?.id
+export const getItemId = item => item?.id
 
 /** Kiểm tra vùng trồng đang hoạt động hay không.
  * API có thể trả về cờ isActive hoặc chỉ trả về status.
  */
-export const isLandPlotActive = (item) => {
-  if (typeof item?.isActive === 'boolean') return item.isActive
+export const isLandPlotActive = item => {
+  if (typeof item?.isActive === "boolean") return item.isActive
 
-  const status = String(item?.status ?? item?.Status ?? '').trim().toLowerCase()
-  if (['inactive', 'disabled', 'deleted', 'stopped', 'ngừng hoạt động'].includes(status)) {
+  const status = String(item?.status ?? item?.Status ?? "")
+    .trim()
+    .toLowerCase()
+  if (
+    ["inactive", "disabled", "deleted", "stopped", "ngừng hoạt động"].includes(
+      status,
+    )
+  ) {
     return false
   }
-  if (['active', 'enabled', 'đang hoạt động', 'hoạt động'].includes(status)) {
+  if (["active", "enabled", "đang hoạt động", "hoạt động"].includes(status)) {
     return true
   }
 
@@ -66,60 +74,62 @@ export const isLandPlotActive = (item) => {
 
 const LAND_PLOT_CULTIVATION_STATUS = {
   AVAILABLE: {
-    label: 'Đang trống',
-    badgeClass: 'bg-slate-100 text-slate-600',
+    label: "Đang trống",
+    badgeClass: "bg-slate-100 text-slate-600",
   },
   PLANNED: {
-    label: 'Đã lên kế hoạch',
-    badgeClass: 'bg-amber-50 text-amber-700',
+    label: "Đã lên kế hoạch",
+    badgeClass: "bg-amber-50 text-amber-700",
   },
   IN_PROGRESS: {
-    label: 'Đang trồng',
-    badgeClass: 'bg-sky-50 text-sky-700',
+    label: "Đang trồng",
+    badgeClass: "bg-sky-50 text-sky-700",
   },
 }
 
 /** Trạng thái canh tác được tính từ các nhật ký đang giữ vùng trồng. */
-export const getCultivationStatus = (item) =>
-  String(item?.cultivationStatus ?? item?.CultivationStatus ?? 'AVAILABLE').toUpperCase()
+export const getCultivationStatus = item =>
+  String(
+    item?.cultivationStatus ?? item?.CultivationStatus ?? "AVAILABLE",
+  ).toUpperCase()
 
-export const getCultivationStatusMeta = (item) => {
+export const getCultivationStatusMeta = item => {
   const status = getCultivationStatus(item)
   return {
     status,
     ...(LAND_PLOT_CULTIVATION_STATUS[status] || {
-      label: 'Chưa xác định',
-      badgeClass: 'bg-slate-100 text-slate-600',
+      label: "Chưa xác định",
+      badgeClass: "bg-slate-100 text-slate-600",
     }),
   }
 }
 
-export const isLandPlotCultivationLocked = (item) =>
-  ['PLANNED', 'IN_PROGRESS'].includes(getCultivationStatus(item))
+export const isLandPlotCultivationLocked = item =>
+  ["PLANNED", "IN_PROGRESS"].includes(getCultivationStatus(item))
 
-export const getCultivationLogbookName = (item) =>
+export const getCultivationLogbookName = item =>
   item?.cultivationLogbookName ?? item?.CultivationLogbookName
 
-export const getCultivationCropName = (item) =>
+export const getCultivationCropName = item =>
   item?.cultivationCropName ?? item?.CultivationCropName
 
 // ── Display Formatters ───────────────────────────────────────────────────────
 
 /** Hiển thị giá trị hoặc "Chưa cập nhật" nếu rỗng */
-export const displayValue = (value) => value || 'Chưa cập nhật'
+export const displayValue = value => value || "Chưa cập nhật"
 
 /** Format diện tích để hiển thị (VD: "1.5 ha" hoặc "500 m²") */
 export const formatLandArea = (area, unit = MEASUREMENT_UNITS.SQUARE_METER) => {
-  if (area == null || area === '') return 'Chưa cập nhật'
+  if (area == null || area === "") return "Chưa cập nhật"
   const raw = String(area).trim()
-  const normalized = raw.includes(',')
-    ? raw.replace(/\./g, '').replace(',', '.')
+  const normalized = raw.includes(",")
+    ? raw.replace(/\./g, "").replace(",", ".")
     : /^\d{1,3}(?:\.\d{3})+$/.test(raw)
-      ? raw.replace(/\./g, '')
+      ? raw.replace(/\./g, "")
       : raw
   const numeric = Number(normalized)
   if (!Number.isFinite(numeric)) return displayValue(area)
-  return `${numeric.toLocaleString('vi-VN')} ${formatAreaUnit(unit)}`
+  return `${numeric.toLocaleString("vi-VN")} ${formatAreaUnit(unit)}`
 }
 
 // ── Boundary Helpers ─────────────────────────────────────────────────────────
@@ -128,9 +138,9 @@ export const formatLandArea = (area, unit = MEASUREMENT_UNITS.SQUARE_METER) => {
  * Đảm bảo boundaryJson luôn là string (để gửi API đúng format).
  * Nếu là object → JSON.stringify, nếu đã là string → giữ nguyên.
  */
-export const ensureBoundaryString = (boundary) => {
+export const ensureBoundaryString = boundary => {
   if (!boundary) return null
-  if (typeof boundary === 'string') return boundary
+  if (typeof boundary === "string") return boundary
   return JSON.stringify(boundary)
 }
 
@@ -139,12 +149,11 @@ export const ensureBoundaryString = (boundary) => {
  * @param {string|Error} msgOrError - Message hoặc Error object
  * @returns {boolean}
  */
-export const isOverlapApiError = (msgOrError) => {
-  const text = typeof msgOrError === 'string'
-    ? msgOrError
-    : msgOrError?.message || ''
+export const isOverlapApiError = msgOrError => {
+  const text =
+    typeof msgOrError === "string" ? msgOrError : msgOrError?.message || ""
   const lower = text.toLowerCase()
-  return lower.includes('overlap') || text.includes('chồng')
+  return lower.includes("overlap") || text.includes("chồng")
 }
 
 // ── Payload Builder ──────────────────────────────────────────────────────────
@@ -160,7 +169,7 @@ export const buildLandPlotPayload = (values, polygonData) => {
   const areaM2 = polygonData?.areaM2 || 0
   // Ưu tiên giá trị user nhập tay; fallback sang areaM2 từ polygon nếu form trống
   const area =
-    values.area !== undefined && values.area !== null && values.area !== ''
+    values.area !== undefined && values.area !== null && values.area !== ""
       ? Number(Number(values.area).toFixed(2))
       : Number((areaM2 || 0).toFixed(2))
 
@@ -192,6 +201,6 @@ export const buildLandPlotPayload = (values, polygonData) => {
     longitude: longitude ?? null,
     boundaryJson: ensureBoundaryString(polygonData?.boundaryJson),
     description: values.description?.trim() || null,
-    status: values.status || 'Active',
+    status: values.status || "Active",
   }
 }

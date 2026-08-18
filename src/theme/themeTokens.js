@@ -1,4 +1,4 @@
-import designTokens from './designTokens'
+import designTokens from "./designTokens"
 
 export const themeTokens = {
   colorPrimary: designTokens.colors.primary,

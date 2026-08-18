@@ -1,19 +1,19 @@
-import { useEffect, useRef } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { useSelector } from 'react-redux'
-import STORAGE, { getStorage } from 'src/redux/storage'
-import signalRService from 'src/components/SocketWrapper'
-import { logDevDiagnostic } from 'src/utils/safeDiagnostic'
+import { useEffect, useRef } from "react"
+import { useQueryClient } from "@tanstack/react-query"
+import { useSelector } from "react-redux"
+import STORAGE, { getStorage } from "src/redux/storage"
+import signalRService from "src/components/SocketWrapper"
+import { logDevDiagnostic } from "src/utils/safeDiagnostic"
 
 const INVALIDATION_DELAY_MS = 150
 const RECONNECT_DELAY_MS = [0, 2000, 5000, 10000, 30000]
 const GROUP_MEMBERSHIP_ENTITIES = new Set([
-  'CultivationLogbook',
-  'CultivationLogbookFarmerAssignment',
-  'CultivationTask',
-  'CultivationTaskAssignee',
-  'LandPlot',
-  'LandPlotSupervisorAssignment',
+  "CultivationLogbook",
+  "CultivationLogbookFarmerAssignment",
+  "CultivationTask",
+  "CultivationTaskAssignee",
+  "LandPlot",
+  "LandPlotSupervisorAssignment",
 ])
 
 const getEntityName = change => change?.entityName || change?.EntityName
@@ -43,19 +43,19 @@ const RealtimeSync = () => {
     const invalidateActiveQueries = () => {
       clearTimeout(invalidationTimer.current)
       invalidationTimer.current = setTimeout(() => {
-        queryClient.invalidateQueries({ refetchType: 'active' })
+        queryClient.invalidateQueries({ refetchType: "active" })
       }, INVALIDATION_DELAY_MS)
     }
 
     const invalidateNotifications = () => {
       queryClient.invalidateQueries({
-        queryKey: ['notifications'],
-        refetchType: 'active',
+        queryKey: ["notifications"],
+        refetchType: "active",
       })
     }
 
     const refreshGroupsNow = () => {
-      signalRService.invoke('RefreshGroups').catch(() => {})
+      signalRService.invoke("RefreshGroups").catch(() => {})
     }
 
     const refreshGroups = change => {
@@ -76,10 +76,12 @@ const RealtimeSync = () => {
     }
 
     const scheduleConnect = () => {
-      if (disposed || reconnectTimer.current || !getStorage(STORAGE.TOKEN)) return
-      const delay = RECONNECT_DELAY_MS[
-        Math.min(retryAttempt, RECONNECT_DELAY_MS.length - 1)
-      ]
+      if (disposed || reconnectTimer.current || !getStorage(STORAGE.TOKEN))
+        return
+      const delay =
+        RECONNECT_DELAY_MS[
+          Math.min(retryAttempt, RECONNECT_DELAY_MS.length - 1)
+        ]
       retryAttempt += 1
       reconnectTimer.current = setTimeout(() => {
         reconnectTimer.current = null
@@ -96,14 +98,14 @@ const RealtimeSync = () => {
           return
         }
 
-        signalRService.on('data-changed', handleDataChanged)
-        signalRService.on('notification-changed', invalidateNotifications)
-        signalRService.on('qr-stats-updated', invalidateActiveQueries)
+        signalRService.on("data-changed", handleDataChanged)
+        signalRService.on("notification-changed", invalidateNotifications)
+        signalRService.on("qr-stats-updated", invalidateActiveQueries)
         retryAttempt = 0
         refreshGroupsNow()
         invalidateActiveQueries()
       } catch (error) {
-        logDevDiagnostic('realtime-connect', error)
+        logDevDiagnostic("realtime-connect", error)
         scheduleConnect()
       }
     }
@@ -116,9 +118,9 @@ const RealtimeSync = () => {
 
     return () => {
       disposed = true
-      signalRService.off('data-changed', handleDataChanged)
-      signalRService.off('notification-changed', invalidateNotifications)
-      signalRService.off('qr-stats-updated', invalidateActiveQueries)
+      signalRService.off("data-changed", handleDataChanged)
+      signalRService.off("notification-changed", invalidateNotifications)
+      signalRService.off("qr-stats-updated", invalidateActiveQueries)
       unsubscribeReconnect()
       unsubscribeClosed()
       clearTimeout(invalidationTimer.current)
