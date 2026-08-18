@@ -67,6 +67,7 @@ import PesticideService from "src/services/PesticideService"
 import UploadService from "src/services/UploadService"
 import { applyApiFieldErrors, normalizeApiError } from "src/services/core/apiError"
 import { formatAreaUnit, getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
+import { CULTIVATION_TASK_TYPES, normalizeCultivationTaskType } from "src/constants/cultivationTask"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
 import { formatDate, getLocalNow } from "src/utils/dateFormatters"
 import { formatMeasurementValue } from "src/utils/materialRecommendations"
@@ -116,6 +117,7 @@ const getHarvestQuantity = log =>
   )
 
 const isHarvestTaskData = task => String(task?.taskType || '').trim().toUpperCase() === 'HARVEST'
+const isMaterialTaskData = task => normalizeCultivationTaskType(task?.taskType) === CULTIVATION_TASK_TYPES.MATERIAL
 
 const toFertilizerOptions = list =>
   (list || []).map(item => {
@@ -406,8 +408,8 @@ const DailyLog = () => {
         executedArea: values.executedArea || 0,
         harvestQuantity: isHarvestTask ? values.harvestQuantity : null,
         harvestUnit: isHarvestTask ? HARVEST_UNIT : null,
-        fertilizers: isHarvestTask ? [] : mapFertilizers(values.fertilizers),
-        pesticides: isHarvestTask ? [] : mapPesticides(values.pesticides),
+        fertilizers: isMaterialTask ? mapFertilizers(values.fertilizers) : [],
+        pesticides: isMaterialTask ? mapPesticides(values.pesticides) : [],
         images: imageUrls.map(url => ({ url })),
       }
 
@@ -596,6 +598,7 @@ const DailyLog = () => {
   const statusCfg = getTaskStatus(task.status)
   const isViewOnly = !canWriteDailyLog(task.status)
   const isHarvestTask = isHarvestTaskData(task)
+  const isMaterialTask = isMaterialTaskData(task)
   const harvestedArea = dailyLogs.reduce((total, log) => total + Number(log.executedArea || 0), 0)
   const remainingHarvestArea = Math.max(0, Number(task.totalPlanArea || 0) - harvestedArea)
   const harvestedQuantity = dailyLogs.reduce(
@@ -920,7 +923,7 @@ const DailyLog = () => {
               </Card>
             )}
 
-            {!isHarvestTask && (
+            {isMaterialTask && (
               <>
                 <Card
                   bordered={false}
