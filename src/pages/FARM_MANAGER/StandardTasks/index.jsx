@@ -144,7 +144,7 @@ const TasksManagement = () => {
       title: 'Mô tả',
       dataIndex: 'description',
       key: 'description',
-      width: '34%',
+      width: '32%',
       render: (v) => (
         <span className="text-sm text-gray-600">{v || '—'}</span>
       ),
@@ -160,21 +160,23 @@ const TasksManagement = () => {
       title: 'Danh mục cây trồng',
       dataIndex: 'cropCatalogName',
       key: 'cropCatalogName',
-      width: '18%',
+      width: '17%',
       render: (v) => <span className="text-sm text-gray-600">{v || '—'}</span>,
     },
     {
       title: 'Cây trồng',
       dataIndex: 'cropName',
       key: 'cropName',
-      width: '17%',
+      width: '11%',
       render: (v) => <span className="text-sm font-semibold text-gray-700">{v || '—'}</span>,
     },
     {
       title: 'Hành động',
       key: 'actions',
-      width: '8%',
+      width: 96,
       align: 'center',
+      className: 'task-catalog-actions-column',
+      onHeaderCell: () => ({ className: 'task-catalog-actions-column' }),
       render: (_, record) => {
         return (
           <div className="flex items-center justify-center gap-2">
