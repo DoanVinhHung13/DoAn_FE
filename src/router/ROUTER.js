@@ -17,8 +17,6 @@ const ROUTER = {
   NOTIFICATIONS_DETAIL: "/notifications/:id",
 
   // ── Public Pages ──────────────────────────────────────────────────────────
-  NEWS: "/news",
-  NEWS_DETAIL: "/news/:id",
   TCVN: "/reference/tcvn",
   TRACE: "/trace/:qrCode",
 

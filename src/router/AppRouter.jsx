@@ -6,11 +6,7 @@ import LayoutCommon from "src/components/Common/LayoutCommon"
 import LayoutAdmin from "src/components/Layout/LayoutAdmin"
 
 // ── SupportPage Guards ─────────────────────────────────────────────────────────
-const PrivateRoutes = React.lazy(
-  () => import("src/pages/SupportPage/PrivateRoutes"),
-)
-const GuestRoute = React.lazy(() => import("src/pages/SupportPage/GuestRoute"))
-import { ProtectedRoute } from "src/router/guards"
+import { ProtectedRoute, GuestRoute, PrivateRoutes } from "src/router/guards"
 import { ROLES } from "src/constants/roles"
 
 // ── Lazy-loaded pages ─────────────────────────────────────────────────────────
@@ -22,12 +18,6 @@ const ForgotPassword = React.lazy(
 )
 const NotFound = React.lazy(() => import("../pages/SupportPage/NotFound"))
 const Forbidden = React.lazy(() => import("../pages/ANONYMOUS/Forbidden"))
-const NewsListAll = React.lazy(
-  () => import("../pages/ANONYMOUS/News/NewsListAll"),
-)
-const NewsDetail = React.lazy(
-  () => import("../pages/ANONYMOUS/News/NewsDetail"),
-)
 const TCVNReference = React.lazy(
   () => import("../pages/ANONYMOUS/Reference/TCVNReference"),
 )
@@ -38,7 +28,7 @@ const AccountInfo = React.lazy(() => import("../pages/USER/AccountInfo"))
 const ChangePassword = React.lazy(() => import("../pages/USER/ChangePassword"))
 const Notifications = React.lazy(() => import("../pages/USER/Notifications"))
 const NotificationDetail = React.lazy(
-  () => import("../pages/USER/NotificationDetail"),
+  () => import("../pages/USER/Notifications/NotificationDetail"),
 )
 const Trace = React.lazy(() => import("../pages/ANONYMOUS/Trace"))
 
@@ -149,28 +139,28 @@ const FarmManagerNotifications = React.lazy(
   () => import("../pages/FARM_MANAGER/Notifications"),
 )
 const FarmManagerViewFertilizers = React.lazy(
-  () => import("../pages/FARM_MANAGER/ViewFertilizers"),
+  () => import("../pages/FARM_MANAGER/Fertilizers"),
 )
 const FarmManagerFertilizerCreate = React.lazy(
-  () => import("../pages/FARM_MANAGER/ViewFertilizers/FertilizerCreate"),
+  () => import("../pages/FARM_MANAGER/Fertilizers/FertilizerCreate"),
 )
 const FarmManagerFertilizerDetail = React.lazy(
-  () => import("../pages/FARM_MANAGER/ViewFertilizers/FertilizerDetail"),
+  () => import("../pages/FARM_MANAGER/Fertilizers/FertilizerDetail"),
 )
 const FarmManagerFertilizerEdit = React.lazy(
-  () => import("../pages/FARM_MANAGER/ViewFertilizers/FertilizerEdit"),
+  () => import("../pages/FARM_MANAGER/Fertilizers/FertilizerEdit"),
 )
 const FarmManagerViewPesticides = React.lazy(
-  () => import("../pages/FARM_MANAGER/ViewPesticides"),
+  () => import("../pages/FARM_MANAGER/Pesticides"),
 )
 const FarmManagerPesticideCreate = React.lazy(
-  () => import("../pages/FARM_MANAGER/ViewPesticides/PesticideCreate"),
+  () => import("../pages/FARM_MANAGER/Pesticides/PesticideCreate"),
 )
 const FarmManagerPesticideDetail = React.lazy(
-  () => import("../pages/FARM_MANAGER/ViewPesticides/PesticideDetail"),
+  () => import("../pages/FARM_MANAGER/Pesticides/PesticideDetail"),
 )
 const FarmManagerPesticideEdit = React.lazy(
-  () => import("../pages/FARM_MANAGER/ViewPesticides/PesticideEdit"),
+  () => import("../pages/FARM_MANAGER/Pesticides/PesticideEdit"),
 )
 const FarmManagerInventoryImportHistory = React.lazy(
   () => import("../pages/FARM_MANAGER/InventoryImportHistory"),
@@ -232,22 +222,7 @@ const routes = [
           </Lazy>
         ),
       },
-      {
-        path: ROUTER.NEWS,
-        element: (
-          <Lazy>
-            <NewsListAll />
-          </Lazy>
-        ),
-      },
-      {
-        path: ROUTER.NEWS_DETAIL,
-        element: (
-          <Lazy>
-            <NewsDetail />
-          </Lazy>
-        ),
-      },
+
       {
         path: ROUTER.TCVN,
         element: (
@@ -301,11 +276,7 @@ const routes = [
 
   // ── Authenticated app layout ──────────────────────────────────────────────
   {
-    element: (
-      <Lazy>
-        <PrivateRoutes />
-      </Lazy>
-    ),
+    element: <PrivateRoutes />,
     children: [
       {
         element: <LayoutAdmin />,

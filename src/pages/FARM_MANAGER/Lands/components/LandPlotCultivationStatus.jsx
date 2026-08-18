@@ -5,7 +5,7 @@ import {
   getCultivationCropName,
   getCultivationLogbookName,
   getCultivationStatusMeta,
-} from "./landPlotUtils"
+} from "src/utils/landPlotUtils"
 
 const LandPlotCultivationStatus = ({ plot, showContext = false }) => {
   const meta = getCultivationStatusMeta(plot)

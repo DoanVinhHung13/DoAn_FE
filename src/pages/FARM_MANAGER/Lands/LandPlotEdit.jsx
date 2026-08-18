@@ -15,10 +15,10 @@ import {
   isLandPlotCultivationLocked,
   normalizeApiDetail,
   normalizeLandPlotResponse,
-} from "./landPlotUtils"
-import { useLandPlotAccess } from "./useLandPlotAccess"
-import { useLandPlotForm } from "./useLandPlotForm"
-import LandPlotFormFields from "./LandPlotFormFields"
+} from "src/utils/landPlotUtils"
+import { useLandPlotAccess } from "./hooks/useLandPlotAccess"
+import { useLandPlotForm } from "./hooks/useLandPlotForm"
+import LandPlotFormFields from "./components/LandPlotFormFields"
 import { MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"

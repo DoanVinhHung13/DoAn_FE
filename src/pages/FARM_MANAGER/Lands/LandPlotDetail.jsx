@@ -21,11 +21,11 @@ import {
   formatLandArea,
   isLandPlotCultivationLocked,
   normalizeApiDetail,
-} from "./landPlotUtils"
-import { useLandPlotAccess } from "./useLandPlotAccess"
-import LandPlotWeather from "./LandPlotWeather"
-import { normalizeWeather } from "./landPlotWeatherUtils"
-import LandPlotCultivationStatus from "./LandPlotCultivationStatus"
+} from "src/utils/landPlotUtils"
+import { useLandPlotAccess } from "./hooks/useLandPlotAccess"
+import LandPlotWeather from "./components/LandPlotWeather"
+import { normalizeWeather } from "src/utils/landPlotWeatherUtils"
+import LandPlotCultivationStatus from "./components/LandPlotCultivationStatus"
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
