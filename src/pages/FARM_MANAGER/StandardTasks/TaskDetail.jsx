@@ -6,18 +6,20 @@ import TitleCustom from 'src/components/TitleCustom'
 import ROUTER from 'src/router/ROUTER'
 import TaskCatalogService from 'src/services/TaskCatalogService'
 import TaskFormFields from './TaskFormFields'
+import {
+  CULTIVATION_TASK_TYPES,
+  getCultivationTaskTypeLabel,
+  normalizeCultivationTaskType,
+} from 'src/constants/cultivationTask'
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res
-const normalizeTaskType = (data) => String(data?.taskType || '').toUpperCase() === 'HARVEST'
-  || String(data?.activityType || '').toUpperCase() === 'HARVESTING' ? 'HARVEST' : 'NORMAL'
-
 const TaskDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const [initialLoading, setInitialLoading] = useState(true)
   const taskType = Form.useWatch('taskType', form)
-  const taskTypeLabel = taskType === 'HARVEST' ? 'Thu hoạch' : 'Công việc thường'
+  const taskTypeLabel = getCultivationTaskTypeLabel(taskType)
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -28,8 +30,8 @@ const TaskDetail = () => {
         form.setFieldsValue({
           cropCatalogId: data.cropCatalogId || '__ALL__',
           cropId: data.cropId || '__ALL__',
-          taskType: normalizeTaskType(data),
-          activityType: data.activityType || (normalizeTaskType(data) === 'HARVEST' ? 'HARVESTING' : 'OTHER'),
+          taskType: normalizeCultivationTaskType(data.taskType) || CULTIVATION_TASK_TYPES.NON_MATERIAL,
+          activityType: data.activityType || (data.taskType === CULTIVATION_TASK_TYPES.HARVEST ? 'HARVESTING' : 'OTHER'),
           name: data.name,
           description: data.description,
         })

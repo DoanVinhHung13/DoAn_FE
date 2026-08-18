@@ -103,10 +103,6 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
       ? { fullName: task.assignedLeaderName, isLeader: true }
       : null)
   const members = assignments.filter(a => !a.isLeader)
-  const quarantineWarnings = Array.isArray(task.quarantineWarnings)
-    ? task.quarantineWarnings
-    : []
-
   return (
     <Card
       bordered={false}
@@ -169,13 +165,30 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
               type="secondary"
               className="block text-[10px] uppercase font-semibold text-slate-400"
             >
-              Ngày bắt đầu
+              Bắt đầu dự kiến
             </Text>
             <Text strong className="text-xs text-slate-700">
               <CalendarOutlined className="mr-1 text-emerald-600" />
-              {task.startDate ? formatDate(task.startDate) : "—"}
+              {task.plannedStartDate ? formatDate(task.plannedStartDate) : "—"}
             </Text>
+            <Text type="secondary" className="block mt-1 text-xs">
+              Kết thúc dự kiến: {task.plannedEndDate ? formatDate(task.plannedEndDate) : "—"}
+            </Text>
+            {task.completedDate && (
+              <Text className="block mt-1 text-xs text-green-600">
+                Hoàn thành: {formatDate(task.completedDate)}
+              </Text>
+            )}
           </div>
+
+          {task.isActivationWarning === true && (
+            <Alert
+              type="warning"
+              showIcon
+              className="!rounded-xl !border-amber-200 !bg-amber-50/80 !px-3 !py-2"
+              message="Đã đến ngày kích hoạt nhưng công việc chưa được kích hoạt."
+            />
+          )}
 
           {Array.isArray(task.inlineQuarantineWarnings) && task.inlineQuarantineWarnings.map((warning, index) => (
             <Alert
@@ -448,7 +461,7 @@ const FarmLeaderTasks = () => {
     const total = logbookDetail.totalTasks ?? tasks.length
     const completed = logbookDetail.completedTasks ?? tasks.filter(t => t.status === "COMPLETED").length
     const active = logbookDetail.inProgressTasks ?? tasks.filter(t =>
-      ["IN_PROGRESS", "ACTIVE", "OVERDUE"].includes(t.status),
+      t.status === "IN_PROGRESS",
     ).length
     const waiting = logbookDetail.pendingApprovalTasks ?? tasks.filter(t => t.status === "WAITING_APPROVAL").length
     const displayedCompleted = completed + waiting

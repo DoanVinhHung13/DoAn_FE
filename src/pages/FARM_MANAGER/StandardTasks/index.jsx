@@ -22,7 +22,8 @@ import TaskCatalogService from 'src/services/TaskCatalogService'
 import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
 import { useListManagement } from 'src/hooks/useListManagement'
-import { UI } from 'src/constants/uiConfig'
+import { getCultivationTaskTypeLabel } from 'src/constants/cultivationTask'
+import { normalizeApiError } from 'src/services/core/apiError'
 
 const unwrapItems = (response) => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
@@ -147,6 +148,13 @@ const TasksManagement = () => {
       render: (v) => (
         <span className="text-sm text-gray-600">{v || '—'}</span>
       ),
+    },
+    {
+      title: 'Loại công việc',
+      dataIndex: 'taskType',
+      key: 'taskType',
+      width: '13%',
+      render: (value) => <span className="text-sm text-gray-600">{getCultivationTaskTypeLabel(value)}</span>,
     },
     {
       title: 'Danh mục cây trồng',

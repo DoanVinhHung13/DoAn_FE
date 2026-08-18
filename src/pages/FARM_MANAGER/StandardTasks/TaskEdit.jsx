@@ -9,11 +9,9 @@ import { applyApiFieldErrors, normalizeApiError } from 'src/services/core/apiErr
 import TaskFormFields from './TaskFormFields'
 import useFormDraft from 'src/hooks/useFormDraft'
 import { getFormDraftKey } from 'src/utils/formDraftKeys'
+import { CULTIVATION_TASK_TYPES, normalizeCultivationTaskType } from 'src/constants/cultivationTask'
 
 const unwrap = (res) => res?.data?.data ?? res?.data ?? res
-const normalizeTaskType = (data) => String(data?.taskType || '').toUpperCase() === 'HARVEST'
-  || String(data?.activityType || '').toUpperCase() === 'HARVESTING' ? 'HARVEST' : 'NORMAL'
-
 const TaskEdit = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -33,8 +31,8 @@ const TaskEdit = () => {
         const serverValues = {
           cropCatalogId: data.cropCatalogId || '__ALL__',
           cropId: data.cropId || '__ALL__',
-          taskType: normalizeTaskType(data),
-          activityType: data.activityType || (normalizeTaskType(data) === 'HARVEST' ? 'HARVESTING' : 'OTHER'),
+          taskType: normalizeCultivationTaskType(data.taskType) || CULTIVATION_TASK_TYPES.NON_MATERIAL,
+          activityType: data.activityType || (data.taskType === CULTIVATION_TASK_TYPES.HARVEST ? 'HARVESTING' : 'OTHER'),
           name: data.name,
           description: data.description,
         }
@@ -58,8 +56,8 @@ const TaskEdit = () => {
         cropId: values.cropId === '__ALL__' ? null : values.cropId,
         name: values.name?.trim(),
         description: values.description?.trim() || null,
-        taskType: values.taskType || 'NORMAL',
-        activityType: values.taskType === 'HARVEST' ? 'HARVESTING' : (values.activityType || 'OTHER'),
+        taskType: values.taskType,
+        activityType: values.taskType === CULTIVATION_TASK_TYPES.HARVEST ? 'HARVESTING' : (values.activityType || 'OTHER'),
       }
 
       await TaskCatalogService.updateTaskCatalog(id, body, {

@@ -51,6 +51,8 @@ import { ROLES } from 'src/constants/roles'
 import { formatAreaUnit, getQuantityUnit, MEASUREMENT_UNITS } from 'src/constants/measurementUnits'
 import { useCultivationStatus } from 'src/hooks/useCultivationStatus'
 import { getActiveQuarantineWarnings } from 'src/utils/quarantineValidation'
+import { CULTIVATION_TASK_TYPES, getTaskSchedulingErrorMessage } from 'src/constants/cultivationTask'
+import { normalizeApiError } from 'src/services/core/apiError'
 
 const { TextArea } = Input
 
@@ -80,10 +82,7 @@ const buildDataSentence = (summary) => {
 const getMaterialId = item =>
   item?.fertilizerId || item?.pesticideId || item?.materialId || item?.id
 
-const isHarvestTask = task =>
-  task?.activityType === 'HARVESTING' ||
-  String(task?.activityType || '').toLowerCase() === 'harvesting' ||
-  String(task?.name || task?.taskName || '').trim().toLowerCase() === 'thu hoạch'
+const isHarvestTask = task => task?.taskType === CULTIVATION_TASK_TYPES.HARVEST
 
 // ── Component ─────────────────────────────────────────────────────────────────
 const FarmSupervisorTaskDetail = () => {
@@ -174,24 +173,19 @@ const FarmSupervisorTaskDetail = () => {
     try {
       const values = await assignForm.validateFields()
       setSavingAssign(true)
-      const leader = farmers.find((l) => l.id === values.farmLeaderId) || leaders.find((l) => l.id === values.farmLeaderId)
-      const farmersList = farmers.filter((f) => (values.farmerIds || []).includes(f.id))
-
       const payload = {
         leaderId: values.farmLeaderId,
         farmerIds: values.farmerIds || [],
       }
 
-      await CultivationTaskService.assign(taskId, payload)
-
-      setTask((prev) => ({
-        ...prev,
-        assignedLeaderId: values.farmLeaderId,
-        assignedLeaderName: leader?.fullName || leader?.name || '',
-        assignments: farmersList.map((f) => ({ userId: f.id, fullName: f.fullName || f.name })),
-      }))
-    } catch {
-      // Assignment failures are handled by the shared interceptor.
+      const response = await CultivationTaskService.assign(taskId, payload, { errorHandling: 'component' })
+      const updatedTask = response?.data?.data ?? response?.data
+      if (updatedTask?.id) setTask(updatedTask)
+      else message.success('Đã lưu phân công công việc.')
+    } catch (error) {
+      if (!error?.errorFields) {
+        message.error(getTaskSchedulingErrorMessage(normalizeApiError(error)))
+      }
     } finally {
       setSavingAssign(false)
     }
@@ -224,8 +218,16 @@ const FarmSupervisorTaskDetail = () => {
     }
     try {
       setActivating(true)
-      await CultivationTaskService.start(taskId)
-      setTask((prev) => ({ ...prev, status: 'IN_PROGRESS' }))
+      const response = await CultivationTaskService.start(taskId)
+      const updatedTask = response?.data?.data ?? response?.data
+      if (updatedTask?.id) {
+        setTask(updatedTask)
+      } else {
+        const refreshed = await CultivationTaskService.getById(taskId)
+        setTask(refreshed?.data?.data ?? refreshed?.data)
+      }
+    } catch (error) {
+      message.error(getTaskSchedulingErrorMessage(normalizeApiError(error)))
     } finally {
       setActivating(false)
     }
@@ -249,10 +251,12 @@ const FarmSupervisorTaskDetail = () => {
           images: task.leaderSummary?.images || [],
         })
       }
-      // Update task status to completed after compilation
-      setTask((prev) => ({ ...prev, status: 'COMPLETED' }))
+      const refreshed = await CultivationTaskService.getById(taskId)
+      setTask(refreshed?.data?.data ?? refreshed?.data)
       setCompileModal(false)
-    } catch { /* validation */ } finally {
+    } catch (error) {
+      if (!error?.errorFields) message.error(getTaskSchedulingErrorMessage(normalizeApiError(error)))
+    } finally {
       setSavingCompile(false)
     }
   }
@@ -293,7 +297,7 @@ const FarmSupervisorTaskDetail = () => {
         >
           Quay lại kế hoạch
         </Button>
-        <div className="flex flex-wrap items-center justify-between gap-3">
+         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="mb-1 flex flex-wrap items-center gap-2">
               <Tag color="blue" className="rounded-full">{stage?.stageName || 'Giai đoạn'}</Tag>
@@ -302,6 +306,21 @@ const FarmSupervisorTaskDetail = () => {
             <TitleCustom className="!mb-0">{task.name}</TitleCustom>
           </div>
         </div>
+        <div className="mt-3 grid gap-2 text-sm text-gray-600 sm:grid-cols-2 lg:grid-cols-5">
+          <div><span className="font-semibold">Bắt đầu dự kiến:</span> {task.plannedStartDate ? formatDate(task.plannedStartDate) : '—'}</div>
+          <div><span className="font-semibold">Kết thúc dự kiến:</span> {task.plannedEndDate ? formatDate(task.plannedEndDate) : '—'}</div>
+          <div><span className="font-semibold">Bắt đầu thực tế:</span> {task.workStartDate ? formatDate(task.workStartDate) : '—'}</div>
+          <div><span className="font-semibold">Kết thúc thực tế:</span> {task.workEndDate ? formatDate(task.workEndDate) : '—'}</div>
+          <div><span className="font-semibold">Hoàn thành:</span> {task.completedDate ? formatDate(task.completedDate) : '—'}</div>
+        </div>
+        {task.isActivationWarning === true && (
+          <Alert
+            type="warning"
+            showIcon
+            className="mt-3 rounded-xl"
+            message="Công việc đã đến ngày dự kiến kích hoạt nhưng hiện chưa được kích hoạt."
+          />
+        )}
         {task.description && (
           <div className="mt-3 rounded-xl bg-amber-50 border border-amber-100 p-3 text-sm text-amber-900">
             <InfoCircleOutlined className="mr-2" /> <strong>Hướng dẫn:</strong> {task.description}
@@ -416,7 +435,7 @@ const FarmSupervisorTaskDetail = () => {
                 <div className="flex items-center gap-2 mb-4">
                   <FileTextOutlined className="text-green-600" />
                   <span className="font-semibold">Báo cáo hoàn thành từ người phụ trách</span>
-                  <Tag color="success" className="ml-auto rounded-full">Nhận {formatDate(task.leaderSummary.completedAt)}</Tag>
+                  <Tag color="success" className="ml-auto rounded-full">Hoàn thành {formatDate(task.completedDate)}</Tag>
                 </div>
 
                 <Collapse bordered={false} defaultActiveKey={['data', 'images', 'description']} className="bg-transparent">
@@ -543,7 +562,7 @@ const FarmSupervisorTaskDetail = () => {
                   </div>
                 )}
               </Card>
-            ) : task.status === 'IN_PROGRESS' || task.status === 'ACTIVE' || task.status === 'ASSIGNED' ? (
+            ) : task.status === 'IN_PROGRESS' || task.status === 'ASSIGNED' ? (
               <Card bordered={false} className="shadow-sm rounded-2xl border border-blue-100">
                 <div className="text-center py-6 text-blue-600">
                   <CheckCircleOutlined className="text-3xl mb-3" />

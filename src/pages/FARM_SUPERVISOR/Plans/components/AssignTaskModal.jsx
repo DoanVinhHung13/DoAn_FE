@@ -1,10 +1,12 @@
 import { SaveOutlined } from "@ant-design/icons"
-import { Form, Modal, Select } from "antd"
+import { Form, Modal, Select, message } from "antd"
 import { useEffect, useState } from "react"
 import { ROLES } from "src/constants/roles"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import UserService from "src/services/UserService"
 import useDebouncedValue from "src/hooks/useDebouncedValue"
+import { getTaskSchedulingErrorMessage } from "src/constants/cultivationTask"
+import { normalizeApiError } from "src/services/core/apiError"
 
 const AssignTaskModal = ({
   open,
@@ -110,11 +112,11 @@ const AssignTaskModal = ({
         farmerIds: values.farmerIds || [],
       }
 
-      await CultivationTaskService.assign(task.id, payload)
+      await CultivationTaskService.assign(task.id, payload, { errorHandling: 'component' })
       onSuccess()
     } catch (err) {
       if (!err?.errorFields) {
-        // axios interceptor handles error notification
+        message.error(getTaskSchedulingErrorMessage(normalizeApiError(err)))
       }
     } finally {
       setSaving(false)

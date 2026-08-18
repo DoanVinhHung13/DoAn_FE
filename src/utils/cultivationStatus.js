@@ -38,7 +38,7 @@ export const STAGE_STATUS = {
 
 /**
  * WORK_TASK_STATUS:
- * PENDING | ASSIGNED | IN_PROGRESS | WAITING_APPROVAL | COMPLETED | OVERDUE | CANCELLED
+ * PENDING | ASSIGNED | IN_PROGRESS | WAITING_APPROVAL | COMPLETED | CANCELLED
  */
 export const TASK_STATUS = {
   PENDING: { color: 'default', label: 'Chưa kích hoạt' },
@@ -46,10 +46,7 @@ export const TASK_STATUS = {
   IN_PROGRESS: { color: 'processing', label: 'Đang thực hiện' },
   WAITING_APPROVAL: { color: 'gold', label: 'Chờ phê duyệt' },
   COMPLETED: { color: 'success', label: 'Đã hoàn thành' },
-  OVERDUE: { color: 'error', label: 'Quá hạn' },
   CANCELLED: { color: 'default', label: 'Đã hủy' },
-  // legacy alias — API hiện dùng IN_PROGRESS
-  ACTIVE: { color: 'processing', label: 'Đang thực hiện' },
 }
 
 /** HARVEST_BATCH_STATUS: CREATED | IN_STORAGE | SOLD | EXPIRED | RECALLED */
@@ -134,13 +131,7 @@ export const getStageStatus = (status, systemKeyOptions) =>
   resolveStatusMeta(status, STAGE_STATUS, systemKeyOptions)
 
 export const getTaskStatus = (status, systemKeyOptions) =>
-  resolveStatusMeta(
-    ['WAITING_APPROVAL', 'PENDING_REVIEW'].includes(String(status).toUpperCase())
-      ? 'COMPLETED'
-      : status,
-    TASK_STATUS,
-    systemKeyOptions,
-  )
+  resolveStatusMeta(status, TASK_STATUS, systemKeyOptions)
 
 export const getHarvestBatchStatus = (status, systemKeyOptions) =>
   resolveStatusMeta(status, HARVEST_BATCH_STATUS, systemKeyOptions)

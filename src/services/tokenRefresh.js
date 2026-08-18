@@ -8,7 +8,8 @@ import {
 } from 'src/redux/authTokens'
 const getBaseUrl = () =>
   (typeof window !== 'undefined' && window.env?.API_ROOT) ||
-  import.meta.env.VITE_API_ROOT
+  import.meta.env.VITE_API_ROOT ||
+  (import.meta.env.DEV ? '/api' : 'https://api.eapls.io.vn/api')
 
 let refreshPromise = null
 

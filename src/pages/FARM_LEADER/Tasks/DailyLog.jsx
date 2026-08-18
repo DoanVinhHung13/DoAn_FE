@@ -68,13 +68,16 @@ import UploadService from "src/services/UploadService"
 import { applyApiFieldErrors, normalizeApiError } from "src/services/core/apiError"
 import { formatAreaUnit, getQuantityUnit, MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
-import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
+import { formatDate, getLocalNow } from "src/utils/dateFormatters"
 import { formatMeasurementValue } from "src/utils/materialRecommendations"
 import { getUserDisplayName } from "src/utils/userDisplayName"
 
 const { Text } = Typography
 const { TextArea } = Input
 const HARVEST_UNIT = MEASUREMENT_UNITS.KILOGRAM
+const MAX_UPLOAD_FILES = 10
+const MAX_UPLOAD_TOTAL_BYTES = 100 * 1024 * 1024
+const MAX_UPLOAD_IMAGE_BYTES = 5 * 1024 * 1024
 
 const DAILY_LOG_FIELD_MAPPING = {
   Date: "date",
@@ -112,10 +115,7 @@ const getHarvestQuantity = log =>
     log?.HarvestQuantity,
   )
 
-const isHarvestTaskData = task =>
-  [task?.activityType, task?.taskType]
-    .some(value => String(value || '').trim().toUpperCase() === 'HARVESTING' ||
-      String(value || '').trim().toUpperCase() === 'HARVEST')
+const isHarvestTaskData = task => String(task?.taskType || '').trim().toUpperCase() === 'HARVEST'
 
 const toFertilizerOptions = list =>
   (list || []).map(item => {
@@ -494,7 +494,7 @@ const DailyLog = () => {
 
       await CultivationTaskService.submitSummary(taskId, {
         descriptionSummary: summaryValues.descriptionSummary,
-        completedAt: getLocalNow().format("YYYY-MM-DD"),
+        completedDate: getLocalNow().toISOString(),
       })
 
       setSubmitModal(false)
@@ -518,10 +518,23 @@ const DailyLog = () => {
 
   const customUpload = async ({ file, onSuccess, onError }) => {
     try {
+      const existingBytes = fileList.reduce((total, item) => total + Number(item.size || 0), 0)
+      if (fileList.length >= MAX_UPLOAD_FILES) {
+        throw new Error(`Mỗi nhật ký chỉ được tải tối đa ${MAX_UPLOAD_FILES} ảnh.`)
+      }
+      if (!String(file.type || '').startsWith('image/')) {
+        throw new Error('Chỉ được tải tệp hình ảnh.')
+      }
+      if (file.size > MAX_UPLOAD_IMAGE_BYTES) {
+        throw new Error('Mỗi ảnh không được vượt quá 5 MB.')
+      }
+      if (existingBytes + file.size > MAX_UPLOAD_TOTAL_BYTES) {
+        throw new Error('Tổng dung lượng ảnh không được vượt quá 100 MB.')
+      }
       const formData = new FormData()
       formData.append("file", file)
       const res = await UploadService.uploadImage(formData, {
-        params: { folder: "eapls/daily-logs" },
+        params: { folder: "eapls/cultivation-logs" },
         errorHandling: "component",
       })
       const data = unwrap(res)
@@ -539,6 +552,7 @@ const DailyLog = () => {
             name: file.name,
             status: "done",
             url,
+            size: file.size,
           },
         ]
         form.setFieldsValue({ images: next })
@@ -547,7 +561,7 @@ const DailyLog = () => {
       })
     } catch (err) {
       onError?.(err)
-      // API error handled by axios interceptor
+      message.error(err?.message || 'Không thể tải ảnh lên.')
       const normalizedError = normalizeApiError(err)
       console.error("DailyLog upload error:", {
         kind: normalizedError.kind,
@@ -642,6 +656,21 @@ const DailyLog = () => {
               <div className="mt-2 min-w-0 max-w-full text-sm text-gray-600 break-words [overflow-wrap:anywhere]">
                 {task.description}
               </div>
+            )}
+            <div className="grid gap-2 mt-3 text-xs text-gray-600 sm:grid-cols-2 lg:grid-cols-5">
+              <span><strong>Bắt đầu dự kiến:</strong> {task.plannedStartDate ? formatDate(task.plannedStartDate) : '—'}</span>
+              <span><strong>Kết thúc dự kiến:</strong> {task.plannedEndDate ? formatDate(task.plannedEndDate) : '—'}</span>
+              <span><strong>Bắt đầu thực tế:</strong> {task.workStartDate ? formatDate(task.workStartDate) : '—'}</span>
+              <span><strong>Kết thúc thực tế:</strong> {task.workEndDate ? formatDate(task.workEndDate) : '—'}</span>
+              <span><strong>Hoàn thành:</strong> {task.completedDate ? formatDate(task.completedDate) : '—'}</span>
+            </div>
+            {task.isActivationWarning === true && (
+              <Alert
+                type="warning"
+                showIcon
+                className="mt-3 rounded-xl"
+                message="Công việc đã đến ngày dự kiến kích hoạt nhưng hiện chưa được kích hoạt."
+              />
             )}
           </div>
         </div>
@@ -1656,33 +1685,8 @@ const DailyLog = () => {
           <div className="py-1 space-y-5 text-sm">
             {/* ── Thống kê thời gian thực tế ── */}
             {(() => {
-              // Lấy ngày bắt đầu thực tế
-              const startDateStr =
-                leaderSummary?.firstLogDate ||
-                leaderSummary?.actualStartDate ||
-                leaderSummary?.startDate ||
-                task?.actualStartDate ||
-                task?.startDate ||
-                (dailyLogs.length > 0
-                  ? dailyLogs[dailyLogs.length - 1]?.date
-                  : null)
-              // Lấy ngày kết thúc thực tế
-              const endDateStr =
-                leaderSummary?.lastLogDate ||
-                leaderSummary?.actualEndDate ||
-                leaderSummary?.completedAt ||
-                leaderSummary?.endDate ||
-                task?.actualEndDate ||
-                task?.endDate ||
-                (dailyLogs.length > 0 ? dailyLogs[0]?.date : null) ||
-                getLocalNow().format("YYYY-MM-DD")
-
-              const formattedStartDate = startDateStr
-                ? parseDate(startDateStr).format("DD/MM/YYYY")
-                : "—"
-              const formattedEndDate = endDateStr
-                ? parseDate(endDateStr).format("DD/MM/YYYY")
-                : "—"
+              const formattedStartDate = task?.workStartDate ? formatDate(task.workStartDate) : "—"
+              const formattedEndDate = task?.workEndDate ? formatDate(task.workEndDate) : "—"
 
               return (
                 <div className="p-4 border border-green-100 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50/40">

@@ -4,10 +4,12 @@ import React, { useEffect, useMemo, useState } from 'react'
 import useDebouncedValue from 'src/hooks/useDebouncedValue'
 import CropCatalogService from 'src/services/CropCatalogService'
 import CropManagementService from 'src/services/CropManagementService'
+import {
+  CULTIVATION_TASK_TYPE_OPTIONS,
+  normalizeCultivationTaskType,
+} from 'src/constants/cultivationTask'
 
 const ALL_OPTION_VALUE = '__ALL__'
-const NORMAL_TASK = 'NORMAL'
-const HARVEST_TASK = 'HARVEST'
 
 const unwrapItems = (response) => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
@@ -16,10 +18,7 @@ const unwrapItems = (response) => {
 
 const getCropCatalogId = (crop) => crop.cropCatalogId || crop.cropCatalog?.id
 
-const normalizeTaskType = (value) =>
-  String(value || '').toUpperCase() === HARVEST_TASK ? HARVEST_TASK : NORMAL_TASK
-
-const TaskFormFields = ({ form, isEdit = false, readOnly = false, showTaskType = true }) => {
+const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
   const [catalogs, setCatalogs] = useState([])
   const [crops, setCrops] = useState([])
   const [catalogLoading, setCatalogLoading] = useState(false)
@@ -134,17 +133,19 @@ const TaskFormFields = ({ form, isEdit = false, readOnly = false, showTaskType =
       </Col>
       {showTaskType && (
         <Col xs={24} md={12}>
-          <Form.Item name="taskType" label="Loại công việc" normalize={normalizeTaskType}>
+          <Form.Item
+            name="taskType"
+            label="Loại công việc"
+            normalize={normalizeCultivationTaskType}
+            rules={!readOnly ? [{ required: true, message: 'Vui lòng chọn loại công việc.' }] : []}
+          >
             <Segmented
               block
               className="task-type-segmented"
-              disabled={readOnly || isEdit}
-              value={normalizeTaskType(selectedTaskType)}
-              onChange={(value) => form?.setFieldValue('taskType', normalizeTaskType(value))}
-              options={[
-                { label: 'Công việc thường', value: NORMAL_TASK },
-                { label: 'Thu hoạch', value: HARVEST_TASK },
-              ]}
+              disabled={readOnly}
+              value={normalizeCultivationTaskType(selectedTaskType)}
+              onChange={(value) => form?.setFieldValue('taskType', normalizeCultivationTaskType(value))}
+              options={CULTIVATION_TASK_TYPE_OPTIONS}
             />
           </Form.Item>
         </Col>

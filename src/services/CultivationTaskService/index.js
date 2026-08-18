@@ -15,6 +15,7 @@ import {
   apiUpdateCultivationTask,
   apiAssignCultivationTask,
   apiStartCultivationTask,
+  apiCancelCultivationTask,
   apiGetLeaderSummary,
   apiSubmitTaskSummary,
   apiGetMyLogbookSummaries,
@@ -35,8 +36,8 @@ const getById = (id) =>
 const create = (body) =>
   http.post(apiCreateCultivationTask, body)
 
-const createBulk = (body) =>
-  http.post(apiCreateCultivationTaskBulk, body)
+const createBulk = (body, config = {}) =>
+  http.post(apiCreateCultivationTaskBulk, body, config)
 
 const reorder = (body, context = {}) => {
   if (
@@ -55,8 +56,8 @@ const reorder = (body, context = {}) => {
 const update = (id, body) =>
   http.put(apiUpdateCultivationTask(id), body)
 
-const assign = (id, body) =>
-  http.post(apiAssignCultivationTask(id), body)
+const assign = (id, body, config = {}) =>
+  http.post(apiAssignCultivationTask(id), body, config)
 
 const remove = (id) =>
   http.delete(apiDeleteCultivationTask(id))
@@ -64,10 +65,13 @@ const remove = (id) =>
 const start = (id) =>
   http.post(apiStartCultivationTask(id))
 
+const cancel = (id, config = {}) =>
+  http.post(apiCancelCultivationTask(id), null, config)
+
 const getLeaderSummary = (id) =>
   http.get(apiGetLeaderSummary(id), silentConfig)
 
-/** Body: { descriptionSummary, completedAt } */
+/** Body: { descriptionSummary, completedDate } */
 const submitSummary = (id, body) =>
   http.post(apiSubmitTaskSummary(id), body)
 
@@ -90,6 +94,7 @@ const CultivationTaskService = {
   assign,
   remove,
   start,
+  cancel,
   getLeaderSummary,
   submitSummary,
   getMyLogbookSummaries,

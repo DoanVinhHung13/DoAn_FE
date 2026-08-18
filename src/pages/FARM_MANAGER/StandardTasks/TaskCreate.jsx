@@ -9,6 +9,7 @@ import { applyApiFieldErrors, normalizeApiError } from 'src/services/core/apiErr
 import TaskFormFields from './TaskFormFields'
 import useFormDraft from 'src/hooks/useFormDraft'
 import { getFormDraftKey } from 'src/utils/formDraftKeys'
+import { CULTIVATION_TASK_TYPES } from 'src/constants/cultivationTask'
 
 const TaskCreate = () => {
   const [form] = Form.useForm()
@@ -21,7 +22,7 @@ const TaskCreate = () => {
     const draft = restoreDraft()
     if (draft?.data) {
       form.setFieldsValue({
-        cropCatalogId: '__ALL__', cropId: '__ALL__', taskType: 'NORMAL', activityType: 'OTHER',
+        cropCatalogId: '__ALL__', cropId: '__ALL__', taskType: CULTIVATION_TASK_TYPES.NON_MATERIAL, activityType: 'OTHER',
         ...draft.data,
       })
     }
@@ -35,8 +36,8 @@ const TaskCreate = () => {
         cropId: values.cropId === '__ALL__' ? null : values.cropId,
         name: values.name?.trim(),
         description: values.description?.trim() || null,
-        taskType: values.taskType || 'NORMAL',
-        activityType: values.taskType === 'HARVEST' ? 'HARVESTING' : (values.activityType || 'OTHER'),
+        taskType: values.taskType,
+        activityType: values.taskType === CULTIVATION_TASK_TYPES.HARVEST ? 'HARVESTING' : (values.activityType || 'OTHER'),
       }
 
       await TaskCatalogService.createTaskCatalog(body, {
@@ -78,7 +79,7 @@ const TaskCreate = () => {
         <Form
           form={form}
           layout="vertical"
-          initialValues={{ cropCatalogId: '__ALL__', cropId: '__ALL__', taskType: 'NORMAL', activityType: 'OTHER' }}
+          initialValues={{ cropCatalogId: '__ALL__', cropId: '__ALL__', taskType: CULTIVATION_TASK_TYPES.NON_MATERIAL, activityType: 'OTHER' }}
           onFinish={handleSubmit}
           onValuesChange={(_, allValues) => saveDraft(allValues)}
         >

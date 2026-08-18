@@ -19,6 +19,7 @@ import {
   Button,
   Card,
   Col,
+  DatePicker,
   Divider,
   Empty,
   Form,
@@ -43,18 +44,23 @@ import {
   canReorderTask,
 } from "src/utils/cultivationStatus"
 import { getTaskOrder, orderTasks } from "src/utils/cultivationOrdering"
-import { formatDate } from "src/utils/dateFormatters"
+import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
 import { getUserDisplayName } from "src/utils/userDisplayName"
 import { getActiveQuarantineWarnings } from "src/utils/quarantineValidation"
+import {
+  CULTIVATION_TASK_TYPE_OPTIONS,
+  CULTIVATION_TASK_TYPES,
+  getCultivationTaskTypeLabel,
+  getTaskSchedulingErrorMessage,
+  toTaskApiDateTime,
+} from "src/constants/cultivationTask"
+import { normalizeApiError } from "src/services/core/apiError"
 
 const { Text } = Typography
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
-const isHarvestTask = task =>
-  task?.activityType === "HARVESTING" ||
-  String(task?.activityType || "").toLowerCase() === "harvesting" ||
-  String(task?.name || task?.taskName || "").trim().toLowerCase() === "thu hoạch"
+const isHarvestTask = task => task?.taskType === CULTIVATION_TASK_TYPES.HARVEST
 
 const getAllTasks = taskMap => Object.values(taskMap).flat()
 
@@ -62,8 +68,7 @@ const taskStatusIcon = s =>
   s === "COMPLETED" ||
     s === "WAITING_APPROVAL" ||
     s === "IN_PROGRESS" ||
-    s === "ASSIGNED" ||
-    s === "ACTIVE" ? (
+    s === "ASSIGNED" ? (
     <CheckCircleOutlined />
   ) : (
     <ClockCircleOutlined />
@@ -155,9 +160,10 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             .map(item => ({
               value: item.id,
               label: item.name,
-              description: item.description,
-              activityType: item.activityType,
-            })),
+               description: item.description,
+               activityType: item.activityType,
+               taskType: item.taskType,
+             })),
         )
       } catch {
         setTaskCatalogOptions([])
@@ -231,7 +237,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       const unfinishedStages = stages.filter(stage => stage.id !== finalStage?.id && stage.status !== "COMPLETED")
       const activeQuarantineWarnings = getActiveQuarantineWarnings(quarantineWarnings)
       if (unfinishedTasks.length > 0 || unfinishedStages.length > 0) {
-        message.warning("Chỉ được kích hoạt thu hoạch sau khi các công việc và giai đoạn trước đã hoàn thành.")
+      message.warning("Chỉ được kích hoạt thu hoạch sau khi các công việc và giai đoạn trước đã hoàn thành.")
         return
       }
       if (activeQuarantineWarnings.length > 0) {
@@ -243,8 +249,9 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     try {
       await CultivationTaskService.start(taskId)
       loadData()
-    } catch {
-      // axios interceptor handles error notification
+    } catch (error) {
+      const normalizedError = normalizeApiError(error)
+      message.error(getTaskSchedulingErrorMessage(normalizedError))
     }
   }
 
@@ -318,6 +325,9 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           description: "",
           leaderId: null,
           farmerIds: [],
+          taskType: null,
+          plannedStartDate: getLocalNow().startOf('day'),
+          plannedEndDate: getLocalNow().startOf('day').add(1, 'day'),
         },
       ],
     })
@@ -355,9 +365,10 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             farmerIds: Array.isArray(task.farmerIds)
               ? task.farmerIds.filter(Boolean)
               : [],
-            activityType:
-              catalog?.activityType ||
-              (isHarvestTask({ name: (task.name || "").trim() }) ? "HARVESTING" : "OTHER"),
+            taskType: catalog?.taskType || task.taskType || null,
+            plannedStartDate: toTaskApiDateTime(task.plannedStartDate),
+            plannedEndDate: toTaskApiDateTime(task.plannedEndDate),
+            activityType: catalog?.activityType || (task.taskType === CULTIVATION_TASK_TYPES.HARVEST ? "HARVESTING" : "OTHER"),
           }
         })
         .filter(task => task.name)
@@ -365,6 +376,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       if (!validTasks.length) {
         message.warning("Chọn công việc từ danh mục hoặc nhập tên mới")
         setSavingTask(false)
+        return
+      }
+
+      if (validTasks.some(task => !task.taskType)) {
+        message.warning("Vui lòng chọn loại công việc cho công việc tự do.")
+        return
+      }
+
+      if (validTasks.some(task => !task.plannedStartDate || !task.plannedEndDate || task.plannedStartDate >= task.plannedEndDate)) {
+        message.warning("Ngày bắt đầu dự kiến phải trước ngày kết thúc dự kiến.")
         return
       }
 
@@ -380,13 +401,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         cultivationLogbookId: planId,
         cultivationStageId: selectedId,
         tasks: validTasks,
-      })
+      }, { errorHandling: 'component' })
 
       setEditingTaskId(null)
       taskForm.resetFields()
       loadData()
-    } catch {
-      // axios interceptor handles error notification
+    } catch (error) {
+      if (!error?.errorFields) {
+        const normalizedError = normalizeApiError(error)
+        message.error(getTaskSchedulingErrorMessage(normalizedError))
+      }
     } finally {
       setSavingTask(false)
     }
@@ -644,8 +668,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg
                                       ${["COMPLETED", "WAITING_APPROVAL", "PENDING_REVIEW"].includes(task.status)
                                         ? "bg-green-100 text-green-700"
-                                        : task.status === "IN_PROGRESS" ||
-                                            task.status === "ACTIVE"
+                                         : task.status === "IN_PROGRESS"
                                             ? "bg-blue-100 text-blue-700"
                                             : "bg-gray-100 text-gray-500"
                                       }`}
@@ -656,26 +679,52 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     <Text className="text-sm font-semibold text-gray-800 line-clamp-2">
                                       {task.name || task.taskName}
                                     </Text>
-                                    {task.description && (
+                                     {task.description && (
                                       <Text
                                         type="secondary"
                                         className="text-xs line-clamp-1 mt-0.5"
                                       >
                                         {task.description}
-                                      </Text>
-                                    )}
-                                    {/* Ngày bắt đầu và hoàn thành của task */}
-                                    <div className="flex flex-wrap mt-1 gap-x-3">
-                                      {task.startDate && (
-                                        <Text
-                                          type="secondary"
-                                          className="text-xs"
-                                        >
-                                          <CalendarOutlined className="mr-1" />
-                                          Bắt đầu: {formatDate(task.startDate)}
-                                        </Text>
-                                      )}
-                                      {task.completedDate && (
+                                       </Text>
+                                     )}
+                                     <Tag color="blue" className="mt-1 text-xs">
+                                       {getCultivationTaskTypeLabel(task.taskType)}
+                                     </Tag>
+                                     {task.isActivationWarning === true && (
+                                       <Alert
+                                         type="warning"
+                                         showIcon
+                                         className="mt-2 rounded-lg"
+                                         message="Công việc đã đến ngày dự kiến kích hoạt nhưng hiện chưa được kích hoạt."
+                                       />
+                                     )}
+                                     {/* Ngày dự kiến và hoàn thành của task */}
+                                     <div className="flex flex-wrap mt-1 gap-x-3">
+                                       {task.plannedStartDate && (
+                                         <Text
+                                           type="secondary"
+                                           className="text-xs"
+                                         >
+                                           <CalendarOutlined className="mr-1" />
+                                           Dự kiến: {formatDate(task.plannedStartDate)}
+                                         </Text>
+                                       )}
+                                       {task.plannedEndDate && (
+                                         <Text type="secondary" className="text-xs">
+                                           Kết thúc dự kiến: {formatDate(task.plannedEndDate)}
+                                         </Text>
+                                       )}
+                                       {task.workStartDate && (
+                                         <Text type="secondary" className="text-xs">
+                                           Thực tế bắt đầu: {formatDate(task.workStartDate)}
+                                         </Text>
+                                       )}
+                                       {task.workEndDate && (
+                                         <Text type="secondary" className="text-xs">
+                                           Thực tế kết thúc: {formatDate(task.workEndDate)}
+                                         </Text>
+                                       )}
+                                       {task.completedDate && (
                                         <Text className="text-xs text-green-600">
                                           <CheckCircleOutlined className="mr-1" />
                                           Xong: {formatDate(task.completedDate)}
@@ -764,6 +813,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         editTaskForm.setFieldsValue({
                                           name: task.name || task.taskName,
                                           description: task.description || "",
+                                          plannedStartDate: parseDate(task.plannedStartDate),
+                                          plannedEndDate: parseDate(task.plannedEndDate),
                                           leaderId:
                                             task.assignedLeaderId || null,
                                           farmerIds:
@@ -847,7 +898,14 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                       layout="vertical"
                       initialValues={{
                         tasks: [
-                          { taskCatalogId: null, name: "", description: "" },
+                          {
+                            taskCatalogId: null,
+                            taskType: null,
+                            name: "",
+                            description: "",
+                            plannedStartDate: getLocalNow().startOf('day'),
+                            plannedEndDate: getLocalNow().startOf('day').add(1, 'day'),
+                          },
                         ],
                       }}
                     >
@@ -918,10 +976,11 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                       )
                                       const list =
                                         taskForm.getFieldValue("tasks") || []
-                                      list[name] = {
-                                        ...list[name],
-                                        taskCatalogId: catalog?.value || null,
-                                      }
+                                       list[name] = {
+                                         ...list[name],
+                                         taskCatalogId: catalog?.value || null,
+                                         taskType: catalog?.taskType || null,
+                                       }
                                       taskForm.setFieldsValue({
                                         tasks: [...list],
                                       })
@@ -933,9 +992,10 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                         taskForm.getFieldValue("tasks") || []
                                       list[name] = {
                                         ...list[name],
-                                        name: catalog.label,
-                                        taskCatalogId: catalog.value,
-                                        description: catalog.description || "",
+                                         name: catalog.label,
+                                         taskCatalogId: catalog.value,
+                                         taskType: catalog.taskType,
+                                         description: catalog.description || "",
                                       }
                                       taskForm.setFieldsValue({
                                         tasks: [...list],
@@ -965,6 +1025,66 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                     placeholder="Mô tả chi tiết, liều lượng..."
                                   />
                                 </Form.Item>
+                                <Row gutter={12}>
+                                  <Col xs={24} md={8}>
+                                    <Form.Item noStyle shouldUpdate={(prev, next) => (
+                                      prev.tasks?.[name]?.taskCatalogId !== next.tasks?.[name]?.taskCatalogId
+                                    )}>
+                                      {() => (
+                                        <Form.Item
+                                          {...restField}
+                                          name={[name, "taskType"]}
+                                          label="Loại công việc"
+                                          rules={[{ required: true, message: "Vui lòng chọn loại công việc." }]}
+                                        >
+                                          <Select
+                                            options={CULTIVATION_TASK_TYPE_OPTIONS}
+                                            placeholder="Chọn loại công việc"
+                                            disabled={Boolean(taskForm.getFieldValue(["tasks", name, "taskCatalogId"]))}
+                                          />
+                                        </Form.Item>
+                                      )}
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={24} md={8}>
+                                    <Form.Item
+                                      {...restField}
+                                      name={[name, "plannedStartDate"]}
+                                      label="Bắt đầu dự kiến"
+                                      rules={[
+                                        { required: true, message: "Vui lòng chọn ngày bắt đầu dự kiến." },
+                                        ({ getFieldValue }) => ({
+                                          validator: (_, value) => {
+                                            const end = getFieldValue(["tasks", name, "plannedEndDate"])
+                                            if (!value || !end || value.isBefore(end)) return Promise.resolve()
+                                            return Promise.reject(new Error("Ngày bắt đầu phải trước ngày kết thúc."))
+                                          },
+                                        }),
+                                      ]}
+                                    >
+                                      <DatePicker showTime format="DD/MM/YYYY HH:mm" className="w-full" />
+                                    </Form.Item>
+                                  </Col>
+                                  <Col xs={24} md={8}>
+                                    <Form.Item
+                                      {...restField}
+                                      name={[name, "plannedEndDate"]}
+                                      label="Kết thúc dự kiến"
+                                      rules={[
+                                        { required: true, message: "Vui lòng chọn ngày kết thúc dự kiến." },
+                                        ({ getFieldValue }) => ({
+                                          validator: (_, value) => {
+                                            const start = getFieldValue(["tasks", name, "plannedStartDate"])
+                                            if (!value || !start || start.isBefore(value)) return Promise.resolve()
+                                            return Promise.reject(new Error("Ngày kết thúc phải sau ngày bắt đầu."))
+                                          },
+                                        }),
+                                      ]}
+                                    >
+                                      <DatePicker showTime format="DD/MM/YYYY HH:mm" className="w-full" />
+                                    </Form.Item>
+                                  </Col>
+                                </Row>
                                 <Row gutter={12}>
                                   <Col xs={24} md={12}>
                                     <Form.Item
@@ -1016,10 +1136,13 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                               type="dashed"
                               onClick={() =>
                                 add({
-                                  taskCatalogId: null,
-                                  name: "",
-                                  description: "",
-                                  leaderId: null,
+                                   taskCatalogId: null,
+                                   taskType: null,
+                                   name: "",
+                                   description: "",
+                                   plannedStartDate: getLocalNow().startOf('day'),
+                                   plannedEndDate: getLocalNow().startOf('day').add(1, 'day'),
+                                   leaderId: null,
                                   farmerIds: [],
                                 })
                               }
@@ -1080,6 +1203,8 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             await CultivationTaskService.update(editTaskModal.task.id, {
               name: values.name,
               description: values.description,
+              plannedStartDate: toTaskApiDateTime(values.plannedStartDate),
+              plannedEndDate: toTaskApiDateTime(values.plannedEndDate),
               leaderId: values.leaderId || null,
               farmerIds: Array.isArray(values.farmerIds)
                 ? values.farmerIds
@@ -1088,8 +1213,11 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
             setEditTaskModal({ open: false, task: null })
             editTaskForm.resetFields()
             loadData()
-          } catch {
-            // axios interceptor handles error notification
+          } catch (error) {
+            if (!error?.errorFields) {
+              const normalizedError = normalizeApiError(error)
+              message.error(getTaskSchedulingErrorMessage(normalizedError))
+            }
           } finally {
             setSavingEdit(false)
           }
@@ -1141,6 +1269,44 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
               placeholder="Mô tả công việc, liều lượng..."
             />
           </Form.Item>
+          <Row gutter={12}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="plannedStartDate"
+                label="Bắt đầu dự kiến"
+                rules={[
+                  { required: true, message: "Vui lòng chọn ngày bắt đầu dự kiến." },
+                  ({ getFieldValue }) => ({
+                    validator: (_, value) => {
+                      const end = getFieldValue("plannedEndDate")
+                      if (!value || !end || value.isBefore(end)) return Promise.resolve()
+                      return Promise.reject(new Error("Ngày bắt đầu phải trước ngày kết thúc."))
+                    },
+                  }),
+                ]}
+              >
+                <DatePicker showTime format="DD/MM/YYYY HH:mm" className="w-full" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="plannedEndDate"
+                label="Kết thúc dự kiến"
+                rules={[
+                  { required: true, message: "Vui lòng chọn ngày kết thúc dự kiến." },
+                  ({ getFieldValue }) => ({
+                    validator: (_, value) => {
+                      const start = getFieldValue("plannedStartDate")
+                      if (!value || !start || start.isBefore(value)) return Promise.resolve()
+                      return Promise.reject(new Error("Ngày kết thúc phải sau ngày bắt đầu."))
+                    },
+                  }),
+                ]}
+              >
+                <DatePicker showTime format="DD/MM/YYYY HH:mm" className="w-full" />
+              </Form.Item>
+            </Col>
+          </Row>
           <Row gutter={12}>
             <Col xs={24} md={12}>
               <Form.Item name="leaderId" label="Người phụ trách">
