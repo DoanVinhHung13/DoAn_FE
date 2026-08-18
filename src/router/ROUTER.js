@@ -65,6 +65,7 @@ const ROUTER = {
   FM_PESTICIDE_CREATE: "/farm-manager/pesticides/create",
   FM_PESTICIDE_DETAIL: "/farm-manager/pesticides/:id",
   FM_PESTICIDE_EDIT: "/farm-manager/pesticides/:id/edit",
+  FM_MATERIAL_USAGE_HISTORY: "/farm-manager/materials/usage-history",
   FM_INVENTORY_IMPORT_HISTORY: "/farm-manager/inventory/import-history",
   FM_LOGBOOKS: "/farm-manager/cultivation-logbooks/reviews",
   FM_LOGBOOK_REVIEW: "/farm-manager/cultivation-logbooks/:id/review",

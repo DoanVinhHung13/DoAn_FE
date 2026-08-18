@@ -175,6 +175,9 @@ const FarmManagerPesticideEdit = React.lazy(
 const FarmManagerInventoryImportHistory = React.lazy(
   () => import("../pages/FARM_MANAGER/InventoryImportHistory"),
 )
+const FarmManagerMaterialUsageHistory = React.lazy(
+  () => import("../pages/FARM_MANAGER/MaterialUsageHistory"),
+)
 const FarmManagerReferenceFertilizers = React.lazy(
   () => import("../pages/FARM_MANAGER/Reference/FertilizerList"),
 )
@@ -693,6 +696,14 @@ const routes = [
                 element: (
                   <Lazy>
                     <FarmManagerInventoryImportHistory />
+                  </Lazy>
+                ),
+              },
+              {
+                path: ROUTER.FM_MATERIAL_USAGE_HISTORY,
+                element: (
+                  <Lazy>
+                    <FarmManagerMaterialUsageHistory />
                   </Lazy>
                 ),
               },
