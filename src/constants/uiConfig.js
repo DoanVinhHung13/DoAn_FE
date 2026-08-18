@@ -11,7 +11,7 @@ export const UI = {
   },
 
   btn: {
-    primary: 'flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100',
+    primary: 'flex-shrink-0 h-10 px-5 font-bold border-0 shadow-lg rounded-xl',
     search: 'h-10 px-4 font-semibold rounded-xl bg-gray-50',
     reload: 'h-10 px-3 rounded-xl bg-gray-50',
     icon: 'flex items-center justify-center w-8 h-8 rounded-lg',
@@ -21,7 +21,7 @@ export const UI = {
     iconDeactivate: 'flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50',
     iconImport: 'flex items-center justify-center w-8 h-8 rounded-lg hover:bg-blue-50',
     iconLocked: 'flex items-center justify-center w-8 h-8 rounded-lg opacity-40',
-    confirm: 'h-10 px-6 font-bold bg-orange-500 border-0 shadow-lg rounded-xl shadow-orange-100',
+    confirm: 'h-10 px-6 font-bold border-0 shadow-lg rounded-xl',
     cancel: 'h-10 px-6 rounded-xl',
   },
 
@@ -48,5 +48,5 @@ export const UI = {
     footer: 'flex justify-end gap-3',
   },
 
-  menuIcon: { fontSize: '24px', color: '#15803d' },
+  menuIcon: { fontSize: '24px', color: 'var(--color-primary)' },
 }

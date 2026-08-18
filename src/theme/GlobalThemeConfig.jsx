@@ -4,9 +4,16 @@ import { useContext } from 'react'
 import { StoreContext } from 'src/contexts'
 import designTokens from './designTokens'
 
+const dt = designTokens
+
 function GlobalThemeConfig({ children }) {
   const { themeStore } = useContext(StoreContext)
   const { isDarkMode } = themeStore
+
+  const colorBgBase      = isDarkMode ? '#101815' : dt.colors.surface
+  const colorBgLayout    = isDarkMode ? '#0f1714' : dt.colors.background
+  const colorBgContainer = isDarkMode ? '#17221d' : dt.colors.surface
+  const colorBorder      = isDarkMode ? '#30443a' : dt.colors.border
 
   return (
     <ConfigProvider
@@ -14,76 +21,90 @@ function GlobalThemeConfig({ children }) {
       theme={{
         algorithm: isDarkMode ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: designTokens.colors.primary,
-          colorPrimaryHover: designTokens.colors.primaryHover,
-          colorPrimaryActive: designTokens.colors.primaryActive,
-          colorInfo: designTokens.colors.info,
-          colorSuccess: designTokens.colors.success,
-          colorWarning: designTokens.colors.warning,
-          colorError: designTokens.colors.error,
-          colorLink: designTokens.colors.primary,
-          colorLinkHover: designTokens.colors.primaryHover,
-          colorTextBase: designTokens.colors.textPrimary,
-          colorBgBase: isDarkMode ? '#101815' : designTokens.colors.surface,
-          colorBgLayout: isDarkMode ? '#0f1714' : designTokens.colors.background,
-          colorBgContainer: isDarkMode ? '#17221d' : designTokens.colors.surface,
-          colorBorder: isDarkMode ? '#30443a' : designTokens.colors.border,
-          colorText: isDarkMode ? '#edf7f1' : designTokens.colors.textPrimary,
-          colorTextSecondary: isDarkMode ? '#b4c7bc' : designTokens.colors.textSecondary,
-          colorTextTertiary: isDarkMode ? '#8fa69a' : designTokens.colors.textMuted,
-          fontSize: designTokens.typography.body,
-          fontFamily: designTokens.typography.fontFamily,
-          borderRadius: designTokens.radius.md,
-          controlHeight: designTokens.controlHeight.md,
-          controlHeightSM: designTokens.controlHeight.sm,
-          controlHeightLG: designTokens.controlHeight.lg,
+          /* ── Brand colours ── */
+          colorPrimary:       dt.colors.primary,
+          colorPrimaryHover:  dt.colors.primaryHover,
+          colorPrimaryActive: dt.colors.primaryActive,
+          colorInfo:          dt.colors.info,
+          colorSuccess:       dt.colors.success,
+          colorWarning:       dt.colors.warning,
+          colorError:         dt.colors.error,
+          colorLink:          dt.colors.primary,
+          colorLinkHover:     dt.colors.primaryHover,
+
+          /* ── Text & surfaces ── */
+          colorTextBase:       isDarkMode ? '#edf7f1' : dt.colors.textPrimary,
+          colorText:           isDarkMode ? '#edf7f1' : dt.colors.textPrimary,
+          colorTextSecondary:  isDarkMode ? '#b4c7bc' : dt.colors.textSecondary,
+          colorTextTertiary:   isDarkMode ? '#8fa69a' : dt.colors.textMuted,
+          colorBgBase,
+          colorBgLayout,
+          colorBgContainer,
+          colorBorder,
+
+          /* ── Typography ── */
+          fontSize:   dt.typography.body,
+          fontFamily: dt.typography.fontFamily,
+
+          /* ── Shape ── */
+          borderRadius: dt.radius.md,
+
+          /* ── Control heights (applies globally) ── */
+          controlHeight:   dt.controlHeight.md,
+          controlHeightSM: dt.controlHeight.sm,
+          controlHeightLG: dt.controlHeight.lg,
         },
         components: {
           Button: {
-            controlHeight: designTokens.controlHeight.md,
-            controlHeightSM: designTokens.controlHeight.sm,
-            controlHeightLG: designTokens.controlHeight.lg,
-            fontWeight: 600,
-            borderRadius: designTokens.radius.md,
-            borderRadiusLG: designTokens.radius.md,
-            lineWidth: 1,
+            controlHeight:   dt.controlHeight.md,
+            controlHeightSM: dt.controlHeight.sm,
+            controlHeightLG: dt.controlHeight.lg,
+            fontWeight:      600,
+            borderRadius:    dt.radius.md,
+            borderRadiusLG:  dt.radius.md,
+            lineWidth:       1,
           },
           Input: {
-            controlHeight: designTokens.controlHeight.md,
-            controlHeightSM: designTokens.controlHeight.sm,
-            controlHeightLG: designTokens.controlHeight.lg,
-            activeShadow: `0 0 0 3px ${designTokens.colors.primarySoft}`,
+            controlHeight:   dt.controlHeight.md,
+            controlHeightSM: dt.controlHeight.sm,
+            controlHeightLG: dt.controlHeight.lg,
+            activeShadow:    `0 0 0 3px ${dt.colors.primarySoft}`,
           },
           Select: {
-            controlHeight: designTokens.controlHeight.md,
-            controlHeightSM: designTokens.controlHeight.sm,
-            controlHeightLG: designTokens.controlHeight.lg,
+            controlHeight:   dt.controlHeight.md,
+            controlHeightSM: dt.controlHeight.sm,
+            controlHeightLG: dt.controlHeight.lg,
           },
           DatePicker: {
-            controlHeight: designTokens.controlHeight.md,
-            controlHeightSM: designTokens.controlHeight.sm,
-            controlHeightLG: designTokens.controlHeight.lg,
+            controlHeight:   dt.controlHeight.md,
+            controlHeightSM: dt.controlHeight.sm,
+            controlHeightLG: dt.controlHeight.lg,
           },
           Menu: {
-            itemHeight: 40,
-            itemBorderRadius: designTokens.radius.md,
-            itemSelectedBg: designTokens.colors.primarySoft,
-            itemSelectedColor: designTokens.colors.primary,
-            itemHoverBg: designTokens.colors.surfaceMuted,
+            itemHeight:       40,
+            itemBorderRadius: dt.radius.md,
+            itemSelectedBg:   dt.colors.primarySoft,
+            itemSelectedColor: dt.colors.primary,
+            itemHoverBg:      dt.colors.surfaceMuted,
           },
           Card: {
-            borderRadiusLG: designTokens.radius.lg,
+            borderRadiusLG: dt.radius.lg,
           },
           Table: {
-            headerBg: designTokens.colors.surfaceMuted,
-            headerColor: designTokens.colors.textSecondary,
-            cellPaddingInline: designTokens.spacing.lg,
-            cellPaddingBlock: 12,
-            borderRadius: designTokens.radius.lg,
-            fontSize: designTokens.typography.body,
+            headerBg:         dt.colors.primary,
+            headerColor:      '#ffffff',
+            headerFontSize:   12.5,
+            cellPaddingInline: dt.spacing.lg,
+            cellPaddingBlock:  10,
+            borderRadius:     dt.radius.lg,
+            fontSize:         dt.typography.body,
+            rowHoverBg:       dt.colors.primarySoft,
           },
           Modal: {
-            borderRadiusLG: designTokens.radius.xl,
+            borderRadiusLG: dt.radius.xl,
+          },
+          Pagination: {
+            itemActiveBg:     dt.colors.primarySoft,
           },
         },
       }}

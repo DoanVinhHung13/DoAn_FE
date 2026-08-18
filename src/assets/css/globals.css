@@ -4,6 +4,91 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── App-level component utilities ─────────────────────────────────────────
+   These are semantic utility classes consumed by src/constants/uiConfig.js
+   and page components. Defined here so Tailwind's JIT does not purge them.
+   All values reference the CSS custom properties set in :root below.
+   ─────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  /* Page wrapper */
+  .page-wrapper {
+    @apply space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4;
+  }
+
+  /* Page header row */
+  .page-header {
+    @apply flex flex-col justify-between gap-4 sm:flex-row sm:items-center;
+  }
+
+  /* Toolbar card (search + filters container) */
+  .toolbar-card {
+    @apply admin-filter-card rounded-lg shadow-sm;
+  }
+
+  /* Toolbar inner row */
+  .toolbar-inner {
+    @apply admin-toolbar flex flex-col gap-3 sm:flex-row sm:flex-wrap;
+  }
+
+  /* Toolbar action button group (right-aligned) */
+  .toolbar-actions {
+    @apply flex gap-2 ml-auto;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary-action {
+    @apply flex-shrink-0 h-control px-5 font-bold bg-primary border-0 shadow-primary rounded-xl;
+  }
+
+  .btn-search {
+    @apply h-control px-4 font-semibold rounded-xl bg-gray-50;
+  }
+
+  .btn-reload {
+    @apply h-control px-3 rounded-xl bg-gray-50;
+  }
+
+  /* Small square icon buttons (32 × 32) */
+  .btn-icon {
+    @apply flex items-center justify-center w-8 h-8 rounded-lg;
+  }
+
+  .btn-icon-edit     { @apply btn-icon hover:bg-green-50; }
+  .btn-icon-delete   { @apply btn-icon hover:bg-red-50; }
+  .btn-icon-activate { @apply btn-icon hover:bg-green-50; }
+  .btn-icon-deactivate { @apply btn-icon hover:bg-red-50; }
+  .btn-icon-import   { @apply btn-icon hover:bg-blue-50; }
+  .btn-icon-locked   { @apply btn-icon opacity-40; }
+
+  /* Confirm modal footer buttons */
+  .btn-confirm {
+    @apply h-control px-6 font-bold bg-orange-500 border-0 shadow-orange rounded-xl;
+  }
+
+  .btn-cancel {
+    @apply h-control px-6 rounded-xl;
+  }
+
+  /* ── Inputs ── */
+  .input-search {
+    @apply w-64 h-control rounded-xl;
+  }
+
+  .input-select {
+    @apply h-control rounded-xl min-w-[160px];
+  }
+
+  /* ── Table row actions ── */
+  .row-actions {
+    @apply flex items-center justify-center gap-2;
+  }
+
+  /* ── Modal parts ── */
+  .modal-title   { @apply flex items-center; }
+  .modal-body    { @apply mt-4 mb-6 ml-4; }
+  .modal-footer  { @apply flex justify-end gap-3; }
+}
+
 :root {
   --color-primary: #15803d;
   --color-primary-hover: #166534;
@@ -1010,19 +1095,35 @@ a,
   }
 }
 
-/* Public traceability follows the same compact card rhythm as the admin UI. */
-.trace-card>.ant-card-body {
-  padding: 24px;
-}
-
-.trace-section-icon {
-  display: none !important;
-}
-
-.trace-material-legacy {
-  display: none !important;
-}
-
+/* ─── Public traceability ───────────────────────────────────────────────── */
+.trace-card>.ant-card-body           { padding: 24px; }
+.trace-section-icon                  { display: none !important; }
+.trace-material-legacy               { display: none !important; }
 .trace-card>.ant-card-body>div:first-child .ant-typography {
   margin-top: 0 !important;
+}
+
+.ant-upload-list {
+  margin-top: 16px !important;
+}
+
+.ant-upload-list-item {
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.ant-upload-list-item-thumbnail img {
+  object-fit: cover !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+.ant-upload-list-item-name {
+  color: var(--color-text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+.ant-upload-list-item:hover {
+  background-color: var(--color-surface-muted) !important;
 }
