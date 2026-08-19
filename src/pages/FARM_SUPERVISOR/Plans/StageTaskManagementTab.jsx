@@ -786,6 +786,7 @@ const StageTaskManagementTab = ({
           getTaskOrder(right, Number.MAX_SAFE_INTEGER),
       )
       onTasksReordered?.(selectedId, nextOrderedTasks)
+      await loadData()
     } catch {
       // Reordering failures are handled by the shared interceptor.
     } finally {
