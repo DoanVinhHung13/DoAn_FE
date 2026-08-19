@@ -11,9 +11,8 @@ import {
   Select,
 } from "antd"
 import { useEffect, useState } from "react"
-import { toTaskApiDateTime } from "src/constants/cultivationTask"
 import CultivationTaskService from "src/services/CultivationTaskService"
-import { parseDate } from "src/utils/dateFormatters"
+import { formatDateForApi, parseDate } from "src/utils/dateFormatters"
 
 const EditTaskModal = ({
   open,
@@ -33,7 +32,6 @@ const EditTaskModal = ({
         name: task.name || task.taskName,
         description: task.description || "",
         plannedStartDate: parseDate(task.plannedStartDate),
-        plannedEndDate: parseDate(task.plannedEndDate),
         leaderId: task.assignedLeaderId || null,
         farmerIds:
           task.assignments
@@ -52,8 +50,7 @@ const EditTaskModal = ({
       await CultivationTaskService.update(task.id, {
         name: values.name,
         description: values.description,
-        plannedStartDate: toTaskApiDateTime(values.plannedStartDate),
-        plannedEndDate: toTaskApiDateTime(values.plannedEndDate),
+        plannedStartDate: formatDateForApi(values.plannedStartDate),
         leaderId: values.leaderId || null,
         farmerIds: Array.isArray(values.farmerIds) ? values.farmerIds : [],
       })
@@ -149,29 +146,11 @@ const EditTaskModal = ({
             <Form.Item
               name="plannedStartDate"
               label="Bắt đầu dự kiến"
-              dependencies={["plannedEndDate"]}
               rules={[
                 {
                   required: true,
                   message: "Vui lòng chọn ngày bắt đầu dự kiến.",
                 },
-                ({ getFieldValue }) => ({
-                  validator: (_, value) => {
-                    const end = getFieldValue("plannedEndDate")
-                    if (
-                      !value ||
-                      !end ||
-                      value.isBefore(end, "day") ||
-                      value.isSame(end, "day")
-                    )
-                      return Promise.resolve()
-                    return Promise.reject(
-                      new Error(
-                        "Ngày bắt đầu phải trước hoặc cùng ngày với ngày kết thúc.",
-                      ),
-                    )
-                  },
-                }),
               ]}
             >
               <DatePicker
@@ -179,50 +158,7 @@ const EditTaskModal = ({
                 className="w-full"
                 placeholder="Chọn ngày bắt đầu"
                 onChange={() => {
-                  editTaskForm
-                    .validateFields(["plannedStartDate", "plannedEndDate"])
-                    .catch(() => {})
-                }}
-              />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={12}>
-            <Form.Item
-              name="plannedEndDate"
-              label="Kết thúc dự kiến"
-              dependencies={["plannedStartDate"]}
-              rules={[
-                {
-                  required: true,
-                  message: "Vui lòng chọn ngày kết thúc dự kiến.",
-                },
-                ({ getFieldValue }) => ({
-                  validator: (_, value) => {
-                    const start = getFieldValue("plannedStartDate")
-                    if (
-                      !value ||
-                      !start ||
-                      start.isBefore(value, "day") ||
-                      start.isSame(value, "day")
-                    )
-                      return Promise.resolve()
-                    return Promise.reject(
-                      new Error(
-                        "Ngày kết thúc phải sau hoặc cùng ngày với ngày bắt đầu.",
-                      ),
-                    )
-                  },
-                }),
-              ]}
-            >
-              <DatePicker
-                format="DD/MM/YYYY"
-                className="w-full"
-                placeholder="Chọn ngày kết thúc"
-                onChange={() => {
-                  editTaskForm
-                    .validateFields(["plannedStartDate", "plannedEndDate"])
-                    .catch(() => {})
+                  editTaskForm.validateFields(["plannedStartDate"]).catch(() => {})
                 }}
               />
             </Form.Item>

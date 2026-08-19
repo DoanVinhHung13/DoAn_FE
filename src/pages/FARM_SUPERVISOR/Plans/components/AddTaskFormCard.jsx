@@ -23,10 +23,9 @@ import { useState } from "react"
 import {
   CULTIVATION_TASK_TYPE_OPTIONS,
   CULTIVATION_TASK_TYPES,
-  toTaskApiDateTime,
 } from "src/constants/cultivationTask"
 import CultivationTaskService from "src/services/CultivationTaskService"
-import { getLocalNow } from "src/utils/dateFormatters"
+import { formatDateForApi, getLocalNow } from "src/utils/dateFormatters"
 
 const { Text } = Typography
 
@@ -82,8 +81,7 @@ const AddTaskFormCard = ({
               ? task.farmerIds.filter(Boolean)
               : [],
             taskType: catalog?.taskType || task.taskType || null,
-            plannedStartDate: toTaskApiDateTime(task.plannedStartDate?.startOf?.("day") || task.plannedStartDate),
-            plannedEndDate: toTaskApiDateTime(task.plannedEndDate?.endOf?.("day") || task.plannedEndDate),
+            plannedStartDate: formatDateForApi(task.plannedStartDate),
             activityType:
               catalog?.activityType ||
               (task.taskType === CULTIVATION_TASK_TYPES.HARVEST
@@ -101,21 +99,6 @@ const AddTaskFormCard = ({
 
       if (validTasks.some(task => !task.taskType)) {
         message.warning("Vui lòng chọn loại công việc cho công việc tự do.")
-        setSavingTask(false)
-        return
-      }
-
-      if (
-        validTasks.some(
-          task =>
-            !task.plannedStartDate ||
-            !task.plannedEndDate ||
-            task.plannedStartDate > task.plannedEndDate,
-        )
-      ) {
-        message.warning(
-          "Ngày bắt đầu dự kiến phải trước hoặc bằng ngày kết thúc dự kiến.",
-        )
         setSavingTask(false)
         return
       }
@@ -178,7 +161,6 @@ const AddTaskFormCard = ({
               name: "",
               description: "",
               plannedStartDate: getLocalNow().startOf("day"),
-              plannedEndDate: getLocalNow().startOf("day").add(1, "day"),
             },
           ],
         }}
@@ -387,33 +369,11 @@ const AddTaskFormCard = ({
                         {...restField}
                         name={[name, "plannedStartDate"]}
                         label="Bắt đầu dự kiến"
-                        dependencies={[[name, "plannedEndDate"]]}
                         rules={[
                           {
                             required: true,
                             message: "Vui lòng chọn ngày bắt đầu dự kiến.",
                           },
-                          ({ getFieldValue }) => ({
-                            validator: (_, value) => {
-                              const end = getFieldValue([
-                                "tasks",
-                                name,
-                                "plannedEndDate",
-                              ])
-                              if (
-                                !value ||
-                                !end ||
-                                value.isBefore(end, "day") ||
-                                value.isSame(end, "day")
-                              )
-                                return Promise.resolve()
-                              return Promise.reject(
-                                new Error(
-                                  "Ngày bắt đầu phải trước hoặc cùng ngày với ngày kết thúc.",
-                                ),
-                              )
-                            },
-                          }),
                         ]}
                         className="!mb-2.5"
                       >
@@ -425,7 +385,6 @@ const AddTaskFormCard = ({
                             taskForm
                               .validateFields([
                                 ["tasks", name, "plannedStartDate"],
-                                ["tasks", name, "plannedEndDate"],
                               ])
                               .catch(() => {})
                           }}
@@ -433,57 +392,6 @@ const AddTaskFormCard = ({
                       </Form.Item>
                     </Col>
 
-                    {/* Kết thúc dự kiến - chỉ chọn ngày, click là chọn luôn */}
-                    <Col xs={24} sm={12}>
-                      <Form.Item
-                        {...restField}
-                        name={[name, "plannedEndDate"]}
-                        label="Kết thúc dự kiến"
-                        dependencies={[[name, "plannedStartDate"]]}
-                        rules={[
-                          {
-                            required: true,
-                            message: "Vui lòng chọn ngày kết thúc dự kiến.",
-                          },
-                          ({ getFieldValue }) => ({
-                            validator: (_, value) => {
-                              const start = getFieldValue([
-                                "tasks",
-                                name,
-                                "plannedStartDate",
-                              ])
-                              if (
-                                !value ||
-                                !start ||
-                                start.isBefore(value, "day") ||
-                                start.isSame(value, "day")
-                              )
-                                return Promise.resolve()
-                              return Promise.reject(
-                                new Error(
-                                  "Ngày kết thúc phải sau hoặc cùng ngày với ngày bắt đầu.",
-                                ),
-                              )
-                            },
-                          }),
-                        ]}
-                        className="!mb-2.5"
-                      >
-                        <DatePicker
-                          format="DD/MM/YYYY"
-                          className="w-full"
-                          placeholder="Chọn ngày kết thúc"
-                          onChange={() => {
-                            taskForm
-                              .validateFields([
-                                ["tasks", name, "plannedStartDate"],
-                                ["tasks", name, "plannedEndDate"],
-                              ])
-                              .catch(() => {})
-                          }}
-                        />
-                      </Form.Item>
-                    </Col>
                   </Row>
 
                   <Row gutter={[12, 0]}>
@@ -546,7 +454,6 @@ const AddTaskFormCard = ({
                     name: "",
                     description: "",
                     plannedStartDate: getLocalNow().startOf("day"),
-                    plannedEndDate: getLocalNow().startOf("day").add(1, "day"),
                     leaderId: null,
                     farmerIds: [],
                   })

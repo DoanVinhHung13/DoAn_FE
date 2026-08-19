@@ -395,10 +395,6 @@ const FarmSupervisorTaskDetail = () => {
             {task.plannedStartDate ? formatDate(task.plannedStartDate) : "—"}
           </div>
           <div>
-            <span className="font-semibold">Kết thúc dự kiến:</span>{" "}
-            {task.plannedEndDate ? formatDate(task.plannedEndDate) : "—"}
-          </div>
-          <div>
             <span className="font-semibold">Bắt đầu thực tế:</span>{" "}
             {task.workStartDate ? formatDate(task.workStartDate) : "—"}
           </div>

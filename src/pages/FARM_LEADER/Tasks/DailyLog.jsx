@@ -776,10 +776,6 @@ const DailyLog = () => {
                   : "—"}
               </span>
               <span>
-                <strong>Kết thúc dự kiến:</strong>{" "}
-                {task.plannedEndDate ? formatDate(task.plannedEndDate) : "—"}
-              </span>
-              <span>
                 <strong>Bắt đầu thực tế:</strong>{" "}
                 {task.workStartDate ? formatDate(task.workStartDate) : "—"}
               </span>

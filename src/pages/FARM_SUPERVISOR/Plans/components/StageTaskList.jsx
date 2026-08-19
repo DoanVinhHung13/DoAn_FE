@@ -314,18 +314,12 @@ const TaskItemCard = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-gray-100 text-xs">
           {/* Cột thời gian */}
           <div className="space-y-1.5">
-            {(task.plannedStartDate || task.plannedEndDate) && (
+            {task.plannedStartDate && (
               <div className="flex items-center gap-1.5 text-gray-600">
                 <CalendarOutlined className="text-gray-400" />
                 <span className="font-medium text-gray-700">Dự kiến:</span>
                 <span>
-                  {task.plannedStartDate
-                    ? formatDate(task.plannedStartDate)
-                    : "—"}{" "}
-                  →{" "}
-                  {task.plannedEndDate
-                    ? formatDate(task.plannedEndDate)
-                    : "Chưa xác định"}
+                  {formatDate(task.plannedStartDate)}
                 </span>
               </div>
             )}

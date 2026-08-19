@@ -153,7 +153,7 @@ const TaskCard = ({
   const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
   const canReorder = canReorderSelectedStage && canReorderTask(task)
 
-  const hasPlannedDates = task.plannedStartDate || task.plannedEndDate
+  const hasPlannedDates = task.plannedStartDate
   const hasActualDates =
     task.workStartDate || task.workEndDate || task.completedDate
 
@@ -338,10 +338,7 @@ const TaskCard = ({
               <CalendarOutlined className="text-gray-400 flex-shrink-0" />
               <span className="font-semibold text-gray-500">Dự kiến:</span>
               <span className="font-medium text-gray-800">
-                {task.plannedStartDate
-                  ? formatDate(task.plannedStartDate)
-                  : "—"}
-                {task.plannedEndDate && ` – ${formatDate(task.plannedEndDate)}`}
+                {task.plannedStartDate ? formatDate(task.plannedStartDate) : "—"}
               </span>
             </div>
 

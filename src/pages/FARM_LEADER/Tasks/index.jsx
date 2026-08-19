@@ -170,10 +170,6 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
               <CalendarOutlined className="mr-1 text-emerald-600" />
               {task.plannedStartDate ? formatDate(task.plannedStartDate) : "—"}
             </Text>
-            <Text type="secondary" className="block mt-1 text-xs">
-              Kết thúc dự kiến:{" "}
-              {task.plannedEndDate ? formatDate(task.plannedEndDate) : "—"}
-            </Text>
             {task.completedDate && (
               <Text className="block mt-1 text-xs text-green-600">
                 Hoàn thành: {formatDate(task.completedDate)}
