@@ -9,7 +9,7 @@ import {
   AppstoreOutlined,
 } from "@ant-design/icons"
 import { Alert, Button, Card, Skeleton, Tag, Tabs } from "antd"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 
 import TitleCustom from "src/components/TitleCustom"
@@ -36,6 +36,14 @@ const CultivationLogbookDetail = () => {
   const [item, setItem] = useState(null)
   const [stages, setStages] = useState([])
   const [activeTab, setActiveTab] = useState("tasks")
+
+  const handleTasksReordered = useCallback((stageId, reorderedTasks) => {
+    setStages(currentStages =>
+      currentStages.map(stage =>
+        stage.id === stageId ? { ...stage, tasks: reorderedTasks } : stage,
+      ),
+    )
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -324,6 +332,7 @@ const CultivationLogbookDetail = () => {
           stages={stages}
           tasks={tasksMap}
           loadData={() => setReloadKey(key => key + 1)}
+          onTasksReordered={handleTasksReordered}
         />
       )}
     </div>

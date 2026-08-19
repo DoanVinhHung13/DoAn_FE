@@ -136,6 +136,13 @@ const FarmSupervisorPlanDetail = () => {
     [navigate, planId],
   )
 
+  const handleTasksReordered = useCallback((stageId, reorderedTasks) => {
+    setTasks(currentTasks => ({
+      ...currentTasks,
+      [stageId]: reorderedTasks,
+    }))
+  }, [])
+
   useEffect(() => {
     loadData(true)
   }, [loadData])
@@ -402,6 +409,7 @@ const FarmSupervisorPlanDetail = () => {
                 stages={stages}
                 tasks={tasks}
                 loadData={loadData}
+                onTasksReordered={handleTasksReordered}
               />
             ),
           },

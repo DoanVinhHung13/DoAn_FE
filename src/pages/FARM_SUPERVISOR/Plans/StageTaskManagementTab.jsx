@@ -485,7 +485,14 @@ const TaskCard = ({
   )
 }
 
-const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
+const StageTaskManagementTab = ({
+  plan,
+  planId,
+  stages,
+  tasks,
+  loadData,
+  onTasksReordered,
+}) => {
   const { getStageStatus, getTaskStatus } = useCultivationStatus()
   const getTaskCfg = s => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
   const [searchParams, setSearchParams] = useSearchParams()
@@ -751,7 +758,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
     try {
       setSavingOrder(true)
-      await CultivationTaskService.reorder(
+      const response = await CultivationTaskService.reorder(
         {
           cultivationLogbookId: planId,
           cultivationStageId: selectedId,
@@ -764,7 +771,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
           tasks: orderedSelectedTasks,
         },
       )
-      await loadData()
+      const savedTasks = unwrap(response)
+      const nextOrderedTasks = (Array.isArray(savedTasks)
+        ? savedTasks
+        : nextTasks
+      ).sort(
+        (left, right) =>
+          getTaskOrder(left, Number.MAX_SAFE_INTEGER) -
+          getTaskOrder(right, Number.MAX_SAFE_INTEGER),
+      )
+      onTasksReordered?.(selectedId, nextOrderedTasks)
     } catch {
       // Reordering failures are handled by the shared interceptor.
     } finally {
