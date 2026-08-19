@@ -159,6 +159,23 @@ const toPesticideOptions = list =>
     }
   })
 
+const normalizeCropName = value =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+
+const hasDosageForCrop = (targets, cropName) => {
+  const normalizedCropName = normalizeCropName(cropName)
+  if (!normalizedCropName) return false
+
+  return (targets || []).some(target => {
+    const value = target?.target ?? target?.targetCrop
+    return normalizeCropName(value) === normalizedCropName
+  })
+}
+
 const DailyLog = () => {
   const { getTaskStatus } = useCultivationStatus()
   const { taskId } = useParams()
@@ -355,14 +372,25 @@ const DailyLog = () => {
 
         const fertData = unwrap(fertRes)
         const pestData = unwrap(pestRes)
+        const cropName = taskData.cropName || taskData.crop?.name
+        const fertilizerList = Array.isArray(fertData)
+          ? fertData
+          : fertData?.items || []
+        const pesticideList = Array.isArray(pestData)
+          ? pestData
+          : pestData?.items || []
         setFertilizerOptions(
           toFertilizerOptions(
-            Array.isArray(fertData) ? fertData : fertData?.items || [],
+            fertilizerList.filter(item =>
+              hasDosageForCrop(item.dosages, cropName),
+            ),
           ),
         )
         setPesticideOptions(
           toPesticideOptions(
-            Array.isArray(pestData) ? pestData : pestData?.items || [],
+            pesticideList.filter(item =>
+              hasDosageForCrop(item.usages, cropName),
+            ),
           ),
         )
         setRemainingAreas({})
