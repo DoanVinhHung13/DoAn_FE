@@ -46,7 +46,7 @@ import {
   saveCompiledDescription,
   unwrap,
 } from "./compileLogHelpers"
-import { getOrderedStageLogs, getStageTaskName } from "./logbookOrdering"
+import { getOrderedStageLogs, getStageTaskName } from "src/utils/cultivationOrdering"
 
 const { Text, Title } = Typography
 const { TextArea } = Input

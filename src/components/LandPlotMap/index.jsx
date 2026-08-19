@@ -12,7 +12,7 @@ import {
   geoJSONToLeafletPositions,
   parseBoundaryJson,
 } from "src/utils/geoJsonUtils"
-import { MSG_LM_25 } from "src/pages/FARM_MANAGER/Lands/landPlotUtils"
+import { MSG_LM_25 } from "src/utils/landPlotUtils"
 import {
   getPlaceDetail,
   isExternalAbortError,

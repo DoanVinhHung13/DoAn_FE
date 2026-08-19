@@ -8,15 +8,15 @@ import TitleCustom from "src/components/TitleCustom"
 import { MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import LandPlotService from "src/services/LandPlotService"
 import { findOverlappingPlot } from "src/utils/geoJsonUtils"
-import LandPlotFormFields from "./LandPlotFormFields"
+import LandPlotFormFields from "./components/LandPlotFormFields"
 import {
   buildLandPlotPayload,
   isOverlapApiError,
   MSG_LM_25,
   normalizeLandPlotResponse,
-} from "./landPlotUtils"
-import { useLandPlotAccess } from "./useLandPlotAccess"
-import { useLandPlotForm } from "./useLandPlotForm"
+} from "src/utils/landPlotUtils"
+import { useLandPlotAccess } from "./hooks/useLandPlotAccess"
+import { useLandPlotForm } from "./hooks/useLandPlotForm"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
 

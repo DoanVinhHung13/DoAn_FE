@@ -39,8 +39,8 @@ import {
   getItemId,
   isLandPlotActive,
   normalizeLandPlotResponse,
-} from "../Lands/landPlotUtils"
-import { normalizeWeather } from "../Lands/landPlotWeatherUtils"
+} from "src/utils/landPlotUtils"
+import { normalizeWeather } from "src/utils/landPlotWeatherUtils"
 
 const { Title, Text } = Typography
 

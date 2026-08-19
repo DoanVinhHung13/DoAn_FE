@@ -1,7 +1,9 @@
 // src/router/guards.jsx
-import { Navigate, Outlet } from "react-router-dom"
+import { useEffect, useContext } from "react"
+import { Navigate, Outlet, useLocation } from "react-router-dom"
 import { useSelector } from "react-redux"
 import authSession from "src/redux/authSession"
+import { StoreContext } from "src/contexts"
 import ROUTER from "./ROUTER"
 import { getDashboardPathByRole } from "./roleRedirects"
 import { hasRoleAccess } from "./authUtils"
@@ -83,4 +85,31 @@ const GuestRoute = ({ children }) => {
   return children ?? <Outlet />
 }
 
-export { ProtectedRoute, GuestRoute }
+/**
+ * PrivateRoutes — Chỉ cho vào nếu đã đăng nhập.
+ */
+const PrivateRoutes = () => {
+  const { userInfo } = useSelector(state => state.appGlobal)
+  const { routerBeforeStore } = useContext(StoreContext)
+  const { setRouterBeforeLogin } = routerBeforeStore
+  const location = useLocation()
+
+  const hasToken = authSession.isAuthenticated()
+  const hasUser = Boolean(userInfo?._id)
+  const isLoggedIn = hasToken || hasUser
+
+  // Lưu URL hiện tại trước khi redirect (để sau login quay lại đúng trang)
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setRouterBeforeLogin(`${location.pathname}${location.search}`)
+    }
+  }, [isLoggedIn, location.pathname, location.search, setRouterBeforeLogin])
+
+  if (!isLoggedIn) {
+    return <Navigate to={ROUTER.LOGIN} replace />
+  }
+
+  return <Outlet />
+}
+
+export { ProtectedRoute, GuestRoute, PrivateRoutes }
