@@ -196,44 +196,58 @@ const TaskCard = ({
         className="pb-2.5 border-b border-gray-100"
       >
         <Flex align="center" gap={8} className="flex-1 min-w-0">
-          {/* Thứ tự & nút di chuyển thứ tự */}
-          <Flex align="center" gap={4} className="flex-shrink-0">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-50 text-green-700 text-xs font-bold border border-green-200">
-              {getTaskOrder(task, taskIndex + 1)}
-            </span>
-            <Flex vertical gap={1} className="flex-shrink-0">
+          {/* Cụm thứ tự và nút di chuyển dọc (Nút tăng trên - Số ở giữa - Nút giảm dưới) */}
+          <div className="flex flex-col items-center justify-center bg-green-50 border border-green-200 rounded-lg p-0.5 shadow-2xs flex-shrink-0 min-w-[32px]">
+            <Tooltip
+              title={
+                canReorder
+                  ? taskIndex === 0
+                    ? "Đang ở vị trí đầu"
+                    : "Di chuyển lên trước"
+                  : "Thứ tự đã khóa"
+              }
+            >
               <Button
                 type="text"
                 size="small"
-                icon={<ArrowUpOutlined style={{ fontSize: 9 }} />}
+                icon={<ArrowUpOutlined style={{ fontSize: 10 }} />}
                 disabled={savingOrder || taskIndex === 0 || !canReorder}
-                title={canReorder ? "Di chuyển lên trước" : "Không thể đổi thứ tự"}
-                style={{ width: 18, height: 13, padding: 0 }}
-                className="flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-100 disabled:opacity-30 rounded"
+                className="!w-6 !h-4 !min-w-0 !p-0 flex items-center justify-center rounded text-green-700 hover:bg-white hover:text-green-900 disabled:opacity-20 transition-all leading-none"
                 onClick={e => {
                   e.stopPropagation()
                   onMoveTask(task.id, -1)
                 }}
               />
+            </Tooltip>
+            <span className="px-1 text-sm font-bold text-green-800 leading-tight select-none my-0.5">
+              {getTaskOrder(task, taskIndex + 1)}
+            </span>
+            <Tooltip
+              title={
+                canReorder
+                  ? taskIndex === orderedSelectedTasks.length - 1
+                    ? "Đang ở vị trí cuối"
+                    : "Di chuyển xuống sau"
+                  : "Thứ tự đã khóa"
+              }
+            >
               <Button
                 type="text"
                 size="small"
-                icon={<ArrowDownOutlined style={{ fontSize: 9 }} />}
+                icon={<ArrowDownOutlined style={{ fontSize: 10 }} />}
                 disabled={
                   savingOrder ||
                   taskIndex === orderedSelectedTasks.length - 1 ||
                   !canReorder
                 }
-                title={canReorder ? "Di chuyển xuống sau" : "Không thể đổi thứ tự"}
-                style={{ width: 18, height: 13, padding: 0 }}
-                className="flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-100 disabled:opacity-30 rounded"
+                className="!w-6 !h-4 !min-w-0 !p-0 flex items-center justify-center rounded text-green-700 hover:bg-white hover:text-green-900 disabled:opacity-20 transition-all leading-none"
                 onClick={e => {
                   e.stopPropagation()
                   onMoveTask(task.id, 1)
                 }}
               />
-            </Flex>
-          </Flex>
+            </Tooltip>
+          </div>
 
           {/* Tên công việc */}
           <Text
