@@ -218,24 +218,3 @@ export const canApproveClosing = logbook => {
   const review = logbook?.reviewStatus
   return review === "WAITING_APPROVAL" || review === "PENDING_REVIEW"
 }
-
-/** Can reorder tasks if logbook and stage are active/planned and not completed/closed */
-export const canReorderStageTasks = (stage, logbook) => {
-  if (!stage) return false
-  if (["COMPLETED", "WAITING_APPROVAL", "APPROVED"].includes(logbook?.status))
-    return false
-  if (["WAITING_APPROVAL", "APPROVED"].includes(logbook?.reviewStatus))
-    return false
-  return (
-    stage.status !== "COMPLETED" &&
-    stage.status !== "CANCELLED" &&
-    stage.status !== "CANCELED"
-  )
-}
-
-/** A task that is pending or assigned (not yet in progress / completed) can be reordered */
-export const canReorderTask = task =>
-  !task?.status || ["PENDING", "ASSIGNED"].includes(task.status)
-
-export const canReorderTaskList = tasks =>
-  Array.isArray(tasks) && tasks.length > 1

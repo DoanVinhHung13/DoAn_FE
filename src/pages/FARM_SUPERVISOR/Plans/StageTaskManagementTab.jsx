@@ -1,6 +1,4 @@
 import {
-  ArrowDownOutlined,
-  ArrowUpOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -45,23 +43,20 @@ import CultivationTaskService from "src/services/CultivationTaskService"
 import TaskCatalogService from "src/services/TaskCatalogService"
 import UserService from "src/services/UserService"
 import { getTaskOrder, orderTasks } from "src/utils/cultivationOrdering"
-import {
-  canReorderStageTasks,
-  canReorderTask,
-  canReorderTaskList,
-} from "src/utils/cultivationStatus"
-import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
+import { formatDate } from "src/utils/dateFormatters"
 import { getActiveQuarantineWarnings } from "src/utils/quarantineValidation"
 import { getUserDisplayName } from "src/utils/userDisplayName"
 import AddTaskFormCard from "./components/AddTaskFormCard"
+import ActivateTaskModal from "./components/ActivateTaskModal"
 import EditTaskModal from "./components/EditTaskModal"
-import StageTaskList from "./components/StageTaskList"
 
 const { Text, Paragraph } = Typography
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
-const isHarvestTask = task => task?.taskType === CULTIVATION_TASK_TYPES.HARVEST
+const isHarvestTask = task =>
+  task?.taskType === CULTIVATION_TASK_TYPES.HARVEST ||
+  task?.activityType === "HARVESTING"
 
 const getAllTasks = taskMap => Object.values(taskMap).flat()
 
@@ -129,11 +124,7 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
 const TaskCard = ({
   task,
   taskIndex,
-  orderedSelectedTasks,
   getTaskCfg,
-  canReorderSelectedStage,
-  savingOrder,
-  onMoveTask,
   onEdit,
   onActivate,
   onDelete,
@@ -151,9 +142,6 @@ const TaskCard = ({
             : "#d1d5db"
 
   const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
-  const canReorder = canReorderSelectedStage && canReorderTask(task)
-
-  const hasPlannedDates = task.plannedStartDate
   const hasActualDates =
     task.workStartDate || task.workEndDate || task.completedDate
 
@@ -196,56 +184,11 @@ const TaskCard = ({
         className="pb-2.5 border-b border-gray-100"
       >
         <Flex align="center" gap={8} className="flex-1 min-w-0">
-          {/* Cụm thứ tự và nút di chuyển dọc (Nút tăng trên - Số ở giữa - Nút giảm dưới) */}
-          <div className="flex flex-col items-center justify-center bg-green-50 border border-green-200 rounded-lg p-0.5 shadow-2xs flex-shrink-0 min-w-[32px]">
-            <Tooltip
-              title={
-                canReorder
-                  ? taskIndex === 0
-                    ? "Đang ở vị trí đầu"
-                    : "Di chuyển lên trước"
-                  : "Thứ tự đã khóa"
-              }
-            >
-              <Button
-                type="text"
-                size="small"
-                icon={<ArrowUpOutlined style={{ fontSize: 10 }} />}
-                disabled={savingOrder || taskIndex === 0 || !canReorder}
-                className="!w-6 !h-4 !min-w-0 !p-0 flex items-center justify-center rounded text-green-700 hover:bg-white hover:text-green-900 disabled:opacity-20 transition-all leading-none"
-                onClick={e => {
-                  e.stopPropagation()
-                  onMoveTask(task.id, -1)
-                }}
-              />
-            </Tooltip>
-            <span className="px-1 text-sm font-bold text-green-800 leading-tight select-none my-0.5">
-              {getTaskOrder(task, taskIndex + 1)}
-            </span>
-            <Tooltip
-              title={
-                canReorder
-                  ? taskIndex === orderedSelectedTasks.length - 1
-                    ? "Đang ở vị trí cuối"
-                    : "Di chuyển xuống sau"
-                  : "Thứ tự đã khóa"
-              }
-            >
-              <Button
-                type="text"
-                size="small"
-                icon={<ArrowDownOutlined style={{ fontSize: 10 }} />}
-                disabled={
-                  savingOrder ||
-                  taskIndex === orderedSelectedTasks.length - 1 ||
-                  !canReorder
-                }
-                className="!w-6 !h-4 !min-w-0 !p-0 flex items-center justify-center rounded text-green-700 hover:bg-white hover:text-green-900 disabled:opacity-20 transition-all leading-none"
-                onClick={e => {
-                  e.stopPropagation()
-                  onMoveTask(task.id, 1)
-                }}
-              />
+          <div className="flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-2 py-1 shadow-2xs flex-shrink-0 min-w-[32px]">
+            <Tooltip title="Thứ tự được cố định theo kế hoạch">
+              <span className="text-sm font-bold text-green-800 leading-tight select-none">
+                {getTaskOrder(task, taskIndex + 1)}
+              </span>
             </Tooltip>
           </div>
 
@@ -497,7 +440,6 @@ const StageTaskManagementTab = ({
   stages,
   tasks,
   loadData,
-  onTasksReordered,
 }) => {
   const { getStageStatus, getTaskStatus } = useCultivationStatus()
   const getTaskCfg = s => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
@@ -515,7 +457,7 @@ const StageTaskManagementTab = ({
     open: false,
     task: null,
   })
-  const [savingOrder, setSavingOrder] = useState(false)
+  const [activationTask, setActivationTask] = useState(null)
 
   const handleSelectStage = stageId => {
     setSelectedId(stageId)
@@ -622,6 +564,7 @@ const StageTaskManagementTab = ({
     const taskToActivate = Object.values(tasks)
       .flat()
       .find(task => task.id === taskId)
+    if (!taskToActivate) return
     const quarantineWarnings = Object.values(tasks).flatMap(taskList =>
       taskList.flatMap(task =>
         Array.isArray(task.quarantineWarnings) ? task.quarantineWarnings : [],
@@ -652,9 +595,42 @@ const StageTaskManagementTab = ({
       }
     }
 
+    setActivationTask(taskToActivate)
+  }
+
+  const busyUserIds = new Set(
+    getAllTasks(tasks)
+      .filter(task =>
+        ["IN_PROGRESS", "WAITING_APPROVAL"].includes(task.status),
+      )
+      .filter(task => task.id !== activationTask?.id)
+      .flatMap(task => [
+        task.assignedLeaderId || task.farmLeaderId,
+        ...(task.assignments || []).map(assignment =>
+          typeof assignment === "object"
+            ? assignment.userId || assignment.id
+            : assignment,
+        ),
+      ])
+      .filter(Boolean)
+      .map(String),
+  )
+
+  const confirmActivation = async (values, shouldAssign) => {
+    if (!activationTask) return
     try {
-      await CultivationTaskService.start(taskId)
-      loadData()
+      if (shouldAssign) {
+        await CultivationTaskService.assign(activationTask.id, {
+          leaderId: values.farmLeaderId,
+          farmerIds: values.farmerIds || [],
+        })
+      }
+      await CultivationTaskService.start(activationTask.id)
+      if (isHarvestTask(activationTask)) {
+        setEditingTaskId(null)
+      }
+      setActivationTask(null)
+      await loadData()
     } catch {
       // Axios interceptor handles error notification directly from backend response
     }
@@ -723,83 +699,18 @@ const StageTaskManagementTab = ({
     ? (tasks[selectedId] || []).filter(task => !deletedTaskIds.has(task.id))
     : []
   const orderedSelectedTasks = orderTasks(selectedTasks)
-  const hasHarvestTask = getAllTasks(tasks).some(isHarvestTask)
+  const harvestTask = getAllTasks(tasks).find(isHarvestTask)
+  const hasActiveHarvest = Boolean(
+    harvestTask && !["PENDING", "ASSIGNED"].includes(harvestTask.status),
+  )
   const selectedIdx = stages.findIndex(s => s.id === selectedId)
-  const canReorderSelectedStage =
-    canReorderStageTasks(selectedStage, plan) &&
-    canReorderTaskList(orderedSelectedTasks)
-
   // ── Handlers ──────────────────────────────────────────────────────────────
   const openAddTask = () => {
-    if (hasHarvestTask) {
-      message.warning(
-        "Sau khi tạo công việc thu hoạch, không thể tạo thêm công việc nào trong nhật ký này.",
-      )
-      return
-    }
     if (selectedStage?.status === "COMPLETED") {
       message.warning("Giai đoạn đã hoàn thành. Không thể thêm công việc mới.")
       return
     }
     setEditingTaskId("new")
-  }
-
-  const handleMoveTask = async (taskId, direction) => {
-    const task = orderedSelectedTasks.find(item => item.id === taskId)
-    if (!canReorderSelectedStage || !canReorderTask(task)) {
-      message.warning(
-        "Chỉ có thể đổi thứ tự công việc chưa thực hiện trong giai đoạn.",
-      )
-      return
-    }
-
-    const currentIndex = orderedSelectedTasks.findIndex(
-      task => task.id === taskId,
-    )
-    const targetIndex = currentIndex + direction
-
-    if (
-      currentIndex < 0 ||
-      targetIndex < 0 ||
-      targetIndex >= orderedSelectedTasks.length
-    ) {
-      return
-    }
-
-    const nextTasks = [...orderedSelectedTasks]
-    const [movedTask] = nextTasks.splice(currentIndex, 1)
-    nextTasks.splice(targetIndex, 0, movedTask)
-
-    try {
-      setSavingOrder(true)
-      const response = await CultivationTaskService.reorder(
-        {
-          cultivationLogbookId: planId,
-          cultivationStageId: selectedId,
-          taskIds: nextTasks.map(task => task.id),
-        },
-        {
-          stage: selectedStage,
-          logbook: plan,
-          task,
-          tasks: orderedSelectedTasks,
-        },
-      )
-      const savedTasks = unwrap(response)
-      const nextOrderedTasks = (
-        Array.isArray(savedTasks) ? savedTasks : nextTasks
-      ).sort(
-        (left, right) =>
-          getTaskOrder(left, Number.MAX_SAFE_INTEGER) -
-          getTaskOrder(right, Number.MAX_SAFE_INTEGER),
-      )
-      onTasksReordered?.(selectedId, nextOrderedTasks)
-      await loadData()
-    } catch {
-      // Reordering failures are handled by the shared interceptor.
-    } finally {
-      setSavingOrder(false)
-    }
   }
 
   return (
@@ -936,11 +847,7 @@ const StageTaskManagementTab = ({
                         key={task.id}
                         task={task}
                         taskIndex={taskIndex}
-                        orderedSelectedTasks={orderedSelectedTasks}
                         getTaskCfg={getTaskCfg}
-                        canReorderSelectedStage={canReorderSelectedStage}
-                        savingOrder={savingOrder}
-                        onMoveTask={handleMoveTask}
                         onEdit={task => setEditTaskModal({ open: true, task })}
                         onActivate={handleActivateTask}
                         onDelete={handleDeleteTask}
@@ -956,7 +863,7 @@ const StageTaskManagementTab = ({
                 )}
 
                 {/* Nút thêm công việc */}
-                {selectedStage.status !== "COMPLETED" && !hasHarvestTask && (
+                {selectedStage.status !== "COMPLETED" && !hasActiveHarvest && (
                   <Button
                     type="dashed"
                     icon={<PlusOutlined />}
@@ -979,7 +886,6 @@ const StageTaskManagementTab = ({
                     leaders={leaders}
                     farmers={farmers}
                     loadingUsers={loadingUsers}
-                    hasHarvestTask={hasHarvestTask}
                     onCancel={() => setEditingTaskId(null)}
                     onSaveSuccess={() => {
                       setEditingTaskId(null)
@@ -1005,6 +911,16 @@ const StageTaskManagementTab = ({
           setEditTaskModal({ open: false, task: null })
           loadData()
         }}
+      />
+
+      <ActivateTaskModal
+        open={Boolean(activationTask)}
+        task={activationTask}
+        leaderOptions={leaders}
+        farmerOptions={farmers}
+        busyUserIds={busyUserIds}
+        onCancel={() => setActivationTask(null)}
+        onConfirm={confirmActivation}
       />
     </div>
   )

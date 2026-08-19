@@ -55,6 +55,7 @@ import {
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import { getActiveQuarantineWarnings } from "src/utils/quarantineValidation"
 import { CULTIVATION_TASK_TYPES } from "src/constants/cultivationTask"
+import ActivateTaskModal from "./components/ActivateTaskModal"
 
 const { TextArea } = Input
 
@@ -106,6 +107,7 @@ const FarmSupervisorTaskDetail = () => {
   const [activating, setActivating] = useState(false)
   const [compileModal, setCompileModal] = useState(false)
   const [savingCompile, setSavingCompile] = useState(false)
+  const [activationTask, setActivationTask] = useState(null)
   const leaderOptions = leaders.map(l => ({
     value: l.id,
     label: l.fullName || l.name,
@@ -274,16 +276,47 @@ const FarmSupervisorTaskDetail = () => {
       )
       return
     }
+    setActivationTask(task)
+  }
+
+  const busyUserIds = new Set(
+    planStages
+      .flatMap(item => item.tasks || [])
+      .filter(item =>
+        ["IN_PROGRESS", "WAITING_APPROVAL"].includes(item.status),
+      )
+      .filter(item => item.id !== activationTask?.id)
+      .flatMap(item => [
+        item.assignedLeaderId || item.farmLeaderId,
+        ...(item.assignments || []).map(assignment =>
+          typeof assignment === "object"
+            ? assignment.userId || assignment.id
+            : assignment,
+        ),
+      ])
+      .filter(Boolean)
+      .map(String),
+  )
+
+  const confirmActivation = async (values, shouldAssign) => {
+    if (!activationTask) return
     try {
       setActivating(true)
-      const response = await CultivationTaskService.start(taskId)
+      if (shouldAssign) {
+        await CultivationTaskService.assign(activationTask.id, {
+          leaderId: values.farmLeaderId,
+          farmerIds: values.farmerIds || [],
+        })
+      }
+      const response = await CultivationTaskService.start(activationTask.id)
       const updatedTask = response?.data?.data ?? response?.data
       if (updatedTask?.id) {
         setTask(updatedTask)
       } else {
-        const refreshed = await CultivationTaskService.getById(taskId)
+        const refreshed = await CultivationTaskService.getById(activationTask.id)
         setTask(refreshed?.data?.data ?? refreshed?.data)
       }
+      setActivationTask(null)
     } catch {
       // Axios interceptor handles error notification directly from backend response
     } finally {
@@ -895,6 +928,17 @@ const FarmSupervisorTaskDetail = () => {
           </div>
         </Form>
       </Modal>
+
+      <ActivateTaskModal
+        open={Boolean(activationTask)}
+        task={activationTask}
+        leaderOptions={leaderOptions}
+        farmerOptions={farmerOptions}
+        busyUserIds={busyUserIds}
+        loading={activating}
+        onCancel={() => setActivationTask(null)}
+        onConfirm={confirmActivation}
+      />
     </div>
   )
 }

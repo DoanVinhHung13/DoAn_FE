@@ -1,10 +1,7 @@
 import {
-  CalendarOutlined,
   DeleteOutlined,
   PlusCircleOutlined,
   PlusOutlined,
-  TeamOutlined,
-  UserOutlined,
 } from "@ant-design/icons"
 import {
   AutoComplete,
@@ -16,7 +13,6 @@ import {
   Input,
   Row,
   Select,
-  Typography,
   message,
 } from "antd"
 import { useState } from "react"
@@ -27,10 +23,6 @@ import {
 import CultivationTaskService from "src/services/CultivationTaskService"
 import { formatDateForApi, getLocalNow } from "src/utils/dateFormatters"
 
-const { Text } = Typography
-
-const isHarvestTask = task => task?.taskType === CULTIVATION_TASK_TYPES.HARVEST
-
 const AddTaskFormCard = ({
   planId,
   selectedId,
@@ -39,7 +31,6 @@ const AddTaskFormCard = ({
   leaders,
   farmers,
   loadingUsers,
-  hasHarvestTask,
   onCancel,
   onSaveSuccess,
 }) => {
@@ -47,13 +38,6 @@ const AddTaskFormCard = ({
   const [savingTask, setSavingTask] = useState(false)
 
   const handleAddTask = async () => {
-    if (hasHarvestTask) {
-      message.warning(
-        "Nhật ký đã có công việc thu hoạch, không thể thêm công việc khác.",
-      )
-      return
-    }
-
     try {
       const values = await taskForm.validateFields()
       const taskList = values.tasks || []
@@ -100,17 +84,6 @@ const AddTaskFormCard = ({
 
       if (validTasks.some(task => !task.taskType)) {
         message.warning("Vui lòng chọn loại công việc cho công việc tự do.")
-        setSavingTask(false)
-        return
-      }
-
-      const harvestFlags = validTasks.map(isHarvestTask)
-      const firstHarvestIndex = harvestFlags.findIndex(Boolean)
-      if (
-        firstHarvestIndex >= 0 &&
-        harvestFlags.slice(firstHarvestIndex + 1).some(flag => !flag)
-      ) {
-        message.warning("Công việc thu hoạch phải ở cuối cùng.")
         setSavingTask(false)
         return
       }

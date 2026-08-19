@@ -1,6 +1,4 @@
 import {
-  ArrowDownOutlined,
-  ArrowUpOutlined,
   CalendarOutlined,
   CheckCircleFilled,
   CheckCircleOutlined,
@@ -40,7 +38,6 @@ import {
   getCultivationTaskTypeLabel,
 } from "src/constants/cultivationTask"
 import { getTaskOrder } from "src/utils/cultivationOrdering"
-import { canReorderTask } from "src/utils/cultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
 import { getUserDisplayName } from "src/utils/userDisplayName"
 
@@ -96,10 +93,6 @@ const getTaskStatusStyle = status => {
 const TaskItemCard = ({
   task,
   taskIndex,
-  totalTasks,
-  canReorderSelectedStage,
-  savingOrder,
-  onMoveTask,
   onEditTask,
   onActivateTask,
   onDeleteTask,
@@ -108,7 +101,6 @@ const TaskItemCard = ({
   const cfg = getTaskCfg(task.status)
   const style = getTaskStatusStyle(task.status)
   const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
-  const canReorder = canReorderSelectedStage && canReorderTask(task)
   const helperAssignments =
     task.assignments?.filter(assignment => !assignment.isLeader) || []
 
@@ -123,60 +115,14 @@ const TaskItemCard = ({
       styles={{ body: { padding: "16px" } }}
     >
       <div className="flex flex-col gap-3">
-        {/* Row 1: Header (STT, Reorder, Icon, Title, Status Tag, Actions) */}
+        {/* Row 1: Header (STT, Icon, Title, Status Tag, Actions) */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            {/* Reorder controls & Index */}
+            {/* Fixed task order */}
             <div className="flex flex-col items-center justify-center flex-shrink-0 bg-white border border-gray-200 rounded-xl p-1 shadow-2xs">
               <Text className="text-xs font-bold text-gray-700 leading-tight">
                 #{getTaskOrder(task, taskIndex + 1)}
               </Text>
-              <div className="flex flex-col gap-0.5 mt-0.5">
-                <Tooltip
-                  title={
-                    !canReorder
-                      ? "Thứ tự đã bị khóa"
-                      : taskIndex === 0
-                        ? "Đã ở vị trí đầu tiên"
-                        : "Đưa lên trước"
-                  }
-                >
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<ArrowUpOutlined style={{ fontSize: 10 }} />}
-                    disabled={savingOrder || taskIndex === 0 || !canReorder}
-                    className="!w-5 !h-5 !min-w-0 flex items-center justify-center p-0 rounded"
-                    onClick={e => {
-                      e.stopPropagation()
-                      onMoveTask(task.id, -1)
-                    }}
-                  />
-                </Tooltip>
-                <Tooltip
-                  title={
-                    !canReorder
-                      ? "Thứ tự đã bị khóa"
-                      : taskIndex === totalTasks - 1
-                        ? "Đã ở vị trí cuối cùng"
-                        : "Đưa xuống sau"
-                  }
-                >
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<ArrowDownOutlined style={{ fontSize: 10 }} />}
-                    disabled={
-                      savingOrder || taskIndex === totalTasks - 1 || !canReorder
-                    }
-                    className="!w-5 !h-5 !min-w-0 flex items-center justify-center p-0 rounded"
-                    onClick={e => {
-                      e.stopPropagation()
-                      onMoveTask(task.id, 1)
-                    }}
-                  />
-                </Tooltip>
-              </div>
             </div>
 
             {/* Status Avatar Icon */}
@@ -411,10 +357,7 @@ const TaskItemCard = ({
 const StageTaskList = ({
   tasks = [],
   selectedStage,
-  canReorderSelectedStage,
-  savingOrder,
   hasHarvestTask,
-  onMoveTask,
   onEditTask,
   onActivateTask,
   onDeleteTask,
@@ -581,10 +524,6 @@ const StageTaskList = ({
               key={task.id}
               task={task}
               taskIndex={index}
-              totalTasks={filteredTasks.length}
-              canReorderSelectedStage={canReorderSelectedStage}
-              savingOrder={savingOrder}
-              onMoveTask={onMoveTask}
               onEditTask={onEditTask}
               onActivateTask={onActivateTask}
               onDeleteTask={onDeleteTask}

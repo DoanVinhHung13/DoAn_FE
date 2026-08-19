@@ -1,13 +1,7 @@
 import http from "../01_axios"
 import {
-  canReorderStageTasks,
-  canReorderTask,
-  canReorderTaskList,
-} from "src/utils/cultivationStatus"
-import {
   apiCreateCultivationTask,
   apiCreateCultivationTaskBulk,
-  apiReorderCultivationTasks,
   apiDeleteCultivationTask,
   apiGetCultivationTaskById,
   apiGetCultivationTasks,
@@ -36,20 +30,6 @@ const create = body => http.post(apiCreateCultivationTask, body)
 
 const createBulk = (body, config = {}) =>
   http.post(apiCreateCultivationTaskBulk, body, config)
-
-const reorder = (body, context = {}) => {
-  if (
-    !canReorderStageTasks(context.stage, context.logbook) ||
-    !canReorderTask(context.task) ||
-    !canReorderTaskList(context.tasks)
-  ) {
-    return Promise.reject(
-      new Error("Task order can only be changed before the stage starts."),
-    )
-  }
-
-  return http.put(apiReorderCultivationTasks, body)
-}
 
 const update = (id, body) => http.put(apiUpdateCultivationTask(id), body)
 
@@ -83,7 +63,6 @@ const CultivationTaskService = {
   getById,
   create,
   createBulk,
-  reorder,
   update,
   assign,
   remove,
