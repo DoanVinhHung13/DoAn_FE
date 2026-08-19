@@ -1,12 +1,10 @@
 import { SaveOutlined } from "@ant-design/icons"
-import { Form, Modal, Select, message } from "antd"
+import { Form, Modal, Select } from "antd"
 import { useEffect, useState } from "react"
 import { ROLES } from "src/constants/roles"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import UserService from "src/services/UserService"
 import useDebouncedValue from "src/hooks/useDebouncedValue"
-import { getTaskSchedulingErrorMessage } from "src/constants/cultivationTask"
-import { normalizeApiError } from "src/services/core/apiError"
 
 const AssignTaskModal = ({ open, onCancel, onSuccess, task }) => {
   const [form] = Form.useForm()
@@ -107,14 +105,10 @@ const AssignTaskModal = ({ open, onCancel, onSuccess, task }) => {
         farmerIds: values.farmerIds || [],
       }
 
-      await CultivationTaskService.assign(task.id, payload, {
-        errorHandling: "component",
-      })
+      await CultivationTaskService.assign(task.id, payload)
       onSuccess()
-    } catch (err) {
-      if (!err?.errorFields) {
-        message.error(getTaskSchedulingErrorMessage(normalizeApiError(err)))
-      }
+    } catch {
+      // Axios interceptor handles error notification directly from backend response
     } finally {
       setSaving(false)
     }

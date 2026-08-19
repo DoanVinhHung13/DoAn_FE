@@ -7,6 +7,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   InfoCircleOutlined,
+  MoreOutlined,
   PlusOutlined,
   TeamOutlined,
   UserOutlined,
@@ -19,23 +20,27 @@ import {
   Card,
   Col,
   Divider,
+  Dropdown,
   Empty,
+  Flex,
   List,
   Modal,
   Row,
+  Space,
   Tag,
+  Tooltip,
   Typography,
   message,
 } from "antd"
 import { useEffect, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import {
   CULTIVATION_TASK_TYPES,
+  getCultivationTaskTypeColor,
   getCultivationTaskTypeLabel,
-  getTaskSchedulingErrorMessage,
 } from "src/constants/cultivationTask"
 import { ROLES } from "src/constants/roles"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
-import { normalizeApiError } from "src/services/core/apiError"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import TaskCatalogService from "src/services/TaskCatalogService"
 import UserService from "src/services/UserService"
@@ -50,14 +55,17 @@ import { getActiveQuarantineWarnings } from "src/utils/quarantineValidation"
 import { getUserDisplayName } from "src/utils/userDisplayName"
 import AddTaskFormCard from "./components/AddTaskFormCard"
 import EditTaskModal from "./components/EditTaskModal"
+import StageTaskList from "./components/StageTaskList"
 
-const { Text } = Typography
+const { Text, Paragraph } = Typography
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
 
 const isHarvestTask = task => task?.taskType === CULTIVATION_TASK_TYPES.HARVEST
 
 const getAllTasks = taskMap => Object.values(taskMap).flat()
+
+const getInitials = name => (name ? name.trim().charAt(0).toUpperCase() : "?")
 
 const taskStatusIcon = s =>
   s === "COMPLETED" ||
@@ -117,10 +125,359 @@ const StageListItem = ({ stage, index, isActive, onClick, getStageStatus }) => {
   )
 }
 
+// Thẻ hiển thị 1 công việc trong danh sách bên phải — Bố cục thiết kế mới 2 cột
+const TaskCard = ({
+  task,
+  taskIndex,
+  orderedSelectedTasks,
+  getTaskCfg,
+  canReorderSelectedStage,
+  savingOrder,
+  onMoveTask,
+  onEdit,
+  onActivate,
+  onDelete,
+}) => {
+  const cfg = getTaskCfg(task.status)
+  const accentColor =
+    cfg.color === "processing"
+      ? "#3b82f6"
+      : cfg.color === "cyan"
+        ? "#06b6d4"
+        : cfg.color === "success"
+          ? "#16a34a"
+          : cfg.color === "gold"
+            ? "#eab308"
+            : "#d1d5db"
+
+  const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
+  const canReorder = canReorderSelectedStage && canReorderTask(task)
+
+  const hasPlannedDates = task.plannedStartDate || task.plannedEndDate
+  const hasActualDates =
+    task.workStartDate || task.workEndDate || task.completedDate
+
+  const supportMembers = (task.assignments || []).filter(f => !f.isLeader)
+
+  const menuItems = [
+    {
+      key: "edit",
+      label: "Sửa công việc",
+      icon: <EditOutlined />,
+      onClick: () => onEdit(task),
+    },
+    { type: "divider" },
+    {
+      key: "delete",
+      label: "Xóa công việc",
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: () => onDelete(task),
+    },
+  ]
+
+  return (
+    <Card
+      size="small"
+      className="w-full shadow-sm rounded-2xl hover:shadow-md transition-shadow bg-white"
+      style={{
+        borderLeft: `4px solid ${accentColor}`,
+        borderTop: "1px solid #f0f0f0",
+        borderRight: "1px solid #f0f0f0",
+        borderBottom: "1px solid #f0f0f0",
+      }}
+      styles={{ body: { padding: "14px 18px" } }}
+    >
+      {/* Top Header: Thứ tự & Tên công việc (Trái) | Loại công việc & Status (Phải) */}
+      <Flex
+        justify="space-between"
+        align="center"
+        gap={12}
+        className="pb-2.5 border-b border-gray-100"
+      >
+        <Flex align="center" gap={8} className="flex-1 min-w-0">
+          {/* Thứ tự & nút di chuyển thứ tự */}
+          <Flex align="center" gap={4} className="flex-shrink-0">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-50 text-green-700 text-xs font-bold border border-green-200">
+              {getTaskOrder(task, taskIndex + 1)}
+            </span>
+            <Flex vertical gap={1} className="flex-shrink-0">
+              <Button
+                type="text"
+                size="small"
+                icon={<ArrowUpOutlined style={{ fontSize: 9 }} />}
+                disabled={savingOrder || taskIndex === 0 || !canReorder}
+                title={canReorder ? "Di chuyển lên trước" : "Không thể đổi thứ tự"}
+                style={{ width: 18, height: 13, padding: 0 }}
+                className="flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-100 disabled:opacity-30 rounded"
+                onClick={e => {
+                  e.stopPropagation()
+                  onMoveTask(task.id, -1)
+                }}
+              />
+              <Button
+                type="text"
+                size="small"
+                icon={<ArrowDownOutlined style={{ fontSize: 9 }} />}
+                disabled={
+                  savingOrder ||
+                  taskIndex === orderedSelectedTasks.length - 1 ||
+                  !canReorder
+                }
+                title={canReorder ? "Di chuyển xuống sau" : "Không thể đổi thứ tự"}
+                style={{ width: 18, height: 13, padding: 0 }}
+                className="flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-100 disabled:opacity-30 rounded"
+                onClick={e => {
+                  e.stopPropagation()
+                  onMoveTask(task.id, 1)
+                }}
+              />
+            </Flex>
+          </Flex>
+
+          {/* Tên công việc */}
+          <Text
+            className="text-base font-bold text-gray-800 truncate"
+            title={task.name || task.taskName}
+          >
+            {task.name || task.taskName}
+          </Text>
+        </Flex>
+
+        {/* Phải: Loại công việc Tag & Status Tag */}
+        <Flex align="center" gap={8} className="flex-shrink-0">
+          <Tag
+            color={getCultivationTaskTypeColor(task.taskType)}
+            className="text-xs rounded-md m-0 font-medium"
+          >
+            {getCultivationTaskTypeLabel(task.taskType)}
+          </Tag>
+          <Tag
+            color={cfg.color}
+            className="text-xs rounded-md m-0 font-medium flex items-center gap-1"
+          >
+            {cfg.icon}
+            <span>{cfg.label}</span>
+          </Tag>
+        </Flex>
+      </Flex>
+
+      {/* Body: Chia 2 cột qua đường phân cách dọc */}
+      <Row gutter={[20, 12]} className="pt-3">
+        {/* Cột trái: Mô tả */}
+        <Col xs={24} md={10} className="flex flex-col justify-between">
+          <div className="space-y-1.5">
+            <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
+              Mô tả
+            </Text>
+            {task.description ? (
+              <Paragraph
+                className="!mb-0 text-xs text-gray-600 leading-relaxed whitespace-pre-line"
+                ellipsis={{
+                  rows: 4,
+                  expandable: true,
+                  symbol: "Xem thêm",
+                }}
+              >
+                {task.description}
+              </Paragraph>
+            ) : (
+              <Text type="secondary" className="text-xs italic text-gray-400">
+                Chưa có mô tả
+              </Text>
+            )}
+
+            {/* Cảnh báo kích hoạt nếu có */}
+            {task.isActivationWarning === true && (
+              <Alert
+                type="warning"
+                showIcon
+                className="mt-2 py-1 px-2 text-xs rounded-lg"
+                message="Đã đến ngày dự kiến kích hoạt nhưng chưa được kích hoạt."
+              />
+            )}
+
+            {/* Ngày thực tế nếu có */}
+            {hasActualDates && (
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-1 text-[11px] text-green-700 font-medium">
+                <CheckCircleOutlined className="text-xs" />
+                {task.workStartDate && (
+                  <span>Bắt đầu: {formatDate(task.workStartDate)}</span>
+                )}
+                {task.completedDate && (
+                  <span>• Hoàn thành: {formatDate(task.completedDate)}</span>
+                )}
+              </div>
+            )}
+          </div>
+        </Col>
+
+        {/* Cột phải: Dự kiến, Leader, Cập nhật bởi & Farmer, Nút hành động */}
+        <Col
+          xs={24}
+          md={14}
+          className="md:border-l md:border-gray-200 md:pl-5 flex flex-col justify-between space-y-2.5"
+        >
+          <div className="space-y-2.5">
+            {/* Hàng 1: Dự kiến */}
+            <div className="flex items-center gap-1.5 text-xs text-gray-600">
+              <CalendarOutlined className="text-gray-400 flex-shrink-0" />
+              <span className="font-semibold text-gray-500">Dự kiến:</span>
+              <span className="font-medium text-gray-800">
+                {task.plannedStartDate
+                  ? formatDate(task.plannedStartDate)
+                  : "—"}
+                {task.plannedEndDate && ` – ${formatDate(task.plannedEndDate)}`}
+              </span>
+            </div>
+
+            {/* Hàng 2: Leader và Farmer cùng 1 dòng */}
+            <Flex align="center" justify="space-between" gap={12} wrap="wrap">
+              {/* Leader */}
+              <div className="flex items-center gap-1.5 min-w-0">
+                <UserOutlined className="text-green-600 text-xs flex-shrink-0" />
+                <span className="text-xs font-semibold text-gray-500">
+                  Leader:
+                </span>
+                {task.assignedLeaderName ? (
+                  <Tooltip title={`Người phụ trách: ${task.assignedLeaderName}`}>
+                    <Space size={4} align="center" className="min-w-0">
+                      <Avatar
+                        size={20}
+                        style={{
+                          backgroundColor: "#16a34a",
+                          fontSize: 10,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {getInitials(task.assignedLeaderName)}
+                      </Avatar>
+                      <Text className="text-xs font-medium text-gray-800 truncate max-w-[130px]">
+                        {task.assignedLeaderName}
+                      </Text>
+                    </Space>
+                  </Tooltip>
+                ) : (
+                  <Text type="secondary" className="text-xs italic text-gray-400">
+                    Chưa giao
+                  </Text>
+                )}
+              </div>
+
+              {/* Farmer */}
+              <div className="flex items-center gap-1.5 min-w-0">
+                <TeamOutlined className="text-blue-600 text-xs flex-shrink-0" />
+                <span className="text-xs font-semibold text-gray-500">
+                  Farmer:
+                </span>
+                {supportMembers.length > 0 ? (
+                  <Space size={4} align="center">
+                    <Avatar.Group
+                      max={{
+                        count: 3,
+                        style: {
+                          color: "#1d4ed8",
+                          backgroundColor: "#dbeafe",
+                          fontSize: 10,
+                        },
+                      }}
+                      size={20}
+                    >
+                      {supportMembers.map(f => (
+                        <Tooltip
+                          key={f.userId || f.id}
+                          title={f.fullName || f.name}
+                        >
+                          <Avatar
+                            size={20}
+                            style={{
+                              backgroundColor: "#3b82f6",
+                              fontSize: 10,
+                              fontWeight: 600,
+                            }}
+                          >
+                            {getInitials(f.fullName || f.name)}
+                          </Avatar>
+                        </Tooltip>
+                      ))}
+                    </Avatar.Group>
+                    <Text className="text-xs text-gray-500 font-medium">
+                      ({supportMembers.length})
+                    </Text>
+                  </Space>
+                ) : (
+                  <Text type="secondary" className="text-xs italic text-gray-400">
+                    Chưa có
+                  </Text>
+                )}
+              </div>
+            </Flex>
+          </div>
+
+          {/* Hàng 3 (Dưới cùng): Cập nhật bởi (Trái) & Nút Kích hoạt / Menu 3 chấm (Phải) */}
+          <Flex
+            justify="space-between"
+            align="center"
+            gap={8}
+            className="pt-2 border-t border-gray-100 mt-auto"
+          >
+            <div className="text-[11px] text-gray-400 truncate">
+              <span>
+                Cập nhật bởi:{" "}
+                <span className="text-gray-600 font-medium">
+                  {getUserDisplayName(
+                    task.updatedByName,
+                    task.updatedBy,
+                    task.editedByName,
+                    task.editedBy,
+                    task.createdByName,
+                    task.createdBy,
+                  )}
+                </span>
+              </span>
+            </div>
+
+            {canEdit && (
+              <Flex align="center" gap={8} className="flex-shrink-0">
+                <Button
+                  type="primary"
+                  size="small"
+                  className="bg-green-600 border-green-600 rounded-lg hover:!bg-green-700 font-semibold px-3.5 h-7"
+                  onClick={e => {
+                    e.stopPropagation()
+                    onActivate(task.id)
+                  }}
+                >
+                  Kích hoạt
+                </Button>
+                <Dropdown
+                  menu={{ items: menuItems }}
+                  trigger={["click"]}
+                  placement="bottomRight"
+                >
+                  <Button
+                    size="small"
+                    icon={<MoreOutlined />}
+                    className="rounded-lg border-gray-200 hover:border-gray-400 h-7 px-2"
+                    onClick={e => e.stopPropagation()}
+                  />
+                </Dropdown>
+              </Flex>
+            )}
+          </Flex>
+        </Col>
+      </Row>
+    </Card>
+  )
+}
+
 const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const { getStageStatus, getTaskStatus } = useCultivationStatus()
   const getTaskCfg = s => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
-  const [selectedId, setSelectedId] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [selectedId, setSelectedId] = useState(
+    () => searchParams.get("stageId") || null,
+  )
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [taskCatalogOptions, setTaskCatalogOptions] = useState([])
   const [leaders, setLeaders] = useState([])
@@ -131,6 +488,20 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     task: null,
   })
   const [savingOrder, setSavingOrder] = useState(false)
+
+  const handleSelectStage = stageId => {
+    setSelectedId(stageId)
+    setEditingTaskId(null)
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        if (stageId) next.set("stageId", stageId)
+        else next.delete("stageId")
+        return next
+      },
+      { replace: true },
+    )
+  }
 
   useEffect(() => {
     const loadCatalogs = async () => {
@@ -256,23 +627,21 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     try {
       await CultivationTaskService.start(taskId)
       loadData()
-    } catch (error) {
-      const normalizedError = normalizeApiError(error)
-      message.error(getTaskSchedulingErrorMessage(normalizedError))
+    } catch {
+      // Axios interceptor handles error notification directly from backend response
     }
   }
 
   const handleDeleteTask = task => {
     Modal.confirm({
       title: "Xóa công việc chưa kích hoạt?",
-      content: `Công việc “${task.name || task.taskName}” sẽ được xóa khỏi kế hoạch.`,
+      content: `Công việc "${task.name || task.taskName}" sẽ được xóa khỏi kế hoạch.`,
       okText: "Xóa công việc",
       cancelText: "Hủy",
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
           await CultivationTaskService.remove(task.id)
-          message.success("Đã xóa công việc.")
           await loadData()
         } catch {
           // axios interceptor handles error notification
@@ -283,14 +652,29 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
   // Mở đúng giai đoạn đang thực hiện; nếu chưa có thì chọn giai đoạn chưa hoàn thành đầu tiên.
   useEffect(() => {
-    if (stages.length > 0 && !selectedId) {
+    if (stages.length > 0) {
+      const stageParam = searchParams.get("stageId")
+      const foundSelected = stages.find(s => s.id === selectedId)
+      const foundParamStage = stages.find(s => s.id === stageParam)
+
+      if (foundSelected) {
+        return
+      }
+
+      if (foundParamStage) {
+        setSelectedId(foundParamStage.id)
+        return
+      }
+
       const currentStage =
         stages.find(s => s.status === "ACTIVE" || s.status === "IN_PROGRESS") ||
         stages.find(s => !["COMPLETED", "CANCELLED"].includes(s.status)) ||
         stages[stages.length - 1]
-      setSelectedId(currentStage?.id ?? null)
+      if (currentStage?.id) {
+        setSelectedId(currentStage.id)
+      }
     }
-  }, [stages, selectedId])
+  }, [stages, selectedId, searchParams])
 
   const selectedStage = stages.find(s => s.id === selectedId) ?? null
   const finalStage = [...stages]
@@ -329,7 +713,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     const task = orderedSelectedTasks.find(item => item.id === taskId)
     if (!canReorderSelectedStage || !canReorderTask(task)) {
       message.warning(
-        "Chỉ có thể đổi thứ tự công việc ở giai đoạn chưa bắt đầu.",
+        "Chỉ có thể đổi thứ tự công việc chưa thực hiện trong giai đoạn.",
       )
       return
     }
@@ -410,10 +794,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     index={idx}
                     isActive={stage.id === selectedId}
                     getStageStatus={getStageStatus}
-                    onClick={() => {
-                      setSelectedId(stage.id)
-                      setEditingTaskId(null)
-                    }}
+                    onClick={() => handleSelectStage(stage.id)}
                   />
                 )}
               />
@@ -505,295 +886,23 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
                 {/* Danh sách công việc */}
                 {selectedTasks.length > 0 ? (
-                  <List
-                    dataSource={orderedSelectedTasks}
-                    split={false}
-                    renderItem={(task, taskIndex) => {
-                      const cfg = getTaskCfg(task.status)
-                      return (
-                        <List.Item key={task.id} className="mb-4">
-                          <Card
-                            hoverable
-                            className="w-full transition-shadow border-l-4 shadow-sm rounded-2xl hover:shadow-md"
-                            style={{
-                              borderLeftColor:
-                                cfg.color === "processing"
-                                  ? "#3b82f6"
-                                  : cfg.color === "success"
-                                    ? "#16a34a"
-                                    : "#d1d5db",
-                              borderTop: "1px solid #f3f4f6",
-                              borderRight: "1px solid #f3f4f6",
-                              borderBottom: "1px solid #f3f4f6",
-                            }}
-                            bodyStyle={{ padding: "16px" }}
-                          >
-                            <div className="flex flex-col gap-3">
-                              {/* Header */}
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex items-center gap-3">
-                                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                                    <Text className="text-xs font-bold text-green-700">
-                                      {getTaskOrder(task, taskIndex + 1)}
-                                    </Text>
-                                    <div className="flex gap-1">
-                                      <Button
-                                        type="text"
-                                        size="small"
-                                        icon={<ArrowUpOutlined />}
-                                        aria-label="Đưa công việc lên trước"
-                                        title={
-                                          canReorderSelectedStage &&
-                                          canReorderTask(task)
-                                            ? "Đưa công việc lên trước"
-                                            : "Thứ tự đã được khóa"
-                                        }
-                                        disabled={
-                                          savingOrder ||
-                                          taskIndex === 0 ||
-                                          !canReorderSelectedStage ||
-                                          !canReorderTask(task)
-                                        }
-                                        onClick={e => {
-                                          e.stopPropagation()
-                                          handleMoveTask(task.id, -1)
-                                        }}
-                                      />
-                                      <Button
-                                        type="text"
-                                        size="small"
-                                        icon={<ArrowDownOutlined />}
-                                        aria-label="Đưa công việc xuống sau"
-                                        title={
-                                          canReorderSelectedStage &&
-                                          canReorderTask(task)
-                                            ? "Đưa công việc xuống sau"
-                                            : "Thứ tự đã được khóa"
-                                        }
-                                        disabled={
-                                          savingOrder ||
-                                          taskIndex ===
-                                            orderedSelectedTasks.length - 1 ||
-                                          !canReorderSelectedStage ||
-                                          !canReorderTask(task)
-                                        }
-                                        onClick={e => {
-                                          e.stopPropagation()
-                                          handleMoveTask(task.id, 1)
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-                                  <div
-                                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-lg
-                                      ${
-                                        [
-                                          "COMPLETED",
-                                          "WAITING_APPROVAL",
-                                          "PENDING_REVIEW",
-                                        ].includes(task.status)
-                                          ? "bg-green-100 text-green-700"
-                                          : task.status === "IN_PROGRESS"
-                                            ? "bg-blue-100 text-blue-700"
-                                            : "bg-gray-100 text-gray-500"
-                                      }`}
-                                  >
-                                    {cfg.icon}
-                                  </div>
-                                  <div>
-                                    <Text className="text-sm font-semibold text-gray-800 line-clamp-2">
-                                      {task.name || task.taskName}
-                                    </Text>
-                                    {task.description && (
-                                      <Text
-                                        type="secondary"
-                                        className="text-xs line-clamp-1 mt-0.5"
-                                      >
-                                        {task.description}
-                                      </Text>
-                                    )}
-                                    <Tag color="blue" className="mt-1 text-xs">
-                                      {getCultivationTaskTypeLabel(
-                                        task.taskType,
-                                      )}
-                                    </Tag>
-                                    {task.isActivationWarning === true && (
-                                      <Alert
-                                        type="warning"
-                                        showIcon
-                                        className="mt-2 rounded-lg"
-                                        message="Công việc đã đến ngày dự kiến kích hoạt nhưng hiện chưa được kích hoạt."
-                                      />
-                                    )}
-                                    {/* Ngày dự kiến và hoàn thành của task */}
-                                    <div className="flex flex-wrap mt-1 gap-x-3">
-                                      {task.plannedStartDate && (
-                                        <Text
-                                          type="secondary"
-                                          className="text-xs"
-                                        >
-                                          <CalendarOutlined className="mr-1" />
-                                          Dự kiến:{" "}
-                                          {formatDate(task.plannedStartDate)}
-                                        </Text>
-                                      )}
-                                      {task.plannedEndDate && (
-                                        <Text
-                                          type="secondary"
-                                          className="text-xs"
-                                        >
-                                          Kết thúc dự kiến:{" "}
-                                          {formatDate(task.plannedEndDate)}
-                                        </Text>
-                                      )}
-                                      {task.workStartDate && (
-                                        <Text
-                                          type="secondary"
-                                          className="text-xs"
-                                        >
-                                          Thực tế bắt đầu:{" "}
-                                          {formatDate(task.workStartDate)}
-                                        </Text>
-                                      )}
-                                      {task.workEndDate && (
-                                        <Text
-                                          type="secondary"
-                                          className="text-xs"
-                                        >
-                                          Thực tế kết thúc:{" "}
-                                          {formatDate(task.workEndDate)}
-                                        </Text>
-                                      )}
-                                      {task.completedDate && (
-                                        <Text className="text-xs text-green-600">
-                                          <CheckCircleOutlined className="mr-1" />
-                                          Xong: {formatDate(task.completedDate)}
-                                        </Text>
-                                      )}
-                                    </div>
-                                    <Text
-                                      type="secondary"
-                                      className="block mt-1 text-xs"
-                                    >
-                                      Cập nhật bởi:{" "}
-                                      {getUserDisplayName(
-                                        task.updatedByName,
-                                        task.updatedBy,
-                                        task.editedByName,
-                                        task.editedBy,
-                                        task.createdByName,
-                                        task.createdBy,
-                                      )}
-                                    </Text>
-                                  </div>
-                                </div>
-                                <Tag
-                                  color={cfg.color}
-                                  className="flex-shrink-0 mt-1"
-                                >
-                                  {cfg.label}
-                                </Tag>
-                              </div>
-
-                              {/* Assignments */}
-                              {(task.assignedLeaderName ||
-                                task.assignments?.length > 0) && (
-                                <div className="flex flex-col gap-2 p-3 mt-1 border border-gray-100 rounded-xl bg-gray-50">
-                                  {task.assignedLeaderName && (
-                                    <div className="flex items-center gap-2">
-                                      <UserOutlined className="text-green-600" />
-                                      <Text className="text-xs">
-                                        <span className="font-semibold">
-                                          Người phụ trách:
-                                        </span>{" "}
-                                        {task.assignedLeaderName}
-                                      </Text>
-                                    </div>
-                                  )}
-                                  {task.assignments?.filter(f => !f.isLeader)
-                                    .length > 0 && (
-                                    <div className="flex items-start gap-2">
-                                      <TeamOutlined className="mt-1 text-blue-600" />
-                                      <div className="flex-1">
-                                        <Text className="block mb-1 text-xs font-semibold">
-                                          Người hỗ trợ (
-                                          {
-                                            task.assignments.filter(
-                                              f => !f.isLeader,
-                                            ).length
-                                          }
-                                          ):
-                                        </Text>
-                                        <div className="flex flex-wrap gap-1">
-                                          {task.assignments
-                                            .filter(f => !f.isLeader)
-                                            .map(f => (
-                                              <Tag
-                                                key={f.userId || f.id}
-                                                color="blue"
-                                                bordered={false}
-                                                className="m-0 rounded-md"
-                                              >
-                                                {f.fullName || f.name}
-                                              </Tag>
-                                            ))}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Actions */}
-                              <div className="flex items-center gap-2 pt-3 mt-2 border-t border-gray-100">
-                                {["PENDING", "ASSIGNED"].includes(
-                                  task.status,
-                                ) && (
-                                  <>
-                                    <Button
-                                      type="primary"
-                                      size="small"
-                                      icon={<EditOutlined />}
-                                      onClick={e => {
-                                        e.stopPropagation()
-                                        setEditTaskModal({ open: true, task })
-                                      }}
-                                      className="bg-orange-500 border-0 rounded-lg hover:!bg-orange-600"
-                                    >
-                                      Sửa
-                                    </Button>
-                                    <Button
-                                      type="primary"
-                                      size="small"
-                                      className="bg-green-600 border-green-600 rounded-lg hover:!bg-green-700"
-                                      onClick={e => {
-                                        e.stopPropagation()
-                                        handleActivateTask(task.id)
-                                      }}
-                                    >
-                                      Kích hoạt
-                                    </Button>
-                                    <Button
-                                      danger
-                                      size="small"
-                                      icon={<DeleteOutlined />}
-                                      onClick={e => {
-                                        e.stopPropagation()
-                                        handleDeleteTask(task)
-                                      }}
-                                      className="rounded-lg"
-                                    >
-                                      Xóa
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </Card>
-                        </List.Item>
-                      )
-                    }}
-                  />
+                  <div className="space-y-3">
+                    {orderedSelectedTasks.map((task, taskIndex) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        taskIndex={taskIndex}
+                        orderedSelectedTasks={orderedSelectedTasks}
+                        getTaskCfg={getTaskCfg}
+                        canReorderSelectedStage={canReorderSelectedStage}
+                        savingOrder={savingOrder}
+                        onMoveTask={handleMoveTask}
+                        onEdit={task => setEditTaskModal({ open: true, task })}
+                        onActivate={handleActivateTask}
+                        onDelete={handleDeleteTask}
+                      />
+                    ))}
+                  </div>
                 ) : (
                   <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}

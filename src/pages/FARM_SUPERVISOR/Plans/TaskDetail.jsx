@@ -54,11 +54,7 @@ import {
 } from "src/constants/measurementUnits"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import { getActiveQuarantineWarnings } from "src/utils/quarantineValidation"
-import {
-  CULTIVATION_TASK_TYPES,
-  getTaskSchedulingErrorMessage,
-} from "src/constants/cultivationTask"
-import { normalizeApiError } from "src/services/core/apiError"
+import { CULTIVATION_TASK_TYPES } from "src/constants/cultivationTask"
 
 const { TextArea } = Input
 
@@ -228,16 +224,11 @@ const FarmSupervisorTaskDetail = () => {
         farmerIds: values.farmerIds || [],
       }
 
-      const response = await CultivationTaskService.assign(taskId, payload, {
-        errorHandling: "component",
-      })
+      const response = await CultivationTaskService.assign(taskId, payload)
       const updatedTask = response?.data?.data ?? response?.data
       if (updatedTask?.id) setTask(updatedTask)
-      else message.success("Đã lưu phân công công việc.")
-    } catch (error) {
-      if (!error?.errorFields) {
-        message.error(getTaskSchedulingErrorMessage(normalizeApiError(error)))
-      }
+    } catch {
+      // Axios interceptor handles error notification directly from backend response
     } finally {
       setSavingAssign(false)
     }
@@ -293,8 +284,8 @@ const FarmSupervisorTaskDetail = () => {
         const refreshed = await CultivationTaskService.getById(taskId)
         setTask(refreshed?.data?.data ?? refreshed?.data)
       }
-    } catch (error) {
-      message.error(getTaskSchedulingErrorMessage(normalizeApiError(error)))
+    } catch {
+      // Axios interceptor handles error notification directly from backend response
     } finally {
       setActivating(false)
     }
@@ -321,9 +312,8 @@ const FarmSupervisorTaskDetail = () => {
       const refreshed = await CultivationTaskService.getById(taskId)
       setTask(refreshed?.data?.data ?? refreshed?.data)
       setCompileModal(false)
-    } catch (error) {
-      if (!error?.errorFields)
-        message.error(getTaskSchedulingErrorMessage(normalizeApiError(error)))
+    } catch {
+      // Axios interceptor handles error notification directly from backend response
     } finally {
       setSavingCompile(false)
     }

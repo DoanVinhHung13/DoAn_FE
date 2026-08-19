@@ -92,7 +92,7 @@ export const STAGE_STATUS = {
  */
 export const TASK_STATUS = {
   PENDING: { color: "default", label: "Chưa kích hoạt" },
-  ASSIGNED: { color: "blue", label: "Đã phân công" },
+  ASSIGNED: { color: "cyan", label: "Đã phân công" },
   IN_PROGRESS: { color: "processing", label: "Đang thực hiện" },
   WAITING_APPROVAL: { color: "gold", label: "Chờ phê duyệt" },
   COMPLETED: { color: "success", label: "Đã hoàn thành" },
@@ -219,18 +219,23 @@ export const canApproveClosing = logbook => {
   return review === "WAITING_APPROVAL" || review === "PENDING_REVIEW"
 }
 
-/** Only stages that have not started may change their task order. */
+/** Can reorder tasks if logbook and stage are active/planned and not completed/closed */
 export const canReorderStageTasks = (stage, logbook) => {
   if (!stage) return false
   if (["COMPLETED", "WAITING_APPROVAL", "APPROVED"].includes(logbook?.status))
     return false
   if (["WAITING_APPROVAL", "APPROVED"].includes(logbook?.reviewStatus))
     return false
-  return stage.status === "PLANNED" || stage.status === "PENDING"
+  return (
+    stage.status !== "COMPLETED" &&
+    stage.status !== "CANCELLED" &&
+    stage.status !== "CANCELED"
+  )
 }
 
-/** A task that is already assigned/started/completed is immutable in the order. */
-export const canReorderTask = task => !task?.status || task.status === "PENDING"
+/** A task that is pending or assigned (not yet in progress / completed) can be reordered */
+export const canReorderTask = task =>
+  !task?.status || ["PENDING", "ASSIGNED"].includes(task.status)
 
 export const canReorderTaskList = tasks =>
-  Array.isArray(tasks) && tasks.every(canReorderTask)
+  Array.isArray(tasks) && tasks.length > 1

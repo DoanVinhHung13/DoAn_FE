@@ -800,7 +800,7 @@ a,
 .ant-picker,
 .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
 .ant-tree-select-selector {
-  min-height: 40px;
+  min-height: 38px;
 }
 
 .ant-input:focus,
@@ -841,13 +841,29 @@ a,
 
 /* One-line controls need the same vertical rhythm in modals and full-page forms. */
 .ant-input:not(textarea),
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-picker,
+.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  height: 38px !important;
+  min-height: 38px !important;
+}
+
+.ant-picker {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.ant-input:not(textarea),
 .ant-input-affix-wrapper > .ant-input,
 .ant-input-number-input,
 .ant-picker-input > input {
-  height: 38px !important;
+  height: 36px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  line-height: 38px !important;
+  line-height: 36px !important;
 }
 
 .task-description-textarea {
