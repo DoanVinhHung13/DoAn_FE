@@ -56,7 +56,8 @@ const update = (id, body) => http.put(apiUpdateCultivationTask(id), body)
 const assign = (id, body, config = {}) =>
   http.post(apiAssignCultivationTask(id), body, config)
 
-const remove = id => http.delete(apiDeleteCultivationTask(id))
+const remove = (id, config = {}) =>
+  http.delete(apiDeleteCultivationTask(id), config)
 
 const start = id => http.post(apiStartCultivationTask(id))
 

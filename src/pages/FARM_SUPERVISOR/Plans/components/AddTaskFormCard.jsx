@@ -114,13 +114,17 @@ const AddTaskFormCard = ({
         return
       }
 
-      await CultivationTaskService.createBulk({
-        cultivationLogbookId: planId,
-        cultivationStageId: selectedId,
-        tasks: validTasks,
-      })
+      await CultivationTaskService.createBulk(
+        {
+          cultivationLogbookId: planId,
+          cultivationStageId: selectedId,
+          tasks: validTasks,
+        },
+        { skipNotice: true },
+      )
 
       taskForm.resetFields()
+      message.success("Tạo công việc thành công.")
       onSaveSuccess()
     } catch {
       // Axios interceptor handles error notification directly from backend response

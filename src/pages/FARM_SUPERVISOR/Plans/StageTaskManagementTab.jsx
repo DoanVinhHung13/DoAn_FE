@@ -501,6 +501,7 @@ const StageTaskManagementTab = ({
   const [leaders, setLeaders] = useState([])
   const [farmers, setFarmers] = useState([])
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [deletedTaskIds, setDeletedTaskIds] = useState(() => new Set())
   const [editTaskModal, setEditTaskModal] = useState({
     open: false,
     task: null,
@@ -659,8 +660,13 @@ const StageTaskManagementTab = ({
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await CultivationTaskService.remove(task.id)
-          await loadData()
+          await CultivationTaskService.remove(task.id, { skipNotice: true })
+          setDeletedTaskIds(current => {
+            const next = new Set(current)
+            next.add(task.id)
+            return next
+          })
+          message.success("Xóa thành công.")
         } catch {
           // axios interceptor handles error notification
         }
@@ -704,7 +710,9 @@ const StageTaskManagementTab = ({
   const availableTaskCatalogOptions = isFinalStage
     ? taskCatalogOptions
     : taskCatalogOptions.filter(option => option.activityType !== "HARVESTING")
-  const selectedTasks = selectedId ? tasks[selectedId] || [] : []
+  const selectedTasks = selectedId
+    ? (tasks[selectedId] || []).filter(task => !deletedTaskIds.has(task.id))
+    : []
   const orderedSelectedTasks = orderTasks(selectedTasks)
   const hasHarvestTask = getAllTasks(tasks).some(isHarvestTask)
   const selectedIdx = stages.findIndex(s => s.id === selectedId)
