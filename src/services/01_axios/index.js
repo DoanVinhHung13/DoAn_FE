@@ -51,8 +51,7 @@ const handleEaplsBody = (resData, config, status) => {
   if (
     !config?.skipNotice &&
     msg &&
-    method !== "get" &&
-    !isGenericApiMessage(msg)
+    method !== "get"
   ) {
     notice({ msg, isSuccess: true })
   }

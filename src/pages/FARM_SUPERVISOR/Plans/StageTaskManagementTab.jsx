@@ -305,7 +305,6 @@ const TaskCard = ({
             {task.isActivationWarning === true && (
               <Alert
                 type="warning"
-                showIcon
                 className="mt-2 py-1 px-2 text-xs rounded-lg"
                 message="Đã đến ngày dự kiến kích hoạt nhưng chưa được kích hoạt."
               />
@@ -338,7 +337,9 @@ const TaskCard = ({
               <CalendarOutlined className="text-gray-400 flex-shrink-0" />
               <span className="font-semibold text-gray-500">Dự kiến:</span>
               <span className="font-medium text-gray-800">
-                {task.plannedStartDate ? formatDate(task.plannedStartDate) : "—"}
+                {task.plannedStartDate
+                  ? formatDate(task.plannedStartDate)
+                  : "—"}
               </span>
             </div>
 
@@ -351,7 +352,9 @@ const TaskCard = ({
                   Leader:
                 </span>
                 {task.assignedLeaderName ? (
-                  <Tooltip title={`Người phụ trách: ${task.assignedLeaderName}`}>
+                  <Tooltip
+                    title={`Người phụ trách: ${task.assignedLeaderName}`}
+                  >
                     <Space size={4} align="center" className="min-w-0">
                       <Avatar
                         size={20}
@@ -369,7 +372,10 @@ const TaskCard = ({
                     </Space>
                   </Tooltip>
                 ) : (
-                  <Text type="secondary" className="text-xs italic text-gray-400">
+                  <Text
+                    type="secondary"
+                    className="text-xs italic text-gray-400"
+                  >
                     Chưa giao
                   </Text>
                 )}
@@ -417,7 +423,10 @@ const TaskCard = ({
                     </Text>
                   </Space>
                 ) : (
-                  <Text type="secondary" className="text-xs italic text-gray-400">
+                  <Text
+                    type="secondary"
+                    className="text-xs italic text-gray-400"
+                  >
                     Chưa có
                   </Text>
                 )}
@@ -660,13 +669,13 @@ const StageTaskManagementTab = ({
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await CultivationTaskService.remove(task.id, { skipNotice: true })
+          await CultivationTaskService.remove(task.id)
           setDeletedTaskIds(current => {
             const next = new Set(current)
             next.add(task.id)
             return next
           })
-          message.success("Xóa thành công.")
+          await loadData()
         } catch {
           // axios interceptor handles error notification
         }
@@ -777,9 +786,8 @@ const StageTaskManagementTab = ({
         },
       )
       const savedTasks = unwrap(response)
-      const nextOrderedTasks = (Array.isArray(savedTasks)
-        ? savedTasks
-        : nextTasks
+      const nextOrderedTasks = (
+        Array.isArray(savedTasks) ? savedTasks : nextTasks
       ).sort(
         (left, right) =>
           getTaskOrder(left, Number.MAX_SAFE_INTEGER) -

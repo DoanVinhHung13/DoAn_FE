@@ -115,17 +115,13 @@ const AddTaskFormCard = ({
         return
       }
 
-      await CultivationTaskService.createBulk(
-        {
-          cultivationLogbookId: planId,
-          cultivationStageId: selectedId,
-          tasks: validTasks,
-        },
-        { skipNotice: true },
-      )
+      await CultivationTaskService.createBulk({
+        cultivationLogbookId: planId,
+        cultivationStageId: selectedId,
+        tasks: validTasks,
+      })
 
       taskForm.resetFields()
-      message.success("Tạo công việc thành công.")
       onSaveSuccess()
     } catch {
       // Axios interceptor handles error notification directly from backend response
@@ -262,8 +258,7 @@ const AddTaskFormCard = ({
                             const catalog = taskCatalogOptions.find(
                               item => item.label === value,
                             )
-                            const list =
-                              taskForm.getFieldValue("tasks") || []
+                            const list = taskForm.getFieldValue("tasks") || []
                             list[name] = {
                               ...list[name],
                               taskCatalogId: catalog?.value || null,
@@ -276,8 +271,7 @@ const AddTaskFormCard = ({
                           onSelect={(_, option) => {
                             const catalog = option?.catalog
                             if (!catalog) return
-                            const list =
-                              taskForm.getFieldValue("tasks") || []
+                            const list = taskForm.getFieldValue("tasks") || []
                             list[name] = {
                               ...list[name],
                               name: catalog.label,
@@ -396,7 +390,6 @@ const AddTaskFormCard = ({
                         />
                       </Form.Item>
                     </Col>
-
                   </Row>
 
                   <Row gutter={[12, 0]}>

@@ -115,11 +115,8 @@ export const createApiError = ({
   fallbackMessage,
   noticeShown = false,
 } = {}) => {
-  const message =
-    getApiMessage(body) ||
-    fallbackMessage ||
-    FALLBACK_MESSAGES[kind] ||
-    FALLBACK_MESSAGES.unknown
+  const message = getApiMessage(body)
+
   const error = new Error(message, { cause })
   error.name = "ApiError"
   error.isApiError = true
