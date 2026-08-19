@@ -1,10 +1,10 @@
 import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   DeleteOutlined,
-  ArrowDownOutlined,
-  ArrowUpOutlined,
   EditOutlined,
   InfoCircleOutlined,
   PlusOutlined,
@@ -13,48 +13,43 @@ import {
 } from "@ant-design/icons"
 import {
   Alert,
-  AutoComplete,
   Avatar,
   Badge,
   Button,
   Card,
   Col,
-  DatePicker,
   Divider,
   Empty,
-  Form,
-  Input,
   List,
-  message,
   Modal,
   Row,
-  Select,
   Tag,
   Typography,
+  message,
 } from "antd"
 import { useEffect, useState } from "react"
-import { ROLES } from "src/constants/roles"
-import { useCultivationStatus } from "src/hooks/useCultivationStatus"
-import CultivationTaskService from "src/services/CultivationTaskService"
-import TaskCatalogService from "src/services/TaskCatalogService"
-import UserService from "src/services/UserService"
 import {
-  canReorderStageTasks,
-  canReorderTaskList,
-  canReorderTask,
-} from "src/utils/cultivationStatus"
-import { getTaskOrder, orderTasks } from "src/utils/cultivationOrdering"
-import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
-import { getUserDisplayName } from "src/utils/userDisplayName"
-import { getActiveQuarantineWarnings } from "src/utils/quarantineValidation"
-import {
-  CULTIVATION_TASK_TYPE_OPTIONS,
   CULTIVATION_TASK_TYPES,
   getCultivationTaskTypeLabel,
   getTaskSchedulingErrorMessage,
-  toTaskApiDateTime,
 } from "src/constants/cultivationTask"
+import { ROLES } from "src/constants/roles"
+import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import { normalizeApiError } from "src/services/core/apiError"
+import CultivationTaskService from "src/services/CultivationTaskService"
+import TaskCatalogService from "src/services/TaskCatalogService"
+import UserService from "src/services/UserService"
+import { getTaskOrder, orderTasks } from "src/utils/cultivationOrdering"
+import {
+  canReorderStageTasks,
+  canReorderTask,
+  canReorderTaskList,
+} from "src/utils/cultivationStatus"
+import { formatDate, getLocalNow, parseDate } from "src/utils/dateFormatters"
+import { getActiveQuarantineWarnings } from "src/utils/quarantineValidation"
+import { getUserDisplayName } from "src/utils/userDisplayName"
+import AddTaskFormCard from "./components/AddTaskFormCard"
+import EditTaskModal from "./components/EditTaskModal"
 
 const { Text } = Typography
 
@@ -127,8 +122,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const getTaskCfg = s => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
   const [selectedId, setSelectedId] = useState(null)
   const [editingTaskId, setEditingTaskId] = useState(null)
-  const [taskForm] = Form.useForm()
-  const [savingTask, setSavingTask] = useState(false)
   const [taskCatalogOptions, setTaskCatalogOptions] = useState([])
   const [leaders, setLeaders] = useState([])
   const [farmers, setFarmers] = useState([])
@@ -137,8 +130,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     open: false,
     task: null,
   })
-  const [editTaskForm] = Form.useForm()
-  const [savingEdit, setSavingEdit] = useState(false)
   const [savingOrder, setSavingOrder] = useState(false)
 
   useEffect(() => {
@@ -332,124 +323,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       return
     }
     setEditingTaskId("new")
-    taskForm.setFieldsValue({
-      tasks: [
-        {
-          taskCatalogId: null,
-          name: "",
-          description: "",
-          leaderId: null,
-          farmerIds: [],
-          taskType: null,
-          plannedStartDate: getLocalNow().startOf("day"),
-          plannedEndDate: getLocalNow().startOf("day").add(1, "day"),
-        },
-      ],
-    })
-  }
-
-  const handleAddTask = async () => {
-    if (hasHarvestTask) {
-      message.warning(
-        "Nhật ký đã có công việc thu hoạch, không thể thêm công việc khác.",
-      )
-      return
-    }
-
-    try {
-      const values = await taskForm.validateFields()
-      const taskList = values.tasks || []
-
-      if (!taskList.length) {
-        message.warning("Vui lòng thêm ít nhất một công việc")
-        return
-      }
-
-      setSavingTask(true)
-
-      const validTasks = taskList
-        .filter(task => task.taskCatalogId || task.name?.trim())
-        .map(task => {
-          const catalog = taskCatalogOptions.find(
-            o => o.value === task.taskCatalogId,
-          )
-          return {
-            taskCatalogId: task.taskCatalogId || null,
-            name: (task.name || catalog?.label || "").trim(),
-            description:
-              (task.description || catalog?.description || "").trim() || null,
-            leaderId: task.leaderId || null,
-            farmerIds: Array.isArray(task.farmerIds)
-              ? task.farmerIds.filter(Boolean)
-              : [],
-            taskType: catalog?.taskType || task.taskType || null,
-            plannedStartDate: toTaskApiDateTime(task.plannedStartDate),
-            plannedEndDate: toTaskApiDateTime(task.plannedEndDate),
-            activityType:
-              catalog?.activityType ||
-              (task.taskType === CULTIVATION_TASK_TYPES.HARVEST
-                ? "HARVESTING"
-                : "OTHER"),
-          }
-        })
-        .filter(task => task.name)
-
-      if (!validTasks.length) {
-        message.warning("Chọn công việc từ danh mục hoặc nhập tên mới")
-        setSavingTask(false)
-        return
-      }
-
-      if (validTasks.some(task => !task.taskType)) {
-        message.warning("Vui lòng chọn loại công việc cho công việc tự do.")
-        return
-      }
-
-      if (
-        validTasks.some(
-          task =>
-            !task.plannedStartDate ||
-            !task.plannedEndDate ||
-            task.plannedStartDate >= task.plannedEndDate,
-        )
-      ) {
-        message.warning(
-          "Ngày bắt đầu dự kiến phải trước ngày kết thúc dự kiến.",
-        )
-        return
-      }
-
-      const harvestFlags = validTasks.map(isHarvestTask)
-      const firstHarvestIndex = harvestFlags.findIndex(Boolean)
-      if (
-        firstHarvestIndex >= 0 &&
-        harvestFlags.slice(firstHarvestIndex + 1).some(flag => !flag)
-      ) {
-        message.warning("Công việc thu hoạch phải ở cuối cùng.")
-        setSavingTask(false)
-        return
-      }
-
-      await CultivationTaskService.createBulk(
-        {
-          cultivationLogbookId: planId,
-          cultivationStageId: selectedId,
-          tasks: validTasks,
-        },
-        { errorHandling: "component" },
-      )
-
-      setEditingTaskId(null)
-      taskForm.resetFields()
-      loadData()
-    } catch (error) {
-      if (!error?.errorFields) {
-        const normalizedError = normalizeApiError(error)
-        message.error(getTaskSchedulingErrorMessage(normalizedError))
-      }
-    } finally {
-      setSavingTask(false)
-    }
   }
 
   const handleMoveTask = async (taskId, direction) => {
@@ -883,32 +756,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                                       icon={<EditOutlined />}
                                       onClick={e => {
                                         e.stopPropagation()
-                                        editTaskForm.setFieldsValue({
-                                          name: task.name || task.taskName,
-                                          description: task.description || "",
-                                          plannedStartDate: parseDate(
-                                            task.plannedStartDate,
-                                          ),
-                                          plannedEndDate: parseDate(
-                                            task.plannedEndDate,
-                                          ),
-                                          leaderId:
-                                            task.assignedLeaderId || null,
-                                          farmerIds:
-                                            task.assignments
-                                              ?.filter(f => !f.isLeader)
-                                              .map(f => f.userId || f.id) || [],
-                                        })
                                         setEditTaskModal({ open: true, task })
                                       }}
-                                      className="bg-orange-500 border-0 rounded-lg"
+                                      className="bg-orange-500 border-0 rounded-lg hover:!bg-orange-600"
                                     >
                                       Sửa
                                     </Button>
                                     <Button
                                       type="primary"
                                       size="small"
-                                      className="bg-green-600 rounded-lg"
+                                      className="bg-green-600 border-green-600 rounded-lg hover:!bg-green-700"
                                       onClick={e => {
                                         e.stopPropagation()
                                         handleActivateTask(task.id)
@@ -961,398 +818,21 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
 
                 {/* Form thêm công việc trực tiếp */}
                 {editingTaskId === "new" && (
-                  <Card
-                    size="small"
-                    className="mt-3 border border-gray-200 rounded-xl bg-gray-50"
-                    title={
-                      <Text strong style={{ fontSize: 13 }}>
-                        Công việc mới
-                      </Text>
-                    }
-                  >
-                    <Form
-                      form={taskForm}
-                      layout="vertical"
-                      initialValues={{
-                        tasks: [
-                          {
-                            taskCatalogId: null,
-                            taskType: null,
-                            name: "",
-                            description: "",
-                            plannedStartDate: getLocalNow().startOf("day"),
-                            plannedEndDate: getLocalNow()
-                              .startOf("day")
-                              .add(1, "day"),
-                          },
-                        ],
-                      }}
-                    >
-                      <Form.List name="tasks">
-                        {(fields, { add, remove }) => (
-                          <>
-                            {fields.map(({ key, name, ...restField }) => (
-                              <Card
-                                key={key}
-                                size="small"
-                                className="mb-3 border border-gray-200 shadow-sm"
-                              >
-                                <div className="flex items-center justify-between mb-2">
-                                  <Text strong>Công việc {name + 1}</Text>
-                                  {fields.length > 1 && (
-                                    <Button
-                                      type="text"
-                                      danger
-                                      onClick={() => remove(name)}
-                                    >
-                                      Xóa
-                                    </Button>
-                                  )}
-                                </div>
-                                <Form.Item
-                                  {...restField}
-                                  name={[name, "taskCatalogId"]}
-                                  hidden
-                                >
-                                  <Input />
-                                </Form.Item>
-                                <Form.Item
-                                  {...restField}
-                                  name={[name, "name"]}
-                                  rules={[
-                                    {
-                                      required: true,
-                                      message: "Vui lòng nhập tên công việc.",
-                                    },
-                                    {
-                                      validator: (_, value) => {
-                                        if (!value) return Promise.resolve()
-                                        const trimmed = value.trim()
-                                        if (!trimmed)
-                                          return Promise.reject(
-                                            new Error(
-                                              "Tên công việc không được chỉ chứa khoảng trắng.",
-                                            ),
-                                          )
-                                        if (trimmed.length > 100)
-                                          return Promise.reject(
-                                            new Error(
-                                              "Tên công việc không được vượt quá 100 ký tự.",
-                                            ),
-                                          )
-                                        if (
-                                          trimmed !==
-                                          trimmed.replace(/\s+/g, " ")
-                                        )
-                                          return Promise.reject(
-                                            new Error(
-                                              "Tên công việc không được chứa nhiều khoảng trắng liên tiếp.",
-                                            ),
-                                          )
-                                        return Promise.resolve()
-                                      },
-                                    },
-                                  ]}
-                                  className="!mb-3"
-                                >
-                                  <AutoComplete
-                                    options={availableTaskCatalogOptions.map(
-                                      catalog => ({
-                                        value: catalog.label,
-                                        label: catalog.label,
-                                        catalog,
-                                      }),
-                                    )}
-                                    filterOption={(inputValue, option) =>
-                                      option?.value
-                                        ?.toLowerCase()
-                                        .includes(inputValue.toLowerCase())
-                                    }
-                                    placeholder="Nhập tên công việc (gợi ý từ danh mục)..."
-                                    onChange={value => {
-                                      const catalog = taskCatalogOptions.find(
-                                        item => item.label === value,
-                                      )
-                                      const list =
-                                        taskForm.getFieldValue("tasks") || []
-                                      list[name] = {
-                                        ...list[name],
-                                        taskCatalogId: catalog?.value || null,
-                                        taskType: catalog?.taskType || null,
-                                      }
-                                      taskForm.setFieldsValue({
-                                        tasks: [...list],
-                                      })
-                                    }}
-                                    onSelect={(_, option) => {
-                                      const catalog = option?.catalog
-                                      if (!catalog) return
-                                      const list =
-                                        taskForm.getFieldValue("tasks") || []
-                                      list[name] = {
-                                        ...list[name],
-                                        name: catalog.label,
-                                        taskCatalogId: catalog.value,
-                                        taskType: catalog.taskType,
-                                        description: catalog.description || "",
-                                      }
-                                      taskForm.setFieldsValue({
-                                        tasks: [...list],
-                                      })
-                                    }}
-                                  />
-                                </Form.Item>
-                                <Form.Item
-                                  {...restField}
-                                  name={[name, "description"]}
-                                  rules={[
-                                    {
-                                      validator: (_, value) => {
-                                        if (!value) return Promise.resolve()
-                                        const trimmed = value.trim()
-                                        if (!trimmed) return Promise.resolve()
-                                        if (trimmed.length > 500)
-                                          return Promise.reject(
-                                            new Error(
-                                              "Mô tả công việc không được vượt quá 500 ký tự.",
-                                            ),
-                                          )
-                                        if (
-                                          trimmed !==
-                                          trimmed.replace(/\s+/g, " ")
-                                        )
-                                          return Promise.reject(
-                                            new Error(
-                                              "Mô tả công việc không được chứa nhiều khoảng trắng liên tiếp.",
-                                            ),
-                                          )
-                                        return Promise.resolve()
-                                      },
-                                    },
-                                  ]}
-                                  className="!mb-3"
-                                >
-                                  <Input.TextArea
-                                    rows={2}
-                                    placeholder="Mô tả chi tiết, liều lượng..."
-                                  />
-                                </Form.Item>
-                                <Row gutter={12}>
-                                  <Col xs={24} md={8}>
-                                    <Form.Item
-                                      noStyle
-                                      shouldUpdate={(prev, next) =>
-                                        prev.tasks?.[name]?.taskCatalogId !==
-                                        next.tasks?.[name]?.taskCatalogId
-                                      }
-                                    >
-                                      {() => (
-                                        <Form.Item
-                                          {...restField}
-                                          name={[name, "taskType"]}
-                                          label="Loại công việc"
-                                          rules={[
-                                            {
-                                              required: true,
-                                              message:
-                                                "Vui lòng chọn loại công việc.",
-                                            },
-                                          ]}
-                                        >
-                                          <Select
-                                            options={
-                                              CULTIVATION_TASK_TYPE_OPTIONS
-                                            }
-                                            placeholder="Chọn loại công việc"
-                                            disabled={Boolean(
-                                              taskForm.getFieldValue([
-                                                "tasks",
-                                                name,
-                                                "taskCatalogId",
-                                              ]),
-                                            )}
-                                          />
-                                        </Form.Item>
-                                      )}
-                                    </Form.Item>
-                                  </Col>
-                                  <Col xs={24} md={8}>
-                                    <Form.Item
-                                      {...restField}
-                                      name={[name, "plannedStartDate"]}
-                                      label="Bắt đầu dự kiến"
-                                      rules={[
-                                        {
-                                          required: true,
-                                          message:
-                                            "Vui lòng chọn ngày bắt đầu dự kiến.",
-                                        },
-                                        ({ getFieldValue }) => ({
-                                          validator: (_, value) => {
-                                            const end = getFieldValue([
-                                              "tasks",
-                                              name,
-                                              "plannedEndDate",
-                                            ])
-                                            if (
-                                              !value ||
-                                              !end ||
-                                              value.isBefore(end)
-                                            )
-                                              return Promise.resolve()
-                                            return Promise.reject(
-                                              new Error(
-                                                "Ngày bắt đầu phải trước ngày kết thúc.",
-                                              ),
-                                            )
-                                          },
-                                        }),
-                                      ]}
-                                    >
-                                      <DatePicker
-                                        showTime
-                                        format="DD/MM/YYYY HH:mm"
-                                        className="w-full"
-                                      />
-                                    </Form.Item>
-                                  </Col>
-                                  <Col xs={24} md={8}>
-                                    <Form.Item
-                                      {...restField}
-                                      name={[name, "plannedEndDate"]}
-                                      label="Kết thúc dự kiến"
-                                      rules={[
-                                        {
-                                          required: true,
-                                          message:
-                                            "Vui lòng chọn ngày kết thúc dự kiến.",
-                                        },
-                                        ({ getFieldValue }) => ({
-                                          validator: (_, value) => {
-                                            const start = getFieldValue([
-                                              "tasks",
-                                              name,
-                                              "plannedStartDate",
-                                            ])
-                                            if (
-                                              !value ||
-                                              !start ||
-                                              start.isBefore(value)
-                                            )
-                                              return Promise.resolve()
-                                            return Promise.reject(
-                                              new Error(
-                                                "Ngày kết thúc phải sau ngày bắt đầu.",
-                                              ),
-                                            )
-                                          },
-                                        }),
-                                      ]}
-                                    >
-                                      <DatePicker
-                                        showTime
-                                        format="DD/MM/YYYY HH:mm"
-                                        className="w-full"
-                                      />
-                                    </Form.Item>
-                                  </Col>
-                                </Row>
-                                <Row gutter={12}>
-                                  <Col xs={24} md={12}>
-                                    <Form.Item
-                                      {...restField}
-                                      name={[name, "leaderId"]}
-                                      label="Người phụ trách"
-                                      className="!mb-3"
-                                    >
-                                      <Select
-                                        allowClear
-                                        showSearch
-                                        options={leaders}
-                                        placeholder="Chọn người phụ trách..."
-                                        loading={loadingUsers}
-                                        filterOption={(input, option) =>
-                                          String(option?.label || "")
-                                            .toLowerCase()
-                                            .includes(input.toLowerCase())
-                                        }
-                                      />
-                                    </Form.Item>
-                                  </Col>
-                                  <Col xs={24} md={12}>
-                                    <Form.Item
-                                      {...restField}
-                                      name={[name, "farmerIds"]}
-                                      label="Người hỗ trợ"
-                                      className="!mb-3"
-                                    >
-                                      <Select
-                                        mode="multiple"
-                                        allowClear
-                                        showSearch
-                                        options={farmers}
-                                        placeholder="Chọn người hỗ trợ..."
-                                        loading={loadingUsers}
-                                        filterOption={(input, option) =>
-                                          String(option?.label || "")
-                                            .toLowerCase()
-                                            .includes(input.toLowerCase())
-                                        }
-                                      />
-                                    </Form.Item>
-                                  </Col>
-                                </Row>
-                              </Card>
-                            ))}
-                            <Button
-                              type="dashed"
-                              onClick={() =>
-                                add({
-                                  taskCatalogId: null,
-                                  taskType: null,
-                                  name: "",
-                                  description: "",
-                                  plannedStartDate:
-                                    getLocalNow().startOf("day"),
-                                  plannedEndDate: getLocalNow()
-                                    .startOf("day")
-                                    .add(1, "day"),
-                                  leaderId: null,
-                                  farmerIds: [],
-                                })
-                              }
-                              block
-                              icon={<PlusOutlined />}
-                              className="mb-3 text-green-600 border-green-300 hover:border-green-500"
-                            >
-                              Thêm công việc khác
-                            </Button>
-                          </>
-                        )}
-                      </Form.List>
-                      <Row gutter={12}>
-                        <Col span={24}>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              onClick={() => setEditingTaskId(null)}
-                              className="rounded-lg"
-                            >
-                              Hủy
-                            </Button>
-                            <Button
-                              type="primary"
-                              onClick={handleAddTask}
-                              loading={savingTask}
-                              className="bg-green-600 rounded-lg"
-                            >
-                              Lưu {taskForm.getFieldValue("tasks")?.length || 1}{" "}
-                              công việc
-                            </Button>
-                          </div>
-                        </Col>
-                      </Row>
-                    </Form>
-                  </Card>
+                  <AddTaskFormCard
+                    planId={planId}
+                    selectedId={selectedId}
+                    taskCatalogOptions={taskCatalogOptions}
+                    availableTaskCatalogOptions={availableTaskCatalogOptions}
+                    leaders={leaders}
+                    farmers={farmers}
+                    loadingUsers={loadingUsers}
+                    hasHarvestTask={hasHarvestTask}
+                    onCancel={() => setEditingTaskId(null)}
+                    onSaveSuccess={() => {
+                      setEditingTaskId(null)
+                      loadData()
+                    }}
+                  />
                 )}
               </div>
             )}
@@ -1361,204 +841,18 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
       </Card>
 
       {/* Modal Sửa công việc chưa bắt đầu */}
-      <Modal
+      <EditTaskModal
         open={editTaskModal.open}
-        title={
-          <div className="flex items-center gap-2 font-semibold text-orange-700">
-            <EditOutlined />
-            Sửa công việc
-          </div>
-        }
+        task={editTaskModal.task}
+        leaders={leaders}
+        farmers={farmers}
+        loadingUsers={loadingUsers}
         onCancel={() => setEditTaskModal({ open: false, task: null })}
-        onOk={async () => {
-          try {
-            const values = await editTaskForm.validateFields()
-            setSavingEdit(true)
-            await CultivationTaskService.update(editTaskModal.task.id, {
-              name: values.name,
-              description: values.description,
-              plannedStartDate: toTaskApiDateTime(values.plannedStartDate),
-              plannedEndDate: toTaskApiDateTime(values.plannedEndDate),
-              leaderId: values.leaderId || null,
-              farmerIds: Array.isArray(values.farmerIds)
-                ? values.farmerIds
-                : [],
-            })
-            setEditTaskModal({ open: false, task: null })
-            editTaskForm.resetFields()
-            loadData()
-          } catch (error) {
-            if (!error?.errorFields) {
-              const normalizedError = normalizeApiError(error)
-              message.error(getTaskSchedulingErrorMessage(normalizedError))
-            }
-          } finally {
-            setSavingEdit(false)
-          }
+        onSaveSuccess={() => {
+          setEditTaskModal({ open: false, task: null })
+          loadData()
         }}
-        okText="Lưu thay đổi"
-        cancelText="Hủy"
-        confirmLoading={savingEdit}
-        okButtonProps={{ className: "bg-orange-500 border-orange-500" }}
-        destroyOnClose
-      >
-        <Form form={editTaskForm} layout="vertical" className="mt-4">
-          <Form.Item
-            name="name"
-            label="Tên công việc"
-            rules={[
-              { required: true, message: "Vui lòng nhập tên công việc." },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed)
-                    return Promise.reject(
-                      new Error(
-                        "Tên công việc không được chỉ chứa khoảng trắng.",
-                      ),
-                    )
-                  if (trimmed.length > 100)
-                    return Promise.reject(
-                      new Error("Tên công việc không được vượt quá 100 ký tự."),
-                    )
-                  if (trimmed !== trimmed.replace(/\s+/g, " "))
-                    return Promise.reject(
-                      new Error(
-                        "Tên công việc không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  return Promise.resolve()
-                },
-              },
-            ]}
-          >
-            <Input placeholder="VD: Bón phân đón đòng..." />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label="Mô tả chi tiết"
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed) return Promise.resolve()
-                  if (trimmed.length > 500)
-                    return Promise.reject(
-                      new Error("Mô tả không được vượt quá 500 ký tự."),
-                    )
-                  if (trimmed !== trimmed.replace(/\s+/g, " "))
-                    return Promise.reject(
-                      new Error(
-                        "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  return Promise.resolve()
-                },
-              },
-            ]}
-          >
-            <Input.TextArea
-              rows={3}
-              placeholder="Mô tả công việc, liều lượng..."
-            />
-          </Form.Item>
-          <Row gutter={12}>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="plannedStartDate"
-                label="Bắt đầu dự kiến"
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng chọn ngày bắt đầu dự kiến.",
-                  },
-                  ({ getFieldValue }) => ({
-                    validator: (_, value) => {
-                      const end = getFieldValue("plannedEndDate")
-                      if (!value || !end || value.isBefore(end))
-                        return Promise.resolve()
-                      return Promise.reject(
-                        new Error("Ngày bắt đầu phải trước ngày kết thúc."),
-                      )
-                    },
-                  }),
-                ]}
-              >
-                <DatePicker
-                  showTime
-                  format="DD/MM/YYYY HH:mm"
-                  className="w-full"
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="plannedEndDate"
-                label="Kết thúc dự kiến"
-                rules={[
-                  {
-                    required: true,
-                    message: "Vui lòng chọn ngày kết thúc dự kiến.",
-                  },
-                  ({ getFieldValue }) => ({
-                    validator: (_, value) => {
-                      const start = getFieldValue("plannedStartDate")
-                      if (!value || !start || start.isBefore(value))
-                        return Promise.resolve()
-                      return Promise.reject(
-                        new Error("Ngày kết thúc phải sau ngày bắt đầu."),
-                      )
-                    },
-                  }),
-                ]}
-              >
-                <DatePicker
-                  showTime
-                  format="DD/MM/YYYY HH:mm"
-                  className="w-full"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={12}>
-            <Col xs={24} md={12}>
-              <Form.Item name="leaderId" label="Người phụ trách">
-                <Select
-                  allowClear
-                  showSearch
-                  options={leaders}
-                  placeholder="Chọn người phụ trách..."
-                  loading={loadingUsers}
-                  filterOption={(input, option) =>
-                    String(option?.label || "")
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={12}>
-              <Form.Item name="farmerIds" label="Người hỗ trợ">
-                <Select
-                  mode="multiple"
-                  allowClear
-                  showSearch
-                  options={farmers}
-                  placeholder="Chọn người hỗ trợ..."
-                  loading={loadingUsers}
-                  filterOption={(input, option) =>
-                    String(option?.label || "")
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Modal>
+      />
     </div>
   )
 }

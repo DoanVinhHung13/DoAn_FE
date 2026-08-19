@@ -36,9 +36,9 @@ import CultivationLogbookService from "src/services/CultivationLogbookService"
 import { isNotFoundError } from "src/services/core/apiError"
 import QuarantineSummary from "src/components/QuarantineSummary"
 
-import StageTaskManagementTab from "./components/StageTaskManagementTab"
-import LogbookFinalizationTab from "./components/LogbookFinalizationTab"
-import TaskLogHistoryTab from "./components/TaskLogHistoryTab"
+import StageTaskManagementTab from "./StageTaskManagementTab"
+import LogbookFinalizationTab from "./LogbookFinalizationTab"
+import TaskLogHistoryTab from "./TaskLogHistoryTab"
 
 const { Text } = Typography
 

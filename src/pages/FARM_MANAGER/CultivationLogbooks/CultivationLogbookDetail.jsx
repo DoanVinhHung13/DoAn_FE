@@ -19,8 +19,8 @@ import { isNotFoundError } from "src/services/core/apiError"
 import { getLandPlotsFromLogbook } from "src/utils/helpers"
 
 // Import các Tab components
-import TaskLogHistoryTab from "src/pages/FARM_SUPERVISOR/Plans/components/TaskLogHistoryTab"
-import StageTaskManagementTab from "src/pages/FARM_SUPERVISOR/Plans/components/StageTaskManagementTab"
+import TaskLogHistoryTab from "src/pages/FARM_SUPERVISOR/Plans/TaskLogHistoryTab"
+import StageTaskManagementTab from "src/pages/FARM_SUPERVISOR/Plans/StageTaskManagementTab"
 import OfficialLogbookTab from "./components/OfficialLogbookTab"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
