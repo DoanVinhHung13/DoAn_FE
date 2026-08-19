@@ -1,3 +1,5 @@
+import { formatDateForApi } from "src/utils/dateFormatters"
+
 export const CULTIVATION_TASK_TYPES = {
   MATERIAL: "MATERIAL",
   HARVEST: "HARVEST",
@@ -38,6 +40,5 @@ export const getCultivationTaskTypeColor = value =>
 
 export const toTaskApiDateTime = value => {
   if (!value) return null
-  if (typeof value?.toISOString === "function") return value.toISOString()
-  return value
+  return formatDateForApi(value)
 }

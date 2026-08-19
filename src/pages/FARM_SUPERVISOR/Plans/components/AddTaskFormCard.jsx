@@ -82,6 +82,7 @@ const AddTaskFormCard = ({
               : [],
             taskType: catalog?.taskType || task.taskType || null,
             plannedStartDate: formatDateForApi(task.plannedStartDate),
+            plannedEndDate: formatDateForApi(task.plannedEndDate),
             activityType:
               catalog?.activityType ||
               (task.taskType === CULTIVATION_TASK_TYPES.HARVEST
