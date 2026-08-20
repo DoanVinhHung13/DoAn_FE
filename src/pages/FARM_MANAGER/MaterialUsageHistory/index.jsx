@@ -1,6 +1,6 @@
 import { ReloadOutlined, SearchOutlined } from "@ant-design/icons"
 import { Button, DatePicker, Input, Select, Tag } from "antd"
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import { ImportHistoryIcon } from "src/assets/icon/menu/MenuIcons"
 import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
@@ -18,6 +18,10 @@ const MATERIAL_TYPE_OPTIONS = [
   { value: "FERTILIZER", label: "Phân bón" },
   { value: "PESTICIDE", label: "Nông dược" },
 ]
+const TIME_SORT_OPTIONS = [
+  { value: "descend", label: "Mới nhất trước" },
+  { value: "ascend", label: "Cũ nhất trước" },
+]
 const unwrap = response => response?.data?.data ?? response?.data ?? {}
 const formatDateTime = value => value ? new Date(value).toLocaleString("vi-VN") : "—"
 const typeLabel = value => value === "FERTILIZER" ? "Phân bón" : value === "PESTICIDE" ? "Nông dược" : "—"
@@ -30,23 +34,25 @@ const getUsedAtTimestamp = value => {
 const MaterialUsageHistory = () => {
   const { searchInput, setSearchInput, search, handleSearch, handleClearSearch, page, setPage, pageSize, setPageSize, filters, updateFilter, listData: rows, setListData: setRows, totalRecords: total, setTotalRecords: setTotal, loading, setLoading } = useListManagement({ initialPageSize: DEFAULT_PAGE_SIZE, initialFilters: { materialType: "all", dateRange: [] } })
   const { materialType, dateRange } = filters
+  const [timeSortOrder, setTimeSortOrder] = useState("descend")
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const [from, to] = dateRange || []
-      const result = unwrap(await MaterialUsageService.getHistory({ PageIndex: page, PageSize: pageSize, MaterialType: materialType === "all" ? undefined : materialType, SearchKeyword: search || undefined, FromDate: from?.startOf("day")?.toISOString(), ToDate: to?.endOf("day")?.toISOString() }))
+      const result = unwrap(await MaterialUsageService.getHistory({ PageIndex: page, PageSize: pageSize, MaterialType: materialType === "all" ? undefined : materialType, SearchKeyword: search || undefined, FromDate: from?.startOf("day")?.toISOString(), ToDate: to?.endOf("day")?.toISOString(), SortDescending: timeSortOrder === "descend" }))
       const items = Array.isArray(result) ? result : result.items || []
-      setRows([...items].sort((a, b) => getUsedAtTimestamp(b.usedAt) - getUsedAtTimestamp(a.usedAt)))
+      const sortMultiplier = timeSortOrder === "descend" ? -1 : 1
+      setRows([...items].sort((a, b) => sortMultiplier * (getUsedAtTimestamp(a.usedAt) - getUsedAtTimestamp(b.usedAt))))
       setTotal(Array.isArray(result) ? items.length : (result.totalItems ?? result.totalCount ?? items.length))
     } catch { setRows([]) }
     finally { setLoading(false) }
-  }, [dateRange, materialType, page, pageSize, search, setLoading, setRows, setTotal])
+  }, [dateRange, materialType, page, pageSize, search, setLoading, setRows, setTotal, timeSortOrder])
 
   useEffect(() => { load() }, [load])
 
   const columns = [
-    { title: "Thời gian", dataIndex: "usedAt", key: "usedAt", width: 145, defaultSortOrder: "descend", sorter: (a, b) => getUsedAtTimestamp(a.usedAt) - getUsedAtTimestamp(b.usedAt), render: formatDateTime },
+    { title: "Thời gian", dataIndex: "usedAt", key: "usedAt", width: 145, render: formatDateTime },
     { title: "Vật tư", dataIndex: "materialName", key: "material", width: 155, ellipsis: true, render: value => value || "—" },
     { title: "Loại vật tư", dataIndex: "materialType", key: "materialType", width: 105, render: value => <Tag className="m-0 whitespace-nowrap">{typeLabel(value)}</Tag> },
     { title: "Số lượng", key: "quantity", width: 95, align: "right", render: (_, row) => `${row.quantity ?? "—"} ${row.unit || ""}` },
@@ -65,9 +71,10 @@ const MaterialUsageHistory = () => {
     </div>
     <div className="admin-filter-card rounded-lg shadow-sm">
       <div className="admin-toolbar flex flex-col gap-3 xl:flex-row xl:items-center xl:flex-wrap">
-        <RangePicker value={dateRange} onChange={dates => updateFilter("dateRange", dates || [])} format="DD/MM/YYYY" placeholder={["Từ ngày", "Đến ngày"]} aria-label="Lọc theo khoảng ngày sử dụng" className="w-full h-10 rounded-xl xl:w-72" />
-        <Select value={materialType} onChange={value => updateFilter("materialType", value)} options={MATERIAL_TYPE_OPTIONS} aria-label="Lọc theo loại vật tư" className="w-full h-10 rounded-xl xl:w-52" />
         <Input value={searchInput} onChange={event => setSearchInput(event.target.value)} onPressEnter={handleSearch} onClear={handleClearSearch} placeholder="Tìm vật tư, công việc hoặc nhật ký" aria-label="Tìm vật tư, công việc hoặc nhật ký" prefix={<SearchOutlined className="text-gray-300" />} className="w-full h-10 rounded-xl xl:w-64" allowClear autoComplete="off" />
+        <Select value={timeSortOrder} onChange={value => { setTimeSortOrder(value); setPage(1) }} options={TIME_SORT_OPTIONS} aria-label="Sắp xếp thời gian sử dụng" className="w-full h-10 rounded-xl xl:w-48" />
+        <Select value={materialType} onChange={value => updateFilter("materialType", value)} options={MATERIAL_TYPE_OPTIONS} aria-label="Lọc theo loại vật tư" className="w-full h-10 rounded-xl xl:w-52" />
+        <RangePicker value={dateRange} onChange={dates => updateFilter("dateRange", dates || [])} format="DD/MM/YYYY" placeholder={["Từ ngày", "Đến ngày"]} aria-label="Lọc theo khoảng ngày sử dụng" className="w-full h-10 rounded-xl xl:w-72" />
         <div className="flex gap-2 xl:ml-auto"><Button onClick={handleSearch} icon={<SearchOutlined />} className="h-10 px-4 font-semibold rounded-xl">Tìm kiếm</Button><Button aria-label="Tải lại lịch sử sử dụng vật tư" icon={<ReloadOutlined />} onClick={load} loading={loading} className="h-10 px-3 rounded-xl" /></div>
       </div>
     </div>
