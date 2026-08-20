@@ -42,6 +42,21 @@ const InventoryImportModal = ({ open, onCancel, onSuccess, item }) => {
   const handleImport = async () => {
     try {
       const values = await form.validateFields()
+
+      const confirmed = await new Promise(resolve => {
+        Modal.confirm({
+          title: "Xác nhận nhập kho",
+          content: `Bạn có chắc muốn nhập ${values.quantity} ${values.unit} vật tư “${item.name}” vào kho không?`,
+          okText: "Xác nhận",
+          cancelText: "Hủy",
+          centered: true,
+          onOk: () => resolve(true),
+          onCancel: () => resolve(false),
+        })
+      })
+
+      if (!confirmed) return
+
       setLoading(true)
 
       const payload = {
