@@ -16,6 +16,7 @@ export const SYSTEM_KEY = {
   COMPONENT_UNIT: "COMPONENT_UNIT",
   AREA_UNIT: "AREA_UNIT",
   FERTILIZER_TYPE: "FERTILIZER_TYPE",
+  PESTICIDE_TYPE: "PESTICIDE_TYPE",
 
   // Cultivation / main flow statuses (SystemKey groups)
   LOGBOOK_STATUS: "LOGBOOK_STATUS",

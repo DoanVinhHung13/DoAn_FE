@@ -8,20 +8,11 @@ import {
 } from "@ant-design/icons"
 import CatalogService from "src/services/CatalogService"
 import TableCustom from "src/components/Table/CustomTable"
+import { normalizePesticideType } from "src/constants/pesticideTypes"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 
 const { Title, Text } = Typography
-
-const CATEGORY_COLOR = {
-  "Thuốc trừ sâu": "red",
-  "Thuốc trừ bệnh": "orange",
-  "Thuốc trừ cỏ": "green",
-  "Thuốc trừ chuột": "purple",
-  "Thuốc điều hòa sinh trưởng": "blue",
-  "Thuốc trừ ốc": "cyan",
-  "Chất dẫn dụ côn trùng": "gold",
-  "THUỐC SỬ DỤNG TRONG LÂM NGHIỆP": "lime",
-  "THUỐC SỬ DỤNG CHO MỤC ĐÍCH KHÁC": "geekblue",
-}
 
 const getCatalogItems = response => {
   let payload = response
@@ -64,6 +55,7 @@ const normalizePesticide = (item, index) => ({
 })
 
 const PesticideList = () => {
+  const { getCombo } = useSystemKey()
   const [searchText, setSearchText] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
@@ -87,22 +79,24 @@ const PesticideList = () => {
     [pesticideResponse],
   )
 
-  const categoryOptions = useMemo(() => {
-    const categories = [
-      ...new Set(pesticideData.map(item => item.category).filter(Boolean)),
-    ]
+  const pesticideTypeOptions = getCombo(SYSTEM_KEY.PESTICIDE_TYPE).map(
+    option => ({
+      value: normalizePesticideType(option.codeValue || option.value),
+      label: option.label || option.description,
+    }),
+  )
 
-    return [
-      { value: "all", label: "Tất cả nhóm nông dược" },
-      ...categories.map(category => ({ value: category, label: category })),
-    ]
-  }, [pesticideData])
+  const categoryOptions = [
+    { value: "all", label: "Tất cả nhóm nông dược" },
+    ...pesticideTypeOptions,
+  ]
 
   const filteredData = useMemo(
     () =>
       pesticideData.filter(
         item =>
-          selectedCategory === "all" || item.category === selectedCategory,
+          selectedCategory === "all" ||
+          normalizePesticideType(item.category) === selectedCategory,
       ),
     [pesticideData, selectedCategory],
   )
@@ -141,7 +135,6 @@ const PesticideList = () => {
       width: 160,
       render: text => (
         <Tag
-          color={CATEGORY_COLOR[text] || "default"}
           className="font-medium rounded border-0 whitespace-normal"
         >
           {text || "—"}
