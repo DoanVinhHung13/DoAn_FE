@@ -268,7 +268,7 @@ const TaskCard = ({
           </div>
         </Col>
 
-        {/* Cột phải: Dự kiến, Leader, Cập nhật bởi & Farmer, Nút hành động */}
+        {/* Cột phải: Dự kiến, người phụ trách, Cập nhật bởi & người hỗ trợ, Nút hành động */}
         <Col
           xs={24}
           md={14}
@@ -286,13 +286,13 @@ const TaskCard = ({
               </span>
             </div>
 
-            {/* Hàng 2: Leader và Farmer cùng 1 dòng */}
+            {/* Hàng 2: Người phụ trách và người hỗ trợ cùng 1 dòng */}
             <Flex align="center" justify="space-between" gap={12} wrap="wrap">
-              {/* Leader */}
+              {/* Người phụ trách */}
               <div className="flex items-center gap-1.5 min-w-0">
                 <UserOutlined className="text-green-600 text-xs flex-shrink-0" />
                 <span className="text-xs font-semibold text-gray-500">
-                  Leader:
+                  Người phụ trách:
                 </span>
                 {task.assignedLeaderName ? (
                   <Tooltip
@@ -324,11 +324,11 @@ const TaskCard = ({
                 )}
               </div>
 
-              {/* Farmer */}
+              {/* Người hỗ trợ */}
               <div className="flex items-center gap-1.5 min-w-0">
                 <TeamOutlined className="text-blue-600 text-xs flex-shrink-0" />
                 <span className="text-xs font-semibold text-gray-500">
-                  Farmer:
+                  Người hỗ trợ:
                 </span>
                 {supportMembers.length > 0 ? (
                   <Space size={4} align="center">
@@ -391,6 +391,12 @@ const TaskCard = ({
                   {getUserDisplayName(
                     task.updatedByName,
                     task.updatedBy,
+                    task.updatedByUser,
+                    task.updatedByFullName,
+                    task.lastModifiedByName,
+                    task.lastModifiedBy,
+                    task.modifiedByName,
+                    task.modifiedBy,
                     task.editedByName,
                     task.editedBy,
                     task.createdByName,
