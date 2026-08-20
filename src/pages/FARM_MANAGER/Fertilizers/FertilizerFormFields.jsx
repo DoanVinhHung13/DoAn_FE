@@ -56,7 +56,6 @@ import {
   createFertilizerComponentRow,
   mapCatalogCompositionsToRows,
 } from "src/services/CatalogSuggestionService/compositions"
-import { FERTILIZER_TYPE_OPTIONS as STANDARD_FERTILIZER_TYPE_OPTIONS } from "src/constants/fertilizerTypes"
 
 const { Text } = Typography
 
@@ -129,15 +128,11 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const { getCombo } = useSystemKey()
   const { cropOptions, isCropsLoading } = useCropOptions()
 
-  const FERTILIZER_TYPE_OPTIONS = [
-    ...STANDARD_FERTILIZER_TYPE_OPTIONS,
-    ...getCombo(SYSTEM_KEY.FERTILIZER_TYPE).map(opt => ({
+  const fertilizerTypeOptions = getCombo(SYSTEM_KEY.FERTILIZER_TYPE).map(
+    opt => ({
       value: opt.codeValue || opt.value,
       label: opt.label || opt.description,
-    })),
-  ].filter(
-    (option, index, options) =>
-      options.findIndex(item => item.value === option.value) === index,
+    }),
   )
 
   const UNIT_OPTIONS = [
@@ -662,7 +657,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               allowClear
               placeholder="Loại Phân Bón"
               className="h-10"
-              options={FERTILIZER_TYPE_OPTIONS}
+              options={fertilizerTypeOptions}
             />
           </Form.Item>
         </Col>

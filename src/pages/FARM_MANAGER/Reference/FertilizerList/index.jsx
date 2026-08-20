@@ -4,10 +4,9 @@ import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from "antd"
 import { BookOutlined, SearchOutlined } from "@ant-design/icons"
 import CatalogService from "src/services/CatalogService"
 import TableCustom from "src/components/Table/CustomTable"
-import {
-  FERTILIZER_TYPE_OPTIONS,
-  normalizeFertilizerType,
-} from "src/constants/fertilizerTypes"
+import { normalizeFertilizerType } from "src/constants/fertilizerTypes"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 
 const { Title, Text } = Typography
 
@@ -75,6 +74,7 @@ const normalizeFertilizer = (item, index) => ({
 })
 
 const FertilizerList = () => {
+  const { getCombo } = useSystemKey()
   const [searchText, setSearchText] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -97,6 +97,13 @@ const FertilizerList = () => {
   const fertilizerData = useMemo(
     () => getCatalogItems(fertilizerResponse).map(normalizeFertilizer),
     [fertilizerResponse],
+  )
+
+  const fertilizerTypeOptions = getCombo(SYSTEM_KEY.FERTILIZER_TYPE).map(
+    option => ({
+      value: normalizeFertilizerType(option.codeValue || option.value),
+      label: option.label || option.description,
+    }),
   )
 
   const filteredData = useMemo(
@@ -241,10 +248,7 @@ const FertilizerList = () => {
             }}
             options={[
               { value: "all", label: "Tất cả loại phân bón" },
-              ...FERTILIZER_TYPE_OPTIONS.map(option => ({
-                ...option,
-                value: normalizeFertilizerType(option.value),
-              })),
+              ...fertilizerTypeOptions,
             ]}
             size="large"
             className="rounded-xl min-w-[240px] h-10"
