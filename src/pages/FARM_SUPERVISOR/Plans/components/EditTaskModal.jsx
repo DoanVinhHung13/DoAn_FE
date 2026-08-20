@@ -12,7 +12,11 @@ import {
 } from "antd"
 import { useEffect, useState } from "react"
 import CultivationTaskService from "src/services/CultivationTaskService"
-import { formatDateForApi, parseDate } from "src/utils/dateFormatters"
+import {
+  formatDateForApi,
+  getLocalNow,
+  parseDate,
+} from "src/utils/dateFormatters"
 
 const EditTaskModal = ({
   open,
@@ -157,6 +161,9 @@ const EditTaskModal = ({
                 format="DD/MM/YYYY"
                 className="w-full"
                 placeholder="Chọn ngày bắt đầu"
+                disabledDate={date =>
+                  date && date.isBefore(getLocalNow().startOf("day"), "day")
+                }
                 onChange={() => {
                   editTaskForm.validateFields(["plannedStartDate"]).catch(() => {})
                 }}

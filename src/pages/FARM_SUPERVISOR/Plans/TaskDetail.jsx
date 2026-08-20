@@ -241,12 +241,6 @@ const FarmSupervisorTaskDetail = () => {
     : []
 
   const handleActivate = async () => {
-    if (!task?.assignedLeaderId && !task?.farmLeaderId) {
-      message.warning(
-        "Vui lòng gán người phụ trách trước khi kích hoạt công việc.",
-      )
-      return
-    }
     if (isHarvestTask(task)) {
       const allTasks = planStages.flatMap(item => item.tasks || [])
       const unfinishedTasks = allTasks.filter(
@@ -429,15 +423,15 @@ const FarmSupervisorTaskDetail = () => {
           </div>
           <div>
             <span className="font-semibold">Bắt đầu thực tế:</span>{" "}
-            {task.workStartDate ? formatDate(task.workStartDate) : "—"}
+            {task.workStartDate ? formatDate(task.workStartDate) : "Chưa bắt đầu"}
           </div>
           <div>
             <span className="font-semibold">Kết thúc thực tế:</span>{" "}
-            {task.workEndDate ? formatDate(task.workEndDate) : "—"}
+            {task.workEndDate ? formatDate(task.workEndDate) : "Chưa kết thúc"}
           </div>
           <div>
             <span className="font-semibold">Hoàn thành:</span>{" "}
-            {task.completedDate ? formatDate(task.completedDate) : "—"}
+            {task.completedDate ? formatDate(task.completedDate) : "Chưa hoàn thành"}
           </div>
         </div>
         {task.isActivationWarning === true && (

@@ -353,6 +353,9 @@ const AddTaskFormCard = ({
                           format="DD/MM/YYYY"
                           className="w-full"
                           placeholder="Chọn ngày bắt đầu"
+                          disabledDate={date =>
+                            date && date.isBefore(getLocalNow().startOf("day"), "day")
+                          }
                           onChange={() => {
                             taskForm
                               .validateFields([

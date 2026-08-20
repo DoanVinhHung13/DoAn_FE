@@ -1,6 +1,5 @@
 import {
   CalendarOutlined,
-  ExperimentOutlined,
   EyeOutlined,
   FileTextOutlined,
   InboxOutlined,
@@ -208,94 +207,6 @@ const TaskLogHistoryTab = ({ stages, tasks }) => {
                               </span>
                             )}
                           </div>
-                        </div>
-                      )}
-
-                      {/* Vật tư: Phân bón & Nông dược */}
-                      {(log.fertilizers?.length > 0 ||
-                        log.pesticides?.length > 0) && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                          {/* Phân bón */}
-                          {log.fertilizers?.length > 0 && (
-                            <div className="bg-blue-50/60 rounded-xl p-3 border border-blue-100">
-                              <div className="text-xs font-bold text-blue-800 mb-2 flex items-center gap-1.5">
-                                <ExperimentOutlined className="text-blue-600 text-sm" />
-                                Phân bón sử dụng:
-                              </div>
-                              <div className="space-y-1.5">
-                                {log.fertilizers.map((f, i) => {
-                                  const name =
-                                    f.name || f.materialName || "Phân bón"
-                                  const qty = f.quantity
-                                  const unit = f.quantityUnit || f.unit || "kg"
-                                  const area = f.area
-                                  const areaUnit = formatAreaUnit(f.areaUnit)
-
-                                  return (
-                                    <div
-                                      key={i}
-                                      className="text-xs text-gray-700 flex flex-wrap items-center justify-between bg-white/80 px-2.5 py-1.5 rounded-lg border border-blue-100/60 shadow-2xs"
-                                    >
-                                      <span className="font-semibold text-gray-800">
-                                        {name}
-                                      </span>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="font-bold text-blue-700">
-                                          {qty} {unit}
-                                        </span>
-                                        {area > 0 && (
-                                          <span className="text-[11px] text-gray-500">
-                                            ({area} {areaUnit})
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Nông dược */}
-                          {log.pesticides?.length > 0 && (
-                            <div className="bg-purple-50/60 rounded-xl p-3 border border-purple-100">
-                              <div className="text-xs font-bold text-purple-800 mb-2 flex items-center gap-1.5">
-                                <ExperimentOutlined className="text-purple-600 text-sm" />
-                                Nông dược sử dụng:
-                              </div>
-                              <div className="space-y-1.5">
-                                {log.pesticides.map((p, i) => {
-                                  const name =
-                                    p.name || p.materialName || "Nông dược"
-                                  const qty = p.quantity
-                                  const unit = p.quantityUnit || p.unit || "lít"
-                                  const area = p.area
-                                  const areaUnit = formatAreaUnit(p.areaUnit)
-
-                                  return (
-                                    <div
-                                      key={i}
-                                      className="text-xs text-gray-700 flex flex-wrap items-center justify-between bg-white/80 px-2.5 py-1.5 rounded-lg border border-purple-100/60 shadow-2xs"
-                                    >
-                                      <span className="font-semibold text-gray-800">
-                                        {name}
-                                      </span>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="font-bold text-purple-700">
-                                          {qty} {unit}
-                                        </span>
-                                        {area > 0 && (
-                                          <span className="text-[11px] text-gray-500">
-                                            ({area} {areaUnit})
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </div>
-                          )}
                         </div>
                       )}
 

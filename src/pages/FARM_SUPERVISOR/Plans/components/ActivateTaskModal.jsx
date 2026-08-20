@@ -1,5 +1,5 @@
-import { ExclamationCircleOutlined, PlayCircleOutlined } from "@ant-design/icons"
-import { Alert, Form, Modal, Select, Space, Typography } from "antd"
+import { PlayCircleOutlined } from "@ant-design/icons"
+import { Form, Modal, Select, Space, Typography } from "antd"
 import { useEffect, useMemo } from "react"
 
 const { Text } = Typography
@@ -25,7 +25,9 @@ const ActivateTaskModal = ({
   onConfirm,
 }) => {
   const [form] = Form.useForm()
-  const leaderId = task?.assignedLeaderId || task?.farmLeaderId
+  const existingLeaderIds = getAssignmentIds(task, true)
+  const leaderId =
+    task?.assignedLeaderId || task?.farmLeaderId || existingLeaderIds[0]
   const existingSupportIds = getAssignmentIds(task, false)
   const hasLeader = Boolean(leaderId)
   const hasSupporters = existingSupportIds.length > 0
@@ -55,7 +57,14 @@ const ActivateTaskModal = ({
 
   const handleOk = async () => {
     const values = !hasLeader || !hasSupporters ? await form.validateFields() : {}
-    await onConfirm(values, !hasLeader || !hasSupporters)
+    await onConfirm(
+      {
+        ...values,
+        farmLeaderId: values.farmLeaderId || leaderId,
+        farmerIds: values.farmerIds || existingSupportIds,
+      },
+      !hasLeader || !hasSupporters,
+    )
   }
 
   return (
@@ -71,21 +80,22 @@ const ActivateTaskModal = ({
       destroyOnClose
     >
       <Space direction="vertical" size={16} className="w-full mt-2">
-        <Alert
-          type="warning"
-          showIcon
-          icon={<ExclamationCircleOutlined />}
-          message={`Bạn có chắc muốn kích hoạt “${task?.name || task?.taskName || "công việc này"}”?`}
-          description="Sau khi kích hoạt, người được phân công có thể bắt đầu thực hiện và ghi nhật ký."
-        />
+        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+          <Text className="block text-[15px] text-gray-800">
+            Bạn có chắc muốn kích hoạt “{task?.name || task?.taskName || "công việc này"}”?
+          </Text>
+          <Text type="secondary" className="mt-1 block">
+            Sau khi kích hoạt, người được phân công có thể bắt đầu thực hiện và ghi nhật ký.
+          </Text>
+        </div>
 
         {(!hasLeader || !hasSupporters) && (
           <>
             <Text type="secondary">
               Chỉ hiển thị người đang không thực hiện công việc khác.
             </Text>
-            {!hasLeader && (
-              <Form form={form} layout="vertical">
+            <Form form={form} layout="vertical" className="w-full">
+              {!hasLeader && (
                 <Form.Item
                   name="farmLeaderId"
                   label="Người phụ trách"
@@ -99,22 +109,31 @@ const ActivateTaskModal = ({
                     notFoundContent="Không có người đang rảnh"
                   />
                 </Form.Item>
-              </Form>
-            )}
-            {!hasSupporters && (
-              <Form form={form} layout="vertical">
-                <Form.Item name="farmerIds" label="Người hỗ trợ">
+              )}
+              {!hasSupporters && (
+                <Form.Item
+                  name="farmerIds"
+                  label="Người hỗ trợ"
+                  rules={[
+                    {
+                      required: true,
+                      type: "array",
+                      min: 1,
+                      message: "Vui lòng chọn ít nhất 1 người hỗ trợ",
+                    },
+                  ]}
+                >
                   <Select
                     mode="multiple"
                     showSearch
                     optionFilterProp="label"
                     options={availableFarmerOptions}
-                    placeholder="Chọn người hỗ trợ (không bắt buộc)"
+                    placeholder="Chọn ít nhất 1 người hỗ trợ"
                     notFoundContent="Không có người đang rảnh"
                   />
                 </Form.Item>
-              </Form>
-            )}
+              )}
+            </Form>
           </>
         )}
       </Space>
