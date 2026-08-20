@@ -69,6 +69,7 @@ const ViewPesticides = () => {
   })
 
   const statusFilter = filters.status
+  const categoryFilter = filters.category
 
   // ── State: modals ───────────────────────────────────────────────────────────
   const [statusLoading, setStatusLoading] = useState(false)
@@ -85,6 +86,14 @@ const ViewPesticides = () => {
       label: opt.label || opt.description,
     })),
   ]
+  const pesticideTypeOptions = getCombo(SYSTEM_KEY.PESTICIDE_TYPE)
+  const selectCategoryOptions = [
+    { value: "all", label: "Tất cả loại" },
+    ...pesticideTypeOptions.map(opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description,
+    })),
+  ]
 
   // ── Fetch list ──────────────────────────────────────────────────────────────
   const getList = useCallback(async () => {
@@ -94,6 +103,7 @@ const ViewPesticides = () => {
         PageIndex: page,
         PageSize: pageSize,
         SearchKeyword: search || undefined,
+        Type: categoryFilter === "all" ? undefined : categoryFilter,
         Status: statusFilter === "all" ? undefined : statusFilter,
       }
       const res = await PesticideService.getPesticides(params)
@@ -106,6 +116,7 @@ const ViewPesticides = () => {
     page,
     pageSize,
     search,
+    categoryFilter,
     statusFilter,
     setLoading,
     setListData,
@@ -180,6 +191,12 @@ const ViewPesticides = () => {
         const val = v || record.manufacturerName || record.supplier
         return <span className="text-sm text-gray-700">{val || "—"}</span>
       },
+    },
+    {
+      title: "Loại nông dược",
+      dataIndex: "type",
+      key: "type",
+      render: v => <span className="text-sm text-gray-700">{v || "—"}</span>,
     },
     {
       title: "Tồn kho thực tế",
@@ -396,6 +413,12 @@ const ViewPesticides = () => {
             className="w-64 h-10 rounded-xl"
             allowClear
             onClear={handleClearSearch}
+          />
+          <Select
+            value={categoryFilter}
+            onChange={val => updateFilter("category", val)}
+            className="h-10 rounded-xl min-w-[180px]"
+            options={selectCategoryOptions}
           />
           <Select
             value={statusFilter}

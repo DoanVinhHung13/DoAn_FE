@@ -241,6 +241,10 @@ const PesticideDetail = () => {
                 {item.manufacturer || <span className="text-gray-400">—</span>}
               </Descriptions.Item>
 
+              <Descriptions.Item label="Loại nông dược">
+                {item.type || <span className="text-gray-400">—</span>}
+              </Descriptions.Item>
+
               {/* Tồn kho thực tế */}
               <Descriptions.Item
                 label={

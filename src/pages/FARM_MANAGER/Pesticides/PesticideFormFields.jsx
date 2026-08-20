@@ -26,11 +26,14 @@ import CatalogSuggestionService, {
 
 import SectionTitle from "src/components/Common/SectionTitle"
 import { useCropOptions } from "src/hooks/useCropOptions"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
 
 const PESTICIDE_FIELD_MAPPING = {
   Name: "name",
+  Type: "type",
   MinInventory: "minimumStock",
   Unit: "unit",
 }
@@ -81,6 +84,11 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
   const navigate = useNavigate()
   const [loading, setLoading] = React.useState(false)
   const { cropOptions, isCropsLoading } = useCropOptions()
+  const { getCombo } = useSystemKey()
+  const pesticideTypeOptions = getCombo(SYSTEM_KEY.PESTICIDE_TYPE).map(opt => ({
+    value: opt.codeValue || opt.value,
+    label: opt.label || opt.description,
+  }))
   const usages = Form.useWatch("usages", form) || []
 
   const UNIT_OPTIONS = [
@@ -130,6 +138,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
       form.setFieldsValue({
         name: editingItem.name || "",
         manufacturer: editingItem.manufacturer || "",
+        type: editingItem.type || "",
         minimumStock: editingItem.minInventory ?? editingItem.minimumStock ?? 0,
         inventoryQuantity: editingItem.inventoryQuantity ?? 0,
         inventoryUnit: selectedUnit,
@@ -180,6 +189,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
 
       const body = {
         name: values.name?.trim(),
+        type: values.type?.trim() || "",
         manufacturer: values.manufacturer?.trim() || "",
         minInventory: values.minimumStock || 0,
         inventoryQuantity: values.inventoryQuantity ?? 0,
@@ -333,6 +343,22 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
           >
             <Input
               placeholder="Nhập nhà sản xuất..."
+              className="h-10 rounded-xl"
+            />
+          </Form.Item>
+        </Col>
+        <Col xs={24} md={12}>
+          <Form.Item
+            name="type"
+            label={<span className="font-semibold text-gray-700">Loại nông dược</span>}
+            rules={[{ required: true, message: "Vui lòng chọn loại nông dược." }]}
+          >
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              options={pesticideTypeOptions}
+              placeholder="Chọn loại nông dược..."
               className="h-10 rounded-xl"
             />
           </Form.Item>
