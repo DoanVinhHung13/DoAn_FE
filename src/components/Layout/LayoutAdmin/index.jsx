@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import {
   Layout,
   Menu,
@@ -34,6 +34,9 @@ const { Header, Sider, Content } = Layout
 const { Text } = Typography
 const { useBreakpoint } = Grid
 
+const routeMatchesMenuItem = (pathname, key) =>
+  key && (pathname === key || pathname.startsWith(`${key}/`))
+
 const LayoutAdmin = () => {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -62,14 +65,35 @@ const LayoutAdmin = () => {
   }
 
   // Lấy menu theo role từ MenuItem.jsx
-  const menuItems = getMenuByRole(user?.role)
+  const menuItems = useMemo(() => getMenuByRole(user?.role), [user?.role])
 
-  const selectedKey =
-    menuItems
-      .flatMap(item => (item.children ? [item, ...item.children] : [item]))
-      .filter(item => item.key && location.pathname.startsWith(item.key))
+  const { selectedKey, activeParentKeys } = useMemo(() => {
+    const matchedItems = menuItems
+      .flatMap(item =>
+        item.children
+          ? item.children.map(child => ({ ...child, parentKey: item.key }))
+          : [item],
+      )
+      .filter(item => routeMatchesMenuItem(location.pathname, item.key))
       .sort((a, b) => b.key.length - a.key.length)
-      .at(0)?.key || location.pathname
+
+    const activeItem = matchedItems[0]
+
+    return {
+      selectedKey: activeItem?.key || location.pathname,
+      activeParentKeys: activeItem?.parentKey ? [activeItem.parentKey] : [],
+    }
+  }, [location.pathname, menuItems])
+
+  const [openKeys, setOpenKeys] = useState(activeParentKeys)
+
+  useEffect(() => {
+    if (activeParentKeys.length === 0) return
+
+    setOpenKeys(previousKeys => [
+      ...new Set([...previousKeys, ...activeParentKeys]),
+    ])
+  }, [activeParentKeys])
 
   const dropdownItems = [
     {
@@ -163,7 +187,8 @@ const LayoutAdmin = () => {
         <Menu
           mode="inline"
           selectedKeys={[selectedKey]}
-          defaultOpenKeys={[]}
+          openKeys={collapsed ? [] : openKeys}
+          onOpenChange={setOpenKeys}
           items={menuItems}
           onClick={handleNavItemClick}
           className="admin-navigation border-r-0 px-3 py-4"
