@@ -50,6 +50,7 @@ const handleEaplsBody = (resData, config, status) => {
 
   if (
     !config?.skipNotice &&
+    !config?.skipSuccessNotice &&
     msg &&
     method !== "get"
   ) {

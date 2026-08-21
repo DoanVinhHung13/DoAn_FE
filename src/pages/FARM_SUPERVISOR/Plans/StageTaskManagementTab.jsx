@@ -629,7 +629,7 @@ const StageTaskManagementTab = ({
         await CultivationTaskService.assign(activationTask.id, {
           leaderId: values.farmLeaderId,
           farmerIds: values.farmerIds || [],
-        })
+        }, { skipSuccessNotice: true })
       }
       await CultivationTaskService.start(activationTask.id)
       if (isHarvestTask(activationTask)) {

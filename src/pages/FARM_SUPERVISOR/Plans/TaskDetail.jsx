@@ -300,7 +300,7 @@ const FarmSupervisorTaskDetail = () => {
         await CultivationTaskService.assign(activationTask.id, {
           leaderId: values.farmLeaderId,
           farmerIds: values.farmerIds || [],
-        })
+        }, { skipSuccessNotice: true })
       }
       const response = await CultivationTaskService.start(activationTask.id)
       const updatedTask = response?.data?.data ?? response?.data
