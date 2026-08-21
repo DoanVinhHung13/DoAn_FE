@@ -10,6 +10,7 @@ import CustomTable from "src/components/Table/CustomTable"
 import TitleCustom from "src/components/TitleCustom"
 import { useListManagement } from "src/hooks/useListManagement"
 import MaterialUsageService from "src/services/MaterialUsageService"
+import { formatDateTime } from "src/utils/dateFormatters"
 import { createPaginationConfig } from "src/utils/tableUtils"
 
 const { RangePicker } = DatePicker
@@ -23,7 +24,6 @@ const TIME_SORT_OPTIONS = [
   { value: "ascend", label: "Cũ nhất trước" },
 ]
 const unwrap = response => response?.data?.data ?? response?.data ?? {}
-const formatDateTime = value => value ? new Date(value).toLocaleString("vi-VN") : "—"
 const typeLabel = value => value === "FERTILIZER" ? "Phân bón" : value === "PESTICIDE" ? "Nông dược" : "—"
 const getLogbookName = row => row.logbookName || row.cultivationLogbookName || row.logbook?.name || "—"
 const getUsedAtTimestamp = value => {
@@ -40,7 +40,7 @@ const MaterialUsageHistory = () => {
     setLoading(true)
     try {
       const [from, to] = dateRange || []
-      const result = unwrap(await MaterialUsageService.getHistory({ PageIndex: page, PageSize: pageSize, MaterialType: materialType === "all" ? undefined : materialType, SearchKeyword: search || undefined, FromDate: from?.startOf("day")?.toISOString(), ToDate: to?.endOf("day")?.toISOString(), SortDescending: timeSortOrder === "descend" }))
+      const result = unwrap(await MaterialUsageService.getHistory({ PageIndex: page, PageSize: pageSize, MaterialType: materialType === "all" ? undefined : materialType, SearchKeyword: search || undefined, FromDate: from?.format("YYYY-MM-DD"), ToDate: to?.format("YYYY-MM-DD"), SortDescending: timeSortOrder === "descend" }))
       const items = Array.isArray(result) ? result : result.items || []
       const sortMultiplier = timeSortOrder === "descend" ? -1 : 1
       setRows([...items].sort((a, b) => sortMultiplier * (getUsedAtTimestamp(a.usedAt) - getUsedAtTimestamp(b.usedAt))))

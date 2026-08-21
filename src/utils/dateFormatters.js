@@ -2,11 +2,13 @@ import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import utc from "dayjs/plugin/utc"
 import timezone from "dayjs/plugin/timezone"
+import customParseFormat from "dayjs/plugin/customParseFormat"
 import "dayjs/locale/vi"
 
 dayjs.extend(relativeTime)
 dayjs.extend(utc)
 dayjs.extend(timezone)
+dayjs.extend(customParseFormat)
 dayjs.locale("vi")
 
 const DEFAULT_TIME_ZONE = "Asia/Ho_Chi_Minh"
@@ -18,9 +20,47 @@ export const getApplicationTimeZone = () =>
 
 export const getLocalNow = () => dayjs.tz(undefined, getApplicationTimeZone())
 
-const inConfiguredTimezone = date => {
+const parseDateOnly = date => {
   if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return dayjs.tz(date, getApplicationTimeZone())
+    return dayjs(date, "YYYY-MM-DD", true)
+  }
+
+  return null
+}
+
+const inConfiguredTimezone = date => {
+  const dateOnly = parseDateOnly(date)
+  if (dateOnly) return dateOnly
+
+  return dayjs.utc(date).tz(getApplicationTimeZone())
+}
+
+export const formatDateOnly = (date, format = "DD/MM/YYYY") => {
+  if (!date) return "---"
+  const formatStr = typeof format === "string" ? format : "DD/MM/YYYY"
+  if (dayjs.isDayjs(date)) return date.format(formatStr)
+
+  const dateOnly = parseDateOnly(date)
+  return (dateOnly || inConfiguredTimezone(date)).format(formatStr)
+}
+
+export const formatVietnamDateTime = (date, format = "HH:mm - DD/MM/YYYY") => {
+  if (!date) return "---"
+  const formatStr = typeof format === "string" ? format : "HH:mm - DD/MM/YYYY"
+  return dayjs.utc(date).tz(getApplicationTimeZone()).format(formatStr)
+}
+
+export const toUtcISOString = date => {
+  if (!date) return null
+  if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error("Date-only values must use formatDateForApi, not toUtcISOString.")
+  }
+  return (dayjs.isDayjs(date) ? date : dayjs(date)).toISOString()
+}
+
+const inConfiguredTimezoneLegacy = date => {
+  if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return parseDateOnly(date)
   }
 
   return dayjs.utc(date).tz(getApplicationTimeZone())
@@ -33,15 +73,11 @@ export const formatDateForApi = date => {
 }
 
 export const formatDate = (date, format = "DD/MM/YYYY") => {
-  if (!date) return "---"
-  const formatStr = typeof format === "string" ? format : "DD/MM/YYYY"
-  return inConfiguredTimezone(date).format(formatStr)
+  return formatDateOnly(date, format)
 }
 
 export const formatDateTime = (date, format = "HH:mm - DD/MM/YYYY") => {
-  if (!date) return "---"
-  const formatStr = typeof format === "string" ? format : "HH:mm - DD/MM/YYYY"
-  return inConfiguredTimezone(date).format(formatStr)
+  return formatVietnamDateTime(date, format)
 }
 
 export const timeAgo = date => {
@@ -51,5 +87,5 @@ export const timeAgo = date => {
 
 export const parseDate = date => {
   if (!date) return null
-  return inConfiguredTimezone(date)
+  return inConfiguredTimezoneLegacy(date)
 }
