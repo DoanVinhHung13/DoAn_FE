@@ -7,11 +7,12 @@ import {
 } from "@ant-design/icons"
 import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd"
 import dayjs from "dayjs"
-import { isValidPhone } from "src/utils/helpers"
+import {
+  addressPattern,
+  fullNamePattern,
+  isValidPhone,
+} from "src/utils/helpers"
 import { getLocalNow } from "src/utils/dateFormatters"
-
-const fullNamePattern = /^[\p{L}\s]+$/u
-const addressPattern = /^[\p{L}\d\s,./#()-]+$/u
 
 const UpdateProfile = ({
   form,

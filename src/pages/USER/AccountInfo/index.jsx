@@ -7,7 +7,6 @@ import {
   SaveOutlined,
   UserOutlined,
 } from "@ant-design/icons"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Avatar,
   Button,
@@ -35,7 +34,14 @@ import { setUserInfo } from "src/redux/slices/appGlobalSlice"
 import UserService from "src/services/UserService"
 import { getRoleLabel } from "src/utils/roleLabels"
 import { applyApiFieldErrors, getApiMessage } from "src/services/core/apiError"
-import { getAvatarUrl, getInitialAvatar } from "src/utils/helpers"
+import {
+  addressPattern,
+  displayValue,
+  fullNamePattern,
+  getAvatarUrl,
+  getInitialAvatar,
+  isValidPhone,
+} from "src/utils/helpers"
 import {
   formatDate,
   formatDateForApi,
@@ -53,24 +59,14 @@ const PROFILE_FIELD_MAPPING = {
   Address: "address",
 }
 
-const displayValue = value => value || "Chưa cập nhật"
-
-const fullNamePattern = /^[\p{L}\s]+$/u
-const addressPattern = /^[\p{L}\p{N}\s,.\-/]+$/u
-
-const isValidPhone = phone => {
-  const cleaned = phone.replace(/[\s\-()]/g, "")
-  return /^(\+84|84|0)[0-9]{9,10}$/.test(cleaned)
-}
-
 const AccountInfo = () => {
   const { userInfo: user } = useSelector(state => state.appGlobal)
   const dispatch = useAppDispatch()
-  const queryClient = useQueryClient()
   const { getCombo, getDescription } = useSystemKey()
   const genderOptions = getCombo(SYSTEM_KEY.GENDER)
   const [form] = Form.useForm()
   const [editing, setEditing] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "")
   const [uploadError, setUploadError] = useState("")
   const watchedName = Form.useWatch("fullName", form)
@@ -91,21 +87,21 @@ const AccountInfo = () => {
     form.setFieldsValue(initialValues)
   }, [form, initialValues])
 
-  const updateMutation = useMutation({
-    mutationFn: async values => {
-      const payload = {
-        fullName: values.fullName.trim().replace(/\s+/g, " "),
-        phoneNumber: values.phoneNumber?.trim() || null,
-        dateOfBirth: formatDateForApi(values.dateOfBirth),
-        gender: values.gender || null,
-        address: values.address?.trim().replace(/\s+/g, " ") || null,
-      }
-      return await UserService.updateMyProfile(payload, {
+  const handleUpdateProfile = async values => {
+    const payload = {
+      fullName: values.fullName.trim().replace(/\s+/g, " "),
+      phoneNumber: values.phoneNumber?.trim() || null,
+      dateOfBirth: formatDateForApi(values.dateOfBirth),
+      gender: values.gender || null,
+      address: values.address?.trim().replace(/\s+/g, " ") || null,
+    }
+
+    try {
+      setSubmitting(true)
+      const response = await UserService.updateMyProfile(payload, {
         errorHandling: "form",
         fieldErrorMapping: PROFILE_FIELD_MAPPING,
       })
-    },
-    onSuccess: (response, values) => {
       const updated = response?.data || {}
       const nextUser = {
         ...user,
@@ -119,13 +115,13 @@ const AccountInfo = () => {
       }
       dispatch(setUserInfo(nextUser))
       authSession.updateUser(nextUser)
-      queryClient.invalidateQueries({ queryKey: ["users"] })
       setEditing(false)
-    },
-    onError: error => {
+    } catch (error) {
       applyApiFieldErrors(form, error, PROFILE_FIELD_MAPPING)
-    },
-  })
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const handleCancel = () => {
     form.setFieldsValue(initialValues)
@@ -305,7 +301,7 @@ const AccountInfo = () => {
                 <Form
                   form={form}
                   layout="vertical"
-                  onFinish={values => updateMutation.mutate(values)}
+                  onFinish={handleUpdateProfile}
                   onFinishFailed={() => {}}
                   scrollToFirstError
                 >
@@ -554,7 +550,7 @@ const AccountInfo = () => {
                       type="primary"
                       htmlType="submit"
                       icon={<SaveOutlined />}
-                      loading={updateMutation.isPending}
+                      loading={submitting}
                       className="h-10 bg-green-500 px-5 font-semibold"
                     >
                       Lưu hồ sơ

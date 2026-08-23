@@ -26,10 +26,23 @@ export const getInitialAvatar = name => {
 }
 
 /**
- * Format số điện thoại
- * @param {string} phone - Số điện thoại
- * @returns {string} - Số điện thoại đã format
+ * Trả về giá trị hiển thị hoặc fallback nếu rỗng / falsy
+ * @param {*} value
+ * @param {string} fallback
+ * @returns {*}
  */
+export const displayValue = (value, fallback = "Chưa cập nhật") =>
+  value || fallback
+
+/**
+ * Pattern họ và tên (chỉ gồm ký tự chữ cái và khoảng trắng)
+ */
+export const fullNamePattern = /^[\p{L}\s]+$/u
+
+/**
+ * Pattern địa chỉ (chữ cái, chữ số, khoảng trắng và các ký tự phân cách cơ bản)
+ */
+export const addressPattern = /^[\p{L}\p{N}\s,.\-/]+$/u
 
 /**
  * Validate số điện thoại Việt Nam
@@ -37,8 +50,9 @@ export const getInitialAvatar = name => {
  * @returns {boolean} - true nếu hợp lệ
  */
 export const isValidPhone = phone => {
-  const phoneRegex = /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/
-  return phoneRegex.test(phone)
+  if (!phone) return false
+  const cleaned = String(phone).replace(/[\s\-()]/g, "")
+  return /^(\+84|84|0)[0-9]{9,10}$/.test(cleaned)
 }
 
 /**

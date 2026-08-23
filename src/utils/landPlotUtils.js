@@ -2,6 +2,9 @@ import {
   formatAreaUnit,
   MEASUREMENT_UNITS,
 } from "src/constants/measurementUnits"
+import { displayValue } from "src/utils/helpers"
+
+export { displayValue }
 
 // ── Constants: Messages ──────────────────────────────────────────────────────
 
@@ -114,9 +117,6 @@ export const getCultivationCropName = item =>
   item?.cultivationCropName ?? item?.CultivationCropName
 
 // ── Display Formatters ───────────────────────────────────────────────────────
-
-/** Hiển thị giá trị hoặc "Chưa cập nhật" nếu rỗng */
-export const displayValue = value => value || "Chưa cập nhật"
 
 /** Format diện tích để hiển thị (VD: "1.5 ha" hoặc "500 m²") */
 export const formatLandArea = (area, unit = MEASUREMENT_UNITS.SQUARE_METER) => {

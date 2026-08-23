@@ -25,12 +25,11 @@ import TitleCustom from "src/components/TitleCustom"
 import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
 import CropCatalogService from "src/services/CropCatalogService"
 import ROUTER from "src/router/ROUTER"
+import { displayValue } from "src/utils/helpers"
 
 const { Text, Paragraph } = Typography
 
 const EMPTY_MESSAGE = "Không tìm thấy thông tin danh mục cây trồng."
-
-const displayValue = value => value || "Chưa cập nhật"
 
 const isCatalogActive = item => {
   if (typeof item?.isActive === "boolean") return item.isActive

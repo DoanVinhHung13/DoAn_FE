@@ -28,12 +28,11 @@ import CropCatalogService from "src/services/CropCatalogService"
 import CropManagementService from "src/services/CropManagementService"
 import CropVarietiesModal from "./CropVarietiesModal"
 import ROUTER from "src/router/ROUTER"
+import { displayValue } from "src/utils/helpers"
 
 const { Text, Paragraph } = Typography
 
 const EMPTY_MESSAGE = "Không tìm thấy thông tin cây trồng."
-
-const displayValue = value => value || "Chưa cập nhật"
 
 const isCropActive = item => {
   if (typeof item?.isActive === "boolean") return item.isActive
