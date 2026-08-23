@@ -361,13 +361,24 @@ const DailyLog = () => {
           return
         }
 
-        setTask(taskData)
-
         const logsData = unwrap(logsRes)
         const logsList = Array.isArray(logsData)
           ? logsData
           : logsData?.items || []
         setDailyLogs(logsList)
+        const recordedDates = logsList
+          .map(log => log.date || log.Date)
+          .filter(Boolean)
+          .sort()
+        setTask({
+          ...taskData,
+          workStartDate:
+            taskData.workStartDate || recordedDates[0] || null,
+          workEndDate:
+            taskData.workEndDate ||
+            recordedDates[recordedDates.length - 1] ||
+            null,
+        })
         const usageEntries = await Promise.all(
           logsList
             .filter(log => log.id)
@@ -425,6 +436,38 @@ const DailyLog = () => {
     }
     loadTaskData()
   }, [taskId, navigate, form, refreshKey])
+
+  useEffect(() => {
+    if (!task || !isMaterialTaskData(task)) return undefined
+
+    const handleFertilizerChanged = async () => {
+      try {
+        const response = await FertilizerService.getFertilizerSelection()
+        const result = unwrap(response)
+        const fertilizerList = Array.isArray(result)
+          ? result
+          : result?.items || []
+        const cropName = task.cropName || task.crop?.name
+        setFertilizerOptions(
+          toFertilizerOptions(
+            fertilizerList.filter(item =>
+              hasDosageForCrop(item.dosages, cropName),
+            ),
+          ),
+        )
+        message.info("Danh sách phân bón đã được cập nhật.")
+      } catch {
+        // BE vẫn là lớp kiểm tra cuối cùng khi ghi nhật ký.
+      }
+    }
+
+    window.addEventListener("app:fertilizer-changed", handleFertilizerChanged)
+    return () =>
+      window.removeEventListener(
+        "app:fertilizer-changed",
+        handleFertilizerChanged,
+      )
+  }, [task])
 
   const openUsageModal = (dailyLogId, item = null) => {
     setUsageModal({ open: true, dailyLogId, item })
@@ -525,6 +568,33 @@ const DailyLog = () => {
 
       const values = await form.validateFields()
 
+      if (isMaterialTask && values.fertilizers?.length > 0) {
+        try {
+          const response = await FertilizerService.getFertilizerSelection()
+          const result = unwrap(response)
+          const fertilizerList = Array.isArray(result)
+            ? result
+            : result?.items || []
+          const activeFertilizerIds = new Set(
+            fertilizerList.map(item => String(item.id)),
+          )
+          const hasInactiveFertilizer = values.fertilizers.some(
+            row =>
+              row?.fertilizerId &&
+              !activeFertilizerIds.has(String(row.fertilizerId)),
+          )
+
+          if (hasInactiveFertilizer) {
+            message.warning(
+              "Một loại phân bón vừa bị vô hiệu hóa. Vui lòng chọn lại trước khi ghi nhật ký.",
+            )
+            return
+          }
+        } catch {
+          // Continue to the API; BE validates the active status authoritatively.
+        }
+      }
+
       setSaving(true)
 
       const payload = {
@@ -581,6 +651,14 @@ const DailyLog = () => {
       if (taskSumRes.status === "fulfilled") {
         const summary = unwrap(taskSumRes.value)
         setLeaderSummary(summary)
+        const workStartDate =
+          summary?.workStartDate || summary?.firstLogDate
+        const workEndDate = summary?.workEndDate || summary?.lastLogDate
+        setTask(previous => ({
+          ...previous,
+          workStartDate: workStartDate || previous?.workStartDate || null,
+          workEndDate: workEndDate || previous?.workEndDate || null,
+        }))
         // Set description đã gửi vào form để hiển thị
         if (summary?.description) {
           summaryForm.setFieldsValue({
@@ -2117,11 +2195,19 @@ const DailyLog = () => {
           <div className="py-1 space-y-5 text-sm">
             {/* ── Thống kê thời gian thực tế ── */}
             {(() => {
-              const formattedStartDate = task?.workStartDate
-                ? formatDate(task.workStartDate)
+              const startDate =
+                leaderSummary?.workStartDate ||
+                leaderSummary?.firstLogDate ||
+                task?.workStartDate
+              const endDate =
+                leaderSummary?.workEndDate ||
+                leaderSummary?.lastLogDate ||
+                task?.workEndDate
+              const formattedStartDate = startDate
+                ? formatDate(startDate)
                 : "—"
-              const formattedEndDate = task?.workEndDate
-                ? formatDate(task.workEndDate)
+              const formattedEndDate = endDate
+                ? formatDate(endDate)
                 : "—"
 
               return (

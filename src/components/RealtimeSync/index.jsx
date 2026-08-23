@@ -18,6 +18,10 @@ const GROUP_MEMBERSHIP_ENTITIES = new Set([
 const getEntityName = change => change?.entityName || change?.EntityName
 const requiresGroupRefresh = change =>
   GROUP_MEMBERSHIP_ENTITIES.has(getEntityName(change))
+const isFertilizerChange = payload =>
+  (payload?.changes || []).some(
+    change => getEntityName(change)?.toLowerCase() === "fertilizer",
+  )
 
 const RealtimeSync = () => {
   const userInfo = useSelector(state => state.appGlobal.userInfo)
@@ -61,6 +65,11 @@ const RealtimeSync = () => {
     const handleDataChanged = change => {
       invalidateActiveQueries()
       refreshGroups(change)
+      if (isFertilizerChange(change)) {
+        window.dispatchEvent(
+          new CustomEvent("app:fertilizer-changed", { detail: change }),
+        )
+      }
     }
 
     const handleReconnected = () => {
