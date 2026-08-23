@@ -1815,65 +1815,6 @@ const DailyLog = () => {
                             </p>
                           )}
 
-                          {isMaterialTask && (
-                            <div className="mt-2 rounded-xl border border-amber-100 bg-amber-50/60 p-2.5">
-                              <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-amber-800">
-                                <span>Vật tư đã sử dụng</span>
-                                {!isViewOnly && log.id && (
-                                  <Button
-                                    size="small"
-                                    type="link"
-                                    icon={<PlusOutlined />}
-                                    onClick={() => openUsageModal(log.id)}
-                                  >
-                                    Thêm vật tư
-                                  </Button>
-                                )}
-                              </div>
-                              {(usageByLog[log.id] || []).map(item => (
-                                <div
-                                  key={item.id}
-                                  className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-700"
-                                >
-                                  <span>
-                                    <b>{item.materialName}</b> · {item.quantity}{" "}
-                                    {item.unit} · {item.appliedArea} m² ·{" "}
-                                    {formatDate(item.usedAt)}
-                                  </span>
-                                  {!isViewOnly && (
-                                    <span className="flex gap-1">
-                                      <Button
-                                        size="small"
-                                        type="link"
-                                        onClick={() =>
-                                          openUsageModal(log.id, item)
-                                        }
-                                      >
-                                        Sửa
-                                      </Button>
-                                      <Button
-                                        size="small"
-                                        danger
-                                        type="link"
-                                        onClick={() =>
-                                          deleteUsage(log.id, item.id)
-                                        }
-                                      >
-                                        Xóa
-                                      </Button>
-                                    </span>
-                                  )}
-                                </div>
-                              ))}
-                              {log.id &&
-                                (usageByLog[log.id] || []).length === 0 && (
-                                  <div className="mt-1 text-xs text-gray-400">
-                                    Chưa có lịch sử sử dụng vật tư.
-                                  </div>
-                                )}
-                            </div>
-                          )}
-
                           {getHarvestQuantity(log) !== null && (
                             <div className="mt-2 bg-emerald-50/70 rounded-xl p-2.5 border border-emerald-100/80 space-y-1">
                               <div className="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
