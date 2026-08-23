@@ -3,6 +3,7 @@ import PropTypes from "prop-types"
 import { Col, Form, Input, InputNumber, Row } from "antd"
 import { MEASUREMENT_UNITS } from "src/constants/measurementUnits"
 import AddressSelectorField from "src/components/AddressSelectorField"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 /**
  * Form fields tái sử dụng cho LandPlotCreate và LandPlotEdit.
@@ -27,30 +28,7 @@ const LandPlotFormFields = ({
         name="name"
         rules={[
           { required: true, message: "Vui lòng nhập tên vùng trồng" },
-          {
-            validator: (_, value) => {
-              if (!value) return Promise.resolve()
-              const trimmed = value.trim()
-              if (!trimmed) {
-                return Promise.reject(
-                  new Error("Tên vùng trồng không được chỉ chứa khoảng trắng"),
-                )
-              }
-              if (trimmed.length > 100) {
-                return Promise.reject(
-                  new Error("Tên vùng trồng không được vượt quá 100 ký tự."),
-                )
-              }
-              if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                return Promise.reject(
-                  new Error(
-                    "Tên vùng trồng không được chứa nhiều khoảng trắng liên tiếp.",
-                  ),
-                )
-              }
-              return Promise.resolve()
-            },
-          },
+          makeNameValidator({ label: "Tên vùng trồng" }),
         ]}
       >
         <Input disabled={disabled} placeholder="Ví dụ: Lô A1" />
@@ -150,29 +128,7 @@ const LandPlotFormFields = ({
         label="Mô tả"
         name="description"
         rules={[
-          {
-            validator: (_, value) => {
-              if (!value) return Promise.resolve()
-              const trimmed = value.trim()
-              if (!trimmed)
-                return Promise.reject(
-                  new Error("Mô tả không được chỉ chứa khoảng trắng"),
-                )
-              if (trimmed.length > 200) {
-                return Promise.reject(
-                  new Error("Mô tả không được vượt quá 200 ký tự."),
-                )
-              }
-              if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                return Promise.reject(
-                  new Error(
-                    "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                  ),
-                )
-              }
-              return Promise.resolve()
-            },
-          },
+          makeDescriptionValidator({ maxLength: 200 }),
         ]}
       >
         <Input.TextArea

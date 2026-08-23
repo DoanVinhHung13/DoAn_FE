@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   Alert,
@@ -19,7 +19,6 @@ import {
   EditOutlined,
   StopOutlined,
 } from "@ant-design/icons"
-import { useQuery } from "@tanstack/react-query"
 import { Sprout } from "lucide-react"
 
 import TitleCustom from "src/components/TitleCustom"
@@ -71,57 +70,66 @@ const CropDetail = () => {
   const { id } = useParams()
   const [isVarietiesModalOpen, setIsVarietiesModalOpen] = useState(false)
 
-  const {
-    data: cropDetail,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["crop-detail", id],
-    queryFn: async () => {
+  const [cropDetail, setCropDetail] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+
+  const [cropCatalogsData, setCropCatalogsData] = useState([])
+
+  const fetchCropDetail = async () => {
+    if (!id) return
+    setIsLoading(true)
+    setIsError(false)
+    try {
       const response = await CropManagementService.getCropById(id, {
         errorHandling: "component",
       })
       const payload = response?.data ?? {}
-      return payload?.data ?? payload
-    },
-    enabled: !!id,
-    retry: false,
-  })
+      setCropDetail(payload?.data ?? payload)
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  const { data: cropCatalogsData } = useQuery({
-    queryKey: ["crop-catalogs-dropdown"],
-    queryFn: async () => {
-      try {
-        const response = await CropCatalogService.getCropCatalogs({
-          PageIndex: 1,
-          PageSize: 100,
-        })
-        const payload = response?.data ?? response ?? {}
-        const data = payload?.data ?? payload
-        const items = Array.isArray(data)
-          ? data
-          : data?.items ||
-            data?.results ||
-            data?.crops ||
-            data?.cropCatalogs ||
-            payload?.items ||
-            payload?.results ||
-            []
-        return items
-      } catch {
-        return []
-      }
-    },
-    retry: false,
-  })
+  const fetchCropCatalogs = async () => {
+    try {
+      const response = await CropCatalogService.getCropCatalogs({
+        PageIndex: 1,
+        PageSize: 100,
+      })
+      const payload = response?.data ?? response ?? {}
+      const data = payload?.data ?? payload
+      const items = Array.isArray(data)
+        ? data
+        : data?.items ||
+          data?.results ||
+          data?.crops ||
+          data?.cropCatalogs ||
+          payload?.items ||
+          payload?.results ||
+          []
+      setCropCatalogsData(items)
+    } catch {
+      setCropCatalogsData([])
+    }
+  }
 
-  const getCropCatalogName = id => {
-    if (!cropCatalogsData || !id) return id
+  useEffect(() => {
+    fetchCropDetail()
+  }, [id])
+
+  useEffect(() => {
+    fetchCropCatalogs()
+  }, [])
+
+  const getCropCatalogName = catalogId => {
+    if (!cropCatalogsData || !catalogId) return catalogId
     const catalog = cropCatalogsData.find(
-      c => c.id === id || c.cropCatalogId === id,
+      c => c.id === catalogId || c.cropCatalogId === catalogId,
     )
-    return catalog ? catalog.name || catalog.cropCatalogName : id
+    return catalog ? catalog.name || catalog.cropCatalogName : catalogId
   }
 
   if (isLoading) {
@@ -149,7 +157,7 @@ const CropDetail = () => {
           type="error"
           message="Không thể tải thông tin cây trồng."
           action={
-            <Button size="small" onClick={() => refetch()}>
+            <Button size="small" onClick={fetchCropDetail}>
               Thử lại
             </Button>
           }
@@ -294,8 +302,6 @@ const CropDetail = () => {
                 </Descriptions.Item>
               </Descriptions>
             </Card>
-
-            {/* Cultivation Conditions */}
 
             {/* Description */}
             <Card

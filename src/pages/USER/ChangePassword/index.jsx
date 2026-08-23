@@ -1,7 +1,6 @@
-import React from "react"
+import React, { useState } from "react"
 import { Card, Form, Input, Button, Divider, Space } from "antd"
 import { LockOutlined, SaveOutlined } from "@ant-design/icons"
-import { useMutation } from "@tanstack/react-query"
 
 import notice from "src/components/Notice"
 import AuthService from "src/services/AuthService"
@@ -23,14 +22,16 @@ const ChangePassword = () => {
   const [form] = Form.useForm()
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const [isPending, setIsPending] = useState(false)
 
-  const updateMutation = useMutation({
-    mutationFn: async values => {
-      if (values.newPassword !== values.confirmPassword) {
-        notice({ msg: "Mật khẩu xác nhận không khớp!", isSuccess: false })
-        throw new Error("Mật khẩu xác nhận không khớp!")
-      }
-      const res = await AuthService.changePassword(
+  const onFinish = async values => {
+    if (values.newPassword !== values.confirmPassword) {
+      notice({ msg: "Mật khẩu xác nhận không khớp!", isSuccess: false })
+      return
+    }
+    setIsPending(true)
+    try {
+      await AuthService.changePassword(
         {
           currentPassword: values.currentPassword,
           newPassword: values.newPassword,
@@ -41,18 +42,16 @@ const ChangePassword = () => {
           fieldErrorMapping: CHANGE_PASSWORD_FIELD_MAPPING,
         },
       )
-      return res
-    },
-    onSuccess: () => {
       form.resetFields()
       authSession.clearSession()
       dispatch(setUserInfo({}))
       navigate(ROUTER.LOGIN)
-    },
-    onError: error => {
+    } catch (error) {
       applyApiFieldErrors(form, error, CHANGE_PASSWORD_FIELD_MAPPING)
-    },
-  })
+    } finally {
+      setIsPending(false)
+    }
+  }
 
   return (
     <div className="">
@@ -69,7 +68,7 @@ const ChangePassword = () => {
         <Form
           form={form}
           layout="vertical"
-          onFinish={values => updateMutation.mutate(values)}
+          onFinish={onFinish}
           className="px-2"
         >
           <Form.Item
@@ -152,7 +151,7 @@ const ChangePassword = () => {
                 type="primary"
                 icon={<SaveOutlined />}
                 htmlType="submit"
-                loading={updateMutation.isPending || updateMutation.isLoading}
+                loading={isPending}
                 className="h-11 px-8 rounded-xl premium-gradient border-0 font-bold shadow-lg shadow-green-100"
               >
                 Cập nhật mật khẩu mới

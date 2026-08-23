@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import {
   Badge,
   Popover,
@@ -10,7 +10,6 @@ import {
   Tag,
 } from "antd"
 import { BellOutlined, CheckOutlined, LoadingOutlined } from "@ant-design/icons"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { useSelector } from "react-redux"
 import {
@@ -50,37 +49,62 @@ const normalizeNotifications = response => {
 }
 
 const NotificationBell = () => {
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { userInfo } = useSelector(state => state.appGlobal)
   const [visible, setVisible] = useState(false)
+  const [data, setData] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [markAllPending, setMarkAllPending] = useState(false)
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["notifications"],
-    queryFn: async () => normalizeNotifications(await getNotifications()),
-    staleTime: 30 * 1000,
-    refetchInterval: 30 * 1000,
-    refetchOnWindowFocus: true,
-    retry: false,
-  })
+  const fetchData = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const res = await getNotifications()
+      setData(normalizeNotifications(res))
+    } catch {
+      return undefined
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
-  const markReadMutation = useMutation({
-    mutationFn: markNotificationAsRead,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
-  })
+  useEffect(() => {
+    fetchData()
+    const interval = setInterval(fetchData, 30 * 1000)
+    return () => clearInterval(interval)
+  }, [fetchData])
 
-  const markAllReadMutation = useMutation({
-    mutationFn: markAllNotificationsAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
-    },
-  })
+  useEffect(() => {
+    const handler = () => fetchData()
+    window.addEventListener("app:notification-changed", handler)
+    return () => window.removeEventListener("app:notification-changed", handler)
+  }, [fetchData])
+
+  const markRead = async id => {
+    try {
+      await markNotificationAsRead(id)
+      fetchData()
+    } catch {
+      return undefined
+    }
+  }
+
+  const markAllRead = async () => {
+    setMarkAllPending(true)
+    try {
+      await markAllNotificationsAsRead()
+      fetchData()
+    } catch {
+      return undefined
+    } finally {
+      setMarkAllPending(false)
+    }
+  }
 
   const handleOpenChange = nextOpen => {
     setVisible(nextOpen)
     if (nextOpen) {
-      refetch()
+      fetchData()
     }
   }
 
@@ -88,7 +112,7 @@ const NotificationBell = () => {
     setVisible(false)
     const id = item._id || item.id
     if (!item.isRead && id) {
-      await markReadMutation.mutateAsync(id).catch(() => undefined)
+      await markRead(id)
     }
 
     const actionUrl = getNotificationActionUrl(item)
@@ -118,8 +142,8 @@ const NotificationBell = () => {
             type="link"
             size="small"
             className="h-auto p-0 text-green-600"
-            onClick={() => markAllReadMutation.mutate()}
-            loading={markAllReadMutation.isPending}
+            onClick={markAllRead}
+            loading={markAllPending}
           >
             Đọc tất cả
           </Button>
@@ -180,7 +204,7 @@ const NotificationBell = () => {
                           icon={<CheckOutlined className="text-green-500" />}
                           onClick={event => {
                             event.stopPropagation()
-                            markReadMutation.mutate(item._id || item.id)
+                            markRead(item._id || item.id)
                           }}
                         />
                       )}

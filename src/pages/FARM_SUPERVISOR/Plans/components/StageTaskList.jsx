@@ -264,15 +264,11 @@ const TaskItemCard = ({
               <div className="flex items-center gap-1.5 text-gray-600">
                 <CalendarOutlined className="text-gray-400" />
                 <span className="font-medium text-gray-700">Dự kiến:</span>
-                <span>
-                  {formatDate(task.plannedStartDate)}
-                </span>
+                <span>{formatDate(task.plannedStartDate)}</span>
               </div>
             )}
 
-            {(task.workStartDate ||
-              task.workEndDate ||
-              task.completedDate) && (
+            {(task.workStartDate || task.workEndDate || task.completedDate) && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-emerald-700 font-medium">
                 {task.workStartDate && (
                   <span className="flex items-center gap-1">
@@ -299,12 +295,17 @@ const TaskItemCard = ({
               <div className="flex items-center gap-1.5">
                 <UserOutlined className="text-emerald-600" />
                 <span className="font-medium text-gray-700">Phụ trách:</span>
-                <Tag color="green" className="m-0 text-xs rounded-md font-medium">
+                <Tag
+                  color="green"
+                  className="m-0 text-xs rounded-md font-medium"
+                >
                   {task.assignedLeaderName}
                 </Tag>
               </div>
             ) : (
-              <div className="text-gray-400 italic">Chưa chỉ định người phụ trách</div>
+              <div className="text-gray-400 italic">
+                Chưa chỉ định người phụ trách
+              </div>
             )}
 
             {helperAssignments.length > 0 && (
@@ -480,9 +481,7 @@ const StageTaskList = ({
             buttonStyle="solid"
             className="flex-shrink-0"
           >
-            <Radio.Button value="ALL">
-              Tất cả ({stats.total})
-            </Radio.Button>
+            <Radio.Button value="ALL">Tất cả ({stats.total})</Radio.Button>
             <Radio.Button value="PENDING">
               Chưa làm ({stats.pending})
             </Radio.Button>

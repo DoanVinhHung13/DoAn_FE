@@ -8,6 +8,7 @@ import {
   CULTIVATION_TASK_TYPE_OPTIONS,
   normalizeCultivationTaskType,
 } from "src/constants/cultivationTask"
+import { makeNameValidator } from "src/utils/helpers"
 
 const ALL_OPTION_VALUE = "__ALL__"
 
@@ -191,34 +192,7 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
             !readOnly
               ? [
                   { required: true, message: "Vui lòng nhập tên công việc." },
-                  {
-                    validator: (_, value) => {
-                      if (!value) return Promise.resolve()
-                      const trimmed = value.trim()
-                      if (!trimmed) {
-                        return Promise.reject(
-                          new Error(
-                            "Tên công việc không được chỉ chứa khoảng trắng.",
-                          ),
-                        )
-                      }
-                      if (trimmed.length > 100) {
-                        return Promise.reject(
-                          new Error(
-                            "Tên công việc không được vượt quá 100 ký tự.",
-                          ),
-                        )
-                      }
-                      if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                        return Promise.reject(
-                          new Error(
-                            "Tên công việc không được chứa nhiều khoảng trắng liên tiếp.",
-                          ),
-                        )
-                      }
-                      return Promise.resolve()
-                    },
-                  },
+                  makeNameValidator({ label: "Tên công việc" }),
                 ]
               : []
           }

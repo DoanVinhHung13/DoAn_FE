@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Button,
   Empty,
@@ -21,44 +21,55 @@ import {
   PlusOutlined,
   UploadOutlined,
 } from "@ant-design/icons"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import CropVarietyService from "src/services/CropVarietyService"
 import UploadService from "src/services/UploadService"
+import { makeDescriptionValidator } from "src/utils/helpers"
 
 const { Text } = Typography
 
 const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
-  const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const [isCreating, setIsCreating] = useState(false)
   const [editingVariety, setEditingVariety] = useState(null)
   const [uploading, setUploading] = useState(false)
   const watchedImageUrl = Form.useWatch("imageUrl", form)
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["crop-varieties", cropId],
-    queryFn: async () => {
+  const [varieties, setVarieties] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [createPending, setCreatePending] = useState(false)
+  const [updatePending, setUpdatePending] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+
+  const fetchVarieties = async () => {
+    if (!cropId || !open) return
+    setIsLoading(true)
+    try {
       const response = await CropVarietyService.getCropVarieties({ cropId })
       const payload = response?.data ?? response ?? {}
       const items = Array.isArray(payload?.data)
         ? payload.data
         : payload?.data?.items || payload?.items || []
 
-      // FRONTEND FILTER: Lọc theo cropId nếu backend không lọc
       const filteredItems = items.filter(item => {
-        // Kiểm tra xem item có cropId khớp không
         return item.cropId === cropId || item.cropId === Number(cropId)
       })
 
-      return filteredItems
-    },
-    enabled: !!cropId && open,
-    retry: false,
-  })
+      setVarieties(filteredItems)
+    } catch {
+      setVarieties([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  const createMutation = useMutation({
-    mutationFn: values => {
+  useEffect(() => {
+    fetchVarieties()
+  }, [cropId, open])
+
+  const handleCreate = async values => {
+    setCreatePending(true)
+    try {
       const payload = {
         cropId: cropId,
         name: values.name.trim(),
@@ -66,17 +77,18 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
         expectedYield: values.expectedYield || null,
         imageUrl: values.imageUrl?.trim() || null,
       }
-      return CropVarietyService.createCropVariety(payload)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["crop-varieties", cropId] })
+      await CropVarietyService.createCropVariety(payload)
+      await fetchVarieties()
       setIsCreating(false)
       form.resetFields()
-    },
-  })
+    } finally {
+      setCreatePending(false)
+    }
+  }
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, values }) => {
+  const handleUpdate = async values => {
+    setUpdatePending(true)
+    try {
       const payload = {
         cropId: cropId,
         name: values.name.trim(),
@@ -84,21 +96,17 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
         expectedYield: values.expectedYield || null,
         imageUrl: values.imageUrl?.trim() || null,
       }
-      return CropVarietyService.updateCropVariety(id, payload)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["crop-varieties", cropId] })
+      await CropVarietyService.updateCropVariety(
+        editingVariety.id || editingVariety._id,
+        payload,
+      )
+      await fetchVarieties()
       setEditingVariety(null)
       form.resetFields()
-    },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: id => CropVarietyService.deleteCropVariety(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["crop-varieties", cropId] })
-    },
-  })
+    } finally {
+      setUpdatePending(false)
+    }
+  }
 
   const handleImageUpload = async ({ file, onSuccess, onError }) => {
     setUploading(true)
@@ -154,7 +162,15 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
       okText: "Xóa",
       cancelText: "Hủy",
       okButtonProps: { danger: true },
-      onOk: () => deleteMutation.mutate(id),
+      onOk: async () => {
+        setDeletingId(id)
+        try {
+          await CropVarietyService.deleteCropVariety(id)
+          await fetchVarieties()
+        } finally {
+          setDeletingId(null)
+        }
+      },
     })
   }
 
@@ -225,10 +241,7 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
               size="small"
               danger
               icon={<DeleteOutlined />}
-              loading={
-                deleteMutation.isPending &&
-                deleteMutation.variables === record.id
-              }
+              loading={deletingId === (record.id || record._id)}
               className="!h-8 !w-8"
               onClick={() => handleDelete(record.id || record._id)}
             />
@@ -270,7 +283,7 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
             <Table
               rowKey={record => record.id || record._id}
               columns={columns}
-              dataSource={data || []}
+              dataSource={varieties}
               pagination={false}
               locale={{
                 emptyText: (
@@ -307,12 +320,7 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
           layout="vertical"
           className="pt-4"
           onFinish={values =>
-            editingVariety
-              ? updateMutation.mutate({
-                  id: editingVariety.id || editingVariety._id,
-                  values,
-                })
-              : createMutation.mutate(values)
+            editingVariety ? handleUpdate(values) : handleCreate(values)
           }
         >
           <div className="grid grid-cols-1 gap-x-4 md:grid-cols-2">
@@ -360,7 +368,6 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
                   </Button>
                 </Upload>
 
-                {/* Loading state */}
                 {uploading && !watchedImageUrl && (
                   <div className="flex h-[200px] w-full items-center justify-center rounded-lg border border-gray-200 bg-gray-50">
                     <div className="flex flex-col items-center gap-2">
@@ -370,7 +377,6 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
                   </div>
                 )}
 
-                {/* Preview ảnh sau khi upload xong */}
                 {watchedImageUrl && !uploading && (
                   <div className="group relative h-[200px] w-full overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                     <img
@@ -378,7 +384,6 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
                       alt="Ảnh minh họa giống cây"
                       className="h-full w-full object-cover"
                     />
-                    {/* Overlay với nút actions */}
                     <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
                       <Button
                         type="default"
@@ -404,32 +409,7 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
           <Form.Item
             name="description"
             label="Mô tả"
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed) {
-                    return Promise.reject(
-                      new Error("Mô tả không được chỉ chứa khoảng trắng."),
-                    )
-                  }
-                  if (trimmed.length > 500) {
-                    return Promise.reject(
-                      new Error("Mô tả không được vượt quá 500 ký tự."),
-                    )
-                  }
-                  if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                    return Promise.reject(
-                      new Error(
-                        "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  }
-                  return Promise.resolve()
-                },
-              },
-            ]}
+            rules={[makeDescriptionValidator({ maxLength: 500 })]}
           >
             <Input.TextArea rows={3} placeholder="Nhập mô tả" />
           </Form.Item>
@@ -447,7 +427,7 @@ const CropVarietiesModal = ({ open, onCancel, cropId, cropName }) => {
             <Button
               type="primary"
               htmlType="submit"
-              loading={createMutation.isPending || updateMutation.isPending}
+              loading={createPending || updatePending}
               className="bg-green-500"
             >
               {editingVariety ? "Cập nhật" : "Tạo mới"}

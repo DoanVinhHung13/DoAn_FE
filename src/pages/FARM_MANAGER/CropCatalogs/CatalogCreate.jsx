@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button, Card, Form, Input, Select } from "antd"
 import {
@@ -6,7 +6,6 @@ import {
   SaveOutlined,
   FileTextOutlined,
 } from "@ant-design/icons"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import TitleCustom from "src/components/TitleCustom"
 import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
@@ -16,6 +15,7 @@ import ROUTER from "src/router/ROUTER"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 const CROP_CATALOG_FIELD_MAPPING = {
   Name: "name",
@@ -27,7 +27,6 @@ const CROP_CATALOG_FIELD_MAPPING = {
 }
 
 const CatalogCreate = () => {
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const { refetchSystemKey } = useSystemKey()
@@ -37,33 +36,34 @@ const CatalogCreate = () => {
     storageKey,
   })
 
+  const [isPending, setIsPending] = useState(false)
+
   useEffect(() => {
     const draft = restoreDraft()
     if (draft?.data) form.setFieldsValue({ isActive: true, ...draft.data })
   }, [form, restoreDraft])
 
-  const createMutation = useMutation({
-    mutationFn: values => {
-      const payload = {
-        name: values.name.trim().replace(/\s+/g, " "),
-        description: values.description?.trim().replace(/\s+/g, " ") || null,
-        isActive: values.isActive ?? true,
-      }
-      return CropCatalogService.createCropCatalog(payload, {
+  const handleCreate = async values => {
+    setIsPending(true)
+    const payload = {
+      name: values.name.trim().replace(/\s+/g, " "),
+      description: values.description?.trim().replace(/\s+/g, " ") || null,
+      isActive: values.isActive ?? true,
+    }
+    try {
+      await CropCatalogService.createCropCatalog(payload, {
         errorHandling: "form",
         fieldErrorMapping: CROP_CATALOG_FIELD_MAPPING,
       })
-    },
-    onSuccess: async () => {
       clearDraft()
-      queryClient.invalidateQueries({ queryKey: ["crop-catalogs"] })
-      queryClient.invalidateQueries({ queryKey: ["crop-catalogs-dropdown"] })
       await refetchSystemKey()
       navigate(ROUTER.FM_CROP_CATALOGS)
-    },
-    onError: error =>
-      applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING),
-  })
+    } catch (error) {
+      applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING)
+    } finally {
+      setIsPending(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -87,7 +87,7 @@ const CatalogCreate = () => {
           form={form}
           layout="vertical"
           initialValues={{ isActive: true }}
-          onFinish={values => createMutation.mutate(values)}
+          onFinish={handleCreate}
           onValuesChange={(_, allValues) => saveDraft(allValues)}
           onFinishFailed={() => {}}
           scrollToFirstError
@@ -97,34 +97,7 @@ const CatalogCreate = () => {
             label="Tên loại cây trồng"
             rules={[
               { required: true, message: "Vui lòng nhập tên loại cây trồng." },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed) {
-                    return Promise.reject(
-                      new Error(
-                        "Tên loại cây trồng không được chỉ chứa khoảng trắng.",
-                      ),
-                    )
-                  }
-                  if (trimmed.length > 100) {
-                    return Promise.reject(
-                      new Error(
-                        "Tên loại cây trồng không được vượt quá 100 ký tự.",
-                      ),
-                    )
-                  }
-                  if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                    return Promise.reject(
-                      new Error(
-                        "Tên loại cây trồng không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  }
-                  return Promise.resolve()
-                },
-              },
+              makeNameValidator({ label: "Tên loại cây trồng" }),
             ]}
           >
             <Input
@@ -136,32 +109,7 @@ const CatalogCreate = () => {
           <Form.Item
             name="description"
             label="Mô tả"
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed) {
-                    return Promise.reject(
-                      new Error("Mô tả không được chỉ chứa khoảng trắng."),
-                    )
-                  }
-                  if (trimmed.length > 200) {
-                    return Promise.reject(
-                      new Error("Mô tả không được vượt quá 200 ký tự."),
-                    )
-                  }
-                  if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                    return Promise.reject(
-                      new Error(
-                        "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  }
-                  return Promise.resolve()
-                },
-              },
-            ]}
+            rules={[makeDescriptionValidator()]}
           >
             <Input.TextArea
               rows={4}
@@ -193,7 +141,7 @@ const CatalogCreate = () => {
               type="primary"
               htmlType="submit"
               icon={<SaveOutlined />}
-              loading={createMutation.isPending}
+              loading={isPending}
               className="h-11 min-w-[120px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
             >
               Thêm mới

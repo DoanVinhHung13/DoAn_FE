@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect, useCallback } from "react"
 import {
   Badge,
   Button,
@@ -12,7 +12,6 @@ import {
   Typography,
 } from "antd"
 import { BellOutlined, CheckOutlined, SearchOutlined } from "@ant-design/icons"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { useSelector } from "react-redux"
 
@@ -80,7 +79,6 @@ const normalizeNotifications = response => {
 const getCategory = getNotificationTypeLabel
 
 const Notifications = () => {
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { userInfo } = useSelector(state => state.appGlobal)
   const [keyword, setKeyword] = useState("")
@@ -90,35 +88,52 @@ const Notifications = () => {
   const [pageSize, setPageSize] = useState(20)
   const debouncedKeyword = useDebouncedValue(keyword, 400)
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: [
-      "notifications",
-      page,
-      pageSize,
-      debouncedKeyword,
-      status,
-      category,
-    ],
-    queryFn: async () =>
-      normalizeNotifications(
-        await getNotifications({
-          PageIndex: page,
-          PageSize: pageSize,
-          SearchKeyword: debouncedKeyword.trim() || undefined,
-          IsRead: status === "all" ? undefined : status === "read",
-          Type: category === "all" ? undefined : category,
-        }),
-      ),
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  })
+  const [data, setData] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+  const [markAllPending, setMarkAllPending] = useState(false)
 
-  const markAllReadMutation = useMutation({
-    mutationFn: markAllNotificationsAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
-    },
-  })
+  const fetchData = useCallback(async () => {
+    setIsLoading(true)
+    setIsError(false)
+    try {
+      const res = await getNotifications({
+        PageIndex: page,
+        PageSize: pageSize,
+        SearchKeyword: debouncedKeyword.trim() || undefined,
+        IsRead: status === "all" ? undefined : status === "read",
+        Type: category === "all" ? undefined : category,
+      })
+      setData(normalizeNotifications(res))
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [page, pageSize, debouncedKeyword, status, category])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
+
+  useEffect(() => {
+    const handler = () => fetchData()
+    window.addEventListener("app:notification-changed", handler)
+    return () => window.removeEventListener("app:notification-changed", handler)
+  }, [fetchData])
+
+  const markAllRead = async () => {
+    setMarkAllPending(true)
+    try {
+      await markAllNotificationsAsRead()
+      fetchData()
+      window.dispatchEvent(new CustomEvent("app:notification-changed"))
+    } catch {
+      return undefined
+    } finally {
+      setMarkAllPending(false)
+    }
+  }
 
   const categoryOptions = useMemo(() => {
     const categories = Object.entries(NOTIFICATION_TYPE_LABELS).map(
@@ -161,7 +176,8 @@ const Notifications = () => {
     const id = item._id || item.id
     if (!item.isRead && id) {
       await markNotificationAsRead(id).catch(() => undefined)
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      fetchData()
+      window.dispatchEvent(new CustomEvent("app:notification-changed"))
     }
 
     const actionUrl = getNotificationActionUrl(item)
@@ -189,8 +205,8 @@ const Notifications = () => {
         <Button
           icon={<CheckOutlined />}
           disabled={!data?.unreadCount}
-          loading={markAllReadMutation.isPending}
-          onClick={() => markAllReadMutation.mutate()}
+          loading={markAllPending}
+          onClick={markAllRead}
           className="h-10 rounded-lg bg-green-500 font-semibold text-white hover:!bg-green-600"
         >
           Đánh dấu tất cả đã đọc
@@ -257,7 +273,7 @@ const Notifications = () => {
             <Text type="secondary" className="block">
               Không thể tải danh sách thông báo.
             </Text>
-            <Button type="link" onClick={() => refetch()}>
+            <Button type="link" onClick={fetchData}>
               Thử lại
             </Button>
           </div>

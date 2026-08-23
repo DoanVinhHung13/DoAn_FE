@@ -440,13 +440,7 @@ const TaskCard = ({
   )
 }
 
-const StageTaskManagementTab = ({
-  plan,
-  planId,
-  stages,
-  tasks,
-  loadData,
-}) => {
+const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
   const { getStageStatus, getTaskStatus } = useCultivationStatus()
   const getTaskCfg = s => ({ ...getTaskStatus(s), icon: taskStatusIcon(s) })
   const [searchParams, setSearchParams] = useSearchParams()
@@ -606,9 +600,7 @@ const StageTaskManagementTab = ({
 
   const busyUserIds = new Set(
     getAllTasks(tasks)
-      .filter(task =>
-        ["IN_PROGRESS", "WAITING_APPROVAL"].includes(task.status),
-      )
+      .filter(task => ["IN_PROGRESS", "WAITING_APPROVAL"].includes(task.status))
       .filter(task => task.id !== activationTask?.id)
       .flatMap(task => [
         task.assignedLeaderId || task.farmLeaderId,
@@ -626,10 +618,14 @@ const StageTaskManagementTab = ({
     if (!activationTask) return
     try {
       if (shouldAssign) {
-        await CultivationTaskService.assign(activationTask.id, {
-          leaderId: values.farmLeaderId,
-          farmerIds: values.farmerIds || [],
-        }, { skipSuccessNotice: true })
+        await CultivationTaskService.assign(
+          activationTask.id,
+          {
+            leaderId: values.farmLeaderId,
+            farmerIds: values.farmerIds || [],
+          },
+          { skipSuccessNotice: true },
+        )
       }
       await CultivationTaskService.start(activationTask.id)
       if (isHarvestTask(activationTask)) {

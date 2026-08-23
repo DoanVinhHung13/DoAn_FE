@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect, useCallback } from "react"
 import {
   Badge,
   Button,
@@ -25,7 +25,6 @@ import {
   SearchOutlined,
   UploadOutlined,
 } from "@ant-design/icons"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 
 import {
@@ -51,6 +50,7 @@ import {
   getNotificationActionUrl,
   getNotificationContext,
 } from "src/utils/notificationUtils"
+import { makeNameValidator } from "src/utils/helpers"
 
 const { Text } = Typography
 const { TextArea } = Input
@@ -125,7 +125,6 @@ const getUserRoles = user => {
 const hasRole = (user, role) => getUserRoles(user).includes(role)
 
 const FarmManagerNotifications = () => {
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const [keyword, setKeyword] = useState("")
@@ -133,24 +132,32 @@ const FarmManagerNotifications = () => {
   const [category, setCategory] = useState("all")
   const [isCreating, setIsCreating] = useState(false)
   const [recipientType, setRecipientType] = useState(RECIPIENT_TYPE.ALL)
-  const [activeTab, setActiveTab] = useState("received") // 'received' or 'sent'
+  const [activeTab, setActiveTab] = useState("received")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const debouncedKeyword = useDebouncedValue(keyword, 400)
   const [uploadingDoc, setUploadingDoc] = useState(false)
-  const [documents, setDocuments] = useState([]) // Danh sách tài liệu đã upload
+  const [documents, setDocuments] = useState([])
 
-  const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: [
-      "notifications",
-      page,
-      pageSize,
-      debouncedKeyword,
-      status,
-      category,
-    ],
-    queryFn: async () =>
-      normalizeNotifications(
+  const [data, setData] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+
+  const [sentData, setSentData] = useState(null)
+  const [isSentLoading, setIsSentLoading] = useState(false)
+  const [isSentError, setIsSentError] = useState(false)
+
+  const [usersData, setUsersData] = useState(null)
+  const [isUsersLoading, setIsUsersLoading] = useState(false)
+
+  const [markAllPending, setMarkAllPending] = useState(false)
+  const [createPending, setCreatePending] = useState(false)
+
+  const fetchNotifications = useCallback(async () => {
+    setIsLoading(true)
+    setIsError(false)
+    try {
+      const result = normalizeNotifications(
         await getNotifications({
           PageIndex: page,
           PageSize: pageSize,
@@ -158,91 +165,115 @@ const FarmManagerNotifications = () => {
           IsRead: status === "all" ? undefined : status === "read",
           Type: category === "all" ? undefined : category,
         }),
-      ),
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  })
+      )
+      setData(result)
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [page, pageSize, debouncedKeyword, status, category])
 
-  const {
-    data: sentData,
-    isLoading: isSentLoading,
-    isError: isSentError,
-    refetch: refetchSent,
-  } = useQuery({
-    queryKey: [
-      "sent-notifications",
-      page,
-      pageSize,
-      debouncedKeyword,
-      status,
-      category,
-    ],
-    queryFn: async () => {
-      try {
-        return normalizeNotifications(
-          await getSentNotifications({
-            PageIndex: page,
-            PageSize: pageSize,
-            SearchKeyword: debouncedKeyword.trim() || undefined,
-            IsRead: status === "all" ? undefined : status === "read",
-            Type: category === "all" ? undefined : category,
-          }),
-        )
-      } catch (error) {
-        // Nếu API chưa có, return empty data thay vì throw error
-        console.warn("API /notifications/sent chưa được implement:", error)
-        return { items: [], unreadCount: 0 }
-      }
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  })
+  const fetchSentNotifications = useCallback(async () => {
+    setIsSentLoading(true)
+    setIsSentError(false)
+    try {
+      const result = normalizeNotifications(
+        await getSentNotifications({
+          PageIndex: page,
+          PageSize: pageSize,
+          SearchKeyword: debouncedKeyword.trim() || undefined,
+          IsRead: status === "all" ? undefined : status === "read",
+          Type: category === "all" ? undefined : category,
+        }),
+      )
+      setSentData(result)
+    } catch (error) {
+      console.warn("API /notifications/sent chưa được implement:", error)
+      setSentData({ items: [], unreadCount: 0 })
+    } finally {
+      setIsSentLoading(false)
+    }
+  }, [page, pageSize, debouncedKeyword, status, category])
 
-  const { data: usersData, isLoading: isUsersLoading } = useQuery({
-    queryKey: ["all-users"],
-    queryFn: async () =>
-      normalizeUsers(
+  const fetchUsers = useCallback(async () => {
+    setIsUsersLoading(true)
+    try {
+      const result = normalizeUsers(
         await getAllUsers({
           PageIndex: 1,
           PageSize: 100,
           HasAccount: true,
         }),
-      ),
-    retry: false,
-  })
+      )
+      setUsersData(result)
+    } catch {
+      setUsersData([])
+    } finally {
+      setIsUsersLoading(false)
+    }
+  }, [])
 
-  const markAllReadMutation = useMutation({
-    mutationFn: markAllNotificationsAsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
-    },
-  })
+  useEffect(() => {
+    fetchNotifications()
+  }, [fetchNotifications])
 
-  const createMutation = useMutation({
-    mutationFn: values => {
+  useEffect(() => {
+    const handler = () => fetchNotifications()
+    window.addEventListener("app:notification-changed", handler)
+    return () => window.removeEventListener("app:notification-changed", handler)
+  }, [fetchNotifications])
+
+  useEffect(() => {
+    fetchSentNotifications()
+  }, [fetchSentNotifications])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
+
+  const handleMarkAllRead = async () => {
+    setMarkAllPending(true)
+    try {
+      await markAllNotificationsAsRead()
+      await fetchNotifications()
+    } finally {
+      setMarkAllPending(false)
+    }
+  }
+
+  const handleCreateNotification = async values => {
+    const recipientUserIds = getRecipientUserIds(values)
+    if (!recipientUserIds.length) {
+      message.error(
+        "Không tìm thấy người dùng có tài khoản phù hợp để nhận thông báo.",
+      )
+      return
+    }
+    setCreatePending(true)
+    try {
       const payload = {
         title: values.title.trim(),
         content: values.message.trim(),
-        type: "Announcement", // Mặc định là Announcement
+        type: "Announcement",
         actionUrl: values.actionUrl?.trim() || null,
-        recipientUserIds: getRecipientUserIds(values),
+        recipientUserIds,
         recipientRoles: [],
         attachments: documents.map(doc => doc.url),
       }
-      return createNotification(payload)
-    },
-    onSuccess: () => {
+      await createNotification(payload)
       setIsCreating(false)
       form.resetFields()
       setRecipientType(RECIPIENT_TYPE.ALL)
       setDocuments([])
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
-      queryClient.invalidateQueries({ queryKey: ["sent-notifications"] })
+      await fetchNotifications()
+      await fetchSentNotifications()
       setActiveTab("sent")
-    },
-  })
+    } finally {
+      setCreatePending(false)
+    }
+  }
 
-  // Upload document handler
   const handleDocumentUpload = async ({ file, onSuccess, onError }) => {
     setUploadingDoc(true)
     const formData = new FormData()
@@ -383,7 +414,7 @@ const FarmManagerNotifications = () => {
     const id = item._id || item.id
     if (!item.isRead && id) {
       await markNotificationAsRead(id).catch(() => undefined)
-      queryClient.invalidateQueries({ queryKey: ["notifications"] })
+      await fetchNotifications()
     }
 
     const actionUrl = getNotificationActionUrl(item)
@@ -410,8 +441,8 @@ const FarmManagerNotifications = () => {
           <Button
             icon={<CheckOutlined />}
             disabled={!data?.unreadCount}
-            loading={markAllReadMutation.isPending}
-            onClick={() => markAllReadMutation.mutate()}
+            loading={markAllPending}
+            onClick={handleMarkAllRead}
             className="h-10 rounded-lg font-semibold"
           >
             Đánh dấu tất cả đã đọc
@@ -528,7 +559,9 @@ const FarmManagerNotifications = () => {
             <Button
               type="link"
               onClick={() =>
-                activeTab === "received" ? refetch() : refetchSent()
+                activeTab === "received"
+                  ? fetchNotifications()
+                  : fetchSentNotifications()
               }
             >
               Thử lại
@@ -670,15 +703,7 @@ const FarmManagerNotifications = () => {
           form={form}
           layout="vertical"
           className="pt-4"
-          onFinish={values => {
-            if (!getRecipientUserIds(values).length) {
-              message.error(
-                "Không tìm thấy người dùng có tài khoản phù hợp để nhận thông báo.",
-              )
-              return
-            }
-            createMutation.mutate(values)
-          }}
+          onFinish={handleCreateNotification}
           onFinishFailed={() => {}}
           scrollToFirstError
         >
@@ -687,29 +712,7 @@ const FarmManagerNotifications = () => {
             label="Tiêu đề"
             rules={[
               { required: true, message: "Vui lòng nhập tiêu đề thông báo." },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed)
-                    return Promise.reject(
-                      new Error(
-                        "Tiêu đề thông báo không được chỉ chứa khoảng trắng.",
-                      ),
-                    )
-                  if (trimmed.length > 200)
-                    return Promise.reject(
-                      new Error("Tiêu đề không được vượt quá 200 ký tự."),
-                    )
-                  if (trimmed !== trimmed.replace(/\s+/g, " "))
-                    return Promise.reject(
-                      new Error(
-                        "Tiêu đề không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  return Promise.resolve()
-                },
-              },
+              makeNameValidator({ label: "Tiêu đề", maxLength: 200 }),
             ]}
           >
             <Input
@@ -952,7 +955,7 @@ const FarmManagerNotifications = () => {
             <Button
               type="primary"
               htmlType="submit"
-              loading={createMutation.isPending}
+              loading={createPending}
               className="h-10 min-w-[112px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
             >
               Tạo thông báo

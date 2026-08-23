@@ -7,11 +7,7 @@ import {
 } from "@ant-design/icons"
 import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd"
 import dayjs from "dayjs"
-import {
-  addressPattern,
-  fullNamePattern,
-  isValidPhone,
-} from "src/utils/helpers"
+import { addressPattern, fullNamePattern, PHONE_RULES } from "src/utils/helpers"
 import { getLocalNow } from "src/utils/dateFormatters"
 
 const UpdateProfile = ({
@@ -67,17 +63,7 @@ const UpdateProfile = ({
             name="phoneNumber"
             label="Số điện thoại"
             validateTrigger={["onBlur", "onSubmit"]}
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value?.trim() || isValidPhone(value.trim()))
-                    return Promise.resolve()
-                  return Promise.reject(
-                    new Error("Định dạng số điện thoại không hợp lệ."),
-                  )
-                },
-              },
-            ]}
+            rules={PHONE_RULES}
           >
             <Input
               prefix={<PhoneOutlined className="text-gray-300" />}

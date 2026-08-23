@@ -111,6 +111,7 @@ import SectionTitle from "src/components/Common/SectionTitle"
 import { useCropOptions } from "src/hooks/useCropOptions"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { makeNameValidator } from "src/utils/helpers"
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const FertilizerFormFields = ({ isEdit, editingItem }) => {
@@ -504,29 +505,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             }
             rules={[
               { required: true, message: "Vui lòng nhập tên phân bón." },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed)
-                    return Promise.reject(
-                      new Error(
-                        "Tên phân bón không được chỉ chứa khoảng trắng.",
-                      ),
-                    )
-                  if (trimmed.length > 100)
-                    return Promise.reject(
-                      new Error("Tên phân bón không được vượt quá 100 ký tự."),
-                    )
-                  if (trimmed !== trimmed.replace(/\s+/g, " "))
-                    return Promise.reject(
-                      new Error(
-                        "Tên phân bón không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  return Promise.resolve()
-                },
-              },
+              makeNameValidator({ label: "Tên phân bón" }),
             ]}
           >
             <AgriculturalInputCatalogAutocomplete

@@ -1,5 +1,4 @@
-import React, { useMemo, useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import React, { useMemo, useState, useEffect, useCallback } from "react"
 import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from "antd"
 import { BookOutlined, SearchOutlined } from "@ant-design/icons"
 import CatalogService from "src/services/CatalogService"
@@ -81,18 +80,28 @@ const FertilizerList = () => {
   const [selectedType, setSelectedType] = useState("all")
   const [selectedUnit, setSelectedUnit] = useState("all")
 
-  const {
-    data: fertilizerResponse,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["license-catalog-fertilizers", searchText.trim()],
-    queryFn: () =>
-      CatalogService.getCatalogFertilizers({
+  const [fertilizerResponse, setFertilizerResponse] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+
+  const fetchFertilizers = useCallback(async () => {
+    setIsLoading(true)
+    setIsError(false)
+    try {
+      const response = await CatalogService.getCatalogFertilizers({
         search: searchText.trim() || undefined,
-      }),
-    staleTime: 60_000,
-  })
+      })
+      setFertilizerResponse(response)
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [searchText])
+
+  useEffect(() => {
+    fetchFertilizers()
+  }, [fetchFertilizers])
 
   const fertilizerData = useMemo(
     () => getCatalogItems(fertilizerResponse).map(normalizeFertilizer),

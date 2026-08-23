@@ -30,6 +30,7 @@ import { useSystemKey } from "src/hooks/useSystemKey"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { makeNameValidator } from "src/utils/helpers"
 
 const PESTICIDE_FIELD_MAPPING = {
   Name: "name",
@@ -278,29 +279,7 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
             }
             rules={[
               { required: true, message: "Bắt buộc" },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed)
-                    return Promise.reject(
-                      new Error(
-                        "Tên nông dược không được chỉ chứa khoảng trắng.",
-                      ),
-                    )
-                  if (trimmed.length > 100)
-                    return Promise.reject(
-                      new Error("Tên nông dược không được vượt quá 100 ký tự."),
-                    )
-                  if (trimmed !== trimmed.replace(/\s+/g, " "))
-                    return Promise.reject(
-                      new Error(
-                        "Tên nông dược không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  return Promise.resolve()
-                },
-              },
+              makeNameValidator({ label: "Tên nông dược" }),
             ]}
           >
             <AgriculturalInputCatalogAutocomplete
@@ -350,8 +329,14 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
         <Col xs={24} md={12}>
           <Form.Item
             name="type"
-            label={<span className="font-semibold text-gray-700">Loại nông dược</span>}
-            rules={[{ required: true, message: "Vui lòng chọn loại nông dược." }]}
+            label={
+              <span className="font-semibold text-gray-700">
+                Loại nông dược
+              </span>
+            }
+            rules={[
+              { required: true, message: "Vui lòng chọn loại nông dược." },
+            ]}
           >
             <Select
               allowClear

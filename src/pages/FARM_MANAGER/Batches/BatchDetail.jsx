@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   Button,
@@ -22,7 +22,6 @@ import {
   CheckCircleOutlined,
 } from "@ant-design/icons"
 import { Sprout } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
 import { formatDate } from "src/utils/dateFormatters"
 
 import TitleCustom from "src/components/TitleCustom"
@@ -67,15 +66,26 @@ const BatchDetail = () => {
   const { id } = useParams()
   const { getDescription } = useSystemKey()
 
-  // Fetch batch detail: GET /api/harvest-batches/{id}
-  const { data: batch, isLoading } = useQuery({
-    queryKey: ["harvest-batch-detail-page", id],
-    queryFn: async () => {
-      const response = await HarvestBatchService.getHarvestBatchById(id)
-      return response?.data?.data || response?.data || response
-    },
-    enabled: !!id,
-  })
+  const [batch, setBatch] = useState(null)
+  const [isLoading, setIsLoading] = useState(Boolean(id))
+
+  useEffect(() => {
+    if (!id) return
+    const timeout = setTimeout(() => {
+      setIsLoading(true)
+      HarvestBatchService.getHarvestBatchById(id)
+        .then(response => {
+          setBatch(response?.data?.data || response?.data || response)
+        })
+        .catch(() => {
+          setBatch(null)
+        })
+        .finally(() => {
+          setIsLoading(false)
+        })
+    }, 0)
+    return () => clearTimeout(timeout)
+  }, [id])
 
   if (isLoading) {
     return (

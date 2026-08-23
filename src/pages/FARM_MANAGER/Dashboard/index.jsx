@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { Link } from "react-router-dom"
 import {
   Alert,
@@ -29,7 +29,6 @@ import {
   Users,
   Wind,
 } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
 import { formatDateTime } from "src/utils/dateFormatters"
 import { useSelector } from "react-redux"
 
@@ -175,40 +174,47 @@ const FeaturedPlotWeather = ({ plot, weather }) => (
 const Dashboard = () => {
   const user = useSelector(state => state.appGlobal.userInfo)
 
-  const {
-    data: featuredPlots = [],
-    isLoading: plotsLoading,
-    isError: plotsError,
-    refetch: refetchPlots,
-  } = useQuery({
-    queryKey: ["dashboard-featured-land-plots"],
-    queryFn: async () => {
+  const [featuredPlots, setFeaturedPlots] = useState([])
+  const [plotsLoading, setPlotsLoading] = useState(false)
+  const [plotsError, setPlotsError] = useState(false)
+
+  const [weatherByPlotId, setWeatherByPlotId] = useState({})
+  const [weatherLoading, setWeatherLoading] = useState(false)
+
+  const fetchPlots = useCallback(async () => {
+    setPlotsLoading(true)
+    setPlotsError(false)
+    try {
       const response = await LandPlotService.getLandPlots({
         PageIndex: 1,
         PageSize: 6,
         Status: "Active",
       })
       const { items } = normalizeLandPlotResponse(response)
-
-      return items
+      const sorted = items
         .filter(isLandPlotActive)
         .sort(
           (first, second) => Number(second.area || 0) - Number(first.area || 0),
         )
         .slice(0, 3)
-    },
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
-  })
+      setFeaturedPlots(sorted)
+    } catch {
+      setPlotsError(true)
+    } finally {
+      setPlotsLoading(false)
+    }
+  }, [])
 
-  const { data: weatherByPlotId = {}, isLoading: weatherLoading } = useQuery({
-    queryKey: [
-      "dashboard-featured-land-plots-weather",
-      featuredPlots.map(getItemId),
-    ],
-    queryFn: async () => {
+  useEffect(() => {
+    fetchPlots()
+  }, [fetchPlots])
+
+  const fetchWeather = useCallback(async plots => {
+    if (!plots || plots.length === 0) return
+    setWeatherLoading(true)
+    try {
       const weatherEntries = await Promise.all(
-        featuredPlots.map(async plot => {
+        plots.map(async plot => {
           const plotId = getItemId(plot)
           try {
             const response = await LandPlotService.getLandPlotWeather(plotId)
@@ -218,14 +224,25 @@ const Dashboard = () => {
           }
         }),
       )
+      setWeatherByPlotId(Object.fromEntries(weatherEntries))
+    } finally {
+      setWeatherLoading(false)
+    }
+  }, [])
 
-      return Object.fromEntries(weatherEntries)
-    },
-    enabled: featuredPlots.length > 0,
-    staleTime: 10 * 60 * 1000,
-    refetchInterval: 10 * 60 * 1000,
-    refetchIntervalInBackground: false,
-  })
+  useEffect(() => {
+    if (featuredPlots.length === 0) return
+    fetchWeather(featuredPlots)
+
+    const interval = setInterval(
+      () => {
+        fetchWeather(featuredPlots)
+      },
+      10 * 60 * 1000,
+    )
+
+    return () => clearInterval(interval)
+  }, [featuredPlots, fetchWeather])
 
   const quickAccessItems = [
     {
@@ -341,7 +358,7 @@ const Dashboard = () => {
                   type="error"
                   message="Không thể tải danh sách vùng trồng"
                   action={
-                    <Button icon={<ReloadOutlined />} onClick={refetchPlots}>
+                    <Button icon={<ReloadOutlined />} onClick={fetchPlots}>
                       Thử lại
                     </Button>
                   }

@@ -29,6 +29,7 @@ import ProcessStepService from "src/services/ProcessStepService"
 import { isActiveCropCatalog } from "src/utils/cropCatalog"
 import { logDevDiagnostic } from "src/utils/safeDiagnostic"
 import { applyApiFieldErrors } from "src/services/core/apiError"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 const { Text } = Typography
 
@@ -547,32 +548,7 @@ const PlanTemplateCreate = () => {
                   label="Tên mẫu quy trình"
                   rules={[
                     { required: true, message: "Vui lòng nhập tên mẫu." },
-                    {
-                      validator: (_, value) => {
-                        if (!value) return Promise.resolve()
-                        const trimmed = value.trim()
-                        if (!trimmed) {
-                          return Promise.reject(
-                            new Error(
-                              "Tên mẫu không được chỉ chứa khoảng trắng.",
-                            ),
-                          )
-                        }
-                        if (trimmed.length > 100) {
-                          return Promise.reject(
-                            new Error("Tên mẫu không được vượt quá 100 ký tự."),
-                          )
-                        }
-                        if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                          return Promise.reject(
-                            new Error(
-                              "Tên mẫu không được chứa nhiều khoảng trắng liên tiếp.",
-                            ),
-                          )
-                        }
-                        return Promise.resolve()
-                      },
-                    },
+                    makeNameValidator({ label: "Tên mẫu" }),
                   ]}
                 >
                   <Input
@@ -655,31 +631,7 @@ const PlanTemplateCreate = () => {
                   name="description"
                   label="Mô tả"
                   rules={[
-                    {
-                      validator: (_, value) => {
-                        if (!value) return Promise.resolve()
-                        const trimmed = value.trim()
-                        if (!trimmed)
-                          return Promise.reject(
-                            new Error(
-                              "Mô tả không được chỉ chứa khoảng trắng.",
-                            ),
-                          )
-                        if (trimmed.length > 200) {
-                          return Promise.reject(
-                            new Error("Mô tả không được vượt quá 200 ký tự."),
-                          )
-                        }
-                        if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                          return Promise.reject(
-                            new Error(
-                              "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                            ),
-                          )
-                        }
-                        return Promise.resolve()
-                      },
-                    },
+                    makeDescriptionValidator({ maxLength: 200 }),
                   ]}
                 >
                   <Input.TextArea

@@ -20,7 +20,6 @@ import {
   SaveOutlined,
   UploadOutlined,
 } from "@ant-design/icons"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Sprout } from "lucide-react"
 
 import TitleCustom from "src/components/TitleCustom"
@@ -38,6 +37,7 @@ import { SYSTEM_KEY } from "src/constants/systemKey"
 import { isActiveCropCatalog } from "src/utils/cropCatalog"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 const EMPTY_MESSAGE = "Không tìm thấy thông tin cây trồng."
 const CROP_FIELD_MAPPING = {
@@ -54,7 +54,6 @@ const CROP_FIELD_MAPPING = {
 const CropEdit = () => {
   const navigate = useNavigate()
   const { id } = useParams()
-  const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const storageKey = getFormDraftKey("crop", "edit", id)
   const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
@@ -62,59 +61,72 @@ const CropEdit = () => {
     storageKey,
   })
   const watchedImageUrl = Form.useWatch("imageUrl", form)
-  const [previewImage, setPreviewImage] = useState(null) // State cho modal xem ảnh
-  const [uploading, setUploading] = useState(false) // Loading state khi upload
+  const [previewImage, setPreviewImage] = useState(null)
+  const [uploading, setUploading] = useState(false)
 
-  // SystemKey hook
   const { getCombo } = useSystemKey()
   const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE)
 
-  const {
-    data: cropDetail,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["crop-detail", id],
-    queryFn: async () => {
+  const [cropDetail, setCropDetail] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+
+  const [cropCatalogsData, setCropCatalogsData] = useState([])
+  const [isCatalogsLoading, setIsCatalogsLoading] = useState(false)
+
+  const [updatePending, setUpdatePending] = useState(false)
+
+  const fetchCropDetail = async () => {
+    if (!id) return
+    setIsLoading(true)
+    setIsError(false)
+    try {
       const response = await CropManagementService.getCropById(id, {
         errorHandling: "component",
       })
       const payload = response?.data ?? {}
-      return payload?.data ?? payload
-    },
-    enabled: !!id,
-    retry: false,
-  })
+      setCropDetail(payload?.data ?? payload)
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  // Query to get crop catalogs for the dropdown
-  const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
-    queryKey: ["crop-catalogs-dropdown"],
-    queryFn: async () => {
-      try {
-        const response = await CropCatalogService.getCropCatalogs({
-          PageIndex: 1,
-          PageSize: 100,
-          Status: "ACTIVE",
-        })
-        const payload = response?.data ?? response ?? {}
-        const data = payload?.data ?? payload
-        const items = Array.isArray(data)
-          ? data
-          : data?.items ||
-            data?.results ||
-            data?.crops ||
-            data?.cropCatalogs ||
-            payload?.items ||
-            payload?.results ||
-            []
-        return items.filter(isActiveCropCatalog)
-      } catch {
-        return []
-      }
-    },
-    retry: false,
-  })
+  const fetchCropCatalogs = async () => {
+    setIsCatalogsLoading(true)
+    try {
+      const response = await CropCatalogService.getCropCatalogs({
+        PageIndex: 1,
+        PageSize: 100,
+        Status: "ACTIVE",
+      })
+      const payload = response?.data ?? response ?? {}
+      const data = payload?.data ?? payload
+      const items = Array.isArray(data)
+        ? data
+        : data?.items ||
+          data?.results ||
+          data?.crops ||
+          data?.cropCatalogs ||
+          payload?.items ||
+          payload?.results ||
+          []
+      setCropCatalogsData(items.filter(isActiveCropCatalog))
+    } catch {
+      setCropCatalogsData([])
+    } finally {
+      setIsCatalogsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCropDetail()
+  }, [id])
+
+  useEffect(() => {
+    fetchCropCatalogs()
+  }, [])
 
   const cropCatalogOptions = useMemo(() => {
     if (!cropCatalogsData || cropCatalogsData.length === 0) {
@@ -126,7 +138,6 @@ const CropEdit = () => {
     }))
   }, [cropCatalogsData])
 
-  // Dùng Crop Catalogs data
   const cropTypeFormOptions = useMemo(() => {
     return cropCatalogOptions || []
   }, [cropCatalogOptions])
@@ -158,54 +169,50 @@ const CropEdit = () => {
     }
   }, [cropDetail, form, restoreDraft])
 
-  const updateMutation = useMutation({
-    mutationFn: values => {
-      const unitToDays = {
-        days: 1,
-        months: 30,
-        years: 365,
-      }
+  const handleUpdate = async values => {
+    setUpdatePending(true)
+    const unitToDays = {
+      days: 1,
+      months: 30,
+      years: 365,
+    }
 
-      const minDays = values.minHarvestDays
-        ? values.minHarvestDays * unitToDays[values.minDurationUnit || "days"]
-        : null
+    const minDays = values.minHarvestDays
+      ? values.minHarvestDays * unitToDays[values.minDurationUnit || "days"]
+      : null
 
-      const maxDays = values.maxHarvestDays
-        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || "days"]
-        : null
+    const maxDays = values.maxHarvestDays
+      ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || "days"]
+      : null
 
-      const payload = {
-        name: values.name.trim().replace(/\s+/g, " "),
-        cropCatalogId: values.cropCatalogId || null,
-        minHarvestDays: minDays,
-        maxHarvestDays: maxDays,
-        description: values.description?.trim().replace(/\s+/g, " ") || null,
-        imageUrl: values.imageUrl?.trim() || "",
-        isActive:
-          typeof cropDetail?.isActive === "boolean"
-            ? cropDetail.isActive
-            : true,
-      }
+    const payload = {
+      name: values.name.trim().replace(/\s+/g, " "),
+      cropCatalogId: values.cropCatalogId || null,
+      minHarvestDays: minDays,
+      maxHarvestDays: maxDays,
+      description: values.description?.trim().replace(/\s+/g, " ") || null,
+      imageUrl: values.imageUrl?.trim() || "",
+      isActive:
+        typeof cropDetail?.isActive === "boolean" ? cropDetail.isActive : true,
+    }
 
-      return CropManagementService.updateCrop(id, payload, {
+    try {
+      await CropManagementService.updateCrop(id, payload, {
         errorHandling: "form",
         fieldErrorMapping: CROP_FIELD_MAPPING,
       })
-    },
-    onSuccess: () => {
       clearDraft()
-      queryClient.invalidateQueries({ queryKey: ["crops"] })
-      queryClient.invalidateQueries({ queryKey: ["crop-detail", id] })
       navigate(ROUTER.FM_CROPS)
-    },
-    onError: error => {
+    } catch (error) {
       if (isNotFoundError(error)) {
         navigate(ROUTER.FM_CROPS)
         return
       }
       applyApiFieldErrors(form, error, CROP_FIELD_MAPPING)
-    },
-  })
+    } finally {
+      setUpdatePending(false)
+    }
+  }
 
   const beforeCropImageUpload = file => {
     const isJpgOrPng =
@@ -272,7 +279,7 @@ const CropEdit = () => {
           type="error"
           message="Không thể tải thông tin cây trồng."
           action={
-            <Button size="small" onClick={() => refetch()}>
+            <Button size="small" onClick={fetchCropDetail}>
               Thử lại
             </Button>
           }
@@ -321,7 +328,7 @@ const CropEdit = () => {
       <Form
         form={form}
         layout="vertical"
-        onFinish={values => updateMutation.mutate(values)}
+        onFinish={handleUpdate}
         onValuesChange={(_, allValues) => saveDraft(allValues)}
         onFinishFailed={() => {}}
         scrollToFirstError
@@ -347,34 +354,7 @@ const CropEdit = () => {
                         required: true,
                         message: "Vui lòng nhập tên cây trồng.",
                       },
-                      {
-                        validator: (_, value) => {
-                          if (!value) return Promise.resolve()
-                          const trimmed = value.trim()
-                          if (!trimmed) {
-                            return Promise.reject(
-                              new Error(
-                                "Tên cây trồng không được chỉ chứa khoảng trắng.",
-                              ),
-                            )
-                          }
-                          if (trimmed.length > 100) {
-                            return Promise.reject(
-                              new Error(
-                                "Tên cây trồng không được vượt quá 100 ký tự.",
-                              ),
-                            )
-                          }
-                          if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                            return Promise.reject(
-                              new Error(
-                                "Tên cây trồng không được chứa nhiều khoảng trắng liên tiếp.",
-                              ),
-                            )
-                          }
-                          return Promise.resolve()
-                        },
-                      },
+                      makeNameValidator({ label: "Tên cây trồng" }),
                     ]}
                   >
                     <Input
@@ -425,34 +405,7 @@ const CropEdit = () => {
                 <Form.Item
                   name="description"
                   label="Mô tả"
-                  rules={[
-                    {
-                      validator: (_, value) => {
-                        if (!value) return Promise.resolve()
-                        const trimmed = value.trim()
-                        if (!trimmed) {
-                          return Promise.reject(
-                            new Error(
-                              "Mô tả không được chỉ chứa khoảng trắng.",
-                            ),
-                          )
-                        }
-                        if (trimmed.length > 200) {
-                          return Promise.reject(
-                            new Error("Mô tả không được vượt quá 200 ký tự."),
-                          )
-                        }
-                        if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                          return Promise.reject(
-                            new Error(
-                              "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                            ),
-                          )
-                        }
-                        return Promise.resolve()
-                      },
-                    },
-                  ]}
+                  rules={[makeDescriptionValidator({ maxLength: 200 })]}
                 >
                   <Input.TextArea
                     rows={4}
@@ -479,7 +432,6 @@ const CropEdit = () => {
               >
                 <Form.Item name="imageUrl" className="mb-0">
                   <div className="flex flex-col items-center space-y-4">
-                    {/* Preview ảnh sau khi upload xong */}
                     {watchedImageUrl && !uploading && (
                       <div className="group relative w-full aspect-square overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-1">
                         <img
@@ -506,7 +458,6 @@ const CropEdit = () => {
                       </div>
                     )}
 
-                    {/* Loading state */}
                     {uploading && !watchedImageUrl && (
                       <div className="flex w-full aspect-square items-center justify-center rounded-xl border border-gray-200 bg-gray-50">
                         <Spin />
@@ -547,7 +498,7 @@ const CropEdit = () => {
                     type="primary"
                     htmlType="submit"
                     icon={<SaveOutlined />}
-                    loading={updateMutation.isPending}
+                    loading={updatePending}
                     className="h-12 w-full rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100 text-base"
                   >
                     Lưu thay đổi

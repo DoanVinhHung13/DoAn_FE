@@ -40,7 +40,7 @@ import {
   fullNamePattern,
   getAvatarUrl,
   getInitialAvatar,
-  isValidPhone,
+  PHONE_RULES,
 } from "src/utils/helpers"
 import {
   formatDate,
@@ -382,37 +382,7 @@ const AccountInfo = () => {
                         name="phoneNumber"
                         label="Số điện thoại"
                         validateTrigger={["onBlur", "onSubmit"]}
-                        rules={[
-                          {
-                            validator: (_, value) => {
-                              if (!value) return Promise.resolve()
-                              const trimmed = value.trim()
-                              if (!trimmed) return Promise.resolve()
-                              if (trimmed.length > 100) {
-                                return Promise.reject(
-                                  new Error(
-                                    "Số điện thoại không được vượt quá 100 ký tự.",
-                                  ),
-                                )
-                              }
-                              if (/\s/.test(trimmed)) {
-                                return Promise.reject(
-                                  new Error(
-                                    "Số điện thoại không được chứa khoảng trắng.",
-                                  ),
-                                )
-                              }
-                              if (!isValidPhone(trimmed)) {
-                                return Promise.reject(
-                                  new Error(
-                                    "Định dạng số điện thoại không hợp lệ. Vui lòng nhập số điện thoại hợp lệ.",
-                                  ),
-                                )
-                              }
-                              return Promise.resolve()
-                            },
-                          },
-                        ]}
+                        rules={PHONE_RULES}
                       >
                         <Input
                           prefix={<PhoneOutlined className="text-gray-300" />}

@@ -36,16 +36,20 @@ const ActivateTaskModal = ({
     const currentId = leaderId && String(leaderId)
     return leaderOptions.filter(
       option =>
-        String(option.value) === currentId || !busyUserIds.has(String(option.value)),
+        String(option.value) === currentId ||
+        !busyUserIds.has(String(option.value)),
     )
   }, [busyUserIds, leaderId, leaderOptions])
 
-  const availableFarmerOptions = useMemo(() =>
-    farmerOptions.filter(
-      option =>
-        existingSupportIds.includes(String(option.value)) ||
-        !busyUserIds.has(String(option.value)),
-    ), [busyUserIds, existingSupportIds, farmerOptions])
+  const availableFarmerOptions = useMemo(
+    () =>
+      farmerOptions.filter(
+        option =>
+          existingSupportIds.includes(String(option.value)) ||
+          !busyUserIds.has(String(option.value)),
+      ),
+    [busyUserIds, existingSupportIds, farmerOptions],
+  )
 
   useEffect(() => {
     if (!open) return
@@ -56,7 +60,8 @@ const ActivateTaskModal = ({
   }, [existingSupportIds, form, leaderId, open])
 
   const handleOk = async () => {
-    const values = !hasLeader || !hasSupporters ? await form.validateFields() : {}
+    const values =
+      !hasLeader || !hasSupporters ? await form.validateFields() : {}
     await onConfirm(
       {
         ...values,
@@ -70,22 +75,31 @@ const ActivateTaskModal = ({
   return (
     <Modal
       open={open}
-      title={hasLeader && hasSupporters ? "Xác nhận kích hoạt công việc" : "Phân công và kích hoạt công việc"}
+      title={
+        hasLeader && hasSupporters
+          ? "Xác nhận kích hoạt công việc"
+          : "Phân công và kích hoạt công việc"
+      }
       okText="Xác nhận kích hoạt"
       cancelText="Hủy"
       onCancel={onCancel}
       onOk={handleOk}
       confirmLoading={loading}
-      okButtonProps={{ className: "bg-green-600", icon: <PlayCircleOutlined /> }}
+      okButtonProps={{
+        className: "bg-green-600",
+        icon: <PlayCircleOutlined />,
+      }}
       destroyOnClose
     >
       <Space direction="vertical" size={16} className="w-full mt-2">
         <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
           <Text className="block text-[15px] text-gray-800">
-            Bạn có chắc muốn kích hoạt “{task?.name || task?.taskName || "công việc này"}”?
+            Bạn có chắc muốn kích hoạt “
+            {task?.name || task?.taskName || "công việc này"}”?
           </Text>
           <Text type="secondary" className="mt-1 block">
-            Sau khi kích hoạt, người được phân công có thể bắt đầu thực hiện và ghi nhật ký.
+            Sau khi kích hoạt, người được phân công có thể bắt đầu thực hiện và
+            ghi nhật ký.
           </Text>
         </div>
 
@@ -99,7 +113,12 @@ const ActivateTaskModal = ({
                 <Form.Item
                   name="farmLeaderId"
                   label="Người phụ trách"
-                  rules={[{ required: true, message: "Vui lòng chọn người phụ trách" }]}
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng chọn người phụ trách",
+                    },
+                  ]}
                 >
                   <Select
                     showSearch

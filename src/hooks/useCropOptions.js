@@ -1,26 +1,34 @@
-import { useQuery } from "@tanstack/react-query"
+import { useState, useEffect } from "react"
 import CropManagementService from "src/services/CropManagementService"
 import { isActiveCropCatalog } from "src/utils/cropCatalog"
 
 export const useCropOptions = () => {
-  const { data, isLoading } = useQuery({
-    queryKey: ["crops-selection"],
-    queryFn: async () => {
-      const response = await CropManagementService.getCrops({
-        PageIndex: 1,
-        PageSize: 100,
-      })
-      const payload = response?.data ?? response ?? {}
-      const items = Array.isArray(payload)
-        ? payload
-        : payload?.items || payload?.crops || payload?.cropCatalogs || []
-      return items.filter(isActiveCropCatalog).map(c => ({
-        value: c.id,
-        label: c.name,
-      }))
-    },
-    staleTime: 5 * 60 * 1000,
-  })
+  const [cropOptions, setCropOptions] = useState([])
+  const [isCropsLoading, setIsCropsLoading] = useState(true)
 
-  return { cropOptions: data || [], isCropsLoading: isLoading }
+  useEffect(() => {
+    let cancelled = false
+    CropManagementService.getCrops({ PageIndex: 1, PageSize: 100 })
+      .then(response => {
+        if (cancelled) return
+        const payload = response?.data ?? response ?? {}
+        const items = Array.isArray(payload)
+          ? payload
+          : payload?.items || payload?.crops || payload?.cropCatalogs || []
+        setCropOptions(
+          items
+            .filter(isActiveCropCatalog)
+            .map(c => ({ value: c.id, label: c.name })),
+        )
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsCropsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return { cropOptions, isCropsLoading }
 }

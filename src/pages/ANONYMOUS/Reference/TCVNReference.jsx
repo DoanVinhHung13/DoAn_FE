@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect, useCallback } from "react"
 import { Table, Input, Typography, Tag, Card, Button, Breadcrumb } from "antd"
 import {
   SearchOutlined,
@@ -6,7 +6,6 @@ import {
   InfoCircleOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons"
-import { useQuery } from "@tanstack/react-query"
 import api from "src/services/01_axios"
 import { useNavigate } from "react-router-dom"
 import ROUTER from "src/router/ROUTER"
@@ -20,15 +19,26 @@ const TCVNReference = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 
-  const { data: tcvns = [], isLoading } = useQuery({
-    queryKey: ["tcvns", searchText],
-    queryFn: async () => {
+  const [tcvns, setTcvns] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  const fetchTcvns = useCallback(async () => {
+    setIsLoading(true)
+    try {
       const { data } = await api.get(
         `/tcvn${searchText ? `?keyword=${searchText}` : ""}`,
       )
-      return data.data
-    },
-  })
+      setTcvns(data.data || [])
+    } catch {
+      setTcvns([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [searchText])
+
+  useEffect(() => {
+    fetchTcvns()
+  }, [fetchTcvns])
 
   const visiblePage = Math.min(
     currentPage,

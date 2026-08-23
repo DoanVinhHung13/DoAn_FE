@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   Button,
@@ -20,7 +20,6 @@ import {
   SaveOutlined,
   UploadOutlined,
 } from "@ant-design/icons"
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query"
 import { Sprout } from "lucide-react"
 
 import TitleCustom from "src/components/TitleCustom"
@@ -33,6 +32,7 @@ import { isActiveCropCatalog } from "src/utils/cropCatalog"
 import { applyApiFieldErrors } from "src/services/core/apiError"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 const CROP_FIELD_MAPPING = {
   Name: "name",
@@ -62,7 +62,6 @@ const normalizeCropResponse = response => {
 }
 
 const CropCreate = () => {
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const storageKey = getFormDraftKey("crop", "create")
@@ -73,17 +72,21 @@ const CropCreate = () => {
 
   const [uploadingCreate, setUploadingCreate] = useState(false)
   const [previewImage, setPreviewImage] = useState("")
+  const [isPending, setIsPending] = useState(false)
+
+  const [cropCatalogsData, setCropCatalogsData] = useState([])
+  const [isCatalogsLoading, setIsCatalogsLoading] = useState(false)
 
   const watchedImageUrl = Form.useWatch("imageUrl", form)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const draft = restoreDraft()
     if (draft?.data) form.setFieldsValue(draft.data)
   }, [form, restoreDraft])
 
-  const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
-    queryKey: ["crop-catalogs-dropdown"],
-    queryFn: async () => {
+  useEffect(() => {
+    const fetchCropCatalogs = async () => {
+      setIsCatalogsLoading(true)
       try {
         const response = await CropCatalogService.getCropCatalogs({
           PageIndex: 1,
@@ -91,10 +94,10 @@ const CropCreate = () => {
           Status: "ACTIVE",
         })
         const items = normalizeCropResponse(response).items
-        return items.filter(isActiveCropCatalog)
+        setCropCatalogsData(items.filter(isActiveCropCatalog))
       } catch (err) {
         if (!err?.code && err?.status === 405) {
-          return [
+          setCropCatalogsData([
             {
               id: "1",
               name: "Cây rau",
@@ -113,13 +116,16 @@ const CropCreate = () => {
               description: "Các loại cây ăn quả",
               isActive: true,
             },
-          ]
+          ])
+        } else {
+          setCropCatalogsData([])
         }
-        return []
+      } finally {
+        setIsCatalogsLoading(false)
       }
-    },
-    retry: false,
-  })
+    }
+    fetchCropCatalogs()
+  }, [])
 
   const cropCatalogOptions = useMemo(() => {
     if (!cropCatalogsData) return []
@@ -169,42 +175,44 @@ const CropCreate = () => {
     }
   }
 
-  const createMutation = useMutation({
-    mutationFn: values => {
-      const unitToDays = {
-        days: 1,
-        months: 30,
-        years: 365,
-      }
+  const handleCreate = async values => {
+    setIsPending(true)
+    const unitToDays = {
+      days: 1,
+      months: 30,
+      years: 365,
+    }
 
-      const minDays = values.minHarvestDays
-        ? values.minHarvestDays * unitToDays[values.minDurationUnit || "days"]
-        : null
+    const minDays = values.minHarvestDays
+      ? values.minHarvestDays * unitToDays[values.minDurationUnit || "days"]
+      : null
 
-      const maxDays = values.maxHarvestDays
-        ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || "days"]
-        : null
+    const maxDays = values.maxHarvestDays
+      ? values.maxHarvestDays * unitToDays[values.maxDurationUnit || "days"]
+      : null
 
-      const payload = {
-        name: values.name.trim().replace(/\s+/g, " "),
-        cropCatalogId: values.cropCatalogId || null,
-        minHarvestDays: minDays,
-        maxHarvestDays: maxDays,
-        description: values.description?.trim().replace(/\s+/g, " ") || null,
-        imageUrl: values.imageUrl || null,
-      }
-      return CropManagementService.createCrop(payload, {
+    const payload = {
+      name: values.name.trim().replace(/\s+/g, " "),
+      cropCatalogId: values.cropCatalogId || null,
+      minHarvestDays: minDays,
+      maxHarvestDays: maxDays,
+      description: values.description?.trim().replace(/\s+/g, " ") || null,
+      imageUrl: values.imageUrl || null,
+    }
+
+    try {
+      await CropManagementService.createCrop(payload, {
         errorHandling: "form",
         fieldErrorMapping: CROP_FIELD_MAPPING,
       })
-    },
-    onSuccess: () => {
       clearDraft()
-      queryClient.invalidateQueries({ queryKey: ["crops"] })
       navigate(ROUTER.FM_CROPS)
-    },
-    onError: error => applyApiFieldErrors(form, error, CROP_FIELD_MAPPING),
-  })
+    } catch (error) {
+      applyApiFieldErrors(form, error, CROP_FIELD_MAPPING)
+    } finally {
+      setIsPending(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -226,7 +234,7 @@ const CropCreate = () => {
       <Form
         form={form}
         layout="vertical"
-        onFinish={values => createMutation.mutate(values)}
+        onFinish={handleCreate}
         onValuesChange={(_, allValues) => saveDraft(allValues)}
         onFinishFailed={() => {}}
         scrollToFirstError
@@ -252,34 +260,7 @@ const CropCreate = () => {
                         required: true,
                         message: "Vui lòng nhập tên cây trồng.",
                       },
-                      {
-                        validator: (_, value) => {
-                          if (!value) return Promise.resolve()
-                          const trimmed = value.trim()
-                          if (!trimmed) {
-                            return Promise.reject(
-                              new Error(
-                                "Tên cây trồng không được chỉ chứa khoảng trắng.",
-                              ),
-                            )
-                          }
-                          if (trimmed.length > 100) {
-                            return Promise.reject(
-                              new Error(
-                                "Tên cây trồng không được vượt quá 100 ký tự.",
-                              ),
-                            )
-                          }
-                          if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                            return Promise.reject(
-                              new Error(
-                                "Tên cây trồng không được chứa nhiều khoảng trắng liên tiếp.",
-                              ),
-                            )
-                          }
-                          return Promise.resolve()
-                        },
-                      },
+                      makeNameValidator({ label: "Tên cây trồng" }),
                     ]}
                   >
                     <Input
@@ -331,34 +312,7 @@ const CropCreate = () => {
                   name="description"
                   label="Mô tả"
                   className="mb-0"
-                  rules={[
-                    {
-                      validator: (_, value) => {
-                        if (!value) return Promise.resolve()
-                        const trimmed = value.trim()
-                        if (!trimmed) {
-                          return Promise.reject(
-                            new Error(
-                              "Mô tả không được chỉ chứa khoảng trắng.",
-                            ),
-                          )
-                        }
-                        if (trimmed.length > 200) {
-                          return Promise.reject(
-                            new Error("Mô tả không được vượt quá 200 ký tự."),
-                          )
-                        }
-                        if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                          return Promise.reject(
-                            new Error(
-                              "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                            ),
-                          )
-                        }
-                        return Promise.resolve()
-                      },
-                    },
-                  ]}
+                  rules={[makeDescriptionValidator({ maxLength: 200 })]}
                 >
                   <Input.TextArea
                     rows={4}
@@ -451,7 +405,7 @@ const CropCreate = () => {
             type="primary"
             htmlType="submit"
             icon={<SaveOutlined />}
-            loading={createMutation.isPending}
+            loading={isPending}
             className="h-11 min-w-[120px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
           >
             Thêm mới

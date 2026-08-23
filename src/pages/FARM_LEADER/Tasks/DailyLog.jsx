@@ -198,7 +198,11 @@ const DailyLog = () => {
   const [remainingAreas, setRemainingAreas] = useState({})
   const [showImageError, setShowImageError] = useState(false)
   const [usageByLog, setUsageByLog] = useState({})
-  const [usageModal, setUsageModal] = useState({ open: false, dailyLogId: null, item: null })
+  const [usageModal, setUsageModal] = useState({
+    open: false,
+    dailyLogId: null,
+    item: null,
+  })
   const [usageForm] = Form.useForm()
 
   const loadRemainingArea = async (materialType, rowIndex, materialId) => {
@@ -364,10 +368,21 @@ const DailyLog = () => {
           ? logsData
           : logsData?.items || []
         setDailyLogs(logsList)
-        const usageEntries = await Promise.all(logsList.filter(log => log.id).map(async log => {
-          try { return [log.id, unwrap(await MaterialUsageService.getByDailyLog(log.id)) || []] }
-          catch { return [log.id, []] }
-        }))
+        const usageEntries = await Promise.all(
+          logsList
+            .filter(log => log.id)
+            .map(async log => {
+              try {
+                return [
+                  log.id,
+                  unwrap(await MaterialUsageService.getByDailyLog(log.id)) ||
+                    [],
+                ]
+              } catch {
+                return [log.id, []]
+              }
+            }),
+        )
         setUsageByLog(Object.fromEntries(usageEntries))
 
         const fertData = unwrap(fertRes)
@@ -413,17 +428,24 @@ const DailyLog = () => {
 
   const openUsageModal = (dailyLogId, item = null) => {
     setUsageModal({ open: true, dailyLogId, item })
-    usageForm.setFieldsValue(item ? {
-      materialType: item.materialType,
-      materialId: item.materialId,
-      quantity: item.quantity,
-      appliedArea: item.appliedArea,
-      usedAt: item.usedAt ? dayjs(item.usedAt) : getLocalNow(),
-      note: item.note,
-    } : { materialType: "FERTILIZER", usedAt: getLocalNow() })
+    usageForm.setFieldsValue(
+      item
+        ? {
+            materialType: item.materialType,
+            materialId: item.materialId,
+            quantity: item.quantity,
+            appliedArea: item.appliedArea,
+            usedAt: item.usedAt ? dayjs(item.usedAt) : getLocalNow(),
+            note: item.note,
+          }
+        : { materialType: "FERTILIZER", usedAt: getLocalNow() },
+    )
   }
 
-  const closeUsageModal = () => { setUsageModal({ open: false, dailyLogId: null, item: null }); usageForm.resetFields() }
+  const closeUsageModal = () => {
+    setUsageModal({ open: false, dailyLogId: null, item: null })
+    usageForm.resetFields()
+  }
   const saveUsage = async () => {
     const values = await usageForm.validateFields()
     const payload = {
@@ -434,16 +456,31 @@ const DailyLog = () => {
       usedAt: values.usedAt?.toISOString?.() || values.usedAt,
       note: values.note || null,
     }
-    if (usageModal.item) await MaterialUsageService.update(usageModal.dailyLogId, usageModal.item.id, payload)
+    if (usageModal.item)
+      await MaterialUsageService.update(
+        usageModal.dailyLogId,
+        usageModal.item.id,
+        payload,
+      )
     else await MaterialUsageService.create(usageModal.dailyLogId, payload)
-    const latest = unwrap(await MaterialUsageService.getByDailyLog(usageModal.dailyLogId)) || []
-    setUsageByLog(previous => ({ ...previous, [usageModal.dailyLogId]: latest }))
+    const latest =
+      unwrap(await MaterialUsageService.getByDailyLog(usageModal.dailyLogId)) ||
+      []
+    setUsageByLog(previous => ({
+      ...previous,
+      [usageModal.dailyLogId]: latest,
+    }))
     closeUsageModal()
     message.success("Đã lưu vật tư sử dụng.")
   }
   const deleteUsage = async (dailyLogId, usageId) => {
     await MaterialUsageService.remove(dailyLogId, usageId)
-    setUsageByLog(previous => ({ ...previous, [dailyLogId]: (previous[dailyLogId] || []).filter(item => item.id !== usageId) }))
+    setUsageByLog(previous => ({
+      ...previous,
+      [dailyLogId]: (previous[dailyLogId] || []).filter(
+        item => item.id !== usageId,
+      ),
+    }))
     message.success("Đã xóa vật tư sử dụng.")
   }
 
@@ -1782,15 +1819,58 @@ const DailyLog = () => {
                             <div className="mt-2 rounded-xl border border-amber-100 bg-amber-50/60 p-2.5">
                               <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-amber-800">
                                 <span>Vật tư đã sử dụng</span>
-                                {!isViewOnly && log.id && <Button size="small" type="link" icon={<PlusOutlined />} onClick={() => openUsageModal(log.id)}>Thêm vật tư</Button>}
+                                {!isViewOnly && log.id && (
+                                  <Button
+                                    size="small"
+                                    type="link"
+                                    icon={<PlusOutlined />}
+                                    onClick={() => openUsageModal(log.id)}
+                                  >
+                                    Thêm vật tư
+                                  </Button>
+                                )}
                               </div>
                               {(usageByLog[log.id] || []).map(item => (
-                                <div key={item.id} className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-700">
-                                  <span><b>{item.materialName}</b> · {item.quantity} {item.unit} · {item.appliedArea} m² · {formatDate(item.usedAt)}</span>
-                                  {!isViewOnly && <span className="flex gap-1"><Button size="small" type="link" onClick={() => openUsageModal(log.id, item)}>Sửa</Button><Button size="small" danger type="link" onClick={() => deleteUsage(log.id, item.id)}>Xóa</Button></span>}
+                                <div
+                                  key={item.id}
+                                  className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-700"
+                                >
+                                  <span>
+                                    <b>{item.materialName}</b> · {item.quantity}{" "}
+                                    {item.unit} · {item.appliedArea} m² ·{" "}
+                                    {formatDate(item.usedAt)}
+                                  </span>
+                                  {!isViewOnly && (
+                                    <span className="flex gap-1">
+                                      <Button
+                                        size="small"
+                                        type="link"
+                                        onClick={() =>
+                                          openUsageModal(log.id, item)
+                                        }
+                                      >
+                                        Sửa
+                                      </Button>
+                                      <Button
+                                        size="small"
+                                        danger
+                                        type="link"
+                                        onClick={() =>
+                                          deleteUsage(log.id, item.id)
+                                        }
+                                      >
+                                        Xóa
+                                      </Button>
+                                    </span>
+                                  )}
                                 </div>
                               ))}
-                              {log.id && (usageByLog[log.id] || []).length === 0 && <div className="mt-1 text-xs text-gray-400">Chưa có lịch sử sử dụng vật tư.</div>}
+                              {log.id &&
+                                (usageByLog[log.id] || []).length === 0 && (
+                                  <div className="mt-1 text-xs text-gray-400">
+                                    Chưa có lịch sử sử dụng vật tư.
+                                  </div>
+                                )}
                             </div>
                           )}
 
@@ -1962,28 +2042,96 @@ const DailyLog = () => {
 
       <Modal
         open={usageModal.open}
-        title={usageModal.item ? "Sửa vật tư đã sử dụng" : "Thêm vật tư đã sử dụng"}
+        title={
+          usageModal.item ? "Sửa vật tư đã sử dụng" : "Thêm vật tư đã sử dụng"
+        }
         onCancel={closeUsageModal}
         onOk={saveUsage}
         okText="Lưu"
         cancelText="Hủy"
       >
         <Form form={usageForm} layout="vertical">
-          <Form.Item name="materialType" label="Loại vật tư" rules={[{ required: true, message: "Chọn loại vật tư" }]}>
-            <Select options={[{ value: "FERTILIZER", label: "Phân bón" }, { value: "PESTICIDE", label: "Nông dược" }]} />
+          <Form.Item
+            name="materialType"
+            label="Loại vật tư"
+            rules={[{ required: true, message: "Chọn loại vật tư" }]}
+          >
+            <Select
+              options={[
+                { value: "FERTILIZER", label: "Phân bón" },
+                { value: "PESTICIDE", label: "Nông dược" },
+              ]}
+            />
           </Form.Item>
-          <Form.Item noStyle shouldUpdate={(previous, current) => previous.materialType !== current.materialType}>
+          <Form.Item
+            noStyle
+            shouldUpdate={(previous, current) =>
+              previous.materialType !== current.materialType
+            }
+          >
             {({ getFieldValue }) => {
-              const options = getFieldValue("materialType") === "PESTICIDE" ? pesticideOptions : fertilizerOptions
-              return <Form.Item name="materialId" label="Vật tư" rules={[{ required: true, message: "Chọn vật tư" }]}><Select showSearch optionFilterProp="label" options={options.map(option => ({ value: option.materialId, label: option.label }))} /></Form.Item>
+              const options =
+                getFieldValue("materialType") === "PESTICIDE"
+                  ? pesticideOptions
+                  : fertilizerOptions
+              return (
+                <Form.Item
+                  name="materialId"
+                  label="Vật tư"
+                  rules={[{ required: true, message: "Chọn vật tư" }]}
+                >
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    options={options.map(option => ({
+                      value: option.materialId,
+                      label: option.label,
+                    }))}
+                  />
+                </Form.Item>
+              )
             }}
           </Form.Item>
           <div className="grid grid-cols-2 gap-3">
-            <Form.Item name="quantity" label="Số lượng" rules={[{ required: true }, { type: "number", min: 0.0001, message: "Số lượng phải lớn hơn 0" }]}><InputNumber className="w-full" min={0} /></Form.Item>
-            <Form.Item name="appliedArea" label="Diện tích (m²)" rules={[{ required: true }, { type: "number", min: 0.0001, message: "Diện tích phải lớn hơn 0" }]}><InputNumber className="w-full" min={0} /></Form.Item>
+            <Form.Item
+              name="quantity"
+              label="Số lượng"
+              rules={[
+                { required: true },
+                {
+                  type: "number",
+                  min: 0.0001,
+                  message: "Số lượng phải lớn hơn 0",
+                },
+              ]}
+            >
+              <InputNumber className="w-full" min={0} />
+            </Form.Item>
+            <Form.Item
+              name="appliedArea"
+              label="Diện tích (m²)"
+              rules={[
+                { required: true },
+                {
+                  type: "number",
+                  min: 0.0001,
+                  message: "Diện tích phải lớn hơn 0",
+                },
+              ]}
+            >
+              <InputNumber className="w-full" min={0} />
+            </Form.Item>
           </div>
-          <Form.Item name="usedAt" label="Thời gian sử dụng" rules={[{ required: true, message: "Chọn thời gian sử dụng" }]}><DatePicker showTime className="w-full" format="DD/MM/YYYY HH:mm" /></Form.Item>
-          <Form.Item name="note" label="Ghi chú"><Input.TextArea rows={3} /></Form.Item>
+          <Form.Item
+            name="usedAt"
+            label="Thời gian sử dụng"
+            rules={[{ required: true, message: "Chọn thời gian sử dụng" }]}
+          >
+            <DatePicker showTime className="w-full" format="DD/MM/YYYY HH:mm" />
+          </Form.Item>
+          <Form.Item name="note" label="Ghi chú">
+            <Input.TextArea rows={3} />
+          </Form.Item>
         </Form>
       </Modal>
 

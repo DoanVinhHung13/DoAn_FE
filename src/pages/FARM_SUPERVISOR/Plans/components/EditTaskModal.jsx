@@ -1,15 +1,5 @@
-import {
-  EditOutlined,
-} from "@ant-design/icons"
-import {
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  Modal,
-  Row,
-  Select,
-} from "antd"
+import { EditOutlined } from "@ant-design/icons"
+import { Col, DatePicker, Form, Input, Modal, Row, Select } from "antd"
 import { useEffect, useState } from "react"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import {
@@ -17,6 +7,7 @@ import {
   getLocalNow,
   parseDate,
 } from "src/utils/dateFormatters"
+import { makeNameValidator } from "src/utils/helpers"
 
 const EditTaskModal = ({
   open,
@@ -80,7 +71,9 @@ const EditTaskModal = ({
       confirmLoading={savingEdit}
       okText="Lưu thay đổi"
       cancelText="Hủy"
-      okButtonProps={{ className: "bg-orange-500 border-orange-500 hover:!bg-orange-600" }}
+      okButtonProps={{
+        className: "bg-orange-500 border-orange-500 hover:!bg-orange-600",
+      }}
       destroyOnClose
     >
       <Form form={editTaskForm} layout="vertical" className="mt-4">
@@ -89,29 +82,7 @@ const EditTaskModal = ({
           label="Tên công việc"
           rules={[
             { required: true, message: "Vui lòng nhập tên công việc." },
-            {
-              validator: (_, value) => {
-                if (!value) return Promise.resolve()
-                const trimmed = value.trim()
-                if (!trimmed)
-                  return Promise.reject(
-                    new Error(
-                      "Tên công việc không được chỉ chứa khoảng trắng.",
-                    ),
-                  )
-                if (trimmed.length > 100)
-                  return Promise.reject(
-                    new Error("Tên công việc không được vượt quá 100 ký tự."),
-                  )
-                if (trimmed !== trimmed.replace(/\s+/g, " "))
-                  return Promise.reject(
-                    new Error(
-                      "Tên công việc không được chứa nhiều khoảng trắng liên tiếp.",
-                    ),
-                  )
-                return Promise.resolve()
-              },
-            },
+            makeNameValidator({ label: "Tên công việc" }),
           ]}
         >
           <Input placeholder="VD: Bón phân đón đòng..." />
@@ -165,7 +136,9 @@ const EditTaskModal = ({
                   date && date.isBefore(getLocalNow().startOf("day"), "day")
                 }
                 onChange={() => {
-                  editTaskForm.validateFields(["plannedStartDate"]).catch(() => {})
+                  editTaskForm
+                    .validateFields(["plannedStartDate"])
+                    .catch(() => {})
                 }}
               />
             </Form.Item>

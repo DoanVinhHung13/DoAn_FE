@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   Alert,
@@ -19,7 +19,6 @@ import {
   FileTextOutlined,
   StopOutlined,
 } from "@ant-design/icons"
-import { useQuery } from "@tanstack/react-query"
 
 import TitleCustom from "src/components/TitleCustom"
 import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
@@ -46,23 +45,30 @@ const CatalogDetail = () => {
   const navigate = useNavigate()
   const { id } = useParams()
 
-  const {
-    data: catalogDetail,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["crop-catalog-detail", id],
-    queryFn: async () => {
+  const [catalogDetail, setCatalogDetail] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+
+  const fetchCatalogDetail = async () => {
+    if (!id) return
+    setIsLoading(true)
+    setIsError(false)
+    try {
       const response = await CropCatalogService.getCropCatalogById(id, {
         errorHandling: "component",
       })
       const payload = response?.data ?? {}
-      return payload?.data ?? payload
-    },
-    enabled: !!id,
-    retry: false,
-  })
+      setCatalogDetail(payload?.data ?? payload)
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCatalogDetail()
+  }, [id])
 
   if (isLoading) {
     return (
@@ -91,7 +97,7 @@ const CatalogDetail = () => {
           type="error"
           message="Không thể tải thông tin danh mục cây trồng."
           action={
-            <Button size="small" onClick={() => refetch()}>
+            <Button size="small" onClick={fetchCatalogDetail}>
               Thử lại
             </Button>
           }

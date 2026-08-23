@@ -1,8 +1,4 @@
-import {
-  EyeOutlined,
-  LockOutlined,
-  SaveOutlined,
-} from "@ant-design/icons"
+import { EyeOutlined, LockOutlined, SaveOutlined } from "@ant-design/icons"
 import {
   Alert,
   Button,
@@ -532,7 +528,17 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
       <div className="p-4 border border-green-200 rounded-xl bg-green-50/30">
         <div className="flex items-center gap-2 mb-3">
           <span className="anticon anticon-edit text-green-600">
-            <svg viewBox="64 64 896 896" focusable="false" data-icon="edit" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M257.7 752c2 0 4-.2 6-.5L431.9 722c2-.4 3.9-1.3 5.3-2.8l423.9-423.9a9.96 9.96 0 0 0 0-14.1L694.9 114.9a9.96 9.96 0 0 0-14.1 0L256.9 538.8c-1.5 1.4-2.4 3.3-2.8 5.3l-29.5 168.2a32.06 32.06 0 0 0 33.1 39.7zM306.1 574l42.2-42.2 97.4 97.4-42.2 42.2-97.4-97.4zm223.7-223.7l97.4 97.4-313 313-97.4-97.4 313-313zM290 224h240c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H290c-116 0-210 94-210 210v288c0 116 94 210 210 210h288c116 0 210-94 210-210V500c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v166c0 73.9-60.1 134-134 134H290c-73.9 0-134-60.1-134-134V358c0-73.9 60.1-134 134-134z"></path></svg>
+            <svg
+              viewBox="64 64 896 896"
+              focusable="false"
+              data-icon="edit"
+              width="1em"
+              height="1em"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M257.7 752c2 0 4-.2 6-.5L431.9 722c2-.4 3.9-1.3 5.3-2.8l423.9-423.9a9.96 9.96 0 0 0 0-14.1L694.9 114.9a9.96 9.96 0 0 0-14.1 0L256.9 538.8c-1.5 1.4-2.4 3.3-2.8 5.3l-29.5 168.2a32.06 32.06 0 0 0 33.1 39.7zM306.1 574l42.2-42.2 97.4 97.4-42.2 42.2-97.4-97.4zm223.7-223.7l97.4 97.4-313 313-97.4-97.4 313-313zM290 224h240c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H290c-116 0-210 94-210 210v288c0 116 94 210 210 210h288c116 0 210-94 210-210V500c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v166c0 73.9-60.1 134-134 134H290c-73.9 0-134-60.1-134-134V358c0-73.9 60.1-134 134-134z"></path>
+            </svg>
           </span>
           <Text strong className="text-green-800">
             Viết lại mô tả (giám sát viên)

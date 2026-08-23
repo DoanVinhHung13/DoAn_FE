@@ -1,5 +1,4 @@
-import { useMemo } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { getNotifications } from "src/services/NotificationService"
 import STORAGE, { getStorage } from "src/redux/storage"
 
@@ -16,7 +15,6 @@ const normalizeNotifications = response => {
   const items = Array.isArray(nestedPayload)
     ? nestedPayload
     : nestedPayload?.notifications || nestedPayload?.items || []
-
   return {
     items,
     unreadCount:
@@ -28,13 +26,29 @@ const normalizeNotifications = response => {
 
 export const useBadgeCounts = () => {
   const isAuthenticated = Boolean(getStorage(STORAGE.TOKEN))
-  const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ["notifications"],
-    queryFn: async () => normalizeNotifications(await getNotifications()),
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  })
+  const [data, setData] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const fetchData = useCallback(() => {
+    if (!getStorage(STORAGE.TOKEN)) return
+    setIsLoading(true)
+    getNotifications()
+      .then(res => setData(normalizeNotifications(res)))
+      .catch(err => setError(err))
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    const timeout = setTimeout(fetchData, 0)
+    const interval = setInterval(fetchData, 5 * 60 * 1000)
+    return () => {
+      clearTimeout(timeout)
+      clearInterval(interval)
+    }
+  }, [isAuthenticated, fetchData])
+
   const unreadCount = data?.unreadCount || 0
   const badgeCounts = useMemo(
     () => ({ ...EMPTY_BADGE_COUNTS, unreadCount }),
@@ -47,8 +61,8 @@ export const useBadgeCounts = () => {
     loading: isLoading,
     error,
     connectionReady: isAuthenticated,
-    refreshCounts: refetch,
-    fetchFromApi: refetch,
+    refreshCounts: fetchData,
+    fetchFromApi: fetchData,
     requestViaSocket: async () => {},
   }
 }

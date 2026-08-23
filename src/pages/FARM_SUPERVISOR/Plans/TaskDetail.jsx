@@ -276,9 +276,7 @@ const FarmSupervisorTaskDetail = () => {
   const busyUserIds = new Set(
     planStages
       .flatMap(item => item.tasks || [])
-      .filter(item =>
-        ["IN_PROGRESS", "WAITING_APPROVAL"].includes(item.status),
-      )
+      .filter(item => ["IN_PROGRESS", "WAITING_APPROVAL"].includes(item.status))
       .filter(item => item.id !== activationTask?.id)
       .flatMap(item => [
         item.assignedLeaderId || item.farmLeaderId,
@@ -297,17 +295,23 @@ const FarmSupervisorTaskDetail = () => {
     try {
       setActivating(true)
       if (shouldAssign) {
-        await CultivationTaskService.assign(activationTask.id, {
-          leaderId: values.farmLeaderId,
-          farmerIds: values.farmerIds || [],
-        }, { skipSuccessNotice: true })
+        await CultivationTaskService.assign(
+          activationTask.id,
+          {
+            leaderId: values.farmLeaderId,
+            farmerIds: values.farmerIds || [],
+          },
+          { skipSuccessNotice: true },
+        )
       }
       const response = await CultivationTaskService.start(activationTask.id)
       const updatedTask = response?.data?.data ?? response?.data
       if (updatedTask?.id) {
         setTask(updatedTask)
       } else {
-        const refreshed = await CultivationTaskService.getById(activationTask.id)
+        const refreshed = await CultivationTaskService.getById(
+          activationTask.id,
+        )
         setTask(refreshed?.data?.data ?? refreshed?.data)
       }
       setActivationTask(null)
@@ -423,7 +427,9 @@ const FarmSupervisorTaskDetail = () => {
           </div>
           <div>
             <span className="font-semibold">Bắt đầu thực tế:</span>{" "}
-            {task.workStartDate ? formatDate(task.workStartDate) : "Chưa bắt đầu"}
+            {task.workStartDate
+              ? formatDate(task.workStartDate)
+              : "Chưa bắt đầu"}
           </div>
           <div>
             <span className="font-semibold">Kết thúc thực tế:</span>{" "}
@@ -431,7 +437,9 @@ const FarmSupervisorTaskDetail = () => {
           </div>
           <div>
             <span className="font-semibold">Hoàn thành:</span>{" "}
-            {task.completedDate ? formatDate(task.completedDate) : "Chưa hoàn thành"}
+            {task.completedDate
+              ? formatDate(task.completedDate)
+              : "Chưa hoàn thành"}
           </div>
         </div>
         {task.isActivationWarning === true && (

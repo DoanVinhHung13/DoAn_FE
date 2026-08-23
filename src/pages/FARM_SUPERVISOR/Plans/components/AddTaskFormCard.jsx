@@ -22,6 +22,7 @@ import {
 } from "src/constants/cultivationTask"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import { formatDateForApi, getLocalNow } from "src/utils/dateFormatters"
+import { makeNameValidator } from "src/utils/helpers"
 
 const AddTaskFormCard = ({
   planId,
@@ -187,31 +188,7 @@ const AddTaskFormCard = ({
                             required: true,
                             message: "Vui lòng nhập tên công việc.",
                           },
-                          {
-                            validator: (_, value) => {
-                              if (!value) return Promise.resolve()
-                              const trimmed = value.trim()
-                              if (!trimmed)
-                                return Promise.reject(
-                                  new Error(
-                                    "Tên công việc không được chỉ chứa khoảng trắng.",
-                                  ),
-                                )
-                              if (trimmed.length > 100)
-                                return Promise.reject(
-                                  new Error(
-                                    "Tên công việc không được vượt quá 100 ký tự.",
-                                  ),
-                                )
-                              if (trimmed !== trimmed.replace(/\s+/g, " "))
-                                return Promise.reject(
-                                  new Error(
-                                    "Tên công việc không được chứa nhiều khoảng trắng liên tiếp.",
-                                  ),
-                                )
-                              return Promise.resolve()
-                            },
-                          },
+                          makeNameValidator({ label: "Tên công việc" }),
                         ]}
                         className="!mb-2.5"
                       >
@@ -354,7 +331,8 @@ const AddTaskFormCard = ({
                           className="w-full"
                           placeholder="Chọn ngày bắt đầu"
                           disabledDate={date =>
-                            date && date.isBefore(getLocalNow().startOf("day"), "day")
+                            date &&
+                            date.isBefore(getLocalNow().startOf("day"), "day")
                           }
                           onChange={() => {
                             taskForm

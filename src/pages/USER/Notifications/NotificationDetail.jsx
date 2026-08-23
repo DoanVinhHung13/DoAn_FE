@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { Alert, Button, Card, Skeleton, Tag, Typography } from "antd"
 import {
   ArrowLeftOutlined,
@@ -7,7 +7,6 @@ import {
   UserOutlined,
   PaperClipOutlined,
 } from "@ant-design/icons"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate, useParams, useLocation } from "react-router-dom"
 import { useSelector } from "react-redux"
 import {
@@ -44,7 +43,6 @@ const ROLE_LABELS = {
 }
 
 const getSenderName = notification => {
-  // Ưu tiên lấy từ object sender
   const sender =
     notification?.sender ||
     notification?.createdBy ||
@@ -53,7 +51,6 @@ const getSenderName = notification => {
 
   if (sender) {
     if (typeof sender === "string") {
-      // Nếu là role, chuyển thành label tiếng Việt
       return ROLE_LABELS[sender] || sender
     }
     const name =
@@ -64,12 +61,10 @@ const getSenderName = notification => {
       sender?.username ||
       sender?.email
     if (name) {
-      // Nếu name là role, chuyển thành label
       return ROLE_LABELS[name] || name
     }
   }
 
-  // Fallback sang các field trực tiếp
   const fallbackName =
     notification?.senderName ||
     notification?.senderFullName ||
@@ -78,7 +73,6 @@ const getSenderName = notification => {
     notification?.senderRole ||
     "Hệ thống"
 
-  // Nếu fallback là role, chuyển thành label
   return ROLE_LABELS[fallbackName] || fallbackName
 }
 
@@ -87,43 +81,53 @@ const NotificationDetail = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const isSent = location.state?.isSent
-  const queryClient = useQueryClient()
   const { userInfo } = useSelector(state => state.appGlobal)
   const listPath =
     userInfo?.role === "FARM_MANAGER"
       ? ROUTER.FM_NOTIFICATIONS
       : ROUTER.NOTIFICATIONS
 
-  const {
-    data: notification,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["notification-detail", id],
-    queryFn: async () => {
+  const [notification, setNotification] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isError, setIsError] = useState(false)
+
+  const fetchNotification = useCallback(async () => {
+    setIsLoading(true)
+    setIsError(false)
+    try {
       if (location.state?.notificationItem) {
-        return location.state.notificationItem
+        setNotification(location.state.notificationItem)
+        return
       }
 
-      // Thử gọi API chi tiết trước (có đầy đủ attachments)
       try {
         const res = await getNotificationById(id)
         const payload = res?.data ?? res ?? {}
         const item = payload?.data ?? payload
-        if (item && (item.id || item._id)) return item
+        if (item && (item.id || item._id)) {
+          setNotification(item)
+          return
+        }
       } catch {
-        // API /notifications/:id chưa có hoặc lỗi, fallback sang tìm trong danh sách
+        return undefined
       }
-      // Fallback: tìm trong danh sách
+
       const fetchList = isSent ? getSentNotifications : getNotifications
       const items = normalizeItems(await fetchList())
-      return (
+      const found =
         items.find(item => String(item._id || item.id) === String(id)) || null
-      )
-    },
-    retry: false,
-  })
+      setNotification(found)
+      if (!found) setIsError(true)
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [id, isSent, location.state?.notificationItem])
+
+  useEffect(() => {
+    fetchNotification()
+  }, [fetchNotification])
 
   const notification_id = notification?._id || notification?.id
 
@@ -131,10 +135,10 @@ const NotificationDetail = () => {
     if (!notification || notification.isRead || isSent) return
     markNotificationAsRead(notification_id)
       .catch(() => undefined)
-      .finally(() =>
-        queryClient.invalidateQueries({ queryKey: ["notifications"] }),
-      )
-  }, [notification, notification_id, queryClient, isSent])
+      .finally(() => {
+        window.dispatchEvent(new CustomEvent("app:notification-changed"))
+      })
+  }, [notification, notification_id, isSent])
 
   if (isLoading) {
     return (
@@ -164,7 +168,7 @@ const NotificationDetail = () => {
           message="Thông báo không tồn tại hoặc đã bị xóa."
           action={
             isError ? (
-              <Button size="small" onClick={() => refetch()}>
+              <Button size="small" onClick={fetchNotification}>
                 Thử lại
               </Button>
             ) : null

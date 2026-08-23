@@ -32,7 +32,6 @@ import {
   CalendarOutlined,
   ExperimentOutlined,
 } from "@ant-design/icons"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { formatAreaUnit } from "src/constants/measurementUnits"
 import { QRCodeSVG } from "qrcode.react"
 import { Sprout } from "lucide-react"
@@ -49,7 +48,6 @@ const { Text, Paragraph } = Typography
 const QRManagement = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const qrContainerRef = useRef(null)
 
@@ -57,57 +55,58 @@ const QRManagement = () => {
   const [qrData, setQrData] = useState(null)
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
 
-  // Get batch info from URL params if present
+  const [previewPending, setPreviewPending] = useState(false)
+  const [createPending, setCreatePending] = useState(false)
+
   const batchIdFromUrl = searchParams.get("batchId")
 
-  // Watch form fields for live updates
   const selectedBatchId = Form.useWatch("harvestBatchId", form)
   const showDailyLog = Form.useWatch("showDailyLog", form)
   const showMaterials = Form.useWatch("showMaterials", form)
   const showPhotos = Form.useWatch("showPhotos", form)
 
-  // 1. Fetch harvest batches list for selection dropdown
-  const { data: harvestBatches = [] } = useQuery({
-    queryKey: ["harvest-batches-select"],
-    queryFn: async () => {
-      const response = await HarvestBatchService.getHarvestBatches()
-      const list =
-        response?.data?.data?.items ||
-        response?.data?.data ||
-        response?.data?.items ||
-        response?.data ||
-        []
-      return Array.isArray(list) ? list : []
-    },
-  })
+  const [harvestBatches, setHarvestBatches] = useState([])
+  const [batchDetail, setBatchDetail] = useState(null)
+  const [existingQRData, setExistingQRData] = useState(null)
 
-  // Pre-fill batchId if passed in URL query
+  useEffect(() => {
+    HarvestBatchService.getHarvestBatches()
+      .then(response => {
+        const list =
+          response?.data?.data?.items ||
+          response?.data?.data ||
+          response?.data?.items ||
+          response?.data ||
+          []
+        setHarvestBatches(Array.isArray(list) ? list : [])
+      })
+      .catch(() => setHarvestBatches([]))
+  }, [])
+
   useEffect(() => {
     if (batchIdFromUrl) {
       form.setFieldsValue({
         harvestBatchId: String(batchIdFromUrl),
       })
     } else if (harvestBatches.length > 0 && !selectedBatchId) {
-      // Auto select first batch if none selected
       form.setFieldsValue({
         harvestBatchId: String(harvestBatches[0].id),
       })
     }
   }, [batchIdFromUrl, harvestBatches, form, selectedBatchId])
 
-  // 2. Fetch specific harvest batch detail by ID
-  const { data: batchDetail } = useQuery({
-    queryKey: ["harvest-batch-detail", selectedBatchId],
-    queryFn: async () => {
-      if (!selectedBatchId) return null
-      const response =
-        await HarvestBatchService.getHarvestBatchById(selectedBatchId)
-      return response?.data?.data || response?.data || response
-    },
-    enabled: !!selectedBatchId,
-  })
+  useEffect(() => {
+    if (!selectedBatchId) {
+      setBatchDetail(null)
+      return
+    }
+    HarvestBatchService.getHarvestBatchById(selectedBatchId)
+      .then(response => {
+        setBatchDetail(response?.data?.data || response?.data || response)
+      })
+      .catch(() => setBatchDetail(null))
+  }, [selectedBatchId])
 
-  // Automatically update basic info form fields when batchDetail is retrieved
   useEffect(() => {
     if (batchDetail) {
       form.setFieldsValue({
@@ -123,32 +122,24 @@ const QRManagement = () => {
     }
   }, [batchDetail, form])
 
-  // 2b. Fetch QR code hiện có của batch (nếu có activeQrCode)
-  const { data: existingQRData } = useQuery({
-    queryKey: ["existing-qr", selectedBatchId],
-    queryFn: async () => {
-      try {
-        const response = await QrCodeService.getQrCodes({
-          BatchId: selectedBatchId,
-          PageSize: 1,
-        })
+  useEffect(() => {
+    if (!selectedBatchId || !batchDetail?.hasActiveQrCode) {
+      setExistingQRData(null)
+      return
+    }
+    QrCodeService.getQrCodes({ BatchId: selectedBatchId, PageSize: 1 })
+      .then(response => {
         const list = response?.data?.items || response?.data?.data?.items || []
-        return list[0] || null
-      } catch {
-        return null
-      }
-    },
-    enabled: !!selectedBatchId && !!batchDetail?.hasActiveQrCode,
-  })
+        setExistingQRData(list[0] || null)
+      })
+      .catch(() => setExistingQRData(null))
+  }, [selectedBatchId, batchDetail?.hasActiveQrCode])
 
-  // Reset qrData & previewData ngay khi chọn lô thu hoạch khác
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setQrData(null)
     setPreviewData(null)
   }, [selectedBatchId])
 
-  // Hiển thị QR hiện tại chỉ khi batch đã có QR đang hoạt động.
   useEffect(() => {
     if (batchDetail && String(batchDetail.id) === String(selectedBatchId)) {
       if (batchDetail.hasActiveQrCode) {
@@ -167,9 +158,7 @@ const QRManagement = () => {
       }
     }
   }, [batchDetail, existingQRData, selectedBatchId])
-  /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Active batch info for rendering
   const activeBatch = batchDetail ||
     harvestBatches.find(b => String(b.id) === String(selectedBatchId)) || {
       batchCode: "LOT-DEMO",
@@ -187,8 +176,6 @@ const QRManagement = () => {
   }
   const displayOptionsDisabled = Boolean(qrData)
 
-  // Preview data is supplied by the API. The batch is only a fallback for the
-  // surrounding layout fields that are not part of the traceability payload.
   const previewBatchData = {
     ...activeBatch,
     ...(previewData?.traceability || {}),
@@ -276,7 +263,6 @@ const QRManagement = () => {
     return `${window.location.origin}/trace/${code}`
   }
 
-  // Trace code: use server-returned code if available, otherwise derive stably from batchCode (no random suffix)
   const currentTraceCode =
     qrData?.traceCode ||
     previewData?.traceCode ||
@@ -287,55 +273,6 @@ const QRManagement = () => {
     previewData?.qrCodeUrl ||
     getPublicTraceUrl(previewTraceCode, previewDisplayOptions)
 
-  // 3. Preview QR mutation: POST /api/qr-codes/preview
-  const previewQRMutation = useMutation({
-    mutationFn: payload => QrCodeService.previewQrCode(payload),
-    onSuccess: response => {
-      const data = response?.data?.data || response?.data
-      const result = {
-        ...data,
-        traceCode: data?.traceCode,
-        qrImageDataUrl: data?.qrImageDataUrl,
-        qrCodeUrl: data?.qrCodeUrl,
-        traceability: data?.traceability,
-        displayOptions: data?.displayOptions || previewDisplayOptions,
-        harvestBatchId: selectedBatchId,
-        isPreview: true,
-      }
-      setPreviewData(result)
-      setPreviewModalOpen(true)
-    },
-    onError: () => {
-      setPreviewData(null)
-      setPreviewModalOpen(false)
-      // axios interceptor handles error notification
-    },
-  })
-
-  // 4. Create QR mutation
-  const createQRMutation = useMutation({
-    mutationFn: payload => QrCodeService.createQrCode(payload),
-    onSuccess: (response, variables) => {
-      const data = response?.data?.data || response?.data
-      const result = {
-        ...data,
-        traceCode: data?.traceCode || variables?.traceCode || currentTraceCode,
-        harvestBatchId: selectedBatchId,
-        createdAt: new Date().toISOString(),
-      }
-      setQrData(result)
-      queryClient.invalidateQueries({ queryKey: ["qr-stats"] })
-      queryClient.invalidateQueries({
-        queryKey: ["harvest-batch-detail", selectedBatchId],
-      })
-      queryClient.invalidateQueries({ queryKey: ["batches"] })
-    },
-    onError: () => {
-      // axios interceptor handles error notification
-    },
-  })
-
-  // Action: Preview trang truy xuất
   const handlePreview = useCallback(async () => {
     try {
       const values = await form.validateFields(["harvestBatchId"])
@@ -345,16 +282,36 @@ const QRManagement = () => {
         showPhotos: !!form.getFieldValue("showPhotos"),
       }
 
-      previewQRMutation.mutate({
-        harvestBatchId: values.harvestBatchId,
-        displayOptions,
-      })
+      setPreviewPending(true)
+      try {
+        const response = await QrCodeService.previewQrCode({
+          harvestBatchId: values.harvestBatchId,
+          displayOptions,
+        })
+        const data = response?.data?.data || response?.data
+        const result = {
+          ...data,
+          traceCode: data?.traceCode,
+          qrImageDataUrl: data?.qrImageDataUrl,
+          qrCodeUrl: data?.qrCodeUrl,
+          traceability: data?.traceability,
+          displayOptions: data?.displayOptions || previewDisplayOptions,
+          harvestBatchId: values.harvestBatchId,
+          isPreview: true,
+        }
+        setPreviewData(result)
+        setPreviewModalOpen(true)
+      } catch {
+        setPreviewData(null)
+        setPreviewModalOpen(false)
+      } finally {
+        setPreviewPending(false)
+      }
     } catch {
       message.warning("Vui lòng chọn lô thu hoạch trước khi xem preview!")
     }
-  }, [form, previewQRMutation])
+  }, [form, previewDisplayOptions])
 
-  // Action: Tạo mã QR
   const handleCreateQR = async () => {
     try {
       const values = await form.validateFields(["harvestBatchId"])
@@ -392,8 +349,28 @@ const QRManagement = () => {
         ),
         okText: "Tạo mã",
         cancelText: "Hủy",
-        onOk: () => {
-          createQRMutation.mutate(payload)
+        onOk: async () => {
+          setCreatePending(true)
+          try {
+            const response = await QrCodeService.createQrCode(payload)
+            const data = response?.data?.data || response?.data
+            const result = {
+              ...data,
+              traceCode:
+                data?.traceCode || payload?.traceCode || currentTraceCode,
+              harvestBatchId: selectedBatchId,
+              createdAt: new Date().toISOString(),
+            }
+            setQrData(result)
+
+            HarvestBatchService.getHarvestBatchById(selectedBatchId)
+              .then(res => {
+                setBatchDetail(res?.data?.data || res?.data || res)
+              })
+              .catch(() => {})
+          } finally {
+            setCreatePending(false)
+          }
         },
       })
     } catch {
@@ -401,7 +378,6 @@ const QRManagement = () => {
     }
   }
 
-  // Download QR SVG/Image
   const handleDownload = () => {
     const svgElement = qrContainerRef.current?.querySelector("svg")
     if (!svgElement) return
@@ -431,7 +407,6 @@ const QRManagement = () => {
       "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)))
   }
 
-  // Print QR Image
   const handlePrint = () => {
     const printWindow = window.open("", "", "width=600,height=600")
     const svgElement = qrContainerRef.current?.querySelector("svg")
@@ -463,7 +438,6 @@ const QRManagement = () => {
     printWindow.print()
   }
 
-  // Copy Trace Link
   const handleCopy = () => {
     navigator.clipboard.writeText(traceUrl)
     message.success("Đã sao chép liên kết truy xuất!")
@@ -650,7 +624,6 @@ const QRManagement = () => {
               </Form>
 
               <div className="mt-6 space-y-3">
-                {/* QR is controlled by eligibility and active QR state, not harvest progress. */}
                 {(() => {
                   const isQrEligible = batchDetail?.isQrEligible === true
 
@@ -716,7 +689,7 @@ const QRManagement = () => {
                         block
                         icon={<QrcodeOutlined />}
                         onClick={handleCreateQR}
-                        loading={createQRMutation.isPending}
+                        loading={createPending}
                         className="h-11 rounded-xl bg-green-600 hover:bg-green-700 font-semibold shadow-md shadow-green-100"
                       >
                         Tạo mã QR chính thức
@@ -727,7 +700,7 @@ const QRManagement = () => {
                         block
                         icon={<EyeOutlined />}
                         onClick={handlePreview}
-                        loading={previewQRMutation.isPending}
+                        loading={previewPending}
                         className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
                       >
                         Xem trước QR

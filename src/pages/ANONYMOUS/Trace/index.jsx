@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useRef } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useSearchParams } from "react-router-dom"
-import { useQuery } from "@tanstack/react-query"
 import { Card, Typography, Image, Tag, Space, Row, Col, Spin } from "antd"
 import {
   CheckCircleOutlined,
@@ -332,7 +331,6 @@ const buildTimelineGroups = traceData => {
 }
 
 export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
-  // Construct dynamic trace data
   const traceData = useMemo(() => {
     const payload = traceabilityData
     const source = payload?.harvestBatch || payload
@@ -436,9 +434,6 @@ export const TraceView = ({ traceabilityData, qrCode, isPreview = false }) => {
       : null
     const journalAreaUnit =
       journalAreas.find(entry => entry.areaUnit)?.areaUnit || ""
-    // The batch/plot area is the area to show in the product summary. The
-    // areas stored on cultivation materials are application areas (for
-    // example, the area covered by a fertilizer), not the plot's total area.
     const batchArea = getPlotArea(payload, source)
     const areaValue = batchArea ?? journalArea
     const areaUnit = formatAreaUnit(
@@ -882,21 +877,30 @@ const Trace = () => {
   const [searchParams] = useSearchParams()
   const recordedScanCodes = useRef(new Set())
 
-  const { data: traceability, isLoading } = useQuery({
-    queryKey: ["traceability", qrCode],
-    queryFn: async () => {
-      try {
-        return await http.get(`/traceability/${encodeURIComponent(qrCode)}`, {
+  const [traceability, setTraceability] = useState(undefined)
+  const [isLoading, setIsLoading] = useState(Boolean(qrCode))
+
+  useEffect(() => {
+    if (!qrCode) return
+    const timeout = setTimeout(() => {
+      setIsLoading(true)
+      http
+        .get(`/traceability/${encodeURIComponent(qrCode)}`, {
           skipNotice: true,
           skipAuthRedirect: true,
         })
-      } catch {
-        return null
-      }
-    },
-    enabled: Boolean(qrCode),
-    retry: false,
-  })
+        .then(response => {
+          setTraceability(response)
+        })
+        .catch(() => {
+          setTraceability(null)
+        })
+        .finally(() => {
+          setIsLoading(false)
+        })
+    }, 0)
+    return () => clearTimeout(timeout)
+  }, [qrCode])
 
   useEffect(() => {
     const payload = traceability?.data ?? traceability

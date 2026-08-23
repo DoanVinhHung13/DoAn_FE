@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Alert, Button, Card, Form, Input, Spin } from "antd"
 import {
@@ -6,7 +6,6 @@ import {
   FileTextOutlined,
   SaveOutlined,
 } from "@ant-design/icons"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import TitleCustom from "src/components/TitleCustom"
 import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
@@ -18,6 +17,7 @@ import {
 import ROUTER from "src/router/ROUTER"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 const EMPTY_MESSAGE = "Không tìm thấy thông tin danh mục cây trồng."
 const CROP_CATALOG_FIELD_MAPPING = {
@@ -30,7 +30,6 @@ const CROP_CATALOG_FIELD_MAPPING = {
 const CatalogEdit = () => {
   const navigate = useNavigate()
   const { id } = useParams()
-  const queryClient = useQueryClient()
   const [form] = Form.useForm()
   const storageKey = getFormDraftKey("crop-catalog", "edit", id)
   const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
@@ -38,23 +37,31 @@ const CatalogEdit = () => {
     storageKey,
   })
 
-  const {
-    data: catalogDetail,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["crop-catalog-detail", id],
-    queryFn: async () => {
+  const [catalogDetail, setCatalogDetail] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+  const [updatePending, setUpdatePending] = useState(false)
+
+  const fetchCatalogDetail = async () => {
+    if (!id) return
+    setIsLoading(true)
+    setIsError(false)
+    try {
       const response = await CropCatalogService.getCropCatalogById(id, {
         errorHandling: "component",
       })
       const payload = response?.data ?? {}
-      return payload?.data ?? payload
-    },
-    enabled: !!id,
-    retry: false,
-  })
+      setCatalogDetail(payload?.data ?? payload)
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCatalogDetail()
+  }, [id])
 
   useEffect(() => {
     if (catalogDetail) {
@@ -67,37 +74,33 @@ const CatalogEdit = () => {
     }
   }, [catalogDetail, form, restoreDraft])
 
-  const updateMutation = useMutation({
-    mutationFn: values => {
-      const payload = {
-        name: values.name.trim().replace(/\s+/g, " "),
-        description: values.description?.trim().replace(/\s+/g, " ") || null,
-        isActive:
-          typeof catalogDetail?.isActive === "boolean"
-            ? catalogDetail.isActive
-            : true,
-      }
-      return CropCatalogService.updateCropCatalog(id, payload, {
+  const handleUpdate = async values => {
+    setUpdatePending(true)
+    const payload = {
+      name: values.name.trim().replace(/\s+/g, " "),
+      description: values.description?.trim().replace(/\s+/g, " ") || null,
+      isActive:
+        typeof catalogDetail?.isActive === "boolean"
+          ? catalogDetail.isActive
+          : true,
+    }
+    try {
+      await CropCatalogService.updateCropCatalog(id, payload, {
         errorHandling: "form",
         fieldErrorMapping: CROP_CATALOG_FIELD_MAPPING,
       })
-    },
-    onSuccess: () => {
       clearDraft()
-      queryClient.invalidateQueries({ queryKey: ["crop-catalogs"] })
-      queryClient.invalidateQueries({ queryKey: ["crop-catalogs-dropdown"] })
-      queryClient.invalidateQueries({ queryKey: ["crop-catalog-detail", id] })
-      queryClient.invalidateQueries({ queryKey: ["system-key"] })
       navigate(ROUTER.FM_CROP_CATALOGS)
-    },
-    onError: error => {
+    } catch (error) {
       if (isNotFoundError(error)) {
         navigate(ROUTER.FM_CROP_CATALOGS)
         return
       }
       applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING)
-    },
-  })
+    } finally {
+      setUpdatePending(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -126,7 +129,7 @@ const CatalogEdit = () => {
           type="error"
           message="Không thể tải thông tin danh mục cây trồng."
           action={
-            <Button size="small" onClick={() => refetch()}>
+            <Button size="small" onClick={fetchCatalogDetail}>
               Thử lại
             </Button>
           }
@@ -178,7 +181,7 @@ const CatalogEdit = () => {
         <Form
           form={form}
           layout="vertical"
-          onFinish={values => updateMutation.mutate(values)}
+          onFinish={handleUpdate}
           onValuesChange={(_, allValues) => saveDraft(allValues)}
           onFinishFailed={() => {}}
           scrollToFirstError
@@ -188,34 +191,7 @@ const CatalogEdit = () => {
             label="Tên loại cây trồng"
             rules={[
               { required: true, message: "Vui lòng nhập tên loại cây trồng." },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed) {
-                    return Promise.reject(
-                      new Error(
-                        "Tên loại cây trồng không được chỉ chứa khoảng trắng.",
-                      ),
-                    )
-                  }
-                  if (trimmed.length > 100) {
-                    return Promise.reject(
-                      new Error(
-                        "Tên loại cây trồng không được vượt quá 100 ký tự.",
-                      ),
-                    )
-                  }
-                  if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                    return Promise.reject(
-                      new Error(
-                        "Tên loại cây trồng không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  }
-                  return Promise.resolve()
-                },
-              },
+              makeNameValidator({ label: "Tên loại cây trồng" }),
             ]}
           >
             <Input
@@ -227,32 +203,7 @@ const CatalogEdit = () => {
           <Form.Item
             name="description"
             label="Mô tả"
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed) {
-                    return Promise.reject(
-                      new Error("Mô tả không được chỉ chứa khoảng trắng."),
-                    )
-                  }
-                  if (trimmed.length > 200) {
-                    return Promise.reject(
-                      new Error("Mô tả không được vượt quá 200 ký tự."),
-                    )
-                  }
-                  if (trimmed !== trimmed.replace(/\s+/g, " ")) {
-                    return Promise.reject(
-                      new Error(
-                        "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  }
-                  return Promise.resolve()
-                },
-              },
-            ]}
+            rules={[makeDescriptionValidator()]}
           >
             <Input.TextArea
               rows={6}
@@ -274,7 +225,7 @@ const CatalogEdit = () => {
               type="primary"
               htmlType="submit"
               icon={<SaveOutlined />}
-              loading={updateMutation.isPending}
+              loading={updatePending}
               className="h-11 min-w-[120px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
             >
               Lưu thay đổi

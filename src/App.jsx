@@ -10,7 +10,6 @@ import AppRouter from "./router/AppRouter"
  * Thứ tự wrapper (từ ngoài vào trong):
  *
  *   Providers
- *     ├─ QueryClientProvider
  *     ├─ ThemeProvider (styled-components)
  *     ├─ Redux Provider
  *     ├─ StoreProvider (Context: theme, modal, routerBefore)

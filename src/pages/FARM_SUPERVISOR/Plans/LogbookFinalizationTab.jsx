@@ -730,7 +730,9 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
         confirmLoading={savingEdit}
         okText="Lưu thay đổi"
         cancelText="Hủy"
-        okButtonProps={{ className: "bg-green-600 border-green-600 hover:!bg-green-700" }}
+        okButtonProps={{
+          className: "bg-green-600 border-green-600 hover:!bg-green-700",
+        }}
       >
         <div className="py-2 space-y-3">
           <div className="text-sm text-gray-600">

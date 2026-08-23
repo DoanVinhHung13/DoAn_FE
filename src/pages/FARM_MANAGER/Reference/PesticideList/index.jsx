@@ -1,5 +1,4 @@
-import React, { useMemo, useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import React, { useMemo, useState, useEffect, useCallback } from "react"
 import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from "antd"
 import {
   FilterOutlined,
@@ -61,18 +60,28 @@ const PesticideList = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
 
-  const {
-    data: pesticideResponse,
-    isLoading,
-    isError,
-  } = useQuery({
-    queryKey: ["license-catalog-pesticides", searchText.trim()],
-    queryFn: () =>
-      CatalogService.getCatalogPesticides({
+  const [pesticideResponse, setPesticideResponse] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+
+  const fetchPesticides = useCallback(async () => {
+    setIsLoading(true)
+    setIsError(false)
+    try {
+      const response = await CatalogService.getCatalogPesticides({
         search: searchText.trim() || undefined,
-      }),
-    staleTime: 60_000,
-  })
+      })
+      setPesticideResponse(response)
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [searchText])
+
+  useEffect(() => {
+    fetchPesticides()
+  }, [fetchPesticides])
 
   const pesticideData = useMemo(
     () => getCatalogItems(pesticideResponse).map(normalizePesticide),
@@ -134,9 +143,7 @@ const PesticideList = () => {
       key: "category",
       width: 160,
       render: text => (
-        <Tag
-          className="font-medium rounded border-0 whitespace-normal"
-        >
+        <Tag className="font-medium rounded border-0 whitespace-normal">
           {text || "—"}
         </Tag>
       ),
@@ -229,7 +236,6 @@ const PesticideList = () => {
       {isError && (
         <Alert
           type="error"
-
           message="Không thể tải danh mục nông dược"
           description="Vui lòng kiểm tra đăng nhập hoặc thử lại sau."
         />

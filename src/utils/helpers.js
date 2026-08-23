@@ -188,6 +188,46 @@ export const LOGIN_IDENTIFIER_RULES = [
   },
 ]
 
+export const makeNameValidator = ({ label = "Tên", maxLength = 100 } = {}) => ({
+  validator: (_, value) => {
+    if (!value) return Promise.resolve()
+    const trimmed = value.trim()
+    if (!trimmed)
+      return Promise.reject(
+        new Error(`${label} không được chỉ chứa khoảng trắng.`),
+      )
+    if (trimmed.length > maxLength)
+      return Promise.reject(
+        new Error(`${label} không được vượt quá ${maxLength} ký tự.`),
+      )
+    if (trimmed !== trimmed.replace(/\s+/g, " "))
+      return Promise.reject(
+        new Error(`${label} không được chứa nhiều khoảng trắng liên tiếp.`),
+      )
+    return Promise.resolve()
+  },
+})
+
+export const makeDescriptionValidator = ({ maxLength = 200 } = {}) => ({
+  validator: (_, value) => {
+    if (!value) return Promise.resolve()
+    const trimmed = value.trim()
+    if (!trimmed)
+      return Promise.reject(
+        new Error("Mô tả không được chỉ chứa khoảng trắng."),
+      )
+    if (trimmed.length > maxLength)
+      return Promise.reject(
+        new Error(`Mô tả không được vượt quá ${maxLength} ký tự.`),
+      )
+    if (trimmed !== trimmed.replace(/\s+/g, " "))
+      return Promise.reject(
+        new Error("Mô tả không được chứa nhiều khoảng trắng liên tiếp."),
+      )
+    return Promise.resolve()
+  },
+})
+
 /**
  * Trích xuất danh sách mảnh đất / vùng trồng từ object nhật ký / kế hoạch
  * Hỗ trợ các thuộc tính: landPlotIds (mảng string), landPlots (mảng object), landPlotId, landPlotName, landPlotNames

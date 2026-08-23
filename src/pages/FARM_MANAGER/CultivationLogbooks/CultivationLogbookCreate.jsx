@@ -43,6 +43,7 @@ import { ROLES } from "src/constants/roles"
 import { applyApiFieldErrors } from "src/services/core/apiError"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 import SectionTitle from "src/components/Common/SectionTitle"
 import { isActiveCropCatalog } from "src/utils/cropCatalog"
@@ -892,31 +893,7 @@ const CultivationLogbookCreate = () => {
                 label="Tên nhật ký"
                 rules={[
                   { required: true, message: "Vui lòng nhập tên nhật ký" },
-                  {
-                    validator: (_, value) => {
-                      if (!value) return Promise.resolve()
-                      const trimmed = value.trim()
-                      if (!trimmed)
-                        return Promise.reject(
-                          new Error(
-                            "Tên nhật ký không được chỉ chứa khoảng trắng.",
-                          ),
-                        )
-                      if (trimmed.length > 100)
-                        return Promise.reject(
-                          new Error(
-                            "Tên nhật ký không được vượt quá 100 ký tự.",
-                          ),
-                        )
-                      if (trimmed !== trimmed.replace(/\s+/g, " "))
-                        return Promise.reject(
-                          new Error(
-                            "Tên nhật ký không được chứa nhiều khoảng trắng liên tiếp.",
-                          ),
-                        )
-                      return Promise.resolve()
-                    },
-                  },
+                  makeNameValidator({ label: "Tên nhật ký" }),
                 ]}
               >
                 <Input
@@ -1036,29 +1013,7 @@ const CultivationLogbookCreate = () => {
                 name="description"
                 label="Mô tả nhật ký"
                 rules={[
-                  {
-                    validator: (_, value) => {
-                      if (!value) return Promise.resolve()
-                      const trimmed = value.trim()
-                      if (!trimmed)
-                        return Promise.reject(
-                          new Error(
-                            "Mô tả nhật ký không được chỉ chứa khoảng trắng.",
-                          ),
-                        )
-                      if (trimmed.length > 200)
-                        return Promise.reject(
-                          new Error("Mô tả không được vượt quá 200 ký tự."),
-                        )
-                      if (trimmed !== trimmed.replace(/\s+/g, " "))
-                        return Promise.reject(
-                          new Error(
-                            "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                          ),
-                        )
-                      return Promise.resolve()
-                    },
-                  },
+                  makeDescriptionValidator({ maxLength: 200 }),
                 ]}
               >
                 <Input.TextArea

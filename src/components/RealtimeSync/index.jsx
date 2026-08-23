@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react"
-import { useQueryClient } from "@tanstack/react-query"
 import { useSelector } from "react-redux"
 import STORAGE, { getStorage } from "src/redux/storage"
 import signalRService from "src/components/SocketWrapper"
@@ -21,7 +20,6 @@ const requiresGroupRefresh = change =>
   GROUP_MEMBERSHIP_ENTITIES.has(getEntityName(change))
 
 const RealtimeSync = () => {
-  const queryClient = useQueryClient()
   const userInfo = useSelector(state => state.appGlobal.userInfo)
   const invalidationTimer = useRef(null)
   const groupRefreshTimer = useRef(null)
@@ -31,7 +29,6 @@ const RealtimeSync = () => {
     const userId = userInfo?._id || userInfo?.id
     if (!userId || !getStorage(STORAGE.TOKEN)) {
       signalRService.stopConnection().catch(() => {})
-      queryClient.clear()
       return undefined
     }
 
@@ -43,15 +40,12 @@ const RealtimeSync = () => {
     const invalidateActiveQueries = () => {
       clearTimeout(invalidationTimer.current)
       invalidationTimer.current = setTimeout(() => {
-        queryClient.invalidateQueries({ refetchType: "active" })
+        window.dispatchEvent(new CustomEvent("app:data-changed"))
       }, INVALIDATION_DELAY_MS)
     }
 
     const invalidateNotifications = () => {
-      queryClient.invalidateQueries({
-        queryKey: ["notifications"],
-        refetchType: "active",
-      })
+      window.dispatchEvent(new CustomEvent("app:notification-changed"))
     }
 
     const refreshGroupsNow = () => {
@@ -126,10 +120,9 @@ const RealtimeSync = () => {
       clearTimeout(invalidationTimer.current)
       clearTimeout(groupRefreshTimer.current)
       clearTimeout(reconnectTimer.current)
-      queryClient.clear()
       signalRService.stopConnection().catch(() => {})
     }
-  }, [queryClient, userInfo?._id, userInfo?.id])
+  }, [userInfo?._id, userInfo?.id])
 
   return null
 }
