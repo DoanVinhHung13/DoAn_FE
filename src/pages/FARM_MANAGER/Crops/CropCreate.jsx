@@ -401,6 +401,7 @@ const CropCreate = () => {
             htmlType="submit"
             icon={<SaveOutlined />}
             loading={isPending}
+            disabled={uploadingCreate}
             className="h-11 min-w-[120px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
           >
             Thêm mới

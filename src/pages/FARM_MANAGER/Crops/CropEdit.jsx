@@ -500,6 +500,7 @@ const CropEdit = () => {
                     htmlType="submit"
                     icon={<SaveOutlined />}
                     loading={updatePending}
+                    disabled={uploading}
                     className="h-12 w-full rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100 text-base"
                   >
                     Lưu thay đổi

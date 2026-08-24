@@ -23,7 +23,6 @@ import { Sprout } from "lucide-react"
 import TitleCustom from "src/components/TitleCustom"
 import { CropIcon } from "src/assets/icon/menu/MenuIcons"
 import CropManagementService from "src/services/CropManagementService"
-import CropVarietiesModal from "./CropVarietiesModal"
 import ROUTER from "src/router/ROUTER"
 import { displayValue } from "src/utils/helpers"
 import { useSystemKey } from "src/hooks/useSystemKey"
@@ -35,7 +34,6 @@ const CropDetail = () => {
   const navigate = useNavigate()
   const { id } = useParams()
   const { getDescription } = useSystemKey()
-  const [isVarietiesModalOpen, setIsVarietiesModalOpen] = useState(false)
 
   const [cropDetail, setCropDetail] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -247,13 +245,7 @@ const CropDetail = () => {
         </Col>
       </Row>
 
-      {/* Crop Varieties Management Modal */}
-      <CropVarietiesModal
-        open={isVarietiesModalOpen}
-        onCancel={() => setIsVarietiesModalOpen(false)}
-        cropId={id}
-        cropName={cropDetail.name}
-      />
+
     </div>
   )
 }
