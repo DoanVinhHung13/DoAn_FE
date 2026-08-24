@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { Alert, Button, Card, Form, Input, Spin } from "antd"
-import {
-  ArrowLeftOutlined,
-  FileTextOutlined,
-  SaveOutlined,
-} from "@ant-design/icons"
+import { Alert, Button, Card, Form, Input, Select, Spin } from "antd"
+import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons"
 
 import TitleCustom from "src/components/TitleCustom"
 import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
@@ -15,32 +11,34 @@ import {
   isNotFoundError,
 } from "src/services/core/apiError"
 import ROUTER from "src/router/ROUTER"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
 import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
-const EMPTY_MESSAGE = "Không tìm thấy thông tin danh mục cây trồng."
-const CROP_CATALOG_FIELD_MAPPING = {
-  Name: "name",
-  name: "name",
-  Description: "description",
-  description: "description",
-}
+const normalizeText = text => text?.trim().replace(/\s+/g, " ") || null
 
 const CatalogEdit = () => {
   const navigate = useNavigate()
   const { id } = useParams()
   const [form] = Form.useForm()
+  const { getCombo } = useSystemKey()
   const storageKey = getFormDraftKey("crop-catalog", "edit", id)
   const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
     form,
     storageKey,
   })
 
+  const statusOptions = getCombo(SYSTEM_KEY.STATUS).map(opt => ({
+    value: (opt.codeValue || opt.value) === "ACTIVE",
+    label: opt.label || opt.description,
+  }))
+
   const [catalogDetail, setCatalogDetail] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isError, setIsError] = useState(false)
-  const [updatePending, setUpdatePending] = useState(false)
+  const [isPending, setIsPending] = useState(false)
 
   const fetchCatalogDetail = async () => {
     if (!id) return
@@ -50,7 +48,7 @@ const CatalogEdit = () => {
       const response = await CropCatalogService.getCropCatalogById(id, {
         errorHandling: "component",
       })
-      const payload = response?.data ?? {}
+      const payload = response?.data
       setCatalogDetail(payload?.data ?? payload)
     } catch {
       setIsError(true)
@@ -66,8 +64,9 @@ const CatalogEdit = () => {
   useEffect(() => {
     if (catalogDetail) {
       const serverValues = {
-        name: catalogDetail.name || catalogDetail.cropCatalogName || "",
+        name: catalogDetail.name || "",
         description: catalogDetail.description || "",
+        isActive: catalogDetail.isActive ?? true,
       }
       const draft = restoreDraft()
       form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) })
@@ -75,19 +74,16 @@ const CatalogEdit = () => {
   }, [catalogDetail, form, restoreDraft])
 
   const handleUpdate = async values => {
-    setUpdatePending(true)
+    setIsPending(true)
     const payload = {
-      name: values.name.trim().replace(/\s+/g, " "),
-      description: values.description?.trim().replace(/\s+/g, " ") || null,
-      isActive:
-        typeof catalogDetail?.isActive === "boolean"
-          ? catalogDetail.isActive
-          : true,
+      name: normalizeText(values.name),
+      description: normalizeText(values.description),
+      isActive: values.isActive ?? catalogDetail?.isActive ?? true,
     }
+
     try {
       await CropCatalogService.updateCropCatalog(id, payload, {
         errorHandling: "form",
-        fieldErrorMapping: CROP_CATALOG_FIELD_MAPPING,
       })
       clearDraft()
       navigate(ROUTER.FM_CROP_CATALOGS)
@@ -96,9 +92,9 @@ const CatalogEdit = () => {
         navigate(ROUTER.FM_CROP_CATALOGS)
         return
       }
-      applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING)
+      applyApiFieldErrors(form, error)
     } finally {
-      setUpdatePending(false)
+      setIsPending(false)
     }
   }
 
@@ -154,7 +150,10 @@ const CatalogEdit = () => {
           </TitleCustom>
         </div>
         <Card>
-          <Alert type="warning" message={EMPTY_MESSAGE} />
+          <Alert
+            type="warning"
+            message="Không tìm thấy thông tin danh mục cây trồng."
+          />
         </Card>
       </div>
     )
@@ -183,7 +182,6 @@ const CatalogEdit = () => {
           layout="vertical"
           onFinish={handleUpdate}
           onValuesChange={(_, allValues) => saveDraft(allValues)}
-          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <Form.Item
@@ -195,7 +193,7 @@ const CatalogEdit = () => {
             ]}
           >
             <Input
-              className="h-11 rounded-lg"
+              className="!h-11 rounded-lg"
               placeholder="Nhập tên loại cây trồng"
             />
           </Form.Item>
@@ -206,9 +204,16 @@ const CatalogEdit = () => {
             rules={[makeDescriptionValidator()]}
           >
             <Input.TextArea
-              rows={6}
+              rows={4}
               className="rounded-lg"
               placeholder="Nhập mô tả danh mục cây trồng"
+            />
+          </Form.Item>
+
+          <Form.Item name="isActive" label="Trạng thái">
+            <Select
+              className="!h-11 w-full rounded-lg [&_.ant-select-selector]:!h-11 [&_.ant-select-selector]:!rounded-lg"
+              options={statusOptions}
             />
           </Form.Item>
 
@@ -223,7 +228,7 @@ const CatalogEdit = () => {
               type="primary"
               htmlType="submit"
               icon={<SaveOutlined />}
-              loading={updatePending}
+              loading={isPending}
               className="h-11 min-w-[120px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
             >
               Lưu thay đổi

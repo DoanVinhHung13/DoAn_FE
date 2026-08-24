@@ -9,22 +9,23 @@ import CropCatalogService from "src/services/CropCatalogService"
 import { applyApiFieldErrors } from "src/services/core/apiError"
 import ROUTER from "src/router/ROUTER"
 import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
 import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
-
-const STATUS_OPTIONS = [
-  { value: true, label: "Hoạt động" },
-  { value: false, label: "Ngừng hoạt động" },
-]
 
 const normalizeText = text => text?.trim().replace(/\s+/g, " ") || null
 
 const CatalogCreate = () => {
   const navigate = useNavigate()
   const [form] = Form.useForm()
-  const { refetchSystemKey } = useSystemKey()
+  const { getCombo, refetchSystemKey } = useSystemKey()
   const [isPending, setIsPending] = useState(false)
+
+  const statusOptions = getCombo(SYSTEM_KEY.STATUS).map(opt => ({
+    value: (opt.codeValue || opt.value) === "ACTIVE",
+    label: opt.label || opt.description,
+  }))
 
   const storageKey = getFormDraftKey("crop-catalog", "create")
   const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
@@ -97,7 +98,7 @@ const CatalogCreate = () => {
             ]}
           >
             <Input
-              className="h-11 rounded-lg"
+              className="!h-11 rounded-lg"
               placeholder="Nhập tên loại cây trồng"
             />
           </Form.Item>
@@ -115,7 +116,10 @@ const CatalogCreate = () => {
           </Form.Item>
 
           <Form.Item name="isActive" label="Trạng thái">
-            <Select className="h-11" options={STATUS_OPTIONS} />
+            <Select
+              className="!h-11 w-full rounded-lg [&_.ant-select-selector]:!h-11 [&_.ant-select-selector]:!rounded-lg"
+              options={statusOptions}
+            />
           </Form.Item>
 
           <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">

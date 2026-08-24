@@ -10,7 +10,6 @@ import {
   Row,
   Space,
   Spin,
-  Tag,
   Typography,
 } from "antd"
 import {
@@ -23,58 +22,24 @@ import { Sprout } from "lucide-react"
 
 import TitleCustom from "src/components/TitleCustom"
 import { CropIcon } from "src/assets/icon/menu/MenuIcons"
-import CropCatalogService from "src/services/CropCatalogService"
 import CropManagementService from "src/services/CropManagementService"
 import CropVarietiesModal from "./CropVarietiesModal"
 import ROUTER from "src/router/ROUTER"
 import { displayValue } from "src/utils/helpers"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 
 const { Text, Paragraph } = Typography
-
-const EMPTY_MESSAGE = "Không tìm thấy thông tin cây trồng."
-
-const isCropActive = item => {
-  if (typeof item?.isActive === "boolean") return item.isActive
-  const status = String(item?.status || "").toLowerCase()
-  return !["inactive", "disabled", "deleted", "ngừng hoạt động"].includes(
-    status,
-  )
-}
-
-const getStatusLabel = item =>
-  isCropActive(item) ? "Hoạt động" : "Ngừng hoạt động"
-
-const CATEGORY_TAG_COLORS = [
-  { bg: "#dcfce7", text: "#15803d" },
-  { bg: "#dbeafe", text: "#1d4ed8" },
-  { bg: "#fef3c7", text: "#b45309" },
-  { bg: "#fce7f3", text: "#be185d" },
-  { bg: "#ede9fe", text: "#6d28d9" },
-  { bg: "#ccfbf1", text: "#0f766e" },
-  { bg: "#fee2e2", text: "#b91c1c" },
-  { bg: "#e0f2fe", text: "#0369a1" },
-]
-
-const getCategoryTagStyle = value => {
-  const text = displayValue(value)
-  const hash = [...text].reduce((sum, char) => sum + char.charCodeAt(0), 0)
-  const color = CATEGORY_TAG_COLORS[hash % CATEGORY_TAG_COLORS.length]
-  return {
-    backgroundColor: color.bg,
-    color: color.text,
-  }
-}
 
 const CropDetail = () => {
   const navigate = useNavigate()
   const { id } = useParams()
+  const { getDescription } = useSystemKey()
   const [isVarietiesModalOpen, setIsVarietiesModalOpen] = useState(false)
 
   const [cropDetail, setCropDetail] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isError, setIsError] = useState(false)
-
-  const [cropCatalogsData, setCropCatalogsData] = useState([])
 
   const fetchCropDetail = async () => {
     if (!id) return
@@ -84,7 +49,7 @@ const CropDetail = () => {
       const response = await CropManagementService.getCropById(id, {
         errorHandling: "component",
       })
-      const payload = response?.data ?? {}
+      const payload = response?.data
       setCropDetail(payload?.data ?? payload)
     } catch {
       setIsError(true)
@@ -93,44 +58,9 @@ const CropDetail = () => {
     }
   }
 
-  const fetchCropCatalogs = async () => {
-    try {
-      const response = await CropCatalogService.getCropCatalogs({
-        PageIndex: 1,
-        PageSize: 100,
-      })
-      const payload = response?.data ?? response ?? {}
-      const data = payload?.data ?? payload
-      const items = Array.isArray(data)
-        ? data
-        : data?.items ||
-          data?.results ||
-          data?.crops ||
-          data?.cropCatalogs ||
-          payload?.items ||
-          payload?.results ||
-          []
-      setCropCatalogsData(items)
-    } catch {
-      setCropCatalogsData([])
-    }
-  }
-
   useEffect(() => {
     fetchCropDetail()
   }, [id])
-
-  useEffect(() => {
-    fetchCropCatalogs()
-  }, [])
-
-  const getCropCatalogName = catalogId => {
-    if (!cropCatalogsData || !catalogId) return catalogId
-    const catalog = cropCatalogsData.find(
-      c => c.id === catalogId || c.cropCatalogId === catalogId,
-    )
-    return catalog ? catalog.name || catalog.cropCatalogName : catalogId
-  }
 
   if (isLoading) {
     return (
@@ -182,14 +112,15 @@ const CropDetail = () => {
         <Card>
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={EMPTY_MESSAGE}
+            description="Không tìm thấy thông tin cây trồng."
           />
         </Card>
       </div>
     )
   }
 
-  const isActive = isCropActive(cropDetail)
+  const isActive = Boolean(cropDetail.isActive)
+  const catalogName = cropDetail.cropCatalogName || cropDetail.cropCatalog?.name
 
   return (
     <div className="space-y-6">
@@ -221,65 +152,7 @@ const CropDetail = () => {
       </div>
 
       <Row gutter={[24, 24]}>
-        {/* Left Column - Image & Basic Info */}
-        <Col xs={24} lg={10}>
-          <Card className="rounded-lg shadow-sm">
-            {/* Crop Image */}
-            <div className="mb-6">
-              {cropDetail.imageUrl ? (
-                <div className="overflow-hidden rounded-xl border border-gray-200">
-                  <img
-                    src={cropDetail.imageUrl}
-                    alt={displayValue(cropDetail.name)}
-                    className="h-[320px] w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="flex h-[320px] items-center justify-center rounded-xl border border-gray-200 bg-green-50">
-                  <Sprout className="h-24 w-24 text-green-300" />
-                </div>
-              )}
-            </div>
-
-            {/* Crop Name & Status */}
-            <div className="space-y-4 border-t border-gray-100 pt-6">
-              <div>
-                <Text type="secondary" className="block text-sm">
-                  Tên cây trồng
-                </Text>
-                <Text strong className="block text-2xl text-gray-900">
-                  {displayValue(cropDetail.name)}
-                </Text>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div
-                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${
-                    isActive
-                      ? "bg-green-50 text-green-700"
-                      : "bg-red-50 text-red-600"
-                  }`}
-                >
-                  {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
-                  {getStatusLabel(cropDetail)}
-                </div>
-
-                {cropDetail.cropCatalogId && (
-                  <Tag
-                    className="!m-0 rounded-full border-0 px-4 py-1.5 text-sm font-semibold"
-                    style={getCategoryTagStyle(
-                      getCropCatalogName(cropDetail.cropCatalogId),
-                    )}
-                  >
-                    {getCropCatalogName(cropDetail.cropCatalogId)}
-                  </Tag>
-                )}
-              </div>
-            </div>
-          </Card>
-        </Col>
-
-        {/* Right Column - Detailed Information */}
+        {/* Left Column - Basic Info & Description */}
         <Col xs={24} lg={14}>
           <Space direction="vertical" size={24} className="w-full">
             {/* Basic Information */}
@@ -295,10 +168,32 @@ const CropDetail = () => {
               <Descriptions
                 column={1}
                 size="middle"
-                className="[&_.ant-descriptions-item-label]:w-[260px]"
+                className="[&_.ant-descriptions-item-label]:w-[180px]"
               >
+                <Descriptions.Item label="Tên cây trồng">
+                  <Text strong className="text-base text-gray-900">
+                    {displayValue(cropDetail.name)}
+                  </Text>
+                </Descriptions.Item>
                 <Descriptions.Item label="Danh mục">
-                  {displayValue(getCropCatalogName(cropDetail.cropCatalogId))}
+                  <span className="font-medium text-gray-800">
+                    {displayValue(catalogName)}
+                  </span>
+                </Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                  <div
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                      isActive
+                        ? "bg-green-50 text-green-700"
+                        : "bg-red-50 text-red-600"
+                    }`}
+                  >
+                    {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
+                    {getDescription(
+                      SYSTEM_KEY.STATUS,
+                      isActive ? "ACTIVE" : "INACTIVE",
+                    )}
+                  </div>
                 </Descriptions.Item>
               </Descriptions>
             </Card>
@@ -312,11 +207,43 @@ const CropDetail = () => {
               }
               className="rounded-lg shadow-sm"
             >
-              <Paragraph className="mb-0 min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-gray-700">
-                {cropDetail.description || "Chưa có mô tả cho cây trồng này"}
-              </Paragraph>
+              {cropDetail.description ? (
+                <Paragraph className="mb-0 min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-gray-700">
+                  {cropDetail.description}
+                </Paragraph>
+              ) : (
+                <Text type="secondary" italic>
+                  Chưa có mô tả cho cây trồng này.
+                </Text>
+              )}
             </Card>
           </Space>
+        </Col>
+
+        {/* Right Column - Crop Image */}
+        <Col xs={24} lg={10}>
+          <Card
+            title={
+              <span className="text-lg font-semibold text-green-600">
+                Ảnh minh họa
+              </span>
+            }
+            className="rounded-lg shadow-sm"
+          >
+            {cropDetail.imageUrl ? (
+              <div className="overflow-hidden rounded-xl border border-gray-200">
+                <img
+                  src={cropDetail.imageUrl}
+                  alt={displayValue(cropDetail.name)}
+                  className="h-[320px] w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex h-[320px] items-center justify-center rounded-xl border border-gray-200 bg-green-50">
+                <Sprout className="h-24 w-24 text-green-300" />
+              </div>
+            )}
+          </Card>
         </Col>
       </Row>
 

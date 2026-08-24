@@ -20,7 +20,6 @@ import {
   SaveOutlined,
   UploadOutlined,
 } from "@ant-design/icons"
-import { Sprout } from "lucide-react"
 
 import TitleCustom from "src/components/TitleCustom"
 import { CropIcon } from "src/assets/icon/menu/MenuIcons"
@@ -241,7 +240,7 @@ const CropCreate = () => {
       >
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={16}>
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Basic Information Card */}
               <Card
                 className="rounded-lg shadow-sm"
@@ -255,6 +254,7 @@ const CropCreate = () => {
                   <Form.Item
                     name="name"
                     label="Tên cây trồng"
+                    className="!mb-0"
                     rules={[
                       {
                         required: true,
@@ -264,7 +264,7 @@ const CropCreate = () => {
                     ]}
                   >
                     <Input
-                      className="h-11 rounded-lg"
+                      className="!h-11 rounded-lg"
                       placeholder="Nhập tên cây trồng"
                     />
                   </Form.Item>
@@ -272,17 +272,14 @@ const CropCreate = () => {
                   <Form.Item
                     name="cropCatalogId"
                     label="Nhóm cây"
+                    className="!mb-0"
                     rules={[
                       { required: true, message: "Vui lòng chọn nhóm cây." },
                     ]}
                   >
                     <Select
                       className="h-11"
-                      placeholder={
-                        cropTypeFormOptions?.length > 0
-                          ? "Chọn nhóm cây"
-                          : "Chọn nhóm cây từ danh sách"
-                      }
+                      placeholder="Chọn nhóm cây"
                       loading={isCatalogsLoading}
                       options={cropTypeFormOptions}
                       showSearch
@@ -311,7 +308,7 @@ const CropCreate = () => {
                 <Form.Item
                   name="description"
                   label="Mô tả"
-                  className="mb-0"
+                  className="!mb-0"
                   rules={[makeDescriptionValidator({ maxLength: 200 })]}
                 >
                   <Input.TextArea

@@ -27,6 +27,8 @@ import ROUTER from "src/router/ROUTER"
 import CropManagementService from "src/services/CropManagementService"
 import CropCatalogService from "src/services/CropCatalogService"
 import { useListManagement } from "src/hooks/useListManagement"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 
 const unwrapItems = response => {
   const payload = response?.data?.data ?? response?.data ?? response ?? {}
@@ -41,6 +43,7 @@ const unwrapItems = response => {
 
 const Crops = () => {
   const navigate = useNavigate()
+  const { getCombo, getDescription } = useSystemKey()
 
   const {
     searchInput,
@@ -72,10 +75,13 @@ const Crops = () => {
   const [statusModal, setStatusModal] = useState({ open: false, item: null })
   const [cropCatalogOptions, setCropCatalogOptions] = useState([])
 
+  const statusOptions = getCombo(SYSTEM_KEY.STATUS)
   const selectStatusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
-    { value: "ACTIVE", label: "Hoạt động" },
-    { value: "INACTIVE", label: "Ngừng hoạt động" },
+    ...statusOptions.map(opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description,
+    })),
   ]
 
   const getList = useCallback(async () => {
@@ -183,7 +189,10 @@ const Crops = () => {
       },
     },
     createStatusColumn({
-      getLabel: isActive => (isActive ? "Hoạt động" : "Ngừng hoạt động"),
+      getLabel: isActive => {
+        const sysVal = isActive ? "ACTIVE" : "INACTIVE"
+        return getDescription(SYSTEM_KEY.STATUS, sysVal)
+      },
     }),
     {
       title: "Hành động",

@@ -14,6 +14,7 @@ import {
 } from "antd"
 import {
   ArrowLeftOutlined,
+  CalendarOutlined,
   CheckCircleOutlined,
   EditOutlined,
   FileTextOutlined,
@@ -25,25 +26,16 @@ import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
 import CropCatalogService from "src/services/CropCatalogService"
 import ROUTER from "src/router/ROUTER"
 import { displayValue } from "src/utils/helpers"
+import { formatDateTime } from "src/utils/dateFormatters"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 
 const { Text, Paragraph } = Typography
-
-const EMPTY_MESSAGE = "Không tìm thấy thông tin danh mục cây trồng."
-
-const isCatalogActive = item => {
-  if (typeof item?.isActive === "boolean") return item.isActive
-  const status = String(item?.status || "").toLowerCase()
-  return !["inactive", "disabled", "deleted", "ngừng hoạt động"].includes(
-    status,
-  )
-}
-
-const getStatusLabel = item =>
-  isCatalogActive(item) ? "Hoạt động" : "Ngừng hoạt động"
 
 const CatalogDetail = () => {
   const navigate = useNavigate()
   const { id } = useParams()
+  const { getDescription } = useSystemKey()
 
   const [catalogDetail, setCatalogDetail] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -57,7 +49,7 @@ const CatalogDetail = () => {
       const response = await CropCatalogService.getCropCatalogById(id, {
         errorHandling: "component",
       })
-      const payload = response?.data ?? {}
+      const payload = response?.data
       setCatalogDetail(payload?.data ?? payload)
     } catch {
       setIsError(true)
@@ -124,14 +116,14 @@ const CatalogDetail = () => {
         <Card>
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={EMPTY_MESSAGE}
+            description="Không tìm thấy thông tin danh mục cây trồng."
           />
         </Card>
       </div>
     )
   }
 
-  const isActive = isCatalogActive(catalogDetail)
+  const isActive = Boolean(catalogDetail.isActive)
 
   return (
     <div className="space-y-6">
@@ -163,7 +155,7 @@ const CatalogDetail = () => {
       <Row gutter={[24, 24]}>
         <Col xs={24}>
           <Space direction="vertical" size={24} className="w-full">
-            {/* Basic Information */}
+            {/* Thông tin cơ bản */}
             <Card
               title={
                 <span className="flex items-center gap-2 text-lg font-semibold text-green-600">
@@ -173,44 +165,57 @@ const CatalogDetail = () => {
               }
               className="rounded-lg shadow-sm"
             >
-              <Descriptions column={1} size="large">
-                <Descriptions.Item label="Tên loại cây trồng">
-                  <Text strong className="text-lg text-gray-900">
-                    {displayValue(
-                      catalogDetail.name || catalogDetail.cropCatalogName,
-                    )}
+              <Descriptions column={{ xs: 1, sm: 2, md: 3 }} size="middle">
+                <Descriptions.Item label="Tên danh mục">
+                  <Text strong className="text-base text-gray-900">
+                    {displayValue(catalogDetail.name)}
                   </Text>
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
                   <div
-                    className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold ${
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
                       isActive
                         ? "bg-green-50 text-green-700"
                         : "bg-red-50 text-red-600"
                     }`}
                   >
                     {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
-                    {getStatusLabel(catalogDetail)}
+                    {getDescription(
+                      SYSTEM_KEY.STATUS,
+                      isActive ? "ACTIVE" : "INACTIVE",
+                    )}
                   </div>
                 </Descriptions.Item>
+                {catalogDetail.createdAt && (
+                  <Descriptions.Item label="Ngày tạo">
+                    <span className="inline-flex items-center gap-1 text-gray-700">
+                      <CalendarOutlined className="text-gray-400" />
+                      {formatDateTime(catalogDetail.createdAt)}
+                    </span>
+                  </Descriptions.Item>
+                )}
               </Descriptions>
             </Card>
 
-            {/* Description */}
-            {catalogDetail.description && (
-              <Card
-                title={
-                  <span className="text-lg font-semibold text-green-600">
-                    Mô tả
-                  </span>
-                }
-                className="rounded-lg shadow-sm"
-              >
+            {/* Mô tả */}
+            <Card
+              title={
+                <span className="text-lg font-semibold text-green-600">
+                  Mô tả
+                </span>
+              }
+              className="rounded-lg shadow-sm"
+            >
+              {catalogDetail.description ? (
                 <Paragraph className="mb-0 min-w-0 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-gray-700">
                   {catalogDetail.description}
                 </Paragraph>
-              </Card>
-            )}
+              ) : (
+                <Text type="secondary" italic>
+                  Chưa có mô tả cho danh mục này.
+                </Text>
+              )}
+            </Card>
           </Space>
         </Col>
       </Row>

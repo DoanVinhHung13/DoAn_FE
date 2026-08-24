@@ -335,7 +335,7 @@ const CropEdit = () => {
       >
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={16}>
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Basic Information Card */}
               <Card
                 className="rounded-lg shadow-sm"
@@ -349,6 +349,7 @@ const CropEdit = () => {
                   <Form.Item
                     name="name"
                     label="Tên cây trồng"
+                    className="!mb-0"
                     rules={[
                       {
                         required: true,
@@ -358,7 +359,7 @@ const CropEdit = () => {
                     ]}
                   >
                     <Input
-                      className="h-11 rounded-lg"
+                      className="!h-11 rounded-lg"
                       placeholder="Nhập tên cây trồng"
                     />
                   </Form.Item>
@@ -366,12 +367,13 @@ const CropEdit = () => {
                   <Form.Item
                     name="cropCatalogId"
                     label="Danh mục cây trồng"
+                    className="!mb-0"
                     rules={[
                       { required: true, message: "Vui lòng chọn danh mục." },
                     ]}
                   >
                     <Select
-                      className="h-11"
+                      className="!h-11 w-full rounded-lg [&_.ant-select-selector]:!h-11 [&_.ant-select-selector]:!rounded-lg"
                       placeholder={
                         cropTypeOptions?.length > 0
                           ? "Chọn danh mục"
@@ -405,6 +407,7 @@ const CropEdit = () => {
                 <Form.Item
                   name="description"
                   label="Mô tả"
+                  className="!mb-0"
                   rules={[makeDescriptionValidator({ maxLength: 200 })]}
                 >
                   <Input.TextArea
