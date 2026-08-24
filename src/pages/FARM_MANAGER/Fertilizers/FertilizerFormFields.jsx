@@ -1,25 +1,5 @@
-/**
- * FertilizerFormModal — Tạo mới / Chỉnh sửa phân bón
- * Triggered by: "Thêm mới" (create) | "Sửa" (update)
- *
- * Fields theo Figma:
- *   Section 1 – Thông Tin Cơ Bản:
- *     mã phân bón, Tên phân bón, Nhà Sản Xuất, Nhà Cung Cấp,
- *     Tồn Kho tối thiểu + Số + Đơn Vị tính, Loại Phân Bón, Mô Tả
- *
- *   Section 2 – Thành Phần:
- *     Bảng động: Tên thành Phần | Hàm Lượng | Đơn Vị Tính(%, ppm, CFU/g)
- *     Mặc định 3 hàng: N, P₂O₅, K₂O
- *
- *   Section 3 – Liều Lượng:
- *     Bảng động: Số | Đơn vị Tính (Kg/Lit) | Đơn Vị diện tích | Đối tượng
- *
- * Notification messages:
- *   MSG-FER-01: "Thêm mới phân bón thành công."
- *   MSG-FER-05: "Vui lòng nhập đầy đủ các trường thông tin bắt buộc."
- *   MSG-FER-06: "Mã phân bón đã tồn tại trong hệ thống."
- *   MSG-FER-09: "Cập nhật thông tin phân bón thành công."
- */
+import React, { useState, useEffect, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   EditOutlined,
   MinusCircleOutlined,
@@ -36,19 +16,11 @@ import {
   Select,
   Typography,
 } from "antd"
-import React from "react"
-import { useNavigate } from "react-router-dom"
+
+import SectionTitle from "src/components/Common/SectionTitle"
+import AgriculturalInputCatalogAutocomplete from "src/components/AgriculturalInputCatalogAutocomplete"
 import ROUTER from "src/router/ROUTER"
 import FertilizerService from "src/services/FertilizerService"
-import { applyApiFieldErrors } from "src/services/core/apiError"
-import { useSystemKey } from "src/hooks/useSystemKey"
-import { SYSTEM_KEY } from "src/constants/systemKey"
-import {
-  getQuantityUnit,
-  formatAreaUnit,
-  MEASUREMENT_UNITS,
-} from "src/constants/measurementUnits"
-import AgriculturalInputCatalogAutocomplete from "src/components/AgriculturalInputCatalogAutocomplete"
 import CatalogSuggestionService, {
   getCatalogPrefill,
 } from "src/services/CatalogSuggestionService"
@@ -56,29 +28,20 @@ import {
   createFertilizerComponentRow,
   mapCatalogCompositionsToRows,
 } from "src/services/CatalogSuggestionService/compositions"
+import { applyApiFieldErrors } from "src/services/core/apiError"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { useCropOptions } from "src/hooks/useCropOptions"
+import useFormDraft from "src/hooks/useFormDraft"
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import {
+  getQuantityUnit,
+  formatAreaUnit,
+  MEASUREMENT_UNITS,
+} from "src/constants/measurementUnits"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 const { Text } = Typography
-
-const FERTILIZER_FIELD_MAPPING = {
-  Name: "name",
-  name: "name",
-  Unit: "unit",
-  unit: "unit",
-  InventoryQuantity: "inventoryQuantity",
-  inventoryQuantity: "inventoryQuantity",
-  InventoryUnit: "inventoryUnit",
-  inventoryUnit: "inventoryUnit",
-  Description: "description",
-  description: "description",
-  MinimumStock: "minimumStock",
-  minimumStock: "minimumStock",
-  Type: "type",
-  type: "type",
-  Manufacturer: "manufacturer",
-  manufacturer: "manufacturer",
-}
-
-// ── Options ──────────────────────────────────────────────────────────────────
 
 const DEFAULT_DOSAGE = {
   amount: "",
@@ -92,30 +55,12 @@ const normalizeTarget = value =>
     .trim()
     .toLowerCase()
 
-const getCropOptionKeys = option =>
-  [option.value, option.label].map(normalizeTarget).filter(Boolean)
-
-const getCropTargetKey = (target, options) => {
-  const normalizedTarget = normalizeTarget(target)
-  if (!normalizedTarget) return ""
-
-  const matchingOption = options.find(option =>
-    getCropOptionKeys(option).includes(normalizedTarget),
-  )
-
-  return normalizeTarget(matchingOption?.value ?? target)
-}
-
-// ── Section header helper ─────────────────────────────────────────────────────
-import SectionTitle from "src/components/Common/SectionTitle"
-import { useCropOptions } from "src/hooks/useCropOptions"
-import useFormDraft from "src/hooks/useFormDraft"
-import { getFormDraftKey } from "src/utils/formDraftKeys"
-import { makeNameValidator } from "src/utils/helpers"
-
-// ── Main Component ────────────────────────────────────────────────────────────
 const FertilizerFormFields = ({ isEdit, editingItem }) => {
   const [form] = Form.useForm()
+  const navigate = useNavigate()
+  const { getCombo } = useSystemKey()
+  const { cropOptions, isCropsLoading } = useCropOptions()
+
   const storageKey = getFormDraftKey(
     "fertilizer",
     isEdit ? "edit" : "create",
@@ -125,9 +70,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
     form,
     storageKey,
   })
-  const navigate = useNavigate()
-  const { getCombo } = useSystemKey()
-  const { cropOptions, isCropsLoading } = useCropOptions()
 
   const fertilizerTypeOptions = getCombo(SYSTEM_KEY.FERTILIZER_TYPE).map(
     opt => ({
@@ -136,17 +78,91 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
     }),
   )
 
-  const UNIT_OPTIONS = [
-    { value: MEASUREMENT_UNITS.LITER, label: MEASUREMENT_UNITS.LITER },
-    { value: MEASUREMENT_UNITS.KILOGRAM, label: MEASUREMENT_UNITS.KILOGRAM },
-  ]
-  const [loading, setLoading] = React.useState(false)
-  const [quantityUnit, setQuantityUnit] = React.useState(
-    MEASUREMENT_UNITS.KILOGRAM,
+  const fertilizerUnitOptions = getCombo(SYSTEM_KEY.FERTILIZER_UNIT).map(
+    opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description,
+    }),
   )
-  const [components, setComponents] = React.useState([])
-  const [dosages, setDosages] = React.useState([DEFAULT_DOSAGE])
-  const prefillRequestRef = React.useRef(0)
+
+  // ── 1. States & Variables ───────────────────────────────────────────────────
+  const [loading, setLoading] = useState(false)
+  const [quantityUnit, setQuantityUnit] = useState(MEASUREMENT_UNITS.KILOGRAM)
+  const [components, setComponents] = useState([])
+  const [dosages, setDosages] = useState([DEFAULT_DOSAGE])
+  const prefillRequestRef = useRef(0)
+
+  // ── 2. Handlers & Business Functions ─────────────────────────────────────────
+  const initFormData = () => {
+    const draft = restoreDraft({
+      onRestore: ({ data }) => {
+        form.setFieldsValue(data)
+        setComponents(data.__draftMeta?.components || [])
+        setDosages(data.__draftMeta?.dosages || [{ ...DEFAULT_DOSAGE }])
+      },
+    })
+    const draftData = draft?.data || {}
+
+    if (isEdit && editingItem) {
+      const selectedUnit = getQuantityUnit(
+        editingItem.unit,
+        MEASUREMENT_UNITS.KILOGRAM,
+      )
+      setQuantityUnit(selectedUnit)
+      form.setFieldsValue({
+        name: editingItem.name || "",
+        manufacturer: editingItem.manufacturer || "",
+        minimumStock: editingItem.minimumStock ?? 0,
+        inventoryQuantity: editingItem.inventoryQuantity ?? 0,
+        inventoryUnit: selectedUnit,
+        unit: selectedUnit,
+        type:
+          editingItem.type ||
+          editingItem.fertilizerType ||
+          editingItem.category ||
+          undefined,
+        description: editingItem.description || "",
+        ...draftData,
+      })
+
+      const incomingComps = editingItem.compositions?.length
+        ? editingItem.compositions
+        : editingItem.components?.length
+          ? editingItem.components
+          : []
+
+      if (incomingComps.length > 0) {
+        setComponents(
+          draftData.__draftMeta?.components ||
+            incomingComps.map(createFertilizerComponentRow),
+        )
+      } else {
+        setComponents(draftData.__draftMeta?.components || [])
+      }
+
+      setDosages(
+        draftData.__draftMeta?.dosages ||
+          (editingItem.dosages?.length
+            ? editingItem.dosages.map(d => ({
+                ...d,
+                unit: selectedUnit,
+                areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
+              }))
+            : [{ ...DEFAULT_DOSAGE, unit: selectedUnit }]),
+      )
+    } else {
+      setQuantityUnit(MEASUREMENT_UNITS.KILOGRAM)
+      form.resetFields()
+      form.setFieldsValue({
+        unit: MEASUREMENT_UNITS.KILOGRAM,
+        inventoryUnit: MEASUREMENT_UNITS.KILOGRAM,
+        ...draftData,
+      })
+      setComponents(draftData.__draftMeta?.components || [])
+      setDosages(draftData.__draftMeta?.dosages || [{ ...DEFAULT_DOSAGE }])
+    }
+  }
+
   const applyCatalog = async catalog => {
     const requestId = ++prefillRequestRef.current
     try {
@@ -177,171 +193,86 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
     }
   }
 
-  // ── Populate form on open ──────────────────────────────────────────────────
-  React.useEffect(() => {
-    const draft = restoreDraft({
-      onRestore: ({ data }) => {
-        form.setFieldsValue(data)
-        setComponents(data.__draftMeta?.components || [])
-        setDosages(data.__draftMeta?.dosages || [{ ...DEFAULT_DOSAGE }])
+  const handleComponentChange = (index, field, value) => {
+    setComponents(current =>
+      current.map((comp, i) =>
+        i === index ? { ...comp, [field]: value } : comp,
+      ),
+    )
+  }
+
+  const handleAddComponent = () =>
+    setComponents(current => [...current, createFertilizerComponentRow()])
+
+  const handleRemoveComponent = index =>
+    setComponents(current => current.filter((_, i) => i !== index))
+
+  const handleDosageChange = (index, field, value) => {
+    setDosages(current =>
+      current.map((dosage, i) =>
+        i === index ? { ...dosage, [field]: value } : dosage,
+      ),
+    )
+  }
+
+  const getDosageOptions = index => {
+    const currentTarget = normalizeTarget(dosages[index]?.target)
+    const targetsInOtherRows = new Set(
+      dosages
+        .filter((_, i) => i !== index)
+        .map(d => normalizeTarget(d.target))
+        .filter(Boolean),
+    )
+
+    return cropOptions.filter(option => {
+      const optKey = normalizeTarget(option.value)
+      return optKey === currentTarget || !targetsInOtherRows.has(optKey)
+    })
+  }
+
+  const handleAddDosage = () =>
+    setDosages(current => [
+      ...current,
+      {
+        ...DEFAULT_DOSAGE,
+        unit: quantityUnit,
+        areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
       },
-    })
-    const draftData = draft?.data || {}
-    if (isEdit) {
-      const selectedUnit = getQuantityUnit(
-        editingItem.unit,
-        MEASUREMENT_UNITS.KILOGRAM,
-      )
-      setQuantityUnit(selectedUnit)
-      form.setFieldsValue({
-        name: editingItem.name || "",
-        manufacturer: editingItem.manufacturer || "",
-        minimumStock: editingItem.minimumStock ?? 0,
-        inventoryQuantity: editingItem.inventoryQuantity ?? 0,
-        inventoryUnit: selectedUnit,
-        unit: selectedUnit,
-        type:
-          editingItem.type ||
-          editingItem.fertilizerType ||
-          editingItem.category ||
-          undefined,
-        description: editingItem.description || "",
-        ...draftData,
-      })
-      // Thành phần
-      const incomingComps = editingItem.compositions?.length
-        ? editingItem.compositions
-        : editingItem.components?.length
-          ? editingItem.components
-          : []
+    ])
 
-      if (incomingComps.length > 0) {
-        const mapToDisplay = c => {
-          if (!c) return c
-          if (c.unit === "CFU/g" && c.value != null) {
-            const val = Number(c.value)
-            if (val > 0) {
-              const exponent = Math.floor(Math.log10(val))
-              const base = Number((val / Math.pow(10, exponent)).toFixed(2))
-              return { ...c, base, exponent }
-            }
-          }
-          return c
-        }
+  const handleRemoveDosage = index =>
+    setDosages(current => current.filter((_, i) => i !== index))
 
-        setComponents(
-          draftData.__draftMeta?.components ||
-            incomingComps.map(c =>
-              createFertilizerComponentRow(mapToDisplay(c)),
-            ),
-        )
-      } else {
-        setComponents(draftData.__draftMeta?.components || [])
-      }
-      // Liều lượng
-      setDosages(
-        draftData.__draftMeta?.dosages ||
-          (editingItem.dosages?.length
-            ? editingItem.dosages.map(d => ({
-                ...d,
-                unit: selectedUnit,
-                areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-                target: Array.isArray(d.target)
-                  ? d.target.join(", ")
-                  : d.target || "",
-              }))
-            : [{ ...DEFAULT_DOSAGE, unit: selectedUnit }]),
-      )
-    } else {
-      setQuantityUnit(MEASUREMENT_UNITS.KILOGRAM)
-      form.resetFields()
-      form.setFieldsValue({
-        unit: MEASUREMENT_UNITS.KILOGRAM,
-        inventoryUnit: MEASUREMENT_UNITS.KILOGRAM,
-        ...draftData,
-      })
-      setComponents(draftData.__draftMeta?.components || [])
-      setDosages(draftData.__draftMeta?.dosages || [{ ...DEFAULT_DOSAGE }])
-    }
-  }, [editingItem, isEdit, form, restoreDraft])
-
-  React.useEffect(() => {
-    saveDraft({
-      ...form.getFieldsValue(true),
-      __draftMeta: { components, dosages },
-    })
-  }, [components, dosages, form, saveDraft])
-
-  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async values => {
     try {
-      // Custom validations
-      // Unit-specific validations
       let totalPercentage = 0
       for (const comp of components) {
         const compName = comp.name?.trim() || ""
-        if (compName.length > 100) {
-          message.error("Tên thành phần không được vượt quá 100 ký tự.")
-          return
-        }
-        if (compName && compName !== compName.replace(/\s+/g, " ")) {
-          message.error(
-            "Tên thành phần không được chứa nhiều khoảng trắng liên tiếp.",
-          )
-          return
-        }
         if (!compName) continue
 
-        let val
-        if (comp.unit === "CFU/g") {
-          if (
-            comp.base == null ||
-            comp.base === "" ||
-            comp.exponent == null ||
-            comp.exponent === ""
-          )
-            continue
-          val = Number(comp.base) * Math.pow(10, Number(comp.exponent))
-        } else {
-          if (comp.value == null || comp.value === "") continue
-          val = Number(comp.value)
+        const val = Number(comp.value)
+        if (comp.value == null || comp.value === "" || Number.isNaN(val)) {
+          continue
         }
 
-        if (Number.isNaN(val)) {
-          message.error(`Giá trị của ${comp.name} không hợp lệ.`)
+        if (val < 0 || val > 100) {
+          message.error(
+            `Hàm lượng của ${compName} (%) phải nằm trong khoảng 0 đến 100.`,
+          )
           return
         }
-
-        if (comp.unit === "%") {
-          if (val < 0 || val > 100) {
-            message.error(
-              `Giá trị của ${comp.name} (%) phải nằm trong khoảng 0 đến 100.`,
-            )
-            return
-          }
-          totalPercentage += val
-        } else if (comp.unit === "ppm") {
-          if (val < 0) {
-            message.error(`Giá trị của ${comp.name} (ppm) không được âm.`)
-            return
-          }
-        } else if (comp.unit === "CFU/g") {
-          if (val <= 0) {
-            message.error(`Giá trị của ${comp.name} (CFU/g) phải lớn hơn 0.`)
-            return
-          }
-        }
+        totalPercentage += val
       }
 
       if (totalPercentage > 100) {
         message.error(
-          "Tổng các thành phần có đơn vị (%) không được vượt quá 100%.",
+          "Tổng hàm lượng các thành phần (%) không được vượt quá 100%.",
         )
         return
       }
 
       const selectedTargets = dosages
-        .map(dosage => getCropTargetKey(dosage.target, cropOptions))
+        .map(dosage => normalizeTarget(dosage.target))
         .filter(Boolean)
       if (new Set(selectedTargets).size !== selectedTargets.length) {
         message.error("Mỗi cây chỉ được khai báo một liều lượng.")
@@ -351,36 +282,19 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       setLoading(true)
 
       const body = {
-        name: values.name?.trim(),
+        name: values.name?.trim().replace(/\s+/g, " "),
         unit: values.unit,
-        description: values.description?.trim() || "",
+        description: values.description?.trim().replace(/\s+/g, " ") || "",
         minimumStock: values.minimumStock ?? 0,
         type: values.type ?? "",
-        manufacturer: values.manufacturer?.trim() || "",
+        manufacturer: values.manufacturer?.trim().replace(/\s+/g, " ") || "",
         compositions: components
-          .filter(c => {
-            if (!c.name?.trim()) return false
-            if (c.unit === "CFU/g")
-              return (
-                c.base != null &&
-                c.base !== "" &&
-                c.exponent != null &&
-                c.exponent !== ""
-              )
-            return c.value != null && c.value !== ""
-          })
+          .filter(c => c.name?.trim() && c.value != null && c.value !== "")
           .map(c => {
-            let finalValue
-            if (c.unit === "CFU/g") {
-              finalValue = Number(c.base) * Math.pow(10, Number(c.exponent))
-            } else {
-              const numericValue = Number(c.value)
-              finalValue = Number.isNaN(numericValue) ? 0 : numericValue
-            }
             const comp = {
-              name: c.name,
-              value: finalValue.toString(),
-              unit: c.unit,
+              name: c.name.trim().replace(/\s+/g, " "),
+              value: Number(c.value).toString(),
+              unit: "%",
             }
             if (isEdit && c.id) comp.id = c.id
             return comp
@@ -392,9 +306,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               amount: d.amount.toString(),
               unit: quantityUnit,
               areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-              target: Array.isArray(d.target)
-                ? d.target.join(", ")
-                : d.target || "",
+              target: d.target || "",
             }
             if (isEdit && d.id) dos.id = d.id
             return dos
@@ -404,79 +316,35 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       if (isEdit) {
         await FertilizerService.updateFertilizer(editingItem.id, body, {
           errorHandling: "form",
-          fieldErrorMapping: FERTILIZER_FIELD_MAPPING,
         })
       } else {
         await FertilizerService.createFertilizer(body, {
           errorHandling: "form",
-          fieldErrorMapping: FERTILIZER_FIELD_MAPPING,
         })
       }
 
       clearDraft()
       navigate(ROUTER.FM_FERTILIZERS)
     } catch (error) {
-      applyApiFieldErrors(form, error, FERTILIZER_FIELD_MAPPING)
+      applyApiFieldErrors(form, error)
     } finally {
       setLoading(false)
     }
   }
 
-  // ── Component row handlers ─────────────────────────────────────────────────
-  const handleComponentChange = (index, field, value) => {
-    setComponents(current =>
-      current.map((component, componentIndex) =>
-        componentIndex === index ? { ...component, [field]: value } : component,
-      ),
-    )
-  }
+  // ── 3. Effects ───────────────────────────────────────────────────────────────
+  useEffect(() => {
+    initFormData()
+  }, [editingItem, isEdit, form, restoreDraft])
 
-  const handleAddComponent = () =>
-    setComponents(current => [...current, createFertilizerComponentRow()])
-
-  const handleRemoveComponent = index =>
-    setComponents(current => current.filter((_, i) => i !== index))
-
-  // ── Dosage row handlers ────────────────────────────────────────────────────
-  const handleDosageChange = (index, field, value) => {
-    const updated = [...dosages]
-    updated[index] = { ...updated[index], [field]: value }
-    setDosages(updated)
-  }
-
-  const getDosageOptions = index => {
-    const currentTarget = dosages[index]?.target
-    const currentTargetKey = getCropTargetKey(currentTarget, cropOptions)
-    const targetsInOtherRows = new Set(
-      dosages
-        .filter((_, dosageIndex) => dosageIndex !== index)
-        .map(dosage => getCropTargetKey(dosage.target, cropOptions))
-        .filter(Boolean),
-    )
-
-    return cropOptions.filter(option => {
-      const optionKeys = getCropOptionKeys(option)
-      return (
-        optionKeys.includes(currentTargetKey) ||
-        !optionKeys.some(optionKey => targetsInOtherRows.has(optionKey))
-      )
+  useEffect(() => {
+    saveDraft({
+      ...form.getFieldsValue(true),
+      __draftMeta: { components, dosages },
     })
-  }
+  }, [components, dosages, form, saveDraft])
 
-  const handleAddDosage = () =>
-    setDosages([
-      ...dosages,
-      {
-        ...DEFAULT_DOSAGE,
-        unit: quantityUnit,
-        areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-      },
-    ])
-
-  const handleRemoveDosage = index =>
-    setDosages(dosages.filter((_, i) => i !== index))
-
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── 4. Render JSX ───────────────────────────────────────────────────────────
   return (
     <Form
       form={form}
@@ -486,23 +354,13 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         saveDraft({ ...allValues, __draftMeta: { components, dosages } })
       }
     >
-      {/* ════════════════════════════════════════════════════════════════
-            Section 1 – Thông Tin Cơ Bản
-        ═══════════════════════════════════════════════════════════════════ */}
       <SectionTitle>Thông Tin Cơ Bản</SectionTitle>
 
       <Row gutter={16}>
-        {/* Removed Mã phân bón */}
-
-        {/* Tên phân bón */}
         <Col xs={24} md={12}>
           <Form.Item
             name="name"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Tên phân bón
-              </span>
-            }
+            label="Tên phân bón"
             rules={[
               { required: true, message: "Vui lòng nhập tên phân bón." },
               makeNameValidator({ label: "Tên phân bón" }),
@@ -519,49 +377,22 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           </Form.Item>
         </Col>
 
-        {/* Nhà Sản Xuất */}
         <Col xs={24} md={12}>
           <Form.Item
             name="manufacturer"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Nhà Sản Xuất
-              </span>
-            }
+            label="Nhà Sản Xuất"
             rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed) return Promise.resolve()
-                  if (trimmed.length > 100)
-                    return Promise.reject(
-                      new Error("Nhà sản xuất không được vượt quá 100 ký tự."),
-                    )
-                  if (trimmed !== trimmed.replace(/\s+/g, " "))
-                    return Promise.reject(
-                      new Error(
-                        "Nhà sản xuất không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  return Promise.resolve()
-                },
-              },
+              makeNameValidator({ label: "Nhà sản xuất", required: false }),
             ]}
           >
             <Input placeholder="Nhà Sản Xuất" className="h-10 rounded-lg" />
           </Form.Item>
         </Col>
 
-        {/* Tồn Kho tối thiểu */}
         <Col xs={24} sm={6}>
           <Form.Item
             name="minimumStock"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Tồn Kho tối thiểu
-              </span>
-            }
+            label="Tồn Kho tối thiểu"
             rules={[
               { required: true, message: "Vui lòng nhập tồn kho tối thiểu." },
               {
@@ -581,7 +412,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           </Form.Item>
         </Col>
 
-        {/* Đơn Vị tính — chỉ chọn khi tạo mới, sau đó cố định theo vật tư */}
         <Col xs={24} sm={6}>
           {isEdit ? (
             <>
@@ -605,7 +435,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               <Select
                 placeholder="Chọn đơn vị"
                 className="h-10"
-                options={UNIT_OPTIONS}
+                options={fertilizerUnitOptions}
                 onChange={value => {
                   setQuantityUnit(value)
                   setDosages(current =>
@@ -621,15 +451,10 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           )}
         </Col>
 
-        {/* Loại Phân Bón */}
         <Col xs={24} sm={8}>
           <Form.Item
             name="type"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Loại Phân Bón
-              </span>
-            }
+            label="Loại Phân Bón"
             getValueFromEvent={val => val ?? ""}
           >
             <Select
@@ -641,35 +466,11 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
           </Form.Item>
         </Col>
 
-        {/* Mô Tả */}
         <Col xs={24}>
           <Form.Item
             name="description"
-            label={
-              <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                Mô Tả
-              </span>
-            }
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed) return Promise.resolve()
-                  if (trimmed.length > 500)
-                    return Promise.reject(
-                      new Error("Mô tả không được vượt quá 500 ký tự."),
-                    )
-                  if (trimmed !== trimmed.replace(/\s+/g, " "))
-                    return Promise.reject(
-                      new Error(
-                        "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  return Promise.resolve()
-                },
-              },
-            ]}
+            label="Mô Tả"
+            rules={[makeDescriptionValidator({ maxLength: 500 })]}
           >
             <Input.TextArea
               rows={3}
@@ -680,9 +481,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         </Col>
       </Row>
 
-      {/* ════════════════════════════════════════════════════════════════
-            Section 2 – Thành Phần
-        ═══════════════════════════════════════════════════════════════════ */}
       <SectionTitle>Thành Phần</SectionTitle>
 
       <Row gutter={8} className="mb-2 px-1">
@@ -693,10 +491,10 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         </Col>
         <Col flex="1 1 100px">
           <Text type="secondary" className="text-xs font-semibold">
-            Giá trị <span className="text-red-500">*</span>
+            Hàm lượng (%) <span className="text-red-500">*</span>
           </Text>
         </Col>
-        <Col flex="1 1 120px">
+        <Col flex="1 1 80px">
           <Text type="secondary" className="text-xs font-semibold">
             Đơn Vị Tính <span className="text-red-500">*</span>
           </Text>
@@ -705,106 +503,46 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
       </Row>
 
       <div className="space-y-2 mb-3">
-        {components.map((comp, index) => {
-          const trimmedCompName = comp.name?.trim() || ""
-          const hasNameLengthError = trimmedCompName.length > 100
-          const hasNameSpaceError = Boolean(
-            trimmedCompName &&
-            trimmedCompName !== trimmedCompName.replace(/\s+/g, " "),
-          )
-          const hasNameError = hasNameLengthError || hasNameSpaceError
-
-          return (
-            <div
-              key={comp.id}
-              className={`flex flex-col rounded-lg bg-gray-50 border p-2 mb-2 ${
-                hasNameError ? "border-red-300" : "border-gray-100"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <div style={{ flex: "1 1 140px" }}>
-                  <Input
-                    value={comp.name}
-                    onChange={e =>
-                      handleComponentChange(index, "name", e.target.value)
-                    }
-                    placeholder="Tên thành phần"
-                    className={`h-9 rounded-lg ${hasNameError ? "border-red-400 focus:border-red-500" : ""}`}
-                  />
-                </div>
-                <div style={{ flex: "1 1 100px" }}>
-                  {comp.unit === "CFU/g" ? (
-                    <div className="flex items-center gap-1 w-full bg-white border border-gray-300 rounded-lg overflow-hidden focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500 h-9 px-1">
-                      <Input
-                        type="number"
-                        min={0}
-                        step={0.1}
-                        value={comp.base}
-                        onChange={e =>
-                          handleComponentChange(index, "base", e.target.value)
-                        }
-                        placeholder="Cơ số"
-                        className="border-none shadow-none p-1 text-center bg-transparent h-full min-w-[30px]"
-                        style={{ flex: 1, boxShadow: "none" }}
-                      />
-                      <span className="text-gray-500 font-semibold select-none whitespace-nowrap text-xs">
-                        x 10<sup className="ml-0.5 mt-1 text-[10px]">^</sup>
-                      </span>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={comp.exponent}
-                        onChange={e =>
-                          handleComponentChange(
-                            index,
-                            "exponent",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Mũ"
-                        className="border-none shadow-none p-1 text-center bg-transparent h-full min-w-[30px]"
-                        style={{ flex: 1, boxShadow: "none" }}
-                      />
-                    </div>
-                  ) : (
-                    <InputNumber
-                      value={comp.value}
-                      onChange={val =>
-                        handleComponentChange(index, "value", val)
-                      }
-                      placeholder="0.0"
-                      min={0}
-                      step={0.1}
-                      className="w-full h-9 rounded-lg"
-                    />
-                  )}
-                </div>
-                <div style={{ flex: "1 1 120px" }}>
-                  <Text className="inline-flex h-9 w-full items-center rounded-lg bg-white px-3 text-gray-700">
-                    {comp.unit || "%"}
-                  </Text>
-                </div>
-                <Button
-                  type="text"
-                  danger
-                  icon={<MinusCircleOutlined />}
-                  onClick={() => handleRemoveComponent(index)}
-                  className="!h-9 !w-9 shrink-0 rounded-lg"
-                />
-              </div>
-              {hasNameLengthError && (
-                <p className="mt-1 mb-0 text-xs text-red-500 px-1">
-                  Tên thành phần không được vượt quá 100 ký tự.
-                </p>
-              )}
-              {hasNameSpaceError && !hasNameLengthError && (
-                <p className="mt-1 mb-0 text-xs text-red-500 px-1">
-                  Tên thành phần không được chứa nhiều khoảng trắng liên tiếp.
-                </p>
-              )}
+        {components.map((comp, index) => (
+          <div
+            key={comp.id || index}
+            className="flex items-center gap-2 rounded-lg bg-gray-50 border border-gray-100 p-2 mb-2"
+          >
+            <div style={{ flex: "1 1 140px" }}>
+              <Input
+                value={comp.name}
+                onChange={e =>
+                  handleComponentChange(index, "name", e.target.value)
+                }
+                placeholder="Tên thành phần (ví dụ: Đạm, Lân, Kali...)"
+                className="h-9 rounded-lg"
+              />
             </div>
-          )
-        })}
+            <div style={{ flex: "1 1 100px" }}>
+              <InputNumber
+                value={comp.value}
+                onChange={val => handleComponentChange(index, "value", val)}
+                placeholder="0.0"
+                min={0}
+                max={100}
+                step={0.1}
+                className="w-full h-9 rounded-lg"
+              />
+            </div>
+            <div style={{ flex: "1 1 120px" }}>
+              <Text className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-white border border-gray-200 px-3 text-gray-700 font-medium">
+                {comp.unit || "%"}
+              </Text>
+            </div>
+            <Button
+              type="text"
+              danger
+              icon={<MinusCircleOutlined />}
+              onClick={() => handleRemoveComponent(index)}
+              className="!h-9 !w-9 shrink-0 rounded-lg"
+            />
+          </div>
+        ))}
       </div>
 
       <Button
@@ -816,9 +554,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
         Thêm Thành Phần
       </Button>
 
-      {/* ════════════════════════════════════════════════════════════════
-            Section 3 – Liều Lượng
-        ═══════════════════════════════════════════════════════════════════ */}
       <SectionTitle>Liều Lượng</SectionTitle>
 
       <div className="space-y-2 mb-3">
@@ -827,10 +562,9 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             key={index}
             className="flex flex-wrap items-end gap-2 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2"
           >
-            {/* Đối tượng */}
             <div style={{ flex: "2 1 140px" }}>
               <Text type="secondary" className="block mb-1 text-xs">
-                Đối tượng{" "}
+                Đối tượng
               </Text>
               <Select
                 value={dosage.target || undefined}
@@ -844,10 +578,9 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 optionFilterProp="label"
               />
             </div>
-            {/* Lượng (amount) */}
             <div style={{ flex: "1 1 120px" }}>
               <Text type="secondary" className="block mb-1 text-xs">
-                Liều lượng{" "}
+                Liều lượng
               </Text>
               <InputNumber
                 value={dosage.amount}

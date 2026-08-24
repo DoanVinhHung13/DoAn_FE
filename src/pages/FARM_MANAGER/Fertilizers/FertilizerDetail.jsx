@@ -1,12 +1,3 @@
-/**
- * FertilizerDetailModal — Xem chi tiết phân bón (Read-Only)
- * Triggered by: "Xem chi tiết" action in table row
- *
- * Hiển thị đầy đủ các trường theo Figma:
- *   - Thông Tin Cơ Bản: mã, tên, nhà SX, nhà CC, tồn kho tối thiểu, đơn vị, loại PB, mô tả
- *   - Thành Phần: bảng (Tên thành Phần | Hàm Lượng | Đơn Vị Tính)
- *   - Liều Lượng: bảng (Số | Đơn vị Tính | Đơn Vị diện tích | Đối tượng)
- */
 import {
   ArrowLeftOutlined,
   BarcodeOutlined,
@@ -36,53 +27,32 @@ import { formatDateTime } from "src/utils/dateFormatters"
 
 const { Text } = Typography
 
-// ── Sub-tables column definitions ────────────────────────────────────────────
-
 const componentColumns = [
   {
-    title: "Tên thành Phần",
+    title: "Tên thành phần",
     dataIndex: "name",
     key: "name",
     render: v => <Text strong>{v || "—"}</Text>,
   },
   {
-    title: "Hàm Lượng",
+    title: "Hàm lượng",
     dataIndex: "value",
     key: "value",
     align: "center",
-    width: 110,
-    render: (v, record) => {
-      if (v == null || v === "") return <Text>—</Text>
-
-      if (record.unit === "CFU/g") {
-        const val = Number(v)
-        if (val > 0) {
-          const exponent = Math.floor(Math.log10(val))
-          const base = Number((val / Math.pow(10, exponent)).toFixed(2))
-          return (
-            <Text>
-              {base} x 10<sup className="text-[10px] ml-[1px]">{exponent}</sup>
-            </Text>
-          )
-        }
-      }
-      return <Text>{v}</Text>
-    },
+    width: 120,
+    render: v => <Text>{v != null && v !== "" ? `${v}%` : "—"}</Text>,
   },
   {
-    title: "Đơn vị Tính (%, ppm, CFU/g)",
+    title: "Đơn vị tính",
     dataIndex: "unit",
     key: "unit",
     align: "center",
-    width: 190,
-    render: v =>
-      v ? (
-        <Tag color="green" className="rounded-full font-medium">
-          {v}
-        </Tag>
-      ) : (
-        "—"
-      ),
+    width: 120,
+    render: v => (
+      <Tag color="green" className="rounded-full font-medium">
+        {v || "%"}
+      </Tag>
+    ),
   },
 ]
 
@@ -111,8 +81,6 @@ const dosageColumns = [
     ),
   },
 ]
-
-// ── Main Component ────────────────────────────────────────────────────────────
 
 const FertilizerDetail = () => {
   const { id } = useParams()
@@ -182,9 +150,6 @@ const FertilizerDetail = () => {
         bodyStyle={{ padding: "24px" }}
       >
         <div className="space-y-6">
-          {/* ════════════════════════════════════════════════════════════════
-            Header: mã + trạng thái
-        ═══════════════════════════════════════════════════════════════════ */}
           <div className="flex items-center justify-end">
             <Badge
               status={isActive ? "success" : "error"}
@@ -200,9 +165,6 @@ const FertilizerDetail = () => {
             />
           </div>
 
-          {/* ════════════════════════════════════════════════════════════════
-            Section 1 – Thông Tin Cơ Bản
-        ═══════════════════════════════════════════════════════════════════ */}
           <div>
             <div
               className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
@@ -216,7 +178,7 @@ const FertilizerDetail = () => {
             </div>
 
             <Descriptions
-              column={{ xs: 1, sm: 2 }}
+              column={{ xs: 1, sm: 3 }}
               size="small"
               labelStyle={{
                 fontWeight: 600,
@@ -227,20 +189,29 @@ const FertilizerDetail = () => {
               }}
               contentStyle={{ color: "#1f2937", fontSize: 14 }}
             >
-              {/* Tên phân bón – span 2 */}
               <Descriptions.Item
                 label={
                   <span className="inline-flex items-center gap-1">
-                    <TagOutlined /> Tên phân bón
+                    Tên phân bón
                   </span>
                 }
-                span={2}
+                span={1}
               >
                 <span className="font-semibold">{item.name || "—"}</span>
               </Descriptions.Item>
 
-              {/* Loại Phân Bón */}
-              <Descriptions.Item label="Loại Phân Bón" span={2}>
+              <Descriptions.Item
+                label={
+                  <span className="inline-flex items-center gap-1">
+                    Nhà Sản Xuất
+                  </span>
+                }
+                span={2}
+              >
+                {item.manufacturer || <span className="text-gray-400">—</span>}
+              </Descriptions.Item>
+
+              <Descriptions.Item label="Loại Phân Bón" span={1}>
                 {item.type ? (
                   item.type
                 ) : (
@@ -248,24 +219,13 @@ const FertilizerDetail = () => {
                 )}
               </Descriptions.Item>
 
-              {/* Nhà Sản Xuất */}
               <Descriptions.Item
                 label={
                   <span className="inline-flex items-center gap-1">
-                    <ShopOutlined /> Nhà Sản Xuất
+                    Tồn kho thực tế
                   </span>
                 }
-              >
-                {item.manufacturer || <span className="text-gray-400">—</span>}
-              </Descriptions.Item>
-
-              {/* Tồn kho thực tế */}
-              <Descriptions.Item
-                label={
-                  <span className="inline-flex items-center gap-1">
-                    <BarcodeOutlined /> Tồn kho thực tế
-                  </span>
-                }
+                span={1}
               >
                 <span className="font-semibold text-blue-600">
                   {item.inventoryQuantity != null
@@ -274,13 +234,13 @@ const FertilizerDetail = () => {
                 </span>
               </Descriptions.Item>
 
-              {/* Tồn Kho tối thiểu */}
               <Descriptions.Item
                 label={
                   <span className="inline-flex items-center gap-1">
-                    <BarcodeOutlined /> Tồn kho tối thiểu
+                    Tồn kho tối thiểu
                   </span>
                 }
+                span={1}
               >
                 <span className="font-semibold text-emerald-600">
                   {item.minimumStock != null
@@ -288,13 +248,6 @@ const FertilizerDetail = () => {
                     : "—"}
                 </span>
               </Descriptions.Item>
-
-              {/* Đơn vị tính */}
-              {/* <Descriptions.Item label="Đơn vị tính (kg/lit)">
-                {item.unit
-                  ? <Tag color="blue" className="font-medium rounded-full">{item.unit}</Tag>
-                  : <span className="text-gray-400">—</span>}
-              </Descriptions.Item> */}
 
               {/* Ngày tạo */}
               {item.createdAt && (
@@ -304,7 +257,7 @@ const FertilizerDetail = () => {
                       <CalendarOutlined /> Ngày tạo
                     </span>
                   }
-                  span={2}
+                  span={3}
                 >
                   {formatDateTime(item.createdAt, "HH:mm - DD/MM/YYYY")}
                 </Descriptions.Item>
@@ -324,9 +277,6 @@ const FertilizerDetail = () => {
             )}
           </div>
 
-          {/* ════════════════════════════════════════════════════════════════
-            Section 2 – Thành Phần
-        ═══════════════════════════════════════════════════════════════════ */}
           <div>
             <div
               className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
@@ -358,9 +308,6 @@ const FertilizerDetail = () => {
             )}
           </div>
 
-          {/* ════════════════════════════════════════════════════════════════
-            Section 3 – Liều Lượng
-        ═══════════════════════════════════════════════════════════════════ */}
           <div>
             <div
               className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
