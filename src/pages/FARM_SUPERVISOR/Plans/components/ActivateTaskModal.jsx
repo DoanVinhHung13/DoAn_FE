@@ -94,8 +94,11 @@ const ActivateTaskModal = ({
       <Space direction="vertical" size={16} className="w-full mt-2">
         <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
           <Text className="block text-[15px] text-gray-800">
-            Bạn có chắc muốn kích hoạt “
-            {task?.name || task?.taskName || "công việc này"}”?
+            Bạn có chắc muốn kích hoạt{" "}
+            <span className="font-semibold text-gray-900">
+              {task?.name?.trim() || task?.taskName?.trim() || "công việc này"}
+            </span>
+            ?
           </Text>
           <Text type="secondary" className="mt-1 block">
             Sau khi kích hoạt, người được phân công có thể bắt đầu thực hiện và

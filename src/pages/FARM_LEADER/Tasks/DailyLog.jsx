@@ -1009,6 +1009,7 @@ const DailyLog = () => {
                       <Form.Item
                         name="images"
                         label="Ảnh minh chứng"
+                        required
                         rules={[
                           {
                             validator: () => {
@@ -1020,7 +1021,7 @@ const DailyLog = () => {
                                     file.response?.data?.url,
                                 )
                                 .filter(Boolean)
-                              if (showImageError && imageUrls.length === 0) {
+                              if (imageUrls.length === 0) {
                                 return Promise.reject(
                                   new Error(
                                     "Vui lòng tải lên ít nhất 1 ảnh minh chứng.",
