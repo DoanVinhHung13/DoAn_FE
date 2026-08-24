@@ -164,15 +164,20 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
               type="secondary"
               className="block text-[10px] uppercase font-semibold text-slate-400"
             >
-              Bắt đầu dự kiến
+              Ngày bắt đầu
             </Text>
             <Text strong className="text-xs text-slate-700">
               <CalendarOutlined className="mr-1 text-emerald-600" />
-              {task.plannedStartDate ? formatDate(task.plannedStartDate) : "—"}
+              {task.workStartDate ? formatDate(task.workStartDate) : "—"}
             </Text>
+            {task.plannedStartDate && (
+              <Text className="block mt-1 text-xs text-slate-500">
+                Dự kiến: {formatDate(task.plannedStartDate)}
+              </Text>
+            )}
             {task.completedDate && (
               <Text className="block mt-1 text-xs text-green-600">
-                Hoàn thành: {formatDate(task.completedDate)}
+                Ngày hoàn thành: {formatDate(task.completedDate)}
               </Text>
             )}
           </div>
