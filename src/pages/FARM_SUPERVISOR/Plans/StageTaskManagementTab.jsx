@@ -142,6 +142,8 @@ const TaskCard = ({
             : "#d1d5db"
 
   const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
+  const isActivated = !canEdit
+  const startDate = isActivated ? task.workStartDate : task.plannedStartDate
   const hasActualDates =
     task.workStartDate || task.workEndDate || task.completedDate
 
@@ -275,13 +277,15 @@ const TaskCard = ({
           className="md:border-l md:border-gray-200 md:pl-5 flex flex-col justify-between space-y-2.5"
         >
           <div className="space-y-2.5">
-            {/* Hàng 1: Dự kiến */}
+            {/* Hàng 1: Ngày bắt đầu / Dự kiến */}
             <div className="flex items-center gap-1.5 text-xs text-gray-600">
               <CalendarOutlined className="text-gray-400 flex-shrink-0" />
-              <span className="font-semibold text-gray-500">Dự kiến:</span>
+              <span className="font-semibold text-gray-500">
+                {isActivated ? "Ngày bắt đầu:" : "Dự kiến:"}
+              </span>
               <span className="font-medium text-gray-800">
-                {task.plannedStartDate
-                  ? formatDate(task.plannedStartDate)
+                {startDate
+                  ? formatDate(startDate)
                   : "—"}
               </span>
             </div>
