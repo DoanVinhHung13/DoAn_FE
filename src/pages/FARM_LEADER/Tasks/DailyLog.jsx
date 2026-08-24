@@ -183,6 +183,7 @@ const DailyLog = () => {
   const [task, setTask] = useState(null)
   const [dailyLogs, setDailyLogs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [form] = Form.useForm()
   const [summaryForm] = Form.useForm()
   const [saving, setSaving] = useState(false)
@@ -347,6 +348,7 @@ const DailyLog = () => {
   useEffect(() => {
     const loadTaskData = async () => {
       setLoading(true)
+      setLoadError(null)
       try {
         const [taskRes, logsRes, fertRes, pestRes] = await Promise.all([
           CultivationTaskService.getById(taskId),
@@ -357,7 +359,7 @@ const DailyLog = () => {
 
         const taskData = unwrap(taskRes)
         if (!taskData?.id && !taskData?.name) {
-          navigate(ROUTER.FL_TASKS)
+          setLoadError({ kind: "not-found" })
           return
         }
 
@@ -366,19 +368,7 @@ const DailyLog = () => {
           ? logsData
           : logsData?.items || []
         setDailyLogs(logsList)
-        const recordedDates = logsList
-          .map(log => log.date || log.Date)
-          .filter(Boolean)
-          .sort()
-        setTask({
-          ...taskData,
-          workStartDate:
-            taskData.workStartDate || recordedDates[0] || null,
-          workEndDate:
-            taskData.workEndDate ||
-            recordedDates[recordedDates.length - 1] ||
-            null,
-        })
+        setTask(taskData)
         const usageEntries = await Promise.all(
           logsList
             .filter(log => log.id)
@@ -427,9 +417,9 @@ const DailyLog = () => {
           fertilizers: [],
           pesticides: [],
         })
-      } catch {
-        // API error handled by axios interceptor
-        navigate(ROUTER.FL_TASKS)
+      } catch (error) {
+        const normalizedError = normalizeApiError(error)
+        setLoadError({ kind: normalizedError.kind || "error" })
       } finally {
         setLoading(false)
       }
@@ -651,14 +641,6 @@ const DailyLog = () => {
       if (taskSumRes.status === "fulfilled") {
         const summary = unwrap(taskSumRes.value)
         setLeaderSummary(summary)
-        const workStartDate =
-          summary?.workStartDate || summary?.firstLogDate
-        const workEndDate = summary?.workEndDate || summary?.lastLogDate
-        setTask(previous => ({
-          ...previous,
-          workStartDate: workStartDate || previous?.workStartDate || null,
-          workEndDate: workEndDate || previous?.workEndDate || null,
-        }))
         // Set description đã gửi vào form để hiển thị
         if (summary?.description) {
           summaryForm.setFieldsValue({
@@ -810,6 +792,31 @@ const DailyLog = () => {
     )
   }
 
+  if (loadError) {
+    const isNotFound = loadError.kind === "not-found"
+    return (
+      <div className="flex flex-col items-center justify-center min-h-96 gap-4">
+        <Empty
+          description={
+            isNotFound
+              ? "Không tìm thấy công việc."
+              : "Không thể tải chi tiết công việc."
+          }
+        />
+        <div className="flex gap-2">
+          {!isNotFound && (
+            <Button type="primary" onClick={() => setRefreshKey(key => key + 1)}>
+              Thử lại
+            </Button>
+          )}
+          <Button onClick={() => navigate(ROUTER.FL_TASKS)}>
+            Quay lại danh sách
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   if (!task) return null
 
   const statusCfg = getTaskStatus(task.status)
@@ -832,6 +839,11 @@ const DailyLog = () => {
     isHarvestTask &&
     Number(task.totalPlanArea || 0) > 0 &&
     remainingHarvestArea <= 0.0001
+  const actualEndDate = ["WAITING_APPROVAL", "COMPLETED"].includes(
+    task?.status,
+  )
+    ? task?.workEndDate
+    : null
 
   return (
     <div className="pb-20 space-y-4 duration-500 animate-in fade-in slide-in-from-bottom-4">
@@ -896,7 +908,7 @@ const DailyLog = () => {
               </span>
               <span>
                 <strong>Kết thúc thực tế:</strong>{" "}
-                {task.workEndDate ? formatDate(task.workEndDate) : "—"}
+                {actualEndDate ? formatDate(actualEndDate) : "Chưa hoàn thành"}
               </span>
               <span>
                 <strong>Hoàn thành:</strong>{" "}
@@ -2193,20 +2205,14 @@ const DailyLog = () => {
           <div className="py-1 space-y-5 text-sm">
             {/* ── Thống kê thời gian thực tế ── */}
             {(() => {
-              const startDate =
-                leaderSummary?.workStartDate ||
-                leaderSummary?.firstLogDate ||
-                task?.workStartDate
-              const endDate =
-                leaderSummary?.workEndDate ||
-                leaderSummary?.lastLogDate ||
-                task?.workEndDate
+              const startDate = task?.workStartDate
+              const endDate = actualEndDate
               const formattedStartDate = startDate
                 ? formatDate(startDate)
                 : "—"
               const formattedEndDate = endDate
                 ? formatDate(endDate)
-                : "—"
+                : "Chưa hoàn thành"
 
               return (
                 <div className="p-4 border border-green-100 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50/40">
