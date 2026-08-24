@@ -240,7 +240,6 @@ const TaskFormFields = ({ form, readOnly = false, showTaskType = true }) => {
             rows={4}
             placeholder="Nhập mô tả chi tiết, quy trình thực hiện, yêu cầu kỹ thuật..."
             className="task-description-textarea rounded-lg"
-            showCount={!readOnly}
             readOnly={readOnly}
           />
         </Form.Item>

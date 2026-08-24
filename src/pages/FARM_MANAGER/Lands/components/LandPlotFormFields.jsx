@@ -134,8 +134,6 @@ const LandPlotFormFields = ({
         <Input.TextArea
           disabled={disabled}
           rows={3}
-          maxLength={200}
-          showCount
           placeholder="Ghi chú thêm về vùng trồng"
         />
       </Form.Item>

@@ -1018,10 +1018,8 @@ const CultivationLogbookCreate = () => {
               >
                 <Input.TextArea
                   rows={3}
-                  maxLength={200}
                   placeholder="Mô tả tổng quan về nhật ký, mục tiêu, yêu cầu kỹ thuật..."
                   disabled={!canEditGeneralInfo}
-                  showCount
                 />
               </Form.Item>
             </Col>
@@ -1092,7 +1090,6 @@ const CultivationLogbookCreate = () => {
                         updateStage(index, "description", e.target.value)
                       }
                       rows={2}
-                      maxLength={200}
                       placeholder="Mô tả chi tiết công việc cần thực hiện trong giai đoạn này..."
                       disabled={!canEditStages}
                     />

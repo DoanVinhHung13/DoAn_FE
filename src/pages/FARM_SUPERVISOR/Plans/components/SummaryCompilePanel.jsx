@@ -555,8 +555,6 @@ const SummaryCompilePanel = ({ task, stageId, onSaved, readOnly = false }) => {
         </div>
         <TextArea
           rows={5}
-          maxLength={200}
-          showCount
           value={description}
           onChange={e => setDescription(e.target.value)}
           placeholder="Nhập mô tả chuẩn để lưu vào nhật ký..."

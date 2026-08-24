@@ -748,8 +748,6 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
 
             <Input.TextArea
               rows={4}
-              maxLength={200}
-              showCount
               value={editModal.description}
               onChange={e =>
                 setEditModal(prev => ({ ...prev, description: e.target.value }))

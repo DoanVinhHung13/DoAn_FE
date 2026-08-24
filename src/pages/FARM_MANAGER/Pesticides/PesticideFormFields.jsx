@@ -440,7 +440,6 @@ const PesticideFormFields = ({ isEdit, editingItem }) => {
               rows={4}
               placeholder="Nhập mô tả chi tiết..."
               className="rounded-xl"
-              showCount
             />
           </Form.Item>
         </Col>

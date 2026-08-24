@@ -755,7 +755,6 @@ const FarmManagerNotifications = () => {
               rows={5}
               className="rounded-lg"
               placeholder="Nhập nội dung thông báo"
-              showCount
             />
           </Form.Item>
 

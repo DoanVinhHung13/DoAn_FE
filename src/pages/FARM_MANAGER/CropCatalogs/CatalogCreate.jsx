@@ -109,8 +109,6 @@ const CatalogCreate = () => {
           >
             <Input.TextArea
               rows={4}
-              maxLength={200}
-              showCount
               className="rounded-lg"
               placeholder="Nhập mô tả danh mục cây trồng"
             />

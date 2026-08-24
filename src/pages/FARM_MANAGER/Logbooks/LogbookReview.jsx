@@ -814,8 +814,6 @@ const LogbookReview = () => {
         />
         <Input.TextArea
           rows={4}
-          maxLength={200}
-          showCount
           value={rejectReason}
           onChange={e => setRejectReason(e.target.value)}
           placeholder="Lý do từ chối..."

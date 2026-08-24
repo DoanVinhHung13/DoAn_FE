@@ -675,7 +675,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               rows={3}
               placeholder="Mô Tả"
               className="rounded-lg"
-              showCount
             />
           </Form.Item>
         </Col>

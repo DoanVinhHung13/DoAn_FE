@@ -1126,8 +1126,6 @@ const DailyLog = () => {
                       >
                         <TextArea
                           rows={3}
-                          maxLength={200}
-                          showCount
                           placeholder="Mô tả tình hình cây trồng, vấn đề phát sinh..."
                           disabled={isViewOnly}
                         />
@@ -2670,8 +2668,6 @@ const DailyLog = () => {
               >
                 <TextArea
                   rows={3}
-                  maxLength={200}
-                  showCount
                   placeholder="VD: Đã hoàn thành công việc phun nông dược theo kế hoạch, cây trồng phát triển tốt…"
                   disabled={task.status === "WAITING_APPROVAL"}
                 />

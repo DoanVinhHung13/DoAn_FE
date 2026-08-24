@@ -636,8 +636,6 @@ const PlanTemplateCreate = () => {
                 >
                   <Input.TextArea
                     rows={3}
-                    maxLength={200}
-                    showCount
                     placeholder="Mô tả mục tiêu và phạm vi áp dụng của mẫu..."
                   />
                 </Form.Item>

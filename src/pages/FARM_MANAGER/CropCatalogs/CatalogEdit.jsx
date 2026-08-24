@@ -207,8 +207,6 @@ const CatalogEdit = () => {
           >
             <Input.TextArea
               rows={6}
-              maxLength={200}
-              showCount
               className="rounded-lg"
               placeholder="Nhập mô tả danh mục cây trồng"
             />
