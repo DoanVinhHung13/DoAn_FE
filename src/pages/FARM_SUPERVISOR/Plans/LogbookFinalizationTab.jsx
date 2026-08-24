@@ -247,7 +247,13 @@ const LogbookFinalizationTab = ({ stages, tasks = {}, loadData, plan }) => {
 
     Modal.confirm({
       title: "Xác nhận hoàn thành giai đoạn",
-      content: `Bạn có chắc muốn hoàn thành giai đoạn "${selectedStage.stageName}"? Sau khi hoàn thành, giai đoạn sẽ được khóa và không thể tiếp tục cập nhật công việc.`,
+      content: (
+        <span>
+          Bạn có chắc muốn hoàn thành giai đoạn{" "}
+          <strong>{selectedStage.stageName}</strong>? Sau khi hoàn thành, giai
+          đoạn sẽ được khóa và không thể tiếp tục cập nhật công việc.
+        </span>
+      ),
       okText: "Xác nhận hoàn thành",
       cancelText: "Hủy",
       onOk: completeStage,

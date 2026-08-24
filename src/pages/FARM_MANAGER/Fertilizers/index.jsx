@@ -1,24 +1,3 @@
-/**
- * ViewFertilizers — Quản lý phân bón (Farm Manager)
- * Route: /farm-manager/fertilizers  (ROUTER.FM_FERTILIZERS)
- *
- * Architecture mirrors /farm-manager/users:
- *   - TitleCustom header + action button
- *   - Card toolbar (search + filters + reload)
- *   - CustomTable with pagination
- *   - Modal-based Create / Update / Detail flows
- *
- * Business Rules:
- *   BR_FER_02: Items with status "In Active Use" (isInActiveUse === true)
- *              → disable "Sửa" button AND disable Switch
- *
- * Notification Messages:
- *   MSG-FER-01: "Thêm mới phân bón thành công."
- *   MSG-FER-02: "Bạn có chắc chắn muốn thay đổi trạng thái của phân bón này?"
- *   MSG-FER-03: "Cập nhật trạng thái phân bón thành công."
- *   MSG-FER-04: "Không có dữ liệu phân bón."
- *   MSG-FER-08: "Phân bón đang được sử dụng trong kế hoạch sản xuất, không thể chỉnh sửa hoặc vô hiệu hóa."
- */
 import {
   CheckCircleOutlined,
   EditOutlined,
@@ -31,7 +10,6 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons"
 import {
-  Alert,
   Button,
   Card,
   Input,
@@ -61,12 +39,10 @@ import { useSystemKey } from "src/hooks/useSystemKey"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useListManagement } from "src/hooks/useListManagement"
 
-// ── Main Component ────────────────────────────────────────────────────────────
 const ViewFertilizers = () => {
   const navigate = useNavigate()
   const { getCombo, getDescription } = useSystemKey()
 
-  // ── Use List Management Hook ────────────────────────────────────────────────
   const {
     searchInput,
     setSearchInput,
@@ -93,13 +69,10 @@ const ViewFertilizers = () => {
   const categoryFilter = filters.category
   const statusFilter = filters.status
 
-  // ── State: modals ───────────────────────────────────────────────────────────
   const [statusLoading, setStatusLoading] = useState(false)
   const [statusModal, setStatusModal] = useState({ open: false, item: null })
   const [importModal, setImportModal] = useState({ open: false, item: null })
-  const [inUseAlert, setInUseAlert] = useState(false)
 
-  // ── Options ─────────────────────────────────────────────────────────────────
   const statusOptions = getCombo(SYSTEM_KEY.STATUS)
   const selectStatusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
@@ -118,7 +91,6 @@ const ViewFertilizers = () => {
     })),
   ]
 
-  // ── Fetch list ──────────────────────────────────────────────────────────────
   const getList = useCallback(async () => {
     try {
       setLoading(true)
@@ -150,29 +122,6 @@ const ViewFertilizers = () => {
     getList()
   }, [getList])
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
-
-  // Kiểm tra BR_FER_02 trước khi mở modal Sửa
-  const handleOpenEdit = record => {
-    if (record.isInActiveUse) {
-      setInUseAlert(true)
-      setTimeout(() => setInUseAlert(false), 5000)
-      return
-    }
-    navigate(ROUTER.FM_FERTILIZER_EDIT.replace(":id", record.id))
-  }
-
-  // Kiểm tra BR_FER_02 trước khi mở confirm toggle
-  const handleSwitchClick = record => {
-    if (record.isInActiveUse) {
-      setInUseAlert(true)
-      setTimeout(() => setInUseAlert(false), 5000)
-      return
-    }
-    setStatusModal({ open: true, item: record })
-  }
-
-  // Thực hiện toggle status
   const handleStatusChange = async () => {
     if (!statusModal.item) return
     const { item } = statusModal
@@ -277,7 +226,6 @@ const ViewFertilizers = () => {
       width: 150,
       align: "center",
       render: (_, record) => {
-        const locked = record.isInActiveUse
         const active = record.isActive !== false
         return (
           <div className="flex items-center justify-center gap-2">
@@ -292,63 +240,33 @@ const ViewFertilizers = () => {
                 }}
               />
             </Tooltip>
-            <Tooltip
-              title={
-                locked
-                  ? "Phân bón đang được sử dụng, không thể chỉnh sửa"
-                  : "Chỉnh sửa"
-              }
-            >
+            <Tooltip title="Chỉnh sửa">
               <Button
                 type="text"
-                icon={
-                  <EditOutlined
-                    className={`text-lg ${locked ? "text-gray-300" : "text-green-500"}`}
-                  />
-                }
-                disabled={locked}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                  locked ? "opacity-40" : "hover:bg-green-50"
-                }`}
+                icon={<EditOutlined className="text-lg text-green-500" />}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
                 onClick={e => {
                   e.stopPropagation()
-                  handleOpenEdit(record)
+                  navigate(ROUTER.FM_FERTILIZER_EDIT.replace(":id", record.id))
                 }}
               />
             </Tooltip>
-            <Tooltip
-              title={
-                locked
-                  ? "Phân bón đang được sử dụng"
-                  : active
-                    ? "Vô hiệu hóa"
-                    : "Kích hoạt"
-              }
-            >
+            <Tooltip title={active ? "Vô hiệu hóa" : "Kích hoạt"}>
               <Button
                 type="text"
                 icon={
                   active ? (
-                    <StopOutlined
-                      className={`text-lg ${locked ? "text-gray-300" : "text-red-500"}`}
-                    />
+                    <StopOutlined className="text-lg text-red-500" />
                   ) : (
-                    <CheckCircleOutlined
-                      className={`text-lg ${locked ? "text-gray-300" : "text-green-500"}`}
-                    />
+                    <CheckCircleOutlined className="text-lg text-green-500" />
                   )
                 }
-                disabled={locked}
                 className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                  locked
-                    ? "opacity-40"
-                    : active
-                      ? "hover:bg-red-50"
-                      : "hover:bg-green-50"
+                  active ? "hover:bg-red-50" : "hover:bg-green-50"
                 }`}
                 onClick={e => {
                   e.stopPropagation()
-                  handleSwitchClick(record)
+                  setStatusModal({ open: true, item: record })
                 }}
               />
             </Tooltip>
@@ -364,20 +282,11 @@ const ViewFertilizers = () => {
                 okText="Đồng ý"
                 cancelText="Hủy"
               >
-                <Tooltip
-                  title={
-                    locked ? "Phân bón đang được sử dụng, không thể xóa" : "Xóa"
-                  }
-                >
+                <Tooltip title="Xóa">
                   <Button
                     type="text"
-                    disabled={locked}
-                    icon={
-                      <DeleteOutlined
-                        className={`text-lg ${locked ? "text-gray-300" : "text-red-500"}`}
-                      />
-                    }
-                    className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? "opacity-40" : "hover:bg-red-50"}`}
+                    icon={<DeleteOutlined className="text-lg text-red-500" />}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50"
                     onClick={e => e.stopPropagation()}
                   />
                 </Tooltip>
@@ -409,18 +318,6 @@ const ViewFertilizers = () => {
           Thêm mới
         </Button>
       </div>
-
-      {/* MSG-FER-08 alert */}
-      {inUseAlert && (
-        <Alert
-          message="Phân bón đang được sử dụng trong kế hoạch sản xuất, không thể chỉnh sửa hoặc vô hiệu hóa."
-          type="warning"
-
-          closable
-          onClose={() => setInUseAlert(false)}
-          className="rounded-xl"
-        />
-      )}
 
       {/* ── Table card ── */}
       <div className="admin-filter-card rounded-lg shadow-sm">
