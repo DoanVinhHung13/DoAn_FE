@@ -334,17 +334,17 @@ const CropEdit = () => {
         scrollToFirstError
       >
         <Row gutter={[24, 24]}>
+          {/* Left Column: Basic & Detailed Information in one card */}
           <Col xs={24} lg={16}>
-            <div className="space-y-4">
-              {/* Basic Information Card */}
-              <Card
-                className="rounded-lg shadow-sm"
-                title={
-                  <span className="text-lg font-semibold text-green-600">
-                    Thông tin cơ bản
-                  </span>
-                }
-              >
+            <Card
+              className="rounded-lg shadow-sm"
+              title={
+                <span className="text-lg font-semibold text-green-600">
+                  Thông tin cơ bản
+                </span>
+              }
+            >
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
                   <Form.Item
                     name="name"
@@ -374,11 +374,7 @@ const CropEdit = () => {
                   >
                     <Select
                       className="!h-11 w-full rounded-lg [&_.ant-select-selector]:!h-11 [&_.ant-select-selector]:!rounded-lg"
-                      placeholder={
-                        cropTypeOptions?.length > 0
-                          ? "Chọn danh mục"
-                          : "Chọn danh mục từ danh sách"
-                      }
+                      placeholder="Chọn danh mục"
                       loading={isCatalogsLoading && !cropTypeOptions?.length}
                       options={cropTypeFormOptions}
                       showSearch
@@ -393,17 +389,7 @@ const CropEdit = () => {
                     />
                   </Form.Item>
                 </div>
-              </Card>
 
-              {/* Detailed Information Card */}
-              <Card
-                className="rounded-lg shadow-sm"
-                title={
-                  <span className="text-lg font-semibold text-green-600">
-                    Thông tin chi tiết
-                  </span>
-                }
-              >
                 <Form.Item
                   name="description"
                   label="Mô tả"
@@ -411,18 +397,18 @@ const CropEdit = () => {
                   rules={[makeDescriptionValidator({ maxLength: 200 })]}
                 >
                   <Input.TextArea
-                    rows={4}
+                    rows={3}
                     className="rounded-lg"
                     placeholder="Nhập mô tả về cây trồng"
                   />
                 </Form.Item>
-              </Card>
-            </div>
+              </div>
+            </Card>
           </Col>
 
+          {/* Right Column: Image Upload & Actions */}
           <Col xs={24} lg={8}>
-            <div className="space-y-6">
-              {/* Image Upload Card */}
+            <div className="space-y-4">
               <Card
                 className="rounded-lg shadow-sm"
                 title={
@@ -432,9 +418,9 @@ const CropEdit = () => {
                 }
               >
                 <Form.Item name="imageUrl" className="mb-0">
-                  <div className="flex flex-col items-center space-y-4">
+                  <div className="flex flex-col items-center space-y-3">
                     {watchedImageUrl && !uploading && (
-                      <div className="group relative w-full aspect-square overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-1">
+                      <div className="group relative h-60 w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-1">
                         <img
                           src={watchedImageUrl}
                           alt="Ảnh minh họa cây trồng"
@@ -444,13 +430,13 @@ const CropEdit = () => {
                           <Button
                             type="text"
                             icon={<EyeOutlined />}
-                            className="!h-10 !w-10 !text-white hover:!bg-white/20"
+                            className="!h-9 !w-9 !text-white hover:!bg-white/20"
                             onClick={() => setPreviewImage(watchedImageUrl)}
                           />
                           <Button
                             type="text"
                             icon={<DeleteOutlined />}
-                            className="!h-10 !w-10 !text-white hover:!bg-white/20"
+                            className="!h-9 !w-9 !text-white hover:!bg-white/20"
                             onClick={() =>
                               form.setFieldsValue({ imageUrl: "" })
                             }
@@ -460,7 +446,7 @@ const CropEdit = () => {
                     )}
 
                     {uploading && !watchedImageUrl && (
-                      <div className="flex w-full aspect-square items-center justify-center rounded-xl border border-gray-200 bg-gray-50">
+                      <div className="flex h-40 w-full items-center justify-center rounded-xl border border-gray-200 bg-gray-50">
                         <Spin />
                       </div>
                     )}
@@ -474,7 +460,7 @@ const CropEdit = () => {
                       <Button
                         icon={<UploadOutlined />}
                         loading={uploading}
-                        className="h-11 rounded-lg w-full"
+                        className="h-11 w-full rounded-lg"
                       >
                         {uploading
                           ? "Đang tải..."
@@ -487,32 +473,25 @@ const CropEdit = () => {
                 </Form.Item>
               </Card>
 
-              <Card className="rounded-lg shadow-sm border-t-4 border-t-green-500">
-                <div className="flex justify-between items-center mb-6">
-                  <span className="font-medium text-gray-700">Trạng thái</span>
-                  <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-semibold">
-                    Đang hoạt động
-                  </span>
-                </div>
-                <div className="flex flex-col gap-3">
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    icon={<SaveOutlined />}
-                    loading={updatePending}
-                    disabled={uploading}
-                    className="h-12 w-full rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100 text-base"
-                  >
-                    Lưu thay đổi
-                  </Button>
-                  <Button
-                    onClick={() => navigate(-1)}
-                    className="h-12 w-full rounded-lg font-semibold text-base"
-                  >
-                    Hủy bỏ
-                  </Button>
-                </div>
-              </Card>
+              {/* Actions below Card */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => navigate(-1)}
+                  className="h-11 w-full rounded-lg font-semibold"
+                >
+                  Hủy bỏ
+                </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  icon={<SaveOutlined />}
+                  loading={updatePending}
+                  disabled={uploading}
+                  className="h-11 w-full rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
+                >
+                  Lưu thay đổi
+                </Button>
+              </div>
             </div>
           </Col>
         </Row>

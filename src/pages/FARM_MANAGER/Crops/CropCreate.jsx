@@ -239,17 +239,17 @@ const CropCreate = () => {
         scrollToFirstError
       >
         <Row gutter={[24, 24]}>
+          {/* Left Column: Basic Information in one card */}
           <Col xs={24} lg={16}>
-            <div className="space-y-4">
-              {/* Basic Information Card */}
-              <Card
-                className="rounded-lg shadow-sm"
-                title={
-                  <span className="text-lg font-semibold text-green-600">
-                    Thông tin cơ bản
-                  </span>
-                }
-              >
+            <Card
+              className="rounded-lg shadow-sm"
+              title={
+                <span className="text-lg font-semibold text-green-600">
+                  Thông tin cơ bản
+                </span>
+              }
+            >
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
                   <Form.Item
                     name="name"
@@ -278,7 +278,7 @@ const CropCreate = () => {
                     ]}
                   >
                     <Select
-                      className="h-11"
+                      className="h-11 w-full rounded-lg"
                       placeholder="Chọn nhóm cây"
                       loading={isCatalogsLoading}
                       options={cropTypeFormOptions}
@@ -294,17 +294,7 @@ const CropCreate = () => {
                     />
                   </Form.Item>
                 </div>
-              </Card>
 
-              {/* Detailed Information Card */}
-              <Card
-                className="rounded-lg shadow-sm"
-                title={
-                  <span className="text-lg font-semibold text-green-600">
-                    Thông tin chi tiết
-                  </span>
-                }
-              >
                 <Form.Item
                   name="description"
                   label="Mô tả"
@@ -312,13 +302,13 @@ const CropCreate = () => {
                   rules={[makeDescriptionValidator({ maxLength: 200 })]}
                 >
                   <Input.TextArea
-                    rows={4}
+                    rows={3}
                     className="rounded-lg"
                     placeholder="Nhập mô tả"
                   />
                 </Form.Item>
-              </Card>
-            </div>
+              </div>
+            </Card>
           </Col>
 
           {/* Right Column */}
@@ -385,28 +375,29 @@ const CropCreate = () => {
                   </div>
                 </Form.Item>
               </Card>
+
+              {/* Actions below Card */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => navigate(-1)}
+                  className="h-11 w-full rounded-lg font-semibold"
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  icon={<SaveOutlined />}
+                  loading={isPending}
+                  disabled={uploadingCreate}
+                  className="h-11 w-full rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
+                >
+                  Thêm mới
+                </Button>
+              </div>
             </div>
           </Col>
         </Row>
-
-        <div className="mt-8 flex justify-end gap-3 border-t border-gray-100 pt-6">
-          <Button
-            onClick={() => navigate(-1)}
-            className="h-11 min-w-[100px] rounded-lg font-semibold"
-          >
-            Hủy
-          </Button>
-          <Button
-            type="primary"
-            htmlType="submit"
-            icon={<SaveOutlined />}
-            loading={isPending}
-            disabled={uploadingCreate}
-            className="h-11 min-w-[120px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-          >
-            Thêm mới
-          </Button>
-        </div>
       </Form>
 
       {/* Modal xem ảnh */}

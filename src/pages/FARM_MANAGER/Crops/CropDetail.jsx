@@ -244,8 +244,6 @@ const CropDetail = () => {
           </Card>
         </Col>
       </Row>
-
-
     </div>
   )
 }
