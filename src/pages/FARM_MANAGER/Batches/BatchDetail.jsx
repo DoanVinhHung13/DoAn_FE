@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   Button,
   Card,
   Col,
   Descriptions,
-  Row,
-  Tag,
-  Typography,
-  Spin,
   Divider,
+  Row,
   Space,
+  Spin,
+  Tag,
   Tooltip,
+  Typography,
 } from "antd"
 import {
   ArrowLeftOutlined,
-  QrcodeOutlined,
   CalendarOutlined,
+  CheckCircleOutlined,
   EnvironmentOutlined,
   FileTextOutlined,
-  CheckCircleOutlined,
+  QrcodeOutlined,
 } from "@ant-design/icons"
 import { Sprout } from "lucide-react"
 import { formatDate } from "src/utils/dateFormatters"
@@ -33,7 +33,7 @@ import ROUTER from "src/router/ROUTER"
 
 const { Text, Paragraph } = Typography
 
-const QR_STATUS = {
+const QR_STATUS_CONFIG = {
   NOT_CREATED: {
     label: "Chưa tạo QR",
     bgColor: "bg-orange-100",
@@ -52,7 +52,7 @@ const QR_STATUS = {
   },
 }
 
-const getQrStatus = batch => {
+const getQrStatusKey = batch => {
   if (batch?.qrStatus === "CREATED" || batch?.qrStatus === "NOT_CREATED") {
     return batch.qrStatus
   }
@@ -67,27 +67,49 @@ const BatchDetail = () => {
   const { getDescription } = useSystemKey()
 
   const [batch, setBatch] = useState(null)
-  const [isLoading, setIsLoading] = useState(Boolean(id))
+  const [loading, setLoading] = useState(Boolean(id))
 
-  useEffect(() => {
+  const fetchBatchDetail = useCallback(async () => {
     if (!id) return
-    const timeout = setTimeout(() => {
-      setIsLoading(true)
-      HarvestBatchService.getHarvestBatchById(id)
-        .then(response => {
-          setBatch(response?.data?.data || response?.data || response)
-        })
-        .catch(() => {
-          setBatch(null)
-        })
-        .finally(() => {
-          setIsLoading(false)
-        })
-    }, 0)
-    return () => clearTimeout(timeout)
+    try {
+      setLoading(true)
+      const res = await HarvestBatchService.getHarvestBatchById(id)
+      const data = res?.data?.data || res?.data || res
+      setBatch(data || null)
+    } catch {
+      setBatch(null)
+    } finally {
+      setLoading(false)
+    }
   }, [id])
 
-  if (isLoading) {
+  useEffect(() => {
+    fetchBatchDetail()
+  }, [fetchBatchDetail])
+
+  const qrStatusKey = useMemo(() => getQrStatusKey(batch), [batch])
+
+  const statusConfig = useMemo(() => {
+    const baseConfig =
+      QR_STATUS_CONFIG[qrStatusKey] || QR_STATUS_CONFIG.NOT_CREATED
+    return {
+      ...baseConfig,
+      label:
+        getDescription(SYSTEM_KEY.QR_STATUS, qrStatusKey) || baseConfig.label,
+    }
+  }, [qrStatusKey, getDescription])
+
+  const canCreateQR = Boolean(batch?.isQrEligible && !batch?.hasActiveQrCode)
+  const hasQR = Boolean(batch?.hasActiveQrCode)
+
+  const handleNavigateQr = useCallback(() => {
+    if (!batch) return
+    navigate(
+      `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
+    )
+  }, [batch, navigate])
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Spin size="large" />
@@ -97,7 +119,7 @@ const BatchDetail = () => {
 
   if (!batch) {
     return (
-      <div className="p-6">
+      <div className="p-6 space-y-4">
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate(ROUTER.FM_HARVEST_BATCHES)}
@@ -110,18 +132,6 @@ const BatchDetail = () => {
       </div>
     )
   }
-
-  const qrStatus = getQrStatus(batch)
-  const fallbackStatusConfig = QR_STATUS[qrStatus] || QR_STATUS.NOT_CREATED
-  const statusConfig = {
-    ...fallbackStatusConfig,
-    label:
-      getDescription(SYSTEM_KEY.QR_STATUS, qrStatus) ||
-      fallbackStatusConfig.label,
-  }
-  const canCreateQR =
-    batch.isQrEligible === true && batch.hasActiveQrCode === false
-  const hasQR = batch.hasActiveQrCode === true
 
   return (
     <div className="p-6 space-y-6">
@@ -145,11 +155,7 @@ const BatchDetail = () => {
                 icon={<QrcodeOutlined />}
                 size="large"
                 aria-label="Quản lý mã QR"
-                onClick={() =>
-                  navigate(
-                    `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
-                  )
-                }
+                onClick={handleNavigateQr}
                 className="bg-green-600 hover:bg-green-700 h-10 px-3 rounded-lg font-semibold"
               >
                 Tạo mã QR
@@ -163,11 +169,7 @@ const BatchDetail = () => {
                 icon={<QrcodeOutlined />}
                 size="large"
                 aria-label="Quản lý mã QR"
-                onClick={() =>
-                  navigate(
-                    `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
-                  )
-                }
+                onClick={handleNavigateQr}
                 className="bg-blue-500 hover:bg-blue-600 h-10 px-3 rounded-lg font-semibold"
               >
                 Xem mã QR
@@ -233,21 +235,18 @@ const BatchDetail = () => {
               labelStyle={{ fontWeight: 600, color: "#4b5563", width: 140 }}
               contentStyle={{ color: "#111827" }}
             >
-              {/* batchCode → Mã lô sản xuất */}
               <Descriptions.Item label="Mã lô sản xuất" span={2}>
                 <Tag color="blue" className="text-sm font-semibold px-3 py-1">
                   {batch.batchCode || "-"}
                 </Tag>
               </Descriptions.Item>
 
-              {/* cropName → Loại cây trồng */}
               <Descriptions.Item label="Loại cây trồng" span={2}>
                 <Text strong className="text-base">
                   {batch.cropName || batch.cropType || "-"}
                 </Text>
               </Descriptions.Item>
 
-              {/* startDate → Ngày trồng */}
               <Descriptions.Item label="Ngày trồng">
                 <Space>
                   <CalendarOutlined className="text-blue-500" />
@@ -257,7 +256,6 @@ const BatchDetail = () => {
                 </Space>
               </Descriptions.Item>
 
-              {/* harvestDate → Ngày thu hoạch */}
               <Descriptions.Item label="Ngày thu hoạch">
                 <Space>
                   <CalendarOutlined className="text-green-600" />
@@ -332,11 +330,7 @@ const BatchDetail = () => {
                       block
                       icon={<QrcodeOutlined />}
                       aria-label="Quản lý mã QR"
-                      onClick={() =>
-                        navigate(
-                          `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
-                        )
-                      }
+                      onClick={handleNavigateQr}
                       className="h-12 rounded-lg bg-green-600 hover:bg-green-700 font-semibold"
                     >
                       Tạo mã QR
@@ -352,11 +346,7 @@ const BatchDetail = () => {
                       block
                       icon={<QrcodeOutlined />}
                       aria-label="Quản lý mã QR"
-                      onClick={() =>
-                        navigate(
-                          `${ROUTER.FM_QR_CODES}?batchId=${batch.id}&batchCode=${batch.batchCode}&cropType=${encodeURIComponent(batch.cropName || "")}`,
-                        )
-                      }
+                      onClick={handleNavigateQr}
                       className="h-12 rounded-lg bg-blue-500 hover:bg-blue-600 font-semibold"
                     >
                       Xem mã QR

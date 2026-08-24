@@ -1,28 +1,5 @@
-/**
- * Reusable table column definitions
- *
- * Factory functions to create common column configurations
- * Used across multiple list management pages to reduce duplication
- */
-
 import StatusBadge from "src/components/Common/StatusBadge"
 
-/**
- * Create STT (sequential number) column
- *
- * @param {number} page - Current page number
- * @param {number} pageSize - Page size
- * @param {Object} options - Optional configuration
- * @param {number} options.width - Column width (default: 56)
- * @param {string} options.title - Column title (default: 'STT')
- * @returns {Object} Ant Design table column config
- *
- * @example
- * const columns = [
- *   createSTTColumn(page, pageSize),
- *   { title: 'Name', dataIndex: 'name' },
- * ]
- */
 export const createSTTColumn = (page, pageSize, options = {}) => ({
   title: options.title || "STT",
   key: "stt",
@@ -35,36 +12,6 @@ export const createSTTColumn = (page, pageSize, options = {}) => ({
   ),
 })
 
-/**
- * Create status badge column (active/inactive)
- *
- * Automatically handles both API formats:
- * - Priority: record.status (string: 'ACTIVE'/'INACTIVE')
- * - Fallback: record.isActive (boolean)
- *
- * @param {Object} options - Column configuration
- * @param {string} options.title - Column title (default: 'Trạng thái')
- * @param {number} options.width - Column width (default: 165)
- * @param {Function} options.getLabel - Custom label getter function (receives isActive boolean)
- * @returns {Object} Ant Design table column config
- *
- * @example
- * // Simple usage
- * const columns = [
- *   createStatusColumn(),
- * ]
- *
- * @example
- * // With custom label from SystemKey
- * const columns = [
- *   createStatusColumn({
- *     getLabel: (isActive) => {
- *       const sysVal = isActive ? 'ACTIVE' : 'INACTIVE'
- *       return getDescription(SYSTEM_KEY.STATUS, sysVal) || (isActive ? 'Hoạt động' : 'Vô hiệu')
- *     }
- *   })
- * ]
- */
 export const createStatusColumn = (options = {}) => {
   const { title = "Trạng thái", width = 165, getLabel = null } = options
 

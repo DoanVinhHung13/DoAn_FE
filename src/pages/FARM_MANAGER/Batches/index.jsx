@@ -48,7 +48,7 @@ const getQrStatus = batch => {
 
 const Batches = () => {
   const navigate = useNavigate()
-  const { getCombo, getDescription } = useSystemKey()
+  const { getOptions } = useSystemKey()
 
   const {
     searchInput,
@@ -75,24 +75,9 @@ const Batches = () => {
 
   const statusFilter = filters.status
 
-  const systemKeyOptions = getCombo(SYSTEM_KEY.QR_STATUS)
-    .map(opt => ({
-      value: opt.codeValue ?? opt.CodeValue,
-      label: opt.description ?? opt.label,
-    }))
-    .filter(
-      opt =>
-        (opt.value === "NOT_CREATED" || opt.value === "CREATED") && opt.label,
-    )
-
   const selectStatusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
-    ...(systemKeyOptions.length
-      ? systemKeyOptions
-      : [
-          { value: "NOT_CREATED", label: "Chưa tạo QR" },
-          { value: "CREATED", label: "Đã tạo QR" },
-        ]),
+    ...getOptions(SYSTEM_KEY.QR_STATUS),
   ]
 
   const getList = useCallback(async () => {

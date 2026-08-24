@@ -1,11 +1,7 @@
 import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button, Card, Form, Input, Select } from "antd"
-import {
-  ArrowLeftOutlined,
-  SaveOutlined,
-  FileTextOutlined,
-} from "@ant-design/icons"
+import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons"
 
 import TitleCustom from "src/components/TitleCustom"
 import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
@@ -17,49 +13,49 @@ import useFormDraft from "src/hooks/useFormDraft"
 import { getFormDraftKey } from "src/utils/formDraftKeys"
 import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
-const CROP_CATALOG_FIELD_MAPPING = {
-  Name: "name",
-  name: "name",
-  Description: "description",
-  description: "description",
-  IsActive: "isActive",
-  isActive: "isActive",
-}
+const STATUS_OPTIONS = [
+  { value: true, label: "Hoạt động" },
+  { value: false, label: "Ngừng hoạt động" },
+]
+
+const normalizeText = text => text?.trim().replace(/\s+/g, " ") || null
 
 const CatalogCreate = () => {
   const navigate = useNavigate()
   const [form] = Form.useForm()
   const { refetchSystemKey } = useSystemKey()
+  const [isPending, setIsPending] = useState(false)
+
   const storageKey = getFormDraftKey("crop-catalog", "create")
   const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
     form,
     storageKey,
   })
 
-  const [isPending, setIsPending] = useState(false)
-
   useEffect(() => {
     const draft = restoreDraft()
-    if (draft?.data) form.setFieldsValue({ isActive: true, ...draft.data })
+    if (draft?.data) {
+      form.setFieldsValue({ isActive: true, ...draft.data })
+    }
   }, [form, restoreDraft])
 
   const handleCreate = async values => {
-    setIsPending(true)
     const payload = {
-      name: values.name.trim().replace(/\s+/g, " "),
-      description: values.description?.trim().replace(/\s+/g, " ") || null,
+      name: normalizeText(values.name),
+      description: normalizeText(values.description),
       isActive: values.isActive ?? true,
     }
+
     try {
+      setIsPending(true)
       await CropCatalogService.createCropCatalog(payload, {
         errorHandling: "form",
-        fieldErrorMapping: CROP_CATALOG_FIELD_MAPPING,
       })
       clearDraft()
       await refetchSystemKey()
       navigate(ROUTER.FM_CROP_CATALOGS)
     } catch (error) {
-      applyApiFieldErrors(form, error, CROP_CATALOG_FIELD_MAPPING)
+      applyApiFieldErrors(form, error)
     } finally {
       setIsPending(false)
     }
@@ -82,6 +78,7 @@ const CatalogCreate = () => {
         </TitleCustom>
       </div>
 
+      {/* Form Card */}
       <Card className="mx-auto max-w-3xl rounded-lg shadow-sm">
         <Form
           form={form}
@@ -89,7 +86,6 @@ const CatalogCreate = () => {
           initialValues={{ isActive: true }}
           onFinish={handleCreate}
           onValuesChange={(_, allValues) => saveDraft(allValues)}
-          onFinishFailed={() => {}}
           scrollToFirstError
         >
           <Form.Item
@@ -121,13 +117,7 @@ const CatalogCreate = () => {
           </Form.Item>
 
           <Form.Item name="isActive" label="Trạng thái">
-            <Select
-              className="h-11"
-              options={[
-                { value: true, label: "Hoạt động" },
-                { value: false, label: "Ngừng hoạt động" },
-              ]}
-            />
+            <Select className="h-11" options={STATUS_OPTIONS} />
           </Form.Item>
 
           <div className="flex justify-end gap-3 border-t border-gray-100 pt-6">
