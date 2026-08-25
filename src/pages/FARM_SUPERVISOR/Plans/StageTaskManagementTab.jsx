@@ -7,6 +7,7 @@ import {
   InfoCircleOutlined,
   MoreOutlined,
   PlusOutlined,
+  SwapOutlined,
   TeamOutlined,
   UserOutlined,
 } from "@ant-design/icons"
@@ -21,6 +22,7 @@ import {
   Dropdown,
   Empty,
   Flex,
+  InputNumber,
   List,
   message,
   Modal,
@@ -128,6 +130,7 @@ const TaskCard = ({
   onEdit,
   onActivate,
   onDelete,
+  onSwap,
 }) => {
   const cfg = getTaskCfg(task.status)
   const accentColor =
@@ -142,6 +145,7 @@ const TaskCard = ({
             : "#d1d5db"
 
   const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
+  const canSwap = task.status === "PENDING"
   const startDate = task.workStartDate || task.plannedStartDate
   const startLabel = task.workStartDate ? "Ngày bắt đầu:" : "Dự kiến:"
   const hasActualDates = task.workEndDate || task.completedDate
@@ -406,6 +410,19 @@ const TaskCard = ({
 
             {canEdit && (
               <Flex align="center" gap={8} className="flex-shrink-0">
+                {canSwap && (
+                  <Button
+                    size="small"
+                    icon={<SwapOutlined />}
+                    className="rounded-lg border-blue-200 text-blue-700 hover:border-blue-400 hover:text-blue-800 h-7"
+                    onClick={e => {
+                      e.stopPropagation()
+                      onSwap(task)
+                    }}
+                  >
+                    Swap
+                  </Button>
+                )}
                 <Button
                   type="primary"
                   size="small"
@@ -456,10 +473,15 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     task: null,
   })
   const [activationTask, setActivationTask] = useState(null)
+  const [swapTask, setSwapTask] = useState(null)
+  const [swapTargetOrder, setSwapTargetOrder] = useState(null)
+  const [swapping, setSwapping] = useState(false)
 
   const handleSelectStage = stageId => {
     setSelectedId(stageId)
     setEditingTaskId(null)
+    setSwapTask(null)
+    setSwapTargetOrder(null)
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev)
@@ -718,6 +740,56 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     setEditingTaskId("new")
   }
 
+  const handleConfirmSwap = async () => {
+    if (!swapTask) return
+
+    const targetOrder = Number(swapTargetOrder)
+    if (!Number.isInteger(targetOrder) || targetOrder < 1) {
+      message.warning("Vui lòng nhập số thứ tự công việc cần đổi.")
+      return
+    }
+
+    const sourceIndex = orderedSelectedTasks.findIndex(
+      task => task.id === swapTask.id,
+    )
+    const sourceOrder = getTaskOrder(swapTask, sourceIndex + 1)
+    if (sourceOrder === targetOrder) {
+      message.warning("Vị trí mới phải khác vị trí hiện tại.")
+      return
+    }
+
+    const targetIndex = orderedSelectedTasks.findIndex(
+      (task, index) => getTaskOrder(task, index + 1) === targetOrder,
+    )
+    const targetTask = orderedSelectedTasks[targetIndex]
+    if (!targetTask) {
+      message.warning(`Không tìm thấy công việc ở vị trí ${targetOrder}.`)
+      return
+    }
+    if (targetTask.status !== "PENDING") {
+      message.warning(
+        "Chỉ có thể đổi vị trí với công việc đang ở trạng thái Chờ thực hiện.",
+      )
+      return
+    }
+
+    try {
+      setSwapping(true)
+      await CultivationTaskService.order({
+        cultivationLogbookId: planId,
+        cultivationStageId: selectedId,
+        taskIds: [swapTask.id, targetTask.id],
+      })
+      setSwapTask(null)
+      setSwapTargetOrder(null)
+      await loadData()
+    } catch {
+      // Axios interceptor handles error notification directly from backend response.
+    } finally {
+      setSwapping(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card
@@ -844,6 +916,10 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                         onEdit={task => setEditTaskModal({ open: true, task })}
                         onActivate={handleActivateTask}
                         onDelete={handleDeleteTask}
+                        onSwap={task => {
+                          setSwapTask(task)
+                          setSwapTargetOrder(null)
+                        }}
                       />
                     ))}
                   </div>
@@ -915,6 +991,38 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         onCancel={() => setActivationTask(null)}
         onConfirm={confirmActivation}
       />
+
+      <Modal
+        open={Boolean(swapTask)}
+        title="Đổi vị trí công việc"
+        okText="Swap"
+        cancelText="Hủy"
+        confirmLoading={swapping}
+        onCancel={() => {
+          setSwapTask(null)
+          setSwapTargetOrder(null)
+        }}
+        onOk={handleConfirmSwap}
+      >
+        <div className="space-y-3">
+          <Text>
+            Công việc: <strong>{swapTask?.name || swapTask?.taskName}</strong>
+          </Text>
+          <Text type="secondary" className="block">
+            Nhập số thứ tự của công việc muốn đổi vị trí. Hệ thống sẽ tự lấy ID
+            công việc đó để gửi API.
+          </Text>
+          <InputNumber
+            min={1}
+            precision={0}
+            value={swapTargetOrder}
+            onChange={setSwapTargetOrder}
+            placeholder="Số thứ tự công việc"
+            className="w-full"
+            autoFocus
+          />
+        </div>
+      </Modal>
     </div>
   )
 }

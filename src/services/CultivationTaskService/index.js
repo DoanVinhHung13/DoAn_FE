@@ -1,19 +1,20 @@
 import http from "../01_axios"
 import {
+  apiAssignCultivationTask,
+  apiCancelCultivationTask,
   apiCreateCultivationTask,
   apiCreateCultivationTaskBulk,
   apiDeleteCultivationTask,
   apiGetCultivationTaskById,
   apiGetCultivationTasks,
-  apiGetMyCultivationTasks,
-  apiUpdateCultivationTask,
-  apiAssignCultivationTask,
-  apiStartCultivationTask,
-  apiCancelCultivationTask,
   apiGetLeaderSummary,
-  apiSubmitTaskSummary,
-  apiGetMyLogbookSummaries,
   apiGetLogbookById,
+  apiGetMyCultivationTasks,
+  apiGetMyLogbookSummaries,
+  apiOrderCultivationTasks,
+  apiStartCultivationTask,
+  apiSubmitTaskSummary,
+  apiUpdateCultivationTask,
 } from "./urls"
 
 const silentConfig = { skipNotice: true }
@@ -30,6 +31,8 @@ const create = body => http.post(apiCreateCultivationTask, body)
 
 const createBulk = (body, config = {}) =>
   http.post(apiCreateCultivationTaskBulk, body, config)
+
+const order = body => http.post(apiOrderCultivationTasks, body)
 
 const update = (id, body) => http.put(apiUpdateCultivationTask(id), body)
 
@@ -63,6 +66,7 @@ const CultivationTaskService = {
   getById,
   create,
   createBulk,
+  order,
   update,
   assign,
   remove,
