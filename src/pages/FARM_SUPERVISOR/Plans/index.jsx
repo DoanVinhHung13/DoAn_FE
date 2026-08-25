@@ -130,8 +130,7 @@ const FarmSupervisorPlans = () => {
       width: 220,
       render: (_, plan) => (
         <span className="whitespace-nowrap text-gray-600">
-          {plan.startDate ? formatDate(plan.startDate) : "—"} –{" "}
-          {plan.expectedEndDate ? formatDate(plan.expectedEndDate) : "—"}
+          {plan.startDate ? formatDate(plan.startDate) : "—"}
         </span>
       ),
     },
@@ -296,15 +295,12 @@ const FarmSupervisorPlans = () => {
                           <UserOutlined className="text-green-500" />
                           {plan.supervisorName || "—"}
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <CalendarOutlined className="text-green-500" />
-                          {plan.startDate
-                            ? formatDate(plan.startDate)
-                            : "—"} –{" "}
-                          {plan.expectedEndDate
-                            ? formatDate(plan.expectedEndDate)
-                            : "Chưa kết thúc"}
-                        </div>
+                        {plan.startDate && (
+                          <div className="flex items-center gap-1.5">
+                            <CalendarOutlined className="text-green-500" />
+                            {formatDate(plan.startDate)}
+                          </div>
+                        )}
                       </div>
                       <Button
                         type="primary"

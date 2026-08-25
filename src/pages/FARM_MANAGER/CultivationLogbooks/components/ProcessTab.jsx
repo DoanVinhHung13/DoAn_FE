@@ -42,11 +42,10 @@ const getHarvestArea = log =>
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
 const StageListItem = ({ stage, index, isActive, onClick }) => {
-  const plannedPeriod = formatKnownDateRange(stage.startDate, stage.endDate)
-  const actualPeriod = formatKnownDateRange(
-    stage.actualStartDate,
-    stage.actualEndDate,
-  )
+  const displayStartDate = stage.actualStartDate || stage.startDate
+  const displayEndDate = stage.actualEndDate
+  const displayPeriod = formatKnownDateRange(displayStartDate, displayEndDate)
+  const displayLabel = stage.actualStartDate ? "Thực tế" : "Dự kiến"
 
   return (
     <List.Item
@@ -82,19 +81,16 @@ const StageListItem = ({ stage, index, isActive, onClick }) => {
           </Text>
         }
         description={
-          (plannedPeriod || actualPeriod) && (
-            <div className="flex flex-col gap-0.5">
-              {plannedPeriod && (
-                <Text type="secondary" style={{ fontSize: 11 }}>
-                  Kế hoạch: {plannedPeriod}
-                </Text>
-              )}
-              {actualPeriod && (
-                <Text style={{ fontSize: 11, color: "#16a34a" }}>
-                  Thực tế: {actualPeriod}
-                </Text>
-              )}
-            </div>
+          displayPeriod && (
+            <Text
+              type={stage.actualStartDate ? undefined : "secondary"}
+              style={{
+                fontSize: 11,
+                color: stage.actualStartDate ? "#16a34a" : undefined,
+              }}
+            >
+              {displayLabel}: {displayPeriod}
+            </Text>
           )
         }
       />
@@ -361,15 +357,15 @@ const ProcessTab = ({ item }) => {
     (s, idx) => (s.id ?? idx) === selectedStageId,
   )
   const selectedStage = selectedIndex >= 0 ? stages[selectedIndex] : null
-  const selectedPlannedPeriod = selectedStage
-    ? formatKnownDateRange(selectedStage.startDate, selectedStage.endDate)
-    : ""
-  const selectedActualPeriod = selectedStage
-    ? formatKnownDateRange(
-        selectedStage.actualStartDate,
-        selectedStage.actualEndDate,
-      )
-    : ""
+  const selectedDisplayStartDate = selectedStage?.actualStartDate || selectedStage?.startDate
+  const selectedDisplayEndDate = selectedStage?.actualEndDate
+  const selectedDisplayPeriod = formatKnownDateRange(
+    selectedDisplayStartDate,
+    selectedDisplayEndDate,
+  )
+  const selectedDisplayLabel = selectedStage?.actualStartDate
+    ? "Thực tế"
+    : "Dự kiến"
 
   const stageLogs = getOrderedStageLogs(
     dailyLogs,
@@ -420,25 +416,22 @@ const ProcessTab = ({ item }) => {
                           selectedStage.name ||
                           `Giai đoạn ${selectedIndex + 1}`}
                       </Text>
-                      {(selectedPlannedPeriod || selectedActualPeriod) && (
-                        <div className="flex flex-col gap-0.5">
-                          {selectedPlannedPeriod && (
-                            <Text type="secondary" style={{ fontSize: 13 }}>
-                              <CalendarOutlined className="mr-1" />
-                              <span className="font-medium">
-                                Kế hoạch:
-                              </span>{" "}
-                              {selectedPlannedPeriod}
-                            </Text>
-                          )}
-                          {selectedActualPeriod && (
-                            <Text style={{ fontSize: 13, color: "#16a34a" }}>
-                              <CalendarOutlined className="mr-1" />
-                              <span className="font-medium">Thực tế:</span>{" "}
-                              {selectedActualPeriod}
-                            </Text>
-                          )}
-                        </div>
+                      {selectedDisplayPeriod && (
+                        <Text
+                          type={selectedStage.actualStartDate ? undefined : "secondary"}
+                          style={{
+                            fontSize: 13,
+                            color: selectedStage.actualStartDate
+                              ? "#16a34a"
+                              : undefined,
+                          }}
+                        >
+                          <CalendarOutlined className="mr-1" />
+                          <span className="font-medium">
+                            {selectedDisplayLabel}:
+                          </span>{" "}
+                          {selectedDisplayPeriod}
+                        </Text>
                       )}
                     </div>
                   </div>

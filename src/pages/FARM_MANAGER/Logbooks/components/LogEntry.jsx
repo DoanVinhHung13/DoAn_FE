@@ -35,7 +35,7 @@ const LogEntry = ({ log }) => {
 
   const workStartDate =
     log.workStartDate || summary.workStartDate || log.startDate
-  const workEndDate = log.workEndDate || summary.workEndDate || log.endDate
+  const workEndDate = log.workEndDate || summary.workEndDate
 
   const editedBy = getUserDisplayName(
     summary.supervisorEditorName,
@@ -214,4 +214,3 @@ const LogEntry = ({ log }) => {
 }
 
 export default LogEntry
-

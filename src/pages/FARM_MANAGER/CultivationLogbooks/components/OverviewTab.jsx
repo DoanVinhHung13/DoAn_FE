@@ -58,8 +58,12 @@ const OverviewTab = ({ item }) => {
               icon: <TeamOutlined />,
             },
             {
-              label: "Ngày bắt đầu",
-              value: item.startDate ? formatDate(item.startDate) : null,
+              label: item.actualStartDate ? "Ngày bắt đầu" : "Dự kiến",
+              value: item.actualStartDate
+                ? formatDate(item.actualStartDate)
+                : item.startDate
+                  ? formatDate(item.startDate)
+                  : null,
               icon: <CalendarOutlined />,
             },
             {
@@ -110,13 +114,24 @@ const OverviewTab = ({ item }) => {
                   <p className="font-bold text-base text-gray-800 mb-1">
                     {getStageName(stage, index)}
                   </p>
-                  {(stage.startDate || stage.endDate) && (
+                  {(stage.actualStartDate || stage.startDate) && (
                     <p className="text-xs text-gray-500 mb-2">
                       <CalendarOutlined className="mr-1" />
-                      {stage.startDate
-                        ? formatDate(stage.startDate)
-                        : "..."} -{" "}
-                      {stage.endDate ? formatDate(stage.endDate) : "..."}
+                      <span className="font-medium">
+                        {stage.actualStartDate ? "Ngày bắt đầu" : "Dự kiến"}:
+                      </span>{" "}
+                      {stage.actualStartDate
+                        ? formatDate(stage.actualStartDate)
+                        : stage.startDate
+                          ? formatDate(stage.startDate)
+                          : "..."}
+                    </p>
+                  )}
+                  {stage.actualEndDate && (
+                    <p className="text-xs text-green-600 mb-2">
+                      <ClockCircleOutlined className="mr-1" />
+                      <span className="font-medium">Kết thúc thực tế:</span>{" "}
+                      {formatDate(stage.actualEndDate)}
                     </p>
                   )}
                   {getStageNote(stage) && (

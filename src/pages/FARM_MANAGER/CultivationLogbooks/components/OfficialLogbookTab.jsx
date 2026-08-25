@@ -24,11 +24,10 @@ const SectionTitle = ({ children }) => (
 
 // Item trong danh sách "Lộ trình sản xuất" bên trái
 const StageListItem = ({ stage, index, isActive, onClick }) => {
-  const plannedPeriod = formatKnownDateRange(stage.startDate, stage.endDate)
-  const actualPeriod = formatKnownDateRange(
-    stage.actualStartDate,
-    stage.actualEndDate,
-  )
+  const displayStartDate = stage.actualStartDate || stage.startDate
+  const displayEndDate = stage.actualEndDate
+  const displayPeriod = formatKnownDateRange(displayStartDate, displayEndDate)
+  const displayLabel = stage.actualStartDate ? "Thực tế" : "Dự kiến"
 
   return (
     <List.Item
@@ -62,19 +61,16 @@ const StageListItem = ({ stage, index, isActive, onClick }) => {
           >
             {stage.stageName || stage.name || `Giai đoạn ${index + 1}`}
           </Text>
-          {(plannedPeriod || actualPeriod) && (
-            <div className="flex flex-col gap-0.5">
-              {plannedPeriod && (
-                <Text type="secondary" style={{ fontSize: 11 }}>
-                  Kế hoạch: {plannedPeriod}
-                </Text>
-              )}
-              {actualPeriod && (
-                <Text style={{ fontSize: 11, color: "#16a34a" }}>
-                  Thực tế: {actualPeriod}
-                </Text>
-              )}
-            </div>
+          {displayPeriod && (
+            <Text
+              type={stage.actualStartDate ? undefined : "secondary"}
+              style={{
+                fontSize: 11,
+                color: stage.actualStartDate ? "#16a34a" : undefined,
+              }}
+            >
+              {displayLabel}: {displayPeriod}
+            </Text>
           )}
         </div>
       </div>
@@ -161,6 +157,10 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
     officialLogs,
     selectedStage?.tasks || selectedStage?.cultivationTasks || [],
   )
+  const displayStartDate = selectedStage?.actualStartDate || selectedStage?.startDate
+  const displayEndDate = selectedStage?.actualEndDate
+  const displayPeriod = formatKnownDateRange(displayStartDate, displayEndDate)
+  const displayLabel = selectedStage?.actualStartDate ? "Thực tế" : "Dự kiến"
 
   return (
     <div className="space-y-6">
@@ -202,30 +202,20 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                           selectedStage.name ||
                           `Giai đoạn ${selectedIndex + 1}`}
                       </h4>
-                      {stageLogs.length > 0 && (
-                        <div className="flex flex-col gap-0.5">
-                          {(() => {
-                            const firstLog = stageLogs[0]
-                            const lastLog = stageLogs[stageLogs.length - 1]
-                            const wsd =
-                              firstLog.workStartDate || firstLog.startDate
-                            const wed = lastLog.workEndDate || lastLog.endDate
-                            const actualPeriod = formatKnownDateRange(wsd, wed)
-                            return (
-                              actualPeriod && (
-                                <Text
-                                  style={{ fontSize: 12, color: "#16a34a" }}
-                                >
-                                  <CalendarOutlined className="mr-1" />
-                                  <span className="font-medium">
-                                    Thực tế:
-                                  </span>{" "}
-                                  {actualPeriod}
-                                </Text>
-                              )
-                            )
-                          })()}
-                        </div>
+                      {displayPeriod && (
+                        <Text
+                          type={selectedStage.actualStartDate ? undefined : "secondary"}
+                          style={{
+                            fontSize: 12,
+                            color: selectedStage.actualStartDate
+                              ? "#16a34a"
+                              : undefined,
+                          }}
+                        >
+                          <CalendarOutlined className="mr-1" />
+                          <span className="font-medium">{displayLabel}:</span>{" "}
+                          {displayPeriod}
+                        </Text>
                       )}
                     </div>
 
@@ -258,7 +248,7 @@ const OfficialLogbookTab = ({ item, stages = [] }) => {
                         const workEndDate =
                           task.workEndDate ||
                           summary.workEndDate ||
-                          task.endDate
+                          null
                         const editedBy = getUserDisplayName(
                           summary.editedBy,
                           summary.editedByName,
