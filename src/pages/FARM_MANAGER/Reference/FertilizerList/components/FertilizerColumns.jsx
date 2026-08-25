@@ -16,17 +16,6 @@ export const getFertilizerColumns = (currentPage, pageSize) => [
     ),
   },
   {
-    title: "Mã",
-    dataIndex: "code",
-    key: "code",
-    width: 140,
-    render: text => (
-      <span className="font-mono font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs">
-        {text || "—"}
-      </span>
-    ),
-  },
-  {
     title: "Tên phân bón",
     dataIndex: "name",
     key: "name",

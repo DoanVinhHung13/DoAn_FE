@@ -5,15 +5,16 @@ import {
   Col,
   Flex,
   Form,
+  message,
   Modal,
   Row,
   Select,
   Tag,
   Typography,
-  message,
 } from "antd"
 import { useEffect, useMemo, useState } from "react"
 import {
+  CULTIVATION_TASK_TYPES,
   getCultivationTaskTypeColor,
   getCultivationTaskTypeLabel,
 } from "src/constants/cultivationTask"
@@ -23,6 +24,10 @@ import { getTaskOrder } from "src/utils/cultivationOrdering"
 const { Text } = Typography
 
 const ALLOWED_SWAP_STATUSES = ["PENDING", "ASSIGNED"]
+
+const isHarvestTask = task =>
+  task?.taskType === CULTIVATION_TASK_TYPES.HARVEST ||
+  task?.activityType === "HARVESTING"
 
 const SwapTaskModal = ({
   open,
@@ -72,6 +77,8 @@ const SwapTaskModal = ({
   const isValidSwap = Boolean(
     targetTask &&
     targetTask.id !== task?.id &&
+    !isHarvestTask(task) &&
+    !isHarvestTask(targetTask) &&
     ALLOWED_SWAP_STATUSES.includes(targetTask?.status),
   )
 
@@ -111,7 +118,10 @@ const SwapTaskModal = ({
   const availableTaskOptions = useMemo(() => {
     return stageTasks
       .filter(
-        t => t.id !== task?.id && ALLOWED_SWAP_STATUSES.includes(t.status),
+        t =>
+          t.id !== task?.id &&
+          !isHarvestTask(t) &&
+          ALLOWED_SWAP_STATUSES.includes(t.status),
       )
       .map(t => {
         const idx = stageTasks.findIndex(item => item.id === t.id)

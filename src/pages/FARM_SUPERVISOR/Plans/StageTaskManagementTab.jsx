@@ -147,7 +147,8 @@ const TaskCard = ({
 
   const isPending = task.status === "PENDING"
   const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
-  const canSwap = ["PENDING", "ASSIGNED"].includes(task.status)
+  const canSwap =
+    ["PENDING", "ASSIGNED"].includes(task.status) && !isHarvestTask(task)
   const startDate = task.workStartDate || task.plannedStartDate
   const startLabel = task.workStartDate ? "Ngày bắt đầu:" : "Dự kiến:"
   const hasActualDates = task.workEndDate || task.completedDate
