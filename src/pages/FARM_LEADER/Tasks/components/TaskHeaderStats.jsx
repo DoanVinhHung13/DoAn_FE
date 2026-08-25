@@ -51,13 +51,24 @@ const TaskHeaderStats = ({
           </h2>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-emerald-100/70 pt-1">
-            <span className="flex items-center gap-1.5">
-              <TagsOutlined className="text-emerald-400" />
-              {logbookDetail?.cropName || logbookDetail?.cropCatalogName || "—"}
-            </span>
+            {logbookDetail?.cropVariety && (
+              <span className="flex items-center gap-1.5">
+                <TagsOutlined className="text-emerald-400" />
+                <span className="text-emerald-200/60 uppercase text-[10px] font-semibold">Cây trồng:</span>
+                {logbookDetail.cropVariety}
+              </span>
+            )}
+            {logbookDetail?.cropCategory && (
+              <span className="flex items-center gap-1.5">
+                <NodeIndexOutlined className="text-emerald-400" />
+                <span className="text-emerald-200/60 uppercase text-[10px] font-semibold">Danh mục:</span>
+                {logbookDetail.cropCategory}
+              </span>
+            )}
             <span className="flex items-center gap-1.5">
               <EnvironmentOutlined className="text-emerald-400" />
-              {getLandPlotNamesDisplay(logbookDetail)}
+              <span className="text-emerald-200/60 uppercase text-[10px] font-semibold">Vùng trồng:</span>
+              {logbookDetail?.growingArea || getLandPlotNamesDisplay(logbookDetail)}
             </span>
             {logbookDetail?.startDate && (
               <span className="flex items-center gap-1.5">
