@@ -918,6 +918,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                     selectedId={selectedId}
                     taskCatalogOptions={taskCatalogOptions}
                     availableTaskCatalogOptions={availableTaskCatalogOptions}
+                    isFinalStage={isFinalStage}
                     leaders={leaders}
                     farmers={farmers}
                     loadingUsers={loadingUsers}
