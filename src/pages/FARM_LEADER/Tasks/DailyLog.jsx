@@ -661,22 +661,6 @@ const DailyLog = () => {
         throw new Error("Upload không trả về url")
       }
       onSuccess({ url })
-      setShowImageError(false)
-      setFileList(prev => {
-        const next = [
-          ...prev.filter(f => f.uid !== file.uid),
-          {
-            uid: file.uid,
-            name: file.name,
-            status: "done",
-            url,
-            size: file.size,
-          },
-        ]
-        form.setFieldsValue({ images: next })
-        form.setFields([{ name: "images", errors: [] }])
-        return next
-      })
     } catch (err) {
       onError?.(err)
       message.error(err?.message || "Không thể tải ảnh lên.")
@@ -690,12 +674,32 @@ const DailyLog = () => {
     }
   }
 
+  const handleUploadChange = ({ file, fileList: nextFileList }) => {
+    const normalizedFileList = nextFileList
+      .filter(item => item.status !== "error")
+      .map(item => ({
+        ...item,
+        url:
+          item.url || item.response?.url || item.response?.data?.url || null,
+      }))
+
+    setFileList(normalizedFileList)
+    form.setFieldsValue({ images: normalizedFileList })
+
+    const hasUploadedImage = normalizedFileList.some(item => item.url)
+    if (file.status === "done" && hasUploadedImage) {
+      setShowImageError(false)
+      form.setFields([{ name: "images", errors: [] }])
+    }
+  }
+
   const uploadProps = {
     name: "file",
     multiple: true,
     fileList,
     customRequest: customUpload,
     showUploadList: false,
+    onChange: handleUploadChange,
     onRemove(file) {
       setFileList(prev => prev.filter(item => item.uid !== file.uid))
     },
