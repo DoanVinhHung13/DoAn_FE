@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Form, Button } from "antd";
+import React, { useState } from "react"
+import { Form, Button } from "antd"
 
 const FormWrapper = ({
   children,
@@ -10,20 +10,22 @@ const FormWrapper = ({
   formProps = {},
   layout = "vertical",
 }) => {
-  const [form] = Form.useForm();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form] = Form.useForm()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleFinish = async (values) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+  const handleFinish = async values => {
+    if (isSubmitting) return
+    setIsSubmitting(true)
     try {
-      await onFinish(values, form);
+      await onFinish(values, form)
     } catch (error) {
-      console.error("Form submission error", error);
+      if (import.meta.env.DEV) {
+        console.error("Form submission error", error)
+      }
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <Form
@@ -44,7 +46,7 @@ const FormWrapper = ({
         </Button>
       </Form.Item>
     </Form>
-  );
-};
+  )
+}
 
-export default FormWrapper;
+export default FormWrapper

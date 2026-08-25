@@ -1,5 +1,12 @@
-@forward './custom-antd.scss';
+/* Chỉ @forward các file scss thực sự có nội dung */
+@forward "./checkbox/index.scss";
+@forward "./upload/index.scss";
+
+/* Các file dưới đây được giữ lại cấu trúc thư mục cho tương lai,
+   hiện tại không có nội dung nên không forward để tránh compile overhead. */
+/*
 @forward './variables/_variables.scss';
+@forward './custom-antd.scss';
 @forward './color/color.scss';
 @forward './background/background.scss';
 @forward './border/border.scss';
@@ -20,3 +27,4 @@
 @forward './rotate/rotate.scss';
 @forward './responsive/responsive.scss';
 @forward './hiddenComponent/index.scss';
+*/

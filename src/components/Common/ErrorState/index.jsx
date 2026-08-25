@@ -1,5 +1,5 @@
-import React from "react";
-import { Result, Button } from "antd";
+import React from "react"
+import { Result, Button } from "antd"
 
 const ErrorState = ({
   title = "Oops! Something went wrong",
@@ -21,7 +21,7 @@ const ErrorState = ({
         }
       />
     </div>
-  );
-};
+  )
+}
 
-export default ErrorState;
+export default ErrorState

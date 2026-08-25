@@ -1,39 +1,30 @@
-import React from 'react'
-import AIChatWidget from 'src/components/AIChatWidget'
+import React from "react"
 import {
   HeroSection,
   QrLookupSection,
-  TcvnSection,
   FeaturesSection,
-  BenefitsSection,
-  TechSection,
   SupplyChainSection,
-  ProductShowcaseSection,
-  SuccessStoriesSection,
-  AboutSection,
   ConsultationSection,
-  FooterSection,
-} from './components'
+} from "./components"
+import "./LandingAnimations.css"
 
 const LandingPage = () => {
   return (
     <div className="min-h-screen overflow-x-hidden bg-white">
-
-      <AIChatWidget />
-
-      {/* Main Sections */}
+      {/* Hero: ảnh nông nghiệp thật + overlay xanh */}
       <HeroSection />
+
+      {/* Tra cứu QR — ngay dưới hero */}
       <QrLookupSection />
-      <TcvnSection />
+
+      {/* 2 module chính — giống TraceViet */}
       <FeaturesSection />
-      <BenefitsSection />
-      <TechSection />
+
+      {/* Quy trình chuỗi cung ứng */}
       <SupplyChainSection />
-      <ProductShowcaseSection />
-      <SuccessStoriesSection />
-      {/* <AboutSection /> */}
+
+      {/* Tư vấn / liên hệ */}
       <ConsultationSection />
-      {/* <FooterSection /> */}
     </div>
   )
 }

@@ -1,9 +1,8 @@
-import React from 'react'
-import { Form, Input, Button } from 'antd'
-import { KeyOutlined, LockOutlined } from '@ant-design/icons'
-import CustomModal from 'src/components/Modal/CustomModal'
-import UserService from 'src/services/UserService'
-import Notice from 'src/components/Notice'
+import React from "react"
+import { Form, Input, Button } from "antd"
+import { KeyOutlined, LockOutlined } from "@ant-design/icons"
+import CustomModal from "src/components/Modal/CustomModal"
+import UserService from "src/services/UserService"
 
 const ResetPasswordModal = ({ open, onClose, user }) => {
   const [form] = Form.useForm()
@@ -14,15 +13,13 @@ const ResetPasswordModal = ({ open, onClose, user }) => {
 
   const [loading, setLoading] = React.useState(false)
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async values => {
     try {
       setLoading(true)
-      const res = await UserService.changeUserPassword(user.id, {
-        newPassword:        values.newPassword,
+      await UserService.changeUserPassword(user.id, {
+        newPassword: values.newPassword,
         confirmNewPassword: values.confirmNewPassword,
       })
-      if (res?.success === false) return
-      Notice({ msg: 'Đặt lại mật khẩu thành công!', isSuccess: true })
       onClose()
     } finally {
       setLoading(false)
@@ -40,20 +37,31 @@ const ResetPasswordModal = ({ open, onClose, user }) => {
           </div>
           <div>
             <div className="font-bold text-gray-800">Đặt lại mật khẩu</div>
-            <div className="text-[11px] text-gray-400 font-normal">{user?.fullName}</div>
+            <div className="text-[11px] text-gray-400 font-normal">
+              {user?.fullName}
+            </div>
           </div>
         </div>
       }
       footer={null}
       width={440}
     >
-      <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        className="mt-4"
+      >
         <Form.Item
           name="newPassword"
-          label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mật khẩu mới</span>}
+          label={
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Mật khẩu mới
+            </span>
+          }
           rules={[
-            { required: true, message: 'Nhập mật khẩu mới!' },
-            { min: 6, message: 'Tối thiểu 6 ký tự!' },
+            { required: true, message: "Nhập mật khẩu mới!" },
+            { min: 6, message: "Tối thiểu 6 ký tự!" },
           ]}
         >
           <Input.Password
@@ -64,14 +72,19 @@ const ResetPasswordModal = ({ open, onClose, user }) => {
         </Form.Item>
         <Form.Item
           name="confirmNewPassword"
-          label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Xác nhận mật khẩu</span>}
-          dependencies={['newPassword']}
+          label={
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Xác nhận mật khẩu
+            </span>
+          }
+          dependencies={["newPassword"]}
           rules={[
-            { required: true, message: 'Vui lòng xác nhận mật khẩu!' },
+            { required: true, message: "Vui lòng xác nhận mật khẩu!" },
             ({ getFieldValue }) => ({
               validator(_, value) {
-                if (!value || getFieldValue('newPassword') === value) return Promise.resolve()
-                return Promise.reject(new Error('Mật khẩu không khớp!'))
+                if (!value || getFieldValue("newPassword") === value)
+                  return Promise.resolve()
+                return Promise.reject(new Error("Mật khẩu không khớp!"))
               },
             }),
           ]}
@@ -84,7 +97,9 @@ const ResetPasswordModal = ({ open, onClose, user }) => {
         </Form.Item>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
-          <Button onClick={onClose} className="h-10 px-6 rounded-xl">Hủy</Button>
+          <Button onClick={onClose} className="h-10 px-6 rounded-xl">
+            Hủy
+          </Button>
           <Button
             danger
             htmlType="submit"

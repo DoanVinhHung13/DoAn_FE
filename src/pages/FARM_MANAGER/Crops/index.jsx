@@ -1,570 +1,389 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Alert,
-  Button,
-  Card,
-  Descriptions,
-  Drawer,
-  Empty,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Select,
-  Space,
-  Spin,
-  Table,
-  Tag,
-  Tooltip,
-  Typography,
-  Upload,
-  message,
-} from 'antd';
 import {
   CheckCircleOutlined,
-  DeleteOutlined,
   EditOutlined,
-  EyeOutlined,
-  FileTextOutlined,
   PlusOutlined,
+  ReloadOutlined,
   SearchOutlined,
   StopOutlined,
-  UploadOutlined,
-} from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Sprout } from 'lucide-react';
+  DeleteOutlined,
+} from "@ant-design/icons"
+import { Button, Input, Popconfirm, Select, Tag, Tooltip } from "antd"
+import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { CropIcon } from "src/assets/icon/menu/MenuIcons"
+import { UI } from "src/constants/uiConfig"
 
-import TitleCustom from 'src/components/TitleCustom';
-import GrowthStages from 'src/components/GrowthStages';
-import CropManagementService from 'src/services/CropManagementService';
-import CropService from 'src/services/CropService';
-import GrowthStageService from 'src/services/GrowthStageService';
-import UploadService from 'src/services/UploadService';
-import ROUTER from 'src/router/ROUTER';
-import { useSystemKey } from 'src/hooks/useSystemKey';
-import { SYSTEM_KEY } from 'src/constants/systemKey';
-import TableCustom from 'src/components/Table/CustomTable';
+import CustomModal from "src/components/Modal/CustomModal"
+import CustomTable from "src/components/Table/CustomTable"
+import TitleCustom from "src/components/TitleCustom"
+import {
+  createSTTColumn,
+  createStatusColumn,
+} from "src/components/Table/columns.jsx"
+import { createPaginationConfig } from "src/utils/tableUtils"
+import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
+import ROUTER from "src/router/ROUTER"
 
-const formatDuration = (days) => {
-  if (!days) return 'Chưa cập nhật';
-  if (days % 365 === 0) return `${days / 365} năm`;
-  if (days % 30 === 0) return `${days / 30} tháng`;
-  return `${days} ngày`;
-};
+import CropManagementService from "src/services/CropManagementService"
+import CropCatalogService from "src/services/CropCatalogService"
+import { useListManagement } from "src/hooks/useListManagement"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
 
-const { Text } = Typography;
-
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'Tất cả trạng thái' },
-  { value: 'active', label: 'Đang hoạt động' },
-  { value: 'inactive', label: 'Ngừng hoạt động' },
-];
-
-const SORT_OPTIONS = [
-  { value: 'name-asc', label: 'Tên cây A-Z' },
-  { value: 'name-desc', label: 'Tên cây Z-A' },
-  { value: 'yield-asc', label: 'Sản lượng tăng dần' },
-  { value: 'yield-desc', label: 'Sản lượng giảm dần' },
-];
-
-const EMPTY_MESSAGE = 'Không tìm thấy thông tin cây trồng.';
-
-const getItemId = (item) => item?.id || item?._id || item?.cropId;
-const CATEGORY_TAG_COLORS = [
-  { bg: '#dcfce7', text: '#15803d' },
-  { bg: '#dbeafe', text: '#1d4ed8' },
-  { bg: '#fef3c7', text: '#b45309' },
-  { bg: '#fce7f3', text: '#be185d' },
-  { bg: '#ede9fe', text: '#6d28d9' },
-  { bg: '#ccfbf1', text: '#0f766e' },
-  { bg: '#fee2e2', text: '#b91c1c' },
-  { bg: '#e0f2fe', text: '#0369a1' },
-];
-
-const getCategoryTagStyle = (value) => {
-  const text = displayValue(value);
-  const hash = [...text].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const color = CATEGORY_TAG_COLORS[hash % CATEGORY_TAG_COLORS.length];
+const unwrapItems = response => {
+  const payload = response?.data?.data ?? response?.data ?? response ?? {}
+  const data = Array.isArray(payload)
+    ? payload
+    : payload.items || payload.results || []
   return {
-    backgroundColor: color.bg,
-    color: color.text,
-  };
-};
-const displayValue = (value) => value || 'Chưa cập nhật';
-
-const normalizeCropResponse = (response) => {
-  const payload = response?.data ?? response ?? {};
-  const data = payload?.data ?? payload;
-
-  const items = Array.isArray(data)
-    ? data
-    : data?.items ||
-      data?.results ||
-      data?.crops ||
-      payload?.items ||
-      payload?.results ||
-      [];
-
-  return {
-    items,
-    total:
-      data?.totalCount ||
-      data?.totalItems ||
-      data?.total ||
-      payload?.totalCount ||
-      items.length,
-  };
-};
-
-const isCropActive = (item) => {
-  if (typeof item?.isActive === 'boolean') return item.isActive;
-  const status = String(item?.status || '').toLowerCase();
-  return !['inactive', 'disabled', 'deleted', 'ngừng hoạt động'].includes(status);
-};
-
-const getStatusLabel = (item) =>
-  isCropActive(item) ? 'Ho\u1ea1t \u0111\u1ed9ng' : 'Ng\u1eebng ho\u1ea1t \u0111\u1ed9ng';
+    items: Array.isArray(payload) ? payload : data,
+    total: payload?.totalItems ?? payload?.totalCount ?? data.length,
+  }
+}
 
 const Crops = () => {
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const [form] = Form.useForm();
-  const [keyword, setKeyword] = useState('');
-  const [status, setStatus] = useState('all');
-  const [category, setCategory] = useState('all');
-  const [sortBy, setSortBy] = useState('name-asc');
-  const [statusTarget, setStatusTarget] = useState(null);
-  const [inlineError, setInlineError] = useState('');
-  const [uploadingUpdate, setUploadingUpdate] = useState(false);
-  const watchedImageUrl = Form.useWatch('imageUrl', form);
+  const navigate = useNavigate()
+  const { getCombo, getDescription } = useSystemKey()
 
-  const { getCombo } = useSystemKey();
-  const cropTypeOptions = getCombo(SYSTEM_KEY.CROP_TYPE);
-  const cropStatusOptions = getCombo(SYSTEM_KEY.CROP_STATUS);
+  const {
+    searchInput,
+    setSearchInput,
+    search,
+    handleSearch,
+    handleClearSearch,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    filters,
+    updateFilter,
+    listData,
+    setListData,
+    totalRecords,
+    setTotalRecords,
+    loading,
+    setLoading,
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { category: "all", status: "ACTIVE" },
+  })
 
-  const statusFilterOptions = useMemo(() => {
-    const baseOptions = [{ value: 'all', label: 'Tất cả trạng thái' }];
-    
-    if (cropStatusOptions && cropStatusOptions.length > 0) {
-      return [
-        ...baseOptions,
-        ...cropStatusOptions.map(opt => ({
-          value: opt.codeValue || opt.CodeValue,
-          label: opt.description || opt.Description,
-        }))
-      ];
+  const categoryFilter = filters.category
+  const statusFilter = filters.status
+
+  const [statusLoading, setStatusLoading] = useState(false)
+  const [statusModal, setStatusModal] = useState({ open: false, item: null })
+  const [cropCatalogOptions, setCropCatalogOptions] = useState([])
+
+  const statusOptions = getCombo(SYSTEM_KEY.STATUS)
+  const selectStatusOptions = [
+    { value: "all", label: "Tất cả trạng thái" },
+    ...statusOptions.map(opt => ({
+      value: opt.codeValue || opt.value,
+      label: opt.label || opt.description,
+    })),
+  ]
+
+  const getList = useCallback(async () => {
+    try {
+      setLoading(true)
+      const params = {
+        PageIndex: page,
+        PageSize: pageSize,
+        SearchKeyword: search || undefined,
+        Status: statusFilter === "all" ? undefined : statusFilter,
+        CropCatalogId: categoryFilter === "all" ? undefined : categoryFilter,
+      }
+      const res = await CropManagementService.getCrops(params)
+      const { items, total } = unwrapItems(res)
+      setListData(items)
+      setTotalRecords(total)
+    } finally {
+      setLoading(false)
     }
-    
-    return [
-      ...baseOptions,
-      { value: 'active', label: 'Đang hoạt động' },
-      { value: 'inactive', label: 'Ngừng hoạt động' },
-    ];
-  }, [cropStatusOptions]);
+  }, [
+    page,
+    pageSize,
+    search,
+    statusFilter,
+    categoryFilter,
+    setLoading,
+    setListData,
+    setTotalRecords,
+  ])
 
-  const { data, isLoading, isError, refetch, error } = useQuery({
-    queryKey: ['crops'],
-    queryFn: async () => {
+  useEffect(() => {
+    getList()
+  }, [getList])
+
+  useEffect(() => {
+    const loadCatalogs = async () => {
       try {
-        const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 200 });
-        return normalizeCropResponse(response);
-      } catch (err) {
-        throw err;
+        const res = await CropCatalogService.getCropCatalogs({
+          PageIndex: 1,
+          PageSize: 100,
+          Status: "ACTIVE",
+        })
+        const { items } = unwrapItems(res)
+        setCropCatalogOptions([
+          { value: "all", label: "Tất cả danh mục" },
+          ...items
+            .filter(c => c.isActive !== false)
+            .map(c => ({ value: c.id, label: c.name })),
+        ])
+      } catch {
+        setCropCatalogOptions([{ value: "all", label: "Tất cả danh mục" }])
       }
-    },
-    retry: false,
-  });
-
-  const { data: cropCatalogsData, isLoading: isCatalogsLoading } = useQuery({
-    queryKey: ['crop-catalogs-dropdown'],
-    queryFn: async () => {
-      try {
-        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100 });
-        return normalizeCropResponse(response).items;
-      } catch (err) {
-        return [];
-      }
-    },
-    retry: false,
-  });
-
-  const cropCatalogOptions = useMemo(() => {
-    if (!cropCatalogsData || cropCatalogsData.length === 0) {
-      return [];
     }
-    return cropCatalogsData.map((catalog) => ({
-      value: catalog.id || catalog.cropCatalogId,
-      label: catalog.name || catalog.cropCatalogName,
-    }));
-  }, [cropCatalogsData]);
+    loadCatalogs()
+  }, [])
 
-  const cropTypeFormOptions = useMemo(() => {
-    if (cropTypeOptions && cropTypeOptions.length > 0) {
-      return cropTypeOptions.map((opt) => ({
-        value: opt.codeValue || opt.CodeValue,
-        label: opt.description || opt.Description,
-      }));
+  const handleStatusChange = async () => {
+    if (!statusModal.item) return
+    const { item } = statusModal
+    try {
+      setStatusLoading(true)
+      const toggle =
+        item.isActive !== false
+          ? CropManagementService.deactivateCrop
+          : CropManagementService.reactivateCrop
+      await toggle(item.id)
+      setStatusModal({ open: false, item: null })
+      getList()
+    } finally {
+      setStatusLoading(false)
     }
-    
-    if (cropCatalogOptions && cropCatalogOptions.length > 0) {
-      return cropCatalogOptions;
+  }
+
+  const handleDelete = async id => {
+    try {
+      await CropManagementService.deleteCrop(id)
+      getList()
+    } catch {
+      // error handled by interceptor
     }
-    
-    return [];
-  }, [cropTypeOptions, cropCatalogOptions]);
-
-  const statusMutation = useMutation({
-    mutationFn: ({ id, nextActive }) =>
-      nextActive
-        ? CropManagementService.activateCrop(id)
-        : CropManagementService.deactivateCrop(id),
-    onSuccess: (response) => {
-      setInlineError('');
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) {
-        message.success(successMsg);
-      }
-      queryClient.invalidateQueries({ queryKey: ['crops'] });
-      queryClient.invalidateQueries({ queryKey: ['crop-detail'] });
-    },
-    onError: (error) => {
-      const statusCode = error?.response?.status;
-      const apiMessage = error?.response?.data?.message || error?.message || '';
-
-      if (statusCode === 404) {
-        setInlineError(EMPTY_MESSAGE);
-        setStatusTarget(null);
-        queryClient.invalidateQueries({ queryKey: ['crops'] });
-        return;
-      }
-
-      if (apiMessage) {
-        message.error(apiMessage);
-      }
-    },
-  });
-
-  const handleConfirmStatusChange = () => {
-    if (statusTarget) {
-      statusMutation.mutate({
-        id: getItemId(statusTarget),
-        nextActive: !isCropActive(statusTarget),
-      });
-      setStatusTarget(null);
-    }
-  };
-
-
-  const filteredCrops = useMemo(() => {
-    const normalizedKeyword = keyword.trim().toLocaleLowerCase('vi');
-    const rows = (data?.items || []).filter((item) => {
-      const matchesKeyword =
-        !normalizedKeyword ||
-        [
-          item.name,
-          item.description,
-        ]
-          .filter(Boolean)
-          .some((value) =>
-            String(value).toLocaleLowerCase('vi').includes(normalizedKeyword)
-          );
-
-      const matchesStatus =
-        status === 'all' ||
-        (status === 'active' && isCropActive(item)) ||
-        (status === 'inactive' && !isCropActive(item));
-      const matchesCategory = category === 'all' || item.cropCatalogId === category;
-
-      return matchesKeyword && matchesStatus && matchesCategory;
-    });
-
-    return [...rows].sort((first, second) => {
-      const firstName = String(first.name || '').localeCompare(String(second.name || ''), 'vi');
-      const firstYield = Number(first.expectedYield || 0);
-      const secondYield = Number(second.expectedYield || 0);
-
-      switch (sortBy) {
-        case 'name-desc':
-          return -firstName;
-        case 'yield-asc':
-          return firstYield - secondYield;
-        case 'yield-desc':
-          return secondYield - firstYield;
-        case 'name-asc':
-        default:
-          return firstName;
-      }
-    });
-  }, [category, data?.items, keyword, sortBy, status]);
-
-  const categoryOptions = useMemo(() => {
-    const categories = [
-      ...new Set((data?.items || []).map((item) => item.cropCatalogId).filter(Boolean)),
-    ];
-    return [
-      { value: 'all', label: 'Tất cả danh mục' },
-      ...categories.map((id) => {
-        const found = cropCatalogsData?.find(
-          (c) => c.id === id || c.cropCatalogId === id
-        );
-        return { value: id, label: found ? (found.name || found.cropCatalogName) : id };
-      }),
-    ];
-  }, [data?.items, cropCatalogsData]);
+  }
 
   const columns = [
+    createSTTColumn(page, pageSize),
     {
-      title: 'STT',
-      key: 'index',
-      width: 50,
-      align: 'center',
-      render: (_, __, index) => (
-        <Text className="font-medium text-gray-400">{index + 1}</Text>
+      title: "Tên cây trồng",
+      dataIndex: "name",
+      key: "name",
+      render: v => (
+        <span className="font-medium text-gray-800">{v || "—"}</span>
       ),
     },
     {
-      title: 'Tên cây trồng',
-      dataIndex: 'name',
-      key: 'name',
-      width: 220,
-      render: (value, record) => {
-        const imgUrl = record.imageUrl || record.image || record.thumbnail || record.thumbnailUrl || record.photo || record.picture;
-        return (
-          <div className="flex min-w-0 items-center gap-3" title={JSON.stringify(record)}>
-            {imgUrl ? (
-              <img
-                src={imgUrl}
-                alt={displayValue(value)}
-                className="h-12 w-12 shrink-0 rounded-lg border border-gray-200 object-cover"
-              />
-            ) : (
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
-                <Sprout className="h-5 w-5" />
-              </div>
-            )}
-            <Text strong className="block truncate text-gray-900">
-              {displayValue(value)}
-            </Text>
-          </div>
-        );
-      },
-    },
-    {
-      title: 'Danh mục',
-      dataIndex: 'cropCatalogId',
-      key: 'cropCatalogId',
-      width: 150,
-      align: 'center',
-      render: (value) => {
-        const catalog = cropCatalogsData?.find(c => c.id === value || c.cropCatalogId === value);
-        const display = catalog ? (catalog.name || catalog.cropCatalogName) : value;
-        return (
-          <Tag
-            className="!m-0 max-w-full truncate rounded-full border-0 px-3 font-semibold"
-            style={getCategoryTagStyle(display)}
-          >
-            {displayValue(display)}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Trạng thái',
-      key: 'status',
-      width: 150,
-      align: 'center',
+      title: "Danh mục",
+      dataIndex: "cropCatalogId",
+      key: "cropCatalog",
+      width: 200,
       render: (_, record) => {
-        const isActive = isCropActive(record);
-        return (
-          <div
-            className={`inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${
-              isActive 
-                ? 'bg-green-50 text-green-700' 
-                : 'bg-red-50 text-red-600'
-            }`}
-          >
-            {isActive ? <CheckCircleOutlined /> : <StopOutlined />}
-            {getStatusLabel(record)}
-          </div>
-        );
+        const label = record.cropCatalogName || record.cropCatalog?.name
+        return label ? (
+          <Tag>{label}</Tag>
+        ) : (
+          <span className="text-gray-300">—</span>
+        )
       },
     },
+    createStatusColumn({
+      getLabel: isActive => {
+        const sysVal = isActive ? "ACTIVE" : "INACTIVE"
+        return getDescription(SYSTEM_KEY.STATUS, sysVal)
+      },
+    }),
     {
-      title: 'Hành động',
-      key: 'action',
+      title: "Hành động",
+      key: "actions",
+      fixed: "right",
       width: 120,
-      align: 'center',
-      fixed: 'right',
-      render: (_, record) => (
-        <Space size={4} className="whitespace-nowrap">
-          <Tooltip title="Sửa">
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
-              onClick={() => navigate(`${ROUTER.FM_CROPS}/${getItemId(record)}/edit`)}
-            />
-          </Tooltip>
-          <Tooltip title="Xem chi tiết">
-            <Button
-              type="text"
-              size="small"
-              icon={<EyeOutlined />}
-              className="!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50"
-              onClick={() => navigate(`${ROUTER.FM_CROPS}/${getItemId(record)}`)}
-            />
-          </Tooltip>
-          <Tooltip title={isCropActive(record) ? 'Vô hiệu hóa' : 'Kích hoạt'}>
-            <Button
-              type="text"
-              size="small"
-              danger={isCropActive(record)}
-              icon={isCropActive(record) ? <StopOutlined /> : <CheckCircleOutlined />}
-              loading={
-                statusMutation.isPending &&
-                statusMutation.variables?.id === getItemId(record)
-              }
-              className={
-                isCropActive(record)
-                  ? '!h-8 !w-8 rounded-lg text-red-500 hover:bg-red-50'
-                  : '!h-8 !w-8 rounded-lg text-green-600 hover:bg-green-50'
-              }
-              onClick={() => setStatusTarget(record)}
-            />
-          </Tooltip>
-        </Space>
-      ),
+      align: "center",
+      render: (_, record) => {
+        const active = record.isActive !== false
+        return (
+          <div className={UI.rowActions}>
+            <Tooltip title="Chỉnh sửa">
+              <Button
+                type="text"
+                icon={<EditOutlined className="text-lg text-green-500" />}
+                className={UI.btn.iconEdit}
+                onClick={e => {
+                  e.stopPropagation()
+                  navigate(`${ROUTER.FM_CROPS}/${record.id}/edit`)
+                }}
+              />
+            </Tooltip>
+            <Tooltip title={active ? "Vô hiệu hóa" : "Kích hoạt"}>
+              <Button
+                type="text"
+                icon={
+                  active ? (
+                    <StopOutlined className="text-lg text-red-500" />
+                  ) : (
+                    <CheckCircleOutlined className="text-lg text-green-500" />
+                  )
+                }
+                className={active ? UI.btn.iconDeactivate : UI.btn.iconActivate}
+                onClick={e => {
+                  e.stopPropagation()
+                  setStatusModal({ open: true, item: record })
+                }}
+              />
+            </Tooltip>
+            {!active && (
+              <Popconfirm
+                title="Xóa cây trồng"
+                description="Bạn có chắc chắn muốn xóa cây trồng này không?"
+                onConfirm={e => {
+                  e.stopPropagation()
+                  return handleDelete(record.id)
+                }}
+                onCancel={e => e.stopPropagation()}
+                okText="Đồng ý"
+                cancelText="Hủy"
+              >
+                <Tooltip title="Xóa">
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined className="text-lg text-red-500" />}
+                    className={UI.btn.iconDelete}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+          </div>
+        )
+      },
     },
-  ];
+  ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <TitleCustom className="!mb-0 flex items-center gap-2">
-          <Sprout className="h-6 w-6" />
-          Cây trồng
-        </TitleCustom>
+    <div className={UI.page.wrapper}>
+      <div className={UI.page.header}>
+        <div>
+          <TitleCustom className="!mb-0 flex items-center gap-2">
+            <CropIcon style={UI.menuIcon} />
+            Cây trồng
+          </TitleCustom>
+        </div>
         <Button
           type="primary"
-          icon={<Sprout />}
+          icon={<PlusOutlined />}
           onClick={() => navigate(ROUTER.FM_CROP_CREATE)}
-          className="h-10 rounded-lg bg-green-600 px-5 font-medium hover:bg-green-700"
+          className={UI.btn.primary}
         >
-          Thêm cây trồng mới
+          Thêm mới
         </Button>
       </div>
 
-      {isError && (
-        <Alert
-          showIcon
-          type="error"
-          message="Không thể tải danh sách cây trồng."
-          description={error?.message || error?.response?.data?.message || 'Vui lòng kiểm tra console để biết thêm chi tiết.'}
-          action={
-            <Button size="small" onClick={() => refetch()}>
-              Thử lại
-            </Button>
-          }
-        />
-      )}
-
-      <Card variant="borderless" className="rounded-lg shadow-sm">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_200px_200px_260px]">
+      <div className={UI.toolbar.card}>
+        <div className={UI.toolbar.inner}>
           <Input
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            onPressEnter={handleSearch}
+            placeholder="Tìm theo tên cây trồng..."
+            prefix={<SearchOutlined className="text-gray-300" />}
+            className={UI.input.search}
             allowClear
-            value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            prefix={<SearchOutlined className="text-gray-400" />}
-            placeholder="Tìm theo tên, mô tả..."
-            className="h-11 rounded-lg"
+            onClear={handleClearSearch}
           />
           <Select
-            value={status}
-            onChange={setStatus}
-            options={statusFilterOptions}
-            className="h-11"
+            value={categoryFilter}
+            onChange={val => updateFilter("category", val)}
+            className={UI.input.select}
+            options={cropCatalogOptions}
           />
           <Select
-            value={category}
-            onChange={setCategory}
-            options={categoryOptions}
-            className="h-11"
+            value={statusFilter}
+            onChange={val => updateFilter("status", val)}
+            className={UI.input.select}
+            options={selectStatusOptions}
           />
-          <Select
-            value={sortBy}
-            onChange={setSortBy}
-            options={SORT_OPTIONS}
-            className="h-11"
-          />
-        </div>
-      </Card>
-
-      <Card
-        variant="borderless"
-        className="overflow-hidden rounded-lg shadow-sm"
-        styles={{ body: { padding: 0 } }}
-      >
-        <TableCustom
-          rowKey={(record) => getItemId(record) || record.cropCode || record.name}
-          loading={isLoading}
-          dataSource={filteredCrops}
-          columns={columns}
-          scroll={{ x: 'max-content' }}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            pageSizeOptions: [10, 20, 50],
-          }}
-          locale={{
-            emptyText: (
-              <Empty
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={EMPTY_MESSAGE}
-              />
-            ),
-          }}
-        />
-      </Card>
-
-      <Modal
-        open={!!statusTarget}
-        onCancel={() => setStatusTarget(null)}
-        footer={null}
-        centered
-        width={400}
-        closeIcon={<span className="text-2xl leading-none text-gray-900">×</span>}
-      >
-        <div className="px-3 pb-1 pt-2">
-          <h2 className="mb-3 border-b border-gray-100 pb-4 text-[24px] font-bold text-green-600">
-            Thay đổi trạng thái
-          </h2>
-          <p className="mb-7 text-base leading-6 text-gray-600">
-            Bạn có chắc muốn thay đổi trạng thái của cây trồng này không?
-          </p>
-          <div className="flex justify-end gap-3">
+          <div className={UI.toolbar.actions}>
             <Button
-              onClick={() => setStatusTarget(null)}
-              className="h-10 min-w-[80px] rounded-lg font-semibold"
+              onClick={handleSearch}
+              icon={<SearchOutlined />}
+              className={UI.btn.search}
             >
-              Hủy
+              Tìm kiếm
             </Button>
             <Button
-              type="primary"
-              loading={statusMutation.isPending}
-              onClick={handleConfirmStatusChange}
-              className="h-10 min-w-[104px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-            >
-              Xác nhận
-            </Button>
+              icon={<ReloadOutlined />}
+              onClick={() => getList()}
+              loading={loading}
+              className={UI.btn.reload}
+            />
           </div>
         </div>
-      </Modal>
+      </div>
 
+      <CustomTable
+        dataSource={listData}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        scroll={{ x: 900 }}
+        onRow={record => ({
+          onClick: () => navigate(`${ROUTER.FM_CROPS}/${record.id}`),
+          className: "cursor-pointer",
+        })}
+        locale={{ emptyText: "Không có dữ liệu cây trồng." }}
+        pagination={createPaginationConfig(
+          page,
+          pageSize,
+          totalRecords,
+          (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        )}
+        rowClassName={UI.row}
+      />
 
+      <CustomModal
+        open={statusModal.open}
+        onCancel={() => setStatusModal({ open: false, item: null })}
+        title={
+          <div className={UI.modal.titleClass}>
+            <span className="font-bold">Thay đổi trạng thái</span>
+          </div>
+        }
+        footer={null}
+        width={420}
+      >
+        <div className={UI.modal.body}>
+          <p className="text-gray-600">
+            Bạn có chắc chắn muốn thay đổi trạng thái của cây trồng này?
+          </p>
+          {statusModal.item && (
+            <p className="mt-2 text-sm font-semibold text-gray-800">
+              {statusModal.item.name}
+            </p>
+          )}
+        </div>
+        <div className={UI.modal.footer}>
+          <Button
+            onClick={() => setStatusModal({ open: false, item: null })}
+            className={UI.btn.cancel}
+          >
+            Hủy
+          </Button>
+          <Button
+            type="primary"
+            loading={statusLoading}
+            onClick={handleStatusChange}
+            className={UI.btn.confirm}
+          >
+            Xác nhận
+          </Button>
+        </div>
+      </CustomModal>
     </div>
-  );
-};
+  )
+}
 
-export default Crops;
+export default Crops

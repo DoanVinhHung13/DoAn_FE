@@ -1,23 +1,27 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { Alert, Button, Card, Col, Form, Row, Space, Spin } from 'antd'
-import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons'
+import React, { useCallback, useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { Alert, Button, Card, Col, Form, Row, Space, Spin } from "antd"
+import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons"
 
-import TitleCustom from 'src/components/TitleCustom'
-import LandPlotMap from 'src/components/LandPlotMap'
-import LandPlotService from 'src/services/LandPlotService'
-import { findOverlappingPlot, parseBoundaryJson } from 'src/utils/geoJsonUtils'
+import TitleCustom from "src/components/TitleCustom"
+import LandPlotMap from "src/components/LandPlotMap"
+import LandPlotService from "src/services/LandPlotService"
+import { findOverlappingPlot, parseBoundaryJson } from "src/utils/geoJsonUtils"
 import {
   MSG_LM_25,
   buildLandPlotPayload,
   ensureBoundaryString,
   isOverlapApiError,
+  isLandPlotCultivationLocked,
   normalizeApiDetail,
   normalizeLandPlotResponse,
-} from './landPlotUtils'
-import { useLandPlotAccess } from './useLandPlotAccess'
-import { useLandPlotForm } from './useLandPlotForm'
-import LandPlotFormFields from './LandPlotFormFields'
+} from "src/utils/landPlotUtils"
+import { useLandPlotAccess } from "./hooks/useLandPlotAccess"
+import { useLandPlotForm } from "./hooks/useLandPlotForm"
+import LandPlotFormFields from "./components/LandPlotFormFields"
+import { MEASUREMENT_UNITS } from "src/constants/measurementUnits"
+import useFormDraft from "src/hooks/useFormDraft"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -26,26 +30,30 @@ const LandPlotEdit = () => {
   const navigate = useNavigate()
   const { canManage, routes } = useLandPlotAccess()
   const [form] = Form.useForm()
+  const storageKey = getFormDraftKey("land-plot", "edit", id)
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
+    form,
+    storageKey,
+  })
 
   // ── Hook: logic form chung ─────────────────────────────────────────────────
   const {
     polygonData,
     mapError,
-    certPreview,
     isSaving,
+    hasFormErrors,
+    handleFieldsChange,
     setMapError,
     setIsSubmitting,
     handlePolygonChange,
-    handleBeforeUpload,
-    uploadCertImage,
-    initCertPreview,
   } = useLandPlotForm(form)
 
   // ── State riêng: chi tiết vùng trồng đang sửa ─────────────────────────────
   const [plot, setPlot] = useState(null)
-  const [plotLoading, setPlotLoading] = useState(false)
+  const [plotLoading, setPlotLoading] = useState(true)
   const [plotError, setPlotError] = useState(null)
   const [existingPlots, setExistingPlots] = useState([])
+  const [existingPlotsLoading, setExistingPlotsLoading] = useState(true)
 
   // Nếu không có quyền thì về trang danh sách
   useEffect(() => {
@@ -67,39 +75,82 @@ const LandPlotEdit = () => {
     }
   }, [id])
 
-  useEffect(() => { fetchPlotDetail() }, [fetchPlotDetail])
+  useEffect(() => {
+    fetchPlotDetail()
+  }, [fetchPlotDetail])
 
   // Điền sẵn giá trị form khi có dữ liệu
   useEffect(() => {
     if (!plot) return
-    form.setFieldsValue({
+    const serverValues = {
       name: plot.name,
-      code: plot.code,
       area: plot.area,
-      areaUnit: plot.areaUnit || 'ha',
+      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
       address: plot.address,
-      ownershipType: plot.ownershipType,
       description: plot.description,
-    })
-    initCertPreview(plot.imageUrl)
-  }, [plot, form, initCertPreview])
+    }
+    const draft = restoreDraft()
+    form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) })
+  }, [plot, form, restoreDraft])
 
   // ── Fetch: vùng trồng khác (kiểm tra chồng lấn, loại trừ chính mình) ─────
   const fetchExistingPlots = useCallback(async () => {
-    if (!canManage || !id) return
+    if (!id) return
     try {
-      const response = await LandPlotService.getLandPlots({ PageIndex: 1, PageSize: 200 })
+      setExistingPlotsLoading(true)
+      const response = await LandPlotService.getLandPlots({
+        PageIndex: 1,
+        PageSize: 100,
+      })
       const allPlots = normalizeLandPlotResponse(response).items
-      setExistingPlots(allPlots.filter((item) => (item.id || item._id) !== id))
+      const filtered = allPlots.filter(item => String(item.id || item._id) !== String(id))
+
+      const needsDetailFetch = filtered.some(
+        item => !item.boundaryJson && !item.boundary && !item.geometry,
+      )
+
+      if (needsDetailFetch) {
+        const results = await Promise.allSettled(
+          filtered.map(async item => {
+            if (item.boundaryJson || item.boundary || item.geometry) {
+              return item
+            }
+            if (item.id) {
+              try {
+                const res = await LandPlotService.getLandPlotById(item.id)
+                const detail = normalizeApiDetail(res)
+                return { ...item, ...detail }
+              } catch {
+                return item
+              }
+            }
+            return item
+          }),
+        )
+        const enriched = results.map((r, i) =>
+          r.status === "fulfilled" ? r.value : filtered[i],
+        )
+        setExistingPlots(enriched)
+      } else {
+        setExistingPlots(filtered)
+      }
     } catch {
       // Không ảnh hưởng UX chính
+    } finally {
+      setExistingPlotsLoading(false)
     }
-  }, [canManage, id])
+  }, [id])
 
-  useEffect(() => { fetchExistingPlots() }, [fetchExistingPlots])
+  useEffect(() => {
+    fetchExistingPlots()
+  }, [fetchExistingPlots])
+
+  const cultivationLocked = isLandPlotCultivationLocked(plot)
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
+    if (cultivationLocked) return
+
     try {
       const values = await form.validateFields()
 
@@ -108,7 +159,7 @@ const LandPlotEdit = () => {
         polygonData?.boundaryJson || plot?.boundaryJson,
       )
       if (!boundary) {
-        setMapError('Vui lòng vẽ hoặc giữ ranh giới vùng trồng trên bản đồ.')
+        setMapError("Vui lòng vẽ hoặc giữ ranh giới vùng trồng trên bản đồ.")
         return
       }
 
@@ -119,24 +170,16 @@ const LandPlotEdit = () => {
         return
       }
 
-      // Upload ảnh mới (nếu có)
-      const imageUrl = (await uploadCertImage()) || plot?.imageUrl || null
-
       // Gọi API cập nhật
       setIsSubmitting(true)
       try {
-        const farmId = plot?.farmId || plot?.farm?.id
         const payload = buildLandPlotPayload(
-          { ...values, imageUrl },
+          values,
           polygonData || { boundaryJson: boundary },
-          farmId,
         )
-        const res = await LandPlotService.updateLandPlot(id, payload)
+        await LandPlotService.updateLandPlot(id, payload)
 
-        if (res?.success === false) {
-          if (isOverlapApiError(res?.message || res?.errors?.[0])) setMapError(MSG_LM_25)
-          return
-        }
+        clearDraft()
         navigate(routes.detail(id))
       } finally {
         setIsSubmitting(false)
@@ -158,12 +201,14 @@ const LandPlotEdit = () => {
   if (plotError || !plot) {
     return (
       <div className="space-y-6">
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(routes.list)}>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(routes.list)}
+        >
           Quay lại
         </Button>
         <Alert
           type="error"
-          showIcon
           message="Không thể tải thông tin vùng trồng để chỉnh sửa."
           action={
             <Button size="small" onClick={fetchPlotDetail}>
@@ -178,7 +223,6 @@ const LandPlotEdit = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-
       {/* Tiêu đề & nút lưu */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
@@ -194,6 +238,7 @@ const LandPlotEdit = () => {
           type="primary"
           icon={<SaveOutlined />}
           loading={isSaving}
+          disabled={cultivationLocked}
           onClick={handleSubmit}
         >
           Lưu
@@ -201,15 +246,24 @@ const LandPlotEdit = () => {
       </div>
 
       <Row gutter={[16, 16]}>
-
         {/* Cột trái: form thông tin */}
         <Col xs={24} xl={10}>
           <Card title="Thông tin vùng trồng">
-            <Form form={form} layout="vertical">
-              <LandPlotFormFields
-                certPreview={certPreview}
-                onBeforeUpload={handleBeforeUpload}
+            {cultivationLocked && (
+              <Alert
+                className="mb-4"
+                type="warning"
+                message="Không thể chỉnh sửa vùng trồng"
+                description="Vùng trồng đang thuộc nhật ký kế hoạch hoặc đang trồng. Chỉ có thể chỉnh sửa khi không còn nhật ký đang sử dụng."
               />
+            )}
+            <Form
+              form={form}
+              layout="vertical"
+              onFieldsChange={handleFieldsChange}
+              onValuesChange={(_, allValues) => saveDraft(allValues)}
+            >
+              <LandPlotFormFields disabled={cultivationLocked} />
             </Form>
           </Card>
         </Col>
@@ -218,20 +272,30 @@ const LandPlotEdit = () => {
         <Col xs={24} xl={14}>
           <Card title="Chỉnh sửa bản đồ ranh giới">
             {mapError && (
-              <Alert className="mb-3" type="error" showIcon message={mapError} />
+              <Alert className="mb-3" type="error" message={mapError} />
             )}
-            <LandPlotMap
-              mode="edit"
-              height={520}
-              boundaryJson={plot.boundaryJson}
-              excludePlotId={id}
-              overlapPlots={existingPlots}
-              onPolygonChange={handlePolygonChange}
-              onOverlapError={(msg) => setMapError(msg || '')}
-              onAddressSelect={({ address }) => {
-                if (address) form.setFieldsValue({ address })
-              }}
-            />
+            {existingPlotsLoading ? (
+              <div
+                className="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 rounded text-gray-500 gap-3"
+                style={{ height: 520 }}
+              >
+                <Spin size="large" />
+                <span>Đang tải dữ liệu bản đồ...</span>
+              </div>
+            ) : (
+              <LandPlotMap
+                mode={cultivationLocked ? "view" : "edit"}
+                height={520}
+                boundaryJson={plot.boundaryJson}
+                excludePlotId={id}
+                overlapPlots={existingPlots}
+                onPolygonChange={handlePolygonChange}
+                onAddressSelect={({ address, latitude, longitude }) => {
+                  if (address)
+                    form.setFieldsValue({ address, latitude, longitude })
+                }}
+              />
+            )}
           </Card>
         </Col>
       </Row>
@@ -241,6 +305,7 @@ const LandPlotEdit = () => {
         <Space>
           <Button onClick={() => navigate(routes.detail(id))}>Hủy</Button>
           <Button
+            disabled={cultivationLocked}
             type="primary"
             icon={<SaveOutlined />}
             loading={isSaving}

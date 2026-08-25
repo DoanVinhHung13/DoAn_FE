@@ -1,7 +1,7 @@
-import { Breadcrumb, Layout, theme } from "antd";
-import React from "react";
+import { Breadcrumb, Layout, theme } from "antd"
+import React from "react"
 
-const { Content } = Layout;
+const { Content } = Layout
 
 const contentStyle = {
   // textAlign: "center",
@@ -10,11 +10,11 @@ const contentStyle = {
   // backgroundColor: "#0958d9",
   height: "100%",
   margin: "0 16px",
-};
+}
 const ContentMain = ({ children }) => {
   const {
     token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+  } = theme.useToken()
   return (
     <Content style={contentStyle}>
       <Breadcrumb
@@ -49,7 +49,7 @@ const ContentMain = ({ children }) => {
         <div className="text-center ">© Power by H2Q solution</div>
       </div>
     </Content>
-  );
-};
+  )
+}
 
-export default ContentMain;
+export default ContentMain

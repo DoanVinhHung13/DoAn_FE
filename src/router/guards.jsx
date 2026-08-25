@@ -1,40 +1,68 @@
 // src/router/guards.jsx
-import { Navigate, Outlet } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import authSession from 'src/redux/authSession'
-import ROUTER from './ROUTER'
-import { normalizeRole } from 'src/constants/roles'
-import { getDashboardPathByRole } from './roleRedirects'
+import { useEffect, useContext } from "react"
+import { Navigate, Outlet, useLocation } from "react-router-dom"
+import { useSelector } from "react-redux"
+import authSession from "src/redux/authSession"
+import { StoreContext } from "src/contexts"
+import ROUTER from "./ROUTER"
+import { getDashboardPathByRole } from "./roleRedirects"
+import { hasRoleAccess } from "./authUtils"
+
+// Guard helpers are kept beside the route components because the router imports
+// both from this module.
+/* eslint-disable react-refresh/only-export-components */
+export { hasRoleAccess } from "./authUtils"
 
 /**
- * Helper function to check role access
+ * ProtectedRoute — chỉ cho vào nếu đã đăng nhập và đúng role.
+ *
+ * Logic:
+ *  1. Không có token → redirect /login
+ *  2. Cần check role nhưng Redux chưa có user (DefaultAction đang fetch /me) → spinner
+ *  3. Có user nhưng sai role → /forbidden
+ *  4. Đúng hết → render
  */
-export const hasRoleAccess = (userRole, allowedRoles) => {
-  if (!userRole) return false
-  return allowedRoles.includes(normalizeRole(userRole))
-}
-
-export const ProtectedRoute = ({ children, allowedRoles }) => {
-  const user = useSelector((state) => state.appGlobal.userInfo)
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const user = useSelector(state => state.appGlobal.userInfo)
   const token = authSession.isAuthenticated()
 
+  // Không có token → về login
   if (!token) {
     return <Navigate to={ROUTER.LOGIN} replace />
   }
 
-  // Chờ load user info từ DefaultAction
-  if (!user?._id) {
+  // Có token nhưng Redux chưa load xong user (DefaultAction đang fetch /me)
+  // → Chỉ block khi cần check role. Nếu không cần check role → cho qua ngay.
+  if (allowedRoles && !user?._id) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+      <div
+        style={{
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#ffffff",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
           <div className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin" />
-          <span style={{ color: '#9ca3af', fontSize: 13, fontWeight: 600 }}>Đang tải hệ thống...</span>
+          <span style={{ color: "#9ca3af", fontSize: 13, fontWeight: 600 }}>
+            Đang tải hệ thống...
+          </span>
         </div>
       </div>
     )
   }
 
-  if (allowedRoles && !hasRoleAccess(user?.role, allowedRoles)) {
+  // Có user, check quyền
+  if (allowedRoles && user?._id && !hasRoleAccess(user?.role, allowedRoles)) {
     return <Navigate to={ROUTER.FORBIDDEN} replace />
   }
 
@@ -45,8 +73,8 @@ export const ProtectedRoute = ({ children, allowedRoles }) => {
  * GuestRoute — chỉ cho vào nếu chưa đăng nhập.
  * Nếu đã login thì redirect về dashboard tương ứng.
  */
-export const GuestRoute = ({ children }) => {
-  const { userInfo } = useSelector((state) => state.appGlobal)
+const GuestRoute = ({ children }) => {
+  const { userInfo } = useSelector(state => state.appGlobal)
   const isLoggedIn = authSession.isAuthenticated() || Boolean(userInfo?._id)
 
   if (isLoggedIn) {
@@ -56,3 +84,32 @@ export const GuestRoute = ({ children }) => {
 
   return children ?? <Outlet />
 }
+
+/**
+ * PrivateRoutes — Chỉ cho vào nếu đã đăng nhập.
+ */
+const PrivateRoutes = () => {
+  const { userInfo } = useSelector(state => state.appGlobal)
+  const { routerBeforeStore } = useContext(StoreContext)
+  const { setRouterBeforeLogin } = routerBeforeStore
+  const location = useLocation()
+
+  const hasToken = authSession.isAuthenticated()
+  const hasUser = Boolean(userInfo?._id)
+  const isLoggedIn = hasToken || hasUser
+
+  // Lưu URL hiện tại trước khi redirect (để sau login quay lại đúng trang)
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setRouterBeforeLogin(`${location.pathname}${location.search}`)
+    }
+  }, [isLoggedIn, location.pathname, location.search, setRouterBeforeLogin])
+
+  if (!isLoggedIn) {
+    return <Navigate to={ROUTER.LOGIN} replace />
+  }
+
+  return <Outlet />
+}
+
+export { ProtectedRoute, GuestRoute, PrivateRoutes }

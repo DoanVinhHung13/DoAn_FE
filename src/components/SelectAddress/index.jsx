@@ -1,5 +1,5 @@
 import { Col, Form, Row, Select } from "antd"
-import { useEffect, useImperativeHandle, useState } from "react"
+import { useCallback, useEffect, useImperativeHandle, useState } from "react"
 import RegionService from "src/services/RegionService"
 import styled from "styled-components"
 import SelectCustom from "../Select/SelectCustom"
@@ -30,22 +30,63 @@ const SelectAddress = (
     district: {},
     ward: {},
   })
-  useImperativeHandle(
-    ref,
-    () => {
-      return {
-        address: selected,
-      }
+
+  const getListProvinceVN = useCallback(() => {
+    onBeforeLoading()
+    RegionService.getByRegionId({ regionId: 234 })
+      .then(res => {
+        if (res?.isError) return
+        setListProvince(res?.Object)
+      })
+      .finally(onLoadingSuccuss)
+  }, [onBeforeLoading, onLoadingSuccuss])
+
+  const onChangeProvince = useCallback(
+    (e, province) => {
+      form.resetFields([`districtId`, `wardId`])
+      if (!e) return setListDistrict([])
+      setSelected(pre => ({ ...pre, province }))
+      onBeforeLoading()
+      RegionService.getByRegionId({ regionId: e })
+        .then(res => {
+          if (res?.isError) return
+          const lstDistrict = res?.Object?.filter(i => i.ParentID === e)
+          setListDistrict(lstDistrict)
+        })
+        .finally(onLoadingSuccuss)
     },
-    [selected],
+    [form, onBeforeLoading, onLoadingSuccuss],
   )
+
+  const onChangeDistrict = useCallback(
+    (e, district) => {
+      form.resetFields([`wardId`])
+      if (!e) return setlistWard([])
+      setSelected(pre => ({ ...pre, district }))
+
+      onBeforeLoading()
+      RegionService.getByRegionId({ regionId: e })
+        .then(res => {
+          if (res?.isError) return
+          const lstWard = res?.Object?.filter(i => i.ParentID === e)
+          setlistWard(lstWard)
+        })
+        .finally(onLoadingSuccuss)
+    },
+    [form, onBeforeLoading, onLoadingSuccuss],
+  )
+  useImperativeHandle(ref, () => {
+    return {
+      address: selected,
+    }
+  }, [selected])
 
   useEffect(() => {
     getListProvinceVN()
     return () => {
       form.resetFields()
     }
-  }, [])
+  }, [form, getListProvinceVN])
 
   useEffect(() => {
     if (
@@ -56,14 +97,16 @@ const SelectAddress = (
       const province = listProvince?.find(
         i => i?.RegionID === initValue?.provinceId,
       )
-      setSelected(pre => ({
-        ...pre,
-        province: {
-          key: province?.ParentID,
-          value: province?.ParentID,
-          children: province?.RegionName,
-        },
-      }))
+      queueMicrotask(() =>
+        setSelected(pre => ({
+          ...pre,
+          province: {
+            key: province?.ParentID,
+            value: province?.ParentID,
+            children: province?.RegionName,
+          },
+        })),
+      )
     }
     if (
       initValue?.districtId &&
@@ -73,78 +116,45 @@ const SelectAddress = (
       const district = listDistrict?.find(
         i => i?.RegionID === initValue?.districtId,
       )
-      setSelected(pre => ({
-        ...pre,
-        district: {
-          key: district?.ParentID,
-          value: district?.ParentID,
-          children: district?.RegionName,
-        },
-      }))
+      queueMicrotask(() =>
+        setSelected(pre => ({
+          ...pre,
+          district: {
+            key: district?.ParentID,
+            value: district?.ParentID,
+            children: district?.RegionName,
+          },
+        })),
+      )
     }
 
     if (initValue?.provinceId && listWard?.length && !selected?.ward?.key) {
       const ward = listWard?.find(i => i?.RegionID === initValue?.wardId)
-      setSelected(pre => ({
-        ...pre,
-        ward: {
-          key: ward?.ParentID,
-          value: ward?.ParentID,
-          children: ward?.RegionName,
-        },
-      }))
+      queueMicrotask(() =>
+        setSelected(pre => ({
+          ...pre,
+          ward: {
+            key: ward?.ParentID,
+            value: ward?.ParentID,
+            children: ward?.RegionName,
+          },
+        })),
+      )
     }
-  }, [initValue, listProvince, listDistrict, listWard])
+  }, [initValue, listProvince, listDistrict, listWard, selected])
 
   useEffect(() => {
-    if (initValue?.provinceId) onChangeProvince(initValue?.provinceId)
-    if (initValue?.districtId) onChangeDistrict(initValue.districtId)
+    if (initValue?.provinceId)
+      queueMicrotask(() => onChangeProvince(initValue?.provinceId))
+    if (initValue?.districtId)
+      queueMicrotask(() => onChangeDistrict(initValue.districtId))
     if (initValue?.provinceId)
       form?.setFieldsValue({
         provinceId: initValue?.provinceId ? initValue?.provinceId : undefined,
         districtId: initValue?.districtId ? initValue?.districtId : undefined,
         wardId: initValue?.wardId ? initValue?.wardId : undefined,
       })
-  }, [initValue])
-
-  const getListProvinceVN = () => {
-    onBeforeLoading()
-    RegionService.getByRegionId({ regionId: 234 })
-      .then(res => {
-        if (res?.isError) return
-        setListProvince(res?.Object)
-      })
-      .finally(onLoadingSuccuss)
-  }
-
-  const onChangeProvince = (e, province) => {
-    form.resetFields([`districtId`, `wardId`])
-    if (!e) return setListDistrict([])
-    setSelected(pre => ({ ...pre, province }))
-    onBeforeLoading()
-    RegionService.getByRegionId({ regionId: e })
-      .then(res => {
-        if (res?.isError) return
-        const lstDistrict = res?.Object?.filter(i => i.ParentID === e)
-        setListDistrict(lstDistrict)
-      })
-      .finally(onLoadingSuccuss)
-  }
-
-  const onChangeDistrict = (e, district) => {
-    form.resetFields([`wardId`])
-    if (!e) return setlistWard([])
-    setSelected(pre => ({ ...pre, district }))
-
-    onBeforeLoading()
-    RegionService.getByRegionId({ regionId: e })
-      .then(res => {
-        if (res?.isError) return
-        const lstWard = res?.Object?.filter(i => i.ParentID === e)
-        setlistWard(lstWard)
-      })
-      .finally(onLoadingSuccuss)
-  }
+  }, [form, initValue, onChangeDistrict, onChangeProvince])
 
   const onChangeWard = (e, ward) => setSelected(pre => ({ ...pre, ward }))
   return (

@@ -1,16 +1,17 @@
-import { useEffect } from 'react'
-import { useSelector } from 'react-redux'
-import { useAppDispatch } from 'src/redux/hooks'
-import { setUserInfo, getListSystemKey } from 'src/redux/slices/appGlobalSlice'
-import authSession from 'src/redux/authSession'
-import AuthService from 'src/services/AuthService'
-import CommonService from 'src/services/CommonService'
-import { refreshAccessToken } from 'src/services/tokenRefresh'
-import { normalizeRole } from 'src/constants/roles'
+import { useEffect } from "react"
+import { useSelector } from "react-redux"
+import { useAppDispatch } from "src/redux/hooks"
+import { setUserInfo, getListSystemKey } from "src/redux/slices/appGlobalSlice"
+import authSession from "src/redux/authSession"
+import AuthService from "src/services/AuthService"
+import CommonService from "src/services/CommonService"
+import { refreshAccessToken } from "src/services/tokenRefresh"
+import { normalizeRole } from "src/constants/roles"
+import { logDevDiagnostic } from "src/utils/safeDiagnostic"
 
 const DefaultAction = ({ children }) => {
   const dispatch = useAppDispatch()
-  const userInfo = useSelector((state) => state.appGlobal.userInfo)
+  const userInfo = useSelector(state => state.appGlobal.userInfo)
   useEffect(() => {
     if (!userInfo?.id) return
 
@@ -22,7 +23,7 @@ const DefaultAction = ({ children }) => {
           dispatch(getListSystemKey(data))
         }
       } catch (error) {
-        console.warn('[DefaultAction] fetchSystemKey failed:', error)
+        logDevDiagnostic("load-system-key", error)
       }
     }
     fetchSystemKey()
@@ -31,17 +32,19 @@ const DefaultAction = ({ children }) => {
   useEffect(() => {
     if (!authSession.isAuthenticated()) return
 
+    // Nếu Redux đã có user (do Login component dispatch) → không fetch lại
+    // Chỉ fetch khi reload trang (Redux trống nhưng token vẫn còn)
+    if (userInfo?._id) return
+
     const fetchProfile = async () => {
-      let meRes = await AuthService.getProfile()
-
-      if (!meRes?.success) {
-        const refreshed = await refreshAccessToken()
-        if (!refreshed) throw new Error('Phiên đăng nhập đã hết hạn')
+      let meRes
+      try {
         meRes = await AuthService.getProfile()
-      }
-
-      if (!meRes?.success) {
-        throw new Error(meRes?.message || 'Không thể tải thông tin người dùng')
+      } catch (error) {
+        if (error?.status !== 401) throw error
+        const refreshed = await refreshAccessToken()
+        if (!refreshed) throw error
+        meRes = await AuthService.getProfile()
       }
 
       return meRes.data
@@ -71,13 +74,13 @@ const DefaultAction = ({ children }) => {
 
         authSession.updateUser(userData)
         dispatch(setUserInfo(userData))
-      } catch (e) {
-        console.warn('[DefaultAction] restoreUser failed:', e?.message)
+      } catch (error) {
+        logDevDiagnostic("restore-user", error)
       }
     }
 
     restoreUser()
-  }, [])
+  }, [dispatch, userInfo?._id])
 
   return <>{children}</>
 }

@@ -3,7 +3,7 @@ import {
   LogoutOutlined,
   MenuOutlined,
   UserOutlined,
-} from "@ant-design/icons";
+} from "@ant-design/icons"
 import {
   Divider as AntdDivider,
   Avatar,
@@ -11,40 +11,39 @@ import {
   Drawer,
   Dropdown,
   Space,
-  Typography,
-} from "antd";
-import { useState } from "react";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import logo from "src/assets/images/logo/logo-eapls.jpg";
-import { clearAuthStorage } from "src/redux/storage";
-import { getAvatarUrl } from "src/utils/helpers";
-import { useAppDispatch } from "src/redux/hooks";
-import { setUserInfo } from "src/redux/slices/appGlobalSlice";
-import ROUTER from "src/router/ROUTER";
-
-const { Title } = Typography;
+} from "antd"
+import { useState } from "react"
+import { useSelector } from "react-redux"
+import { useNavigate } from "react-router-dom"
+import logo from "src/assets/images/logo/logo-eapls.jpg"
+import { clearAuthStorage } from "src/redux/storage"
+import { getAvatarUrl } from "src/utils/helpers"
+import { useAppDispatch } from "src/redux/hooks"
+import { setUserInfo } from "src/redux/slices/appGlobalSlice"
+import ROUTER from "src/router/ROUTER"
+import { getDashboardPathByRole } from "src/router/roleRedirects"
 
 const PublicNavbar = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   // Dùng Redux làm nguồn duy nhất — không cần isLoginContext từ Context
-  const { userInfo: user } = useSelector((state) => state.appGlobal);
-  const isLoginContext = Boolean(user?._id);
-  const dispatch = useAppDispatch();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { userInfo: user } = useSelector(state => state.appGlobal)
+  const isLoginContext = Boolean(user?._id)
+  const dashboardPath = getDashboardPathByRole(user?.role)
+  const dispatch = useAppDispatch()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
-    clearAuthStorage();
-    dispatch(setUserInfo({}));
-    navigate(ROUTER.HOME);
-  };
+    clearAuthStorage()
+    dispatch(setUserInfo({}))
+    navigate(ROUTER.HOME)
+  }
 
   const userMenuItems = [
     {
       key: "dashboard",
       label: "Bảng điều khiển",
       icon: <DashboardOutlined />,
-      onClick: () => navigate(ROUTER.FM_DASHBOARD),
+      onClick: () => navigate(dashboardPath),
     },
     {
       key: "profile",
@@ -62,7 +61,7 @@ const PublicNavbar = () => {
       danger: true,
       onClick: handleLogout,
     },
-  ];
+  ]
 
   return (
     <nav className="fixed top-0 z-50 flex justify-center w-full border-b border-gray-100 glass-card">
@@ -82,7 +81,7 @@ const PublicNavbar = () => {
             </div>
             <div className="flex flex-col justify-center">
               <span className="text-green-600 font-extrabold text-[18px] leading-[1.1] uppercase tracking-tight">
-                Nhật ký sản xuất
+                Nhật ký canh tác
               </span>
               <span className="text-green-600 font-extrabold text-[18px] leading-[1.1] uppercase tracking-tight">
                 Điện tử
@@ -91,54 +90,7 @@ const PublicNavbar = () => {
           </div>
         </div>
 
-        {/* Center: Desktop Menu */}
-        <div className="items-center justify-center hidden lg:flex">
-          <Space size="large">
-            <Button
-              type="text"
-              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => navigate(ROUTER.HOME)}
-            >
-              Trang chủ
-            </Button>
-            <Button
-              type="text"
-              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => navigate(ROUTER.TCVN)}
-            >
-              Tra cứu TCVN
-            </Button>
-            <Button
-              type="text"
-              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => navigate(ROUTER.NEWS)}
-            >
-              Tin tức
-            </Button>
-            <Button
-              type="text"
-              className="px-4 py-2 font-bold text-gray-600 transition-all hover:text-green-600 rounded-xl"
-              onClick={() => {
-                if (window.location.pathname === ROUTER.HOME) {
-                  document
-                    .getElementById("about-us")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                } else {
-                  navigate(ROUTER.HOME);
-                  setTimeout(
-                    () =>
-                      document
-                        .getElementById("about-us")
-                        ?.scrollIntoView({ behavior: "smooth" }),
-                    300,
-                  );
-                }
-              }}
-            >
-              Về chúng tôi
-            </Button>
-          </Space>
-        </div>
+        {/* Center: Desktop Menu (Emptied per user request) */}
 
         {/* Right Side: Auth & Mobile Menu */}
         <div className="flex items-center justify-end flex-1">
@@ -149,7 +101,7 @@ const PublicNavbar = () => {
                   type="text"
                   icon={<DashboardOutlined />}
                   className="items-center hidden px-3 font-bold text-green-600 transition-all rounded-lg hover:bg-green-50 sm:flex"
-                  onClick={() => navigate(ROUTER.FM_DASHBOARD)}
+                  onClick={() => navigate(dashboardPath)}
                 >
                   Bảng điều khiển
                 </Button>
@@ -231,59 +183,7 @@ const PublicNavbar = () => {
           width={280}
         >
           <div className="flex flex-col gap-4">
-            <Button
-              type="text"
-              className="font-bold text-left text-gray-600"
-              onClick={() => {
-                navigate(ROUTER.HOME);
-                setMobileMenuOpen(false);
-              }}
-            >
-              Trang chủ
-            </Button>
-            <Button
-              type="text"
-              className="font-bold text-left text-gray-600"
-              onClick={() => {
-                navigate(ROUTER.TCVN);
-                setMobileMenuOpen(false);
-              }}
-            >
-              Tra cứu TCVN
-            </Button>
-            <Button
-              type="text"
-              className="font-bold text-left text-gray-600"
-              onClick={() => {
-                navigate(ROUTER.NEWS);
-                setMobileMenuOpen(false);
-              }}
-            >
-              Tin tức
-            </Button>
-            <Button
-              type="text"
-              className="font-bold text-left text-gray-600"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                if (window.location.pathname === ROUTER.HOME) {
-                  document
-                    .getElementById("about-us")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                } else {
-                  navigate(ROUTER.HOME);
-                  setTimeout(
-                    () =>
-                      document
-                        .getElementById("about-us")
-                        ?.scrollIntoView({ behavior: "smooth" }),
-                    300,
-                  );
-                }
-              }}
-            >
-              Về chúng tôi
-            </Button>
+            {/* Nav links removed per user request */}
 
             <AntdDivider className="my-2" />
 
@@ -303,7 +203,7 @@ const PublicNavbar = () => {
         </Drawer>
       </div>
     </nav>
-  );
-};
+  )
+}
 
-export default PublicNavbar;
+export default PublicNavbar

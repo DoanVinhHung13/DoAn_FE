@@ -48,13 +48,21 @@ export const CellListContent = styled.div`
 `
 
 export const TableCustomStyled = styled.div`
+  width: 100%;
+
+  .ant-table-container {
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    border-radius: ${({ theme }) => theme.radius.lg}px !important;
+    overflow: hidden;
+  }
+
   .ant-table-column-sorter-inner {
     svg path {
-      fill: rgba(243, 246, 249, 0.5);
+      fill: ${({ theme }) => theme.colors.textMuted};
     }
     .active {
       svg path {
-        fill: #fff;
+        fill: ${({ theme }) => theme.colors.primary};
       }
     }
   }
@@ -65,7 +73,7 @@ export const TableCustomStyled = styled.div`
   }
   .ant-table-body {
     overflow: auto auto !important;
-    transition: all linear 0.2s;
+    transition: scrollbar-color 160ms ease;
     &::-webkit-scrollbar {
       width: 5px;
       height: 5px;
@@ -95,18 +103,21 @@ export const TableCustomStyled = styled.div`
 
   .ant-table-thead {
     .ant-table-cell {
+      background: ${({ theme }) => theme.colors.primary} !important;
+      color: #ffffff !important;
       font-size: 13px;
-      .anticon,
+      font-weight: 700;
       .anticon {
+        color: #ffffff !important;
         svg path {
-          fill: ${props => (props.$isPrimary ? "#fff" : "#fff")};
+          fill: #ffffff !important;
         }
       }
     }
   }
 
   .ant-table-row {
-    cursor: pointer;
+    cursor: ${({ $hasRowClick }) => ($hasRowClick ? "pointer" : "default")};
   }
   .ant-table-tbody > tr:hover {
     .float-action__wrapper {

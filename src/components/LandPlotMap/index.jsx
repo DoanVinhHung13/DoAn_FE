@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react'
-import PropTypes from 'prop-types'
-import { Input, Spin } from 'antd'
-import { EnvironmentOutlined, SearchOutlined } from '@ant-design/icons'
-import L from 'src/lib/map/leafletGeoman'
-import geomanVi from 'src/lib/map/geomanVi'
+import React, { useEffect, useRef, useCallback, useState } from "react"
+import PropTypes from "prop-types"
+import { Input, Spin } from "antd"
+import { EnvironmentOutlined, SearchOutlined } from "@ant-design/icons"
+import L from "src/lib/map/leafletGeoman"
+import geomanVi from "src/lib/map/geomanVi"
 import {
   calculatePolygonArea,
   createGeoJSONPolygon,
@@ -11,22 +11,28 @@ import {
   formatArea,
   geoJSONToLeafletPositions,
   parseBoundaryJson,
-} from 'src/utils/geoJsonUtils'
-import { MSG_LM_25 } from 'src/pages/FARM_MANAGER/Lands/landPlotUtils'
-import { searchAddress } from 'src/utils/geocodingUtils'
-import './styles.css'
+} from "src/utils/geoJsonUtils"
+import { MSG_LM_25 } from "src/utils/landPlotUtils"
+import {
+  getPlaceDetail,
+  isExternalAbortError,
+  reverseGeocode,
+  searchAddress,
+} from "src/utils/geocodingUtils"
+import "./styles.css"
 
 const DEFAULT_CENTER = [21.0285, 105.8542]
 const DEFAULT_ZOOM = 13
 const SEARCH_ZOOM = 16
-const MAP_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+const MAP_COLORS = ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"]
+const MAX_AREA_M2 = 300_000
 
 const LandPlotMap = ({
-  mode = 'view',
+  mode = "view",
   boundaryJson,
-  color = '#22c55e',
+  color = "#22c55e",
   height = 420,
-  className = '',
+  className = "",
   onPolygonChange,
   onAddressSelect,
   overlapPlots = [],
@@ -45,13 +51,20 @@ const LandPlotMap = ({
   const onPolygonChangeRef = useRef(onPolygonChange)
   const onAddressSelectRef = useRef(onAddressSelect)
   const onOverlapErrorRef = useRef(onOverlapError)
+  const searchControllerRef = useRef(null)
+  const searchRequestIdRef = useRef(0)
+  const debounceTimerRef = useRef(null)
+  const detailControllerRef = useRef(null)
+  const reverseGeocodeControllerRef = useRef(null)
 
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState([])
   const [searchLoading, setSearchLoading] = useState(false)
-  const [searchError, setSearchError] = useState('')
-  const [overlapError, setOverlapError] = useState('')
+  const [geocodingLoading, setGeocodingLoading] = useState(false)
+  const [searchError, setSearchError] = useState("")
+  const [overlapError, setOverlapError] = useState("")
   const [showResults, setShowResults] = useState(false)
+  const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {
     overlapPlotsRef.current = overlapPlots
@@ -73,7 +86,17 @@ const LandPlotMap = ({
     onAddressSelectRef.current = onAddressSelect
   }, [onAddressSelect])
 
-  const emitPolygonChange = useCallback((geoJSON) => {
+  useEffect(
+    () => () => {
+      searchControllerRef.current?.abort()
+      detailControllerRef.current?.abort()
+      reverseGeocodeControllerRef.current?.abort()
+      clearTimeout(debounceTimerRef.current)
+    },
+    [],
+  )
+
+  const emitPolygonChange = useCallback(geoJSON => {
     const areaM2 = calculatePolygonArea(geoJSON.coordinates)
     onPolygonChangeRef.current?.({
       geoJSON,
@@ -84,6 +107,27 @@ const LandPlotMap = ({
 
   const validatePolygon = useCallback(
     (geoJSON, layer, { isDraw = false } = {}) => {
+      // Kiểm tra diện tích tối đa 30 ha = 300,000 m²
+      const areaM2 = calculatePolygonArea(geoJSON.coordinates)
+      if (areaM2 > MAX_AREA_M2) {
+        const message = `Diện tích vượt quá giới hạn cho phép (tối đa  ${MAX_AREA_M2.toLocaleString("vi-VN")} m²). Vui lòng vẽ lại nhỏ hơn.`
+        setOverlapError(message)
+        onOverlapErrorRef.current?.(message)
+
+        if (isDraw && layer && mapInstance.current) {
+          mapInstance.current.removeLayer(layer)
+          activeLayer.current = null
+          onPolygonChangeRef.current?.(null)
+        } else if (layer && lastValidGeoJSON.current) {
+          const positions = geoJSONToLeafletPositions(
+            lastValidGeoJSON.current.coordinates,
+          )
+          layer.setLatLngs(positions)
+        }
+
+        return false
+      }
+
       const overlapping = findOverlappingPlot(
         geoJSON,
         overlapPlotsRef.current,
@@ -91,7 +135,7 @@ const LandPlotMap = ({
       )
 
       if (overlapping) {
-        const plotLabel = overlapping.name || overlapping.code || 'lô đất khác'
+        const plotLabel = overlapping.name || "lô đất khác"
         const message = `${MSG_LM_25} (${plotLabel})`
         setOverlapError(message)
         onOverlapErrorRef.current?.(message)
@@ -101,15 +145,17 @@ const LandPlotMap = ({
           activeLayer.current = null
           onPolygonChangeRef.current?.(null)
         } else if (layer && lastValidGeoJSON.current) {
-          const positions = geoJSONToLeafletPositions(lastValidGeoJSON.current.coordinates)
+          const positions = geoJSONToLeafletPositions(
+            lastValidGeoJSON.current.coordinates,
+          )
           layer.setLatLngs(positions)
         }
 
         return false
       }
 
-      setOverlapError('')
-      onOverlapErrorRef.current?.('')
+      setOverlapError("")
+      onOverlapErrorRef.current?.("")
       lastValidGeoJSON.current = geoJSON
       emitPolygonChange(geoJSON)
       return true
@@ -172,36 +218,145 @@ const LandPlotMap = ({
       clearSearchMarker()
       searchMarkerRef.current = L.marker([latitude, longitude])
         .addTo(mapInstance.current)
-        .bindPopup(label || 'Vị trí đã tìm')
+        .bindPopup(label || "Vị trí đã tìm")
         .openPopup()
     },
     [clearSearchMarker],
   )
 
+  const handlePolygonGeocode = useCallback(async layer => {
+    if (!layer?.getBounds) return
+    const center = layer.getBounds().getCenter()
+    if (!center || !Number.isFinite(center.lat) || !Number.isFinite(center.lng))
+      return
+
+    const { lat, lng } = center
+
+    reverseGeocodeControllerRef.current?.abort()
+    const controller = new AbortController()
+    reverseGeocodeControllerRef.current = controller
+
+    setGeocodingLoading(true)
+    try {
+      const address = await reverseGeocode(lat, lng, {
+        signal: controller.signal,
+      })
+      if (address) {
+        setSearchQuery(address)
+        onAddressSelectRef.current?.({
+          address,
+          latitude: lat,
+          longitude: lng,
+        })
+      }
+    } catch (error) {
+      if (!isExternalAbortError(error)) {
+        const fallbackAddr = `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+        setSearchQuery(fallbackAddr)
+        onAddressSelectRef.current?.({
+          address: fallbackAddr,
+          latitude: lat,
+          longitude: lng,
+        })
+      }
+    } finally {
+      if (reverseGeocodeControllerRef.current === controller) {
+        reverseGeocodeControllerRef.current = null
+        setGeocodingLoading(false)
+      }
+    }
+  }, [])
+
+  const attachLayerEditEvents = useCallback(
+    layer => {
+      if (!layer) return
+
+      const onLayerModified = () => {
+        if (!layer?.getLatLngs) return
+        const latLngs = layer.getLatLngs()[0]
+        const updatedGeoJSON = createGeoJSONPolygon(latLngs)
+        const isValid = validatePolygon(updatedGeoJSON, layer)
+        if (isValid) {
+          handlePolygonGeocode(layer)
+        }
+      }
+
+      layer.on("pm:edit", onLayerModified)
+      layer.on("pm:dragend", onLayerModified)
+      layer.on("pm:vertexadded", onLayerModified)
+      layer.on("pm:vertexremoved", onLayerModified)
+      layer.on("pm:markerdragend", onLayerModified)
+    },
+    [validatePolygon, handlePolygonGeocode],
+  )
+
   useEffect(() => {
     if (mapInstance.current || !mapRef.current) return
 
+    // Tính toán bounds khởi tạo để tránh tải map ở vị trí mặc định trước khi nhảy sang lô đất
+    let initialBounds = null
+    const parsedBoundary = parseBoundaryJson(boundaryJson)
+    if (parsedBoundary?.coordinates) {
+      const positions = geoJSONToLeafletPositions(parsedBoundary.coordinates)
+      if (positions.length > 0) {
+        initialBounds = L.latLngBounds(positions)
+      }
+    } else if (overlapPlots?.length > 0) {
+      const allPositions = []
+      overlapPlots.forEach(plot => {
+        const rawBoundary =
+          plot?.boundaryJson ||
+          plot?.boundary ||
+          plot?.boundaries ||
+          plot?.polygon ||
+          plot?.geometry
+        const g = parseBoundaryJson(rawBoundary)
+        if (g?.coordinates) {
+          allPositions.push(...geoJSONToLeafletPositions(g.coordinates))
+        }
+      })
+      if (allPositions.length > 0) {
+        initialBounds = L.latLngBounds(allPositions)
+      }
+    }
+
     const map = L.map(mapRef.current, {
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
       zoomControl: true,
     })
 
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap',
-      maxZoom: 19,
-    })
+    if (initialBounds && initialBounds.isValid()) {
+      map.fitBounds(initialBounds, { padding: [40, 40] })
+    } else {
+      map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)
+    }
+
+    const osm = L.tileLayer(
+      "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+      {
+        maxZoom: 19,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      },
+    )
     const satellite = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { attribution: '© Esri', maxZoom: 19 },
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 19,
+        attribution: "© Esri & OpenStreetMap",
+      },
     )
     osm.addTo(map)
-    L.control.layers({ 'Bản đồ': osm, 'Vệ tinh': satellite }).addTo(map)
-    map.pm.setLang('vi', geomanVi, 'en')
+    L.control
+      .layers({
+        "Bản đồ (OpenStreetMap)": osm,
+        "Vệ tinh": satellite,
+      })
+      .addTo(map)
+    map.pm.setLang("vi", geomanVi, "en")
 
-    if (mode === 'draw' || mode === 'edit') {
+    if (mode === "draw" || mode === "edit") {
       map.pm.addControls({
-        position: 'topleft',
+        position: "topleft",
         drawMarker: false,
         drawCircleMarker: false,
         drawPolyline: false,
@@ -226,26 +381,9 @@ const LandPlotMap = ({
         snapDistance: 20,
       })
 
-      // Helper: đăng ký sự kiện chỉnh sửa/kéo trên LAYER (không phải map)
-      // Geoman chỉ fire pm:edit, pm:dragend trên layer cụ thể
-      const attachLayerEditEvents = (layer) => {
-        layer.on('pm:edit', () => {
-          if (!layer?.getLatLngs) return
-          const latLngs = layer.getLatLngs()[0]
-          const geoJSON = createGeoJSONPolygon(latLngs)
-          validatePolygon(geoJSON, layer)
-        })
-        layer.on('pm:dragend', () => {
-          if (!layer?.getLatLngs) return
-          const latLngs = layer.getLatLngs()[0]
-          const geoJSON = createGeoJSONPolygon(latLngs)
-          validatePolygon(geoJSON, layer)
-        })
-      }
-
-      const handleCreate = (e) => {
+      const handleCreate = e => {
         const { layer, shape } = e
-        if (shape !== 'Polygon') return
+        if (shape !== "Polygon") return
 
         clearActiveLayer()
         activeLayer.current = layer
@@ -259,92 +397,119 @@ const LandPlotMap = ({
 
         const latLngs = layer.getLatLngs()[0]
         const geoJSON = createGeoJSONPolygon(latLngs)
-        validatePolygon(geoJSON, layer, { isDraw: true })
+        const isValid = validatePolygon(geoJSON, layer, { isDraw: true })
+        if (isValid) {
+          handlePolygonGeocode(layer)
+        }
       }
 
       const handleRemove = () => {
         activeLayer.current = null
         lastValidGeoJSON.current = null
-        setOverlapError('')
+        setOverlapError("")
         onPolygonChangeRef.current?.(null)
       }
 
-      map.on('pm:create', handleCreate)
-      map.on('pm:remove', handleRemove)
+      map.on("pm:create", handleCreate)
+      map.on("pm:remove", handleRemove)
     }
 
     mapInstance.current = map
+    setMapReady(true)
 
     return () => {
+      setMapReady(false)
       map.remove()
       mapInstance.current = null
       activeLayer.current = null
       searchMarkerRef.current = null
       locateMarkerRef.current = null
     }
-  }, [mode, color, clearActiveLayer, validatePolygon])
+  }, [
+    mode,
+    color,
+    clearActiveLayer,
+    validatePolygon,
+    handlePolygonGeocode,
+  ])
 
   useEffect(() => {
-    if (!mapInstance.current) return
+    if (!mapInstance.current || !mapReady) return
 
-    overlapLayers.current.forEach((layer) => mapInstance.current.removeLayer(layer))
+    overlapLayers.current.forEach(layer =>
+      mapInstance.current.removeLayer(layer),
+    )
     overlapLayers.current = []
 
+    const validLayers = []
     overlapPlots.forEach((plot, index) => {
-      const geoJSON = parseBoundaryJson(plot.boundaryJson)
+      const rawBoundary =
+        plot?.boundaryJson ||
+        plot?.boundary ||
+        plot?.boundaries ||
+        plot?.polygon ||
+        plot?.geometry
+      const geoJSON = parseBoundaryJson(rawBoundary)
       if (!geoJSON) return
       const layer = renderPolygon(geoJSON, {
         color: MAP_COLORS[(index + 1) % MAP_COLORS.length],
-        fillOpacity: 0.15,
+        fillOpacity: 0.2,
         weight: 2,
-        dashArray: '6 4',
+        dashArray: "6 4",
         pmIgnore: true,
       })
       if (layer) {
         layer.bindTooltip(
-          `${plot.name || plot.code || 'Lô đất khác'} (đã đăng ký)`,
-          { permanent: false, direction: 'center' },
+          `<strong>${plot.name || "Lô đất khác"}</strong> (đã đăng ký)`,
+          {
+            permanent: false,
+            direction: "center",
+          },
         )
         overlapLayers.current.push(layer)
+        validLayers.push(layer)
       }
     })
-  }, [overlapPlots, renderPolygon])
+
+    // Nếu ở chế độ vẽ mới (chưa có boundary) và có các lô đất khác, zoom hiển thị các lô cũ
+    if (mode === "draw" && !boundaryJson && validLayers.length > 0) {
+      const group = L.featureGroup(validLayers)
+      mapInstance.current.fitBounds(group.getBounds(), { padding: [50, 50] })
+    }
+  }, [mapReady, overlapPlots, renderPolygon, mode, boundaryJson])
 
   useEffect(() => {
-    if (!mapInstance.current) return
+    if (!mapInstance.current || !mapReady) return
 
     clearActiveLayer()
     const geoJSON = parseBoundaryJson(boundaryJson)
     if (!geoJSON) return
 
-    const layer = renderPolygon(geoJSON, { fitBounds: true })
+    const layer = renderPolygon(geoJSON, { fitBounds: false })
     if (!layer) return
 
     activeLayer.current = layer
 
-    if (mode === 'edit' || mode === 'draw') {
+    if (mode === "edit" || mode === "draw") {
       layer.pm?.enable({
         allowSelfIntersection: false,
       })
 
       // Đăng ký event edit/drag trên layer được load từ boundaryJson
-      layer.on('pm:edit', () => {
-        if (!layer?.getLatLngs) return
-        const latLngs = layer.getLatLngs()[0]
-        const updatedGeoJSON = createGeoJSONPolygon(latLngs)
-        validatePolygon(updatedGeoJSON, layer)
-      })
-      layer.on('pm:dragend', () => {
-        if (!layer?.getLatLngs) return
-        const latLngs = layer.getLatLngs()[0]
-        const updatedGeoJSON = createGeoJSONPolygon(latLngs)
-        validatePolygon(updatedGeoJSON, layer)
-      })
+      attachLayerEditEvents(layer)
     }
 
     lastValidGeoJSON.current = geoJSON
     validatePolygon(geoJSON, layer)
-  }, [boundaryJson, mode, clearActiveLayer, renderPolygon, validatePolygon])
+  }, [
+    mapReady,
+    boundaryJson,
+    mode,
+    clearActiveLayer,
+    renderPolygon,
+    validatePolygon,
+    attachLayerEditEvents,
+  ])
 
   useEffect(() => {
     if (!mapInstance.current?.pm) return
@@ -353,48 +518,119 @@ const LandPlotMap = ({
     })
   }, [color])
 
-  const handleAddressSearch = async (value) => {
-    const keyword = (value ?? searchQuery).trim()
-    if (!keyword) {
-      setSearchError('Vui lòng nhập địa chỉ cần tìm.')
+  // ── Autocomplete: gọi khi user gõ (debounce 400ms) ─────────────────────────
+  const triggerAutocomplete = useCallback(keyword => {
+    clearTimeout(debounceTimerRef.current)
+    if (!keyword || keyword.length < 2) {
+      setSearchResults([])
+      setShowResults(false)
       return
     }
 
-    setSearchLoading(true)
-    setSearchError('')
-    setShowResults(true)
+    debounceTimerRef.current = setTimeout(async () => {
+      searchControllerRef.current?.abort()
+      const controller = new AbortController()
+      const requestId = searchRequestIdRef.current + 1
+      searchRequestIdRef.current = requestId
+      searchControllerRef.current = controller
 
-    try {
-      const results = await searchAddress(keyword)
-      setSearchResults(results)
-      if (!results.length) {
-        setSearchError('Không tìm thấy địa chỉ phù hợp. Hãy thử từ khóa khác.')
+      setSearchLoading(true)
+      setSearchError("")
+      setShowResults(true)
+
+      try {
+        const results = await searchAddress(keyword, {
+          signal: controller.signal,
+        })
+        if (requestId !== searchRequestIdRef.current) return
+        setSearchResults(results)
+        if (!results.length) {
+          setSearchError(
+            "Không tìm thấy địa chỉ phù hợp. Hãy thử từ khóa khác.",
+          )
+        }
+      } catch (error) {
+        if (
+          isExternalAbortError(error) ||
+          requestId !== searchRequestIdRef.current
+        )
+          return
+        setSearchResults([])
+        setSearchError("Không thể tìm kiếm vị trí lúc này. Vui lòng thử lại.")
+      } finally {
+        if (requestId === searchRequestIdRef.current) {
+          searchControllerRef.current = null
+          setSearchLoading(false)
+        }
       }
-    } catch (error) {
-      setSearchResults([])
-      setSearchError(error.message || 'Không thể tìm kiếm địa chỉ.')
-    } finally {
-      setSearchLoading(false)
-    }
-  }
+    }, 400)
+  }, [])
 
-  const handleSelectResult = (result) => {
-    setSearchQuery(result.label)
-    setShowResults(false)
-    setSearchResults([])
-    flyToLocation(result.latitude, result.longitude, result.label)
-    onAddressSelectRef.current?.({
-      address: result.label,
-      latitude: result.latitude,
-      longitude: result.longitude,
-    })
-  }
+  // ── Xử lý chọn gợi ý: nếu có place_id → fetch tọa độ; không thì dùng trực tiếp ──
+  const handleSelectResult = useCallback(
+    async result => {
+      setSearchQuery(result.label)
+      setShowResults(false)
+      setSearchResults([])
+
+      // Nếu đã có tọa độ (fallback Nominatim) → dùng luôn
+      if (result.latitude != null && result.longitude != null) {
+        flyToLocation(result.latitude, result.longitude, result.label)
+        onAddressSelectRef.current?.({
+          address: result.label,
+          latitude: result.latitude,
+          longitude: result.longitude,
+        })
+        return
+      }
+
+      // OpenMap.vn: cần gọi Place Detail để lấy tọa độ
+      if (!result.place_id) return
+
+      detailControllerRef.current?.abort()
+      const controller = new AbortController()
+      detailControllerRef.current = controller
+
+      setSearchLoading(true)
+      try {
+        const detail = await getPlaceDetail(result.place_id, {
+          signal: controller.signal,
+        })
+        flyToLocation(
+          detail.latitude,
+          detail.longitude,
+          detail.label || result.label,
+        )
+        onAddressSelectRef.current?.({
+          address: detail.label || result.label,
+          latitude: detail.latitude,
+          longitude: detail.longitude,
+        })
+      } catch (error) {
+        if (!isExternalAbortError(error)) {
+          setSearchError("Không thể lấy vị trí. Vui lòng thử lại.")
+        }
+      } finally {
+        detailControllerRef.current = null
+        setSearchLoading(false)
+      }
+    },
+    [flyToLocation],
+  )
 
   const handleLocate = () => {
     if (!navigator.geolocation || !mapInstance.current) return
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      pos => {
         const { latitude, longitude } = pos.coords
+        setSearchError("")
+        const fallbackAddress = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+        setSearchQuery(fallbackAddress)
+        onAddressSelectRef.current?.({
+          address: fallbackAddress,
+          latitude,
+          longitude,
+        })
         mapInstance.current.flyTo([latitude, longitude], SEARCH_ZOOM)
         clearLocateMarker()
         locateMarkerRef.current = L.marker([latitude, longitude])
@@ -403,15 +639,25 @@ const LandPlotMap = ({
             `Vị trí hiện tại<br/>${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
           )
           .openPopup()
+        reverseGeocode(latitude, longitude)
+          .then(address => {
+            if (address) {
+              setSearchQuery(address)
+              onAddressSelectRef.current?.({ address, latitude, longitude })
+            }
+          })
+          .catch(() => {
+            // Tọa độ GPS vẫn hợp lệ nếu reverse geocoding không thành công.
+          })
       },
       () => {
-        setSearchError('Không thể định vị GPS. Hãy dùng tìm kiếm địa chỉ.')
+        setSearchError("Không thể định vị GPS. Hãy dùng tìm kiếm địa chỉ.")
       },
       { enableHighAccuracy: true, timeout: 10000 },
     )
   }
 
-  const showToolbar = mode !== 'view'
+  const showToolbar = mode !== "view"
 
   return (
     <div className={`land-plot-map ${className}`}>
@@ -423,36 +669,30 @@ const LandPlotMap = ({
               prefix={<SearchOutlined className="text-slate-400" />}
               placeholder="Tìm địa chỉ, xã, huyện, tỉnh..."
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setSearchError('')
-                if (!e.target.value) {
-                  setSearchResults([])
-                  setShowResults(false)
-                }
+              onChange={e => {
+                const val = e.target.value
+                setSearchQuery(val)
+                setSearchError("")
+                triggerAutocomplete(val)
               }}
-              onPressEnter={() => handleAddressSearch()}
+              onPressEnter={() => triggerAutocomplete(searchQuery)}
               onFocus={() => {
                 if (searchResults.length) setShowResults(true)
               }}
             />
-            <button
-              type="button"
-              className="land-plot-map__search-btn"
-              onClick={() => handleAddressSearch()}
-              disabled={searchLoading}
-            >
-              {searchLoading ? 'Đang tìm...' : 'Tìm'}
-            </button>
           </div>
 
-          <button type="button" className="land-plot-map__locate" onClick={handleLocate}>
+          <button
+            type="button"
+            className="land-plot-map__locate"
+            onClick={handleLocate}
+          >
             <EnvironmentOutlined /> GPS
           </button>
         </div>
       )}
 
-      {(mode === 'draw' || mode === 'edit') && (
+      {(mode === "draw" || mode === "edit") && (
         <div className="land-plot-map__hint-bar">
           Tìm địa chỉ để di chuyển bản đồ. Vùng nét đứt là lô đất đã có — không được vẽ chồng lên.
         </div>
@@ -468,30 +708,44 @@ const LandPlotMap = ({
 
       {showToolbar && showResults && searchResults.length > 0 && (
         <ul className="land-plot-map__search-results">
-          {searchResults.map((result) => (
+          {searchResults.map(result => (
             <li key={result.id}>
               <button type="button" onClick={() => handleSelectResult(result)}>
                 <EnvironmentOutlined />
-                <span>{result.label}</span>
+                <span className="land-plot-map__result-text">
+                  <span className="land-plot-map__result-main">
+                    {result.mainText || result.label}
+                  </span>
+                  {result.secondaryText && (
+                    <span className="land-plot-map__result-sub">
+                      {result.secondaryText}
+                    </span>
+                  )}
+                </span>
               </button>
             </li>
           ))}
         </ul>
       )}
 
-      {showToolbar && searchLoading && (
+      {showToolbar && (searchLoading || geocodingLoading) && (
         <div className="land-plot-map__search-loading">
-          <Spin size="small" /> Đang tìm địa chỉ...
+          <Spin size="small" />{" "}
+          {geocodingLoading
+            ? "Đang tự động xác định địa chỉ..."
+            : "Đang tìm địa chỉ..."}
         </div>
       )}
 
       <div ref={mapRef} className="land-plot-map__canvas" style={{ height }} />
 
-      {boundaryJson && mode === 'view' && (
+      {boundaryJson && mode === "view" && (
         <div className="land-plot-map__meta">
-          Diện tích ước tính:{' '}
+          Diện tích ước tính:{" "}
           {formatArea(
-            calculatePolygonArea(parseBoundaryJson(boundaryJson)?.coordinates || []),
+            calculatePolygonArea(
+              parseBoundaryJson(boundaryJson)?.coordinates || [],
+            ),
           )}
         </div>
       )}
@@ -500,7 +754,7 @@ const LandPlotMap = ({
 }
 
 LandPlotMap.propTypes = {
-  mode: PropTypes.oneOf(['view', 'draw', 'edit']),
+  mode: PropTypes.oneOf(["view", "draw", "edit"]),
   boundaryJson: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   color: PropTypes.string,
   height: PropTypes.number,

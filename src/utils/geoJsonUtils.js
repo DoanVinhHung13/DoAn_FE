@@ -1,9 +1,10 @@
-import booleanOverlap from '@turf/boolean-overlap'
-import booleanContains from '@turf/boolean-contains'
-import { polygon as turfPolygon } from '@turf/helpers'
+import booleanContains from "@turf/boolean-contains"
+import booleanOverlap from "@turf/boolean-overlap"
+import { polygon as turfPolygon } from "@turf/helpers"
+import { formatAreaUnit } from "src/constants/measurementUnits"
 
 export function leafletLatLngsToGeoJSON(leafletLatLngs) {
-  return leafletLatLngs.map((latLng) => [latLng.lng, latLng.lat])
+  return leafletLatLngs.map(latLng => [latLng.lng, latLng.lat])
 }
 
 export function createGeoJSONPolygon(leafletLatLngs) {
@@ -15,7 +16,7 @@ export function createGeoJSONPolygon(leafletLatLngs) {
   const ring = isClosed ? geoJSONCoords : [...geoJSONCoords, firstPoint]
 
   return {
-    type: 'Polygon',
+    type: "Polygon",
     coordinates: [ring],
   }
 }
@@ -31,18 +32,15 @@ export function calculatePolygonArea(geoJSONCoords) {
     const [lng1, lat1] = ring[i]
     const [lng2, lat2] = ring[i + 1]
     area +=
-      ((lng2 - lng1) * Math.PI) / 180 *
+      (((lng2 - lng1) * Math.PI) / 180) *
       (2 + Math.sin((lat1 * Math.PI) / 180) + Math.sin((lat2 * Math.PI) / 180))
   }
 
   return Math.abs((area * R * R) / 2)
 }
 
-export function formatArea(areaM2, unit = 'm2') {
-  if (unit === 'ha' || areaM2 >= 10000) {
-    return `${(areaM2 / 10000).toFixed(2)} ha`
-  }
-  return `${Math.round(areaM2).toLocaleString('vi-VN')} m²`
+export function formatArea(areaM2) {
+  return `${Math.round(areaM2).toLocaleString("vi-VN")} ${formatAreaUnit()}`
 }
 
 export function geoJSONToLeafletPositions(coordinates) {
@@ -51,37 +49,19 @@ export function geoJSONToLeafletPositions(coordinates) {
 
 export function parseBoundaryJson(boundaryJson) {
   if (!boundaryJson) return null
-  if (typeof boundaryJson === 'object') return boundaryJson
+  if (typeof boundaryJson === "object") {
+    if (boundaryJson.coordinates) return boundaryJson
+    if (boundaryJson.type === "Polygon") return boundaryJson
+    if (Array.isArray(boundaryJson)) return { type: "Polygon", coordinates: boundaryJson }
+    return boundaryJson
+  }
   try {
-    return JSON.parse(boundaryJson)
+    const parsed = JSON.parse(boundaryJson)
+    if (typeof parsed === "string") return parseBoundaryJson(parsed)
+    return parsed
   } catch {
     return null
   }
-}
-
-export function getPolygonCenter(geoJSON) {
-  const ring = geoJSON?.coordinates?.[0]
-  if (!ring?.length) return null
-
-  let sumLat = 0
-  let sumLng = 0
-  const points = ring[ring.length - 1][0] === ring[0][0] && ring[ring.length - 1][1] === ring[0][1]
-    ? ring.slice(0, -1)
-    : ring
-
-  points.forEach(([lng, lat]) => {
-    sumLng += lng
-    sumLat += lat
-  })
-
-  return {
-    latitude: sumLat / points.length,
-    longitude: sumLng / points.length,
-  }
-}
-
-export function areaToHectares(areaM2) {
-  return Number((areaM2 / 10000).toFixed(4))
 }
 
 export function toTurfPolygon(geoJSON) {
@@ -97,17 +77,27 @@ export function toTurfPolygon(geoJSON) {
  * Kiểm tra polygon mới có chồng lấn với lô đất đã tồn tại hay không.
  * Chỉ chặn overlap thực sự (không chặn chạm cạnh).
  */
-export function findOverlappingPlot(newGeoJSON, existingPlots = [], excludePlotId = null) {
-  if (!newGeoJSON?.coordinates) return null
+export function findOverlappingPlot(
+  newGeoJSON,
+  existingPlots = [],
+  excludePlotId = null,
+) {
+  if (!newGeoJSON?.coordinates || !Array.isArray(existingPlots)) return null
 
   const newPoly = toTurfPolygon(newGeoJSON)
   if (!newPoly) return null
 
   for (const plot of existingPlots) {
     const plotId = plot?.id || plot?._id || plot?.landPlotId
-    if (excludePlotId && plotId === excludePlotId) continue
+    if (excludePlotId && String(plotId) === String(excludePlotId)) continue
 
-    const existingGeoJSON = parseBoundaryJson(plot.boundaryJson)
+    const rawBoundary =
+      plot?.boundaryJson ||
+      plot?.boundary ||
+      plot?.boundaries ||
+      plot?.polygon ||
+      plot?.geometry
+    const existingGeoJSON = parseBoundaryJson(rawBoundary)
     if (!existingGeoJSON?.coordinates) continue
 
     const existingPoly = toTurfPolygon(existingGeoJSON)

@@ -1,5 +1,5 @@
-import React from "react";
-import { Empty, Button } from "antd";
+import React from "react"
+import { Empty, Button } from "antd"
 
 const EmptyState = ({
   description = "No Data Found",
@@ -16,7 +16,7 @@ const EmptyState = ({
         )}
       </Empty>
     </div>
-  );
-};
+  )
+}
 
-export default EmptyState;
+export default EmptyState

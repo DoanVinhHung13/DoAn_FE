@@ -1,35 +1,29 @@
-/**
- * Users Management — Farm Manager / Land Manager
- * Route: /farm-manager/users OR /land-manager/farmers
- */
 import {
   CheckCircleOutlined,
   EditOutlined,
+  KeyOutlined,
   ReloadOutlined,
   SearchOutlined,
   StopOutlined,
-  TeamOutlined,
   UserAddOutlined,
   UserOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons"
+import { UserManagementIcon } from "src/assets/icon/menu/MenuIcons"
+import { UI } from "src/constants/uiConfig"
 
-import {
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  Input,
-  message,
-  Select,
-  Tooltip,
-} from "antd"
+import { Avatar, Button, Input, Select, Tooltip, Popconfirm } from "antd"
 import { useCallback, useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 
 import CustomTable from "src/components/Table/CustomTable"
+import {
+  createSTTColumn,
+  createStatusColumn,
+} from "src/components/Table/columns.jsx"
+import { createPaginationConfig } from "src/utils/tableUtils"
 import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
-import { PAGE_SIZE } from "src/constants/pageSizeOptions"
 import { ROLES } from "src/constants/roles"
 import UserService from "src/services/UserService"
 
@@ -37,18 +31,30 @@ import CustomModal from "src/components/Modal/CustomModal"
 import TitleCustom from "src/components/TitleCustom"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 import { useSystemKey } from "src/hooks/useSystemKey"
+import { useListManagement } from "src/hooks/useListManagement"
 import ROUTER from "src/router/ROUTER"
 import { formatDate } from "src/utils/dateFormatters"
-import { getAvatarUrl, invalidCharsRegex } from "src/utils/helpers"
+import { getAvatarUrl } from "src/utils/helpers"
+import { getRoleLabel } from "src/utils/roleLabels"
 import AssignRolesModal from "./components/AssignRolesModal"
+import CreateAccountModal from "./components/CreateAccountModal"
 import ResetPasswordModal from "./components/ResetPasswordModal"
 import UserFormModal from "./components/UserFormModal"
+
+const getUserListData = response => {
+  const data = response?.data?.data ?? response?.data ?? response
+  if (Array.isArray(data)) return { items: data, totalItems: data.length }
+  return {
+    items: data?.items ?? data?.Items ?? [],
+    totalItems: data?.totalItems ?? data?.totalCount ?? data?.TotalItems ?? 0,
+  }
+}
 
 const getRoleTag = (role, roleDesc) => {
   let color = "default"
   if (role === "FARM_MANAGER") color = "green"
-  else if (role === "LAND_MANAGER") color = "blue"
-  else if (role === "MATERIAL_MANAGER") color = "orange"
+  else if (role === "FARM_SUPERVISOR") color = "blue"
+  else if (role === "FARMER_LEADER") color = "purple"
   else if (role === "FARMER") color = "cyan"
 
   return (
@@ -56,7 +62,7 @@ const getRoleTag = (role, roleDesc) => {
       key={role}
       className={`px-2 py-0.5 rounded-full text-[11px] font-semibold bg-${color}-50 text-${color}-600 border border-${color}-100`}
     >
-      {roleDesc || role}
+      {roleDesc || getRoleLabel(role)}
     </span>
   )
 }
@@ -64,68 +70,129 @@ const getRoleTag = (role, roleDesc) => {
 const UsersManagement = () => {
   const navigate = useNavigate()
   const currentUser = useSelector(state => state.appGlobal.userInfo)
-  const isFarmManager = currentUser?.role === ROLES.FARM_MANAGER
+  const currentRoles = currentUser?.roles?.length
+    ? currentUser.roles
+    : [currentUser?.role]
+  const isFarmManager = currentRoles.includes(ROLES.FARM_MANAGER)
+  const isFarmSupervisor = currentRoles.includes(ROLES.FARM_SUPERVISOR)
+  const canManageUsers = isFarmManager || isFarmSupervisor
+  const userDetailRoute = isFarmManager
+    ? ROUTER.FM_USER_DETAIL
+    : ROUTER.FS_USER_DETAIL
 
-  const { getCombo, getDescription } = useSystemKey()
-  const statusOptions = getCombo(SYSTEM_KEY.STATUS)
-  const roleOptions = getCombo(SYSTEM_KEY.ROLE)
-  const statusSystemOptions = getCombo(SYSTEM_KEY.STATUS)
+  const { getOptions, getDescription } = useSystemKey()
 
+  const {
+    searchInput,
+    setSearchInput,
+    search,
+    handleSearch,
+    handleClearSearch,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    filters,
+    updateFilter,
+    listData,
+    setListData,
+    totalRecords,
+    setTotalRecords,
+    loading,
+    setLoading,
+  } = useListManagement({
+    initialPageSize: DEFAULT_PAGE_SIZE,
+    initialFilters: { role: undefined, status: "ACTIVE" },
+  })
+
+  const roleFilter = filters.role
+  const statusFilter = filters.status
+
+  const allowedRoles = Object.values(ROLES)
+  const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option => {
+    const role = option.codeValue || option.value
+    return (
+      allowedRoles.includes(role) &&
+      !(isFarmSupervisor && role === ROLES.FARM_SUPERVISOR)
+    )
+  })
   const selectStatusOptions = [
     { value: "all", label: "Tất cả trạng thái" },
-    ...statusSystemOptions.map(opt => ({
-      value: opt.codeValue || opt.value,
-      label: opt.label || opt.description,
-    })),
+    ...getOptions(SYSTEM_KEY.STATUS),
   ]
 
-  // ── State ──────────────────────────────────────────────────
-  const [search, setSearch] = useState("")
-  const [searchInput, setSearchInput] = useState("")
-  const [roleFilter, setRoleFilter] = useState(undefined)
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
-
   const [formModal, setFormModal] = useState({ open: false, user: null })
+  const [createAccountModalOpen, setCreateAccountModalOpen] = useState(false)
+  const [accountCandidates, setAccountCandidates] = useState([])
+  const [accountCandidatesLoading, setAccountCandidatesLoading] =
+    useState(false)
   const [rolesModal, setRolesModal] = useState({ open: false, user: null })
   const [pwdModal, setPwdModal] = useState({ open: false, user: null })
   const [statusModal, setStatusModal] = useState({ open: false, user: null })
+  const [statusLoading, setStatusLoading] = useState(false)
 
-  // ── Data fetching ──────────────────────────────────────────
-  const [listData, setListData] = useState([])
-  const [totalRecords, setTotalRecords] = useState(0)
-  const [loading, setLoading] = useState(false)
-
-  const getList = async () => {
+  const getList = useCallback(async () => {
     try {
       setLoading(true)
       const res = await UserService.getUsers({
-        PageIndex: page,
-        PageSize: pageSize,
-        SearchKeyword: search || undefined,
-        Role: roleFilter || undefined,
-        Status: statusFilter === "all" ? undefined : statusFilter,
+        pageIndex: page,
+        pageSize,
+        searchKeyword: search || undefined,
+        role: roleFilter || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
       })
-      if (res?.success === false) return
-      setListData(res?.data?.items || [])
-      setTotalRecords(res?.data?.totalItems || 0)
+      const { items, totalItems } = getUserListData(res)
+      setListData(items)
+      setTotalRecords(totalItems)
     } finally {
       setLoading(false)
     }
-  }
+  }, [
+    page,
+    pageSize,
+    roleFilter,
+    search,
+    statusFilter,
+    setLoading,
+    setListData,
+    setTotalRecords,
+  ])
+
+  const getAccountCandidates = useCallback(async () => {
+    if (!canManageUsers) return
+    try {
+      setAccountCandidatesLoading(true)
+      const res = await UserService.getUsers({
+        PageIndex: 1,
+        PageSize: 100,
+        HasAccount: false,
+      })
+      const { items } = getUserListData(res)
+      setAccountCandidates(
+        items.filter(user => {
+          const roles = Array.isArray(user?.roles) ? user.roles : [user?.role]
+          return (
+            user?.isActive !== false &&
+            !(
+              isFarmSupervisor &&
+              roles.some(r => String(r).toUpperCase() === ROLES.FARM_SUPERVISOR)
+            )
+          )
+        }),
+      )
+    } finally {
+      setAccountCandidatesLoading(false)
+    }
+  }, [canManageUsers, isFarmSupervisor])
 
   useEffect(() => {
     getList()
-  }, [page, pageSize, search, roleFilter, statusFilter])
-
-  const [statusLoading, setStatusLoading] = useState(false)
+  }, [getList])
 
   const handleStatusChange = async (id, isActive) => {
     try {
       setStatusLoading(true)
-      const res = await UserService.changeUserStatus(id, { isActive })
-      if (res?.success === false) return
+      await UserService.changeUserStatus(id, { isActive })
       getList()
       setStatusModal({ open: false, user: null })
     } finally {
@@ -133,31 +200,21 @@ const UsersManagement = () => {
     }
   }
 
-  const handleSearch = useCallback(() => {
-    if (invalidCharsRegex.test(searchInput)) {
-      message.error("Ký tự tìm kiếm không hợp lệ")
-      return
+  const handleDelete = async id => {
+    try {
+      await UserService.deleteUser(id)
+      getList()
+    } catch {
+      // error handled by axios interceptor
     }
-    setSearch(searchInput.trim())
-    setPage(1)
-  }, [searchInput])
+  }
 
-  // ── Table columns ──────────────────────────────────────────
   const columns = [
-    {
-      title: "STT",
-      key: "stt",
-      width: 50,
-      align: "center",
-      render: (_, __, index) => (
-        <span className="text-sm font-medium text-gray-400">
-          {(page - 1) * pageSize + index + 1}
-        </span>
-      ),
-    },
+    createSTTColumn(page, pageSize),
     {
       title: "Người dùng",
       key: "user",
+      width: 240,
       render: (_, record) => (
         <div className="flex items-center gap-3">
           <Avatar
@@ -176,12 +233,12 @@ const UsersManagement = () => {
           </div>
         </div>
       ),
-      width: 240,
     },
     {
       title: "Vai trò",
       dataIndex: "roles",
       key: "roles",
+      width: 150,
       render: roles => (
         <div className="flex flex-wrap gap-1">
           {(roles || []).map(r =>
@@ -189,62 +246,39 @@ const UsersManagement = () => {
           )}
         </div>
       ),
-      width: 150,
     },
     {
       title: "Điện thoại",
       dataIndex: "phoneNumber",
       key: "phone",
+      width: 140,
       render: v =>
         v ? (
           <span className="text-sm text-gray-600">{v}</span>
         ) : (
           <span className="text-sm text-gray-300">—</span>
         ),
-      width: 140,
     },
     {
       title: "Ngày tạo",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: 120,
       render: v => (
         <span className="text-xs text-gray-600">{formatDate(v)}</span>
       ),
-      width: 120,
     },
-    {
+    createStatusColumn({
       title: "Trạng thái",
-      dataIndex: "isActive",
-      key: "isActive",
-      render: isActive => {
-        // Ánh xạ boolean sang SystemKey value để lấy mô tả
+      width: 150,
+      getLabel: isActive => {
         const sysVal = isActive ? "ACTIVE" : "INACTIVE"
-        const statusDesc =
+        return (
           getDescription(SYSTEM_KEY.STATUS, sysVal) ||
           (isActive ? "Hoạt động" : "Vô hiệu")
-
-        return (
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold cursor-default select-none
-                ${isActive ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}
-          >
-            {isActive ? (
-              <>
-                <CheckCircleOutlined />
-                <span>{statusDesc}</span>
-              </>
-            ) : (
-              <>
-                <StopOutlined />
-                <span>{statusDesc}</span>
-              </>
-            )}
-          </div>
         )
       },
-      width: 150,
-    },
-
+    }),
     {
       title: "Hành động",
       key: "actions",
@@ -253,42 +287,19 @@ const UsersManagement = () => {
       align: "center",
       render: (_, record) => {
         if (!isFarmManager) return null
-
         return (
-          <div className="flex items-center justify-center gap-2">
+          <div className={UI.rowActions}>
             <Tooltip title="Chỉnh sửa">
               <Button
                 type="text"
                 icon={<EditOutlined className="text-lg text-green-500" />}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
+                className={UI.btn.iconEdit}
                 onClick={e => {
                   e.stopPropagation()
                   setFormModal({ open: true, user: record })
                 }}
               />
             </Tooltip>
-            {/* <Tooltip title="Phân quyền">
-              <Button
-                type="text"
-                icon={<SafetyCertificateOutlined className="text-lg text-purple-500" />}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-purple-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setRolesModal({ open: true, user: record });
-                }}
-              />
-            </Tooltip>
-            <Tooltip title="Đặt lại mật khẩu">
-              <Button
-                type="text"
-                icon={<KeyOutlined className="text-lg text-orange-500" />}
-                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-orange-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPwdModal({ open: true, user: record });
-                }}
-              />
-            </Tooltip> */}
             <Tooltip title={record.isActive ? "Vô hiệu hóa" : "Kích hoạt"}>
               <Button
                 type="text"
@@ -299,13 +310,37 @@ const UsersManagement = () => {
                     <CheckCircleOutlined className="text-lg text-green-500" />
                   )
                 }
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${record.isActive ? "hover:bg-red-50" : "hover:bg-green-50"}`}
+                className={
+                  record.isActive ? UI.btn.iconDeactivate : UI.btn.iconActivate
+                }
                 onClick={e => {
                   e.stopPropagation()
                   setStatusModal({ open: true, user: record })
                 }}
               />
             </Tooltip>
+            {!record.isActive && (
+              <Popconfirm
+                title="Xóa người dùng"
+                description="Bạn có chắc chắn muốn xóa người dùng này không?"
+                onConfirm={e => {
+                  e.stopPropagation()
+                  return handleDelete(record.id)
+                }}
+                onCancel={e => e.stopPropagation()}
+                okText="Đồng ý"
+                cancelText="Hủy"
+              >
+                <Tooltip title="Xóa">
+                  <Button
+                    type="text"
+                    icon={<DeleteOutlined className="text-lg text-red-500" />}
+                    className={UI.btn.iconDelete}
+                    onClick={e => e.stopPropagation()}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
           </div>
         )
       },
@@ -313,80 +348,74 @@ const UsersManagement = () => {
   ]
 
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      {/* ── Header ── */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div className={UI.page.wrapper}>
+      <div className={UI.page.header}>
         <div>
           <TitleCustom className="!mb-0 flex items-center gap-2">
-            <TeamOutlined className="text-green-600" />
+            <UserManagementIcon style={UI.menuIcon} />
             Quản lý người dùng
- 
           </TitleCustom>
         </div>
-        {isFarmManager && (
-          <Button
-            type="primary"
-            icon={<UserAddOutlined />}
-            onClick={() => setFormModal({ open: true, user: null })}
-            className="flex-shrink-0 h-10 px-5 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
-          >
-            Thêm người dùng
-          </Button>
+        {canManageUsers && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="primary"
+              icon={<UserAddOutlined />}
+              onClick={() => setFormModal({ open: true, user: null })}
+              className={UI.btn.primary}
+            >
+              Thêm người dùng
+            </Button>
+            <Button
+              icon={<KeyOutlined />}
+              onClick={() => {
+                setCreateAccountModalOpen(true)
+                getAccountCandidates()
+              }}
+              className="flex-shrink-0 h-10 px-5 font-bold text-blue-600 border-blue-200 rounded-xl hover:text-blue-700 hover:border-blue-400 hover:bg-blue-50"
+            >
+              Tạo tài khoản
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* ── Table card ── */}
-      <Card
-        bordered={false}
-        className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: 0 }}
-      >
-        {/* Toolbar */}
-        <div className="flex flex-col gap-3 p-5 border-b border-gray-100 sm:flex-row">
+      <div className={UI.toolbar.card}>
+        <div className={UI.toolbar.inner}>
           <Input
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
             onPressEnter={handleSearch}
             placeholder="Tìm theo tên, email..."
             prefix={<SearchOutlined className="text-gray-300" />}
-            className="w-64 h-10 rounded-xl"
+            className={UI.input.search}
             allowClear
-            onClear={() => {
-              setSearchInput("")
-              setSearch("")
-              setPage(1)
-            }}
+            onClear={handleClearSearch}
           />
           <Select
             placeholder="Tất cả vai trò"
-            className="h-10 rounded-xl min-w-[150px]"
+            className="h-10 min-w-[150px]"
             allowClear
             value={roleFilter}
-            onChange={val => {
-              setRoleFilter(val)
-              setPage(1)
-            }}
+            onChange={val => updateFilter("role", val)}
             options={roleOptions.map(opt => ({
               value: opt.codeValue || opt.value,
-              label: opt.label || opt.description,
+              label: getRoleLabel(opt.codeValue || opt.value),
             }))}
           />
           <Select
             placeholder="Tất cả trạng thái"
-            className="h-10 rounded-xl min-w-[150px]"
+            className="h-10 min-w-[150px]"
             allowClear
             value={statusFilter}
-            onChange={value => {
-              setStatusFilter(value)
-              setPage(1)
-            }}
+            onChange={val => updateFilter("status", val)}
             options={selectStatusOptions}
           />
-          <div className="flex gap-2 ml-auto">
+          <div className={UI.toolbar.actions}>
             <Button
               onClick={handleSearch}
               icon={<SearchOutlined />}
-              className="h-10 px-4 font-semibold rounded-xl bg-gray-50"
+              className={UI.btn.search}
             >
               Tìm kiếm
             </Button>
@@ -394,52 +423,50 @@ const UsersManagement = () => {
               icon={<ReloadOutlined />}
               onClick={() => getList()}
               loading={loading}
-              className="h-10 px-3 rounded-xl bg-gray-50"
+              className={UI.btn.reload}
             />
           </div>
         </div>
+      </div>
 
-        {/* Table */}
-        <CustomTable
-          dataSource={listData}
-          columns={columns}
-          rowKey="id"
-          loading={loading}
-          onRow={record => {
-            return {
-              onClick: () => {
-                navigate(ROUTER.FM_USER_DETAIL.replace(":id", record.id))
-              },
-              className: "cursor-pointer",
-            }
-          }}
-          locale={{ emptyText: "No data available" }}
-          pagination={{
-            current: page,
-            pageSize: pageSize,
-            total: totalRecords,
-            showSizeChanger: true,
-            pageSizeOptions: PAGE_SIZE,
-            showTotal: (total, range) => (
-              <span className="text-xs text-gray-500">
-                {range[0]}–{range[1]} / <strong>{total}</strong>
-              </span>
-            ),
-            onChange: (p, ps) => {
-              setPage(p)
-              setPageSize(ps)
-            },
-          }}
-          rowClassName="hover:bg-green-50/30 transition-colors"
-        />
-      </Card>
+      <CustomTable
+        dataSource={listData}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        onRow={record => ({
+          onClick: () => navigate(userDetailRoute.replace(":id", record.id)),
+          className: "cursor-pointer",
+        })}
+        locale={{ emptyText: "Không có dữ liệu người dùng." }}
+        pagination={createPaginationConfig(
+          page,
+          pageSize,
+          totalRecords,
+          (p, ps) => {
+            setPage(p)
+            setPageSize(ps)
+          },
+        )}
+        rowClassName={UI.row}
+      />
 
-      {/* ── Modals ── */}
       <UserFormModal
         open={formModal.open}
         editingUser={formModal.user}
         onClose={() => setFormModal({ open: false, user: null })}
         onSuccess={() => getList()}
+      />
+      <CreateAccountModal
+        open={createAccountModalOpen}
+        users={accountCandidates}
+        loadingUsers={accountCandidatesLoading}
+        canCreateSupervisor={isFarmManager}
+        onClose={() => setCreateAccountModalOpen(false)}
+        onSuccess={() => {
+          getList()
+          getAccountCandidates()
+        }}
       />
       <AssignRolesModal
         open={rolesModal.open}
@@ -451,38 +478,46 @@ const UsersManagement = () => {
         user={pwdModal.user}
         onClose={() => setPwdModal({ open: false, user: null })}
       />
+
       <CustomModal
         open={statusModal.open}
         onCancel={() => setStatusModal({ open: false, user: null })}
         title={
-          <div className="flex items-center ">
+          <div className={UI.modal.titleClass}>
             <span className="font-bold">Thay đổi trạng thái</span>
           </div>
         }
         footer={null}
-        width={400}
+        width={420}
       >
-        <div className="mt-4 mb-6 ml-4">
+        <div className={UI.modal.body}>
           <p className="text-gray-600">
-            Bạn có chắc muốn thay đổi trạng thái người dùng này không?{" "}
+            Bạn có chắc muốn thay đổi trạng thái người dùng này không?
           </p>
+          {statusModal.user && (
+            <p className="mt-2 text-sm font-semibold text-gray-800">
+              {statusModal.user.fullName}
+            </p>
+          )}
         </div>
-        <div className="flex justify-end gap-3">
+        <div className={UI.modal.footer}>
           <Button
             onClick={() => setStatusModal({ open: false, user: null })}
-            className="h-10 px-6 rounded-xl"
+            className={UI.btn.cancel}
           >
             Hủy
           </Button>
           <Button
             type="primary"
-            className="h-10 px-6 font-bold bg-orange-600 border-0 shadow-lg rounded-xl shadow-orange-100"
             loading={statusLoading}
             onClick={() => {
-              if (statusModal.user) {
-                handleStatusChange(statusModal.user.id, !statusModal.user.isActive)
-              }
+              if (statusModal.user)
+                handleStatusChange(
+                  statusModal.user.id,
+                  !statusModal.user.isActive,
+                )
             }}
+            className={UI.btn.confirm}
           >
             Xác nhận
           </Button>

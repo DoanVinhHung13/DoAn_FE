@@ -1,74 +1,95 @@
-/**
- * PlanTemplateDetail — Chi tiết Mẫu Kế hoạch (Màn 1)
- * Route: /farm-manager/plan-templates/:id  (ROUTER.FM_PLAN_TEMPLATE_DETAIL)
- *
- * Architecture mirrors FertilizerDetail:
- *   - Button "Quay lại" + TitleCustom header
- *   - Single Card with section headers (green left-border bar)
- *   - Descriptions for basic info
- */
 import {
   ArrowLeftOutlined,
+  EditOutlined,
+  FileTextOutlined,
   ProfileOutlined,
-} from '@ant-design/icons'
-import { Badge, Button, Card, Descriptions, Empty, Skeleton, Typography, message } from 'antd'
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+} from "@ant-design/icons"
+import { Button, Card, Empty, Skeleton, Typography } from "antd"
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 
-import TitleCustom from 'src/components/TitleCustom'
-import ROUTER from 'src/router/ROUTER'
-import PlanTemplateService from 'src/services/PlanTemplateService'
+import TitleCustom from "src/components/TitleCustom"
+import ROUTER from "src/router/ROUTER"
+import ProcessTemplateService from "src/services/ProcessTemplateService"
+import ProcessStepService from "src/services/ProcessStepService"
 
 const { Text } = Typography
 
-// ── Section header (Fertilizer-style) ─────────────────────────────────────────
-const SectionTitle = ({ children }) => (
-  <div
-    className="mb-3 px-4 py-2 rounded-lg font-semibold text-green-800"
-    style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 13 }}
-  >
-    {children}
+const normalizeItems = response => {
+  const payload = response?.data ?? response ?? {}
+  const data = payload?.data ?? payload
+  return Array.isArray(data)
+    ? data
+    : data?.items || data?.results || data?.processSteps || []
+}
+
+const InfoItem = ({ label, value, helper, icon }) => (
+  <div className="flex min-w-0 items-center gap-3 px-5 py-4">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-50 text-base text-green-600">
+      {icon}
+    </div>
+    <div className="min-w-0">
+      <p className="mb-0.5 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+        {label}
+      </p>
+      <p className="m-0 truncate text-sm font-semibold text-gray-800">
+        {value || "—"}
+      </p>
+      <p className="mb-0 mt-0.5 truncate text-xs text-gray-400">{helper}</p>
+    </div>
   </div>
 )
 
-// ── Main Component ────────────────────────────────────────────────────────────
 const PlanTemplateDetail = () => {
   const navigate = useNavigate()
   const { id } = useParams()
-
-  const [initialLoading, setInitialLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [item, setItem] = useState(null)
+  const [steps, setSteps] = useState([])
 
   useEffect(() => {
-    const fetchDetail = async () => {
+    let mounted = true
+
+    const loadDetail = async () => {
       try {
-        setInitialLoading(true)
-        const res = await PlanTemplateService.getById(id)
-        if (res?.success === false) {
-          message.error('Không tìm thấy kế hoạch mẫu')
-          navigate(ROUTER.FM_PLAN_TEMPLATES)
-          return
-        }
-        setItem(res?.data)
-      } catch (err) {
-        message.error('Lấy thông tin kế hoạch mẫu thất bại')
-        navigate(ROUTER.FM_PLAN_TEMPLATES)
+        setLoading(true)
+        const [templateResponse, stepsResponse] = await Promise.all([
+          ProcessTemplateService.getProcessTemplateById(id),
+          ProcessStepService.getAll({ PageIndex: 1, PageSize: 100 }),
+        ])
+        if (!mounted) return
+
+        const template = templateResponse?.data ?? templateResponse
+        const templateSteps = normalizeItems(stepsResponse)
+          .filter(
+            step => (step.processTemplateId || step.processTemplate?.id) === id,
+          )
+          .sort(
+            (first, second) => (first.stepOrder || 0) - (second.stepOrder || 0),
+          )
+
+        setItem(template)
+        setSteps(templateSteps)
+      } catch {
+        // axios interceptor handles error notification
+        navigate(ROUTER.FM_PROCESS_TEMPLATES)
       } finally {
-        setInitialLoading(false)
+        if (mounted) setLoading(false)
       }
     }
-    if (id) fetchDetail()
+
+    loadDetail()
+    return () => {
+      mounted = false
+    }
   }, [id, navigate])
 
-  if (initialLoading) {
+  if (loading) {
     return (
-      <div className="space-y-6">
-        <TitleCustom className="!mb-0 flex items-center gap-2">
-          <ProfileOutlined className="text-green-600" />
-          Chi tiết kế hoạch mẫu
-        </TitleCustom>
-        <Card bordered={false} className="shadow-sm rounded-2xl" bodyStyle={{ padding: '24px' }}>
-          <Skeleton active paragraph={{ rows: 8 }} />
+      <div className="space-y-5">
+        <Skeleton.Button active className="!h-10 !w-72" />
+        <Card variant="borderless" className="shadow-sm rounded-2xl">
+          <Skeleton active paragraph={{ rows: 10 }} />
         </Card>
       </div>
     )
@@ -76,128 +97,166 @@ const PlanTemplateDetail = () => {
 
   if (!item) return null
 
-  const stages = item.stages || []
+  const catalogName =
+    item.cropCatalogName || item.cropCatalog?.name || "Chưa xác định"
+  const cropName = item.cropName || item.crop?.name
 
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      {/* ── Header ── */}
+    <div className="space-y-5 duration-500 animate-in fade-in">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_PLAN_TEMPLATES)}>
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTER.FM_PROCESS_TEMPLATES)}
+            className="h-10 rounded-xl"
+          >
             Quay lại
           </Button>
           <TitleCustom className="!mb-0 flex items-center gap-2">
             <ProfileOutlined className="text-green-600" />
-            Chi tiết kế hoạch mẫu
+            Chi tiết mẫu quy trình
           </TitleCustom>
         </div>
+        <Button
+          type="primary"
+          icon={<EditOutlined />}
+          onClick={() =>
+            navigate(ROUTER.FM_PROCESS_TEMPLATE_EDIT.replace(":id", id))
+          }
+          className="h-10 rounded-xl border-0 bg-green-600 px-5 font-bold shadow-lg shadow-green-100"
+        >
+          Chỉnh sửa
+        </Button>
       </div>
 
-      {/* ── Main Card ── */}
       <Card
-        bordered={false}
-        className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: '24px' }}
+        variant="borderless"
+        className="overflow-hidden border border-gray-100 shadow-sm rounded-2xl"
+        styles={{ body: { padding: 0 } }}
       >
-        <div className="space-y-6">
-
-          {/* ── Section 1: Thông Tin Cơ Bản ── */}
-          <SectionTitle>Thông Tin Cơ Bản</SectionTitle>
-
-          <Descriptions
-            column={{ xs: 1, sm: 2 }}
-            size="small"
-            labelStyle={{
-              fontWeight: 600,
-              color: '#6b7280',
-              fontSize: 12,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
-            contentStyle={{ color: '#1f2937', fontSize: 14 }}
-          >
-            <Descriptions.Item label="Tên kế hoạch mẫu" span={2}>
-              <span className="font-semibold">{item.name || '—'}</span>
-            </Descriptions.Item>
-
-            <Descriptions.Item label="Danh mục">
-              {item.category || <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-
-            <Descriptions.Item label="Cây trồng">
-              {item.cropType || <span className="text-gray-400">—</span>}
-            </Descriptions.Item>
-          </Descriptions>
-
-          {item.description && (
-            <div className="mt-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
-              <p className="mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Mô tả
-              </p>
-              <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-line m-0">
-                {item.description}
-              </p>
-            </div>
-          )}
-
-          {/* ── Section 2: Quy Trình Kỹ Thuật Chi Tiết ── */}
-          <SectionTitle>Quy Trình Kỹ Thuật Chi Tiết</SectionTitle>
-
-          {stages.length > 0 ? (
-            <div className="relative">
-              {stages.map((stage, index) => {
-                const isLast = index === stages.length - 1
-                const isFilled = !stage.isDraft
-
-                return (
-                  <div key={stage.id || index} className="relative flex gap-4">
-                    {/* Vòng tròn + đường kẻ dọc */}
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={`relative z-10 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                          isFilled
-                            ? 'bg-green-600 text-white shadow-md shadow-green-200'
-                            : 'bg-gray-100 text-gray-400 border-2 border-gray-200'
-                        }`}
-                      >
-                        {index + 1}
-                      </div>
-                      {!isLast && (
-                        <div className="w-0 flex-1 border-l-2 border-gray-200 my-1" />
-                      )}
-                    </div>
-
-                    {/* Nội dung */}
-                    <div className={`flex-1 ${!isLast ? 'pb-6' : 'pb-0'}`}>
-                      <h3 className="text-base font-semibold text-gray-800 m-0 mb-2">
-                        {stage.title || `Giai đoạn ${index + 1}`}
-                      </h3>
-                      {stage.isDraft ? (
-                        <div className="border-2 border-dashed border-gray-200 rounded-xl p-4">
-                          <p className="text-sm text-gray-400 italic m-0">
-                            Nội dung đang được cập nhật cho {stage.title?.toLowerCase() || 'giai đoạn này'}...
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap m-0 leading-relaxed">
-                            {stage.description || 'Chưa có mô tả.'}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Chưa có giai đoạn nào"
-              className="py-4"
-            />
-          )}
+        <div
+          className="border-l-4 border-green-600 px-6 py-5 md:px-7"
+          style={{ backgroundColor: "#f0fdf4" }}
+        >
+          <h1 className="mb-1 text-xl font-bold leading-tight text-gray-900 md:text-2xl">
+            {item.name}
+          </h1>
+          <p className="m-0 max-w-5xl text-sm leading-6 text-gray-600">
+            {item.description || "Mẫu quy trình chưa có mô tả tổng quan."}
+          </p>
         </div>
+
+        <div className="grid divide-y divide-gray-100 bg-white sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
+          <InfoItem
+            label="Danh mục"
+            value={catalogName}
+            icon={<ProfileOutlined />}
+          />
+          <InfoItem
+            label="Cây trồng"
+            value={cropName || "Cả danh mục"}
+            icon={<FileTextOutlined />}
+          />
+          {/* <InfoItem
+            label="Thời lượng"
+            value={
+              item.estimatedDurationDays
+                ? `${item.estimatedDurationDays} ngày`
+                : 'Chưa thiết lập'
+            }
+            helper="Tổng thời gian dự kiến"
+            icon={<CalendarOutlined />}
+          /> */}
+          <InfoItem
+            label="Số bước"
+            value={`${steps.length} bước`}
+            icon={<ProfileOutlined />}
+          />
+        </div>
+      </Card>
+
+      <Card
+        variant="borderless"
+        className="shadow-sm rounded-2xl"
+        styles={{ body: { padding: 0 } }}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-6 py-4">
+          <div>
+            <h2 className="m-0 text-base font-bold text-gray-800">
+              Các bước thực hiện
+            </h2>
+            <Text type="secondary" className="text-xs">
+              Sắp xếp theo thứ tự thực hiện
+            </Text>
+          </div>
+          {/* <Tag color="green" className="m-0 rounded-full px-3 py-1">
+            {steps.length} bước
+          </Tag> */}
+        </div>
+
+        {steps.length ? (
+          <div className="relative px-6 py-5">
+            <div className="absolute bottom-10 left-[43px] top-10 w-px bg-green-100" />
+            <div className="space-y-3">
+              {steps.map((step, index) => (
+                <div
+                  key={step.id || index}
+                  className="group relative flex items-start gap-3"
+                >
+                  <div className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-4 border-green-50 bg-green-600 text-xs font-bold text-white">
+                    {step.stepOrder || index + 1}
+                  </div>
+
+                  <div className="min-w-0 flex-1 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition-colors group-hover:border-green-200">
+                    <div className="mb-2 flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                      <h3 className="m-0 text-sm font-bold text-gray-800">
+                        {step.stepName || `Bước ${index + 1}`}
+                      </h3>
+                      {/* <div className="flex flex-wrap gap-2">
+                        {step.estimatedDay !== null &&
+                          step.estimatedDay !== undefined && (
+                            <Tag
+                              icon={<CalendarOutlined />}
+                              color="blue"
+                              className="m-0"
+                            >
+                              Ngày thứ {step.estimatedDay}
+                            </Tag>
+                          )}
+                        {step.requiredMaterialType && (
+                          <Tag color="gold" className="m-0">
+                            {step.requiredMaterialType}
+                          </Tag>
+                        )}
+                      </div> */}
+                    </div>
+
+                    <p className="m-0 min-w-0 max-w-full whitespace-pre-line break-words [overflow-wrap:anywhere] text-sm leading-5 text-gray-600">
+                      {step.description || "Chưa có mô tả công việc."}
+                    </p>
+
+                    {/* {step.note && (
+                      <div className="mt-3 flex gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm">
+                        <span className="shrink-0 font-semibold text-amber-700">
+                          Ghi chú:
+                        </span>
+                        <p className="m-0 min-w-0 max-w-full whitespace-pre-line break-words [overflow-wrap:anywhere] leading-5 text-amber-900">
+                          {step.note}
+                        </p>
+                      </div>
+                    )} */}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="Mẫu quy trình chưa có bước nào."
+            className="py-10"
+          />
+        )}
       </Card>
     </div>
   )

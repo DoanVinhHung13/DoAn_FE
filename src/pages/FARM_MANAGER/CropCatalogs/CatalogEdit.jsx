@@ -1,98 +1,109 @@
-import React, { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { Alert, Button, Card, Form, Input, Select, Spin } from "antd"
+import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons"
+
+import TitleCustom from "src/components/TitleCustom"
+import { CropCatalogIcon } from "src/assets/icon/menu/MenuIcons"
+import CropCatalogService from "src/services/CropCatalogService"
 import {
-  Alert,
-  Button,
-  Card,
-  Form,
-  Input,
-  Space,
-  Spin,
-  Typography,
-  message,
-} from 'antd';
-import {
-  ArrowLeftOutlined,
-  FileTextOutlined,
-  SaveOutlined,
-} from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+  applyApiFieldErrors,
+  isNotFoundError,
+} from "src/services/core/apiError"
+import ROUTER from "src/router/ROUTER"
+import { useSystemKey } from "src/hooks/useSystemKey"
+import { SYSTEM_KEY } from "src/constants/systemKey"
+import useFormDraft from "src/hooks/useFormDraft"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
-import TitleCustom from 'src/components/TitleCustom';
-import CropService from 'src/services/CropService';
-import ROUTER from 'src/router/ROUTER';
-
-const { Text } = Typography;
-
-const EMPTY_MESSAGE = 'Không tìm thấy thông tin danh mục cây trồng.';
-
-const getItemId = (item) => item?.id || item?._id || item?.cropCatalogId;
+const normalizeText = text => text?.trim().replace(/\s+/g, " ") || null
 
 const CatalogEdit = () => {
-  const navigate = useNavigate();
-  const { id } = useParams();
-  const queryClient = useQueryClient();
-  const [form] = Form.useForm();
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const [form] = Form.useForm()
+  const { getCombo } = useSystemKey()
+  const storageKey = getFormDraftKey("crop-catalog", "edit", id)
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
+    form,
+    storageKey,
+  })
 
-  const {
-    data: catalogDetail,
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ['crop-catalog-detail', id],
-    queryFn: async () => {
-      const response = await CropService.getCropById(id);
-      const payload = response?.data ?? {};
-      return payload?.data ?? payload;
-    },
-    enabled: !!id,
-    retry: false,
-  });
+  const statusOptions = getCombo(SYSTEM_KEY.STATUS).map(opt => ({
+    value: (opt.codeValue || opt.value) === "ACTIVE",
+    label: opt.label || opt.description,
+  }))
+
+  const [catalogDetail, setCatalogDetail] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
+  const [isPending, setIsPending] = useState(false)
+
+  const fetchCatalogDetail = async () => {
+    if (!id) return
+    setIsLoading(true)
+    setIsError(false)
+    try {
+      const response = await CropCatalogService.getCropCatalogById(id, {
+        errorHandling: "component",
+      })
+      const payload = response?.data
+      setCatalogDetail(payload?.data ?? payload)
+    } catch {
+      setIsError(true)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCatalogDetail()
+  }, [id])
 
   useEffect(() => {
     if (catalogDetail) {
-      form.setFieldsValue({
-        name: catalogDetail.name || catalogDetail.cropCatalogName || '',
-        description: catalogDetail.description || '',
-      });
-    }
-  }, [catalogDetail, form]);
-
-  const updateMutation = useMutation({
-    mutationFn: (values) => {
-      const payload = {
-        name: values.name.trim().replace(/\s+/g, ' '),
-        description: values.description?.trim().replace(/\s+/g, ' ') || null,
-        isActive: typeof catalogDetail?.isActive === 'boolean' ? catalogDetail.isActive : true,
-      };
-      return CropService.updateCrop(id, payload);
-    },
-    onSuccess: (response) => {
-      const successMsg = response?.data?.message || response?.message;
-      if (successMsg) message.success(successMsg);
-      queryClient.invalidateQueries({ queryKey: ['crop-catalogs'] });
-      queryClient.invalidateQueries({ queryKey: ['crop-catalogs-dropdown'] });
-      queryClient.invalidateQueries({ queryKey: ['crop-catalog-detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['system-key'] });
-      navigate(ROUTER.FM_CROP_CATALOGS);
-    },
-    onError: (error) => {
-      if (error?.response?.status === 404) {
-        navigate(ROUTER.FM_CROP_CATALOGS);
-        return;
+      const serverValues = {
+        name: catalogDetail.name || "",
+        description: catalogDetail.description || "",
+        isActive: catalogDetail.isActive ?? true,
       }
-      const errorMsg = error?.response?.data?.message || error?.response?.data?.title || error?.message;
-      if (errorMsg) message.error(errorMsg);
-    },
-  });
+      const draft = restoreDraft()
+      form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) })
+    }
+  }, [catalogDetail, form, restoreDraft])
+
+  const handleUpdate = async values => {
+    setIsPending(true)
+    const payload = {
+      name: normalizeText(values.name),
+      description: normalizeText(values.description),
+      isActive: values.isActive ?? catalogDetail?.isActive ?? true,
+    }
+
+    try {
+      await CropCatalogService.updateCropCatalog(id, payload, {
+        errorHandling: "form",
+      })
+      clearDraft()
+      navigate(ROUTER.FM_CROP_CATALOGS)
+    } catch (error) {
+      if (isNotFoundError(error)) {
+        navigate(ROUTER.FM_CROP_CATALOGS)
+        return
+      }
+      applyApiFieldErrors(form, error)
+    } finally {
+      setIsPending(false)
+    }
+  }
 
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Spin size="large" />
       </div>
-    );
+    )
   }
 
   if (isError) {
@@ -106,20 +117,21 @@ const CatalogEdit = () => {
           >
             Quay lại
           </Button>
-          <TitleCustom className="!mb-0">Chỉnh sửa danh mục cây trồng</TitleCustom>
+          <TitleCustom className="!mb-0">
+            Chỉnh sửa danh mục cây trồng
+          </TitleCustom>
         </div>
         <Alert
-          showIcon
           type="error"
           message="Không thể tải thông tin danh mục cây trồng."
           action={
-            <Button size="small" onClick={() => refetch()}>
+            <Button size="small" onClick={fetchCatalogDetail}>
               Thử lại
             </Button>
           }
         />
       </div>
-    );
+    )
   }
 
   if (!catalogDetail) {
@@ -133,13 +145,18 @@ const CatalogEdit = () => {
           >
             Quay lại
           </Button>
-          <TitleCustom className="!mb-0">Chỉnh sửa danh mục cây trồng</TitleCustom>
+          <TitleCustom className="!mb-0">
+            Chỉnh sửa danh mục cây trồng
+          </TitleCustom>
         </div>
         <Card>
-          <Alert showIcon type="warning" message={EMPTY_MESSAGE} />
+          <Alert
+            type="warning"
+            message="Không tìm thấy thông tin danh mục cây trồng."
+          />
         </Card>
       </div>
-    );
+    )
   }
 
   return (
@@ -154,7 +171,7 @@ const CatalogEdit = () => {
           Quay lại
         </Button>
         <TitleCustom className="!mb-0 flex items-center gap-2">
-          <FileTextOutlined className="h-6 w-6" />
+          <CropCatalogIcon style={{ fontSize: "24px", color: "#15803d" }} />
           Chỉnh sửa danh mục cây trồng
         </TitleCustom>
       </div>
@@ -163,36 +180,40 @@ const CatalogEdit = () => {
         <Form
           form={form}
           layout="vertical"
-          onFinish={(values) => updateMutation.mutate(values)}
-          onFinishFailed={() => {}}
+          onFinish={handleUpdate}
+          onValuesChange={(_, allValues) => saveDraft(allValues)}
           scrollToFirstError
         >
           <Form.Item
             name="name"
             label="Tên loại cây trồng"
             rules={[
-              { required: true, message: 'Vui lòng nhập tên loại cây trồng.' },
-              {
-                validator: (_, value) => {
-                  if (!value || value.trim()) return Promise.resolve();
-                  return Promise.reject(
-                    new Error('Tên loại cây trồng không được chỉ chứa khoảng trắng.')
-                  );
-                },
-              },
+              { required: true, message: "Vui lòng nhập tên loại cây trồng." },
+              makeNameValidator({ label: "Tên loại cây trồng" }),
             ]}
           >
             <Input
-              className="h-11 rounded-lg"
+              className="rounded-lg"
               placeholder="Nhập tên loại cây trồng"
             />
           </Form.Item>
 
-          <Form.Item name="description" label="Mô tả">
+          <Form.Item
+            name="description"
+            label="Mô tả"
+            rules={[makeDescriptionValidator()]}
+          >
             <Input.TextArea
-              rows={6}
+              rows={4}
               className="rounded-lg"
               placeholder="Nhập mô tả danh mục cây trồng"
+            />
+          </Form.Item>
+
+          <Form.Item name="isActive" label="Trạng thái">
+            <Select
+              className="w-full rounded-lg"
+              options={statusOptions}
             />
           </Form.Item>
 
@@ -207,7 +228,7 @@ const CatalogEdit = () => {
               type="primary"
               htmlType="submit"
               icon={<SaveOutlined />}
-              loading={updateMutation.isPending}
+              loading={isPending}
               className="h-11 min-w-[120px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
             >
               Lưu thay đổi
@@ -216,7 +237,7 @@ const CatalogEdit = () => {
         </Form>
       </Card>
     </div>
-  );
-};
+  )
+}
 
-export default CatalogEdit;
+export default CatalogEdit

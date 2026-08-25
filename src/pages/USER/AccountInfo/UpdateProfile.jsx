@@ -7,19 +7,18 @@ import {
 } from "@ant-design/icons"
 import { Button, Col, DatePicker, Form, Input, Row, Select } from "antd"
 import dayjs from "dayjs"
-import { isValidPhone } from "src/utils/helpers"
+import { addressPattern, fullNamePattern, PHONE_RULES } from "src/utils/helpers"
+import { getLocalNow } from "src/utils/dateFormatters"
 
-const fullNamePattern = /^[\p{L}\s]+$/u
-const addressPattern = /^[\p{L}\d\s,./#()-]+$/u
-
-const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => {
+const UpdateProfile = ({
+  form,
+  onFinish,
+  onCancel,
+  loading,
+  genderOptions,
+}) => {
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      onFinish={onFinish}
-      scrollToFirstError
-    >
+    <Form form={form} layout="vertical" onFinish={onFinish} scrollToFirstError>
       <Row gutter={16}>
         <Col xs={24} md={12}>
           <Form.Item
@@ -46,7 +45,6 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
           >
             <Input
               prefix={<UserOutlined className="text-gray-300" />}
-              className="h-11"
             />
           </Form.Item>
         </Col>
@@ -55,7 +53,6 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
             <Input
               disabled
               prefix={<MailOutlined className="text-gray-300" />}
-              className="h-11"
             />
           </Form.Item>
         </Col>
@@ -64,23 +61,10 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
             name="phoneNumber"
             label="Số điện thoại"
             validateTrigger={["onBlur", "onSubmit"]}
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value?.trim() || isValidPhone(value.trim()))
-                    return Promise.resolve()
-                  return Promise.reject(
-                    new Error(
-                      "Định dạng số điện thoại không hợp lệ.",
-                    ),
-                  )
-                },
-              },
-            ]}
+            rules={PHONE_RULES}
           >
             <Input
               prefix={<PhoneOutlined className="text-gray-300" />}
-              className="h-11"
             />
           </Form.Item>
         </Col>
@@ -97,11 +81,16 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
               {
                 validator: (_, value) => {
                   if (!value) return Promise.resolve()
-                  if (!dayjs(value).isValid() || value.isAfter(dayjs(), "day")) {
+                  if (
+                    !dayjs(value).isValid() ||
+                    value.isAfter(getLocalNow(), "day")
+                  ) {
                     return Promise.reject(new Error("Ngày sinh không hợp lệ."))
                   }
-                  if (dayjs().diff(value, "year") < 15) {
-                    return Promise.reject(new Error("Người dùng phải từ đủ 15 tuổi."))
+                  if (getLocalNow().diff(value, "year") < 15) {
+                    return Promise.reject(
+                      new Error("Người dùng phải từ đủ 15 tuổi."),
+                    )
                   }
                   return Promise.resolve()
                 },
@@ -111,8 +100,10 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
             <DatePicker
               format="DD/MM/YYYY"
               placeholder="Chọn ngày sinh"
-              className="w-full h-11"
-              disabledDate={current => current && current > dayjs().endOf("day")}
+              className="w-full"
+              disabledDate={current =>
+                current && current > getLocalNow().endOf("day")
+              }
             />
           </Form.Item>
         </Col>
@@ -121,7 +112,6 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
             <Select
               allowClear
               placeholder="Chọn giới tính"
-              className="h-11"
               options={genderOptions}
             />
           </Form.Item>
@@ -143,7 +133,9 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
                     normalized.length > 200 ||
                     !addressPattern.test(normalized)
                   ) {
-                    return Promise.reject(new Error("Địa chỉ chi tiết không hợp lệ."))
+                    return Promise.reject(
+                      new Error("Địa chỉ chi tiết không hợp lệ."),
+                    )
                   }
                   return Promise.resolve()
                 },
@@ -153,7 +145,6 @@ const UpdateProfile = ({ form, onFinish, onCancel, loading, genderOptions }) => 
             <Input
               prefix={<EnvironmentOutlined className="text-gray-300" />}
               placeholder="Số nhà, tên đường..."
-              className="h-11"
             />
           </Form.Item>
         </Col>

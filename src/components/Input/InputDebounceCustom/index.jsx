@@ -1,6 +1,5 @@
 // InputDebounceCustom.js - Sửa lại
 import { Input, InputNumber } from "antd"
-import PropTypes from "prop-types"
 import { useEffect, useRef } from "react"
 import useDebounce from "src/hooks/useDebounce"
 
@@ -20,6 +19,7 @@ const InputDebounceCustom = ({
   onDebouncedChange,
   debounceDelay = 300,
   value,
+  size = "middle",
   ...rest
 }) => {
   const debouncedValue = useDebounce(value || "", debounceDelay)
@@ -41,6 +41,7 @@ const InputDebounceCustom = ({
     <Component
       placeholder={label}
       className={className}
+      size={size}
       value={value}
       enterButton={type === "search"}
       {...rest}

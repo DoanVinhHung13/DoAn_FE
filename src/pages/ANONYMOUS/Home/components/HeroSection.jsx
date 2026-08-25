@@ -1,112 +1,245 @@
-﻿import React from 'react'
-import { Col, Row, Typography, Button, Space, Tag } from 'antd'
-import { ArrowRightOutlined, SearchOutlined, CheckCircleFilled } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import ROUTER from 'src/router/ROUTER'
-
-const { Title, Paragraph, Text } = Typography
+import React from "react"
+import { Button, Space } from "antd"
+import { ArrowRightOutlined, SearchOutlined } from "@ant-design/icons"
+import { useNavigate } from "react-router-dom"
+import { useSelector } from "react-redux"
+import ROUTER from "src/router/ROUTER"
 
 const HeroSection = () => {
   const navigate = useNavigate()
-  const user = useSelector((state) => state.appGlobal.userInfo)
+  const user = useSelector(state => state.appGlobal.userInfo)
 
-  const handleGetStarted = () => {
-    if (user) {
-      navigate(ROUTER.FM_DASHBOARD)
-    } else {
-      navigate(ROUTER.LOGIN)
-    }
-  }
+  const handleGetStarted = () =>
+    navigate(user ? ROUTER.FM_DASHBOARD : ROUTER.LOGIN)
 
   return (
-    <section className="relative px-6 pt-32 pb-20 overflow-hidden md:pt-48 md:pb-32 hero-mask bg-slate-50">
-      <div className="absolute top-0 right-0 z-0 w-full h-full opacity-20">
-        <img
-          src="/images/hero.png"
-          alt="Agriculture Background"
-          className="object-cover w-full h-full parallax-slow"
-        />
-      </div>
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-green-400/20 blur-[120px] rounded-full blob-animate"></div>
+    <section className="relative overflow-hidden" style={{ minHeight: 500 }}>
+      {/* Background: ảnh nông nghiệp + overlay */}
       <div
-        className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-400/10 blur-[120px] rounded-full blob-animate"
-        style={{ animationDelay: '2s' }}
-      ></div>
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage:
+            "url(https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1600&q=80)",
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(27, 94, 32, 0.88) 0%, rgba(1, 87, 155, 0.75) 100%)",
+        }}
+      />
 
-      <div className="relative z-10 mx-auto max-w-7xl">
-        <Row gutter={[48, 48]} align="middle">
-          <Col xs={24} lg={14} className="space-y-8">
-            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-100 px-4 py-1.5 rounded-full mb-4 scroll-reveal pulse-badge">
-              <Tag color="green" className="m-0 font-bold rounded-full">
-                Mới
-              </Tag>
-              <Text className="text-xs font-bold tracking-wider text-green-700 uppercase">
-                Hệ thống truy xuất chuẩn quốc gia TCVN
-              </Text>
+      {/* Content */}
+      <div className="relative z-10 mx-auto max-w-6xl px-6 py-20 md:py-24">
+        <div className="flex flex-col md:flex-row md:items-center gap-10">
+          {/* Trái: Text content */}
+          <div style={{ flex: 1, maxWidth: 600 }}>
+            {/* Label */}
+            <div
+              className="inline-flex items-center gap-2 mb-5 px-3 py-1 rounded"
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.3)",
+              }}
+            >
+              <span
+                className="text-xs font-semibold uppercase tracking-widest"
+                style={{ color: "#a5d6a7" }}
+              >
+                Hệ thống truy xuất nguồn gốc canh tác nông sản
+              </span>
             </div>
-            <Title className="!text-gray-900 !mb-6 leading-[1.1] !text-4xl md:!text-7xl font-black scroll-reveal">
-              Minh bạch <span className="gradient-text">Nguồn gốc</span>,
+
+            {/* Tiêu đề */}
+            <h1
+              className="font-bold leading-tight mb-4"
+              style={{
+                color: "#fff",
+                fontSize: "clamp(2rem, 5vw, 3.2rem)",
+                lineHeight: 1.2,
+              }}
+            >
+              Minh bạch canh tác,
               <br />
-              Nâng tầm <span className="gradient-text">Giá trị</span> Nông sản.
-            </Title>
-            <Paragraph className="max-w-2xl text-lg leading-relaxed text-gray-500 md:text-xl scroll-reveal">
-              EAPLS cung cấp giải pháp chuyển đổi số toàn diện cho nông trại, HTX và doanh nghiệp: Từ Nhật ký sản xuất điện tử đến Truy xuất nguồn gốc bằng mã QR chuẩn quốc gia.
-            </Paragraph>
-            <Space size="middle" className="flex-wrap pt-4 scroll-reveal">
+              chuyển đổi số nông nghiệp
+            </h1>
+
+            {/* Mô tả */}
+            <p
+              className="mb-8 leading-relaxed"
+              style={{
+                color: "rgba(255,255,255,0.85)",
+                fontSize: "1.05rem",
+                maxWidth: 520,
+              }}
+            >
+              Nền tảng EAPLS giúp nông trại và hợp tác xã số hóa quy trình sản
+              xuất: từ ghi chép nhật ký canh tác, quản lý vật tư bón phân/nông
+              dược đến quản lý lô thu hoạch và phát hành tem QR truy xuất nguồn
+              gốc.
+            </p>
+
+            {/* Nút */}
+            <Space size={12} wrap>
               <Button
                 type="primary"
                 size="large"
-                className="h-16 px-10 text-lg font-black bg-green-600 border-0 shadow-2xl hover:bg-green-700 rounded-2xl shadow-green-200 shine-effect hover-lift"
                 onClick={handleGetStarted}
+                style={{
+                  background: "#2e7d32",
+                  borderColor: "#2e7d32",
+                  height: 48,
+                  paddingInline: 28,
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  borderRadius: 6,
+                }}
               >
-                Số hóa nông trại ngay <ArrowRightOutlined />
-              </Button>
-              <Button
-                size="large"
-                className="h-16 px-10 text-lg font-bold transition-all border-2 border-gray-100 shadow-sm rounded-2xl hover:border-green-500 hover:text-green-600 hover-lift"
-                onClick={() => navigate('/reference/tcvn')}
-              >
-                Tra cứu tiêu chuẩn <SearchOutlined />
+                Bắt đầu sử dụng <ArrowRightOutlined />
               </Button>
             </Space>
-            <div className="flex flex-wrap items-center pt-12 gap-x-12 gap-y-6 scroll-reveal">
-              <div className="flex flex-col count-up">
-                <span className="text-3xl font-black text-gray-900">500+</span>
-                <span className="text-xs font-bold tracking-widest text-gray-400 uppercase">Nông trại</span>
-              </div>
-              <div className="flex flex-col count-up" style={{ animationDelay: '0.2s' }}>
-                <span className="text-3xl font-black text-gray-900">35+</span>
-                <span className="text-xs font-bold tracking-widest text-gray-400 uppercase">Tiêu chuẩn TCVN</span>
-              </div>
-              <div className="flex flex-col count-up" style={{ animationDelay: '0.4s' }}>
-                <span className="text-3xl font-black text-gray-900">100%</span>
-                <span className="text-xs font-bold tracking-widest text-gray-400 uppercase">Minh bạch</span>
-              </div>
-            </div>
-          </Col>
-          <Col xs={24} lg={10} className="relative hidden lg:block">
-            <div className="floating-element">
-              <div className="glass-card rounded-[40px] p-4 shadow-2xl border-white relative z-10 hover-lift">
-                <img
-                  src="/images/trace.png"
-                  alt="QR Traceability"
-                  className="w-full rounded-[32px] shadow-sm"
-                />
-                <div className="absolute w-64 p-6 border-white shadow-xl -bottom-10 -right-10 glass-card rounded-3xl bounce-in">
-                  <div className="flex items-center gap-3 mb-3">
-                    <CheckCircleFilled className="text-xl text-green-500" />
-                    <Text strong>Đã xác minh</Text>
+
+            {/* Thống kê */}
+            <div
+              className="flex flex-wrap gap-8 mt-12 pt-8"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.2)" }}
+            >
+              {[
+                { value: "100%", label: "Số hóa nhật ký canh tác" },
+                { value: "03", label: "Cấp phân quyền vận hành" },
+                { value: "QR Code", label: "Truy xuất lô thu hoạch" },
+              ].map((stat, i) => (
+                <div key={i}>
+                  <div
+                    style={{
+                      color: "#a5d6a7",
+                      fontSize: "1.5rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {stat.value}
                   </div>
-                  <Text className="block mb-1 text-xs text-gray-500">Rau Cải Ngọt</Text>
-                  <div className="w-full h-2 overflow-hidden bg-gray-100 rounded-full">
-                    <div className="h-full bg-green-500 progress-animate" style={{ width: '85%' }}></div>
+                  <div
+                    style={{
+                      color: "rgba(255,255,255,0.7)",
+                      fontSize: "0.8rem",
+                      marginTop: 2,
+                    }}
+                  >
+                    {stat.label}
                   </div>
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Phải: QR Demo card — bán trong suốt */}
+          <div
+            className="hidden md:flex flex-col items-center"
+            style={{ flexShrink: 0 }}
+          >
+            <div
+              style={{
+                background: "rgba(255,255,255,0.12)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                border: "1px solid rgba(255,255,255,0.25)",
+                borderRadius: 12,
+                padding: "20px 24px",
+                textAlign: "center",
+                minWidth: 200,
+              }}
+            >
+              {/* Header card */}
+              <div
+                style={{
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  color: "#a5d6a7",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  marginBottom: 12,
+                  paddingBottom: 10,
+                  borderBottom: "1px solid rgba(255,255,255,0.15)",
+                }}
+              >
+                📦 Sản phẩm mẫu
+              </div>
+
+              {/* QR Image — nền trắng nhỏ để QR dễ scan */}
+              <div
+                style={{
+                  display: "inline-block",
+                  padding: 8,
+                  borderRadius: 8,
+                  background: "#fff",
+                  marginBottom: 12,
+                }}
+              >
+                <img
+                  src="/qr_hong_nam_dong.png"
+                  alt="QR Cây Hồng Nam Đồng"
+                  style={{ width: 130, height: 130, display: "block" }}
+                />
+              </div>
+
+              {/* Tên sản phẩm */}
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: "#fff",
+                  fontSize: "0.9rem",
+                  marginBottom: 4,
+                }}
+              >
+                🌿 Cây Hồng Nam Đồng
+              </div>
+              <div
+                style={{
+                  fontSize: "0.72rem",
+                  color: "rgba(255,255,255,0.7)",
+                  lineHeight: 1.5,
+                }}
+              >
+                Quét để xem nguồn gốc sản phẩm
+              </div>
+
+              {/* Indicator */}
+              <div
+                style={{
+                  marginTop: 12,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  background: "rgba(165,214,167,0.2)",
+                  border: "1px solid rgba(165,214,167,0.4)",
+                  borderRadius: 4,
+                  padding: "3px 10px",
+                }}
+              >
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: "#a5d6a7",
+                    display: "inline-block",
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: "0.68rem",
+                    color: "#a5d6a7",
+                    fontWeight: 600,
+                  }}
+                >
+                  Đã xác thực
+                </span>
               </div>
             </div>
-          </Col>
-        </Row>
+          </div>
+        </div>
       </div>
     </section>
   )

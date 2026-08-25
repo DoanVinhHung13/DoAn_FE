@@ -1,7 +1,8 @@
-﻿import React from 'react'
-import { Typography, Button } from 'antd'
-import { ArrowRightOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import React from "react"
+import { Typography, Button } from "antd"
+import { ArrowRightOutlined } from "@ant-design/icons"
+import { useNavigate } from "react-router-dom"
+import ROUTER from "src/router/ROUTER"
 
 const { Title, Paragraph } = Typography
 
@@ -9,7 +10,7 @@ const FooterSection = () => {
   const navigate = useNavigate()
 
   const handleGetStarted = () => {
-    navigate('/login')
+    navigate(ROUTER.LOGIN)
   }
 
   return (
@@ -18,14 +19,19 @@ const FooterSection = () => {
         <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-blue-600 rounded-[40px] blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 morph-shape"></div>
         <div className="relative bg-gray-900 rounded-[40px] p-12 md:p-24 overflow-hidden flex flex-col items-center text-center space-y-12 hover-lift">
           <div className="absolute top-0 right-0 z-0 w-full h-full opacity-30 floating-element">
-            <img src="/images/supply.png" alt="Supply Chain" className="object-cover w-full h-full" />
+            <img
+              src="/images/supply.png"
+              alt="Supply Chain"
+              className="object-cover w-full h-full"
+            />
           </div>
           <div className="relative z-10 max-w-4xl space-y-6">
             <Title className="!text-white !mb-0 md:!text-6xl font-black">
               Sẵn sàng để đưa nông trại của bạn lên tầm cao mới?
             </Title>
             <Paragraph className="text-xl leading-relaxed text-gray-400">
-              Hãy tham gia cùng hàng ngàn nông hộ và HTX đã số hóa quy trình sản xuất cùng EAPLS.
+              Hãy tham gia cùng hàng ngàn nông hộ và HTX đã số hóa quy trình sản
+              xuất cùng EAPLS.
             </Paragraph>
           </div>
           <div className="relative z-10 flex flex-wrap justify-center gap-6">

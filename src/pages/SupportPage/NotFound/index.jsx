@@ -1,24 +1,22 @@
 // src/pages/SUPPORTPAGES/NotFound/index.jsx
-import React from 'react';
-import { Button, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { Leaf, ShieldX } from 'lucide-react';
-import ROUTER from 'src/router/ROUTER';
+import React from "react"
+import { Button, Typography } from "antd"
+import { useNavigate } from "react-router-dom"
+import { useSelector } from "react-redux"
+import ROUTER from "src/router/ROUTER"
 
-const { Title, Text } = Typography;
-
+const { Text } = Typography
 
 function NotFound() {
-  const navigate = useNavigate();
-  const userInfo = useSelector((state) => state.appGlobal);
-  const user = userInfo;
+  const navigate = useNavigate()
+  const userInfo = useSelector(state => state.appGlobal)
+  const user = userInfo
 
   const handleGoHome = () => {
-    if (!user) navigate(ROUTER.LOGIN);
-    else if (user.role === 'Admin') navigate(ROUTER.FM_DASHBOARD);
-    else navigate(ROUTER.FM_DASHBOARD);
-  };
+    if (!user) navigate(ROUTER.LOGIN)
+    else if (user.role === "Admin") navigate(ROUTER.FM_DASHBOARD)
+    else navigate(ROUTER.FM_DASHBOARD)
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-8">
       {/* Decorative background blobs */}
@@ -31,13 +29,11 @@ function NotFound() {
           <span className="text-[180px] font-black text-transparent bg-clip-text bg-gradient-to-b from-green-400 to-green-100 select-none leading-none block">
             404
           </span>
-
         </div>
 
         <Text className="text-gray-400 text-lg block mb-3 leading-relaxed">
           Trang bạn đang tìm kiếm không tồn tại.
         </Text>
-
 
         <div className="flex gap-4 justify-center">
           <Button
@@ -69,7 +65,7 @@ function NotFound() {
         </div>
 
         <Text className="text-gray-300 text-xs block mt-6 tracking-widest uppercase font-bold">
-          EAPLS · Hệ thống Nhật ký Sản xuất
+          EAPLS · Hệ thống Nhật ký Canh tác
         </Text>
       </div>
     </div>

@@ -11,13 +11,12 @@
  *
  * CreateFertilizerRequest / UpdateFertilizerRequest schema:
  *   { name: string (req), code: string (req), unit: string (req),
- *     supplier?: string, manufacturer?: string, materialId?: uuid,
- *     price?: number, description?: string, minimumStock?: number,
+ *     manufacturer?: string, description?: string, minimumStock?: number,
  *     type?: string,
  *     compositions?: Array<{ name: string, value: string, unit: string }>,
  *     dosages?: Array<{ amount: string, unit: string, areaUnit: string, target: string }> }
  */
-import http from '../01_axios'
+import http from "../01_axios"
 import {
   apiGetFertilizers,
   apiCreateFertilizer,
@@ -25,37 +24,42 @@ import {
   apiUpdateFertilizer,
   apiDeleteFertilizer,
   apiToggleFertilizerStatus,
-} from './urls'
+  apiDeactivateFertilizer,
+  apiReactivateFertilizer,
+  apiGetFertilizerSelection,
+} from "./urls"
 
 /**
  * GET /api/fertilizers
  * params: { PageIndex, PageSize, SearchKeyword, Type?, Status? }
  */
-const getFertilizers = (params) => http.get(apiGetFertilizers, { params })
+const getFertilizers = params => http.get(apiGetFertilizers, { params })
 
 /**
  * GET /api/fertilizers/:id
  */
-const getFertilizerById = (id) => http.get(apiGetFertilizerById(id))
+const getFertilizerById = id => http.get(apiGetFertilizerById(id))
 
 /**
  * POST /api/fertilizers
- * body: { name, code, unit, supplier?, manufacturer?, materialId?, price?,
+ * body: { name, unit, manufacturer?,
  *         description?, minimumStock?, type?, compositions?, dosages? }
  */
-const createFertilizer = (body) => http.post(apiCreateFertilizer, body)
+const createFertilizer = (body, config) =>
+  http.post(apiCreateFertilizer, body, config)
 
 /**
  * PUT /api/fertilizers/:id
- * body: { name, code, unit, supplier?, manufacturer?, materialId?, price?,
+ * body: { name, unit, manufacturer?,
  *         description?, minimumStock?, type?, compositions?, dosages? }
  */
-const updateFertilizer = (id, body) => http.put(apiUpdateFertilizer(id), body)
+const updateFertilizer = (id, body, config) =>
+  http.put(apiUpdateFertilizer(id), body, config)
 
 /**
  * DELETE /api/fertilizers/:id — xóa mềm
  */
-const deleteFertilizer = (id) => http.delete(apiDeleteFertilizer(id))
+const deleteFertilizer = id => http.delete(apiDeleteFertilizer(id))
 
 /**
  * PUT /api/fertilizers/:id — thay đổi trạng thái (isActive)
@@ -63,7 +67,13 @@ const deleteFertilizer = (id) => http.delete(apiDeleteFertilizer(id))
  * NOTE: Swagger không có endpoint riêng cho status —
  *       dùng chung PUT với toàn bộ body update + trường isActive.
  */
-const toggleFertilizerStatus = (id, body) => http.put(apiToggleFertilizerStatus(id), body)
+const toggleFertilizerStatus = id => http.patch(apiToggleFertilizerStatus(id))
+const deactivateFertilizer = id => toggleFertilizerStatus(id)
+const reactivateFertilizer = id => toggleFertilizerStatus(id)
+
+/** GET /fertilizers/selection — dùng cho Daily Log Select */
+const getFertilizerSelection = params =>
+  http.get(apiGetFertilizerSelection, { params, skipNotice: true })
 
 const FertilizerService = {
   getFertilizers,
@@ -72,6 +82,9 @@ const FertilizerService = {
   updateFertilizer,
   deleteFertilizer,
   toggleFertilizerStatus,
+  deactivateFertilizer,
+  reactivateFertilizer,
+  getFertilizerSelection,
 }
 
 export default FertilizerService

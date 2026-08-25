@@ -1,6 +1,5 @@
 import {
   CameraOutlined,
-  LockOutlined,
   MailOutlined,
   PhoneOutlined,
   UserAddOutlined,
@@ -20,29 +19,59 @@ import {
 } from "antd"
 import dayjs from "dayjs"
 import React from "react"
+import { useSelector } from "react-redux"
 import { useNavigate } from "react-router-dom"
 import CustomModal from "src/components/Modal/CustomModal"
+import { ROLES } from "src/constants/roles"
 import { SYSTEM_KEY } from "src/constants/systemKey"
+import {
+  formatDateForApi,
+  getLocalNow,
+  parseDate,
+} from "src/utils/dateFormatters"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import ROUTER from "src/router/ROUTER"
 import UploadService from "src/services/UploadService"
 import UserService from "src/services/UserService"
+import { applyApiFieldErrors } from "src/services/core/apiError"
 import {
+  CONTACT_REQUIRED_RULE,
   EMAIL_RULES,
   FULL_NAME_RULES,
-  PASSWORD_RULES,
   PHONE_RULES,
   getAvatarUrl,
 } from "src/utils/helpers"
 
+const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
+
+const USER_FIELD_MAPPING = {
+  FullName: "fullName",
+  Email: "email",
+  PhoneNumber: "phoneNumber",
+  DateOfBirth: "dateOfBirth",
+  Gender: "gender",
+}
+
 const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = React.useState(false)
+  const currentUser = useSelector(state => state.appGlobal.userInfo)
+  const currentRoles = currentUser?.roles?.length
+    ? currentUser.roles
+    : [currentUser?.role]
   const navigate = useNavigate()
   const isEdit = !!editingUser
-  const { getCombo } = useSystemKey()
-  const genderOptions = getCombo(SYSTEM_KEY.GENDER)
-  const roleOptions = getCombo(SYSTEM_KEY.ROLE)
+  const { getOptions } = useSystemKey()
+  const genderOptions = getOptions(SYSTEM_KEY.GENDER)
+  const allowedRoles = Object.values(ROLES)
+  const roleOptions = getOptions(SYSTEM_KEY.ROLE).filter(option =>
+    allowedRoles.includes(option.codeValue || option.value),
+  )
+  const allowedRoleOptions = currentRoles.includes(ROLES.FARM_MANAGER)
+    ? roleOptions
+    : roleOptions.filter(
+        option => (option.codeValue || option.value) !== ROLES.FARM_MANAGER,
+      )
 
   const [avatarFile, setAvatarFile] = React.useState(null)
   const [previewAvatar, setPreviewAvatar] = React.useState("")
@@ -55,7 +84,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           phoneNumber: editingUser.phoneNumber || "",
           gender: editingUser.gender || undefined,
           dateOfBirth: editingUser.dateOfBirth
-            ? dayjs(editingUser.dateOfBirth)
+            ? parseDate(editingUser.dateOfBirth)
             : null,
           roles: editingUser.roles?.[0] || "FARMER",
           isActive: editingUser.isActive ?? true,
@@ -63,7 +92,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         setPreviewAvatar(editingUser.avatarUrl || "")
       } else {
         form.resetFields()
-        form.setFieldsValue({ isActive: true, roles: "FARMER" })
+        form.setFieldsValue({ isActive: true })
         setPreviewAvatar("")
       }
       setAvatarFile(null)
@@ -112,19 +141,25 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           payload ||
           uploadedUrl
       }
-      let res
       if (isEdit) {
         // Cập nhật thông tin cơ bản
-        await UserService.updateUser(editingUser.id, {
-          fullName: values.fullName,
-          phoneNumber: values.phoneNumber || null,
-          gender: values.gender || null,
-          dateOfBirth: values.dateOfBirth
-            ? values.dateOfBirth.toISOString()
-            : null,
-          avatarUrl: uploadedUrl || null,
-          isActive: editingUser.isActive,
-        })
+        await UserService.updateUser(
+          editingUser.id,
+          {
+            fullName: values.fullName,
+            phoneNumber: values.phoneNumber || null,
+            gender: values.gender || null,
+            dateOfBirth: values.dateOfBirth
+              ? formatDateForApi(values.dateOfBirth)
+              : null,
+            avatarUrl: uploadedUrl || null,
+            isActive: editingUser.isActive,
+          },
+          {
+            errorHandling: "form",
+            fieldErrorMapping: USER_FIELD_MAPPING,
+          },
+        )
 
         // Cập nhật vai trò (gọi API assignRoles)
         if (values.roles && values.roles !== editingUser.roles?.[0]) {
@@ -132,37 +167,25 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             roles: [values.roles],
           })
         }
-        res = { success: true }
       } else {
         // Thêm người dùng mới
-        res = await UserService.createUser({
-          fullName: values.fullName,
-          email: values.email,
-          password: values.password,
-          phoneNumber: values.phoneNumber || null,
-          gender: values.gender || null,
-          dateOfBirth: values.dateOfBirth
-            ? values.dateOfBirth.toISOString()
-            : null,
-          avatarUrl: uploadedUrl || null,
-          roles: values.roles ? [values.roles] : ["FARMER"],
-        })
-      }
-
-      if (res?.success === false) {
-        const errMsg = res.message || (res.errors && res.errors[0]) || ""
-        const lowerMsg = errMsg.toLowerCase()
-        if (lowerMsg.includes("email")) {
-          form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }])
-        } else if (
-          lowerMsg.includes("phone") ||
-          lowerMsg.includes("điện thoại")
-        ) {
-          form.setFields([
-            { name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] },
-          ])
-        }
-        return
+        await UserService.createUser(
+          {
+            fullName: values.fullName,
+            email: values.email?.trim() || null,
+            phoneNumber: values.phoneNumber || null,
+            gender: values.gender || null,
+            dateOfBirth: values.dateOfBirth
+              ? formatDateForApi(values.dateOfBirth)
+              : null,
+            avatarUrl: uploadedUrl || null,
+            roles: [ROLES.FARMER],
+          },
+          {
+            errorHandling: "form",
+            fieldErrorMapping: USER_FIELD_MAPPING,
+          },
+        )
       }
 
       onClose()
@@ -172,18 +195,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         navigate(ROUTER.FM_USER_DETAIL.replace(":id", editingUser.id))
       }
     } catch (error) {
-      const errMsg = error.response?.data?.message || error.message || ""
-      const lowerMsg = errMsg.toLowerCase()
-      if (lowerMsg.includes("email")) {
-        form.setFields([{ name: "email", errors: ["Email đã tồn tại"] }])
-      } else if (
-        lowerMsg.includes("phone") ||
-        lowerMsg.includes("điện thoại")
-      ) {
-        form.setFields([
-          { name: "phoneNumber", errors: ["Số điện thoại đã tồn tại"] },
-        ])
-      }
+      applyApiFieldErrors(form, error, USER_FIELD_MAPPING)
     } finally {
       setLoading(false)
     }
@@ -240,9 +252,13 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                     Email
                   </span>
                 }
-                rules={EMAIL_RULES}
+                dependencies={["phoneNumber"]}
+                rules={[...OPTIONAL_EMAIL_RULES, CONTACT_REQUIRED_RULE]}
+                required
               >
                 <Input
+                  type="email"
+                  autoComplete="email"
                   prefix={<MailOutlined className="text-gray-300" />}
                   placeholder="example@eapls.com"
                   className="h-10 rounded-lg"
@@ -251,21 +267,21 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             </Col>
           )}
 
-          {!isEdit && (
+          {isEdit && (
             <Col xs={24} md={12}>
               <Form.Item
-                name="password"
+                name="roles"
                 label={
                   <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                    Mật khẩu
+                    Vai trò
                   </span>
                 }
-                rules={PASSWORD_RULES}
+                rules={[{ required: true, message: "Chọn một vai trò!" }]}
               >
-                <Input.Password
-                  prefix={<LockOutlined className="text-gray-300" />}
-                  placeholder="••••••••"
+                <Select
+                  placeholder="Chọn vai trò"
                   className="h-10 rounded-lg"
+                  options={allowedRoleOptions}
                 />
               </Form.Item>
             </Col>
@@ -273,33 +289,21 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
 
           <Col xs={24} md={12}>
             <Form.Item
-              name="roles"
-              label={
-                <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                  Vai trò
-                </span>
-              }
-              rules={[{ required: true, message: "Chọn một vai trò!" }]}
-            >
-              <Select
-                placeholder="Chọn vai trò"
-                className="h-10 rounded-lg"
-                options={roleOptions}
-              />
-            </Form.Item>
-          </Col>
-
-          <Col xs={24} md={12}>
-            <Form.Item
               name="phoneNumber"
+              dependencies={["email"]}
               label={
                 <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
                   Số điện thoại
                 </span>
               }
-              rules={PHONE_RULES}
+              rules={
+                isEdit ? PHONE_RULES : [...PHONE_RULES, CONTACT_REQUIRED_RULE]
+              }
+              required
             >
               <Input
+                type="tel"
+                autoComplete="tel"
                 prefix={<PhoneOutlined className="text-gray-300" />}
                 placeholder="0912345678"
                 className="h-10 rounded-lg"
@@ -343,13 +347,13 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                     if (!value) return Promise.resolve()
                     if (
                       !dayjs(value).isValid() ||
-                      value.isAfter(dayjs(), "day")
+                      value.isAfter(getLocalNow(), "day")
                     ) {
                       return Promise.reject(
                         new Error("Ngày sinh không hợp lệ."),
                       )
                     }
-                    if (dayjs().diff(value, "year") < 15) {
+                    if (getLocalNow().diff(value, "year") < 15) {
                       return Promise.reject(
                         new Error("Người dùng phải từ đủ 15 tuổi."),
                       )
@@ -364,7 +368,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                 placeholder="Chọn ngày sinh"
                 className="w-full h-10 rounded-lg"
                 disabledDate={current =>
-                  current && current > dayjs().endOf("day")
+                  current && current > getLocalNow().endOf("day")
                 }
               />
             </Form.Item>
@@ -413,7 +417,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             loading={loading}
             className="h-10 px-6 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
           >
-            {isEdit ? "Lưu thay đổi" : "Tạo tài khoản"}
+            {isEdit ? "Lưu thay đổi" : "Thêm người dùng"}
           </Button>
         </div>
       </Form>

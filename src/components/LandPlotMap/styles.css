@@ -3,7 +3,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   overflow: hidden;
-  background: #f8fafc;
+  background: #ffffff;
 }
 
 .land-plot-map__toolbar {
@@ -24,27 +24,6 @@
 
 .land-plot-map__search .ant-input-affix-wrapper {
   flex: 1;
-}
-
-.land-plot-map__search-btn {
-  flex-shrink: 0;
-  border: 1px solid #16a34a;
-  background: #16a34a;
-  color: #fff;
-  border-radius: 8px;
-  padding: 0 14px;
-  font-size: 13px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.land-plot-map__search-btn:hover:not(:disabled) {
-  background: #15803d;
-}
-
-.land-plot-map__search-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 
 .land-plot-map__locate {
@@ -69,7 +48,7 @@
   padding: 8px 12px;
   font-size: 12px;
   color: #64748b;
-  background: #f8fafc;
+  background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -96,7 +75,7 @@
   position: absolute;
   top: 52px;
   left: 12px;
-  right: 88px;
+  right: 12px;
   z-index: 1000;
   margin: 0;
   padding: 4px 0;
@@ -105,7 +84,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-  max-height: 220px;
+  max-height: 260px;
   overflow-y: auto;
 }
 
@@ -128,8 +107,34 @@
 }
 
 .land-plot-map__search-results li button .anticon {
-  margin-top: 2px;
+  margin-top: 3px;
+  flex-shrink: 0;
   color: #16a34a;
+}
+
+/* Layout 2 dòng: tên chính + địa chỉ phụ */
+.land-plot-map__result-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.land-plot-map__result-main {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.land-plot-map__result-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .land-plot-map__canvas {

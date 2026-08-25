@@ -1,12 +1,11 @@
 import { Layout } from "antd"
 import PropTypes from "prop-types"
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { useSelector } from "react-redux"
 import { useLocation, useNavigate } from "react-router-dom"
 import STORAGE, { getStorage, setStorage } from "src/redux/storage"
-import { hasPermission } from "src/utils/helpers"
 import { MenuItemAdmin, MenuItemUser } from "src/router/MenuItem"
-import { useBadgeCounts } from "../../hooks/useBadgeCounts"
+import { useBadgeCounts } from "src/hooks/useBadgeCounts"
 import BreadcrumbHome from "./BreadcrumbHome/BreadcrumbHome"
 import FooterMain from "./Footer"
 import HeaderMain from "./Header"
@@ -21,35 +20,42 @@ const layoutStyle = {
   display: "block",
 }
 
+const setShowListMenu = list =>
+  list?.length
+    ? list.map(i => ({
+        ...i,
+        children: setShowListMenu(i?.children),
+      }))
+    : undefined
+
 const MainLayout = props => {
-  const { badgeCounts, loading, connectionReady } = useBadgeCounts()
+  const { badgeCounts } = useBadgeCounts()
   const { type, children } = props
   const isAdmin = type === "isAdmin"
   const isUser = type === "isUser"
-  const [menuAdmin, setMenuAdmin] = useState([])
-  const [menuUser, setMenuUser] = useState([])
   const navigate = useNavigate()
   const location = useLocation()
-  const [selectedKey, setSelectedKey] = useState(
-    getStorage(STORAGE.KEY_MENU_ACTIVE) || [location?.pathname] || ["/"],
-  )
+  const selectedKey = [
+    location?.pathname || getStorage(STORAGE.KEY_MENU_ACTIVE) || "/",
+  ]
   const { userInfo } = useSelector(state => state?.appGlobal)
   // Dùng Redux làm nguồn duy nhất — không cần isLoginContext từ Context
   const isLoginContext = Boolean(userInfo?._id)
 
-  const setShowListMenu = list =>
-    list?.length
-      ? list.map(i => ({
-          ...i,
-          children: setShowListMenu(i?.children),
-        }))
-      : undefined
-
   const onClickMenu = menu => {
     setStorage(STORAGE.KEY_MENU_ACTIVE, menu.keyPath)
-    setSelectedKey(menu.key.keyPath)
     if (!menu.key.includes("subkey")) navigate(menu.key)
   }
+
+  const menuAdmin = useMemo(
+    () =>
+      isLoginContext ? setShowListMenu(MenuItemAdmin(badgeCounts)) : undefined,
+    [badgeCounts, isLoginContext],
+  )
+  const menuUser = useMemo(
+    () => (isLoginContext ? setShowListMenu(MenuItemUser()) : undefined),
+    [isLoginContext],
+  )
 
   const getLayout = () => {
     switch (type) {
@@ -58,7 +64,6 @@ const MainLayout = props => {
           <LayoutAdmin
             menuAdmin={menuAdmin}
             selectedKey={selectedKey}
-            setSelectedKey={setSelectedKey}
             onClickMenu={onClickMenu}
           >
             {children}
@@ -79,40 +84,6 @@ const MainLayout = props => {
         return <div className="w-100 body-cl">{children}</div>
     }
   }
-
-  useEffect(() => {
-    if (isLoginContext) {
-      const menu = setShowListMenu(MenuItemAdmin(badgeCounts))
-      setMenuAdmin(menu)
-
-      const menuUserData = setShowListMenu(MenuItemUser())
-      setMenuUser(menuUserData)
-    }
-  }, [
-    userInfo,
-    badgeCounts,
-    loading,
-    connectionReady,
-    isLoginContext,
-  ])
-
-  useEffect(() => {
-    if (connectionReady && !loading && isLoginContext) {
-      const menu = setShowListMenu(MenuItemAdmin(badgeCounts))
-      setMenuAdmin(menu)
-    }
-  }, [
-    connectionReady,
-    loading,
-    badgeCounts,
-    userInfo,
-    isLoginContext,
-  ])
-
-  useEffect(() => {
-    let key = location?.pathname
-    setSelectedKey([key])
-  }, [location])
 
   return (
     <Layout style={layoutStyle}>

@@ -1,20 +1,15 @@
-import React from 'react'
-import { Form, Select, Button, Typography } from 'antd'
-import { SafetyCertificateOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
-import CustomModal from 'src/components/Modal/CustomModal'
-import UserService from 'src/services/UserService'
-import { ROLES } from 'src/constants/roles'
-import Notice from 'src/components/Notice'
+import React from "react"
+import { Form, Select, Button, Typography } from "antd"
+import {
+  SafetyCertificateOutlined,
+  ExclamationCircleOutlined,
+} from "@ant-design/icons"
+import CustomModal from "src/components/Modal/CustomModal"
+import UserService from "src/services/UserService"
+import { ROLE_CONFIG } from "./roleConfig"
 
 const { Text } = Typography
 const { Option } = Select
-
-export const ROLE_CONFIG = {
-  FARM_MANAGER:     { label: 'Farm Manager' },
-  LAND_MANAGER:     { label: 'Land Manager'   },
-  MATERIAL_MANAGER: { label: 'Material Manager' },
-  FARMER:           { label: 'Farmer'  },
-}
 
 const ALL_ROLES = Object.entries(ROLE_CONFIG).map(([value, cfg]) => ({
   value,
@@ -27,16 +22,14 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
 
   React.useEffect(() => {
     if (open && user) {
-      form.setFieldsValue({ roles: user.roles || [] })
+      form.setFieldsValue({ role: user.roles?.[0] || undefined })
     }
   }, [open, user, form])
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async values => {
     try {
       setLoading(true)
-      const res = await UserService.assignRoles(user.id, { roles: values.roles })
-      if (res?.success === false) return
-      Notice({ msg: 'Phân quyền thành công!', isSuccess: true })
+      await UserService.assignRoles(user.id, { roles: [values.role] })
       onClose()
       onSuccess?.()
     } finally {
@@ -55,21 +48,33 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
           </div>
           <div>
             <div className="font-bold text-gray-800">Phân quyền người dùng</div>
-            <div className="text-[11px] text-gray-400 font-normal">{user?.fullName}</div>
+            <div className="text-[11px] text-gray-400 font-normal">
+              {user?.fullName}
+            </div>
           </div>
         </div>
       }
       footer={null}
       width={440}
     >
-      <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSubmit}
+        className="mt-4"
+      >
         <Form.Item
-          name="roles"
-          label={<span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Vai trò được gán</span>}
-          rules={[{ required: true, message: 'Phải chọn ít nhất một vai trò!' }]}
+          name="role"
+          label={
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Vai trò được gán
+            </span>
+          }
+          rules={[
+            { required: true, message: "Phải chọn ít nhất một vai trò!" },
+          ]}
         >
           <Select
-            mode="multiple"
             placeholder="Chọn vai trò"
             className="rounded-lg"
             optionLabelProp="label"
@@ -85,12 +90,15 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
         <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-6 flex gap-2 items-start">
           <ExclamationCircleOutlined className="text-amber-500 mt-0.5 flex-shrink-0" />
           <Text className="text-xs text-amber-700">
-            Thay đổi vai trò sẽ <strong>thay thế hoàn toàn</strong> danh sách hiện tại. Mọi phiên đăng nhập của tài khoản này sẽ bị ảnh hưởng.
+            Thay đổi vai trò sẽ <strong>thay thế hoàn toàn</strong> danh sách
+            hiện tại. Mọi phiên đăng nhập của tài khoản này sẽ bị ảnh hưởng.
           </Text>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-          <Button onClick={onClose} className="h-10 px-6 rounded-xl">Hủy</Button>
+          <Button onClick={onClose} className="h-10 px-6 rounded-xl">
+            Hủy
+          </Button>
           <Button
             type="primary"
             htmlType="submit"

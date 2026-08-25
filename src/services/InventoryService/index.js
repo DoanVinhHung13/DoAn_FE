@@ -1,4 +1,4 @@
-import http from '../01_axios'
+import http from "../01_axios"
 import {
   apiGetInventory,
   apiCreateInventory,
@@ -7,6 +7,8 @@ import {
   apiDistributeInventory,
   apiCreateTransaction,
   apiGetTransactions,
+  apiGetImportHistory,
+  apiGetImportHistoryById,
   apiGetInventoryById,
   apiUpdateInventory,
   apiDeleteInventory,
@@ -14,24 +16,27 @@ import {
   apiCreateInventoryCategory,
   apiUpdateInventoryCategory,
   apiDeleteInventoryCategory,
-} from './urls'
+} from "./urls"
 
-const getInventory = (params) => http.get(apiGetInventory, { params })
-const createInventory = (body) => http.post(apiCreateInventory, body)
-const addStock = (body) => http.post(apiAddInventory, body)
-const consumeStock = (body) => http.post(apiConsumeInventory, body)
-const distributeStock = (body) => http.post(apiDistributeInventory, body)
-const createTransaction = (body) => http.post(apiCreateTransaction, body)
-const getTransactions = (params) => http.get(apiGetTransactions, { params })
-const getInventoryById = (id) => http.get(apiGetInventoryById(id))
+const getInventory = params => http.get(apiGetInventory, { params })
+const createInventory = body => http.post(apiCreateInventory, body)
+const addStock = (body, config = {}) => http.post(apiAddInventory, body, config)
+const consumeStock = body => http.post(apiConsumeInventory, body)
+const distributeStock = body => http.post(apiDistributeInventory, body)
+const createTransaction = body => http.post(apiCreateTransaction, body)
+const getTransactions = params => http.get(apiGetTransactions, { params })
+const getImportHistory = params => http.get(apiGetImportHistory, { params })
+const getImportHistoryById = id => http.get(apiGetImportHistoryById(id))
+const getInventoryById = id => http.get(apiGetInventoryById(id))
 const updateInventory = (id, body) => http.put(apiUpdateInventory(id), body)
-const deleteInventory = (id) => http.delete(apiDeleteInventory(id))
+const deleteInventory = id => http.delete(apiDeleteInventory(id))
 
 // Categories
-const getCategories = (params) => http.get(apiGetInventoryCategories, { params })
-const createCategory = (body) => http.post(apiCreateInventoryCategory, body)
-const updateCategory = (id, body) => http.put(apiUpdateInventoryCategory(id), body)
-const deleteCategory = (id) => http.delete(apiDeleteInventoryCategory(id))
+const getCategories = params => http.get(apiGetInventoryCategories, { params })
+const createCategory = body => http.post(apiCreateInventoryCategory, body)
+const updateCategory = (id, body) =>
+  http.put(apiUpdateInventoryCategory(id), body)
+const deleteCategory = id => http.delete(apiDeleteInventoryCategory(id))
 
 const InventoryService = {
   getInventory,
@@ -41,6 +46,8 @@ const InventoryService = {
   distributeStock,
   createTransaction,
   getTransactions,
+  getImportHistory,
+  getImportHistoryById,
   getInventoryById,
   updateInventory,
   deleteInventory,

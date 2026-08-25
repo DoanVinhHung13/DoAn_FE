@@ -1,22 +1,10 @@
-/**
- * PlanTemplateCreate — Tạo Kế hoạch mẫu mới (Màn 6)
- * Route: /farm-manager/plan-templates/create  (ROUTER.FM_PLAN_TEMPLATE_CREATE)
- *
- * Architecture mirrors FertilizerCreate:
- *   - Button "Quay lại" + TitleCustom header
- *   - Single Card with SectionTitle dividers
- *   - Form with footer actions (Hủy + Lưu)
- */
 import {
   ArrowLeftOutlined,
-  DeleteOutlined,
   EditOutlined,
-  HolderOutlined,
   MinusCircleOutlined,
   PlusOutlined,
   ProfileOutlined,
-  ShoppingOutlined,
-} from '@ant-design/icons'
+} from "@ant-design/icons"
 import {
   Button,
   Card,
@@ -26,421 +14,673 @@ import {
   message,
   Row,
   Select,
-  Tag,
+  Spin,
   Typography,
-} from 'antd'
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+} from "antd"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 
-import TitleCustom from 'src/components/TitleCustom'
-import ROUTER from 'src/router/ROUTER'
-import PlanTemplateService from 'src/services/PlanTemplateService'
-import CropService from 'src/services/CropService'
-import CropManagementService from 'src/services/CropManagementService'
-
-const normalizeResponse = (response) => {
-  const payload = response?.data ?? response ?? {};
-  const data = payload?.data ?? payload;
-  return Array.isArray(data)
-    ? data
-    : data?.items || data?.results || data?.crops || data?.cropCatalogs || [];
-};
+import TitleCustom from "src/components/TitleCustom"
+import ROUTER from "src/router/ROUTER"
+import CropManagementService from "src/services/CropManagementService"
+import CropCatalogService from "src/services/CropCatalogService"
+import ProcessTemplateService from "src/services/ProcessTemplateService"
+import ProcessStepService from "src/services/ProcessStepService"
+import { isActiveCropCatalog } from "src/utils/cropCatalog"
+import { logDevDiagnostic } from "src/utils/safeDiagnostic"
+import { applyApiFieldErrors } from "src/services/core/apiError"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 const { Text } = Typography
 
-// ── Section header (Fertilizer-style) ─────────────────────────────────────────
-const SectionTitle = ({ children }) => (
-  <div
-    className="mb-4 px-4 py-2 rounded-lg font-semibold text-green-800"
-    style={{ background: '#f0fdf4', borderLeft: '3px solid #16a34a', fontSize: 14 }}
-  >
-    {children}
-  </div>
-)
+const PLAN_TEMPLATE_FIELD_MAPPING = {
+  CropCatalogId: "cropCatalogId",
+  cropCatalogId: "cropCatalogId",
+  CropId: "cropId",
+  cropId: "cropId",
+  Name: "name",
+  name: "name",
+  Description: "description",
+  description: "description",
+  EstimatedDurationDays: "estimatedDurationDays",
+  estimatedDurationDays: "estimatedDurationDays",
+}
 
-// ── Stage helpers ─────────────────────────────────────────────────────────────
-const createEmptyStage = (order) => ({
-  _key: `stage-${Date.now()}-${order}`,
-  order,
-  title: '',
-  description: '',
-  materials: [],
-  _materialInput: '',
+const normalizeItems = response => {
+  const payload = response?.data ?? response ?? {}
+  const data = payload?.data ?? payload
+  return Array.isArray(data)
+    ? data
+    : data?.items ||
+        data?.results ||
+        data?.crops ||
+        data?.cropCatalogs ||
+        data?.processSteps ||
+        []
+}
+
+const getEntity = response => response?.data ?? response ?? null
+
+const getCreatedId = response =>
+  response?.data?.id ||
+  response?.data?.processTemplateId ||
+  response?.id ||
+  response?.processTemplateId ||
+  null
+
+const createEmptyStep = order => ({
+  _key: `step-${Date.now()}-${order}`,
+  id: null,
+  stepName: "",
+  stepOrder: order,
+  description: "",
+  estimatedDay: null,
+  requiredMaterialType: "",
+  note: "",
 })
 
-// ── Main Component ────────────────────────────────────────────────────────────
+const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
+  const [touched, setTouched] = useState(false)
+  const trimmedName = step.stepName?.trim() || ""
+  const trimmedDesc = step.description?.trim() || ""
+
+  const hasEmptyNameError = touched && !trimmedName
+  const hasNameLengthError = trimmedName.length > 100
+  const hasNameSpaceError = Boolean(
+    trimmedName && trimmedName !== trimmedName.replace(/\s+/g, " "),
+  )
+
+  const hasEmptyDescError = touched && !trimmedDesc
+  const hasDescLengthError = trimmedDesc.length > 200
+  const hasDescSpaceError = Boolean(
+    trimmedDesc && trimmedDesc !== trimmedDesc.replace(/\s+/g, " "),
+  )
+
+  const hasNameError =
+    hasEmptyNameError || hasNameLengthError || hasNameSpaceError
+  const hasDescError =
+    hasEmptyDescError || hasDescLengthError || hasDescSpaceError
+
+  return (
+    <div
+      className={`p-4 border rounded-xl transition-colors ${
+        hasNameError || hasDescError
+          ? "border-red-300 bg-red-50/30"
+          : "border-gray-100 bg-gray-50 hover:border-green-200"
+      }`}
+    >
+      <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center justify-center w-8 h-8 font-bold text-white bg-green-600 rounded-full shrink-0">
+          {index + 1}
+        </div>
+        <div className="flex-1">
+          <Input
+            value={step.stepName}
+            onChange={e => updateStep(index, "stepName", e.target.value)}
+            onBlur={() => setTouched(true)}
+            placeholder={`Tên bước ${index + 1} (bắt buộc)`}
+            className={`font-semibold ${hasNameError ? "border-red-400 focus:border-red-500" : ""}`}
+          />
+          {hasEmptyNameError && (
+            <p className="mt-0.5 mb-0 text-xs text-red-500">
+              Vui lòng nhập tên bước
+            </p>
+          )}
+          {hasNameLengthError && (
+            <p className="mt-0.5 mb-0 text-xs text-red-500">
+              Tên bước không được vượt quá 100 ký tự.
+            </p>
+          )}
+          {hasNameSpaceError && !hasNameLengthError && (
+            <p className="mt-0.5 mb-0 text-xs text-red-500">
+              Tên bước không được chứa nhiều khoảng trắng liên tiếp.
+            </p>
+          )}
+        </div>
+        {steps.length > 1 && (
+          <Button
+            danger
+            type="text"
+            icon={<MinusCircleOutlined />}
+            onClick={() => removeStep(index)}
+          />
+        )}
+      </div>
+
+      <Text type="secondary" className="block mb-1 text-xs font-medium">
+        <span className="text-red-500 mr-1">*</span>Mô tả công việc (bắt buộc)
+      </Text>
+      <Input.TextArea
+        rows={3}
+        value={step.description}
+        onChange={e => updateStep(index, "description", e.target.value)}
+        placeholder="Mô tả cách thực hiện bước này..."
+        className={hasDescError ? "border-red-400 focus:border-red-500" : ""}
+      />
+      {hasEmptyDescError && (
+        <p className="mt-0.5 mb-0 text-xs text-red-500">
+          Vui lòng nhập mô tả công việc
+        </p>
+      )}
+      {hasDescLengthError && (
+        <p className="mt-0.5 mb-0 text-xs text-red-500">
+          Mô tả công việc không được vượt quá 200 ký tự.
+        </p>
+      )}
+      {hasDescSpaceError && !hasDescLengthError && (
+        <p className="mt-0.5 mb-0 text-xs text-red-500">
+          Mô tả công việc không được chứa nhiều khoảng trắng liên tiếp.
+        </p>
+      )}
+    </div>
+  )
+}
+
+import SectionTitle from "src/components/Common/SectionTitle"
+import useFormDraft from "src/hooks/useFormDraft"
+import { getFormDraftKey } from "src/utils/formDraftKeys"
+
 const PlanTemplateCreate = () => {
   const navigate = useNavigate()
+  const { id } = useParams()
+  const isEdit = Boolean(id)
   const [form] = Form.useForm()
+  const storageKey = getFormDraftKey(
+    "process-template",
+    isEdit ? "edit" : "create",
+    id,
+  )
+  const { saveDraft, clearDraft, restoreDraft } = useFormDraft({
+    form,
+    storageKey,
+  })
+  const draftReadyRef = useRef(false)
+  const selectedCatalogId = Form.useWatch("cropCatalogId", form)
 
-  // ── Stages state ──
-  const [stages, setStages] = useState([createEmptyStage(1)])
-  const [loading, setLoading] = useState(false)
+  const [steps, setSteps] = useState([createEmptyStep(1)])
+  const [originalSteps, setOriginalSteps] = useState([])
+  const [catalogs, setCatalogs] = useState([])
+  const [crops, setCrops] = useState([])
+  const [loadingOptions, setLoadingOptions] = useState(false)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
-  // ── Dropdown options ──
-  const [catalogsData, setCatalogsData] = useState(null);
-  const [isCatalogsLoading, setIsCatalogsLoading] = useState(false);
-  const [cropsData, setCropsData] = useState(null);
-  const [isCropsLoading, setIsCropsLoading] = useState(false);
-
-  const selectedCatalogId = Form.useWatch('category', form);
-
-  React.useEffect(() => {
-    let isMounted = true;
-    const fetchCatalogs = async () => {
-      setIsCatalogsLoading(true);
+  useEffect(() => {
+    let mounted = true
+    const loadOptions = async () => {
       try {
-        const response = await CropService.getCrops({ PageIndex: 1, PageSize: 100, Status: true });
-        if (isMounted) setCatalogsData(normalizeResponse(response));
-      } catch (error) {
-        console.error(error);
+        setLoadingOptions(true)
+        const [catalogResponse, cropResponse] = await Promise.all([
+          CropCatalogService.getCropCatalogs({
+            PageIndex: 1,
+            PageSize: 100,
+            Status: true,
+          }),
+          CropManagementService.getCrops({
+            PageIndex: 1,
+            PageSize: 100,
+            Status: true,
+          }),
+        ])
+        if (!mounted) return
+        setCatalogs(normalizeItems(catalogResponse))
+        setCrops(normalizeItems(cropResponse))
       } finally {
-        if (isMounted) setIsCatalogsLoading(false);
+        if (mounted) setLoadingOptions(false)
       }
-    };
-    if (!catalogsData) fetchCatalogs();
-    return () => { isMounted = false; };
-  }, [catalogsData]);
-
-  React.useEffect(() => {
-    let isMounted = true;
-    const fetchCrops = async () => {
-      setIsCropsLoading(true);
-      try {
-        const response = await CropManagementService.getCrops({ PageIndex: 1, PageSize: 1000, Status: true });
-        if (isMounted) setCropsData(normalizeResponse(response));
-      } catch (error) {
-        console.error(error);
-      } finally {
-        if (isMounted) setIsCropsLoading(false);
-      }
-    };
-    if (!cropsData) fetchCrops();
-    return () => { isMounted = false; };
-  }, [cropsData]);
-
-  const categoryOptions = React.useMemo(() => {
-    if (!catalogsData) return [];
-    return catalogsData
-      .filter((c) => {
-        if (typeof c.isActive === 'boolean') return c.isActive;
-        const status = String(c.status || '').toLowerCase();
-        return !['inactive', 'disabled', 'deleted'].includes(status);
-      })
-      .map((c) => ({
-        value: c.id || c._id || c.cropCatalogId,
-        label: c.name,
-      }));
-  }, [catalogsData]);
-
-  const cropVarietyOptions = React.useMemo(() => {
-    if (!cropsData) return [];
-    let filtered = cropsData.filter((c) => {
-      if (typeof c.isActive === 'boolean') return c.isActive;
-      const status = String(c.status || '').toLowerCase();
-      return !['inactive', 'disabled', 'deleted'].includes(status);
-    });
-
-    if (selectedCatalogId) {
-      filtered = filtered.filter((c) => (c.cropCatalogId || c.categoryId) === selectedCatalogId);
     }
-    return filtered.map((c) => ({
-      value: c.id || c._id || c.cropId,
-      label: c.name,
-    }));
-  }, [cropsData, selectedCatalogId]);
+    loadOptions()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
-  // ── Stage handlers ──
-  const addStage = () => {
-    setStages((prev) => [...prev, createEmptyStage(prev.length + 1)])
-  }
+  useEffect(() => {
+    if (!isEdit) return
+    let mounted = true
 
-  const removeStage = (index) => {
-    if (stages.length <= 1) return
-    setStages((prev) => {
-      const next = prev.filter((_, i) => i !== index)
-      return next.map((s, i) => ({ ...s, order: i + 1 }))
-    })
-  }
+    const loadDetail = async () => {
+      try {
+        setLoadingDetail(true)
+        const [templateResponse, stepsResponse] = await Promise.all([
+          ProcessTemplateService.getProcessTemplateById(id),
+          ProcessStepService.getAll({ PageIndex: 1, PageSize: 100 }),
+        ])
+        if (!mounted) return
 
-  const updateStage = (index, field, value) => {
-    setStages((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, [field]: value } : s))
-    )
-  }
+        const template = getEntity(templateResponse)
+        const templateSteps = normalizeItems(stepsResponse)
+          .filter(
+            step => (step.processTemplateId || step.processTemplate?.id) === id,
+          )
+          .sort(
+            (first, second) => (first.stepOrder || 0) - (second.stepOrder || 0),
+          )
 
-  const addMaterial = (index) => {
-    setStages((prev) =>
-      prev.map((s, i) => {
-        if (i !== index || !s._materialInput.trim()) return s
-        return {
-          ...s,
-          materials: [...s.materials, s._materialInput.trim()],
-          _materialInput: '',
+        const serverValues = {
+          name: template?.name,
+          cropCatalogId: template?.cropCatalogId || template?.cropCatalog?.id,
+          cropId: template?.cropId || template?.crop?.id,
+          description: template?.description || "",
+          estimatedDurationDays: template?.estimatedDurationDays,
         }
-      })
+        const draft = restoreDraft({
+          onRestore: ({ data }) => {
+            form.setFieldsValue({ ...serverValues, ...data })
+            setSteps(
+              data.__draftMeta?.steps ||
+                (mappedSteps.length ? mappedSteps : [createEmptyStep(1)]),
+            )
+          },
+        })
+        const draftData = draft?.data || {}
+        form.setFieldsValue({ ...serverValues, ...draftData })
+
+        const mappedSteps = templateSteps.map((step, index) => ({
+          _key: `step-${step.id || index}`,
+          id: step.id,
+          processTemplateId: step.processTemplateId || id,
+          stepName: step.stepName || "",
+          stepOrder: step.stepOrder || index + 1,
+          description: step.description || "",
+          estimatedDay: step.estimatedDay ?? null,
+          requiredMaterialType: step.requiredMaterialType || "",
+          note: step.note || "",
+        }))
+        setSteps(
+          draftData.__draftMeta?.steps ||
+            (mappedSteps.length ? mappedSteps : [createEmptyStep(1)]),
+        )
+        setOriginalSteps(mappedSteps)
+        draftReadyRef.current = true
+      } catch {
+        // axios interceptor handles error notification
+      } finally {
+        if (mounted) setLoadingDetail(false)
+      }
+    }
+
+    loadDetail()
+    return () => {
+      mounted = false
+    }
+  }, [form, id, isEdit, restoreDraft])
+
+  useEffect(() => {
+    if (isEdit) return
+    const draft = restoreDraft({
+      onRestore: ({ data }) => {
+        form.setFieldsValue(data)
+        setSteps(data.__draftMeta?.steps || [createEmptyStep(1)])
+      },
+    })
+    const draftData = draft?.data || {}
+    form.setFieldsValue(draftData)
+    setSteps(draftData.__draftMeta?.steps || [createEmptyStep(1)])
+    draftReadyRef.current = true
+  }, [form, isEdit, restoreDraft])
+
+  useEffect(() => {
+    if (draftReadyRef.current) {
+      saveDraft({ ...form.getFieldsValue(true), __draftMeta: { steps } })
+    }
+  }, [form, saveDraft, steps])
+
+  const catalogOptions = useMemo(
+    () =>
+      catalogs
+        .filter(isActiveCropCatalog)
+        .map(item => ({
+          value: item.id || item.cropCatalogId,
+          label: item.name,
+        }))
+        .filter(item => item.value && item.label),
+    [catalogs],
+  )
+
+  const cropOptions = useMemo(
+    () =>
+      crops
+        .filter(
+          item =>
+            item.isActive !== false &&
+            (!selectedCatalogId ||
+              (item.cropCatalogId ||
+                item.categoryId ||
+                item.cropCatalog?.id) === selectedCatalogId),
+        )
+        .map(item => ({
+          value: item.id || item.cropId,
+          label: item.name,
+        }))
+        .filter(item => item.value && item.label),
+    [crops, selectedCatalogId],
+  )
+
+  const updateStep = (index, field, value) => {
+    setSteps(current =>
+      current.map((step, stepIndex) =>
+        stepIndex === index ? { ...step, [field]: value } : step,
+      ),
     )
   }
 
-  const removeMaterial = (stageIndex, matIndex) => {
-    setStages((prev) =>
-      prev.map((s, i) => {
-        if (i !== stageIndex) return s
-        return { ...s, materials: s.materials.filter((_, mi) => mi !== matIndex) }
-      })
+  const addStep = () => {
+    setSteps(current => [...current, createEmptyStep(current.length + 1)])
+  }
+
+  const removeStep = index => {
+    setSteps(current =>
+      current
+        .filter((_, stepIndex) => stepIndex !== index)
+        .map((step, stepIndex) => ({
+          ...step,
+          stepOrder: stepIndex + 1,
+        })),
     )
   }
 
-  // ── Submit ──
-  const handleSubmit = async (values) => {
-    const body = {
-      name: values.name?.trim(),
-      category: values.category,
-      cropType: values.category, // Keep for backward compatibility just in case
-      cropVariety: values.cropVariety,
-      description: values.description?.trim() || '',
-      stages: stages.map((s) => ({
-        order: s.order,
-        title: s.title,
-        description: s.description,
-        materials: s.materials,
-      })),
+  const syncSteps = async (processTemplateId, nextSteps) => {
+    const nextIds = new Set(nextSteps.map(step => step.id).filter(Boolean))
+
+    for (const original of originalSteps) {
+      if (original.id && !nextIds.has(original.id)) {
+        await ProcessStepService.remove(original.id)
+      }
+    }
+
+    for (const step of nextSteps) {
+      const payload = {
+        processTemplateId,
+        stepName: step.stepName.trim(),
+        stepOrder: step.stepOrder,
+        description: step.description?.trim() || null,
+        estimatedDay: step.estimatedDay ?? null,
+        requiredMaterialType: step.requiredMaterialType?.trim() || null,
+        note: step.note?.trim() || null,
+      }
+      const original = step.id
+        ? originalSteps.find(item => item.id === step.id)
+        : null
+      const changed =
+        !original ||
+        original.stepName !== payload.stepName ||
+        original.stepOrder !== payload.stepOrder ||
+        (original.description || null) !== payload.description ||
+        (original.estimatedDay ?? null) !== payload.estimatedDay ||
+        (original.requiredMaterialType || null) !==
+          payload.requiredMaterialType ||
+        (original.note || null) !== payload.note
+
+      if (!changed) continue
+      if (step.id) {
+        await ProcessStepService.update(step.id, payload)
+      } else {
+        await ProcessStepService.create(payload)
+      }
+    }
+  }
+
+  const handleSubmit = async values => {
+    const normalizedSteps = steps.map((step, index) => ({
+      ...step,
+      stepOrder: index + 1,
+      stepName: step.stepName?.trim() || "",
+      description: step.description?.trim() || "",
+    }))
+    if (normalizedSteps.some(step => !step.stepName)) {
+      message.error("Vui lòng nhập tên cho tất cả các bước quy trình.")
+      return
+    }
+    if (normalizedSteps.some(step => step.stepName.length > 100)) {
+      message.error("Tên bước quy trình không được vượt quá 100 ký tự.")
+      return
+    }
+    if (
+      normalizedSteps.some(
+        step => step.stepName !== step.stepName.replace(/\s+/g, " "),
+      )
+    ) {
+      message.error(
+        "Tên bước quy trình không được chứa nhiều khoảng trắng liên tiếp.",
+      )
+      return
+    }
+    if (normalizedSteps.some(step => !step.description)) {
+      message.error(
+        "Vui lòng nhập mô tả công việc cho tất cả các bước quy trình.",
+      )
+      return
+    }
+    if (normalizedSteps.some(step => step.description.length > 200)) {
+      message.error("Mô tả bước quy trình không được vượt quá 200 ký tự.")
+      return
+    }
+    if (normalizedSteps.some(step => !step.description.trim())) {
+      message.error("Mô tả bước quy trình không được chỉ chứa khoảng trắng.")
+      return
+    }
+    if (
+      normalizedSteps.some(
+        step => step.description !== step.description.replace(/\s+/g, " "),
+      )
+    ) {
+      message.error(
+        "Mô tả bước quy trình không được chứa nhiều khoảng trắng liên tiếp.",
+      )
+      return
+    }
+
+    const templatePayload = {
+      cropCatalogId: values.cropCatalogId,
+      cropId: values.cropId,
+      name: values.name.trim(),
+      description: values.description?.trim() || null,
+      estimatedDurationDays: values.estimatedDurationDays ?? null,
     }
 
     try {
-      setLoading(true)
-      const res = await PlanTemplateService.create(body)
-      if (res?.success === false) return
-      navigate(ROUTER.FM_PLAN_TEMPLATES)
+      setSubmitting(true)
+      const response = isEdit
+        ? await ProcessTemplateService.updateProcessTemplate(
+            id,
+            templatePayload,
+            {
+              skipNotice: true,
+            },
+          )
+        : await ProcessTemplateService.createProcessTemplate(templatePayload, {
+            skipNotice: true,
+          })
+      const processTemplateId = isEdit ? id : getCreatedId(response)
+      if (!processTemplateId) {
+        throw new Error(
+          "API đã tạo mẫu nhưng không trả về ID để lưu các bước quy trình.",
+        )
+      }
+
+      await syncSteps(processTemplateId, normalizedSteps)
+      clearDraft()
+      navigate(ROUTER.FM_PROCESS_TEMPLATES)
+    } catch (error) {
+      // API error handled by axios interceptor
+      applyApiFieldErrors(form, error, PLAN_TEMPLATE_FIELD_MAPPING)
+      logDevDiagnostic("process-template-submit", error)
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
   return (
-    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      {/* ── Header ── */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-4">
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(ROUTER.FM_PLAN_TEMPLATES)}>
-            Quay lại
-          </Button>
-          <TitleCustom className="!mb-0 flex items-center gap-2">
-            <ProfileOutlined className="text-green-600" />
-            Tạo Kế hoạch mẫu mới
-          </TitleCustom>
-        </div>
+    <div className="space-y-6 duration-500 animate-in fade-in">
+      <div className="flex items-center gap-4">
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(ROUTER.FM_PROCESS_TEMPLATES)}
+        >
+          Quay lại
+        </Button>
+        <TitleCustom className="!mb-0 flex items-center gap-2">
+          <ProfileOutlined className="text-green-600" />
+          {isEdit ? "Cập nhật mẫu quy trình" : "Tạo mẫu quy trình mới"}
+        </TitleCustom>
       </div>
 
-      {/* ── Main Card ── */}
       <Card
-        bordered={false}
+        variant="borderless"
         className="shadow-sm rounded-2xl"
-        bodyStyle={{ padding: '24px' }}
+        styles={{ body: { padding: 24 } }}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          {/* ════ Section 1 – Thông Tin Cơ Bản ════ */}
-          <SectionTitle>Thông Tin Cơ Bản</SectionTitle>
-
-          <Row gutter={16}>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="name"
-                label={
-                  <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                    Tên Kế hoạch mẫu
-                  </span>
-                }
-                rules={[
-                  { required: true, message: 'Vui lòng nhập tên kế hoạch mẫu.' },
-                  { max: 200, message: 'Tối đa 200 ký tự.' },
-                ]}
-              >
-                <Input
-                  placeholder="VD: Quy trình trồng Dưa Lưới VietGAP"
-                  className="h-10 rounded-lg"
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="category"
-                label={
-                  <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                    Danh mục cây trồng
-                  </span>
-                }
-                rules={[{ required: true, message: 'Vui lòng chọn danh mục cây trồng.' }]}
-              >
-                <Select
-                  placeholder="Chọn danh mục cây trồng"
-                  options={categoryOptions}
-                  loading={isCatalogsLoading}
-                  className="h-10"
-                  showSearch
-                  optionFilterProp="label"
-                  onChange={() => form.setFieldsValue({ cropVariety: undefined })}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="cropVariety"
-                label={
-                  <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                    Giống cây trồng
-                  </span>
-                }
-              >
-                <Select
-                  placeholder="Chọn giống cây trồng..."
-                  options={cropVarietyOptions}
-                  loading={isCropsLoading}
-                  className="h-10"
-                  showSearch
-                  optionFilterProp="label"
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24}>
-              <Form.Item
-                name="description"
-                label={
-                  <span className="text-xs font-bold tracking-wider text-gray-500 uppercase">
-                    Mô tả tóm tắt
-                  </span>
-                }
-              >
-                <Input.TextArea
-                  rows={3}
-                  placeholder="Mô tả ngắn gọn mục tiêu của quy trình này..."
-                  className="rounded-lg"
-                  maxLength={1000}
-                  showCount
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          {/* ════ Section 2 – Quy Trình Kỹ Thuật ════ */}
-          <SectionTitle>Quy Trình Kỹ Thuật (Các Giai Đoạn)</SectionTitle>
-
-          <div className="space-y-2 mb-3">
-            {stages.map((stage, index) => (
-              <div
-                key={stage._key}
-                className="flex flex-col gap-3 rounded-lg bg-gray-50 border border-gray-100 px-4 py-3"
-              >
-                {/* Row 1: Số thứ tự + Tên + Actions */}
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-600 text-white text-sm font-bold">
-                    {index + 1}
-                  </div>
+        <Spin spinning={loadingDetail}>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            onValuesChange={(_, allValues) =>
+              saveDraft({ ...allValues, __draftMeta: { steps } })
+            }
+          >
+            <SectionTitle>Thông tin mẫu quy trình</SectionTitle>
+            <Row gutter={16}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="name"
+                  label="Tên mẫu quy trình"
+                  rules={[
+                    { required: true, message: "Vui lòng nhập tên mẫu." },
+                    makeNameValidator({ label: "Tên mẫu" }),
+                  ]}
+                >
                   <Input
-                    value={stage.title}
-                    onChange={(e) => updateStage(index, 'title', e.target.value)}
-                    placeholder={`Tên giai đoạn ${index + 1}`}
-                    className="flex-1 h-9 rounded-lg font-semibold"
+                    maxLength={100}
+                    showCount
+                    placeholder="Ví dụ: Quy trình trồng ngô ngọt"
+                    className="h-10"
                   />
-                  {stages.length > 1 && (
-                    <Button
-                      type="text"
-                      danger
-                      icon={<MinusCircleOutlined />}
-                      onClick={() => removeStage(index)}
-                      className="!h-9 !w-9 shrink-0 rounded-lg"
-                    />
-                  )}
-                  <Button
-                    type="text"
-                    icon={<HolderOutlined className="text-gray-300" />}
-                    className="!h-9 !w-9 shrink-0 rounded-lg cursor-grab"
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="cropCatalogId"
+                  label="Danh mục cây trồng"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng chọn danh mục cây trồng.",
+                    },
+                  ]}
+                >
+                  <Select
+                    options={catalogOptions}
+                    loading={loadingOptions}
+                    showSearch
+                    optionFilterProp="label"
+                    placeholder="Chọn danh mục cây trồng"
+                    onChange={() => form.setFieldValue("cropId", undefined)}
                   />
-                </div>
-
-                {/* Row 2: Mô tả */}
-                <div>
-                  <Text type="secondary" className="block mb-1 text-xs">Mô tả</Text>
-                  <Input.TextArea
-                    value={stage.description}
-                    onChange={(e) => updateStage(index, 'description', e.target.value)}
-                    placeholder="1. Bước đầu tiên&#10;2. Bước thứ hai&#10;3. Bước thứ ba"
-                    rows={3}
-                    className="rounded-lg text-sm"
-                  />
-                </div>
-
-                {/* Row 3: Vật tư dự kiến */}
-                {/* <div>
-                  <Text type="secondary" className="flex items-center gap-1 mb-1 text-xs">
-                    <ShoppingOutlined /> Vật tư dự kiến (Tùy chọn)
-                  </Text>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {stage.materials.map((mat, mi) => (
-                      <Tag
-                        key={mi}
-                        closable
-                        onClose={() => removeMaterial(index, mi)}
-                        className="rounded-full px-2.5 py-0.5 text-xs bg-green-50 border-green-200 text-green-700"
-                      >
-                        {mat}
-                      </Tag>
-                    ))}
-                  </div>
-                  <Input
-                    value={stage._materialInput}
-                    onChange={(e) => updateStage(index, '_materialInput', e.target.value)}
-                    onPressEnter={() => addMaterial(index)}
-                    placeholder="Thêm vật tư... (Enter để thêm)"
-                    className="h-8 rounded-lg text-sm"
-                    suffix={
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<PlusOutlined className="text-xs" />}
-                        onClick={() => addMaterial(index)}
-                        className="text-green-600"
-                      />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="cropId"
+                  label="Cây trồng cụ thể"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Vui lòng chọn cây trồng cụ thể.",
+                    },
+                  ]}
+                >
+                  <Select
+                    allowClear
+                    options={cropOptions}
+                    loading={loadingOptions}
+                    disabled={!selectedCatalogId}
+                    showSearch
+                    optionFilterProp="label"
+                    placeholder={
+                      selectedCatalogId
+                        ? "Chọn cây trồng cụ thể"
+                        : "Chọn danh mục cây trồng trước"
                     }
                   />
-                </div> */}
-              </div>
-            ))}
-          </div>
+                </Form.Item>
+              </Col>
+              {/* <Col xs={24} md={12}>
+                <Form.Item
+                  name="estimatedDurationDays"
+                  label="Tổng thời lượng dự kiến (ngày)"
+                  rules={[
+                    {
+                      type: 'number',
+                      min: 1,
+                      message: 'Thời lượng phải lớn hơn 0.',
+                    },
+                  ]}
+                >
+                  <InputNumber
+                    min={1}
+                    precision={0}
+                    className="w-full"
+                    placeholder="Ví dụ: 90"
+                  />
+                </Form.Item>
+              </Col> */}
+              <Col span={24}>
+                <Form.Item
+                  name="description"
+                  label="Mô tả"
+                  rules={[
+                    makeDescriptionValidator({ maxLength: 200 }),
+                  ]}
+                >
+                  <Input.TextArea
+                    rows={3}
+                    placeholder="Mô tả mục tiêu và phạm vi áp dụng của mẫu..."
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Button
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={addStage}
-            className="w-full mb-5 rounded-lg border-green-400 text-green-700 hover:border-green-500"
-          >
-            Thêm Giai đoạn
-          </Button>
+            <SectionTitle>Các bước quy trình (bắt buộc)</SectionTitle>
+            <div className="space-y-4">
+              {steps.map((step, index) => (
+                <StepCard
+                  key={step._key}
+                  step={step}
+                  index={index}
+                  steps={steps}
+                  updateStep={updateStep}
+                  removeStep={removeStep}
+                />
+              ))}
+            </div>
 
-          {/* ── Footer actions ── */}
-          <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
             <Button
-              onClick={() => navigate(ROUTER.FM_PLAN_TEMPLATES)}
-              className="h-10 px-6 rounded-xl"
-              disabled={loading}
-            >
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
+              type="dashed"
               icon={<PlusOutlined />}
-              className="h-10 px-6 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
+              onClick={addStep}
+              className="w-full mt-4 text-green-700 border-green-400"
             >
-              Lưu Kế Hoạch
+              Thêm bước quy trình
             </Button>
-          </div>
-        </Form>
+
+            <div className="flex justify-end gap-3 pt-5 mt-5 border-t">
+              <Button onClick={() => navigate(ROUTER.FM_PROCESS_TEMPLATES)}>
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={submitting}
+                icon={isEdit ? <EditOutlined /> : <PlusOutlined />}
+                className="font-bold bg-green-600"
+              >
+                {isEdit ? "Lưu thay đổi" : "Tạo mẫu quy trình"}
+              </Button>
+            </div>
+          </Form>
+        </Spin>
       </Card>
     </div>
   )
