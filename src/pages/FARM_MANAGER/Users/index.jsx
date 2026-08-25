@@ -394,7 +394,7 @@ const UsersManagement = () => {
           />
           <Select
             placeholder="Tất cả vai trò"
-            className="h-10 rounded-xl min-w-[150px]"
+            className="h-10 min-w-[150px]"
             allowClear
             value={roleFilter}
             onChange={val => updateFilter("role", val)}
@@ -405,7 +405,7 @@ const UsersManagement = () => {
           />
           <Select
             placeholder="Tất cả trạng thái"
-            className="h-10 rounded-xl min-w-[150px]"
+            className="h-10 min-w-[150px]"
             allowClear
             value={statusFilter}
             onChange={val => updateFilter("status", val)}

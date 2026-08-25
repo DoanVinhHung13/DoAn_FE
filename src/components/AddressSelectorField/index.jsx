@@ -16,7 +16,7 @@ const AddressSelectorField = ({
       value={typeof value === "string" ? value : value?.detailAddress || ""}
       onChange={e => onChange?.(e.target.value)}
       disabled={disabled}
-      className="h-11 rounded-xl"
+      className="rounded-xl"
     />
   )
 }

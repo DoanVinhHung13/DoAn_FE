@@ -133,7 +133,7 @@ const InventoryImportModal = ({ open, onCancel, onSuccess, item }) => {
           <InputNumber
             min={0}
             placeholder="Nhập số lượng..."
-            className="w-full h-10 rounded-xl"
+            className="w-full rounded-xl"
             formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
             parser={v => v?.replace(/,*/g, "")}
           />

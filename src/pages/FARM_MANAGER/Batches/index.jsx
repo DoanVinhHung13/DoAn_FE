@@ -48,7 +48,7 @@ const getQrStatus = batch => {
 
 const Batches = () => {
   const navigate = useNavigate()
-  const { getOptions } = useSystemKey()
+  const { getOptions, getDescription } = useSystemKey()
 
   const {
     searchInput,

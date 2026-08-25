@@ -33,7 +33,7 @@ const LocationSelector = ({ value = {}, onChange, disabled = false }) => {
       value={detailAddress}
       onChange={handleDetailChange}
       disabled={disabled}
-      className="h-12 rounded-xl border-gray-200 hover:border-green-400 focus:border-green-500 transition-all"
+      className="rounded-xl border-gray-200 hover:border-green-400 focus:border-green-500 transition-all"
     />
   )
 }

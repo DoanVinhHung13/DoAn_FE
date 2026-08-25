@@ -34,7 +34,7 @@ export const UI = {
 
   input: {
     search: "w-64 h-10 rounded-xl",
-    select: "h-10 rounded-xl min-w-[160px]",
+    select: "h-10 min-w-[160px]",
   },
 
   icon: {

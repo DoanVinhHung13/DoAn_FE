@@ -362,7 +362,6 @@ const AccountInfo = () => {
                       >
                         <Input
                           prefix={<UserOutlined className="text-gray-300" />}
-                          className="h-11"
                         />
                       </Form.Item>
                     </Col>
@@ -372,7 +371,6 @@ const AccountInfo = () => {
                         <Input
                           disabled
                           prefix={<MailOutlined className="text-gray-300" />}
-                          className="h-11"
                         />
                       </Form.Item>
                     </Col>
@@ -386,7 +384,6 @@ const AccountInfo = () => {
                       >
                         <Input
                           prefix={<PhoneOutlined className="text-gray-300" />}
-                          className="h-11"
                         />
                       </Form.Item>
                     </Col>
@@ -425,7 +422,7 @@ const AccountInfo = () => {
                         <DatePicker
                           format="DD/MM/YYYY"
                           placeholder="Chọn ngày sinh"
-                          className="h-11 w-full"
+                          className="w-full"
                           disabledDate={current =>
                             current && current > getLocalNow().endOf("day")
                           }
@@ -438,7 +435,6 @@ const AccountInfo = () => {
                         <Select
                           allowClear
                           placeholder="Chọn giới tính"
-                          className="h-11"
                           options={
                             genderOptions?.length > 0
                               ? genderOptions.map(opt => ({

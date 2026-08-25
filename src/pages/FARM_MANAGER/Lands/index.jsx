@@ -364,7 +364,7 @@ const LandsManagement = () => {
           />
 
           <Select
-            className="h-10 min-w-[150px] rounded-xl"
+            className="h-10 min-w-[150px]"
             value={status}
             options={statusOptions}
             onChange={value => updateFilter("status", value)}

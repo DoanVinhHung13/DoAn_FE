@@ -716,7 +716,7 @@ const FarmManagerNotifications = () => {
             ]}
           >
             <Input
-              className="h-11 rounded-lg"
+              className="rounded-lg"
               placeholder="Nhập tiêu đề thông báo"
             />
           </Form.Item>
@@ -778,7 +778,7 @@ const FarmManagerNotifications = () => {
             ]}
           >
             <Input
-              className="h-11 rounded-lg"
+              className="rounded-lg"
               placeholder="Ví dụ: /farm-manager/cultivation-logbooks/123"
             />
           </Form.Item>

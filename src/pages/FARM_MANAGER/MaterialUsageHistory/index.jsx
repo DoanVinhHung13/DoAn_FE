@@ -205,7 +205,7 @@ const MaterialUsageHistory = () => {
             placeholder="Tìm vật tư, công việc hoặc nhật ký"
             aria-label="Tìm vật tư, công việc hoặc nhật ký"
             prefix={<SearchOutlined className="text-gray-300" />}
-            className="w-full h-10 rounded-xl xl:w-64"
+            className="w-full rounded-xl xl:w-64"
             allowClear
             autoComplete="off"
           />
@@ -217,14 +217,14 @@ const MaterialUsageHistory = () => {
             }}
             options={TIME_SORT_OPTIONS}
             aria-label="Sắp xếp thời gian sử dụng"
-            className="w-full h-10 rounded-xl xl:w-48"
+            className="w-full  xl:w-48"
           />
           <Select
             value={materialType}
             onChange={value => updateFilter("materialType", value)}
             options={MATERIAL_TYPE_OPTIONS}
             aria-label="Lọc theo loại vật tư"
-            className="w-full h-10 rounded-xl xl:w-52"
+            className="w-full  xl:w-52"
           />
           <RangePicker
             value={dateRange}
@@ -232,7 +232,7 @@ const MaterialUsageHistory = () => {
             format="DD/MM/YYYY"
             placeholder={["Từ ngày", "Đến ngày"]}
             aria-label="Lọc theo khoảng ngày sử dụng"
-            className="w-full h-10 rounded-xl xl:w-72"
+            className="w-full  xl:w-72"
           />
           <div className="flex gap-2 xl:ml-auto">
             <Button

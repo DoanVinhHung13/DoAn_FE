@@ -302,7 +302,7 @@ const InventoryImportHistory = () => {
             aria-label="Tìm theo tên vật tư"
             autoComplete="off"
             prefix={<SearchOutlined className="text-gray-300" />}
-            className="w-full h-10 rounded-xl xl:w-64"
+            className="w-full xl:w-64"
             allowClear
             onClear={() => {
               handleClearSearch()
@@ -313,7 +313,7 @@ const InventoryImportHistory = () => {
             onChange={val => updateFilter("typeFilter", val)}
             options={MATERIAL_TYPE_OPTIONS}
             aria-label="Lọc theo loại vật tư"
-            className="w-full h-10 rounded-xl xl:w-52"
+            className="w-full xl:w-52"
           />
           <RangePicker
             value={dateRange}
@@ -321,7 +321,7 @@ const InventoryImportHistory = () => {
             format="DD/MM/YYYY"
             placeholder={["Từ ngày", "Đến ngày"]}
             aria-label="Lọc theo khoảng ngày nhập"
-            className="w-full h-10 rounded-xl xl:w-72"
+            className="w-full rounded-xl xl:w-72"
           />
           <div className="flex gap-2 xl:ml-auto">
             <Button

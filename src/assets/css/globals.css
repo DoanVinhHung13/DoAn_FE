@@ -132,6 +132,11 @@
   --shadow-sm: 0 1px 2px rgba(22, 48, 42, 0.05);
   --shadow-md: 0 4px 14px rgba(22, 48, 42, 0.08);
   --shadow-lg: 0 12px 32px rgba(22, 48, 42, 0.1);
+  --form-control-height: 40px;
+  --form-control-radius: var(--radius-md);
+  --form-control-border: var(--color-border);
+  --form-control-focus-border: var(--color-primary);
+  --form-control-focus-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
 }
 
 * {
@@ -563,8 +568,8 @@ a,
 .admin-compact-list .admin-toolbar .ant-select,
 .admin-compact-list .admin-toolbar .ant-select-selector,
 .admin-compact-list .admin-toolbar .ant-btn {
-  height: 40px !important;
-  min-height: 40px !important;
+  height: var(--form-control-height) !important;
+  min-height: var(--form-control-height) !important;
 }
 
 .admin-compact-list .ant-table-thead > tr > th {
@@ -669,8 +674,8 @@ a,
 .admin-filter-card .ant-input-affix-wrapper,
 .admin-filter-card .ant-select,
 .admin-filter-card .ant-select-selector {
-  height: 40px !important;
-  min-height: 40px !important;
+  height: var(--form-control-height) !important;
+  min-height: var(--form-control-height) !important;
 }
 
 .admin-toolbar .ant-select,
@@ -783,26 +788,74 @@ a,
   border-color: var(--color-primary-border) !important;
 }
 
+/* ── Unified form control design system ──────────────────────────────────────
+   Single source of truth for height, border, radius, focus across:
+   Input, Input.TextArea, Input.Password, Input.Search
+   InputNumber (.ant-input-number, .ant-input-number-input, .ant-input-number-input-wrap)
+   Select / AutoComplete (.ant-select-selector)
+   DatePicker / RangePicker (.ant-picker)
+   TreeSelect (.ant-tree-select-selector)
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* 1. Border, radius, shadow reset */
 .ant-input,
 .ant-input-affix-wrapper,
 .ant-input-number,
+.ant-input-number-input-wrap,
 .ant-picker,
 .ant-select-selector,
 .ant-tree-select-selector {
-  border-radius: var(--radius-md) !important;
-  border-color: var(--color-border) !important;
+  border-radius: var(--form-control-radius) !important;
+  border-color: var(--form-control-border) !important;
   box-shadow: none !important;
 }
 
-.ant-input,
+/* 2. Unified height for all single-line controls */
+.ant-input:not(textarea),
 .ant-input-affix-wrapper,
 .ant-input-number,
 .ant-picker,
 .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
-.ant-tree-select-selector {
-  min-height: 38px;
+.ant-tree-select-selector,
+.ant-select-auto-complete .ant-select-selector {
+  height: var(--form-control-height) !important;
+  min-height: var(--form-control-height) !important;
 }
 
+/* 3. Inner input elements — same height, no extra padding */
+.ant-input:not(textarea),
+.ant-input-affix-wrapper > .ant-input,
+.ant-input-number-input,
+.ant-input-number-input-wrap,
+.ant-picker-input > input {
+  height: var(--form-control-height) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: var(--form-control-height) !important;
+}
+
+/* 4. Flex alignment for wrapper controls */
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-picker {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* 5. Select alignment */
+.ant-select-single .ant-select-selector {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.ant-select-single .ant-select-selection-item,
+.ant-select-single .ant-select-selection-placeholder {
+  line-height: var(--form-control-height) !important;
+}
+
+/* 6. Focus state */
 .ant-input:focus,
 .ant-input-focused,
 .ant-input-affix-wrapper:focus,
@@ -811,81 +864,29 @@ a,
 .ant-picker-focused,
 .ant-select-focused .ant-select-selector,
 .ant-tree-select-focused .ant-select-selector {
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12) !important;
+  border-color: var(--form-control-focus-border) !important;
+  box-shadow: var(--form-control-focus-shadow) !important;
 }
 
+/* 7. Placeholder color */
 .ant-input::placeholder,
 .ant-select-selection-placeholder,
 .ant-picker-input > input::placeholder {
   color: var(--color-text-muted) !important;
 }
 
-/* Keep form controls on one baseline, including controls with a prefix/icon. */
-.ant-form .ant-input:not(textarea),
-.ant-form .ant-input-affix-wrapper > .ant-input,
-.ant-form .ant-input-number-input,
-.ant-form .ant-picker-input > input {
-  line-height: 44px !important;
-}
-
-.ant-form .ant-select-single .ant-select-selector {
-  display: flex !important;
-  align-items: center !important;
-}
-
-.ant-form .ant-select-single .ant-select-selection-item,
-.ant-form .ant-select-single .ant-select-selection-placeholder {
-  line-height: 44px !important;
-}
-
-/* One-line controls — unified height 44px (h-11) across forms and modals. */
-.ant-input:not(textarea),
-.ant-input-affix-wrapper,
-.ant-input-number,
-.ant-picker,
-.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
-  height: 44px !important;
-  min-height: 44px !important;
-}
-
-.ant-picker {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-}
-
-.ant-input:not(textarea),
-.ant-input-affix-wrapper > .ant-input,
-.ant-input-number-input,
-.ant-picker-input > input {
-  height: 44px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  line-height: 44px !important;
+/* 8. Textarea — auto height, no fixed height override */
+.ant-input[data-component="textarea"],
+textarea.ant-input {
+  height: auto !important;
+  min-height: 80px !important;
+  line-height: 1.6 !important;
+  padding: 8px 12px !important;
 }
 
 .task-description-textarea {
   line-height: 24px !important;
   padding: 8px 12px !important;
-}
-
-.ant-input-affix-wrapper,
-.ant-input-number,
-.ant-picker {
-  display: inline-flex;
-  align-items: center;
-}
-
-.ant-select-single .ant-select-selector {
-  display: flex !important;
-  align-items: center !important;
-}
-
-.ant-select-single .ant-select-selection-item,
-.ant-select-single .ant-select-selection-placeholder {
-  line-height: 44px !important;
 }
 
 .ant-form-item-label > label {

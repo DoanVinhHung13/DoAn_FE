@@ -40,7 +40,7 @@ const componentColumns = [
     key: "value",
     align: "center",
     width: 120,
-    render: v => <Text>{v != null && v !== "" ? `${v}%` : "—"}</Text>,
+    render: v => <Text>{v != null && v !== "" ? `${v}` : "—"}</Text>,
   },
   {
     title: "Đơn vị tính",

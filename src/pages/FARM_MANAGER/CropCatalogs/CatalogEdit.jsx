@@ -193,7 +193,7 @@ const CatalogEdit = () => {
             ]}
           >
             <Input
-              className="!h-11 rounded-lg"
+              className="rounded-lg"
               placeholder="Nhập tên loại cây trồng"
             />
           </Form.Item>
@@ -212,7 +212,7 @@ const CatalogEdit = () => {
 
           <Form.Item name="isActive" label="Trạng thái">
             <Select
-              className="!h-11 w-full rounded-lg [&_.ant-select-selector]:!h-11 [&_.ant-select-selector]:!rounded-lg"
+              className="w-full rounded-lg"
               options={statusOptions}
             />
           </Form.Item>
