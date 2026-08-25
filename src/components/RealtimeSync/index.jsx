@@ -44,9 +44,7 @@ const RealtimeSync = () => {
     const invalidateActiveQueries = detail => {
       clearTimeout(invalidationTimer.current)
       invalidationTimer.current = setTimeout(() => {
-        window.dispatchEvent(
-          new CustomEvent("app:data-changed", { detail }),
-        )
+        window.dispatchEvent(new CustomEvent("app:data-changed", { detail }))
       }, INVALIDATION_DELAY_MS)
     }
 
@@ -108,7 +106,6 @@ const RealtimeSync = () => {
         signalRService.on("qr-stats-updated", invalidateActiveQueries)
         retryAttempt = 0
         refreshGroupsNow()
-        invalidateActiveQueries({ reason: "connected" })
       } catch (error) {
         logDevDiagnostic("realtime-connect", error)
         scheduleConnect()
