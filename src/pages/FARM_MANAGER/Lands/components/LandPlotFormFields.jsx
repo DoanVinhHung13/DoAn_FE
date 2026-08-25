@@ -127,9 +127,7 @@ const LandPlotFormFields = ({
       <Form.Item
         label="Mô tả"
         name="description"
-        rules={[
-          makeDescriptionValidator({ maxLength: 200 }),
-        ]}
+        rules={[makeDescriptionValidator({ maxLength: 200 })]}
       >
         <Input.TextArea
           disabled={disabled}

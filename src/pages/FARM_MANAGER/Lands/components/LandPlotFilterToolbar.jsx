@@ -40,11 +40,7 @@ const LandPlotFilterToolbar = ({
           options={statusOptions}
         />
 
-        <Button
-          icon={<SearchOutlined />}
-          type="primary"
-          onClick={handleSearch}
-        >
+        <Button icon={<SearchOutlined />} type="primary" onClick={handleSearch}>
           Tìm kiếm
         </Button>
 
@@ -61,19 +57,12 @@ const LandPlotFilterToolbar = ({
       </div>
 
       <div className="flex items-center gap-2">
-        <Button
-          icon={<ReloadOutlined spin={loading} />}
-          onClick={onRefresh}
-        >
+        <Button icon={<ReloadOutlined spin={loading} />} onClick={onRefresh}>
           Làm mới
         </Button>
 
         {canManage && onCreate && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={onCreate}
-          >
+          <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
             Thêm mới
           </Button>
         )}
