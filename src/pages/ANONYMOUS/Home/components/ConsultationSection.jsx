@@ -10,6 +10,7 @@ import ConsultationService from "src/services/ConsultationService"
 import { normalizeApiError } from "src/services/core/apiError"
 import { message, Modal } from "antd"
 import { SafetyCertificateFilled } from "@ant-design/icons"
+import heroImage from "src/assets/hero.png"
 
 const { Title, Paragraph, Text } = Typography
 const { Option } = Select
@@ -80,7 +81,7 @@ const ConsultationSection = () => {
     <section className="relative px-6 py-24 overflow-hidden bg-white md:py-32">
       <div className="absolute top-0 right-0 w-1/2 h-full opacity-5">
         <img
-          src="/images/hero.png"
+          src={heroImage}
           alt=""
           className="object-cover w-full h-full"
         />
