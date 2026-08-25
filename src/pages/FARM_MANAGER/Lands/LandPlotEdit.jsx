@@ -234,15 +234,7 @@ const LandPlotEdit = () => {
           </Button>
           <TitleCustom className="!mb-0">Cập nhật vùng trồng</TitleCustom>
         </div>
-        <Button
-          type="primary"
-          icon={<SaveOutlined />}
-          loading={isSaving}
-          disabled={cultivationLocked}
-          onClick={handleSubmit}
-        >
-          Lưu
-        </Button>
+
       </div>
 
       <Row gutter={[16, 16]}>
