@@ -359,7 +359,7 @@ const CropEdit = () => {
                     ]}
                   >
                     <Input
-                      className="!h-11 rounded-lg"
+                      className="rounded-lg"
                       placeholder="Nhập tên cây trồng"
                     />
                   </Form.Item>
@@ -373,7 +373,7 @@ const CropEdit = () => {
                     ]}
                   >
                     <Select
-                      className="!h-11 w-full rounded-lg [&_.ant-select-selector]:!h-11 [&_.ant-select-selector]:!rounded-lg"
+                      className="w-full rounded-lg"
                       placeholder="Chọn danh mục"
                       loading={isCatalogsLoading && !cropTypeOptions?.length}
                       options={cropTypeFormOptions}

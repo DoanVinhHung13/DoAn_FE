@@ -9,15 +9,7 @@ import {
   SearchOutlined,
   DeleteOutlined,
 } from "@ant-design/icons"
-import {
-  Button,
-  Card,
-  Input,
-  Select,
-  Tag,
-  Tooltip,
-  Popconfirm,
-} from "antd"
+import { Button, Card, Input, Select, Tag, Tooltip, Popconfirm } from "antd"
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import ROUTER from "src/router/ROUTER"
@@ -336,13 +328,13 @@ const ViewFertilizers = () => {
           <Select
             value={categoryFilter}
             onChange={val => updateFilter("category", val)}
-            className="h-10 rounded-xl min-w-[160px]"
+            className="h-10 min-w-[160px]"
             options={selectCategoryOptions}
           />
           <Select
             value={statusFilter}
             onChange={val => updateFilter("status", val)}
-            className="h-10 rounded-xl min-w-[160px]"
+            className="h-10 min-w-[160px]"
             options={selectStatusOptions}
           />
           <div className="flex gap-2 ml-auto">

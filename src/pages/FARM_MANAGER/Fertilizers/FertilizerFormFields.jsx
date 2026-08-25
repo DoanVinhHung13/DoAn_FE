@@ -385,7 +385,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               makeNameValidator({ label: "Nhà sản xuất", required: false }),
             ]}
           >
-            <Input placeholder="Nhà Sản Xuất" className="h-10 rounded-lg" />
+            <Input placeholder="Nhà Sản Xuất" className="rounded-lg" />
           </Form.Item>
         </Col>
 
@@ -405,7 +405,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             <InputNumber
               min={1}
               placeholder="Số"
-              className="w-full h-10 rounded-lg"
+              className="w-full rounded-lg"
               formatter={v => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
               parser={v => v?.replace(/,*/g, "")}
             />
@@ -434,7 +434,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             >
               <Select
                 placeholder="Chọn đơn vị"
-                className="h-10"
                 options={fertilizerUnitOptions}
                 onChange={value => {
                   setQuantityUnit(value)
@@ -460,7 +459,6 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
             <Select
               allowClear
               placeholder="Loại Phân Bón"
-              className="h-10"
               options={fertilizerTypeOptions}
             />
           </Form.Item>
@@ -515,7 +513,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                   handleComponentChange(index, "name", e.target.value)
                 }
                 placeholder="Tên thành phần (ví dụ: Đạm, Lân, Kali...)"
-                className="h-9 rounded-lg"
+                className="rounded-lg"
               />
             </div>
             <div style={{ flex: "1 1 100px" }}>
@@ -526,11 +524,11 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 min={0}
                 max={100}
                 step={0.1}
-                className="w-full h-9 rounded-lg"
+                className="w-full rounded-lg"
               />
             </div>
             <div style={{ flex: "1 1 120px" }}>
-              <Text className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-white border border-gray-200 px-3 text-gray-700 font-medium">
+              <Text className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-white border border-gray-200 px-3 text-gray-700 font-medium">
                 {comp.unit || "%"}
               </Text>
             </div>
@@ -572,7 +570,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 placeholder="Chọn đối tượng..."
                 options={getDosageOptions(index)}
                 loading={isCropsLoading}
-                className="w-full h-9"
+                className="w-full"
                 allowClear
                 showSearch
                 optionFilterProp="label"
@@ -587,7 +585,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
                 onChange={val => handleDosageChange(index, "amount", val)}
                 placeholder="Số"
                 min={0}
-                className="w-full h-9 rounded-lg"
+                className="w-full rounded-lg"
               />
             </div>
             {/* Đơn vị tính / Diện tích */}
@@ -595,7 +593,7 @@ const FertilizerFormFields = ({ isEdit, editingItem }) => {
               <Text type="secondary" className="block mb-1 text-xs">
                 Đơn vị tính / Diện tích
               </Text>
-              <Text className="inline-flex h-9 w-full items-center rounded-lg bg-gray-50 border border-gray-200 px-3 text-sm text-gray-700">
+              <Text className="inline-flex h-10 w-full items-center rounded-lg bg-gray-50 border border-gray-200 px-3 text-sm text-gray-700">
                 {quantityUnit}/{formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}
               </Text>
             </div>

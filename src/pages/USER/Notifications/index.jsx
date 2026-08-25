@@ -224,7 +224,7 @@ const Notifications = () => {
             }}
             prefix={<SearchOutlined className="text-gray-400" />}
             placeholder="Tìm theo tiêu đề hoặc nội dung"
-            className="h-10 rounded-lg"
+            className="rounded-lg"
           />
           <Select
             value={status}
@@ -233,7 +233,6 @@ const Notifications = () => {
               setPage(1)
             }}
             options={STATUS_OPTIONS}
-            className="h-10"
           />
           <Select
             value={category}
@@ -242,7 +241,6 @@ const Notifications = () => {
               setPage(1)
             }}
             options={categoryOptions}
-            className="h-10"
           />
         </div>
       </div>

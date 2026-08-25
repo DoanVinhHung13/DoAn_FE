@@ -45,7 +45,6 @@ const UpdateProfile = ({
           >
             <Input
               prefix={<UserOutlined className="text-gray-300" />}
-              className="h-11"
             />
           </Form.Item>
         </Col>
@@ -54,7 +53,6 @@ const UpdateProfile = ({
             <Input
               disabled
               prefix={<MailOutlined className="text-gray-300" />}
-              className="h-11"
             />
           </Form.Item>
         </Col>
@@ -67,7 +65,6 @@ const UpdateProfile = ({
           >
             <Input
               prefix={<PhoneOutlined className="text-gray-300" />}
-              className="h-11"
             />
           </Form.Item>
         </Col>
@@ -103,7 +100,7 @@ const UpdateProfile = ({
             <DatePicker
               format="DD/MM/YYYY"
               placeholder="Chọn ngày sinh"
-              className="w-full h-11"
+              className="w-full"
               disabledDate={current =>
                 current && current > getLocalNow().endOf("day")
               }
@@ -115,7 +112,6 @@ const UpdateProfile = ({
             <Select
               allowClear
               placeholder="Chọn giới tính"
-              className="h-11"
               options={genderOptions}
             />
           </Form.Item>
@@ -149,7 +145,6 @@ const UpdateProfile = ({
             <Input
               prefix={<EnvironmentOutlined className="text-gray-300" />}
               placeholder="Số nhà, tên đường..."
-              className="h-11"
             />
           </Form.Item>
         </Col>

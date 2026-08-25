@@ -264,7 +264,7 @@ const CropCreate = () => {
                     ]}
                   >
                     <Input
-                      className="!h-11 rounded-lg"
+                      className="rounded-lg"
                       placeholder="Nhập tên cây trồng"
                     />
                   </Form.Item>
@@ -278,7 +278,7 @@ const CropCreate = () => {
                     ]}
                   >
                     <Select
-                      className="h-11 w-full rounded-lg"
+                      className="h-10 w-full"
                       placeholder="Chọn nhóm cây"
                       loading={isCatalogsLoading}
                       options={cropTypeFormOptions}
@@ -333,7 +333,7 @@ const CropCreate = () => {
                       <Button
                         icon={<UploadOutlined />}
                         loading={uploadingCreate}
-                        className="h-11 w-full rounded-lg"
+                        className="w-full rounded-lg"
                       >
                         {uploadingCreate ? "Đang tải lên..." : "Tải ảnh lên"}
                       </Button>

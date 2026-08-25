@@ -80,7 +80,7 @@ const ChangePassword = () => {
           >
             <Input.Password
               prefix={<LockOutlined className="text-gray-400" />}
-              className="h-11 rounded-lg"
+              className="rounded-lg"
               placeholder="Nhập mật khẩu đang sử dụng"
             />
           </Form.Item>
@@ -110,7 +110,7 @@ const ChangePassword = () => {
             >
               <Input.Password
                 prefix={<LockOutlined className="text-green-500" />}
-                className="h-11 rounded-lg"
+                className="rounded-lg"
                 placeholder="Mật khẩu mới"
               />
             </Form.Item>
@@ -133,7 +133,7 @@ const ChangePassword = () => {
             >
               <Input.Password
                 prefix={<LockOutlined className="text-green-500" />}
-                className="h-11 rounded-lg"
+                className="rounded-lg"
                 placeholder="Nhập lại mật khẩu mới"
               />
             </Form.Item>
