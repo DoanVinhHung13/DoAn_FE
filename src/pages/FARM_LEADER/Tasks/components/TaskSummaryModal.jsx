@@ -60,9 +60,14 @@ const TaskSummaryModal = ({
       onOk={isWaitingApproval ? onCancel : onSubmit}
       okText={isWaitingApproval ? "Đóng" : "Xác nhận gửi báo cáo"}
       cancelText="Hủy"
+      cancelButtonProps={
+        isWaitingApproval ? { style: { display: "none" } } : undefined
+      }
       confirmLoading={submitting}
       okButtonProps={{
-        className: isWaitingApproval ? "" : "bg-green-600 border-green-600",
+        className: isWaitingApproval
+          ? "bg-green-600 border-green-600 px-6 font-semibold rounded-lg text-white"
+          : "bg-green-600 border-green-600",
         disabled: summaryLoading,
       }}
       width={780}
