@@ -442,19 +442,6 @@ const TaskCard = ({
 
             {canEdit && (
               <Flex align="center" gap={8} className="flex-shrink-0">
-                {isPending && (
-                  <Button
-                    size="small"
-                    icon={<SwapOutlined />}
-                    className="h-7 px-2.5 rounded-lg border-green-300 text-green-700 hover:!border-green-500 hover:!text-green-800 hover:!bg-green-50 font-medium flex items-center gap-1"
-                    onClick={e => {
-                      e.stopPropagation()
-                      onSwap?.(task, taskIndex)
-                    }}
-                  >
-                    Đổi vị trí
-                  </Button>
-                )}
                 <Button
                   type="primary"
                   size="small"
