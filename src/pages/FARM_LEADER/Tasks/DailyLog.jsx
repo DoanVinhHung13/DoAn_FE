@@ -15,19 +15,11 @@
  *   POST /cultivation-tasks/{id}/summary
  */
 import {
-  ArrowLeftOutlined,
-  CalendarOutlined,
   CameraOutlined,
-  CheckCircleOutlined,
   DeleteOutlined,
-  ExperimentOutlined,
   EyeOutlined,
-  FileTextOutlined,
   FormOutlined,
-  InboxOutlined,
-  PictureOutlined,
   PlusOutlined,
-  SendOutlined,
 } from "@ant-design/icons"
 import {
   Alert,
@@ -35,18 +27,13 @@ import {
   Card,
   Col,
   DatePicker,
-  Divider,
-  Empty,
   Form,
   Image,
   Input,
   InputNumber,
   message,
-  Modal,
   Row,
   Select,
-  Spin,
-  Table,
   Tag,
   Tooltip,
   Typography,
@@ -58,7 +45,6 @@ import dayjs from "dayjs"
 
 import { useNavigate, useParams } from "react-router-dom"
 
-import TitleCustom from "src/components/TitleCustom"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import ROUTER from "src/router/ROUTER"
 import CultivationDailyLogService from "src/services/CultivationDailyLogService"
@@ -76,105 +62,34 @@ import {
   getQuantityUnit,
   MEASUREMENT_UNITS,
 } from "src/constants/measurementUnits"
-import {
-  CULTIVATION_TASK_TYPES,
-  normalizeCultivationTaskType,
-} from "src/constants/cultivationTask"
 import { canWriteDailyLog } from "src/utils/cultivationStatus"
-import { formatDate, getLocalNow } from "src/utils/dateFormatters"
+import { getLocalNow } from "src/utils/dateFormatters"
 import { formatMeasurementValue } from "src/utils/materialRecommendations"
-import { getUserDisplayName } from "src/utils/userDisplayName"
+
+import {
+  DAILY_LOG_FIELD_MAPPING,
+  HARVEST_UNIT,
+  MAX_UPLOAD_FILES,
+  MAX_UPLOAD_IMAGE_BYTES,
+  MAX_UPLOAD_TOTAL_BYTES,
+  getHarvestQuantity,
+  getMaterialUnit,
+  hasDosageForCrop,
+  isHarvestTaskData,
+  isMaterialTaskData,
+  toFertilizerOptions,
+  toFiniteNumber,
+  toPesticideOptions,
+  unwrap,
+} from "./components/dailyLogHelpers"
+import DailyLogTaskHeader from "./components/DailyLogTaskHeader"
+import DailyLogHistoryList from "./components/DailyLogHistoryList"
+import MaterialUsageModal from "./components/MaterialUsageModal"
+import TaskSummaryModal from "./components/TaskSummaryModal"
 
 const { Text } = Typography
 const { TextArea } = Input
-const HARVEST_UNIT = MEASUREMENT_UNITS.KILOGRAM
-const MAX_UPLOAD_FILES = 10
-const MAX_UPLOAD_TOTAL_BYTES = 100 * 1024 * 1024
-const MAX_UPLOAD_IMAGE_BYTES = 5 * 1024 * 1024
 
-const DAILY_LOG_FIELD_MAPPING = {
-  Date: "date",
-  date: "date",
-  Description: "description",
-  description: "description",
-}
-
-const unwrap = res => res?.data?.data ?? res?.data ?? res
-
-const getMaterialUnit = item =>
-  getQuantityUnit(
-    item?.unit || item?.quantityUnit || item?.unitName || item?.materialUnit,
-    "",
-  )
-
-const toFiniteNumber = value => {
-  if (value === null || value === undefined || value === "") return null
-
-  const normalizedValue =
-    typeof value === "string" ? value.replace(",", ".").trim() : value
-  const number = Number(normalizedValue)
-
-  return Number.isFinite(number) ? number : null
-}
-
-const getHarvestQuantity = log =>
-  toFiniteNumber(
-    log?.harvestQuantity ??
-      log?.quantityHarvested ??
-      log?.harvestedQuantity ??
-      log?.HarvestQuantity,
-  )
-
-const isHarvestTaskData = task =>
-  String(task?.taskType || "")
-    .trim()
-    .toUpperCase() === "HARVEST"
-const isMaterialTaskData = task =>
-  normalizeCultivationTaskType(task?.taskType) ===
-  CULTIVATION_TASK_TYPES.MATERIAL
-
-const toFertilizerOptions = list =>
-  (list || []).map(item => {
-    const unit = getMaterialUnit(item)
-    return {
-      value: item.id,
-      label: unit ? `${item.name} (${unit})` : item.name,
-      materialId: item.materialId || item.id,
-      name: item.name,
-      unit: unit,
-      raw: item,
-    }
-  })
-
-const toPesticideOptions = list =>
-  (list || []).map(item => {
-    const unit = getMaterialUnit(item)
-    return {
-      value: item.id,
-      label: unit ? `${item.name} (${unit})` : item.name,
-      materialId: item.materialId || item.id,
-      name: item.name,
-      unit: unit,
-      raw: item,
-    }
-  })
-
-const normalizeCropName = value =>
-  String(value || "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-
-const hasDosageForCrop = (targets, cropName) => {
-  const normalizedCropName = normalizeCropName(cropName)
-  if (!normalizedCropName) return false
-
-  return (targets || []).some(target => {
-    const value = target?.target ?? target?.targetCrop
-    return normalizeCropName(value) === normalizedCropName
-  })
-}
 
 const DailyLog = () => {
   const { getTaskStatus } = useCultivationStatus()
@@ -851,113 +766,16 @@ const DailyLog = () => {
 
   return (
     <div className="pb-20 space-y-4 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      <div>
-        <Button
-          type="text"
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(ROUTER.FL_TASKS)}
-          className="mb-3 -ml-2 text-gray-600 h-9 hover:text-green-700"
-        >
-          Quay lại danh sách công việc
-        </Button>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex-1">
-            <div className="flex flex-wrap gap-2 mt-2">
-              <Tag color={statusCfg.color}>{statusCfg.label}</Tag>
-              {task.taskCatalogName && (
-                <Tag color="blue">{task.taskCatalogName}</Tag>
-              )}
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <TitleCustom className="!mb-0 text-xl md:text-2xl line-clamp-1">
-                {task.name}
-              </TitleCustom>
-              {task.status === "WAITING_APPROVAL" ? (
-                <Button
-                  type="default"
-                  icon={<FileTextOutlined />}
-                  onClick={openSummaryModal}
-                  className="h-10 px-5 font-semibold rounded-xl border-emerald-500 text-emerald-600 hover:!bg-emerald-50 shrink-0"
-                >
-                  Xem lại bản tổng hợp đã gửi
-                </Button>
-              ) : (
-                !isViewOnly && (
-                  <Button
-                    type="primary"
-                    icon={<CheckCircleOutlined />}
-                    onClick={openSummaryModal}
-                    className="h-10 px-5 font-semibold rounded-xl bg-emerald-600 border-emerald-600 hover:!bg-emerald-700 hover:!border-emerald-700 shrink-0"
-                  >
-                    Hoàn thành & gửi bản tổng hợp
-                  </Button>
-                )
-              )}
-            </div>
-            {task.description && (
-              <div className="mt-2 min-w-0 max-w-full text-sm text-gray-600 break-words [overflow-wrap:anywhere]">
-                {task.description}
-              </div>
-            )}
-            <div className="grid gap-2 mt-3 text-xs text-gray-600 sm:grid-cols-2 lg:grid-cols-5">
-              <span>
-                <strong>{displayStartLabel}:</strong>{" "}
-                {displayStartDate ? formatDate(displayStartDate) : "—"}
-              </span>
-              <span>
-                <strong>Kết thúc thực tế:</strong>{" "}
-                {actualEndDate ? formatDate(actualEndDate) : "Chưa hoàn thành"}
-              </span>
-              <span>
-                <strong>Hoàn thành:</strong>{" "}
-                {task.completedDate ? formatDate(task.completedDate) : "—"}
-              </span>
-            </div>
-            {task.isActivationWarning === true && (
-              <Alert
-                type="warning"
-                showIcon
-                className="mt-3 rounded-xl"
-                message="Công việc đã đến ngày dự kiến kích hoạt nhưng hiện chưa được kích hoạt."
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {(task.cultivationLogbookName || task.cultivationStageName) && (
-        <Card
-          bordered={false}
-          className="border border-green-100 shadow-sm rounded-2xl bg-green-50/40"
-        >
-          <div className="grid gap-3 text-sm sm:grid-cols-2">
-            <div>
-              <Text type="secondary" className="text-xs">
-                Kế hoạch canh tác
-              </Text>
-              <div className="mt-1 font-semibold text-gray-800">
-                {task.cultivationLogbookName || "—"}
-              </div>
-            </div>
-            <div>
-              <Text type="secondary" className="text-xs">
-                Giai đoạn
-              </Text>
-              <div className="mt-1 font-semibold text-gray-800">
-                {task.cultivationStageName || "—"}
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {task.status === "WAITING_APPROVAL" && (
-        <Alert
-          type="info"
-          message="Đã gửi bản tổng hợp cho giám sát viên biên soạn."
-          className="rounded-xl"
-        />
-      )}
+      <DailyLogTaskHeader
+        task={task}
+        statusCfg={statusCfg}
+        isViewOnly={isViewOnly}
+        displayStartDate={displayStartDate}
+        displayStartLabel={displayStartLabel}
+        actualEndDate={actualEndDate}
+        onBack={() => navigate(ROUTER.FL_TASKS)}
+        onOpenSummaryModal={openSummaryModal}
+      />
 
       <Row gutter={24}>
         <Col xs={24} lg={14}>
@@ -1841,846 +1659,38 @@ const DailyLog = () => {
 
         <Col xs={24} lg={10}>
           <div className="sticky space-y-4 top-20">
-            <Card
-              bordered={false}
-              className="shadow-sm rounded-2xl"
-              bodyStyle={{ padding: "20px" }}
-            >
-              <div className="flex items-center justify-between mb-4 text-base font-bold text-gray-800">
-                <span>Lịch sử ghi chép</span>
-                <Tag color="blue" className="rounded-full">
-                  {dailyLogs.length} bản ghi
-                </Tag>
-              </div>
-
-              {dailyLogs.length === 0 ? (
-                <Empty description="Chưa có bản ghi nào" className="my-8" />
-              ) : (
-                <div className="relative max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                  {dailyLogs.map((log, index) => {
-                    const isLast = index === dailyLogs.length - 1
-                    return (
-                      <div
-                        key={log.id || index}
-                        className="relative flex gap-4"
-                      >
-                        <div className="flex flex-col items-center">
-                          <div className="relative z-10 flex h-3 w-3 flex-shrink-0 rounded-full bg-green-500 mt-1.5" />
-                          {!isLast && (
-                            <div className="flex-1 w-0 my-1 border-l-2 border-gray-200" />
-                          )}
-                        </div>
-                        <div className={`flex-1 ${!isLast ? "pb-5" : "pb-2"}`}>
-                          <div className="flex items-center justify-between mb-1">
-                            <Tag
-                              color="green"
-                              className="m-0 font-medium rounded-full"
-                            >
-                              {formatDate(log.date)}
-                            </Tag>
-                            <span className="text-[11px] text-gray-400">
-                              Cập nhật bởi:{" "}
-                              <span className="font-medium text-gray-600">
-                                {getUserDisplayName(
-                                  log.updatedByName,
-                                  log.updatedBy,
-                                  log.createdByName,
-                                  log.createdBy,
-                                  log.recordedByName,
-                                  log.recordedBy,
-                                  log.user,
-                                  log.author,
-                                  log.performedByName,
-                                  log.performedBy,
-                                )}
-                              </span>
-                            </span>
-                          </div>
-                          {log.description && (
-                            <p className="min-w-0 max-w-full text-sm m-0 mt-1.5 text-gray-700 font-medium leading-relaxed break-words [overflow-wrap:anywhere]">
-                              {log.description}
-                            </p>
-                          )}
-
-                          {getHarvestQuantity(log) !== null && (
-                            <div className="mt-2 bg-emerald-50/70 rounded-xl p-2.5 border border-emerald-100/80 space-y-1">
-                              <div className="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
-                                <InboxOutlined className="text-emerald-600" />
-                                Đã thu hoạch:
-                              </div>
-                              <div className="text-xs text-gray-700 flex flex-wrap items-center gap-x-1.5 pl-1.5">
-                                <span className="font-bold text-emerald-700">
-                                  {getHarvestQuantity(log)} {HARVEST_UNIT}
-                                </span>
-                                {Number(log.executedArea || 0) > 0 && (
-                                  <span className="text-gray-500 text-[11px]">
-                                    ({log.executedArea}{" "}
-                                    {formatAreaUnit(
-                                      MEASUREMENT_UNITS.SQUARE_METER,
-                                    )}
-                                    )
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Phân bón */}
-                          {log.fertilizers?.length > 0 && (
-                            <div className="mt-2 bg-blue-50/60 rounded-xl p-2.5 border border-blue-100/80 space-y-1">
-                              <div className="text-[11px] font-bold text-blue-800 flex items-center gap-1">
-                                <ExperimentOutlined className="text-blue-600" />
-                                Phân bón đã sử dụng:
-                              </div>
-                              {log.fertilizers.map((f, i) => {
-                                const name =
-                                  f.name || f.materialName || "Phân bón"
-                                const qty = f.quantity
-                                const unit = getQuantityUnit(
-                                  f.quantityUnit || f.unit,
-                                  "",
-                                )
-                                const area = f.area
-                                const areaUnit = formatAreaUnit(
-                                  MEASUREMENT_UNITS.SQUARE_METER,
-                                )
-
-                                return (
-                                  <div
-                                    key={i}
-                                    className="text-xs text-gray-700 flex flex-wrap items-center gap-x-1.5 pl-1.5"
-                                  >
-                                    <span>
-                                      •{" "}
-                                      <span className="font-semibold text-gray-800">
-                                        {name}
-                                      </span>
-                                      :
-                                    </span>
-                                    <span className="font-bold text-blue-700">
-                                      {qty} {unit}
-                                    </span>
-                                    {area > 0 && (
-                                      <span className="text-gray-500 text-[11px]">
-                                        ({area} {areaUnit})
-                                      </span>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )}
-
-                          {/* Nông dược */}
-                          {log.pesticides?.length > 0 && (
-                            <div className="mt-2 bg-purple-50/60 rounded-xl p-2.5 border border-purple-100/80 space-y-1">
-                              <div className="text-[11px] font-bold text-purple-800 flex items-center gap-1">
-                                <ExperimentOutlined className="text-purple-600" />
-                                Nông dược đã sử dụng:
-                              </div>
-                              {log.pesticides.map((p, i) => {
-                                const name =
-                                  p.name || p.materialName || "Nông dược"
-                                const qty = p.quantity
-                                const unit = getQuantityUnit(
-                                  p.quantityUnit || p.unit,
-                                  "",
-                                )
-                                const area = p.area
-                                const areaUnit = formatAreaUnit(
-                                  MEASUREMENT_UNITS.SQUARE_METER,
-                                )
-
-                                return (
-                                  <div
-                                    key={i}
-                                    className="text-xs text-gray-700 flex flex-wrap items-center gap-x-1.5 pl-1.5"
-                                  >
-                                    <span>
-                                      •{" "}
-                                      <span className="font-semibold text-gray-800">
-                                        {name}
-                                      </span>
-                                      :
-                                    </span>
-                                    <span className="font-bold text-purple-700">
-                                      {qty} {unit}
-                                    </span>
-                                    {area > 0 && (
-                                      <span className="text-gray-500 text-[11px]">
-                                        ({area} {areaUnit})
-                                      </span>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          )}
-
-                          {/* Ảnh minh chứng */}
-                          {log.images?.length > 0 && (
-                            <Image.PreviewGroup
-                              items={log.images
-                                .map(img =>
-                                  typeof img === "string"
-                                    ? img
-                                    : (img.url ?? null),
-                                )
-                                .filter(Boolean)}
-                            >
-                              <div className="flex flex-wrap gap-1.5 mt-2.5">
-                                {log.images.map((img, i) => {
-                                  const src =
-                                    typeof img === "string"
-                                      ? img
-                                      : (img.url ?? null)
-                                  return (
-                                    <div
-                                      key={i}
-                                      className="w-14 h-14 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden cursor-pointer hover:border-green-400 hover:shadow-md transition-all duration-200 [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
-                                    >
-                                      <Image
-                                        src={src}
-                                        alt={`Ảnh ${i + 1}`}
-                                        preview={{
-                                          src,
-                                          mask: (
-                                            <div className="flex items-center justify-center text-[10px] text-white">
-                                              <EyeOutlined />
-                                            </div>
-                                          ),
-                                        }}
-                                      />
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </Image.PreviewGroup>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </Card>
+            <DailyLogHistoryList dailyLogs={dailyLogs} />
           </div>
         </Col>
       </Row>
 
-      <Modal
+      <MaterialUsageModal
         open={usageModal.open}
-        title={
-          usageModal.item ? "Sửa vật tư đã sử dụng" : "Thêm vật tư đã sử dụng"
-        }
+        item={usageModal.item}
         onCancel={closeUsageModal}
-        onOk={saveUsage}
-        okText="Lưu"
-        cancelText="Hủy"
-      >
-        <Form form={usageForm} layout="vertical">
-          <Form.Item
-            name="materialType"
-            label="Loại vật tư"
-            rules={[{ required: true, message: "Chọn loại vật tư" }]}
-          >
-            <Select
-              options={[
-                { value: "FERTILIZER", label: "Phân bón" },
-                { value: "PESTICIDE", label: "Nông dược" },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item
-            noStyle
-            shouldUpdate={(previous, current) =>
-              previous.materialType !== current.materialType
-            }
-          >
-            {({ getFieldValue }) => {
-              const options =
-                getFieldValue("materialType") === "PESTICIDE"
-                  ? pesticideOptions
-                  : fertilizerOptions
-              return (
-                <Form.Item
-                  name="materialId"
-                  label="Vật tư"
-                  rules={[{ required: true, message: "Chọn vật tư" }]}
-                >
-                  <Select
-                    showSearch
-                    optionFilterProp="label"
-                    options={options.map(option => ({
-                      value: option.materialId,
-                      label: option.label,
-                    }))}
-                  />
-                </Form.Item>
-              )
-            }}
-          </Form.Item>
-          <div className="grid grid-cols-2 gap-3">
-            <Form.Item
-              name="quantity"
-              label="Số lượng"
-              rules={[
-                { required: true },
-                {
-                  type: "number",
-                  min: 0.0001,
-                  message: "Số lượng phải lớn hơn 0",
-                },
-              ]}
-            >
-              <InputNumber className="w-full" min={0} />
-            </Form.Item>
-            <Form.Item
-              name="appliedArea"
-              label="Diện tích (m²)"
-              rules={[
-                { required: true },
-                {
-                  type: "number",
-                  min: 0.0001,
-                  message: "Diện tích phải lớn hơn 0",
-                },
-              ]}
-            >
-              <InputNumber className="w-full" min={0} />
-            </Form.Item>
-          </div>
-          <Form.Item
-            name="usedAt"
-            label="Thời gian sử dụng"
-            rules={[{ required: true, message: "Chọn thời gian sử dụng" }]}
-          >
-            <DatePicker showTime className="w-full" format="DD/MM/YYYY HH:mm" />
-          </Form.Item>
-          <Form.Item name="note" label="Ghi chú">
-            <Input.TextArea rows={3} />
-          </Form.Item>
-        </Form>
-      </Modal>
+        onSave={saveUsage}
+        form={usageForm}
+        fertilizerOptions={fertilizerOptions}
+        pesticideOptions={pesticideOptions}
+      />
 
-      <Modal
+      <TaskSummaryModal
         open={submitModal}
         onCancel={() => {
           setSubmitModal(false)
           summaryForm.resetFields()
         }}
-        title={
-          <div className="flex items-center gap-2 text-green-700">
-            {task.status === "WAITING_APPROVAL" ? (
-              <FileTextOutlined />
-            ) : (
-              <SendOutlined />
-            )}
-            {task.status === "WAITING_APPROVAL"
-              ? "Bản tổng hợp đã gửi"
-              : "Tạo bản tổng hợp & gửi báo cáo hoàn thành"}
-          </div>
-        }
-        onOk={
-          task.status === "WAITING_APPROVAL"
-            ? () => setSubmitModal(false)
-            : handleSubmitSummary
-        }
-        okText={
-          task.status === "WAITING_APPROVAL" ? "Đóng" : "Xác nhận gửi báo cáo"
-        }
-        cancelText="Hủy"
-        confirmLoading={submitting}
-        okButtonProps={{
-          className:
-            task.status === "WAITING_APPROVAL"
-              ? ""
-              : "bg-green-600 border-green-600",
-          disabled: summaryLoading,
-        }}
-        width={780}
-      >
-        <Spin spinning={summaryLoading} tip="Đang tải tổng hợp...">
-          <div className="py-1 space-y-5 text-sm">
-            {/* ── Thống kê thời gian thực tế ── */}
-            {(() => {
-              const startDate = task?.workStartDate
-              const endDate = actualEndDate
-              const formattedStartDate = startDate
-                ? formatDate(startDate)
-                : "—"
-              const formattedEndDate = endDate
-                ? formatDate(endDate)
-                : "Chưa hoàn thành"
-
-              return (
-                <div className="p-4 border border-green-100 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50/40">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 font-semibold text-green-800">
-                      <FileTextOutlined />
-                      Thời gian thực hiện thực tế
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 border shadow-sm bg-white/80 rounded-xl border-green-200/60">
-                    <CalendarOutlined className="text-2xl text-green-600 shrink-0" />
-                    <div>
-                      <div className="text-xs font-medium text-gray-500">
-                        Thời gian thực tế (Ngày bắt đầu ➔ Ngày kết thúc)
-                      </div>
-                      <div className="text-base font-bold text-gray-800 tracking-wide mt-0.5">
-                        <span className="text-green-700">
-                          {formattedStartDate}
-                        </span>
-                        <span className="mx-2 text-gray-400">➔</span>
-                        <span className="text-emerald-700">
-                          {formattedEndDate}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })()}
-
-            {isHarvestTask &&
-              (() => {
-                const harvestRows = dailyLogs
-                  .map((log, index) => ({
-                    key: log.id || `harvest-${index}`,
-                    date: log.date,
-                    quantity: getHarvestQuantity(log),
-                    area: Number(log.executedArea || 0),
-                  }))
-                  .filter(row => row.quantity !== null || row.area > 0)
-
-                const totalQuantity = harvestRows.reduce(
-                  (total, row) => total + Number(row.quantity || 0),
-                  0,
-                )
-                const totalArea = harvestRows.reduce(
-                  (total, row) => total + row.area,
-                  0,
-                )
-
-                if (harvestRows.length === 0) return null
-
-                return (
-                  <div>
-                    <div className="flex items-center gap-2 mb-2 font-semibold text-emerald-800">
-                      <InboxOutlined className="text-emerald-600" />
-                      Tổng hợp thu hoạch
-                    </div>
-                    <Table
-                      columns={[
-                        {
-                          title: "Ngày",
-                          dataIndex: "date",
-                          key: "date",
-                          render: (value, record) =>
-                            record.key === "harvest-total" ? (
-                              <span className="font-bold">Tổng hợp</span>
-                            ) : value ? (
-                              formatDate(value)
-                            ) : (
-                              "—"
-                            ),
-                        },
-                        {
-                          title: "Số lượng thu hoạch",
-                          dataIndex: "quantity",
-                          key: "quantity",
-                          align: "right",
-                          render: value => (
-                            <span className="font-semibold text-emerald-700">
-                              {value ?? "—"} {value != null ? HARVEST_UNIT : ""}
-                            </span>
-                          ),
-                        },
-                        {
-                          title: "Diện tích",
-                          dataIndex: "area",
-                          key: "area",
-                          align: "right",
-                          render: value => (
-                            <span className="font-semibold text-gray-700">
-                              {value > 0
-                                ? `${value} ${formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)}`
-                                : "—"}
-                            </span>
-                          ),
-                        },
-                      ]}
-                      dataSource={[
-                        ...harvestRows,
-                        {
-                          key: "harvest-total",
-                          date: "Tổng hợp",
-                          quantity: totalQuantity,
-                          area: totalArea,
-                        },
-                      ]}
-                      rowClassName={record =>
-                        record.key === "harvest-total"
-                          ? "font-bold bg-emerald-50"
-                          : ""
-                      }
-                      size="small"
-                      pagination={false}
-                      className="overflow-hidden border border-emerald-100 rounded-xl"
-                    />
-                  </div>
-                )
-              })()}
-
-            {/* ── Bảng phân bón ── */}
-            {(() => {
-              // Ưu tiên BE data; fallback về aggregation từ local dailyLogs
-              const rows =
-                leaderSummary?.fertilizers?.length > 0
-                  ? leaderSummary.fertilizers.map((f, i) => ({
-                      key: i,
-                      name:
-                        f.name ||
-                        f.fertilizerName ||
-                        f.materialName ||
-                        `Phân ${i + 1}`,
-                      totalQuantity: f.totalQuantity ?? f.quantity ?? 0,
-                      unit: f.unit ?? "",
-                      totalArea: f.totalArea ?? f.area ?? 0,
-                      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-                      recommendation: f.recommendationText,
-                      days: f.days ?? "—",
-                    }))
-                  : aggregateFromLogs.fertilizers.map((f, i) => ({
-                      key: i,
-                      name: f.name,
-                      totalQuantity: f.totalQuantity,
-                      unit: f.unit,
-                      totalArea: f.totalArea,
-                      areaUnit: f.areaUnit,
-                      recommendation: f.recommendationText,
-                      days: f.days,
-                    }))
-
-              if (!rows.some(row => Number(row.totalQuantity) > 0)) return null
-
-              const cols = [
-                {
-                  title: "Loại phân bón",
-                  dataIndex: "name",
-                  key: "name",
-                  render: v => (
-                    <span className="font-medium text-gray-800">{v}</span>
-                  ),
-                },
-                {
-                  title: "Tổng lượng",
-                  key: "qty",
-                  align: "right",
-                  render: (_, r) => (
-                    <span className="font-semibold text-blue-700">
-                      {r.totalQuantity}{" "}
-                      <span className="font-normal text-gray-500">
-                        {r.unit}
-                      </span>
-                    </span>
-                  ),
-                },
-                {
-                  title: "Diện tích",
-                  key: "area",
-                  align: "right",
-                  render: (_, r) =>
-                    r.totalArea > 0 ? (
-                      <span>
-                        {r.totalArea}{" "}
-                        <span className="text-gray-500">
-                          {formatAreaUnit(r.areaUnit)}
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="text-gray-300">—</span>
-                    ),
-                },
-              ]
-
-              return (
-                <div>
-                  <div className="flex items-center gap-2 mb-2 font-semibold text-blue-800">
-                    <ExperimentOutlined className="text-blue-500" />
-                    Phân bón đã sử dụng
-                    {rows.length === 0 && (
-                      <span className="text-xs font-normal text-gray-400">
-                        (chưa có dữ liệu)
-                      </span>
-                    )}
-                  </div>
-                  <Table
-                    columns={cols}
-                    dataSource={rows}
-                    size="small"
-                    pagination={false}
-                    scroll={rows.length > 3 ? { y: 180 } : undefined}
-                    locale={{
-                      emptyText: (
-                        <div className="py-2 text-xs text-center text-gray-400">
-                          Chưa ghi nhận phân bón nào
-                        </div>
-                      ),
-                    }}
-                    className="overflow-hidden border border-blue-100 rounded-xl"
-                    rowClassName="hover:bg-blue-50/50"
-                  />
-                  {rows.some(row => row.recommendation) && (
-                    <Alert
-                      type="warning"
-                      className="mt-3 rounded-xl"
-                      message="Khuyến nghị lượng sử dụng phân bón"
-                      description={
-                        <div className="space-y-1">
-                          {rows
-                            .filter(row => row.recommendation)
-                            .map(row => (
-                              <div key={row.key}>
-                                {row.name}: nên dùng {row.recommendation}
-                              </div>
-                            ))}
-                        </div>
-                      }
-                    />
-                  )}
-                </div>
-              )
-            })()}
-
-            {/* ── Bảng nông dược ── */}
-            {(() => {
-              const rows =
-                leaderSummary?.pesticides?.length > 0
-                  ? leaderSummary.pesticides.map((p, i) => ({
-                      key: i,
-                      name:
-                        p.name ||
-                        p.pesticideName ||
-                        p.materialName ||
-                        `Nông dược ${i + 1}`,
-                      totalQuantity: p.totalQuantity ?? p.quantity ?? 0,
-                      unit: p.unit ?? "",
-                      totalArea: p.totalArea ?? p.area ?? 0,
-                      areaUnit: MEASUREMENT_UNITS.SQUARE_METER,
-                      recommendation: p.recommendationText,
-                      days: p.days ?? "—",
-                    }))
-                  : aggregateFromLogs.pesticides.map((p, i) => ({
-                      key: i,
-                      name: p.name,
-                      totalQuantity: p.totalQuantity,
-                      unit: p.unit,
-                      totalArea: p.totalArea,
-                      areaUnit: p.areaUnit,
-                      recommendation: p.recommendationText,
-                      days: p.days,
-                    }))
-
-              if (!rows.some(row => Number(row.totalQuantity) > 0)) return null
-
-              const cols = [
-                {
-                  title: "Loại nông dược",
-                  dataIndex: "name",
-                  key: "name",
-                  render: v => (
-                    <span className="font-medium text-gray-800">{v}</span>
-                  ),
-                },
-                {
-                  title: "Tổng lượng",
-                  key: "qty",
-                  align: "right",
-                  render: (_, r) => (
-                    <span className="font-semibold text-purple-700">
-                      {r.totalQuantity}{" "}
-                      <span className="font-normal text-gray-500">
-                        {r.unit}
-                      </span>
-                    </span>
-                  ),
-                },
-                {
-                  title: "Diện tích",
-                  key: "area",
-                  align: "right",
-                  render: (_, r) =>
-                    r.totalArea > 0 ? (
-                      <span>
-                        {r.totalArea}{" "}
-                        <span className="text-gray-500">
-                          {formatAreaUnit(r.areaUnit)}
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="text-gray-300">—</span>
-                    ),
-                },
-              ]
-
-              return (
-                <div>
-                  <div className="flex items-center gap-2 mb-2 font-semibold text-purple-800">
-                    <ExperimentOutlined className="text-purple-500" />
-                    Nông dược đã sử dụng
-                    {rows.length === 0 && (
-                      <span className="text-xs font-normal text-gray-400">
-                        (chưa có dữ liệu)
-                      </span>
-                    )}
-                  </div>
-                  <Table
-                    columns={cols}
-                    dataSource={rows}
-                    size="small"
-                    pagination={false}
-                    scroll={rows.length > 3 ? { y: 160 } : undefined}
-                    locale={{
-                      emptyText: (
-                        <div className="py-2 text-xs text-center text-gray-400">
-                          Chưa ghi nhận nông dược nào
-                        </div>
-                      ),
-                    }}
-                    className="overflow-hidden border border-purple-100 rounded-xl"
-                    rowClassName="hover:bg-purple-50/50"
-                  />
-                  {rows.some(row => row.recommendation) && (
-                    <Alert
-                      type="warning"
-                      className="mt-3 rounded-xl"
-                      message="Khuyến nghị lượng sử dụng nông dược"
-                      description={
-                        <div className="space-y-1">
-                          {rows
-                            .filter(row => row.recommendation)
-                            .map(row => (
-                              <div key={row.key}>
-                                {row.name}: nên dùng {row.recommendation}
-                              </div>
-                            ))}
-                        </div>
-                      }
-                    />
-                  )}
-                </div>
-              )
-            })()}
-
-            {/* ── Ảnh minh chứng tổng hợp ── */}
-            {(() => {
-              const rawImages =
-                leaderSummary?.images?.length > 0
-                  ? leaderSummary.images
-                  : dailyLogs.flatMap(log => log.images || [])
-
-              const summaryImages = rawImages
-                .map(img =>
-                  typeof img === "string"
-                    ? img
-                    : img?.imageUrl || img?.url || img?.fileUrl,
-                )
-                .filter(Boolean)
-
-              if (summaryImages.length === 0) return null
-
-              return (
-                <div>
-                  <div className="flex items-center gap-2 mb-2 font-semibold text-orange-700">
-                    <PictureOutlined />
-                    Ảnh minh chứng tổng hợp ({summaryImages.length} ảnh)
-                  </div>
-                  {summaryImages.length > 0 ? (
-                    <Image.PreviewGroup>
-                      <div className="flex flex-wrap gap-2">
-                        {summaryImages.map((src, i) => (
-                          <Tooltip key={i} title={`Ảnh ${i + 1}`}>
-                            <div className="w-16 h-16 overflow-hidden transition-all border border-orange-200 cursor-pointer rounded-xl hover:border-orange-400 hover:shadow-md">
-                              <Image
-                                src={src}
-                                alt={`Ảnh ${i + 1}`}
-                                width="100%"
-                                height="100%"
-                                style={{
-                                  objectFit: "cover",
-                                  width: "100%",
-                                  height: "100%",
-                                }}
-                              />
-                            </div>
-                          </Tooltip>
-                        ))}
-                      </div>
-                    </Image.PreviewGroup>
-                  ) : (
-                    <div className="py-2.5 px-3 bg-gray-50/80 rounded-xl border border-dashed border-gray-200 text-xs text-gray-400 text-center">
-                      Chưa có ảnh minh chứng nào từ nhật ký hàng ngày
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
-
-            <Divider className="!my-2" />
-
-            {/* ── Form mô tả tổng kết ── */}
-            <Form form={summaryForm} layout="vertical">
-              <Form.Item
-                name="descriptionSummary"
-                label={
-                  <span className="font-semibold">
-                    Mô tả tổng kết công việc{" "}
-                    {task.status !== "WAITING_APPROVAL" && (
-                      <span className="text-red-500">*</span>
-                    )}
-                  </span>
-                }
-                rules={
-                  task.status !== "WAITING_APPROVAL"
-                    ? [
-                        {
-                          required: true,
-                          message: "Vui lòng viết mô tả tổng kết",
-                        },
-                        {
-                          validator: (_, value) => {
-                            const text =
-                              typeof value === "string" ? value.trim() : ""
-                            if (!text)
-                              return Promise.reject(
-                                new Error(
-                                  "Mô tả tổng kết không được để trống hoặc chỉ chứa khoảng trắng.",
-                                ),
-                              )
-                            if (text.length > 200)
-                              return Promise.reject(
-                                new Error(
-                                  "Mô tả tổng kết không được vượt quá 200 ký tự.",
-                                ),
-                              )
-                            return Promise.resolve()
-                          },
-                        },
-                      ]
-                    : []
-                }
-              >
-                <TextArea
-                  rows={3}
-                  placeholder="VD: Đã hoàn thành công việc phun nông dược theo kế hoạch, cây trồng phát triển tốt…"
-                  disabled={task.status === "WAITING_APPROVAL"}
-                />
-              </Form.Item>
-            </Form>
-          </div>
-        </Spin>
-      </Modal>
+        task={task}
+        dailyLogs={dailyLogs}
+        actualEndDate={actualEndDate}
+        isHarvestTask={isHarvestTask}
+        leaderSummary={leaderSummary}
+        aggregateFromLogs={aggregateFromLogs}
+        summaryForm={summaryForm}
+        summaryLoading={summaryLoading}
+        submitting={submitting}
+        onSubmit={handleSubmitSummary}
+      />
     </div>
   )
 }
