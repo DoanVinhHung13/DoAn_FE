@@ -229,12 +229,14 @@ const SwapTaskModal = ({
                   <Text className="text-xs font-bold text-gray-800 block truncate">
                     {task?.name || task?.taskName}
                   </Text>
-                  <Text type="secondary" className="text-[11px] block mt-0.5">
-                    Sẽ chuyển sang vị trí:{" "}
-                    <span className="font-bold text-green-700">
-                      #{getTaskOrder(targetTask, targetTaskIndex + 1)}
-                    </span>
-                  </Text>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Tag
+                      color={currentTaskCfg.color || "default"}
+                      className="text-[10px] rounded m-0 px-1 py-0"
+                    >
+                      {currentTaskCfg.label || task?.status}
+                    </Tag>
+                  </div>
                 </div>
               </Col>
 
