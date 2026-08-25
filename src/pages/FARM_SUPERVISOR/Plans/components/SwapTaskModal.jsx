@@ -58,6 +58,8 @@ const SwapTaskModal = ({
     }
   }, [open, task, form])
 
+  const ALLOWED_SWAP_STATUSES = ["PENDING", "ASSIGNED"]
+
   // Resolve target task from targetTaskId
   const { targetTask, targetTaskIndex } = useMemo(() => {
     if (!targetTaskId) {
@@ -70,7 +72,11 @@ const SwapTaskModal = ({
     }
   }, [targetTaskId, stageTasks])
 
-  const isValidSwap = Boolean(targetTask && targetTask.id !== task?.id)
+  const isValidSwap = Boolean(
+    targetTask &&
+      targetTask.id !== task?.id &&
+      ALLOWED_SWAP_STATUSES.includes(targetTask?.status),
+  )
 
   const handleSelectTask = value => {
     setTargetTaskId(value || null)
@@ -108,7 +114,9 @@ const SwapTaskModal = ({
 
   const availableTaskOptions = useMemo(() => {
     return stageTasks
-      .filter(t => t.id !== task?.id)
+      .filter(
+        t => t.id !== task?.id && ALLOWED_SWAP_STATUSES.includes(t.status),
+      )
       .map(t => {
         const idx = stageTasks.findIndex(item => item.id === t.id)
         const order = getTaskOrder(t, idx + 1)
@@ -202,7 +210,7 @@ const SwapTaskModal = ({
               onChange={handleSelectTask}
               optionFilterProp="label"
               className="w-full rounded-xl"
-              notFoundContent="Không có công việc khác trong giai đoạn"
+              notFoundContent="Không có công việc nào ở trạng thái Chờ thực hiện hoặc Đã phân công"
               size="middle"
             />
           </Form.Item>

@@ -147,7 +147,7 @@ const TaskCard = ({
 
   const isPending = task.status === "PENDING"
   const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
-  const canSwap = task.status === "PENDING"
+  const canSwap = ["PENDING", "ASSIGNED"].includes(task.status)
   const startDate = task.workStartDate || task.plannedStartDate
   const startLabel = task.workStartDate ? "Ngày bắt đầu:" : "Dự kiến:"
   const hasActualDates = task.workEndDate || task.completedDate
@@ -155,7 +155,7 @@ const TaskCard = ({
   const supportMembers = (task.assignments || []).filter(f => !f.isLeader)
 
   const menuItems = [
-    ...(isPending
+    ...(canSwap
       ? [
           {
             key: "swap",
@@ -203,19 +203,19 @@ const TaskCard = ({
         <Flex align="center" gap={8} className="flex-1 min-w-0">
           <Tooltip
             title={
-              isPending
+              canSwap
                 ? "Nhấp để đổi vị trí thứ tự công việc"
                 : "Thứ tự công việc"
             }
           >
             <div
               className={`flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-2 py-1 shadow-2xs flex-shrink-0 min-w-[32px] ${
-                isPending
+                canSwap
                   ? "cursor-pointer hover:bg-green-100 hover:border-green-400 transition-all"
                   : ""
               }`}
               onClick={
-                isPending
+                canSwap
                   ? e => {
                       e.stopPropagation()
                       onSwap?.(task, taskIndex)
