@@ -100,7 +100,6 @@ const SwapTaskModal = ({
         taskIds: [task.id, targetTask.id],
       }
       await CultivationTaskService.reorder(payload)
-      message.success("Đổi vị trí thứ tự công việc thành công!")
       onSuccess?.()
     } catch {
       // Axios interceptor handles and displays backend error
