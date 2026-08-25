@@ -365,16 +365,6 @@ const BatchDetail = () => {
                     Chưa đủ điều kiện tạo QR
                   </Button>
                 )}
-
-                <Button
-                  size="large"
-                  block
-                  icon={<ArrowLeftOutlined />}
-                  onClick={() => navigate(ROUTER.FM_HARVEST_BATCHES)}
-                  className="h-11 rounded-lg"
-                >
-                  Quay lại danh sách
-                </Button>
               </div>
             </div>
           </Card>

@@ -1,285 +1,115 @@
-import React, { useState, useRef, useEffect, useCallback } from "react"
+import { ArrowLeftOutlined, QrcodeOutlined } from "@ant-design/icons"
+import { Button, Card, Col, Form, Modal, Row, Typography, message } from "antd"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  Row,
-  Checkbox,
-  Typography,
-  message,
-  Tag,
-  DatePicker,
-  Modal,
-  Timeline,
-  Image,
-  Descriptions,
-  Space,
-  Empty,
-} from "antd"
-import {
-  QrcodeOutlined,
-  DownloadOutlined,
-  PrinterOutlined,
-  CopyOutlined,
-  SafetyOutlined,
-  EyeOutlined,
-  ArrowLeftOutlined,
-  CheckCircleOutlined,
-  EnvironmentOutlined,
-  CalendarOutlined,
-  ExperimentOutlined,
-} from "@ant-design/icons"
-import { formatAreaUnit } from "src/constants/measurementUnits"
-import { QRCodeSVG } from "qrcode.react"
-import { Sprout } from "lucide-react"
 
 import TitleCustom from "src/components/TitleCustom"
-import QrCodeService from "src/services/QrCodeService"
-import { formatDate, parseDate } from "src/utils/dateFormatters"
-import HarvestBatchService from "src/services/HarvestBatchService"
 import ROUTER from "src/router/ROUTER"
-import { TraceView } from "src/pages/ANONYMOUS/Trace"
+import HarvestBatchService from "src/services/HarvestBatchService"
+import QrCodeService from "src/services/QrCodeService"
+import { parseDate } from "src/utils/dateFormatters"
 
-const { Text, Paragraph } = Typography
+import BatchInfoFormCard from "./components/BatchInfoFormCard"
+import DisplayOptionsCard from "./components/DisplayOptionsCard"
+import QrPreviewModal from "./components/QrPreviewModal"
+import QrResultCard from "./components/QrResultCard"
+import {
+  downloadQrAsPng,
+  getPublicTraceUrl,
+  printQrCode,
+  unwrap,
+} from "./components/qrHelpers"
+
+const { Paragraph } = Typography
 
 const QRManagement = () => {
+  // ── 1. Declarations & States ──────────────────────────────────────────────
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [form] = Form.useForm()
   const qrContainerRef = useRef(null)
 
-  const [previewData, setPreviewData] = useState(null)
-  const [qrData, setQrData] = useState(null)
-  const [previewModalOpen, setPreviewModalOpen] = useState(false)
-
-  const [previewPending, setPreviewPending] = useState(false)
-  const [createPending, setCreatePending] = useState(false)
-
   const batchIdFromUrl = searchParams.get("batchId")
-
   const selectedBatchId = Form.useWatch("harvestBatchId", form)
   const showDailyLog = Form.useWatch("showDailyLog", form)
   const showMaterials = Form.useWatch("showMaterials", form)
   const showPhotos = Form.useWatch("showPhotos", form)
 
-  const [harvestBatches, setHarvestBatches] = useState([])
   const [batchDetail, setBatchDetail] = useState(null)
-  const [existingQRData, setExistingQRData] = useState(null)
+  const [qrData, setQrData] = useState(null)
+  const [previewData, setPreviewData] = useState(null)
 
-  useEffect(() => {
-    HarvestBatchService.getHarvestBatches()
-      .then(response => {
-        const list =
-          response?.data?.data?.items ||
-          response?.data?.data ||
-          response?.data?.items ||
-          response?.data ||
-          []
-        setHarvestBatches(Array.isArray(list) ? list : [])
-      })
-      .catch(() => setHarvestBatches([]))
-  }, [])
+  const [previewModalOpen, setPreviewModalOpen] = useState(false)
+  const [previewPending, setPreviewPending] = useState(false)
+  const [createPending, setCreatePending] = useState(false)
 
-  useEffect(() => {
-    if (batchIdFromUrl) {
-      form.setFieldsValue({
-        harvestBatchId: String(batchIdFromUrl),
-      })
-    } else if (harvestBatches.length > 0 && !selectedBatchId) {
-      form.setFieldsValue({
-        harvestBatchId: String(harvestBatches[0].id),
-      })
-    }
-  }, [batchIdFromUrl, harvestBatches, form, selectedBatchId])
+  // ── 2. Functions & Handlers ───────────────────────────────────────────────
+  const fetchBatchDetail = useCallback(
+    async batchId => {
+      if (!batchId) {
+        setBatchDetail(null)
+        setQrData(null)
+        return
+      }
+      try {
+        const response = await HarvestBatchService.getHarvestBatchById(batchId)
+        const detail = unwrap(response)
+        setBatchDetail(detail)
 
-  useEffect(() => {
-    if (!selectedBatchId) {
-      setBatchDetail(null)
-      return
-    }
-    HarvestBatchService.getHarvestBatchById(selectedBatchId)
-      .then(response => {
-        setBatchDetail(response?.data?.data || response?.data || response)
-      })
-      .catch(() => setBatchDetail(null))
-  }, [selectedBatchId])
-
-  useEffect(() => {
-    if (batchDetail) {
-      form.setFieldsValue({
-        batchCode: batchDetail.batchCode || "",
-        cropName: batchDetail.cropName || batchDetail.cropType || "",
-        startDate: batchDetail.startDate
-          ? parseDate(batchDetail.startDate)
-          : null,
-        harvestDate: batchDetail.harvestDate
-          ? parseDate(batchDetail.harvestDate)
-          : null,
-      })
-    }
-  }, [batchDetail, form])
-
-  useEffect(() => {
-    if (!selectedBatchId || !batchDetail?.hasActiveQrCode) {
-      setExistingQRData(null)
-      return
-    }
-    QrCodeService.getQrCodes({ BatchId: selectedBatchId, PageSize: 1 })
-      .then(response => {
-        const list = response?.data?.items || response?.data?.data?.items || []
-        setExistingQRData(list[0] || null)
-      })
-      .catch(() => setExistingQRData(null))
-  }, [selectedBatchId, batchDetail?.hasActiveQrCode])
-
-  useEffect(() => {
-    setQrData(null)
-    setPreviewData(null)
-  }, [selectedBatchId])
-
-  useEffect(() => {
-    if (batchDetail && String(batchDetail.id) === String(selectedBatchId)) {
-      if (batchDetail.hasActiveQrCode) {
-        setQrData({
-          ...existingQRData,
-          traceCode:
-            batchDetail.activeTraceCode ||
-            existingQRData?.traceCode ||
-            existingQRData?.code ||
-            `QR-${batchDetail.batchCode}`,
-          harvestBatchId: selectedBatchId,
-          isExisting: true,
+        // Populate Form
+        form.setFieldsValue({
+          harvestBatchId: String(detail.id),
+          batchCode: detail.batchCode || "",
+          cropName: detail.cropName || detail.cropType || "",
+          startDate: detail.startDate ? parseDate(detail.startDate) : null,
+          harvestDate: detail.harvestDate ? parseDate(detail.harvestDate) : null,
         })
-      } else {
+
+        // Check if batch already has active QR
+        if (detail.hasActiveQrCode) {
+          try {
+            const qrRes = await QrCodeService.getQrCodes({
+              BatchId: batchId,
+              PageSize: 1,
+            })
+            const list = qrRes?.data?.items || qrRes?.data?.data?.items || []
+            const existingQR = list[0] || null
+
+            setQrData({
+              ...existingQR,
+              traceCode:
+                detail.activeTraceCode ||
+                existingQR?.traceCode ||
+                existingQR?.code ||
+                `QR-${detail.batchCode}`,
+              harvestBatchId: batchId,
+              isExisting: true,
+            })
+          } catch {
+            setQrData({
+              traceCode: detail.activeTraceCode || `QR-${detail.batchCode}`,
+              harvestBatchId: batchId,
+              isExisting: true,
+            })
+          }
+        } else {
+          setQrData(null)
+        }
+      } catch {
+        setBatchDetail(null)
         setQrData(null)
       }
-    }
-  }, [batchDetail, existingQRData, selectedBatchId])
+    },
+    [form],
+  )
 
-  const activeBatch = batchDetail ||
-    harvestBatches.find(b => String(b.id) === String(selectedBatchId)) || {
-      batchCode: "LOT-DEMO",
-      cropName: "Nông sản",
-      startDate: "2024-03-01",
-      harvestDate: "2024-05-20",
-      landPlotName: "Vườn A1",
-      area: 2.5,
-    }
-
-  const previewDisplayOptions = previewData?.displayOptions || {
-    showDailyLog: !!showDailyLog,
-    showMaterials: !!showMaterials,
-    showPhotos: !!showPhotos,
-  }
-  const displayOptionsDisabled = Boolean(qrData)
-
-  const previewBatchData = {
-    ...activeBatch,
-    ...(previewData?.traceability || {}),
-    dailyLogs: previewData?.traceability?.dailyLogs ||
-      activeBatch?.dailyLogs ||
-      activeBatch?.logs || [
-        {
-          date: activeBatch?.startDate || "2024-03-12",
-          stage: "Gieo trồng",
-          activity: `Bắt đầu gieo trồng ${activeBatch?.cropName || "nông sản"}`,
-          notes: "Chuẩn bị đất và gieo hạt giống",
-        },
-        {
-          date: parseDate(activeBatch?.startDate || "2024-03-12")
-            .add(20, "day")
-            .format("YYYY-MM-DD"),
-          stage: "Chăm sóc",
-          activity: "Bón phân và tưới nước",
-          notes: "Bón phân NPK theo định kỳ, kiểm tra độ ẩm đất",
-        },
-        {
-          date: parseDate(activeBatch?.startDate || "2024-03-12")
-            .add(45, "day")
-            .format("YYYY-MM-DD"),
-          stage: "Phòng trừ sâu bệnh",
-          activity: "Kiểm tra và phun nông dược sinh học",
-          notes: "Phun nông dược sinh học, an toàn cho sức khỏe",
-        },
-        {
-          date: activeBatch?.harvestDate || "2024-05-20",
-          stage: "Thu hoạch",
-          activity: `Thu hoạch ${activeBatch?.cropName || "nông sản"} đạt tiêu chuẩn`,
-          notes: `Chất lượng đạt yêu cầu, năng suất tốt trên diện tích ${activeBatch?.area || "N/A"} ${formatAreaUnit()}`,
-        },
-      ],
-    materials: previewData?.traceability?.materials ||
-      activeBatch?.materials ||
-      activeBatch?.inputs || [
-        {
-          type: "Phân bón",
-          name: "NPK 20-20-15",
-          quantity: "300 kg",
-          supplier: "Công ty Phân bón Đồng Nai",
-        },
-        {
-          type: "Nông dược",
-          name: "Biotin Plus (Sinh học)",
-          quantity: "5 lít",
-          supplier: "Công ty TNHH Sinh học An Nông",
-        },
-        {
-          type: "Giống cây trồng",
-          name: activeBatch?.cropName || "Giống chuẩn",
-          quantity: "80 kg",
-          supplier: "Trung tâm Giống cây trồng",
-        },
-      ],
-    photos: previewData?.traceability?.photos ||
-      activeBatch?.photos ||
-      activeBatch?.images || [
-        {
-          url: `https://placehold.co/400x300/22c55e/ffffff?text=${encodeURIComponent(activeBatch?.cropName || "Nông sản")}+giai+đoạn+đầu`,
-          caption: `${activeBatch?.cropName || "Nông sản"} giai đoạn sinh trưởng`,
-          date: parseDate(activeBatch?.startDate || "2024-03-12")
-            .add(30, "day")
-            .format("YYYY-MM-DD"),
-        },
-        {
-          url: `https://placehold.co/400x300/facc15/333333?text=Gần+đến+ngày+thu+hoạch`,
-          caption: "Sắp đến ngày thu hoạch",
-          date: parseDate(activeBatch?.harvestDate || "2024-05-20")
-            .subtract(10, "day")
-            .format("YYYY-MM-DD"),
-        },
-        {
-          url: `https://placehold.co/400x300/3b82f6/ffffff?text=Thu+hoạch`,
-          caption: "Ngày thu hoạch",
-          date: activeBatch?.harvestDate || "2024-05-20",
-        },
-      ],
-  }
-
-  const getPublicTraceUrl = code => {
-    if (!code) return ""
-    return `${window.location.origin}/trace/${code}`
-  }
-
-  const currentTraceCode =
-    qrData?.traceCode ||
-    previewData?.traceCode ||
-    (activeBatch?.batchCode ? `TR-${activeBatch.batchCode}` : "TR-PREVIEW")
-  const traceUrl = getPublicTraceUrl(currentTraceCode)
-  const previewTraceCode = previewData?.traceCode || ""
-  const previewTraceUrl =
-    previewData?.qrCodeUrl ||
-    getPublicTraceUrl(previewTraceCode, previewDisplayOptions)
-
-  const handlePreview = useCallback(async () => {
+  const handlePreview = async () => {
     try {
       const values = await form.validateFields(["harvestBatchId"])
       const displayOptions = {
-        showDailyLog: !!form.getFieldValue("showDailyLog"),
-        showMaterials: !!form.getFieldValue("showMaterials"),
-        showPhotos: !!form.getFieldValue("showPhotos"),
+        showDailyLog: !!showDailyLog,
+        showMaterials: !!showMaterials,
+        showPhotos: !!showPhotos,
       }
 
       setPreviewPending(true)
@@ -288,18 +118,17 @@ const QRManagement = () => {
           harvestBatchId: values.harvestBatchId,
           displayOptions,
         })
-        const data = response?.data?.data || response?.data
-        const result = {
+        const data = unwrap(response)
+        setPreviewData({
           ...data,
           traceCode: data?.traceCode,
           qrImageDataUrl: data?.qrImageDataUrl,
           qrCodeUrl: data?.qrCodeUrl,
           traceability: data?.traceability,
-          displayOptions: data?.displayOptions || previewDisplayOptions,
+          displayOptions: data?.displayOptions || displayOptions,
           harvestBatchId: values.harvestBatchId,
           isPreview: true,
-        }
-        setPreviewData(result)
+        })
         setPreviewModalOpen(true)
       } catch {
         setPreviewData(null)
@@ -310,16 +139,15 @@ const QRManagement = () => {
     } catch {
       message.warning("Vui lòng chọn lô thu hoạch trước khi xem preview!")
     }
-  }, [form, previewDisplayOptions])
+  }
 
   const handleCreateQR = async () => {
     try {
       const values = await form.validateFields(["harvestBatchId"])
-
       const displayOptions = {
-        showDailyLog: !!form.getFieldValue("showDailyLog"),
-        showMaterials: !!form.getFieldValue("showMaterials"),
-        showPhotos: !!form.getFieldValue("showPhotos"),
+        showDailyLog: !!showDailyLog,
+        showMaterials: !!showMaterials,
+        showPhotos: !!showPhotos,
       }
 
       const payload = {
@@ -338,7 +166,7 @@ const QRManagement = () => {
         title: "Xác nhận tạo mã QR chính thức",
         content: (
           <div>
-            <p>Bạn có chắc chắn muốn tạo mã QR này?</p>
+            <p>Bạn có chắc chắn muốn tạo mã QR cho lô thu hoạch này?</p>
             {!previewData && (
               <p className="text-orange-500 text-sm mt-1">
                 Lưu ý: Bạn chưa xem trước mã QR. Khuyến nghị xem trước để kiểm
@@ -353,21 +181,15 @@ const QRManagement = () => {
           setCreatePending(true)
           try {
             const response = await QrCodeService.createQrCode(payload)
-            const data = response?.data?.data || response?.data
-            const result = {
+            const data = unwrap(response)
+            setQrData({
               ...data,
-              traceCode:
-                data?.traceCode || payload?.traceCode || currentTraceCode,
+              traceCode: data?.traceCode || payload?.traceCode || currentTraceCode,
               harvestBatchId: selectedBatchId,
               createdAt: new Date().toISOString(),
-            }
-            setQrData(result)
-
-            HarvestBatchService.getHarvestBatchById(selectedBatchId)
-              .then(res => {
-                setBatchDetail(res?.data?.data || res?.data || res)
-              })
-              .catch(() => {})
+            })
+            // Reload batch detail
+            await fetchBatchDetail(selectedBatchId)
           } finally {
             setCreatePending(false)
           }
@@ -380,605 +202,118 @@ const QRManagement = () => {
 
   const handleDownload = () => {
     const svgElement = qrContainerRef.current?.querySelector("svg")
-    if (!svgElement) return
-
-    const svgData = new XMLSerializer().serializeToString(svgElement)
-    const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
-    const img = new window.Image()
-
-    img.onload = () => {
-      canvas.width = img.width + 40
-      canvas.height = img.height + 40
-      if (ctx) {
-        ctx.fillStyle = "#ffffff"
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(img, 20, 20)
-      }
-      const pngFile = canvas.toDataURL("image/png")
-      const downloadLink = document.createElement("a")
-      downloadLink.download = `QR_${activeBatch.batchCode || "LOT"}_${currentTraceCode}.png`
-      downloadLink.href = pngFile
-      downloadLink.click()
-      message.success("Tải xuống mã QR thành công!")
-    }
-
-    img.src =
-      "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)))
+    downloadQrAsPng(svgElement, batchDetail?.batchCode, currentTraceCode)
   }
 
   const handlePrint = () => {
-    const printWindow = window.open("", "", "width=600,height=600")
     const svgElement = qrContainerRef.current?.querySelector("svg")
-    const svgHtml = svgElement ? svgElement.outerHTML : ""
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>In mã QR - ${activeBatch.batchCode || ""}</title>
-          <style>
-            body { text-align: center; padding: 30px; font-family: Arial, sans-serif; }
-            .qr-box { display: inline-block; padding: 20px; border: 2px solid #16a34a; border-radius: 12px; }
-            .title { color: #166534; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
-            .code { font-weight: bold; margin-top: 15px; font-size: 16px; color: #15803d; }
-            .sub { color: #6b7280; font-size: 13px; margin-top: 5px; }
-          </style>
-        </head>
-        <body>
-          <div class="qr-box">
-            <div class="title">Truy Xuất Nguồn Gốc Nông Sản</div>
-            <div>${svgHtml}</div>
-            <div class="code">Mã lô: ${activeBatch.batchCode || "N/A"}</div>
-            <div class="sub">Trace Code: ${currentTraceCode}</div>
-          </div>
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
-    printWindow.print()
+    printQrCode(svgElement, batchDetail?.batchCode, currentTraceCode)
   }
 
-  const handleCopy = () => {
+  const handleCopyLink = () => {
     navigator.clipboard.writeText(traceUrl)
     message.success("Đã sao chép liên kết truy xuất!")
   }
 
+  // ── 3. useEffects ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (batchIdFromUrl) {
+      form.setFieldsValue({ harvestBatchId: String(batchIdFromUrl) })
+      fetchBatchDetail(batchIdFromUrl)
+    }
+  }, [batchIdFromUrl, form, fetchBatchDetail])
+
+  // ── 4. Derived Values & Render ────────────────────────────────────────────
+  const currentTraceCode = useMemo(() => {
+    return (
+      qrData?.traceCode ||
+      previewData?.traceCode ||
+      (batchDetail?.batchCode ? `TR-${batchDetail.batchCode}` : "TR-PREVIEW")
+    )
+  }, [qrData, previewData, batchDetail])
+
+  const traceUrl = useMemo(() => {
+    return getPublicTraceUrl(currentTraceCode)
+  }, [currentTraceCode])
+
+  const previewTraceUrl = useMemo(() => {
+    return previewData?.qrCodeUrl || getPublicTraceUrl(previewData?.traceCode)
+  }, [previewData])
+
+  const displayOptionsDisabled = Boolean(qrData)
+
   return (
-    <>
-      <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate(ROUTER.FM_HARVEST_BATCHES)}
-              className="h-10 rounded-xl"
-            >
-              Quay lại
-            </Button>
-            <TitleCustom className="!mb-0 flex items-center gap-2">
-              <QrcodeOutlined className="text-2xl text-green-600" />
-              Quản lý mã QR
-            </TitleCustom>
-          </div>
+    <div className="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+      {/* ── Page Header ── */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(ROUTER.FM_HARVEST_BATCHES)}
+            className="h-10 rounded-xl"
+          >
+            Quay lại
+          </Button>
+          <TitleCustom className="!mb-0 flex items-center gap-2">
+            <QrcodeOutlined className="text-2xl text-green-600" />
+            Quản lý mã QR
+          </TitleCustom>
         </div>
-
-        {/* Description */}
-        <Card className="bg-green-50/70 border-green-200 rounded-2xl shadow-sm">
-          <Paragraph className="mb-0 text-gray-700">
-            Mã QR được tạo chuẩn hoá theo từng lô thu hoạch. Tùy chỉnh chọn các
-            mục thông tin bên dưới và nhấn{" "}
-            <strong>"Tạo mã QR chính thức"</strong> để sinh mã cho người tiêu
-            dùng.
-          </Paragraph>
-        </Card>
-
-        <Row gutter={24}>
-          {/* Left Form */}
-          <Col xs={24} lg={13}>
-            {/* Thông tin cơ bản */}
-            <Card
-              title={
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-lg">
-                    <QrcodeOutlined className="text-green-600" />
-                  </div>
-                  <span className="text-lg font-semibold text-gray-800">
-                    Chi tiết lô thu hoạch
-                  </span>
-                </div>
-              }
-              className="rounded-2xl shadow-sm border-0"
-            >
-              <Form
-                form={form}
-                layout="vertical"
-                initialValues={{
-                  showDailyLog: true,
-                  showMaterials: true,
-                  showPhotos: true,
-                }}
-              >
-                <Form.Item
-                  name="harvestBatchId"
-                  hidden
-                  rules={[
-                    {
-                      required: true,
-                      message: "Không xác định được lô thu hoạch",
-                    },
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-
-                {/* batchCode: Mã lô thu hoạch */}
-                <Form.Item name="batchCode" label="Mã lô thu hoạch">
-                  <Input
-                    placeholder="Mã lô thu hoạch"
-                    className="h-10 rounded-xl font-bold text-green-700 bg-gray-50"
-                    disabled
-                  />
-                </Form.Item>
-
-                {/* cropName: Loại cây trồng */}
-                <Row gutter={16}>
-                  <Col span={24}>
-                    <Form.Item
-                      name="cropName"
-                      label="Loại cây trồng (Sản phẩm)"
-                    >
-                      <Input
-                        placeholder="Loại cây trồng"
-                        className="h-10 rounded-xl font-semibold text-gray-800 bg-gray-50"
-                        disabled
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-
-                <Row gutter={16}>
-                  {/* startDate: Ngày trồng */}
-                  <Col span={12}>
-                    <Form.Item name="startDate" label="Ngày trồng (Bắt đầu)">
-                      <DatePicker
-                        placeholder="DD/MM/YYYY"
-                        className="w-full h-10 rounded-xl bg-gray-50"
-                        format="DD/MM/YYYY"
-                        disabled
-                      />
-                    </Form.Item>
-                  </Col>
-
-                  {/* harvestDate: Ngày thu hoạch */}
-                  <Col span={12}>
-                    <Form.Item name="harvestDate" label="Ngày thu hoạch">
-                      <DatePicker
-                        placeholder="DD/MM/YYYY"
-                        className="w-full h-10 rounded-xl bg-gray-50"
-                        format="DD/MM/YYYY"
-                        disabled
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Form>
-            </Card>
-
-            {/* Display Options */}
-            <Card
-              title={
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg">
-                    <EyeOutlined className="text-blue-600" />
-                  </div>
-                  <span className="text-lg font-semibold text-gray-800">
-                    Tùy chỉnh thông tin hiển thị
-                  </span>
-                </div>
-              }
-              className="mt-6 rounded-2xl shadow-sm border-0"
-            >
-              <Paragraph className="mb-4 text-sm text-gray-600">
-                Tích chọn các mục bên dưới. Khi khách hàng quét mã QR, hệ thống
-                chỉ hiển thị đúng các thông tin được tích:
-              </Paragraph>
-
-              <Form form={form} component={false}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50/80 rounded-xl border border-gray-100">
-                  <Form.Item
-                    name="showDailyLog"
-                    valuePropName="checked"
-                    noStyle
-                  >
-                    <Checkbox
-                      disabled={displayOptionsDisabled}
-                      className="text-sm font-medium"
-                    >
-                      <span className="ml-1">📝 Nhật ký hàng ngày</span>
-                    </Checkbox>
-                  </Form.Item>
-
-                  <Form.Item
-                    name="showMaterials"
-                    valuePropName="checked"
-                    noStyle
-                  >
-                    <Checkbox
-                      disabled={displayOptionsDisabled}
-                      className="text-sm font-medium"
-                    >
-                      <span className="ml-1">🧪 Thông tin vật tư sử dụng</span>
-                    </Checkbox>
-                  </Form.Item>
-
-                  <Form.Item name="showPhotos" valuePropName="checked" noStyle>
-                    <Checkbox
-                      disabled={displayOptionsDisabled}
-                      className="text-sm font-medium"
-                    >
-                      <span className="ml-1">📷 Hình ảnh thực địa</span>
-                    </Checkbox>
-                  </Form.Item>
-                </div>
-              </Form>
-
-              <div className="mt-6 space-y-3">
-                {(() => {
-                  const isQrEligible = batchDetail?.isQrEligible === true
-
-                  if (!isQrEligible) {
-                    return (
-                      <div className="space-y-3">
-                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
-                          <SafetyOutlined className="text-amber-600 text-lg flex-shrink-0" />
-                          <Text className="text-amber-800 text-xs font-medium">
-                            Lô thu hoạch này chưa đủ điều kiện tạo QR.
-                          </Text>
-                        </div>
-                        <Button
-                          size="large"
-                          block
-                          disabled
-                          icon={<QrcodeOutlined />}
-                          className="h-11 rounded-xl font-semibold"
-                        >
-                          Tạo mã QR
-                        </Button>
-                        <Button
-                          size="large"
-                          block
-                          disabled
-                          icon={<EyeOutlined />}
-                          className="h-11 rounded-xl font-medium"
-                        >
-                          Xem trước QR
-                        </Button>
-                      </div>
-                    )
-                  }
-
-                  if (batchDetail?.hasActiveQrCode) {
-                    return (
-                      <>
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-                          <CheckCircleOutlined className="text-blue-500 flex-shrink-0" />
-                          <Text className="text-blue-700 text-sm">
-                            Mã QR đã được tạo và đang hoạt động
-                          </Text>
-                        </div>
-                        <Button
-                          type="dashed"
-                          size="large"
-                          block
-                          disabled
-                          icon={<EyeOutlined />}
-                          className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
-                        >
-                          Xem trước QR
-                        </Button>
-                      </>
-                    )
-                  }
-
-                  return (
-                    <>
-                      <Button
-                        type="primary"
-                        size="large"
-                        block
-                        icon={<QrcodeOutlined />}
-                        onClick={handleCreateQR}
-                        loading={createPending}
-                        className="h-11 rounded-xl bg-green-600 hover:bg-green-700 font-semibold shadow-md shadow-green-100"
-                      >
-                        Tạo mã QR chính thức
-                      </Button>
-                      <Button
-                        type="dashed"
-                        size="large"
-                        block
-                        icon={<EyeOutlined />}
-                        onClick={handlePreview}
-                        loading={previewPending}
-                        className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
-                      >
-                        Xem trước QR
-                      </Button>
-                    </>
-                  )
-                })()}
-              </div>
-            </Card>
-          </Col>
-
-          {/* Right Standard QR Code Display */}
-          <Col xs={24} lg={11}>
-            <Card
-              title={
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold text-gray-800">
-                    {qrData
-                      ? qrData.isExisting
-                        ? "MÃ QR HIỆN TẠI"
-                        : "MÃ QR CHÍNH THỨC"
-                      : "KẾT QUẢ MÃ QR"}
-                  </span>
-                  {qrData ? (
-                    <Tag
-                      icon={<CheckCircleOutlined />}
-                      color={qrData.isExisting ? "blue" : "success"}
-                      className="px-3 py-1 text-xs font-bold rounded-full"
-                    >
-                      {qrData.isExisting
-                        ? "ĐANG HOẠT ĐỘNG"
-                        : "ĐÃ TẠO THÀNH CÔNG"}
-                    </Tag>
-                  ) : (
-                    <Tag
-                      color="default"
-                      className="px-3 py-1 text-xs font-bold rounded-full"
-                    >
-                      CHƯA KHỞI TẠO
-                    </Tag>
-                  )}
-                </div>
-              }
-              className="rounded-2xl shadow-sm border-0 h-full flex flex-col justify-between"
-            >
-              {qrData ? (
-                <div className="space-y-4">
-                  {/* Banner thông báo khi hiển thị QR sẵn có */}
-                  {qrData.isExisting && (
-                    <div className="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3">
-                      <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-white text-xs font-bold">i</span>
-                      </div>
-                      <div>
-                        <Text strong className="text-blue-700 text-sm block">
-                          Lô này đã có mã QR đang hoạt động
-                        </Text>
-                        <Text className="text-blue-600 text-xs">
-                          Mã truy xuất: <strong>{qrData.traceCode}</strong>. Để
-                          tạo mã mới, hãy vô hiệu hoá mã hiện tại trước.
-                        </Text>
-                      </div>
-                    </div>
-                  )}
-                  <div className="space-y-6">
-                    {/* Standard High-contrast Black/White QR Code */}
-                    <div className="flex justify-center p-6 bg-white border-2 border-dashed border-gray-200 rounded-2xl">
-                      <div
-                        ref={qrContainerRef}
-                        className="p-4 bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col items-center"
-                      >
-                        <QRCodeSVG
-                          value={traceUrl}
-                          size={200}
-                          level="H"
-                          marginSize={2}
-                          fgColor="#000000"
-                          bgColor="#ffffff"
-                        />
-                        <div className="mt-3 text-center">
-                          <Text strong className="block text-sm text-green-700">
-                            {activeBatch.batchCode}
-                          </Text>
-                          <Text className="text-xs text-gray-500 font-medium">
-                            {activeBatch.cropName ||
-                              activeBatch.cropType ||
-                              "Lô thu hoạch"}
-                          </Text>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Trace Code */}
-                    <div className="text-center bg-green-50/60 p-3 rounded-xl border border-green-100">
-                      <Text className="text-xs text-gray-500 block mb-1">
-                        Mã truy xuất
-                      </Text>
-                      <Text
-                        strong
-                        className="text-base text-green-800 font-mono"
-                      >
-                        {currentTraceCode}
-                      </Text>
-                    </div>
-
-                    {/* Active display options summary */}
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                      <Text className="text-xs text-gray-500 block mb-2 font-medium">
-                        Hiển thị khi quét QR:
-                      </Text>
-                      <div className="flex flex-wrap gap-1.5">
-                        <Tag
-                          color={showDailyLog ? "blue" : "default"}
-                          className="rounded-full text-xs"
-                        >
-                          {showDailyLog ? "✓ Nhật ký" : "✕ Nhật ký"}
-                        </Tag>
-                        <Tag
-                          color={showMaterials ? "orange" : "default"}
-                          className="rounded-full text-xs"
-                        >
-                          {showMaterials ? "✓ Vật tư" : "✕ Vật tư"}
-                        </Tag>
-                        <Tag
-                          color={showPhotos ? "green" : "default"}
-                          className="rounded-full text-xs"
-                        >
-                          {showPhotos ? "✓ Ảnh thực địa" : "✕ Ảnh thực địa"}
-                        </Tag>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="space-y-3">
-                      <Button
-                        type="primary"
-                        size="large"
-                        block
-                        icon={<DownloadOutlined />}
-                        onClick={handleDownload}
-                        className="h-11 rounded-xl bg-green-600 hover:bg-green-700 font-semibold"
-                      >
-                        Tải xuống mã QR (PNG)
-                      </Button>
-
-                      <Row gutter={12}>
-                        <Col span={12}>
-                          <Button
-                            size="large"
-                            block
-                            icon={<PrinterOutlined />}
-                            onClick={handlePrint}
-                            className="h-11 rounded-xl"
-                          >
-                            In mã QR
-                          </Button>
-                        </Col>
-                        <Col span={12}>
-                          <Button
-                            size="large"
-                            block
-                            icon={<CopyOutlined />}
-                            onClick={handleCopy}
-                            className="h-11 rounded-xl"
-                          >
-                            Sao chép link
-                          </Button>
-                        </Col>
-                      </Row>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-                  <div
-                    className={`w-20 h-20 ${batchDetail?.isQrEligible !== true ? "bg-amber-50 text-amber-600 border-amber-100" : "bg-green-50 text-green-600 border-green-100"} rounded-2xl flex items-center justify-center mb-4 shadow-sm border`}
-                  >
-                    <QrcodeOutlined className="text-4xl" />
-                  </div>
-                  <Text strong className="text-gray-800 text-lg mb-1">
-                    {batchDetail?.isQrEligible !== true
-                      ? "Lô chưa đủ điều kiện tạo QR"
-                      : "Chưa tạo mã QR chính thức"}
-                  </Text>
-                  <Paragraph className="text-xs text-gray-500 max-w-xs mb-0">
-                    {batchDetail?.isQrEligible !== true
-                      ? "Lô hàng này chưa được hệ thống cho phép tạo QR."
-                      : 'Bấm nút "Tạo mã QR chính thức" để sinh mã QR cho lô thu hoạch này.'}
-                  </Paragraph>
-                </div>
-              )}
-            </Card>
-          </Col>
-        </Row>
       </div>
 
-      {/* Trace Preview Modal */}
-      <Modal
+      {/* ── Description Note ── */}
+      <Card className="bg-green-50/70 border-green-200 rounded-2xl shadow-sm">
+        <Paragraph className="mb-0 text-gray-700">
+          Mã QR được tạo chuẩn hoá theo từng lô thu hoạch. Tùy chỉnh chọn các
+          mục thông tin bên dưới và nhấn{" "}
+          <strong>"Tạo mã QR chính thức"</strong> để sinh mã cho người tiêu dùng.
+        </Paragraph>
+      </Card>
+
+      {/* ── Main Row ── */}
+      <Row gutter={24}>
+        {/* Left Column: Form & Display Options */}
+        <Col xs={24} lg={13}>
+          <BatchInfoFormCard form={form} />
+
+          <DisplayOptionsCard
+            form={form}
+            batchDetail={batchDetail}
+            disabledOptions={displayOptionsDisabled}
+            createPending={createPending}
+            previewPending={previewPending}
+            onCreateQR={handleCreateQR}
+            onPreviewQR={handlePreview}
+          />
+        </Col>
+
+        {/* Right Column: QR Result Card */}
+        <Col xs={24} lg={11}>
+          <QrResultCard
+            qrData={qrData}
+            batchDetail={batchDetail}
+            currentTraceCode={currentTraceCode}
+            traceUrl={traceUrl}
+            qrContainerRef={qrContainerRef}
+            showDailyLog={showDailyLog}
+            showMaterials={showMaterials}
+            showPhotos={showPhotos}
+            onDownload={handleDownload}
+            onPrint={handlePrint}
+            onCopy={handleCopyLink}
+          />
+        </Col>
+      </Row>
+
+      {/* ── Modal Preview Trace ── */}
+      <QrPreviewModal
         open={previewModalOpen}
         onCancel={() => setPreviewModalOpen(false)}
-        footer={null}
-        width={860}
-        title={
-          <div className="flex items-center gap-2">
-            <EyeOutlined className="text-blue-600" />
-            <span>
-              Xem trước trang truy xuất — Lô:{" "}
-              <strong>{previewBatchData?.batchCode || "N/A"}</strong>
-            </span>
-          </div>
-        }
-        styles={{ body: { padding: 0, maxHeight: "80vh", overflowY: "auto" } }}
-      >
-        {/* QR Code + Link Preview */}
-        <div className="flex items-center gap-6 px-6 py-5 bg-white border-b border-gray-100">
-          <div className="flex-shrink-0 p-3 bg-white rounded-xl shadow border border-gray-100 flex flex-col items-center">
-            {previewData?.qrImageDataUrl ? (
-              <img
-                src={previewData.qrImageDataUrl}
-                alt={`QR xem trước ${previewBatchData?.batchCode || ""}`}
-                className="w-[120px] h-[120px] object-contain"
-              />
-            ) : (
-              <QRCodeSVG
-                value={previewTraceUrl}
-                size={120}
-                level="H"
-                marginSize={1}
-                fgColor="#000000"
-                bgColor="#ffffff"
-              />
-            )}
-            <Text
-              strong
-              className="mt-2 block text-xs text-green-700 text-center"
-            >
-              {previewBatchData?.batchCode}
-            </Text>
-          </div>
-          <div className="flex-1 min-w-0">
-            <Text className="text-xs text-gray-500 block mb-1">
-              Mã truy xuất
-            </Text>
-            <Text
-              strong
-              className="text-sm text-green-800 font-mono block mb-3"
-            >
-              {previewTraceCode || "—"}
-            </Text>
-            <Text className="text-xs text-gray-500 block mb-1">
-              Link truy xuất:
-            </Text>
-            <div className="flex items-center gap-2">
-              <Text className="text-xs text-blue-600 font-mono truncate flex-1 bg-blue-50 px-2 py-1 rounded">
-                {previewTraceUrl || "—"}
-              </Text>
-              <Button
-                size="small"
-                icon={<CopyOutlined />}
-                onClick={() => {
-                  navigator.clipboard.writeText(previewTraceUrl)
-                  message.success("Đã sao chép link truy xuất!")
-                }}
-                className="flex-shrink-0"
-              >
-                Sao chép
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <TraceView
-          traceabilityData={previewData?.traceability}
-          qrCode={previewTraceCode}
-          isPreview={true}
-        />
-      </Modal>
-    </>
+        previewData={previewData}
+        previewTraceUrl={previewTraceUrl}
+        batchCode={batchDetail?.batchCode}
+      />
+    </div>
   )
 }
 
