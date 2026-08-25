@@ -12,7 +12,12 @@ export const API_URL = `${API_BASE_URL}/api`
  */
 export const getAvatarUrl = avatarPath => {
   if (!avatarPath) return null
-  if (avatarPath.startsWith("http")) return avatarPath
+  if (
+    avatarPath.startsWith("http") ||
+    avatarPath.startsWith("data:") ||
+    avatarPath.startsWith("blob:")
+  )
+    return avatarPath
   return `${API_BASE_URL}${avatarPath}`
 }
 
