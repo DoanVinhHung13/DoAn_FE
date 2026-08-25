@@ -106,6 +106,7 @@ const RealtimeSync = () => {
         signalRService.on("qr-stats-updated", invalidateActiveQueries)
         retryAttempt = 0
         refreshGroupsNow()
+        invalidateActiveQueries({ reason: "connected" })
       } catch (error) {
         logDevDiagnostic("realtime-connect", error)
         scheduleConnect()

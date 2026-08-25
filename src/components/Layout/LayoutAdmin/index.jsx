@@ -40,6 +40,7 @@ const routeMatchesMenuItem = (pathname, key) =>
 const LayoutAdmin = () => {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [realtimeRefreshKey, setRealtimeRefreshKey] = useState(0)
   const { userInfo: user } = useSelector(state => state.appGlobal)
   const dispatch = useAppDispatch()
   const logout = () => {
@@ -52,6 +53,22 @@ const LayoutAdmin = () => {
   const screens = useBreakpoint()
 
   const isMobile = !screens.md
+  const isFormRoute =
+    /\/(?:create|edit)(?:\/|$)/i.test(location.pathname) ||
+    /\/daily-logs(?:\/|$)/i.test(location.pathname) ||
+    /\/qr-codes(?:\/|$)/i.test(location.pathname) ||
+    /\/qr-management(?:\/|$)/i.test(location.pathname)
+
+  useEffect(() => {
+    const handleRealtimeChange = () => {
+      if (isFormRoute) return
+      setRealtimeRefreshKey(currentKey => currentKey + 1)
+    }
+
+    window.addEventListener("app:data-changed", handleRealtimeChange)
+    return () =>
+      window.removeEventListener("app:data-changed", handleRealtimeChange)
+  }, [isFormRoute])
 
   const handleLogout = async () => {
     try {
@@ -322,7 +339,7 @@ const LayoutAdmin = () => {
         <Content
           className={`admin-content ${isMobile ? "p-4" : "p-8"} min-h-[calc(100vh-80px)]`}
         >
-          <div className="admin-page-shell">
+          <div className="admin-page-shell" key={realtimeRefreshKey}>
             <Outlet />
           </div>
         </Content>
