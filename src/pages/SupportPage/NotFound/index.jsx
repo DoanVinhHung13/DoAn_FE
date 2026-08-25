@@ -13,9 +13,7 @@ function NotFound() {
   const user = userInfo
 
   const handleGoHome = () => {
-    if (!user) navigate(ROUTER.LOGIN)
-    else if (user.role === "Admin") navigate(ROUTER.FM_DASHBOARD)
-    else navigate(ROUTER.FM_DASHBOARD)
+    navigate(ROUTER.HOME)
   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50 flex items-center justify-center p-8">
@@ -42,14 +40,7 @@ function NotFound() {
             onClick={handleGoHome}
             className="h-12 px-10 rounded-xl bg-green-600 border-0 font-bold shadow-lg shadow-green-200 hover:bg-green-700"
           >
-            Về trang của tôi
-          </Button>
-          <Button
-            size="large"
-            onClick={() => navigate(-1)}
-            className="h-12 px-8 rounded-xl border-orange-200 text-orange-500 hover:border-orange-400"
-          >
-            ← Quay lại
+            Về trang chủ
           </Button>
         </div>
 
