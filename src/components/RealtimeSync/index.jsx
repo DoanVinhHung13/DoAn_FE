@@ -41,10 +41,12 @@ const RealtimeSync = () => {
     let unsubscribeReconnect = () => {}
     let unsubscribeClosed = () => {}
 
-    const invalidateActiveQueries = () => {
+    const invalidateActiveQueries = detail => {
       clearTimeout(invalidationTimer.current)
       invalidationTimer.current = setTimeout(() => {
-        window.dispatchEvent(new CustomEvent("app:data-changed"))
+        window.dispatchEvent(
+          new CustomEvent("app:data-changed", { detail }),
+        )
       }, INVALIDATION_DELAY_MS)
     }
 
@@ -74,7 +76,7 @@ const RealtimeSync = () => {
 
     const handleReconnected = () => {
       retryAttempt = 0
-      invalidateActiveQueries()
+      invalidateActiveQueries({ reason: "reconnected" })
       refreshGroupsNow()
     }
 
@@ -106,7 +108,7 @@ const RealtimeSync = () => {
         signalRService.on("qr-stats-updated", invalidateActiveQueries)
         retryAttempt = 0
         refreshGroupsNow()
-        invalidateActiveQueries()
+        invalidateActiveQueries({ reason: "connected" })
       } catch (error) {
         logDevDiagnostic("realtime-connect", error)
         scheduleConnect()
