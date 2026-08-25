@@ -181,12 +181,14 @@ const Batches = () => {
     },
     {
       title: "Diện tích",
-      dataIndex: "area",
-      key: "area",
+      dataIndex: "harvestedArea",
+      key: "harvestedArea",
       width: 120,
-      render: area => (
+      render: harvestedArea => (
         <Text className="text-sm font-semibold">
-          {area ? `${area} ${formatAreaUnit()}` : "—"}
+          {harvestedArea != null
+            ? `${harvestedArea} ${formatAreaUnit()}`
+            : "—"}
         </Text>
       ),
     },

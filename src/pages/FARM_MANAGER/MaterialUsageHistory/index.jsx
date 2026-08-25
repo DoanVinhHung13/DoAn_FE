@@ -139,6 +139,16 @@ const MaterialUsageHistory = () => {
       ),
     },
     {
+      title: "Cách ly lúc dùng",
+      key: "quarantineDaysAtUse",
+      width: 125,
+      align: "center",
+      render: (_, row) =>
+        row.materialType === "PESTICIDE" && row.quarantineDaysAtUse != null
+          ? `${row.quarantineDaysAtUse} ngày`
+          : "—",
+    },
+    {
       title: "Số lượng",
       key: "quantity",
       width: 95,

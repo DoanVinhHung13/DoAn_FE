@@ -351,38 +351,6 @@ const DailyLog = () => {
     loadTaskData()
   }, [taskId, navigate, form, refreshKey])
 
-  useEffect(() => {
-    if (!task || !isMaterialTaskData(task)) return undefined
-
-    const handleFertilizerChanged = async () => {
-      try {
-        const response = await FertilizerService.getFertilizerSelection()
-        const result = unwrap(response)
-        const fertilizerList = Array.isArray(result)
-          ? result
-          : result?.items || []
-        const cropName = task.cropName || task.crop?.name
-        setFertilizerOptions(
-          toFertilizerOptions(
-            fertilizerList.filter(item =>
-              hasDosageForCrop(item.dosages, cropName),
-            ),
-          ),
-        )
-        message.info("Danh sách phân bón đã được cập nhật.")
-      } catch {
-        // BE vẫn là lớp kiểm tra cuối cùng khi ghi nhật ký.
-      }
-    }
-
-    window.addEventListener("app:fertilizer-changed", handleFertilizerChanged)
-    return () =>
-      window.removeEventListener(
-        "app:fertilizer-changed",
-        handleFertilizerChanged,
-      )
-  }, [task])
-
   const openUsageModal = (dailyLogId, item = null) => {
     setUsageModal({ open: true, dailyLogId, item })
     usageForm.setFieldsValue(
