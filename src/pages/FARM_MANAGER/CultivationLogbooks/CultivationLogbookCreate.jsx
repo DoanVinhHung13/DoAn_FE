@@ -17,6 +17,7 @@ import {
   Button,
   Card,
   Col,
+  Empty,
   Form,
   Input,
   message,
@@ -25,7 +26,6 @@ import {
   Select,
   Spin,
   Typography,
-  Empty,
 } from "antd"
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
@@ -55,10 +55,6 @@ const normalizeResponse = response => {
 
 const { Text } = Typography
 
-// Ngày kế hoạch là ngày nghiệp vụ, không phải một thời điểm UTC.
-const formatApiDate = date =>
-  date ? date.format("YYYY-MM-DD[T]00:00:00") : undefined
-
 const getCreatedPlanId = response =>
   response?.data?.data?.id || response?.data?.id || response?.id || null
 
@@ -73,8 +69,6 @@ const CULTIVATION_LOGBOOK_FIELD_MAPPING = {
   landPlotId: "landPlotIds",
   StartDate: "expectedStartDate",
   startDate: "expectedStartDate",
-  ExpectedEndDate: "expectedEndDate",
-  expectedEndDate: "expectedEndDate",
   AssignedFarmSupervisorId: "assignedFarmSupervisorId",
   assignedFarmSupervisorId: "assignedFarmSupervisorId",
   Description: "description",
@@ -88,7 +82,6 @@ const createEmptyStage = order => ({
   title: "",
   description: "",
   startDate: null,
-  endDate: null,
 })
 
 const CultivationLogbookCreate = () => {
@@ -374,9 +367,6 @@ const CultivationLogbookCreate = () => {
           landPlotIds: selectedLandPlotIds,
           area: plan.area || "",
           expectedStartDate: plan.startDate ? parseDate(plan.startDate) : null,
-          expectedEndDate: plan.expectedEndDate
-            ? parseDate(plan.expectedEndDate)
-            : null,
           assignedFarmSupervisorId: originalSupervisorId,
           description: plan.description || "",
         })
@@ -394,7 +384,6 @@ const CultivationLogbookCreate = () => {
           title: stage.stageName || "",
           description: stage.description || "",
           startDate: stage.startDate ? parseDate(stage.startDate) : null,
-          endDate: stage.endDate ? parseDate(stage.endDate) : null,
         }))
 
         const draft = restoreDraft({
@@ -572,7 +561,6 @@ const CultivationLogbookCreate = () => {
           title: step.stepName || step.title || "",
           description: step.description || step.note || "",
           startDate: null,
-          endDate: null,
         }))
 
         setStages(
@@ -672,7 +660,6 @@ const CultivationLogbookCreate = () => {
         title: step.stepName || step.title || "",
         description: step.description || step.note || "",
         startDate: null,
-        endDate: null,
       }))
 
       setStages(
@@ -762,20 +749,6 @@ const CultivationLogbookCreate = () => {
       return
     }
 
-    if (
-      stages.some(
-        stage =>
-          stage.startDate &&
-          stage.endDate &&
-          stage.startDate.isAfter(stage.endDate),
-      )
-    ) {
-      message.warning(
-        "Ngày bắt đầu không được sau ngày kết thúc trong bất kỳ giai đoạn nào.",
-      )
-      return
-    }
-
     try {
       setSubmitting(true)
       const landPlotIds = Array.isArray(values.landPlotIds)
@@ -792,9 +765,6 @@ const CultivationLogbookCreate = () => {
         logbookName: values.logbookName,
         cropId: values.cropId,
         landPlotIds: landPlotIds,
-        landPlotId: landPlotIds.length === 1 ? landPlotIds[0] : landPlotIds, // Array format as requested, fallback single ID if 1 element
-        startDate: formatApiDate(values.expectedStartDate),
-        expectedEndDate: formatApiDate(values.expectedEndDate),
         status: isEdit ? planStatus || "PLANNED" : "PLANNED",
         scope: "OVERALL",
         assignedFarmSupervisorId: values.assignedFarmSupervisorId,

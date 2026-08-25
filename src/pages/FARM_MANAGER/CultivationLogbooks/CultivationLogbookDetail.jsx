@@ -119,6 +119,11 @@ const CultivationLogbookDetail = () => {
 
   if (!item) return null
 
+  const displayStartDate = item.actualStartDate || item.startDate
+  const displayStartLabel = item.actualStartDate
+    ? "Ngày bắt đầu"
+    : "Dự kiến"
+
   // Build tasksMap từ stages (mỗi stage có array tasks)
   const tasksMap = Object.fromEntries(
     stages.map(stage => [
@@ -271,18 +276,17 @@ const CultivationLogbookDetail = () => {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <CalendarOutlined className="text-gray-400" />
-                <span>
-                  <span className="text-gray-500">Thời gian:</span>{" "}
-                  <span className="font-medium text-gray-800">
-                    {item.startDate ? formatDate(item.startDate) : "..."} -{" "}
-                    {item.expectedEndDate || item.endDate
-                      ? formatDate(item.expectedEndDate || item.endDate)
-                      : "..."}
+              {displayStartDate && (
+                <div className="flex items-center gap-2">
+                  <CalendarOutlined className="text-gray-400" />
+                  <span>
+                    <span className="text-gray-500">{displayStartLabel}:</span>{" "}
+                    <span className="font-medium text-gray-800">
+                      {formatDate(displayStartDate)}
+                    </span>
                   </span>
-                </span>
-              </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 sm:col-span-2">
                 <TeamOutlined className="text-gray-400" />

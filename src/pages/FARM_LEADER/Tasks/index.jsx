@@ -77,6 +77,8 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
   const cfg = getTaskStatus(task.status)
   const canLog = canWriteDailyLog(task.status)
   const taskNumber = taskOrderValue(task, taskIndex + 1)
+  const displayStartDate = task.workStartDate || task.plannedStartDate
+  const displayStartLabel = task.workStartDate ? "Ngày bắt đầu" : "Dự kiến"
 
   let ctaLabel = "Xem chi tiết"
   let ctaIcon = <EyeOutlined />
@@ -164,17 +166,12 @@ const TaskCard = ({ task, taskIndex, onOpen, getTaskStatus }) => {
               type="secondary"
               className="block text-[10px] uppercase font-semibold text-slate-400"
             >
-              Ngày bắt đầu
+              {displayStartLabel}
             </Text>
             <Text strong className="text-xs text-slate-700">
               <CalendarOutlined className="mr-1 text-emerald-600" />
-              {task.workStartDate ? formatDate(task.workStartDate) : "—"}
+              {displayStartDate ? formatDate(displayStartDate) : "—"}
             </Text>
-            {task.plannedStartDate && (
-              <Text className="block mt-1 text-xs text-slate-500">
-                Dự kiến: {formatDate(task.plannedStartDate)}
-              </Text>
-            )}
             {task.completedDate && (
               <Text className="block mt-1 text-xs text-green-600">
                 Ngày hoàn thành: {formatDate(task.completedDate)}

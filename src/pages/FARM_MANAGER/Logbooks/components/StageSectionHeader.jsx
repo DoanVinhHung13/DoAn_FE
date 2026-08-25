@@ -3,12 +3,9 @@ import { formatDate } from "src/utils/dateFormatters"
 const getLogDate = (log, type) => {
   const summary = log?.summary || log?.officialLog || {}
   const dateKey = type === "start" ? "workStartDate" : "workEndDate"
-  const fallbackKey = type === "start" ? "startDate" : "endDate"
   return (
     log?.[dateKey] ||
-    summary?.[dateKey] ||
-    log?.[fallbackKey] ||
-    summary?.[fallbackKey]
+    summary?.[dateKey]
   )
 }
 
@@ -16,13 +13,12 @@ const StageSectionHeader = ({ stage, index, stageLogs = [] }) => {
   if (!stage) return null
 
   const firstLog = stageLogs[0]
-  const lastLog = stageLogs[stageLogs.length - 1]
   const stageName =
     stage.stageName || stage.name || stage.title || `Giai đoạn ${index + 1}`
-  const plannedStart = stage.startDate || stage.plannedStartDate
-  const plannedEnd = stage.endDate || stage.plannedEndDate
   const actualStart = stage.actualStartDate || getLogDate(firstLog, "start")
-  const actualEnd = stage.actualEndDate || getLogDate(lastLog, "end")
+  const actualEnd = stage.actualEndDate
+  const displayStart = actualStart || stage.startDate
+  const displayLabel = actualStart ? "Ngày bắt đầu" : "Dự kiến"
 
   return (
     <div className="flex items-start gap-3 pb-3 border-b border-green-100">
@@ -33,17 +29,15 @@ const StageSectionHeader = ({ stage, index, stageLogs = [] }) => {
         <h3 className="mb-1 text-base font-bold text-gray-800">{stageName}</h3>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
           <span className="text-gray-500">
-            Kế hoạch:{" "}
-            {plannedStart ? formatDate(plannedStart) : "Chưa xác định"}
+            {displayStart
+              ? `${displayLabel}: ${formatDate(displayStart)}`
+              : ""}
           </span>
-          <span className="font-medium text-green-600">
-            Thực tế: {actualStart ? formatDate(actualStart) : "Chưa bắt đầu"} -{" "}
-            {actualEnd
-              ? formatDate(actualEnd)
-              : actualStart
-                ? "Đang thực hiện"
-                : "Chưa xác định"}
-          </span>
+          {actualEnd && (
+            <span className="font-medium text-green-600">
+              Kết thúc thực tế: {formatDate(actualEnd)}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -51,4 +45,3 @@ const StageSectionHeader = ({ stage, index, stageLogs = [] }) => {
 }
 
 export default StageSectionHeader
-

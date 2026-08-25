@@ -844,6 +844,10 @@ const DailyLog = () => {
   )
     ? task?.workEndDate
     : null
+  const displayStartDate = task?.workStartDate || task?.plannedStartDate
+  const displayStartLabel = task?.workStartDate
+    ? "Ngày bắt đầu"
+    : "Dự kiến"
 
   return (
     <div className="pb-20 space-y-4 duration-500 animate-in fade-in slide-in-from-bottom-4">
@@ -897,14 +901,8 @@ const DailyLog = () => {
             )}
             <div className="grid gap-2 mt-3 text-xs text-gray-600 sm:grid-cols-2 lg:grid-cols-5">
               <span>
-                <strong>Bắt đầu dự kiến:</strong>{" "}
-                {task.plannedStartDate
-                  ? formatDate(task.plannedStartDate)
-                  : "—"}
-              </span>
-              <span>
-                <strong>Bắt đầu thực tế:</strong>{" "}
-                {task.workStartDate ? formatDate(task.workStartDate) : "—"}
+                <strong>{displayStartLabel}:</strong>{" "}
+                {displayStartDate ? formatDate(displayStartDate) : "—"}
               </span>
               <span>
                 <strong>Kết thúc thực tế:</strong>{" "}

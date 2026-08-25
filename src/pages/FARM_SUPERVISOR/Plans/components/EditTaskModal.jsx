@@ -1,6 +1,10 @@
 import { EditOutlined } from "@ant-design/icons"
 import { Col, DatePicker, Form, Input, Modal, Row, Select } from "antd"
 import { useEffect, useState } from "react"
+import {
+  CULTIVATION_TASK_TYPE_OPTIONS,
+  normalizeCultivationTaskType,
+} from "src/constants/cultivationTask"
 import CultivationTaskService from "src/services/CultivationTaskService"
 import {
   formatDateForApi,
@@ -26,6 +30,7 @@ const EditTaskModal = ({
       editTaskForm.setFieldsValue({
         name: task.name || task.taskName,
         description: task.description || "",
+        taskType: normalizeCultivationTaskType(task.taskType) || undefined,
         plannedStartDate: parseDate(task.plannedStartDate),
         leaderId: task.assignedLeaderId || null,
         farmerIds:
@@ -45,6 +50,7 @@ const EditTaskModal = ({
       await CultivationTaskService.update(task.id, {
         name: values.name,
         description: values.description,
+        taskType: values.taskType,
         plannedStartDate: formatDateForApi(values.plannedStartDate),
         leaderId: values.leaderId || null,
         farmerIds: Array.isArray(values.farmerIds) ? values.farmerIds : [],
@@ -114,6 +120,19 @@ const EditTaskModal = ({
           <Input.TextArea
             rows={3}
             placeholder="Mô tả công việc, liều lượng..."
+          />
+        </Form.Item>
+        <Form.Item
+          name="taskType"
+          label="Loại công việc"
+          rules={[
+            { required: true, message: "Vui lòng chọn loại công việc." },
+          ]}
+        >
+          <Select
+            options={CULTIVATION_TASK_TYPE_OPTIONS}
+            placeholder="Chọn loại công việc"
+            disabled={Boolean(task?.taskCatalogId)}
           />
         </Form.Item>
         <Row gutter={12}>

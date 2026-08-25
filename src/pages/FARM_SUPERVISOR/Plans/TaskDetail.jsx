@@ -420,26 +420,20 @@ const FarmSupervisorTaskDetail = () => {
             <TitleCustom className="!mb-0">{task.name}</TitleCustom>
           </div>
         </div>
-        <div className="mt-3 grid gap-2 text-sm text-gray-600 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-3 grid gap-2 text-sm text-gray-600 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <span className="font-semibold">Bắt đầu dự kiến:</span>{" "}
-            {task.plannedStartDate ? formatDate(task.plannedStartDate) : "—"}
-          </div>
-          <div>
-            <span className="font-semibold">Bắt đầu thực tế:</span>{" "}
+            <span className="font-semibold">
+              {task.workStartDate ? "Bắt đầu thực tế" : "Bắt đầu dự kiến"}:
+            </span>{" "}
             {task.workStartDate
               ? formatDate(task.workStartDate)
-              : "Chưa bắt đầu"}
+              : task.plannedStartDate
+                ? formatDate(task.plannedStartDate)
+                : "—"}
           </div>
           <div>
             <span className="font-semibold">Kết thúc thực tế:</span>{" "}
             {task.workEndDate ? formatDate(task.workEndDate) : "Chưa kết thúc"}
-          </div>
-          <div>
-            <span className="font-semibold">Hoàn thành:</span>{" "}
-            {task.completedDate
-              ? formatDate(task.completedDate)
-              : "Chưa hoàn thành"}
           </div>
         </div>
         {task.isActivationWarning === true && (

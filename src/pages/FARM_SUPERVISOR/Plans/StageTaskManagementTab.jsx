@@ -22,13 +22,13 @@ import {
   Empty,
   Flex,
   List,
+  message,
   Modal,
   Row,
   Space,
   Tag,
   Tooltip,
   Typography,
-  message,
 } from "antd"
 import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
@@ -142,10 +142,9 @@ const TaskCard = ({
             : "#d1d5db"
 
   const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
-  const isActivated = !canEdit
-  const startDate = isActivated ? task.workStartDate : task.plannedStartDate
-  const hasActualDates =
-    task.workStartDate || task.workEndDate || task.completedDate
+  const startDate = task.workStartDate || task.plannedStartDate
+  const startLabel = task.workStartDate ? "Ngày bắt đầu:" : "Dự kiến:"
+  const hasActualDates = task.workEndDate || task.completedDate
 
   const supportMembers = (task.assignments || []).filter(f => !f.isLeader)
 
@@ -259,9 +258,6 @@ const TaskCard = ({
             {hasActualDates && (
               <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-1 text-[11px] text-green-700 font-medium">
                 <CheckCircleOutlined className="text-xs" />
-                {task.workStartDate && (
-                  <span>Bắt đầu: {formatDate(task.workStartDate)}</span>
-                )}
                 {task.completedDate && (
                   <span>• Hoàn thành: {formatDate(task.completedDate)}</span>
                 )}
@@ -281,7 +277,7 @@ const TaskCard = ({
             <div className="flex items-center gap-1.5 text-xs text-gray-600">
               <CalendarOutlined className="text-gray-400 flex-shrink-0" />
               <span className="font-semibold text-gray-500">
-                {isActivated ? "Ngày bắt đầu:" : "Dự kiến:"}
+                {startLabel}
               </span>
               <span className="font-medium text-gray-800">
                 {startDate ? formatDate(startDate) : "—"}
@@ -703,6 +699,11 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     ? (tasks[selectedId] || []).filter(task => !deletedTaskIds.has(task.id))
     : []
   const orderedSelectedTasks = orderTasks(selectedTasks)
+  const selectedStageStartDate =
+    selectedStage?.actualStartDate || selectedStage?.startDate
+  const selectedStageStartLabel = selectedStage?.actualStartDate
+    ? "Ngày bắt đầu"
+    : "Dự kiến"
   const harvestTask = getAllTasks(tasks).find(isHarvestTask)
   const hasActiveHarvest = Boolean(
     harvestTask && !["PENDING", "ASSIGNED"].includes(harvestTask.status),
@@ -778,31 +779,23 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                         selectedStage.name ||
                         `Giai đoạn ${selectedIdx + 1}`}
                     </Text>
-                    {/* Ngày dự kiến của giai đoạn */}
-                    {(selectedStage.startDate || selectedStage.endDate) && (
+                    {/* Ngày do BE suy ra từ task đầu tiên trong giai đoạn */}
+                    {selectedStageStartDate && (
                       <Text type="secondary" className="text-sm block mt-0.5">
                         <CalendarOutlined className="mr-1" />
-                        <span className="font-medium">Dự kiến:</span>{" "}
-                        {selectedStage.startDate
-                          ? formatDate(selectedStage.startDate)
-                          : "—"}
+                        <span className="font-medium">
+                          {selectedStageStartLabel}:
+                        </span>{" "}
+                        {formatDate(selectedStageStartDate)}
                       </Text>
                     )}
-                    {/* Ngày thực tế của giai đoạn */}
-                    {(selectedStage.actualStartDate ||
-                      selectedStage.actualEndDate) && (
+                    {selectedStage.actualEndDate && (
                       <Text type="secondary" className="text-sm block mt-0.5">
                         <CheckCircleOutlined className="mr-1 text-green-600" />
                         <span className="font-medium text-green-700">
-                          Thực tế:
+                          Kết thúc thực tế:
                         </span>{" "}
-                        {selectedStage.actualStartDate
-                          ? formatDate(selectedStage.actualStartDate)
-                          : "—"}{" "}
-                        –{" "}
-                        {selectedStage.actualEndDate
-                          ? formatDate(selectedStage.actualEndDate)
-                          : "Chưa kết thúc"}
+                        {formatDate(selectedStage.actualEndDate)}
                       </Text>
                     )}
                   </div>
