@@ -21,6 +21,7 @@ import { getLandPlotsFromLogbook } from "src/utils/helpers"
 // Import các Tab components
 import TaskLogHistoryTab from "src/pages/FARM_SUPERVISOR/Plans/TaskLogHistoryTab"
 import StageTaskManagementTab from "src/pages/FARM_SUPERVISOR/Plans/StageTaskManagementTab"
+import LogbookFinalizationTab from "src/pages/FARM_SUPERVISOR/Plans/LogbookFinalizationTab"
 import OfficialLogbookTab from "./components/OfficialLogbookTab"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import { formatDate } from "src/utils/dateFormatters"
@@ -120,9 +121,7 @@ const CultivationLogbookDetail = () => {
   if (!item) return null
 
   const displayStartDate = item.actualStartDate || item.startDate
-  const displayStartLabel = item.actualStartDate
-    ? "Ngày bắt đầu"
-    : "Dự kiến"
+  const displayStartLabel = item.actualStartDate ? "Ngày bắt đầu" : "Dự kiến"
 
   // Build tasksMap từ stages (mỗi stage có array tasks)
   const tasksMap = Object.fromEntries(
@@ -157,6 +156,15 @@ const CultivationLogbookDetail = () => {
         <span className="flex items-center gap-2">
           <AppstoreOutlined />
           Quản lý công việc
+        </span>
+      ),
+    },
+    {
+      key: "finalize",
+      label: (
+        <span className="flex items-center gap-2">
+          <CheckCircleOutlined />
+          Chốt nhật ký
         </span>
       ),
     },
@@ -328,6 +336,15 @@ const CultivationLogbookDetail = () => {
           stages={stages}
           tasks={tasksMap}
           loadData={() => setReloadKey(key => key + 1)}
+        />
+      )}
+      {activeTab === "finalize" && (
+        <LogbookFinalizationTab
+          planId={id}
+          stages={stages}
+          tasks={tasksMap}
+          loadData={() => setReloadKey(key => key + 1)}
+          plan={item}
         />
       )}
     </div>
