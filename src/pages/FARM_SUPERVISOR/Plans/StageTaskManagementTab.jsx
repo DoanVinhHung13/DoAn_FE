@@ -284,9 +284,7 @@ const TaskCard = ({
                 {isActivated ? "Ngày bắt đầu:" : "Dự kiến:"}
               </span>
               <span className="font-medium text-gray-800">
-                {startDate
-                  ? formatDate(startDate)
-                  : "—"}
+                {startDate ? formatDate(startDate) : "—"}
               </span>
             </div>
 
@@ -787,11 +785,7 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                         <span className="font-medium">Dự kiến:</span>{" "}
                         {selectedStage.startDate
                           ? formatDate(selectedStage.startDate)
-                          : "—"}{" "}
-                        –{" "}
-                        {selectedStage.endDate
-                          ? formatDate(selectedStage.endDate)
-                          : "Chưa xác định"}
+                          : "—"}
                       </Text>
                     )}
                     {/* Ngày thực tế của giai đoạn */}
