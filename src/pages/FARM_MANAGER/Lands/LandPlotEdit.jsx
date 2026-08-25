@@ -94,18 +94,44 @@ const LandPlotEdit = () => {
 
   // ── Fetch: vùng trồng khác (kiểm tra chồng lấn, loại trừ chính mình) ─────
   const fetchExistingPlots = useCallback(async () => {
-    if (!canManage || !id) return
+    if (!id) return
     try {
       const response = await LandPlotService.getLandPlots({
         PageIndex: 1,
         PageSize: 100,
       })
       const allPlots = normalizeLandPlotResponse(response).items
-      setExistingPlots(allPlots.filter(item => (item.id || item._id) !== id))
+      const filtered = allPlots.filter(item => String(item.id || item._id) !== String(id))
+
+      const needsDetailFetch = filtered.some(
+        item => !item.boundaryJson && !item.boundary && !item.geometry,
+      )
+
+      if (needsDetailFetch) {
+        const enriched = []
+        for (const item of filtered) {
+          if (item.boundaryJson || item.boundary || item.geometry) {
+            enriched.push(item)
+          } else if (item.id) {
+            try {
+              const res = await LandPlotService.getLandPlotById(item.id)
+              const detail = normalizeApiDetail(res)
+              enriched.push({ ...item, ...detail })
+            } catch {
+              enriched.push(item)
+            }
+          } else {
+            enriched.push(item)
+          }
+        }
+        setExistingPlots(enriched)
+      } else {
+        setExistingPlots(filtered)
+      }
     } catch {
       // Không ảnh hưởng UX chính
     }
-  }, [canManage, id])
+  }, [id])
 
   useEffect(() => {
     fetchExistingPlots()
@@ -204,7 +230,7 @@ const LandPlotEdit = () => {
           type="primary"
           icon={<SaveOutlined />}
           loading={isSaving}
-          disabled={cultivationLocked || hasFormErrors}
+          disabled={cultivationLocked}
           onClick={handleSubmit}
         >
           Lưu
@@ -261,7 +287,7 @@ const LandPlotEdit = () => {
         <Space>
           <Button onClick={() => navigate(routes.detail(id))}>Hủy</Button>
           <Button
-            disabled={cultivationLocked || hasFormErrors}
+            disabled={cultivationLocked}
             type="primary"
             icon={<SaveOutlined />}
             loading={isSaving}

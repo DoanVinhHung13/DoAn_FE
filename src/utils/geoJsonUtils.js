@@ -49,9 +49,16 @@ export function geoJSONToLeafletPositions(coordinates) {
 
 export function parseBoundaryJson(boundaryJson) {
   if (!boundaryJson) return null
-  if (typeof boundaryJson === "object") return boundaryJson
+  if (typeof boundaryJson === "object") {
+    if (boundaryJson.coordinates) return boundaryJson
+    if (boundaryJson.type === "Polygon") return boundaryJson
+    if (Array.isArray(boundaryJson)) return { type: "Polygon", coordinates: boundaryJson }
+    return boundaryJson
+  }
   try {
-    return JSON.parse(boundaryJson)
+    const parsed = JSON.parse(boundaryJson)
+    if (typeof parsed === "string") return parseBoundaryJson(parsed)
+    return parsed
   } catch {
     return null
   }
@@ -75,16 +82,22 @@ export function findOverlappingPlot(
   existingPlots = [],
   excludePlotId = null,
 ) {
-  if (!newGeoJSON?.coordinates) return null
+  if (!newGeoJSON?.coordinates || !Array.isArray(existingPlots)) return null
 
   const newPoly = toTurfPolygon(newGeoJSON)
   if (!newPoly) return null
 
   for (const plot of existingPlots) {
     const plotId = plot?.id || plot?._id || plot?.landPlotId
-    if (excludePlotId && plotId === excludePlotId) continue
+    if (excludePlotId && String(plotId) === String(excludePlotId)) continue
 
-    const existingGeoJSON = parseBoundaryJson(plot.boundaryJson)
+    const rawBoundary =
+      plot?.boundaryJson ||
+      plot?.boundary ||
+      plot?.boundaries ||
+      plot?.polygon ||
+      plot?.geometry
+    const existingGeoJSON = parseBoundaryJson(rawBoundary)
     if (!existingGeoJSON?.coordinates) continue
 
     const existingPoly = toTurfPolygon(existingGeoJSON)
@@ -93,7 +106,8 @@ export function findOverlappingPlot(
     try {
       const overlaps =
         booleanOverlap(newPoly, existingPoly) ||
-        booleanContains(newPoly, existingPoly)
+        booleanContains(newPoly, existingPoly) ||
+        booleanContains(existingPoly, newPoly)
 
       if (overlaps) return plot
     } catch {
