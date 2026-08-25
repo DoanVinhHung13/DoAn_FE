@@ -25,6 +25,7 @@ import TitleCustom from "src/components/TitleCustom"
 import { MyTaskIcon } from "src/assets/icon/menu/MenuIcons"
 import { useCultivationStatus } from "src/hooks/useCultivationStatus"
 import ROUTER from "src/router/ROUTER"
+import CultivationLogbookService from "src/services/CultivationLogbookService"
 import CultivationTaskService from "src/services/CultivationTaskService"
 
 import TaskCard, { orderTasks } from "./components/TaskCard"
@@ -32,6 +33,13 @@ import LogbookTreePanel from "./components/LogbookTreePanel"
 import TaskHeaderStats from "./components/TaskHeaderStats"
 
 const unwrap = res => res?.data?.data ?? res?.data ?? res
+
+const getLogbookId = item =>
+  item?.id ||
+  item?.logbookId ||
+  item?.cultivationLogbookId ||
+  item?.cultivationPlanId ||
+  item?._id
 
 const FarmLeaderTasks = () => {
   const navigate = useNavigate()
@@ -67,7 +75,8 @@ const FarmLeaderTasks = () => {
       const data = unwrap(res)
       const list = Array.isArray(data) ? data : data?.items || []
       setLogbookSummaries(list)
-    } catch {
+    } catch (err) {
+      console.error("Error loading logbook summaries:", err)
       setSummariesError(true)
       setLogbookSummaries([])
     } finally {
@@ -81,10 +90,17 @@ const FarmLeaderTasks = () => {
 
   // ── Auto-select first logbook ─────────────────────────────────────────────
   useEffect(() => {
-    if (logbookSummaries.length > 0 && !selectedLogbookId) {
-      const first = logbookSummaries[0]
-      const id = first.id || first.logbookId || first._id
-      setSelectedLogbookId(id)
+    if (logbookSummaries.length > 0) {
+      const found = logbookSummaries.find(
+        lb => getLogbookId(lb) === selectedLogbookId,
+      )
+      if (!found || !selectedLogbookId) {
+        const first = logbookSummaries[0]
+        const id = getLogbookId(first)
+        if (id) {
+          setSelectedLogbookId(id)
+        }
+      }
     }
   }, [logbookSummaries, selectedLogbookId])
 
@@ -94,37 +110,74 @@ const FarmLeaderTasks = () => {
     try {
       setLoadingDetail(true)
       setDetailError(false)
-      const params = {}
-      const res = await CultivationTaskService.getLogbookById(
-        selectedLogbookId,
-        params,
-        { errorHandling: "component" },
-      )
-      const data = unwrap(res)
-      const plan = data?.plan ?? data
-      const stagesArr = Array.isArray(data?.stages) ? data.stages : []
-      const flatTasks = stagesArr.flatMap(s =>
-        Array.isArray(s.tasks) ? s.tasks : [],
-      )
-      setLogbookDetail(plan)
-      setStages(stagesArr)
-      setTasks(flatTasks)
 
-      if (statusFilter === "all") {
-        setWarningTasks(flatTasks)
-      } else {
-        const allRes = await CultivationTaskService.getLogbookById(
+      let plan = null
+      let stagesArr = []
+
+      // 1. Thử lấy qua endpoint chuyên biệt của Leader: /cultivation-tasks/logbook/{logbookId}
+      try {
+        const res = await CultivationTaskService.getLogbookById(
           selectedLogbookId,
           {},
           { errorHandling: "component" },
         )
-        const allData = unwrap(allRes)
-        const allStages = Array.isArray(allData?.stages) ? allData.stages : []
-        setWarningTasks(
-          allStages.flatMap(s => (Array.isArray(s.tasks) ? s.tasks : [])),
+        const data = unwrap(res)
+        plan = data?.plan ?? (data?.id ? data : null)
+        const rawStages =
+          data?.stages ||
+          data?.cultivationStages ||
+          data?.productionStages ||
+          []
+        stagesArr = Array.isArray(rawStages) ? rawStages : []
+      } catch (leaderApiErr) {
+        console.warn(
+          "CultivationTaskService.getLogbookById failed, trying CultivationLogbookService.getById fallback:",
+          leaderApiErr,
         )
       }
-    } catch {
+
+      // 2. Fallback nếu endpoint trên lỗi hoặc trả về rỗng: lấy qua /cultivation-logbooks/{id}
+      if (!plan || stagesArr.length === 0) {
+        try {
+          const fallbackRes = await CultivationLogbookService.getById(
+            selectedLogbookId,
+            { errorHandling: "component" },
+          )
+          const planData = unwrap(fallbackRes)
+          if (planData) {
+            plan = plan || planData
+            const rawStages =
+              planData.cultivationStages ||
+              planData.productionStages ||
+              planData.stages ||
+              []
+            stagesArr = Array.isArray(rawStages) ? rawStages : []
+          }
+        } catch (fallbackErr) {
+          console.warn("CultivationLogbookService.getById fallback also failed:", fallbackErr)
+        }
+      }
+
+      if (!plan && stagesArr.length === 0) {
+        throw new Error("Không tìm thấy dữ liệu kế hoạch.")
+      }
+
+      // Chuẩn hóa cấu trúc stages
+      const normalizedStages = stagesArr.map(s => ({
+        stageId: s.stageId || s.id,
+        stageName: s.stageName || s.name || "Giai đoạn",
+        tasks: Array.isArray(s.tasks) ? s.tasks : [],
+        ...s,
+      }))
+
+      const flatTasks = normalizedStages.flatMap(s => s.tasks)
+
+      setLogbookDetail(plan)
+      setStages(normalizedStages)
+      setTasks(flatTasks)
+      setWarningTasks(flatTasks)
+    } catch (err) {
+      console.error("Error loading logbook detail:", err)
       setDetailError(true)
       setLogbookDetail(null)
       setStages([])
@@ -133,7 +186,7 @@ const FarmLeaderTasks = () => {
     } finally {
       setLoadingDetail(false)
     }
-  }, [selectedLogbookId, statusFilter])
+  }, [selectedLogbookId])
 
   useEffect(() => {
     loadLogbookDetail()
@@ -149,7 +202,7 @@ const FarmLeaderTasks = () => {
         return name.includes(keyword)
       })
       .map(summary => {
-        const id = summary.id || summary.logbookId || summary._id
+        const id = getLogbookId(summary)
         const name = summary.logbookName || summary.name || "Kế hoạch"
         const isSelected = selectedLogbookId === id
         return {
