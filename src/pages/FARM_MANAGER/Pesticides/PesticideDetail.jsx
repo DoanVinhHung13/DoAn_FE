@@ -31,18 +31,26 @@ import { formatDateTime } from "src/utils/dateFormatters"
 
 const { Text } = Typography
 
-// ── Sub-tables column definitions ────────────────────────────────────────────
 const usageColumns = [
   {
-    title: "Cây trồng",
+    title: "Đối tượng (Cây trồng)",
     dataIndex: "targetCrop",
     key: "targetCrop",
     render: (v, record) => <Text strong>{v || record.target || "—"}</Text>,
   },
   {
+    title: "Liều lượng",
+    dataIndex: "dosage",
+    key: "dosage",
+    align: "center",
+    width: 120,
+    render: v => <Text>{v != null && v !== "" ? v : "—"}</Text>,
+  },
+  {
     title: "Đơn vị tính / diện tích",
     key: "unitPerArea",
     align: "center",
+    width: 180,
     render: (_, record) => {
       const quantityUnit = getQuantityUnit(
         record.productUnit ||
@@ -57,52 +65,11 @@ const usageColumns = [
     },
   },
   {
-    title: "Đối tượng sử dụng",
-    dataIndex: "targetCrop",
-    key: "targetCrop",
-    render: v => <Text strong>{v || "—"}</Text>,
-  },
-  {
-    title: "Đối tượng diệt trừ",
-    dataIndex: "targetPest",
-    key: "targetPest",
-    render: v => <Text>{v || "—"}</Text>,
-  },
-  {
-    title: "Lượng nước pha loãng",
-    dataIndex: "concentration",
-    key: "concentration",
-    align: "center",
-    render: (v, record) => {
-      const chemicalAmount = record.concentration || ""
-      const chemicalUnit = record.concentrationUnit || "%"
-      const waterAmount = record.dilutionVolume || ""
-      const waterUnit = record.dilutionUnit || MEASUREMENT_UNITS.LITER
-
-      if (!chemicalAmount && !waterAmount) return <Text>—</Text>
-
-      return (
-        <Text>{`${chemicalAmount} ${chemicalUnit} : ${waterAmount} ${waterUnit}`}</Text>
-      )
-    },
-  },
-  {
-    title: "Liều lượng",
-    dataIndex: "dosage",
-    key: "dosage",
-    align: "center",
-    render: (v, record) => {
-      const dosage = v != null ? v : ""
-      if (dosage === "") return <Text>—</Text>
-
-      return <Text>{dosage}</Text>
-    },
-  },
-  {
     title: "Cách ly (Ngày)",
     dataIndex: "quarantineDays",
     key: "quarantineDays",
     align: "center",
+    width: 140,
     render: (v, record) => {
       const days = v != null ? v : record.isolationDays
       return days != null ? <Tag color="red">{days} ngày</Tag> : "—"
@@ -209,7 +176,7 @@ const PesticideDetail = () => {
             </div>
 
             <Descriptions
-              column={{ xs: 1, sm: 2 }}
+              column={{ xs: 1, sm: 3 }}
               size="small"
               labelStyle={{
                 fontWeight: 600,
@@ -226,7 +193,7 @@ const PesticideDetail = () => {
                     <TagOutlined /> Tên nông dược
                   </span>
                 }
-                span={2}
+                span={1}
               >
                 <span className="font-semibold">{item.name || "—"}</span>
               </Descriptions.Item>
@@ -237,12 +204,19 @@ const PesticideDetail = () => {
                     <ShopOutlined /> Nhà Sản Xuất
                   </span>
                 }
+                span={2}
               >
                 {item.manufacturer || <span className="text-gray-400">—</span>}
               </Descriptions.Item>
 
-              <Descriptions.Item label="Loại nông dược">
-                {item.type || <span className="text-gray-400">—</span>}
+              <Descriptions.Item label="Loại nông dược" span={1}>
+                {item.type ? (
+                  <Tag color="green" className="font-medium rounded-full">
+                    {item.type}
+                  </Tag>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
               </Descriptions.Item>
 
               {/* Tồn kho thực tế */}
@@ -252,6 +226,7 @@ const PesticideDetail = () => {
                     <BarcodeOutlined /> Tồn kho thực tế
                   </span>
                 }
+                span={1}
               >
                 <span className="font-semibold text-blue-600">
                   {item.inventoryQuantity != null
@@ -266,25 +241,13 @@ const PesticideDetail = () => {
                     <BarcodeOutlined /> Tồn kho tối thiểu
                   </span>
                 }
+                span={1}
               >
                 <span className="font-semibold text-emerald-600">
-                  {item.minInventory != null || item.minimumStock != null
-                    ? `${Number(item.minInventory ?? item.minimumStock).toLocaleString("vi-VN")} ${getQuantityUnit(item.unitId || item.unit, MEASUREMENT_UNITS.LITER)}`
+                  {item.minimumStock != null || item.minInventory != null
+                    ? `${Number(item.minimumStock ?? item.minInventory).toLocaleString("vi-VN")} ${getQuantityUnit(item.unit || item.unitId, MEASUREMENT_UNITS.LITER)}`
                     : "—"}
                 </span>
-              </Descriptions.Item>
-
-              <Descriptions.Item label="Đơn vị tính">
-                {item.unitId || item.unit ? (
-                  <Tag color="blue" className="font-medium rounded-full">
-                    {getQuantityUnit(
-                      item.unitId || item.unit,
-                      MEASUREMENT_UNITS.LITER,
-                    )}
-                  </Tag>
-                ) : (
-                  <span className="text-gray-400">—</span>
-                )}
               </Descriptions.Item>
 
               {item.createdAt && (
@@ -294,7 +257,7 @@ const PesticideDetail = () => {
                       <CalendarOutlined /> Ngày tạo
                     </span>
                   }
-                  span={2}
+                  span={3}
                 >
                   {formatDateTime(item.createdAt, "HH:mm - DD/MM/YYYY")}
                 </Descriptions.Item>

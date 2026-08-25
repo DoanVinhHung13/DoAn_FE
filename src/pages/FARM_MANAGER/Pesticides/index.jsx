@@ -10,7 +10,6 @@ import {
   DeleteOutlined,
 } from "@ant-design/icons"
 import {
-  Alert,
   Button,
   Card,
   Input,
@@ -75,7 +74,6 @@ const ViewPesticides = () => {
   const [statusLoading, setStatusLoading] = useState(false)
   const [statusModal, setStatusModal] = useState({ open: false, item: null })
   const [importModal, setImportModal] = useState({ open: false, item: null })
-  const [inUseAlert, setInUseAlert] = useState(false)
 
   // ── Status Options ──────────────────────────────────────────────────────────
   const statusOptions = getCombo(SYSTEM_KEY.STATUS)
@@ -128,24 +126,6 @@ const ViewPesticides = () => {
   }, [getList])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-
-  const handleOpenEdit = record => {
-    if (record.isInActiveUse) {
-      setInUseAlert(true)
-      setTimeout(() => setInUseAlert(false), 5000)
-      return
-    }
-    navigate(ROUTER.FM_PESTICIDE_EDIT.replace(":id", record.id))
-  }
-
-  const handleSwitchClick = record => {
-    if (record.isInActiveUse) {
-      setInUseAlert(true)
-      setTimeout(() => setInUseAlert(false), 5000)
-      return
-    }
-    setStatusModal({ open: true, item: record })
-  }
 
   const handleStatusChange = async () => {
     if (!statusModal.item) return
@@ -206,7 +186,7 @@ const ViewPesticides = () => {
       align: "right",
       render: (v, record) => {
         const qty = Number(v || 0)
-        const minStock = Number(record.minInventory ?? record.minimumStock ?? 0)
+        const minStock = Number(record.minimumStock ?? record.minInventory ?? 0)
         let colorClass = "text-blue-600"
         if (minStock > 0) {
           if (qty <= minStock) colorClass = "text-red-500"
@@ -225,15 +205,17 @@ const ViewPesticides = () => {
     },
     {
       title: "Tồn kho tối thiểu",
-      key: "minInventory",
+      dataIndex: "minimumStock",
+      key: "minimumStock",
       width: 165,
       align: "right",
-      render: (_, record) => {
-        const qty = record.minInventory ?? record.minimumStock ?? 0
-        const unit = record.unit || ""
+      render: (v, record) => {
+        const qty = v ?? record.minInventory
         return (
           <span className="text-sm font-semibold text-gray-700">
-            {qty ? `${qty} ${unit}` : "—"}
+            {qty != null
+              ? `${Number(qty).toLocaleString("vi-VN")} ${record.unit || ""}`
+              : "—"}
           </span>
         )
       },
@@ -254,7 +236,6 @@ const ViewPesticides = () => {
       width: 150,
       align: "center",
       render: (_, record) => {
-        const locked = record.isInActiveUse
         const active = record.isActive !== false
         return (
           <div className="flex items-center justify-center gap-2">
@@ -269,63 +250,33 @@ const ViewPesticides = () => {
                 }}
               />
             </Tooltip>
-            <Tooltip
-              title={
-                locked
-                  ? "Nông dược đang được sử dụng, không thể chỉnh sửa"
-                  : "Chỉnh sửa"
-              }
-            >
+            <Tooltip title="Chỉnh sửa">
               <Button
                 type="text"
-                icon={
-                  <EditOutlined
-                    className={`text-lg ${locked ? "text-gray-300" : "text-green-500"}`}
-                  />
-                }
-                disabled={locked}
-                className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                  locked ? "opacity-40" : "hover:bg-green-50"
-                }`}
+                icon={<EditOutlined className="text-lg text-green-500" />}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-green-50"
                 onClick={e => {
                   e.stopPropagation()
-                  handleOpenEdit(record)
+                  navigate(ROUTER.FM_PESTICIDE_EDIT.replace(":id", record.id))
                 }}
               />
             </Tooltip>
-            <Tooltip
-              title={
-                locked
-                  ? "Nông dược đang được sử dụng"
-                  : active
-                    ? "Vô hiệu hóa"
-                    : "Kích hoạt"
-              }
-            >
+            <Tooltip title={active ? "Vô hiệu hóa" : "Kích hoạt"}>
               <Button
                 type="text"
                 icon={
                   active ? (
-                    <StopOutlined
-                      className={`text-lg ${locked ? "text-gray-300" : "text-red-500"}`}
-                    />
+                    <StopOutlined className="text-lg text-red-500" />
                   ) : (
-                    <CheckCircleOutlined
-                      className={`text-lg ${locked ? "text-gray-300" : "text-green-500"}`}
-                    />
+                    <CheckCircleOutlined className="text-lg text-green-500" />
                   )
                 }
-                disabled={locked}
                 className={`flex items-center justify-center w-8 h-8 rounded-lg ${
-                  locked
-                    ? "opacity-40"
-                    : active
-                      ? "hover:bg-red-50"
-                      : "hover:bg-green-50"
+                  active ? "hover:bg-red-50" : "hover:bg-green-50"
                 }`}
                 onClick={e => {
                   e.stopPropagation()
-                  handleSwitchClick(record)
+                  setStatusModal({ open: true, item: record })
                 }}
               />
             </Tooltip>
@@ -341,22 +292,11 @@ const ViewPesticides = () => {
                 okText="Đồng ý"
                 cancelText="Hủy"
               >
-                <Tooltip
-                  title={
-                    locked
-                      ? "Nông dược đang được sử dụng, không thể xóa"
-                      : "Xóa"
-                  }
-                >
+                <Tooltip title="Xóa">
                   <Button
                     type="text"
-                    disabled={locked}
-                    icon={
-                      <DeleteOutlined
-                        className={`text-lg ${locked ? "text-gray-300" : "text-red-500"}`}
-                      />
-                    }
-                    className={`flex items-center justify-center w-8 h-8 rounded-lg ${locked ? "opacity-40" : "hover:bg-red-50"}`}
+                    icon={<DeleteOutlined className="text-lg text-red-500" />}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50"
                     onClick={e => e.stopPropagation()}
                   />
                 </Tooltip>
@@ -388,18 +328,6 @@ const ViewPesticides = () => {
           Thêm mới
         </Button>
       </div>
-
-      {/* Alert */}
-      {inUseAlert && (
-        <Alert
-          message="Nông dược đang được sử dụng, không thể chỉnh sửa hoặc vô hiệu hóa."
-          type="warning"
-
-          closable
-          onClose={() => setInUseAlert(false)}
-          className="rounded-xl"
-        />
-      )}
 
       {/* ── Table card ── */}
       <div className="admin-filter-card rounded-lg shadow-sm">

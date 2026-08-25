@@ -1,27 +1,15 @@
-/**
- * PlanTemplates — Thư viện Kế hoạch Mẫu (Màn 4)
- * Route: /farm-manager/process-templates  (ROUTER.FM_PROCESS_TEMPLATES)
- *
- * Architecture mirrors the other resource management screens:
- *   - TitleCustom header + action button
- *   - Card toolbar (search + filters + reload)
- *   - CustomTable with pagination
- *   - CustomModal for delete confirm
- */
+import React, { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   DeleteOutlined,
   EditOutlined,
   PlayCircleOutlined,
   PlusOutlined,
-  ProfileOutlined,
   ReloadOutlined,
   SearchOutlined,
 } from "@ant-design/icons"
-import { Button, Card, Input, message, Tag, Tooltip, Select } from "antd"
-import { useCallback, useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Button, Input, Popconfirm, Select, Tag, Tooltip } from "antd"
 
-import CustomModal from "src/components/Modal/CustomModal"
 import CustomTable from "src/components/Table/CustomTable"
 import TitleCustom from "src/components/TitleCustom"
 import { createSTTColumn } from "src/components/Table/columns.jsx"
@@ -30,11 +18,10 @@ import { TemplateLibraryIcon } from "src/assets/icon/menu/MenuIcons"
 import { DEFAULT_PAGE_SIZE } from "src/constants/constants"
 import ROUTER from "src/router/ROUTER"
 import CropCatalogService from "src/services/CropCatalogService"
-import CropManagementService from "src/services/CropManagementService"
 import ProcessTemplateService from "src/services/ProcessTemplateService"
 import ProcessStepService from "src/services/ProcessStepService"
-import { invalidCharsRegex } from "src/utils/helpers"
 import { useListManagement } from "src/hooks/useListManagement"
+import { useCropOptions } from "src/hooks/useCropOptions"
 import { UI } from "src/constants/uiConfig"
 
 const normalizeItems = response => {
@@ -50,11 +37,11 @@ const normalizeItems = response => {
         []
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
 const PlanTemplateList = () => {
   const navigate = useNavigate()
+  const { cropOptions, isCropsLoading } = useCropOptions()
 
-  // ── Use List Management Hook ────────────────────────────────────────────────
+  // ── 1. States & Variables ───────────────────────────────────────────────────
   const {
     searchInput,
     setSearchInput,
@@ -81,17 +68,10 @@ const PlanTemplateList = () => {
   const cropCatalogId = filters.cropCatalogId
   const cropId = filters.cropId
 
-  // ── State: options ──────────────────────────────────────────────────────────
   const [cropCatalogOptions, setCropCatalogOptions] = useState([])
-  const [cropOptions, setCropOptions] = useState([])
   const [loadingCropCatalogs, setLoadingCropCatalogs] = useState(false)
-  const [loadingCrops, setLoadingCrops] = useState(false)
 
-  // ── State: modals ───────────────────────────────────────────────────────────
-  const [deleteModal, setDeleteModal] = useState({ open: false, item: null })
-  const [deleteLoading, setDeleteLoading] = useState(false)
-
-  // ── Fetch list ──────────────────────────────────────────────────────────────
+  // ── 2. Handlers & Business Functions ─────────────────────────────────────────
   const getList = useCallback(async () => {
     try {
       setLoading(true)
@@ -140,40 +120,31 @@ const PlanTemplateList = () => {
     setLoading,
   ])
 
+  const handleDelete = async id => {
+    try {
+      await ProcessTemplateService.deleteProcessTemplate(id)
+      getList()
+    } catch {
+      // error handled by interceptor
+    }
+  }
+
+  // ── 3. Effects ───────────────────────────────────────────────────────────────
   useEffect(() => {
     getList()
   }, [getList])
 
   useEffect(() => {
     let mounted = true
-
-    const getCropOptions = async () => {
+    const fetchCatalogs = async () => {
       try {
-        setLoadingCrops(true)
         setLoadingCropCatalogs(true)
-        const [cropResponse, catalogResponse] = await Promise.all([
-          CropManagementService.getCrops({
-            PageIndex: 1,
-            PageSize: 100,
-            Status: true,
-          }),
-          CropCatalogService.getCropCatalogs({
-            PageIndex: 1,
-            PageSize: 100,
-            Status: true,
-          }),
-        ])
+        const catalogResponse = await CropCatalogService.getCropCatalogs({
+          PageIndex: 1,
+          PageSize: 100,
+          Status: true,
+        })
         if (!mounted) return
-
-        const options = normalizeItems(cropResponse)
-          .filter(crop => crop.isActive !== false)
-          .map(crop => ({
-            value: crop.id || crop._id || crop.cropId,
-            label: crop.name || crop.cropName,
-          }))
-          .filter(option => option.value && option.label)
-
-        setCropOptions(options)
         setCropCatalogOptions(
           normalizeItems(catalogResponse)
             .filter(catalog => catalog.isActive !== false)
@@ -184,46 +155,29 @@ const PlanTemplateList = () => {
             .filter(option => option.value && option.label),
         )
       } finally {
-        if (mounted) {
-          setLoadingCrops(false)
-          setLoadingCropCatalogs(false)
-        }
+        if (mounted) setLoadingCropCatalogs(false)
       }
     }
 
-    getCropOptions()
+    fetchCatalogs()
     return () => {
       mounted = false
     }
   }, [])
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
-
-  const handleDelete = async () => {
-    if (!deleteModal.item) return
-    try {
-      setDeleteLoading(true)
-      await ProcessTemplateService.deleteProcessTemplate(deleteModal.item.id)
-      setDeleteModal({ open: false, item: null })
-      getList()
-    } finally {
-      setDeleteLoading(false)
-    }
-  }
-
-  // ── Table columns ────────────────────────────────────────────────────────────
+  // ── 4. Table Columns & Render JSX ───────────────────────────────────────────
   const columns = [
     createSTTColumn(page, pageSize),
     {
       title: "Tên mẫu quy trình",
       dataIndex: "name",
       key: "name",
-      render: v => <span className="">{v || "—"}</span>,
+      render: v => <span className="font-semibold text-gray-800">{v || "—"}</span>,
     },
     {
       title: "Cây trồng áp dụng",
       key: "targetCrop",
-      width: 180,
+      width: 200,
       render: (_, record) => {
         const label =
           record.cropName ||
@@ -233,7 +187,7 @@ const PlanTemplateList = () => {
           record.targetCrop?.label ||
           record.targetCrop
         if (!label) return <span className="text-gray-300">—</span>
-        return <Tag>{label}</Tag>
+        return <Tag color="green" className="rounded-full font-medium">{label}</Tag>
       },
     },
     {
@@ -258,7 +212,7 @@ const PlanTemplateList = () => {
       title: "Hành động",
       key: "actions",
       fixed: "right",
-      width: 130,
+      width: 140,
       align: "center",
       render: (_, record) => (
         <div className="flex items-center justify-center gap-2">
@@ -288,23 +242,31 @@ const PlanTemplateList = () => {
               }}
             />
           </Tooltip>
-          <Tooltip title="Xóa">
-            <Button
-              type="text"
-              icon={<DeleteOutlined className="text-lg text-red-500" />}
-              className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50"
-              onClick={e => {
-                e.stopPropagation()
-                setDeleteModal({ open: true, item: record })
-              }}
-            />
-          </Tooltip>
+          <Popconfirm
+            title="Xóa mẫu quy trình"
+            description="Bạn có chắc chắn muốn xóa mẫu quy trình này? Thao tác này không thể hoàn tác."
+            onConfirm={e => {
+              e.stopPropagation()
+              return handleDelete(record.id)
+            }}
+            onCancel={e => e.stopPropagation()}
+            okText="Đồng ý"
+            cancelText="Hủy"
+          >
+            <Tooltip title="Xóa">
+              <Button
+                type="text"
+                icon={<DeleteOutlined className="text-lg text-red-500" />}
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50"
+                onClick={e => e.stopPropagation()}
+              />
+            </Tooltip>
+          </Popconfirm>
         </div>
       ),
     },
   ]
 
-  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <div className={UI.page.wrapper}>
       {/* ── Header ── */}
@@ -359,7 +321,7 @@ const PlanTemplateList = () => {
           <Select
             value={cropId}
             options={cropOptions}
-            loading={loadingCrops}
+            loading={isCropsLoading}
             allowClear
             showSearch
             optionFilterProp="label"
@@ -412,49 +374,9 @@ const PlanTemplateList = () => {
         )}
         rowClassName="hover:bg-green-50/30 transition-colors"
       />
-
-      {/* ── Delete Confirm Modal ── */}
-      <CustomModal
-        open={deleteModal.open}
-        onCancel={() => setDeleteModal({ open: false, item: null })}
-        title={
-          <div className="flex items-center">
-            <span className="font-bold">Xác nhận xóa</span>
-          </div>
-        }
-        footer={null}
-        width={420}
-      >
-        <div className="mt-4 mb-6 ml-4">
-          <p className="text-gray-600">
-            Bạn có chắc chắn muốn xóa mẫu quy trình này? Thao tác này không thể
-            hoàn tác.
-          </p>
-          {deleteModal.item && (
-            <p className="mt-2 text-sm font-semibold text-gray-800">
-              {deleteModal.item.name}
-            </p>
-          )}
-        </div>
-        <div className="flex justify-end gap-3">
-          <Button
-            onClick={() => setDeleteModal({ open: false, item: null })}
-            className="h-10 px-6 rounded-xl"
-          >
-            Hủy
-          </Button>
-          <Button
-            type="primary"
-            loading={deleteLoading}
-            onClick={handleDelete}
-            className="h-10 px-6 font-bold bg-orange-500 border-0 shadow-lg rounded-xl shadow-orange-100"
-          >
-            Xác nhận
-          </Button>
-        </div>
-      </CustomModal>
     </div>
   )
 }
 
 export default PlanTemplateList
+
