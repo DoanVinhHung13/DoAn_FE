@@ -201,6 +201,6 @@ export const buildLandPlotPayload = (values, polygonData) => {
     longitude: longitude ?? null,
     boundaryJson: ensureBoundaryString(polygonData?.boundaryJson),
     description: values.description?.trim() || null,
-    status: values.status || "Active",
+    ...(values.status ? { status: values.status } : {}),
   }
 }
