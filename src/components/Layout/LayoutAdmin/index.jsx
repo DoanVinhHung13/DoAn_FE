@@ -53,7 +53,9 @@ const LayoutAdmin = () => {
   const screens = useBreakpoint()
 
   const isMobile = !screens.md
-  const isFormRoute = /\/(?:create|edit)(?:\/|$)/i.test(location.pathname)
+  const isFormRoute =
+    /\/(?:create|edit)(?:\/|$)/i.test(location.pathname) ||
+    /\/daily-logs(?:\/|$)/i.test(location.pathname)
 
   useEffect(() => {
     const handleRealtimeChange = () => {

@@ -123,6 +123,9 @@ const DailyLog = () => {
   })
   const [usageForm] = Form.useForm()
 
+  const getServerImageUrl = file =>
+    file?.serverUrl || file?.response?.url || file?.response?.data?.url || null
+
   const loadRemainingArea = async (materialType, rowIndex, materialId) => {
     const key = `${materialType}-${rowIndex}`
     if (!materialId) {
@@ -459,7 +462,7 @@ const DailyLog = () => {
   const handleSave = async () => {
     try {
       const imageUrls = (fileList || [])
-        .map(file => file.url || file.response?.url || file.response?.data?.url)
+        .map(getServerImageUrl)
         .filter(Boolean)
 
       if (imageUrls.length === 0) {
@@ -630,6 +633,7 @@ const DailyLog = () => {
   }
 
   const customUpload = async ({ file, onSuccess, onError }) => {
+    let previewUrl = null
     try {
       const existingBytes = fileList.reduce(
         (total, item) => total + Number(item.size || 0),
@@ -649,6 +653,20 @@ const DailyLog = () => {
       if (existingBytes + file.size > MAX_UPLOAD_TOTAL_BYTES) {
         throw new Error("Tổng dung lượng ảnh không được vượt quá 100 MB.")
       }
+
+      previewUrl = URL.createObjectURL(file)
+      setFileList(prev => [
+        ...prev.filter(item => item.uid !== file.uid),
+        {
+          uid: file.uid,
+          name: file.name,
+          status: "uploading",
+          url: previewUrl,
+          previewUrl,
+          size: file.size,
+        },
+      ])
+
       const formData = new FormData()
       formData.append("file", file)
       const res = await UploadService.uploadImage(formData, {
@@ -661,7 +679,29 @@ const DailyLog = () => {
         throw new Error("Upload không trả về url")
       }
       onSuccess({ url })
+      setFileList(prev => {
+        const next = [
+          ...prev.filter(item => item.uid !== file.uid),
+          {
+            uid: file.uid,
+            name: file.name,
+            status: "done",
+            url: previewUrl,
+            previewUrl,
+            serverUrl: url,
+            size: file.size,
+          },
+        ]
+        form.setFieldsValue({ images: next })
+        form.setFields([{ name: "images", errors: [] }])
+        return next
+      })
+      setShowImageError(false)
     } catch (err) {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+        setFileList(prev => prev.filter(item => item.uid !== file.uid))
+      }
       onError?.(err)
       message.error(err?.message || "Không thể tải ảnh lên.")
       const normalizedError = normalizeApiError(err)
@@ -674,32 +714,12 @@ const DailyLog = () => {
     }
   }
 
-  const handleUploadChange = ({ file, fileList: nextFileList }) => {
-    const normalizedFileList = nextFileList
-      .filter(item => item.status !== "error")
-      .map(item => ({
-        ...item,
-        url:
-          item.url || item.response?.url || item.response?.data?.url || null,
-      }))
-
-    setFileList(normalizedFileList)
-    form.setFieldsValue({ images: normalizedFileList })
-
-    const hasUploadedImage = normalizedFileList.some(item => item.url)
-    if (file.status === "done" && hasUploadedImage) {
-      setShowImageError(false)
-      form.setFields([{ name: "images", errors: [] }])
-    }
-  }
-
   const uploadProps = {
     name: "file",
     multiple: true,
     fileList,
     customRequest: customUpload,
     showUploadList: false,
-    onChange: handleUploadChange,
     onRemove(file) {
       setFileList(prev => prev.filter(item => item.uid !== file.uid))
     },
@@ -848,12 +868,7 @@ const DailyLog = () => {
                           {
                             validator: () => {
                               const imageUrls = (fileList || [])
-                                .map(
-                                  file =>
-                                    file.url ||
-                                    file.response?.url ||
-                                    file.response?.data?.url,
-                                )
+                                .map(getServerImageUrl)
                                 .filter(Boolean)
                               if (imageUrls.length === 0) {
                                 return Promise.reject(
@@ -875,7 +890,7 @@ const DailyLog = () => {
                                 className="group relative h-14 w-14 shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-xs hover:shadow-md transition-all [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
                               >
                                 <Image
-                                  src={file.url}
+                                  src={file.previewUrl || file.url}
                                   alt={file.name || "Ảnh minh chứng"}
                                   preview={{
                                     mask: (
