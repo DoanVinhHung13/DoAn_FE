@@ -46,10 +46,19 @@ const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
 
 const USER_FIELD_MAPPING = {
   FullName: "fullName",
+  fullName: "fullName",
   Email: "email",
+  email: "email",
   PhoneNumber: "phoneNumber",
+  phoneNumber: "phoneNumber",
+  Phone: "phoneNumber",
+  phone: "phoneNumber",
   DateOfBirth: "dateOfBirth",
+  dateOfBirth: "dateOfBirth",
   Gender: "gender",
+  gender: "gender",
+  Roles: "roles",
+  roles: "roles",
 }
 
 const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
@@ -141,9 +150,11 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           payload ||
           uploadedUrl
       }
+
+      let res
       if (isEdit) {
         // Cập nhật thông tin cơ bản
-        await UserService.updateUser(
+        res = await UserService.updateUser(
           editingUser.id,
           {
             fullName: values.fullName,
@@ -169,7 +180,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         }
       } else {
         // Thêm người dùng mới
-        await UserService.createUser(
+        res = await UserService.createUser(
           {
             fullName: values.fullName,
             email: values.email?.trim() || null,
@@ -188,6 +199,22 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         )
       }
 
+      // Kiểm tra phản hồi nếu API trả về không thành công
+      const resData = res?.data ?? res
+      if (
+        resData &&
+        (resData.success === false || resData.isSuccess === false)
+      ) {
+        const errorMsg = resData.message || "Thao tác không thành công."
+        if (/email/i.test(errorMsg)) {
+          form.setFields([{ name: "email", errors: [errorMsg] }])
+        } else if (/số điện thoại|phone/i.test(errorMsg)) {
+          form.setFields([{ name: "phoneNumber", errors: [errorMsg] }])
+        }
+        return
+      }
+
+      // Chỉ đóng modal khi API đã chạy thành công
       onClose()
       onSuccess?.()
 
@@ -195,7 +222,25 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         navigate(ROUTER.FM_USER_DETAIL.replace(":id", editingUser.id))
       }
     } catch (error) {
-      applyApiFieldErrors(form, error, USER_FIELD_MAPPING)
+      const fieldErrorsCount = applyApiFieldErrors(
+        form,
+        error,
+        USER_FIELD_MAPPING,
+      )
+      const errorMsg =
+        error?.message ||
+        error?.responseData?.message ||
+        error?.response?.data?.message ||
+        ""
+      if (fieldErrorsCount === 0 && errorMsg) {
+        if (/email/i.test(errorMsg)) {
+          form.setFields([{ name: "email", errors: [errorMsg] }])
+        } else if (/số điện thoại|phone/i.test(errorMsg)) {
+          form.setFields([{ name: "phoneNumber", errors: [errorMsg] }])
+        } else if (/tên|name/i.test(errorMsg)) {
+          form.setFields([{ name: "fullName", errors: [errorMsg] }])
+        }
+      }
     } finally {
       setLoading(false)
     }

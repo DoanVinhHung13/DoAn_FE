@@ -21,6 +21,8 @@ const ResetPasswordModal = ({ open, onClose, user }) => {
         confirmNewPassword: values.confirmNewPassword,
       })
       onClose()
+    } catch {
+      // Axios handles error notification
     } finally {
       setLoading(false)
     }
