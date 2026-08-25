@@ -64,7 +64,7 @@ const LandPlotMap = ({
   const [searchError, setSearchError] = useState("")
   const [overlapError, setOverlapError] = useState("")
   const [showResults, setShowResults] = useState(false)
-  const [pickLocationMode, setPickLocationMode] = useState(false)
+  const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {
     overlapPlotsRef.current = overlapPlots
@@ -224,13 +224,6 @@ const LandPlotMap = ({
     [clearSearchMarker],
   )
 
-  const handlePickLocation = useCallback(() => {
-    if (!mapInstance.current) return
-    setPickLocationMode(true)
-    setSearchError("Click trên bản đồ để chọn vị trí chính xác")
-    mapInstance.current.getContainer().style.cursor = "crosshair"
-  }, [])
-
   const handlePolygonGeocode = useCallback(async layer => {
     if (!layer?.getBounds) return
     const center = layer.getBounds().getCenter()
@@ -274,44 +267,27 @@ const LandPlotMap = ({
     }
   }, [])
 
-  const handleMapClick = useCallback(
-    async e => {
-      if (!pickLocationMode) return
-      const { lat, lng } = e.latlng
-      setPickLocationMode(false)
-      mapInstance.current.getContainer().style.cursor = ""
-      setSearchError("")
+  const attachLayerEditEvents = useCallback(
+    layer => {
+      if (!layer) return
 
-      clearSearchMarker()
-      searchMarkerRef.current = L.marker([lat, lng])
-        .addTo(mapInstance.current)
-        .bindPopup(`Vị trí đã chọn<br/>${lat.toFixed(6)}, ${lng.toFixed(6)}`)
-        .openPopup()
-
-      setGeocodingLoading(true)
-      try {
-        const address = await reverseGeocode(lat, lng)
-        if (address) {
-          setSearchQuery(address)
-          onAddressSelectRef.current?.({
-            address,
-            latitude: lat,
-            longitude: lng,
-          })
+      const onLayerModified = () => {
+        if (!layer?.getLatLngs) return
+        const latLngs = layer.getLatLngs()[0]
+        const updatedGeoJSON = createGeoJSONPolygon(latLngs)
+        const isValid = validatePolygon(updatedGeoJSON, layer)
+        if (isValid) {
+          handlePolygonGeocode(layer)
         }
-      } catch {
-        const fallbackAddr = `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-        setSearchQuery(fallbackAddr)
-        onAddressSelectRef.current?.({
-          address: fallbackAddr,
-          latitude: lat,
-          longitude: lng,
-        })
-      } finally {
-        setGeocodingLoading(false)
       }
+
+      layer.on("pm:edit", onLayerModified)
+      layer.on("pm:dragend", onLayerModified)
+      layer.on("pm:vertexadded", onLayerModified)
+      layer.on("pm:vertexremoved", onLayerModified)
+      layer.on("pm:markerdragend", onLayerModified)
     },
-    [pickLocationMode, clearSearchMarker],
+    [validatePolygon, handlePolygonGeocode],
   )
 
   useEffect(() => {
@@ -324,18 +300,27 @@ const LandPlotMap = ({
     })
 
     const osm = L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
       {
-        attribution: "© OpenStreetMap",
         maxZoom: 19,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       },
     )
     const satellite = L.tileLayer(
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      { attribution: "© Esri", maxZoom: 19 },
+      {
+        maxZoom: 19,
+        attribution: "© Esri & OpenStreetMap",
+      },
     )
     osm.addTo(map)
-    L.control.layers({ "Bản đồ": osm, "Vệ tinh": satellite }).addTo(map)
+    L.control
+      .layers({
+        "Bản đồ (OpenStreetMap)": osm,
+        "Vệ tinh": satellite,
+      })
+      .addTo(map)
     map.pm.setLang("vi", geomanVi, "en")
 
     if (mode === "draw" || mode === "edit") {
@@ -364,29 +349,6 @@ const LandPlotMap = ({
         snappable: true,
         snapDistance: 20,
       })
-
-      // Helper: đăng ký sự kiện chỉnh sửa/kéo trên LAYER (không phải map)
-      // Geoman chỉ fire pm:edit, pm:dragend trên layer cụ thể
-      const attachLayerEditEvents = layer => {
-        layer.on("pm:edit", () => {
-          if (!layer?.getLatLngs) return
-          const latLngs = layer.getLatLngs()[0]
-          const geoJSON = createGeoJSONPolygon(latLngs)
-          const isValid = validatePolygon(geoJSON, layer)
-          if (isValid) {
-            handlePolygonGeocode(layer)
-          }
-        })
-        layer.on("pm:dragend", () => {
-          if (!layer?.getLatLngs) return
-          const latLngs = layer.getLatLngs()[0]
-          const geoJSON = createGeoJSONPolygon(latLngs)
-          const isValid = validatePolygon(geoJSON, layer)
-          if (isValid) {
-            handlePolygonGeocode(layer)
-          }
-        })
-      }
 
       const handleCreate = e => {
         const { layer, shape } = e
@@ -421,12 +383,11 @@ const LandPlotMap = ({
       map.on("pm:remove", handleRemove)
     }
 
-    map.on("click", handleMapClick)
-
     mapInstance.current = map
+    setMapReady(true)
 
     return () => {
-      map.off("click", handleMapClick)
+      setMapReady(false)
       map.remove()
       mapInstance.current = null
       activeLayer.current = null
@@ -438,40 +399,56 @@ const LandPlotMap = ({
     color,
     clearActiveLayer,
     validatePolygon,
-    handleMapClick,
     handlePolygonGeocode,
   ])
 
   useEffect(() => {
-    if (!mapInstance.current) return
+    if (!mapInstance.current || !mapReady) return
 
     overlapLayers.current.forEach(layer =>
       mapInstance.current.removeLayer(layer),
     )
     overlapLayers.current = []
 
+    const validLayers = []
     overlapPlots.forEach((plot, index) => {
-      const geoJSON = parseBoundaryJson(plot.boundaryJson)
+      const rawBoundary =
+        plot?.boundaryJson ||
+        plot?.boundary ||
+        plot?.boundaries ||
+        plot?.polygon ||
+        plot?.geometry
+      const geoJSON = parseBoundaryJson(rawBoundary)
       if (!geoJSON) return
       const layer = renderPolygon(geoJSON, {
         color: MAP_COLORS[(index + 1) % MAP_COLORS.length],
-        fillOpacity: 0.15,
+        fillOpacity: 0.2,
         weight: 2,
         dashArray: "6 4",
         pmIgnore: true,
       })
       if (layer) {
-        layer.bindTooltip(`${plot.name || "Lô đất khác"} (đã đăng ký)`, {
-          permanent: false,
-          direction: "center",
-        })
+        layer.bindTooltip(
+          `<strong>${plot.name || "Lô đất khác"}</strong> (đã đăng ký)`,
+          {
+            permanent: false,
+            direction: "center",
+          },
+        )
         overlapLayers.current.push(layer)
+        validLayers.push(layer)
       }
     })
-  }, [overlapPlots, renderPolygon])
+
+    // Nếu ở chế độ vẽ mới (chưa có boundary) và có các lô đất khác, zoom hiển thị các lô cũ
+    if (mode === "draw" && !boundaryJson && validLayers.length > 0) {
+      const group = L.featureGroup(validLayers)
+      mapInstance.current.fitBounds(group.getBounds(), { padding: [50, 50] })
+    }
+  }, [mapReady, overlapPlots, renderPolygon, mode, boundaryJson])
 
   useEffect(() => {
-    if (!mapInstance.current) return
+    if (!mapInstance.current || !mapReady) return
 
     clearActiveLayer()
     const geoJSON = parseBoundaryJson(boundaryJson)
@@ -488,23 +465,20 @@ const LandPlotMap = ({
       })
 
       // Đăng ký event edit/drag trên layer được load từ boundaryJson
-      layer.on("pm:edit", () => {
-        if (!layer?.getLatLngs) return
-        const latLngs = layer.getLatLngs()[0]
-        const updatedGeoJSON = createGeoJSONPolygon(latLngs)
-        validatePolygon(updatedGeoJSON, layer)
-      })
-      layer.on("pm:dragend", () => {
-        if (!layer?.getLatLngs) return
-        const latLngs = layer.getLatLngs()[0]
-        const updatedGeoJSON = createGeoJSONPolygon(latLngs)
-        validatePolygon(updatedGeoJSON, layer)
-      })
+      attachLayerEditEvents(layer)
     }
 
     lastValidGeoJSON.current = geoJSON
     validatePolygon(geoJSON, layer)
-  }, [boundaryJson, mode, clearActiveLayer, renderPolygon, validatePolygon])
+  }, [
+    mapReady,
+    boundaryJson,
+    mode,
+    clearActiveLayer,
+    renderPolygon,
+    validatePolygon,
+    attachLayerEditEvents,
+  ])
 
   useEffect(() => {
     if (!mapInstance.current?.pm) return
@@ -668,8 +642,6 @@ const LandPlotMap = ({
                 const val = e.target.value
                 setSearchQuery(val)
                 setSearchError("")
-                setPickLocationMode(false)
-                mapInstance.current.getContainer().style.cursor = ""
                 triggerAutocomplete(val)
               }}
               onPressEnter={() => triggerAutocomplete(searchQuery)}
@@ -678,14 +650,6 @@ const LandPlotMap = ({
               }}
             />
           </div>
-
-          <button
-            type="button"
-            className="land-plot-map__locate"
-            onClick={handlePickLocation}
-          >
-            <EnvironmentOutlined /> Chọn trên bản đồ
-          </button>
 
           <button
             type="button"
@@ -699,9 +663,7 @@ const LandPlotMap = ({
 
       {(mode === "draw" || mode === "edit") && (
         <div className="land-plot-map__hint-bar">
-          {pickLocationMode
-            ? "Click vào bản đồ để chọn vị trí chính xác"
-            : "Tìm địa chỉ để di chuyển bản đồ. Vùng nét đứt là lô đất đã có — không được vẽ chồng lên."}
+          Tìm địa chỉ để di chuyển bản đồ. Vùng nét đứt là lô đất đã có — không được vẽ chồng lên.
         </div>
       )}
 

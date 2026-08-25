@@ -13,6 +13,7 @@ import {
   buildLandPlotPayload,
   isOverlapApiError,
   MSG_LM_25,
+  normalizeApiDetail,
   normalizeLandPlotResponse,
 } from "src/utils/landPlotUtils"
 import { useLandPlotAccess } from "./hooks/useLandPlotAccess"
@@ -68,17 +69,42 @@ const LandPlotCreate = () => {
 
   // ── Fetch: vùng trồng hiện có (kiểm tra chồng lấn) ────────────────────────
   const fetchExistingPlots = useCallback(async () => {
-    if (!canManage) return
     try {
       const response = await LandPlotService.getLandPlots({
         PageIndex: 1,
         PageSize: 100,
       })
-      setExistingPlots(normalizeLandPlotResponse(response).items)
+      const items = normalizeLandPlotResponse(response).items
+
+      const needsDetailFetch = items.some(
+        item => !item.boundaryJson && !item.boundary && !item.geometry,
+      )
+
+      if (needsDetailFetch) {
+        const enriched = []
+        for (const item of items) {
+          if (item.boundaryJson || item.boundary || item.geometry) {
+            enriched.push(item)
+          } else if (item.id) {
+            try {
+              const res = await LandPlotService.getLandPlotById(item.id)
+              const detail = normalizeApiDetail(res)
+              enriched.push({ ...item, ...detail })
+            } catch {
+              enriched.push(item)
+            }
+          } else {
+            enriched.push(item)
+          }
+        }
+        setExistingPlots(enriched)
+      } else {
+        setExistingPlots(items)
+      }
     } catch {
       // Existing plots are best-effort data for overlap validation.
     }
-  }, [canManage])
+  }, [])
 
   useEffect(() => {
     fetchExistingPlots()
@@ -130,15 +156,14 @@ const LandPlotCreate = () => {
           </Button>
           <TitleCustom className="!mb-0">Tạo mới vùng trồng</TitleCustom>
         </div>
-        <Button
-          type="primary"
-          icon={<SaveOutlined />}
-          loading={isSaving}
-          disabled={hasFormErrors}
-          onClick={handleSubmit}
-        >
-          Xác nhận
-        </Button>
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            loading={isSaving}
+            onClick={handleSubmit}
+          >
+            Xác nhận
+          </Button>
       </div>
 
       <Row gutter={[16, 16]}>
@@ -190,7 +215,6 @@ const LandPlotCreate = () => {
             type="primary"
             icon={<SaveOutlined />}
             loading={isSaving}
-            disabled={hasFormErrors}
             onClick={handleSubmit}
           >
             Xác nhận

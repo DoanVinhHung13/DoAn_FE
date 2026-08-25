@@ -280,9 +280,7 @@ const TaskCard = ({
                 {startLabel}
               </span>
               <span className="font-medium text-gray-800">
-                {startDate
-                  ? formatDate(startDate)
-                  : "—"}
+                {startDate ? formatDate(startDate) : "—"}
               </span>
             </div>
 

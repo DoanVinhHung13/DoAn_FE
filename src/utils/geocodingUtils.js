@@ -164,19 +164,24 @@ export async function reverseGeocode(latitude, longitude, { signal } = {}) {
   if (OPENMAP_API_KEY) {
     try {
       const params = new URLSearchParams({
-        lat: String(latitude),
-        lng: String(longitude),
+        latlng: `${latitude},${longitude}`,
+        format: "google",
+        admin_v2: "true",
         apikey: OPENMAP_API_KEY,
       })
-      const response = await fetch(`${OPENMAP_BASE}/reverse?${params}`, {
-        headers: { Accept: "application/json" },
-        signal,
-      })
+      const response = await fetch(
+        `${OPENMAP_BASE}/geocode/reverse?${params}`,
+        {
+          headers: { Accept: "application/json" },
+          signal,
+        },
+      )
       if (response.ok) {
         const data = await response.json()
         const label =
+          data?.results?.[0]?.formatted_address ||
+          data?.results?.[0]?.address ||
           data?.features?.[0]?.properties?.label ||
-          data?.result?.address ||
           data?.display_name
         if (label) return label
       }
@@ -188,7 +193,7 @@ export async function reverseGeocode(latitude, longitude, { signal } = {}) {
   // 2. Fallback sang OpenStreetMap Nominatim
   try {
     const params = new URLSearchParams({
-      format: "json",
+      format: "jsonv2",
       lat: String(latitude),
       lon: String(longitude),
       "accept-language": "vi",
@@ -199,16 +204,14 @@ export async function reverseGeocode(latitude, longitude, { signal } = {}) {
       {
         headers: {
           Accept: "application/json",
-          "User-Agent": "FarmManagerApp/1.0",
         },
         signal,
       },
     )
     if (response.ok) {
       const data = await response.json()
-      if (data?.display_name) {
-        return data.display_name
-      }
+      const label = data?.display_name || data?.name
+      if (label) return label
     }
   } catch (err) {
     if (isExternalAbortError(err)) throw err
