@@ -11,7 +11,7 @@ import {
   getLocalNow,
   parseDate,
 } from "src/utils/dateFormatters"
-import { makeNameValidator } from "src/utils/helpers"
+import { makeDescriptionValidator, makeNameValidator } from "src/utils/helpers"
 
 const EditTaskModal = ({
   open,
@@ -97,24 +97,8 @@ const EditTaskModal = ({
           name="description"
           label="Mô tả chi tiết"
           rules={[
-            {
-              validator: (_, value) => {
-                if (!value) return Promise.resolve()
-                const trimmed = value.trim()
-                if (!trimmed) return Promise.resolve()
-                if (trimmed.length > 500)
-                  return Promise.reject(
-                    new Error("Mô tả không được vượt quá 500 ký tự."),
-                  )
-                if (trimmed !== trimmed.replace(/\s+/g, " "))
-                  return Promise.reject(
-                    new Error(
-                      "Mô tả không được chứa nhiều khoảng trắng liên tiếp.",
-                    ),
-                  )
-                return Promise.resolve()
-              },
-            },
+            { required: true, message: "Vui lòng nhập mô tả chi tiết." },
+            makeDescriptionValidator({ maxLength: 500 }),
           ]}
         >
           <Input.TextArea
