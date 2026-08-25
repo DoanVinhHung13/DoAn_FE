@@ -5,13 +5,9 @@ import {
   Card,
   Empty,
   Form,
-  Input,
   Pagination,
-  Modal,
-  Select,
   Skeleton,
   Tabs,
-  Tag,
   Typography,
   Upload,
   message,
@@ -19,11 +15,7 @@ import {
 import {
   BellOutlined,
   CheckOutlined,
-  DeleteOutlined,
-  FileOutlined,
   PlusOutlined,
-  SearchOutlined,
-  UploadOutlined,
 } from "@ant-design/icons"
 import { useNavigate } from "react-router-dom"
 
@@ -39,90 +31,26 @@ import UploadService from "src/services/UploadService"
 import TitleCustom from "src/components/TitleCustom"
 import { NotificationIcon } from "src/assets/icon/menu/MenuIcons"
 import ROUTER from "src/router/ROUTER"
-import {
-  getNotificationTypeLabel,
-  NOTIFICATION_TYPE_LABELS,
-  NOTIFICATION_TYPE_COLORS,
-} from "src/constants/notificationTypes"
-import { parseDate, timeAgo } from "src/utils/dateFormatters"
+import { NOTIFICATION_TYPE_LABELS } from "src/constants/notificationTypes"
 import { useDebouncedValue } from "src/hooks/useDebouncedValue"
 import {
   getNotificationActionUrl,
   getNotificationContext,
 } from "src/utils/notificationUtils"
-import { makeNameValidator } from "src/utils/helpers"
+
+import {
+  RECIPIENT_TYPE,
+  getCategory,
+  getUserId,
+  hasRole,
+  normalizeNotifications,
+  normalizeUsers,
+} from "./components/notificationConstants"
+import NotificationItem from "./components/NotificationItem"
+import NotificationFilterToolbar from "./components/NotificationFilterToolbar"
+import CreateNotificationModal from "./components/CreateNotificationModal"
 
 const { Text } = Typography
-const { TextArea } = Input
-
-const STATUS_OPTIONS = [
-  { value: "all", label: "Tất cả trạng thái" },
-  { value: "unread", label: "Chưa đọc" },
-  { value: "read", label: "Đã đọc" },
-]
-
-const TYPE_COLORS = {
-  Journal_Submitted: "blue",
-  Journal_Verified: "green",
-  Journal_Revision_Requested: "orange",
-  Journal_Assigned: "purple",
-  System: "cyan",
-  Announcement: "magenta",
-}
-
-const ROLE_OPTIONS = [
-  { value: "FARM_SUPERVISOR", label: "Giám sát nông trại" },
-  { value: "FARMER_LEADER", label: "Tổ trưởng" },
-]
-
-const RECIPIENT_TYPE = {
-  ALL: "all",
-  BY_ROLE: "by_role",
-  SPECIFIC_USERS: "specific_users",
-}
-
-const normalizeNotifications = response => {
-  const payload = response?.data ?? response ?? {}
-  const nestedPayload = payload?.data ?? payload
-  const items = Array.isArray(nestedPayload)
-    ? nestedPayload
-    : nestedPayload?.notifications ||
-      nestedPayload?.items ||
-      nestedPayload?.results ||
-      payload?.notifications ||
-      []
-
-  const unreadCount =
-    payload?.unreadCount ??
-    nestedPayload?.unreadCount ??
-    items.filter(item => !item.isRead).length
-
-  return {
-    items,
-    unreadCount,
-    totalItems:
-      nestedPayload?.totalItems ?? payload?.totalItems ?? items.length,
-  }
-}
-
-const normalizeUsers = response => {
-  const payload = response?.data ?? response ?? {}
-  const data = payload?.data ?? payload
-  return Array.isArray(data)
-    ? data
-    : data?.items || data?.results || data?.users || []
-}
-
-const getCategory = getNotificationTypeLabel
-
-const getUserId = user => user?.id || user?._id || user?.userId
-
-const getUserRoles = user => {
-  const roles = Array.isArray(user?.roles) ? user.roles : [user?.role]
-  return roles.filter(Boolean).map(role => String(role).toUpperCase())
-}
-
-const hasRole = (user, role) => getUserRoles(user).includes(role)
 
 const FarmManagerNotifications = () => {
   const navigate = useNavigate()
@@ -242,6 +170,29 @@ const FarmManagerNotifications = () => {
     }
   }
 
+  const accountUsers = useMemo(
+    () =>
+      (usersData || [])
+        .filter(user => getUserId(user))
+        .filter(user => !hasRole(user, "FARM_MANAGER")),
+    [usersData],
+  )
+
+  const getRecipientUserIds = values => {
+    if (recipientType === RECIPIENT_TYPE.SPECIFIC_USERS) {
+      return values.recipientUserIds || []
+    }
+
+    if (recipientType === RECIPIENT_TYPE.BY_ROLE) {
+      const selectedRoles = values.recipientRoles || []
+      return accountUsers
+        .filter(user => selectedRoles.some(role => hasRole(user, role)))
+        .map(getUserId)
+    }
+
+    return accountUsers.map(getUserId)
+  }
+
   const handleCreateNotification = async values => {
     const recipientUserIds = getRecipientUserIds(values)
     if (!recipientUserIds.length) {
@@ -356,29 +307,6 @@ const FarmManagerNotifications = () => {
       }))
   }, [usersData])
 
-  const accountUsers = useMemo(
-    () =>
-      (usersData || [])
-        .filter(user => getUserId(user))
-        .filter(user => !hasRole(user, "FARM_MANAGER")),
-    [usersData],
-  )
-
-  const getRecipientUserIds = values => {
-    if (recipientType === RECIPIENT_TYPE.SPECIFIC_USERS) {
-      return values.recipientUserIds || []
-    }
-
-    if (recipientType === RECIPIENT_TYPE.BY_ROLE) {
-      const selectedRoles = values.recipientRoles || []
-      return accountUsers
-        .filter(user => selectedRoles.some(role => hasRole(user, role)))
-        .map(getUserId)
-    }
-
-    return accountUsers.map(getUserId)
-  }
-
   const filteredNotifications = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLocaleLowerCase("vi")
     const sourceData = activeTab === "received" ? data : sentData
@@ -407,8 +335,6 @@ const FarmManagerNotifications = () => {
       return matchesKeyword && matchesStatus && matchesCategory
     })
   }, [category, data, sentData, keyword, status, activeTab])
-
-  const paginatedNotifications = filteredNotifications
 
   const handleNotificationClick = async item => {
     const id = item._id || item.id
@@ -490,39 +416,16 @@ const FarmManagerNotifications = () => {
         className="bg-white rounded-lg shadow-sm px-6"
       />
 
-      <div className="admin-filter-card rounded-lg shadow-sm">
-        <div className="admin-toolbar grid grid-cols-1 gap-3 md:grid-cols-[minmax(240px,1fr)_200px_200px]">
-          <Input
-            allowClear
-            value={keyword}
-            onChange={event => {
-              setKeyword(event.target.value)
-              setPage(1)
-            }}
-            prefix={<SearchOutlined className="text-gray-400" />}
-            placeholder="Tìm theo tiêu đề hoặc nội dung"
-            className="h-10 rounded-lg"
-          />
-          <Select
-            value={status}
-            onChange={value => {
-              setStatus(value)
-              setPage(1)
-            }}
-            options={STATUS_OPTIONS}
-            className="h-10"
-          />
-          <Select
-            value={category}
-            onChange={value => {
-              setCategory(value)
-              setPage(1)
-            }}
-            options={categoryOptions}
-            className="h-10"
-          />
-        </div>
-      </div>
+      <NotificationFilterToolbar
+        keyword={keyword}
+        setKeyword={setKeyword}
+        status={status}
+        setStatus={setStatus}
+        category={category}
+        setCategory={setCategory}
+        categoryOptions={categoryOptions}
+        onResetPage={() => setPage(1)}
+      />
 
       <Card
         variant="borderless"
@@ -579,89 +482,14 @@ const FarmManagerNotifications = () => {
           />
         ) : (
           <div className="space-y-4 p-5">
-            {paginatedNotifications.map(item => {
-              const id = item._id || item.id
-              const createdAt = item.createdAt || item.timestamp || item.date
-              const content = item.message || item.content || ""
-              const context = getNotificationContext(item)
-
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => handleNotificationClick(item)}
-                  className={`grid w-full grid-cols-[40px_1fr] gap-3 rounded-xl border p-4 text-left transition-all hover:shadow-md sm:grid-cols-[40px_1fr_auto] ${
-                    item.isRead
-                      ? "border-gray-200 bg-white hover:border-gray-300"
-                      : "border-green-200 bg-green-50/50 hover:border-green-300"
-                  }`}
-                >
-                  <span
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                      item.isRead
-                        ? "bg-gray-100 text-gray-400"
-                        : "bg-green-100 text-green-600"
-                    }`}
-                  >
-                    <BellOutlined />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="mb-2 flex flex-wrap items-center gap-2">
-                      <Text
-                        strong={activeTab !== "sent" && !item.isRead}
-                        className="!text-sm"
-                      >
-                        {item.title || "Thông báo"}
-                      </Text>
-                      <Tag
-                        color={
-                          NOTIFICATION_TYPE_COLORS[item.type] ||
-                          TYPE_COLORS[item.type] ||
-                          "default"
-                        }
-                        className="!m-0 !text-xs"
-                      >
-                        {getCategory(item)}
-                      </Tag>
-                      {activeTab !== "sent" && !item.isRead && (
-                        <Tag color="green" className="!m-0 !text-xs">
-                          Chưa đọc
-                        </Tag>
-                      )}
-                    </span>
-                    <Text
-                      type="secondary"
-                      className="block !text-sm !leading-6"
-                    >
-                      {content}
-                    </Text>
-                    {(context.logbookName || context.stageName) && (
-                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                        {context.logbookName && (
-                          <span>Nhật ký: {context.logbookName}</span>
-                        )}
-                        {context.stageName && (
-                          <span>Giai đoạn: {context.stageName}</span>
-                        )}
-                      </div>
-                    )}
-                  </span>
-                  <span className="col-start-2 flex items-center gap-2 sm:col-start-auto">
-                    <Text
-                      type="secondary"
-                      className="whitespace-nowrap !text-xs"
-                    >
-                      {createdAt && parseDate(createdAt)?.isValid()
-                        ? timeAgo(createdAt)
-                        : "Không rõ thời gian"}
-                    </Text>
-                    {activeTab !== "sent" && !item.isRead && (
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-green-500" />
-                    )}
-                  </span>
-                </button>
-              )
-            })}
+            {filteredNotifications.map(item => (
+              <NotificationItem
+                key={item._id || item.id}
+                item={item}
+                isSentTab={activeTab === "sent"}
+                onClick={handleNotificationClick}
+              />
+            ))}
             <div className="flex justify-end border-t border-gray-100 pt-4">
               <Pagination
                 current={page}
@@ -680,288 +508,28 @@ const FarmManagerNotifications = () => {
         )}
       </Card>
 
-      {/* Modal tạo thông báo */}
-      <Modal
+      <CreateNotificationModal
         open={isCreating}
-        onCancel={() => {
+        onClose={() => {
           setIsCreating(false)
           form.resetFields()
           setRecipientType(RECIPIENT_TYPE.ALL)
+          setDocuments([])
         }}
-        footer={null}
-        centered
-        wrapClassName="notification-create-modal"
-        style={{ width: "min(92vw, 920px)", maxWidth: "calc(100vw - 32px)" }}
-        destroyOnClose
-        title={
-          <span className="text-2xl font-bold text-green-600">
-            Tạo thông báo mới
-          </span>
-        }
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          className="pt-4"
-          onFinish={handleCreateNotification}
-          onFinishFailed={() => {}}
-          scrollToFirstError
-        >
-          <Form.Item
-            name="title"
-            label="Tiêu đề"
-            rules={[
-              { required: true, message: "Vui lòng nhập tiêu đề thông báo." },
-              makeNameValidator({ label: "Tiêu đề", maxLength: 200 }),
-            ]}
-          >
-            <Input
-              className="rounded-lg"
-              placeholder="Nhập tiêu đề thông báo"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="message"
-            label="Nội dung"
-            rules={[
-              { required: true, message: "Vui lòng nhập nội dung thông báo." },
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve()
-                  const trimmed = value.trim()
-                  if (!trimmed)
-                    return Promise.reject(
-                      new Error(
-                        "Nội dung thông báo không được chỉ chứa khoảng trắng.",
-                      ),
-                    )
-                  if (trimmed.length > 1000)
-                    return Promise.reject(
-                      new Error("Nội dung không được vượt quá 1000 ký tự."),
-                    )
-                  if (trimmed !== trimmed.replace(/\s+/g, " "))
-                    return Promise.reject(
-                      new Error(
-                        "Nội dung không được chứa nhiều khoảng trắng liên tiếp.",
-                      ),
-                    )
-                  return Promise.resolve()
-                },
-              },
-            ]}
-          >
-            <TextArea
-              rows={5}
-              className="rounded-lg"
-              placeholder="Nhập nội dung thông báo"
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="actionUrl"
-            label="Đường dẫn khi bấm (tuỳ chọn)"
-            rules={[
-              {
-                max: 500,
-                message: "Đường dẫn không được vượt quá 500 ký tự.",
-              },
-              {
-                validator: (_, value) => {
-                  if (!value || value.trim().startsWith("/"))
-                    return Promise.resolve()
-                  return Promise.reject(
-                    new Error("Đường dẫn phải bắt đầu bằng /."),
-                  )
-                },
-              },
-            ]}
-          >
-            <Input
-              className="rounded-lg"
-              placeholder="Ví dụ: /farm-manager/cultivation-logbooks/123"
-            />
-          </Form.Item>
-
-          {/* Upload tài liệu */}
-          <Form.Item label="Tài liệu đính kèm">
-            <div className="space-y-3">
-              <Upload
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
-                showUploadList={false}
-                beforeUpload={beforeDocumentUpload}
-                customRequest={handleDocumentUpload}
-                disabled={uploadingDoc}
-              >
-                <Button
-                  icon={<UploadOutlined />}
-                  loading={uploadingDoc}
-                  className="h-11 rounded-lg"
-                >
-                  {uploadingDoc ? "Đang tải lên..." : "Tải tài liệu lên"}
-                </Button>
-              </Upload>
-
-              {/* Danh sách tài liệu đã upload */}
-              {documents.length > 0 && (
-                <div className="space-y-2">
-                  {documents.map(doc => (
-                    <div
-                      key={doc.uid}
-                      className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
-                    >
-                      <div className="flex min-w-0 items-center gap-2">
-                        <FileOutlined className="text-lg text-blue-500" />
-                        <div className="min-w-0 flex-1">
-                          <Text className="block truncate font-medium">
-                            {doc.name}
-                          </Text>
-                          <Text type="secondary" className="text-xs">
-                            {(doc.size / 1024).toFixed(2)} KB
-                          </Text>
-                        </div>
-                      </div>
-                      <Button
-                        type="text"
-                        danger
-                        size="small"
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleRemoveDocument(doc.uid)}
-                        className="shrink-0"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Form.Item>
-
-          <Form.Item label="Đối tượng nhận">
-            <div className="space-y-3">
-              {/* Radio buttons cho loại người nhận */}
-              <div className="space-y-2">
-                <div
-                  className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                    recipientType === RECIPIENT_TYPE.ALL
-                      ? "border-green-500 bg-green-50"
-                      : "border-gray-200 hover:border-green-300"
-                  }`}
-                  onClick={() => {
-                    setRecipientType(RECIPIENT_TYPE.ALL)
-                    form.setFieldsValue({
-                      recipientRoles: [],
-                      recipientUserIds: [],
-                    })
-                  }}
-                >
-                  <Text strong> Gửi cho tất cả người dùng</Text>
-                </div>
-
-                <div
-                  className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                    recipientType === RECIPIENT_TYPE.BY_ROLE
-                      ? "border-green-500 bg-green-50"
-                      : "border-gray-200 hover:border-green-300"
-                  }`}
-                  onClick={() => {
-                    setRecipientType(RECIPIENT_TYPE.BY_ROLE)
-                    form.setFieldsValue({ recipientUserIds: [] })
-                  }}
-                >
-                  <Text strong>Gửi theo vai trò</Text>
-                </div>
-
-                <div
-                  className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                    recipientType === RECIPIENT_TYPE.SPECIFIC_USERS
-                      ? "border-green-500 bg-green-50"
-                      : "border-gray-200 hover:border-green-300"
-                  }`}
-                  onClick={() => {
-                    setRecipientType(RECIPIENT_TYPE.SPECIFIC_USERS)
-                    form.setFieldsValue({ recipientRoles: [] })
-                  }}
-                >
-                  <Text strong>Chọn người dùng cụ thể</Text>
-                </div>
-              </div>
-
-              {/* Select vai trò */}
-              {recipientType === RECIPIENT_TYPE.BY_ROLE && (
-                <Form.Item
-                  name="recipientRoles"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng chọn ít nhất một vai trò.",
-                    },
-                  ]}
-                  className="!mb-0"
-                >
-                  <Select
-                    mode="multiple"
-                    className="w-full"
-                    placeholder="Chọn vai trò người nhận"
-                    options={ROLE_OPTIONS}
-                    maxTagCount="responsive"
-                  />
-                </Form.Item>
-              )}
-
-              {/* Select người dùng cụ thể */}
-              {recipientType === RECIPIENT_TYPE.SPECIFIC_USERS && (
-                <Form.Item
-                  name="recipientUserIds"
-                  rules={[
-                    {
-                      required: true,
-                      message: "Vui lòng chọn ít nhất một người nhận.",
-                    },
-                  ]}
-                  className="!mb-0"
-                >
-                  <Select
-                    mode="multiple"
-                    className="w-full"
-                    placeholder="Chọn người nhận"
-                    loading={isUsersLoading}
-                    options={userOptions}
-                    showSearch
-                    filterOption={(input, option) =>
-                      (option?.label ?? "")
-                        .toLowerCase()
-                        .includes(input.toLowerCase())
-                    }
-                    maxTagCount="responsive"
-                  />
-                </Form.Item>
-              )}
-            </div>
-          </Form.Item>
-
-          <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
-            <Button
-              onClick={() => {
-                setIsCreating(false)
-                form.resetFields()
-                setRecipientType(RECIPIENT_TYPE.ALL)
-                setDocuments([])
-              }}
-              className="h-10 min-w-[88px] rounded-lg font-semibold"
-            >
-              Hủy
-            </Button>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={createPending}
-              className="h-10 min-w-[112px] rounded-lg bg-green-500 font-semibold shadow-lg shadow-green-100"
-            >
-              Tạo thông báo
-            </Button>
-          </div>
-        </Form>
-      </Modal>
+        form={form}
+        onSubmit={handleCreateNotification}
+        loading={createPending}
+        recipientType={recipientType}
+        setRecipientType={setRecipientType}
+        documents={documents}
+        setDocuments={setDocuments}
+        uploadingDoc={uploadingDoc}
+        beforeDocumentUpload={beforeDocumentUpload}
+        handleDocumentUpload={handleDocumentUpload}
+        handleRemoveDocument={handleRemoveDocument}
+        isUsersLoading={isUsersLoading}
+        userOptions={userOptions}
+      />
     </div>
   )
 }

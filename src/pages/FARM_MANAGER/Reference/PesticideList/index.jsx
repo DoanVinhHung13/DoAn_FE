@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react"
-import { Alert, Badge, Breadcrumb, Input, Select, Tag, Typography } from "antd"
+import { Alert, Input, Select } from "antd"
 import {
   FilterOutlined,
   SafetyCertificateOutlined,
@@ -11,16 +11,15 @@ import { normalizePesticideType } from "src/constants/pesticideTypes"
 import { useSystemKey } from "src/hooks/useSystemKey"
 import { SYSTEM_KEY } from "src/constants/systemKey"
 
-const { Title, Text } = Typography
+import ReferenceHeader from "../components/ReferenceHeader"
+import ReferenceSourceFooter from "../components/ReferenceSourceFooter"
+import { getPesticideColumns } from "./components/PesticideColumns"
 
 const getCatalogItems = response => {
   let payload = response
-
   if (payload?.data !== undefined) payload = payload.data
   if (payload?.data !== undefined) payload = payload.data
-
   if (Array.isArray(payload)) return payload
-
   return (
     payload?.items ||
     payload?.results ||
@@ -116,93 +115,24 @@ const PesticideList = () => {
     [currentPage, filteredData, pageSize],
   )
 
-  const columns = [
-    {
-      title: "STT",
-      key: "stt",
-      width: 80,
-      align: "center",
-      render: (_, __, index) => (
-        <Text className="font-bold text-gray-400">
-          {(currentPage - 1) * pageSize + index + 1}
-        </Text>
-      ),
-    },
-    {
-      title: "Tên",
-      dataIndex: "tradeName",
-      key: "tradeName",
-      width: 200,
-      render: text => (
-        <Text className="font-bold text-gray-800">{text || "—"}</Text>
-      ),
-    },
-    {
-      title: "Loại nông dược",
-      dataIndex: "category",
-      key: "category",
-      width: 160,
-      render: text => (
-        <Tag className="font-medium rounded border-0 whitespace-normal">
-          {text || "—"}
-        </Tag>
-      ),
-    },
-    {
-      title: "Mô tả",
-      dataIndex: "description",
-      key: "description",
-      render: text => (
-        <Text className="text-gray-600 text-sm">{text || "—"}</Text>
-      ),
-    },
-    {
-      title: "Nhà sản xuất",
-      dataIndex: "applicant",
-      key: "applicant",
-      width: 220,
-      render: text => (
-        <Text className="text-gray-600 text-sm">{text || "—"}</Text>
-      ),
-    },
-  ]
+  const columns = useMemo(
+    () => getPesticideColumns(currentPage, pageSize),
+    [currentPage, pageSize],
+  )
 
   return (
     <div className="admin-compact-list space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
-      <div className="space-y-3">
-        <Breadcrumb
-          items={[
-            { title: "Trang chủ" },
-            { title: "Tra cứu cấp phép" },
-            { title: "Danh mục nông dược" },
-          ]}
-        />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 shrink-0">
-              <SafetyCertificateOutlined className="text-3xl" />
-            </div>
-            <div>
-              <Title level={4} className="!mb-1 font-bold">
-                Danh mục nông dược
-              </Title>
-              <Text className="text-gray-500">
-                Danh sách nông dược đang hoạt động từ hệ thống EAPLS.
-              </Text>
-            </div>
-          </div>
-          <Badge
-            count={filteredData.length.toLocaleString()}
-            overflowCount={99999}
-            style={{
-              backgroundColor: "#16a34a",
-              fontSize: 13,
-              padding: "0 10px",
-              borderRadius: 20,
-            }}
-          />
-        </div>
-      </div>
+      <ReferenceHeader
+        breadcrumbItems={[
+          { title: "Trang chủ" },
+          { title: "Tra cứu cấp phép" },
+          { title: "Danh mục nông dược" },
+        ]}
+        icon={<SafetyCertificateOutlined className="text-3xl" />}
+        title="Danh mục nông dược"
+        subtitle="Danh sách nông dược đang hoạt động từ hệ thống EAPLS."
+        count={filteredData.length}
+      />
 
       <div className="admin-filter-card shadow-sm border-gray-100 rounded-2xl p-4 bg-white">
         <div className="admin-toolbar flex flex-col sm:flex-row gap-3">
@@ -263,20 +193,10 @@ const PesticideList = () => {
         }}
       />
 
-      <div className="bg-blue-50/50 border border-blue-100 p-5 rounded-2xl flex items-start gap-4">
-        <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-600 shrink-0 mt-0.5">
-          <SafetyCertificateOutlined className="text-lg" />
-        </div>
-        <div>
-          <Text className="block font-bold text-gray-800 mb-1">
-            Nguồn dữ liệu:
-          </Text>
-          <Text className="text-gray-600 text-[13px]">
-            Dữ liệu lấy trực tiếp từ API danh mục nông dược đang hoạt động của
-            EAPLS.
-          </Text>
-        </div>
-      </div>
+      <ReferenceSourceFooter
+        icon={<SafetyCertificateOutlined className="text-lg" />}
+        text="Dữ liệu lấy trực tiếp từ API danh mục nông dược đang hoạt động của EAPLS."
+      />
     </div>
   )
 }
