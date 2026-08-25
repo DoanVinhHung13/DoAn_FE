@@ -265,10 +265,10 @@ const BatchDetail = () => {
                 </Space>
               </Descriptions.Item>
 
-              {batch.area && (
+              {batch.harvestedArea != null && (
                 <Descriptions.Item label="Diện tích" span={1}>
                   <Text strong>
-                    {batch.area} {formatAreaUnit()}
+                    {batch.harvestedArea} {formatAreaUnit()}
                   </Text>
                 </Descriptions.Item>
               )}

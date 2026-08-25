@@ -32,6 +32,8 @@ const AssignRolesModal = ({ open, onClose, user, onSuccess }) => {
       await UserService.assignRoles(user.id, { roles: [values.role] })
       onClose()
       onSuccess?.()
+    } catch {
+      // Axios handles error notification
     } finally {
       setLoading(false)
     }

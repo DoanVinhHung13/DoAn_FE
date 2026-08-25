@@ -25,6 +25,7 @@ const QrPreviewModal = ({
       onCancel={onCancel}
       footer={null}
       width={860}
+      centered
       title={
         <div className="flex items-center gap-2">
           <EyeOutlined className="text-blue-600" />
@@ -33,7 +34,9 @@ const QrPreviewModal = ({
           </span>
         </div>
       }
-      styles={{ body: { padding: 0, maxHeight: "80vh", overflowY: "auto" } }}
+      styles={{
+        body: { padding: 0, maxHeight: "calc(85vh - 80px)", overflowY: "auto" },
+      }}
     >
       {/* QR Code + Link Preview */}
       <div className="flex items-center gap-6 px-6 py-5 bg-white border-b border-gray-100">
@@ -54,7 +57,10 @@ const QrPreviewModal = ({
               bgColor="#ffffff"
             />
           )}
-          <Text strong className="mt-2 block text-xs text-green-700 text-center">
+          <Text
+            strong
+            className="mt-2 block text-xs text-green-700 text-center"
+          >
             {batchCode}
           </Text>
         </div>
@@ -63,7 +69,9 @@ const QrPreviewModal = ({
           <Text strong className="text-sm text-green-800 font-mono block mb-3">
             {previewTraceCode || "—"}
           </Text>
-          <Text className="text-xs text-gray-500 block mb-1">Link truy xuất:</Text>
+          <Text className="text-xs text-gray-500 block mb-1">
+            Link truy xuất:
+          </Text>
           <div className="flex items-center gap-2">
             <Text className="text-xs text-blue-600 font-mono truncate flex-1 bg-blue-50 px-2 py-1 rounded">
               {previewTraceUrl || "—"}

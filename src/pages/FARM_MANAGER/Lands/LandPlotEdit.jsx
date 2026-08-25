@@ -12,6 +12,7 @@ import {
   buildLandPlotPayload,
   ensureBoundaryString,
   isOverlapApiError,
+  isLandPlotActive,
   isLandPlotCultivationLocked,
   normalizeApiDetail,
   normalizeLandPlotResponse,
@@ -82,6 +83,10 @@ const LandPlotEdit = () => {
   // Điền sẵn giá trị form khi có dữ liệu
   useEffect(() => {
     if (!plot) return
+    if (!isLandPlotActive(plot)) {
+      navigate(routes.detail(id), { replace: true })
+      return
+    }
     const serverValues = {
       name: plot.name,
       area: plot.area,
@@ -91,7 +96,7 @@ const LandPlotEdit = () => {
     }
     const draft = restoreDraft()
     form.setFieldsValue({ ...serverValues, ...(draft?.data || {}) })
-  }, [plot, form, restoreDraft])
+  }, [plot, form, restoreDraft, navigate, routes, id])
 
   // ── Fetch: vùng trồng khác (kiểm tra chồng lấn, loại trừ chính mình) ─────
   const fetchExistingPlots = useCallback(async () => {
@@ -103,7 +108,9 @@ const LandPlotEdit = () => {
         PageSize: 100,
       })
       const allPlots = normalizeLandPlotResponse(response).items
-      const filtered = allPlots.filter(item => String(item.id || item._id) !== String(id))
+      const filtered = allPlots.filter(
+        item => String(item.id || item._id) !== String(id),
+      )
 
       const needsDetailFetch = filtered.some(
         item => !item.boundaryJson && !item.boundary && !item.geometry,

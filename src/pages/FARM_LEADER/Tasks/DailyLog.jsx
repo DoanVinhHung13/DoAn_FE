@@ -92,7 +92,6 @@ import TaskSummaryModal from "./components/TaskSummaryModal"
 const { Text } = Typography
 const { TextArea } = Input
 
-
 const DailyLog = () => {
   const { getTaskStatus } = useCultivationStatus()
   const { taskId } = useParams()
@@ -122,6 +121,39 @@ const DailyLog = () => {
     item: null,
   })
   const [usageForm] = Form.useForm()
+
+  const watchedFertilizers = Form.useWatch("fertilizers", form)
+  const watchedPesticides = Form.useWatch("pesticides", form)
+
+  const getAvailableFertilizerOptions = currentIndex => {
+    const selectedIds = new Set(
+      (watchedFertilizers || [])
+        .filter((item, idx) => idx !== currentIndex && item)
+        .flatMap(item => [item.fertilizerId, item.materialId])
+        .filter(Boolean)
+        .map(String),
+    )
+    return fertilizerOptions.filter(
+      opt =>
+        !selectedIds.has(String(opt.value)) &&
+        !selectedIds.has(String(opt.materialId)),
+    )
+  }
+
+  const getAvailablePesticideOptions = currentIndex => {
+    const selectedIds = new Set(
+      (watchedPesticides || [])
+        .filter((item, idx) => idx !== currentIndex && item)
+        .flatMap(item => [item.pesticideId, item.materialId])
+        .filter(Boolean)
+        .map(String),
+    )
+    return pesticideOptions.filter(
+      opt =>
+        !selectedIds.has(String(opt.value)) &&
+        !selectedIds.has(String(opt.materialId)),
+    )
+  }
 
   const isUploadingImages = useMemo(
     () => (fileList || []).some(item => item.status === "uploading"),
@@ -352,38 +384,6 @@ const DailyLog = () => {
     loadTaskData()
   }, [taskId, navigate, form, refreshKey])
 
-  useEffect(() => {
-    if (!task || !isMaterialTaskData(task)) return undefined
-
-    const handleFertilizerChanged = async () => {
-      try {
-        const response = await FertilizerService.getFertilizerSelection()
-        const result = unwrap(response)
-        const fertilizerList = Array.isArray(result)
-          ? result
-          : result?.items || []
-        const cropName = task.cropName || task.crop?.name
-        setFertilizerOptions(
-          toFertilizerOptions(
-            fertilizerList.filter(item =>
-              hasDosageForCrop(item.dosages, cropName),
-            ),
-          ),
-        )
-        message.info("Danh sách phân bón đã được cập nhật.")
-      } catch {
-        // BE vẫn là lớp kiểm tra cuối cùng khi ghi nhật ký.
-      }
-    }
-
-    window.addEventListener("app:fertilizer-changed", handleFertilizerChanged)
-    return () =>
-      window.removeEventListener(
-        "app:fertilizer-changed",
-        handleFertilizerChanged,
-      )
-  }, [task])
-
   const openUsageModal = (dailyLogId, item = null) => {
     setUsageModal({ open: true, dailyLogId, item })
     usageForm.setFieldsValue(
@@ -471,9 +471,7 @@ const DailyLog = () => {
     }
 
     try {
-      const imageUrls = (fileList || [])
-        .map(getServerImageUrl)
-        .filter(Boolean)
+      const imageUrls = (fileList || []).map(getServerImageUrl).filter(Boolean)
 
       if (imageUrls.length === 0) {
         setShowImageError(true)
@@ -756,7 +754,10 @@ const DailyLog = () => {
         />
         <div className="flex gap-2">
           {!isNotFound && (
-            <Button type="primary" onClick={() => setRefreshKey(key => key + 1)}>
+            <Button
+              type="primary"
+              onClick={() => setRefreshKey(key => key + 1)}
+            >
               Thử lại
             </Button>
           )}
@@ -790,15 +791,11 @@ const DailyLog = () => {
     isHarvestTask &&
     Number(task.totalPlanArea || 0) > 0 &&
     remainingHarvestArea <= 0.0001
-  const actualEndDate = ["WAITING_APPROVAL", "COMPLETED"].includes(
-    task?.status,
-  )
+  const actualEndDate = ["WAITING_APPROVAL", "COMPLETED"].includes(task?.status)
     ? task?.workEndDate
     : null
   const displayStartDate = task?.workStartDate || task?.plannedStartDate
-  const displayStartLabel = task?.workStartDate
-    ? "Ngày bắt đầu"
-    : "Dự kiến"
+  const displayStartLabel = task?.workStartDate ? "Ngày bắt đầu" : "Dự kiến"
 
   return (
     <div className="pb-20 space-y-4 duration-500 animate-in fade-in slide-in-from-bottom-4">
@@ -1147,7 +1144,9 @@ const DailyLog = () => {
                                         showSearch
                                         optionFilterProp="label"
                                         placeholder="Chọn phân bón"
-                                        options={fertilizerOptions}
+                                        options={getAvailableFertilizerOptions(
+                                          field.name,
+                                        )}
                                         disabled={isViewOnly}
                                         onChange={(value, option) => {
                                           const opt =
@@ -1436,7 +1435,9 @@ const DailyLog = () => {
                                         showSearch
                                         optionFilterProp="label"
                                         placeholder="Chọn nông dược"
-                                        options={pesticideOptions}
+                                        options={getAvailablePesticideOptions(
+                                          field.name,
+                                        )}
                                         disabled={isViewOnly}
                                         onChange={(value, option) => {
                                           const opt =

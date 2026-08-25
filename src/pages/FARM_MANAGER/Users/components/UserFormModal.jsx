@@ -46,10 +46,19 @@ const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
 
 const USER_FIELD_MAPPING = {
   FullName: "fullName",
+  fullName: "fullName",
   Email: "email",
+  email: "email",
   PhoneNumber: "phoneNumber",
+  phoneNumber: "phoneNumber",
+  Phone: "phoneNumber",
+  phone: "phoneNumber",
   DateOfBirth: "dateOfBirth",
+  dateOfBirth: "dateOfBirth",
   Gender: "gender",
+  gender: "gender",
+  Roles: "roles",
+  roles: "roles",
 }
 
 const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
@@ -73,7 +82,8 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         option => (option.codeValue || option.value) !== ROLES.FARM_MANAGER,
       )
 
-  const [avatarFile, setAvatarFile] = React.useState(null)
+  const [uploadingAvatar, setUploadingAvatar] = React.useState(false)
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = React.useState("")
   const [previewAvatar, setPreviewAvatar] = React.useState("")
 
   React.useEffect(() => {
@@ -89,17 +99,20 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           roles: editingUser.roles?.[0] || "FARMER",
           isActive: editingUser.isActive ?? true,
         })
-        setPreviewAvatar(editingUser.avatarUrl || "")
+        const initialAvatar = editingUser.avatarUrl || ""
+        setPreviewAvatar(initialAvatar)
+        setUploadedAvatarUrl(initialAvatar)
       } else {
         form.resetFields()
         form.setFieldsValue({ isActive: true })
         setPreviewAvatar("")
+        setUploadedAvatarUrl("")
       }
-      setAvatarFile(null)
+      setUploadingAvatar(false)
     }
   }, [open, editingUser, isEdit, form])
 
-  const beforeUpload = file => {
+  const beforeUpload = async file => {
     const isJpgOrPng =
       file.type === "image/jpeg" ||
       file.type === "image/png" ||
@@ -114,36 +127,52 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
       return Upload.LIST_IGNORE
     }
 
-    setAvatarFile(file)
-
-    // Create local preview
+    // Hiển thị local preview ngay lập tức
     const reader = new FileReader()
     reader.onload = e => setPreviewAvatar(e.target.result)
     reader.readAsDataURL(file)
+
+    // Gọi luôn API upload ảnh
+    try {
+      setUploadingAvatar(true)
+      const formData = new FormData()
+      formData.append("file", file)
+      const response = await UploadService.uploadImage(formData)
+      const payload = response?.data?.data || response?.data || {}
+      const uploadedUrl =
+        payload.avatarUrl ||
+        payload.avatar ||
+        payload.url ||
+        (typeof payload === "string" ? payload : "") ||
+        ""
+      if (uploadedUrl) {
+        setUploadedAvatarUrl(uploadedUrl)
+        setPreviewAvatar(uploadedUrl)
+      }
+    } catch {
+      message.error("Tải ảnh đại diện lên thất bại. Vui lòng thử lại.")
+    } finally {
+      setUploadingAvatar(false)
+    }
 
     return false
   }
 
   const handleSubmit = async values => {
+    if (uploadingAvatar) {
+      message.warning("Ảnh đang được tải lên, vui lòng đợi trong giây lát.")
+      return
+    }
+
     try {
       setLoading(true)
-      let uploadedUrl = isEdit ? editingUser.avatarUrl : null
+      const finalAvatarUrl =
+        uploadedAvatarUrl || (isEdit ? editingUser.avatarUrl : null) || null
 
-      if (avatarFile) {
-        const formData = new FormData()
-        formData.append("file", avatarFile)
-        const response = await UploadService.uploadImage(formData)
-        const payload = response?.data?.data || response?.data || {}
-        uploadedUrl =
-          payload.avatarUrl ||
-          payload.avatar ||
-          payload.url ||
-          payload ||
-          uploadedUrl
-      }
+      let res
       if (isEdit) {
         // Cập nhật thông tin cơ bản
-        await UserService.updateUser(
+        res = await UserService.updateUser(
           editingUser.id,
           {
             fullName: values.fullName,
@@ -152,7 +181,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             dateOfBirth: values.dateOfBirth
               ? formatDateForApi(values.dateOfBirth)
               : null,
-            avatarUrl: uploadedUrl || null,
+            avatarUrl: finalAvatarUrl,
             isActive: editingUser.isActive,
           },
           {
@@ -169,7 +198,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         }
       } else {
         // Thêm người dùng mới
-        await UserService.createUser(
+        res = await UserService.createUser(
           {
             fullName: values.fullName,
             email: values.email?.trim() || null,
@@ -178,7 +207,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
             dateOfBirth: values.dateOfBirth
               ? formatDateForApi(values.dateOfBirth)
               : null,
-            avatarUrl: uploadedUrl || null,
+            avatarUrl: finalAvatarUrl,
             roles: [ROLES.FARMER],
           },
           {
@@ -188,6 +217,22 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         )
       }
 
+      // Kiểm tra phản hồi nếu API trả về không thành công
+      const resData = res?.data ?? res
+      if (
+        resData &&
+        (resData.success === false || resData.isSuccess === false)
+      ) {
+        const errorMsg = resData.message || "Thao tác không thành công."
+        if (/email/i.test(errorMsg)) {
+          form.setFields([{ name: "email", errors: [errorMsg] }])
+        } else if (/số điện thoại|phone/i.test(errorMsg)) {
+          form.setFields([{ name: "phoneNumber", errors: [errorMsg] }])
+        }
+        return
+      }
+
+      // Chỉ đóng modal khi API đã chạy thành công
       onClose()
       onSuccess?.()
 
@@ -195,7 +240,25 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
         navigate(ROUTER.FM_USER_DETAIL.replace(":id", editingUser.id))
       }
     } catch (error) {
-      applyApiFieldErrors(form, error, USER_FIELD_MAPPING)
+      const fieldErrorsCount = applyApiFieldErrors(
+        form,
+        error,
+        USER_FIELD_MAPPING,
+      )
+      const errorMsg =
+        error?.message ||
+        error?.responseData?.message ||
+        error?.response?.data?.message ||
+        ""
+      if (fieldErrorsCount === 0 && errorMsg) {
+        if (/email/i.test(errorMsg)) {
+          form.setFields([{ name: "email", errors: [errorMsg] }])
+        } else if (/số điện thoại|phone/i.test(errorMsg)) {
+          form.setFields([{ name: "phoneNumber", errors: [errorMsg] }])
+        } else if (/tên|name/i.test(errorMsg)) {
+          form.setFields([{ name: "fullName", errors: [errorMsg] }])
+        }
+      }
     } finally {
       setLoading(false)
     }
@@ -385,7 +448,7 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
               <div className="flex items-center gap-4 mt-1">
                 <Avatar
                   size={48}
-                  src={avatarFile ? previewAvatar : getAvatarUrl(previewAvatar)}
+                  src={previewAvatar ? getAvatarUrl(previewAvatar) : undefined}
                   icon={<UserOutlined />}
                   className="bg-gray-100 border border-gray-200 shadow-sm"
                 />
@@ -393,9 +456,15 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
                   showUploadList={false}
                   beforeUpload={beforeUpload}
                   accept="image/*"
+                  disabled={uploadingAvatar || loading}
                 >
-                  <Button className="h-10 rounded-lg" icon={<CameraOutlined />}>
-                    Đổi ảnh đại diện
+                  <Button
+                    className="h-10 rounded-lg"
+                    icon={<CameraOutlined />}
+                    loading={uploadingAvatar}
+                    disabled={uploadingAvatar || loading}
+                  >
+                    {uploadingAvatar ? "Đang tải ảnh..." : "Đổi ảnh đại diện"}
                   </Button>
                 </Upload>
               </div>
@@ -407,14 +476,15 @@ const UserFormModal = ({ open, onClose, editingUser, onSuccess }) => {
           <Button
             onClick={onClose}
             className="h-10 px-6 rounded-xl"
-            disabled={loading}
+            disabled={loading || uploadingAvatar}
           >
             Hủy
           </Button>
           <Button
             type="primary"
             htmlType="submit"
-            loading={loading}
+            loading={loading || uploadingAvatar}
+            disabled={loading || uploadingAvatar}
             className="h-10 px-6 font-bold bg-green-600 border-0 shadow-lg rounded-xl shadow-green-100"
           >
             {isEdit ? "Lưu thay đổi" : "Thêm người dùng"}

@@ -553,7 +553,6 @@ const PlanTemplateCreate = () => {
                 >
                   <Input
                     maxLength={100}
-                    showCount
                     placeholder="Ví dụ: Quy trình trồng ngô ngọt"
                     className="h-10"
                   />

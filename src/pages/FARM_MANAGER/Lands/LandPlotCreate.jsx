@@ -164,14 +164,14 @@ const LandPlotCreate = () => {
           </Button>
           <TitleCustom className="!mb-0">Tạo mới vùng trồng</TitleCustom>
         </div>
-          <Button
-            type="primary"
-            icon={<SaveOutlined />}
-            loading={isSaving}
-            onClick={handleSubmit}
-          >
-            Xác nhận
-          </Button>
+        <Button
+          type="primary"
+          icon={<SaveOutlined />}
+          loading={isSaving}
+          onClick={handleSubmit}
+        >
+          Xác nhận
+        </Button>
       </div>
 
       <Row gutter={[16, 16]}>

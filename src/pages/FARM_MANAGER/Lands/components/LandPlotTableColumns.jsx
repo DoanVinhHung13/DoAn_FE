@@ -97,7 +97,7 @@ export const getLandPlotTableColumns = ({
                 className="flex items-center justify-center gap-2"
                 onClick={e => e.stopPropagation()}
               >
-                {routes.edit && (
+                {active && routes.edit && (
                   <Tooltip
                     title={
                       cultivationLocked
@@ -128,9 +128,13 @@ export const getLandPlotTableColumns = ({
                     disabled={cultivationLocked}
                     icon={
                       active ? (
-                        <StopOutlined className={cultivationLocked ? "" : "text-amber-500"} />
+                        <StopOutlined
+                          className={cultivationLocked ? "" : "text-amber-500"}
+                        />
                       ) : (
-                        <CheckCircleOutlined className={cultivationLocked ? "" : "text-green-500"} />
+                        <CheckCircleOutlined
+                          className={cultivationLocked ? "" : "text-green-500"}
+                        />
                       )
                     }
                     onClick={() => onOpenStatusModal(record)}

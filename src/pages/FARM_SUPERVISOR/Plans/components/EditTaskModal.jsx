@@ -109,14 +109,11 @@ const EditTaskModal = ({
         <Form.Item
           name="taskType"
           label="Loại công việc"
-          rules={[
-            { required: true, message: "Vui lòng chọn loại công việc." },
-          ]}
+          rules={[{ required: true, message: "Vui lòng chọn loại công việc." }]}
         >
           <Select
             options={CULTIVATION_TASK_TYPE_OPTIONS}
             placeholder="Chọn loại công việc"
-            disabled={Boolean(task?.taskCatalogId)}
           />
         </Form.Item>
         <Row gutter={12}>

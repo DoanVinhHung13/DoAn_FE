@@ -71,7 +71,27 @@ const DisplayOptionsCard = ({
       </Form>
 
       <div className="mt-6 space-y-3">
-        {!isQrEligible ? (
+        {hasActiveQrCode ? (
+          <>
+            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl">
+              <CheckCircleOutlined className="text-blue-500 flex-shrink-0" />
+              <Text className="text-blue-700 text-sm">
+                Mã QR đã được tạo và đang hoạt động
+              </Text>
+            </div>
+            <Button
+              type="dashed"
+              size="large"
+              block
+              icon={<EyeOutlined />}
+              onClick={onPreviewQR}
+              loading={previewPending}
+              className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
+            >
+              Xem trước QR
+            </Button>
+          </>
+        ) : !isQrEligible ? (
           <div className="space-y-3">
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
               <SafetyOutlined className="text-amber-600 text-lg flex-shrink-0" />
@@ -89,34 +109,17 @@ const DisplayOptionsCard = ({
               Tạo mã QR
             </Button>
             <Button
-              size="large"
-              block
-              disabled
-              icon={<EyeOutlined />}
-              className="h-11 rounded-xl font-medium"
-            >
-              Xem trước QR
-            </Button>
-          </div>
-        ) : hasActiveQrCode ? (
-          <>
-            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl">
-              <CheckCircleOutlined className="text-blue-500 flex-shrink-0" />
-              <Text className="text-blue-700 text-sm">
-                Mã QR đã được tạo và đang hoạt động
-              </Text>
-            </div>
-            <Button
               type="dashed"
               size="large"
               block
-              disabled
               icon={<EyeOutlined />}
+              onClick={onPreviewQR}
+              loading={previewPending}
               className="h-11 rounded-xl text-blue-600 border-blue-400 hover:bg-blue-50 font-medium"
             >
               Xem trước QR
             </Button>
-          </>
+          </div>
         ) : (
           <>
             <Button

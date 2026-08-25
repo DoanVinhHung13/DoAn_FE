@@ -154,7 +154,10 @@ const FarmLeaderTasks = () => {
             stagesArr = Array.isArray(rawStages) ? rawStages : []
           }
         } catch (fallbackErr) {
-          console.warn("CultivationLogbookService.getById fallback also failed:", fallbackErr)
+          console.warn(
+            "CultivationLogbookService.getById fallback also failed:",
+            fallbackErr,
+          )
         }
       }
 

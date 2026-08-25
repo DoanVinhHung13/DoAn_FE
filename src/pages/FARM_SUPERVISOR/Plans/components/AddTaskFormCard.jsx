@@ -11,9 +11,9 @@ import {
   DatePicker,
   Form,
   Input,
+  message,
   Row,
   Select,
-  message,
 } from "antd"
 import { useState } from "react"
 import {
@@ -29,6 +29,7 @@ const AddTaskFormCard = ({
   selectedId,
   taskCatalogOptions,
   availableTaskCatalogOptions,
+  isFinalStage,
   leaders,
   farmers,
   loadingUsers,
@@ -37,6 +38,11 @@ const AddTaskFormCard = ({
 }) => {
   const [taskForm] = Form.useForm()
   const [savingTask, setSavingTask] = useState(false)
+  const availableTaskTypeOptions = isFinalStage
+    ? CULTIVATION_TASK_TYPE_OPTIONS
+    : CULTIVATION_TASK_TYPE_OPTIONS.filter(
+        option => option.value !== CULTIVATION_TASK_TYPES.HARVEST,
+      )
 
   const handleAddTask = async () => {
     try {
@@ -84,6 +90,19 @@ const AddTaskFormCard = ({
 
       if (validTasks.some(task => !task.taskType)) {
         message.warning("Vui lòng chọn loại công việc cho công việc tự do.")
+        setSavingTask(false)
+        return
+      }
+
+      if (
+        !isFinalStage &&
+        validTasks.some(
+          task =>
+            task.taskType === CULTIVATION_TASK_TYPES.HARVEST ||
+            task.activityType === "HARVESTING",
+        )
+      ) {
+        message.warning("Công việc thu hoạch chỉ được tạo ở giai đoạn cuối cùng.")
         setSavingTask(false)
         return
       }
@@ -259,7 +278,7 @@ const AddTaskFormCard = ({
                             className="!mb-2.5"
                           >
                             <Select
-                              options={CULTIVATION_TASK_TYPE_OPTIONS}
+                              options={availableTaskTypeOptions}
                               placeholder="Chọn loại công việc"
                               disabled={Boolean(
                                 taskForm.getFieldValue([

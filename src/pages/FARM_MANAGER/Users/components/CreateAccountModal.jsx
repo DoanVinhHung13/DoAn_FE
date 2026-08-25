@@ -19,9 +19,17 @@ const OPTIONAL_EMAIL_RULES = EMAIL_RULES.filter(rule => !rule.required)
 
 const CREATE_ACCOUNT_FIELD_MAPPING = {
   Email: "email",
+  email: "email",
   PhoneNumber: "phoneNumber",
+  phoneNumber: "phoneNumber",
+  Phone: "phoneNumber",
+  phone: "phoneNumber",
   Password: "password",
+  password: "password",
   Roles: "role",
+  roles: "role",
+  Role: "role",
+  role: "role",
 }
 
 const getUserId = user => user?.id || user?._id || user?.userId
@@ -89,7 +97,7 @@ const CreateAccountModal = ({
 
     try {
       setLoading(true)
-      await UserService.createAccount(
+      const res = await UserService.createAccount(
         values.userId,
         {
           password: values.password,
@@ -103,10 +111,40 @@ const CreateAccountModal = ({
         },
       )
 
+      const resData = res?.data ?? res
+      if (
+        resData &&
+        (resData.success === false || resData.isSuccess === false)
+      ) {
+        const errorMsg = resData.message || "Tạo tài khoản không thành công."
+        if (/email/i.test(errorMsg)) {
+          form.setFields([{ name: "email", errors: [errorMsg] }])
+        } else if (/số điện thoại|phone/i.test(errorMsg)) {
+          form.setFields([{ name: "phoneNumber", errors: [errorMsg] }])
+        }
+        return
+      }
+
       onClose()
       onSuccess?.()
     } catch (error) {
-      applyApiFieldErrors(form, error, CREATE_ACCOUNT_FIELD_MAPPING)
+      const fieldErrorsCount = applyApiFieldErrors(
+        form,
+        error,
+        CREATE_ACCOUNT_FIELD_MAPPING,
+      )
+      const errorMsg =
+        error?.message ||
+        error?.responseData?.message ||
+        error?.response?.data?.message ||
+        ""
+      if (fieldErrorsCount === 0 && errorMsg) {
+        if (/email/i.test(errorMsg)) {
+          form.setFields([{ name: "email", errors: [errorMsg] }])
+        } else if (/số điện thoại|phone/i.test(errorMsg)) {
+          form.setFields([{ name: "phoneNumber", errors: [errorMsg] }])
+        }
+      }
     } finally {
       setLoading(false)
     }

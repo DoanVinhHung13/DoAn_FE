@@ -36,10 +36,7 @@ const DailyLogHistoryList = ({ dailyLogs }) => {
           {dailyLogs.map((log, index) => {
             const isLast = index === dailyLogs.length - 1
             return (
-              <div
-                key={log.id || index}
-                className="relative flex gap-4"
-              >
+              <div key={log.id || index} className="relative flex gap-4">
                 <div className="flex flex-col items-center">
                   <div className="relative z-10 flex h-3 w-3 flex-shrink-0 rounded-full bg-green-500 mt-1.5" />
                   {!isLast && (
@@ -48,10 +45,7 @@ const DailyLogHistoryList = ({ dailyLogs }) => {
                 </div>
                 <div className={`flex-1 ${!isLast ? "pb-5" : "pb-2"}`}>
                   <div className="flex items-center justify-between mb-1">
-                    <Tag
-                      color="green"
-                      className="m-0 font-medium rounded-full"
-                    >
+                    <Tag color="green" className="m-0 font-medium rounded-full">
                       {formatDate(log.date)}
                     </Tag>
                     <span className="text-[11px] text-gray-400">
@@ -91,10 +85,7 @@ const DailyLogHistoryList = ({ dailyLogs }) => {
                         {Number(log.executedArea || 0) > 0 && (
                           <span className="text-gray-500 text-[11px]">
                             ({log.executedArea}{" "}
-                            {formatAreaUnit(
-                              MEASUREMENT_UNITS.SQUARE_METER,
-                            )}
-                            )
+                            {formatAreaUnit(MEASUREMENT_UNITS.SQUARE_METER)})
                           </span>
                         )}
                       </div>
@@ -109,8 +100,7 @@ const DailyLogHistoryList = ({ dailyLogs }) => {
                         Phân bón đã sử dụng:
                       </div>
                       {log.fertilizers.map((f, i) => {
-                        const name =
-                          f.name || f.materialName || "Phân bón"
+                        const name = f.name || f.materialName || "Phân bón"
                         const qty = f.quantity
                         const unit = getQuantityUnit(
                           f.quantityUnit || f.unit,
@@ -155,8 +145,7 @@ const DailyLogHistoryList = ({ dailyLogs }) => {
                         Nông dược đã sử dụng:
                       </div>
                       {log.pesticides.map((p, i) => {
-                        const name =
-                          p.name || p.materialName || "Nông dược"
+                        const name = p.name || p.materialName || "Nông dược"
                         const qty = p.quantity
                         const unit = getQuantityUnit(
                           p.quantityUnit || p.unit,
@@ -198,18 +187,14 @@ const DailyLogHistoryList = ({ dailyLogs }) => {
                     <Image.PreviewGroup
                       items={log.images
                         .map(img =>
-                          typeof img === "string"
-                            ? img
-                            : (img.url ?? null),
+                          typeof img === "string" ? img : (img.url ?? null),
                         )
                         .filter(Boolean)}
                     >
                       <div className="flex flex-wrap gap-1.5 mt-2.5">
                         {log.images.map((img, i) => {
                           const src =
-                            typeof img === "string"
-                              ? img
-                              : (img.url ?? null)
+                            typeof img === "string" ? img : (img.url ?? null)
                           return (
                             <div
                               key={i}

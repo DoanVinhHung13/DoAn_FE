@@ -1,7 +1,4 @@
-import {
-  InfoCircleOutlined,
-  SwapOutlined,
-} from "@ant-design/icons"
+import { InfoCircleOutlined, SwapOutlined } from "@ant-design/icons"
 import {
   Alert,
   Card,
@@ -24,6 +21,8 @@ import CultivationTaskService from "src/services/CultivationTaskService"
 import { getTaskOrder } from "src/utils/cultivationOrdering"
 
 const { Text } = Typography
+
+const ALLOWED_SWAP_STATUSES = ["PENDING", "ASSIGNED"]
 
 const SwapTaskModal = ({
   open,
@@ -58,8 +57,6 @@ const SwapTaskModal = ({
     }
   }, [open, task, form])
 
-  const ALLOWED_SWAP_STATUSES = ["PENDING", "ASSIGNED"]
-
   // Resolve target task from targetTaskId
   const { targetTask, targetTaskIndex } = useMemo(() => {
     if (!targetTaskId) {
@@ -74,8 +71,8 @@ const SwapTaskModal = ({
 
   const isValidSwap = Boolean(
     targetTask &&
-      targetTask.id !== task?.id &&
-      ALLOWED_SWAP_STATUSES.includes(targetTask?.status),
+    targetTask.id !== task?.id &&
+    ALLOWED_SWAP_STATUSES.includes(targetTask?.status),
   )
 
   const handleSelectTask = value => {
@@ -100,7 +97,6 @@ const SwapTaskModal = ({
         taskIds: [task.id, targetTask.id],
       }
       await CultivationTaskService.reorder(payload)
-      message.success("Đổi vị trí thứ tự công việc thành công!")
       onSuccess?.()
     } catch {
       // Axios interceptor handles and displays backend error

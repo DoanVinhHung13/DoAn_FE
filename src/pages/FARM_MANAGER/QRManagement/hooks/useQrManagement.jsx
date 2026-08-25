@@ -38,7 +38,9 @@ export const useQrManagement = (form, batchIdFromUrl) => {
           batchCode: detail.batchCode || "",
           cropName: detail.cropName || detail.cropType || "",
           startDate: detail.startDate ? parseDate(detail.startDate) : null,
-          harvestDate: detail.harvestDate ? parseDate(detail.harvestDate) : null,
+          harvestDate: detail.harvestDate
+            ? parseDate(detail.harvestDate)
+            : null,
         })
 
         if (detail.hasActiveQrCode) {
@@ -98,14 +100,22 @@ export const useQrManagement = (form, batchIdFromUrl) => {
       try {
         const response = await QrCodeService.previewQrCode({
           harvestBatchId: values.harvestBatchId,
+          batchCode: batchDetail?.batchCode,
           displayOptions,
         })
         const data = unwrap(response)
+        const traceCode =
+          data?.traceCode ||
+          qrData?.traceCode ||
+          batchDetail?.activeTraceCode ||
+          (batchDetail?.batchCode
+            ? `TR-${batchDetail.batchCode}`
+            : "TR-PREVIEW")
         setPreviewData({
           ...data,
-          traceCode: data?.traceCode,
+          traceCode,
           qrImageDataUrl: data?.qrImageDataUrl,
-          qrCodeUrl: data?.qrCodeUrl,
+          qrCodeUrl: data?.qrCodeUrl || getPublicTraceUrl(traceCode),
           traceability: data?.traceability,
           displayOptions: data?.displayOptions || displayOptions,
           harvestBatchId: values.harvestBatchId,
@@ -113,8 +123,21 @@ export const useQrManagement = (form, batchIdFromUrl) => {
         })
         setPreviewModalOpen(true)
       } catch {
-        setPreviewData(null)
-        setPreviewModalOpen(false)
+        // Fallback: nếu API preview gặp lỗi, vẫn mở preview với mã trace và link dự kiến
+        const fallbackTraceCode =
+          qrData?.traceCode ||
+          batchDetail?.activeTraceCode ||
+          (batchDetail?.batchCode
+            ? `TR-${batchDetail.batchCode}`
+            : "TR-PREVIEW")
+        setPreviewData({
+          traceCode: fallbackTraceCode,
+          qrCodeUrl: getPublicTraceUrl(fallbackTraceCode),
+          displayOptions,
+          harvestBatchId: values.harvestBatchId,
+          isPreview: true,
+        })
+        setPreviewModalOpen(true)
       } finally {
         setPreviewPending(false)
       }

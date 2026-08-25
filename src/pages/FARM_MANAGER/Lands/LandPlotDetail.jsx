@@ -19,6 +19,7 @@ import LandPlotService from "src/services/LandPlotService"
 import {
   displayValue,
   formatLandArea,
+  isLandPlotActive,
   isLandPlotCultivationLocked,
   normalizeApiDetail,
 } from "src/utils/landPlotUtils"
@@ -148,7 +149,7 @@ const LandPlotDetail = () => {
           </div>
         </div>
 
-        {canManage && routes.edit && (
+        {canManage && routes.edit && isLandPlotActive(plot) && (
           <Tooltip
             title={
               cultivationLocked
