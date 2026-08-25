@@ -163,7 +163,7 @@ const FarmSupervisorPlanDetail = () => {
   const logbookStartDate = plan?.actualStartDate || plan?.startDate
   const logbookStartLabel = plan?.actualStartDate
     ? "Ngày bắt đầu"
-    : "Dự kiến"
+    : "Dự kiến bắt đầu"
 
   const canSubmit = useMemo(
     () => !isPlanCompleted && allStagesCompleted,
@@ -351,13 +351,18 @@ const FarmSupervisorPlanDetail = () => {
               label={
                 <span className="text-gray-500">
                   <CalendarOutlined className="mr-1" />
-                  Thời gian
+                  {plan?.actualEndDate || plan?.endDate
+                    ? "Thời gian"
+                    : logbookStartLabel}
                 </span>
               }
               span={2}
             >
               <Text strong>
-                {logbookStartLabel}: {formatDate(logbookStartDate)}
+                {formatDate(logbookStartDate)}
+                {plan?.actualEndDate || plan?.endDate
+                  ? ` → ${formatDate(plan.actualEndDate || plan.endDate)}`
+                  : ""}
               </Text>
             </Descriptions.Item>
           )}
