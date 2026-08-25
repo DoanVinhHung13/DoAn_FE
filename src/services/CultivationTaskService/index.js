@@ -8,10 +8,10 @@ import {
   apiGetCultivationTaskById,
   apiGetCultivationTasks,
   apiGetLeaderSummary,
-  apiGetLogbookById,
   apiGetMyCultivationTasks,
   apiGetMyLogbookSummaries,
   apiOrderCultivationTasks,
+  apiReorderCultivationTasks,
   apiStartCultivationTask,
   apiSubmitTaskSummary,
   apiUpdateCultivationTask,
@@ -60,6 +60,13 @@ const getMyLogbookSummaries = (params, config = {}) =>
 const getLogbookById = (logbookId, params, config = {}) =>
   http.get(apiGetLogbookById(logbookId), { ...config, params })
 
+/**
+ * Reorder tasks: Swap order between 2 tasks in a stage
+ * Body: { cultivationLogbookId, cultivationStageId, taskIds: [taskId1, taskId2] }
+ */
+const reorder = (body, config = {}) =>
+  http.put(apiReorderCultivationTasks, body, config)
+
 const CultivationTaskService = {
   getAll,
   getMyTasks,
@@ -76,6 +83,7 @@ const CultivationTaskService = {
   submitSummary,
   getMyLogbookSummaries,
   getLogbookById,
+  reorder,
 }
 
 export default CultivationTaskService

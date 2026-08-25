@@ -51,6 +51,7 @@ import { getUserDisplayName } from "src/utils/userDisplayName"
 import AddTaskFormCard from "./components/AddTaskFormCard"
 import ActivateTaskModal from "./components/ActivateTaskModal"
 import EditTaskModal from "./components/EditTaskModal"
+import SwapTaskModal from "./components/SwapTaskModal"
 
 const { Text, Paragraph } = Typography
 
@@ -144,6 +145,7 @@ const TaskCard = ({
             ? "#eab308"
             : "#d1d5db"
 
+  const isPending = task.status === "PENDING"
   const canEdit = ["PENDING", "ASSIGNED"].includes(task.status)
   const canSwap = task.status === "PENDING"
   const startDate = task.workStartDate || task.plannedStartDate
@@ -153,6 +155,16 @@ const TaskCard = ({
   const supportMembers = (task.assignments || []).filter(f => !f.isLeader)
 
   const menuItems = [
+    ...(isPending
+      ? [
+          {
+            key: "swap",
+            label: "Đổi vị trí thứ tự",
+            icon: <SwapOutlined />,
+            onClick: () => onSwap?.(task, taskIndex),
+          },
+        ]
+      : []),
     {
       key: "edit",
       label: "Sửa công việc",
@@ -189,13 +201,33 @@ const TaskCard = ({
         className="pb-2.5 border-b border-gray-100"
       >
         <Flex align="center" gap={8} className="flex-1 min-w-0">
-          <div className="flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-2 py-1 shadow-2xs flex-shrink-0 min-w-[32px]">
-            <Tooltip title="Thứ tự được cố định theo kế hoạch">
+          <Tooltip
+            title={
+              isPending
+                ? "Nhấp để đổi vị trí thứ tự công việc"
+                : "Thứ tự công việc"
+            }
+          >
+            <div
+              className={`flex items-center justify-center bg-green-50 border border-green-200 rounded-lg px-2 py-1 shadow-2xs flex-shrink-0 min-w-[32px] ${
+                isPending
+                  ? "cursor-pointer hover:bg-green-100 hover:border-green-400 transition-all"
+                  : ""
+              }`}
+              onClick={
+                isPending
+                  ? e => {
+                      e.stopPropagation()
+                      onSwap?.(task, taskIndex)
+                    }
+                  : undefined
+              }
+            >
               <span className="text-sm font-bold text-green-800 leading-tight select-none">
                 {getTaskOrder(task, taskIndex + 1)}
               </span>
-            </Tooltip>
-          </div>
+            </div>
+          </Tooltip>
 
           {/* Tên công việc */}
           <Text
@@ -410,17 +442,17 @@ const TaskCard = ({
 
             {canEdit && (
               <Flex align="center" gap={8} className="flex-shrink-0">
-                {canSwap && (
+                {isPending && (
                   <Button
                     size="small"
                     icon={<SwapOutlined />}
-                    className="rounded-lg border-blue-200 text-blue-700 hover:border-blue-400 hover:text-blue-800 h-7"
+                    className="h-7 px-2.5 rounded-lg border-green-300 text-green-700 hover:!border-green-500 hover:!text-green-800 hover:!bg-green-50 font-medium flex items-center gap-1"
                     onClick={e => {
                       e.stopPropagation()
-                      onSwap(task)
+                      onSwap?.(task, taskIndex)
                     }}
                   >
-                    Swap
+                    Đổi vị trí
                   </Button>
                 )}
                 <Button
@@ -472,16 +504,16 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     open: false,
     task: null,
   })
+  const [swapTaskModal, setSwapTaskModal] = useState({
+    open: false,
+    task: null,
+    taskIndex: 0,
+  })
   const [activationTask, setActivationTask] = useState(null)
-  const [swapTask, setSwapTask] = useState(null)
-  const [swapTargetOrder, setSwapTargetOrder] = useState(null)
-  const [swapping, setSwapping] = useState(false)
 
   const handleSelectStage = stageId => {
     setSelectedId(stageId)
     setEditingTaskId(null)
-    setSwapTask(null)
-    setSwapTargetOrder(null)
     setSearchParams(
       prev => {
         const next = new URLSearchParams(prev)
@@ -740,56 +772,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
     setEditingTaskId("new")
   }
 
-  const handleConfirmSwap = async () => {
-    if (!swapTask) return
-
-    const targetOrder = Number(swapTargetOrder)
-    if (!Number.isInteger(targetOrder) || targetOrder < 1) {
-      message.warning("Vui lòng nhập số thứ tự công việc cần đổi.")
-      return
-    }
-
-    const sourceIndex = orderedSelectedTasks.findIndex(
-      task => task.id === swapTask.id,
-    )
-    const sourceOrder = getTaskOrder(swapTask, sourceIndex + 1)
-    if (sourceOrder === targetOrder) {
-      message.warning("Vị trí mới phải khác vị trí hiện tại.")
-      return
-    }
-
-    const targetIndex = orderedSelectedTasks.findIndex(
-      (task, index) => getTaskOrder(task, index + 1) === targetOrder,
-    )
-    const targetTask = orderedSelectedTasks[targetIndex]
-    if (!targetTask) {
-      message.warning(`Không tìm thấy công việc ở vị trí ${targetOrder}.`)
-      return
-    }
-    if (targetTask.status !== "PENDING") {
-      message.warning(
-        "Chỉ có thể đổi vị trí với công việc đang ở trạng thái Chờ thực hiện.",
-      )
-      return
-    }
-
-    try {
-      setSwapping(true)
-      await CultivationTaskService.order({
-        cultivationLogbookId: planId,
-        cultivationStageId: selectedId,
-        taskIds: [swapTask.id, targetTask.id],
-      })
-      setSwapTask(null)
-      setSwapTargetOrder(null)
-      await loadData()
-    } catch {
-      // Axios interceptor handles error notification directly from backend response.
-    } finally {
-      setSwapping(false)
-    }
-  }
-
   return (
     <div className="space-y-6">
       <Card
@@ -916,10 +898,9 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
                         onEdit={task => setEditTaskModal({ open: true, task })}
                         onActivate={handleActivateTask}
                         onDelete={handleDeleteTask}
-                        onSwap={task => {
-                          setSwapTask(task)
-                          setSwapTargetOrder(null)
-                        }}
+                        onSwap={(task, taskIndex) =>
+                          setSwapTaskModal({ open: true, task, taskIndex })
+                        }
                       />
                     ))}
                   </div>
@@ -982,6 +963,24 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         }}
       />
 
+      {/* Modal Đổi vị trí thứ tự công việc */}
+      <SwapTaskModal
+        open={swapTaskModal.open}
+        task={swapTaskModal.task}
+        taskIndex={swapTaskModal.taskIndex}
+        stageTasks={orderedSelectedTasks}
+        stage={selectedStage}
+        planId={planId || plan?.id}
+        getTaskCfg={getTaskCfg}
+        onCancel={() =>
+          setSwapTaskModal({ open: false, task: null, taskIndex: 0 })
+        }
+        onSuccess={async () => {
+          setSwapTaskModal({ open: false, task: null, taskIndex: 0 })
+          await loadData()
+        }}
+      />
+
       <ActivateTaskModal
         open={Boolean(activationTask)}
         task={activationTask}
@@ -991,38 +990,6 @@ const StageTaskManagementTab = ({ plan, planId, stages, tasks, loadData }) => {
         onCancel={() => setActivationTask(null)}
         onConfirm={confirmActivation}
       />
-
-      <Modal
-        open={Boolean(swapTask)}
-        title="Đổi vị trí công việc"
-        okText="Swap"
-        cancelText="Hủy"
-        confirmLoading={swapping}
-        onCancel={() => {
-          setSwapTask(null)
-          setSwapTargetOrder(null)
-        }}
-        onOk={handleConfirmSwap}
-      >
-        <div className="space-y-3">
-          <Text>
-            Công việc: <strong>{swapTask?.name || swapTask?.taskName}</strong>
-          </Text>
-          <Text type="secondary" className="block">
-            Nhập số thứ tự của công việc muốn đổi vị trí. Hệ thống sẽ tự lấy ID
-            công việc đó để gửi API.
-          </Text>
-          <InputNumber
-            min={1}
-            precision={0}
-            value={swapTargetOrder}
-            onChange={setSwapTargetOrder}
-            placeholder="Số thứ tự công việc"
-            className="w-full"
-            autoFocus
-          />
-        </div>
-      </Modal>
     </div>
   )
 }

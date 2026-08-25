@@ -13,6 +13,7 @@ export const apiUpdateCultivationTask = id => `/cultivation-tasks/${id}`
 export const apiAssignCultivationTask = id => `/cultivation-tasks/${id}/assign`
 export const apiDeleteCultivationTask = id => `/cultivation-tasks/${id}`
 export const apiCancelCultivationTask = id => `/cultivation-tasks/${id}/cancel`
+export const apiReorderCultivationTasks = "/cultivation-tasks/order"
 
 // Start/Activate a cultivation task
 // Swagger: POST /api/cultivation-tasks/{id}/start

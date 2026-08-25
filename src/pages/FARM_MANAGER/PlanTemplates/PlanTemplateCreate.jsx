@@ -164,7 +164,7 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
       )}
       {hasDescLengthError && (
         <p className="mt-0.5 mb-0 text-xs text-red-500">
-          Mô tả công việc không được vượt quá 200 ký tự.
+          Mô tả công việc không được vượt quá 500 ký tự.
         </p>
       )}
       {hasDescSpaceError && !hasDescLengthError && (
@@ -452,12 +452,12 @@ const PlanTemplateCreate = () => {
       )
       return
     }
-    if (normalizedSteps.some(step => step.description.length > 200)) {
-      message.error("Mô tả bước quy trình không được vượt quá 200 ký tự.")
-      return
-    }
     if (normalizedSteps.some(step => !step.description.trim())) {
       message.error("Mô tả bước quy trình không được chỉ chứa khoảng trắng.")
+      return
+    }
+    if (normalizedSteps.some(step => step.description.length > 500)) {
+      message.error("Mô tả bước quy trình không được vượt quá 500 ký tự.")
       return
     }
     if (
@@ -630,7 +630,7 @@ const PlanTemplateCreate = () => {
                 <Form.Item
                   name="description"
                   label="Mô tả"
-                  rules={[makeDescriptionValidator({ maxLength: 200 })]}
+                  rules={[makeDescriptionValidator({ maxLength: 500 })]}
                 >
                   <Input.TextArea
                     rows={3}
