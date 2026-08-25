@@ -123,6 +123,11 @@ const DailyLog = () => {
   })
   const [usageForm] = Form.useForm()
 
+  const isUploadingImages = useMemo(
+    () => (fileList || []).some(item => item.status === "uploading"),
+    [fileList],
+  )
+
   const getServerImageUrl = file =>
     file?.serverUrl || file?.response?.url || file?.response?.data?.url || null
 
@@ -460,6 +465,11 @@ const DailyLog = () => {
     }))
 
   const handleSave = async () => {
+    if (isUploadingImages) {
+      message.warning("Đang tải ảnh lên máy chủ, vui lòng đợi trong giây lát.")
+      return
+    }
+
     try {
       const imageUrls = (fileList || [])
         .map(getServerImageUrl)
@@ -884,49 +894,62 @@ const DailyLog = () => {
                       >
                         <Image.PreviewGroup>
                           <div className="flex flex-wrap items-center gap-2">
-                            {fileList.map((file, idx) => (
-                              <div
-                                key={file.uid || idx}
-                                className="group relative h-14 w-14 shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-xs hover:shadow-md transition-all [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
-                              >
-                                <Image
-                                  src={file.previewUrl || file.url}
-                                  alt={file.name || "Ảnh minh chứng"}
-                                  preview={{
-                                    mask: (
-                                      <div className="flex items-center justify-center text-white text-[10px]">
-                                        <EyeOutlined />
-                                      </div>
-                                    ),
-                                  }}
-                                />
-                                {!isViewOnly && (
-                                  <button
-                                    type="button"
-                                    onClick={e => {
-                                      e.stopPropagation()
-                                      setFileList(prev => {
-                                        const next = prev.filter(
-                                          item => item.uid !== file.uid,
-                                        )
-                                        form.setFieldsValue({ images: next })
-                                        return next
-                                      })
-                                    }}
-                                    className="absolute z-20 flex items-center justify-center w-4 h-4 text-white transition-colors rounded-full shadow-xs top-1 right-1 bg-black/70 hover:bg-red-600 opacity-90 group-hover:opacity-100"
-                                    title="Xóa ảnh"
-                                  >
-                                    <DeleteOutlined className="text-[8px]" />
-                                  </button>
-                                )}
-                              </div>
-                            ))}
+                            {fileList.map((file, idx) => {
+                              const isUploading = file.status === "uploading"
+                              return (
+                                <div
+                                  key={file.uid || idx}
+                                  className="group relative h-14 w-14 shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shadow-xs hover:shadow-md transition-all [&_.ant-image]:!h-full [&_.ant-image]:!w-full [&_.ant-image-img]:!h-full [&_.ant-image-img]:!w-full [&_.ant-image-img]:!object-cover"
+                                >
+                                  <Image
+                                    src={file.previewUrl || file.url}
+                                    alt={file.name || "Ảnh minh chứng"}
+                                    preview={
+                                      isUploading
+                                        ? false
+                                        : {
+                                            mask: (
+                                              <div className="flex items-center justify-center text-white text-[10px]">
+                                                <EyeOutlined />
+                                              </div>
+                                            ),
+                                          }
+                                    }
+                                  />
+                                  {isUploading && (
+                                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 text-white">
+                                      <Spin size="small" />
+                                    </div>
+                                  )}
+                                  {!isViewOnly && !isUploading && (
+                                    <button
+                                      type="button"
+                                      onClick={e => {
+                                        e.stopPropagation()
+                                        setFileList(prev => {
+                                          const next = prev.filter(
+                                            item => item.uid !== file.uid,
+                                          )
+                                          form.setFieldsValue({ images: next })
+                                          return next
+                                        })
+                                      }}
+                                      className="absolute z-20 flex items-center justify-center w-4 h-4 text-white transition-colors rounded-full shadow-xs top-1 right-1 bg-black/70 hover:bg-red-600 opacity-90 group-hover:opacity-100"
+                                      title="Xóa ảnh"
+                                    >
+                                      <DeleteOutlined className="text-[8px]" />
+                                    </button>
+                                  )}
+                                </div>
+                              )
+                            })}
 
                             {!isViewOnly && (
                               <Upload
                                 {...uploadProps}
                                 accept="image/*"
                                 showUploadList={false}
+                                disabled={fileList.length >= MAX_UPLOAD_FILES}
                               >
                                 <div className="flex flex-col items-center justify-center text-green-700 transition-all border border-green-400 border-dashed cursor-pointer h-14 w-14 shrink-0 rounded-xl bg-green-50/50 hover:bg-green-100/70 hover:border-green-600 group">
                                   <CameraOutlined className="text-base text-green-600 group-hover:scale-110 transition-transform mb-0.5" />
@@ -1666,10 +1689,11 @@ const DailyLog = () => {
                     <Button
                       type="primary"
                       onClick={handleSave}
-                      loading={saving}
+                      loading={saving || isUploadingImages}
+                      disabled={isUploadingImages}
                       className="h-10 px-6 font-semibold bg-green-600 rounded-xl"
                     >
-                      Lưu nhật ký
+                      {isUploadingImages ? "Đang tải ảnh..." : "Lưu nhật ký"}
                     </Button>
                   </div>
                 )}
