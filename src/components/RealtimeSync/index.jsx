@@ -21,6 +21,7 @@ const RealtimeSync = () => {
     let retryAttempt = 0
     let unsubscribeClosed = () => {}
 
+
     const invalidateNotifications = () => {
       window.dispatchEvent(new CustomEvent("app:notification-changed"))
     }

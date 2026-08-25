@@ -122,6 +122,39 @@ const DailyLog = () => {
   })
   const [usageForm] = Form.useForm()
 
+  const watchedFertilizers = Form.useWatch("fertilizers", form)
+  const watchedPesticides = Form.useWatch("pesticides", form)
+
+  const getAvailableFertilizerOptions = currentIndex => {
+    const selectedIds = new Set(
+      (watchedFertilizers || [])
+        .filter((item, idx) => idx !== currentIndex && item)
+        .flatMap(item => [item.fertilizerId, item.materialId])
+        .filter(Boolean)
+        .map(String),
+    )
+    return fertilizerOptions.filter(
+      opt =>
+        !selectedIds.has(String(opt.value)) &&
+        !selectedIds.has(String(opt.materialId)),
+    )
+  }
+
+  const getAvailablePesticideOptions = currentIndex => {
+    const selectedIds = new Set(
+      (watchedPesticides || [])
+        .filter((item, idx) => idx !== currentIndex && item)
+        .flatMap(item => [item.pesticideId, item.materialId])
+        .filter(Boolean)
+        .map(String),
+    )
+    return pesticideOptions.filter(
+      opt =>
+        !selectedIds.has(String(opt.value)) &&
+        !selectedIds.has(String(opt.materialId)),
+    )
+  }
+
   const isUploadingImages = useMemo(
     () => (fileList || []).some(item => item.status === "uploading"),
     [fileList],
@@ -1111,7 +1144,9 @@ const DailyLog = () => {
                                         showSearch
                                         optionFilterProp="label"
                                         placeholder="Chọn phân bón"
-                                        options={fertilizerOptions}
+                                        options={getAvailableFertilizerOptions(
+                                          field.name,
+                                        )}
                                         disabled={isViewOnly}
                                         onChange={(value, option) => {
                                           const opt =
@@ -1400,7 +1435,9 @@ const DailyLog = () => {
                                         showSearch
                                         optionFilterProp="label"
                                         placeholder="Chọn nông dược"
-                                        options={pesticideOptions}
+                                        options={getAvailablePesticideOptions(
+                                          field.name,
+                                        )}
                                         disabled={isViewOnly}
                                         onChange={(value, option) => {
                                           const opt =
