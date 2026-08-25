@@ -73,6 +73,19 @@ export function toTurfPolygon(geoJSON) {
   }
 }
 
+function isPointInRing(point, ring) {
+  const [x, y] = point
+  let inside = false
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i]
+    const [xj, yj] = ring[j]
+    const intersect =
+      yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
+    if (intersect) inside = !inside
+  }
+  return inside
+}
+
 /**
  * Kiểm tra polygon mới có chồng lấn với lô đất đã tồn tại hay không.
  * Chỉ chặn overlap thực sự (không chặn chạm cạnh).
@@ -86,6 +99,8 @@ export function findOverlappingPlot(
 
   const newPoly = toTurfPolygon(newGeoJSON)
   if (!newPoly) return null
+
+  const newRing = newGeoJSON.coordinates[0] || []
 
   for (const plot of existingPlots) {
     const plotId = plot?.id || plot?._id || plot?.landPlotId
@@ -110,6 +125,14 @@ export function findOverlappingPlot(
         booleanContains(existingPoly, newPoly)
 
       if (overlaps) return plot
+
+      // Kiểm tra nếu có bất kỳ đỉnh nào của polygon mới nằm hẳn bên trong polygon cũ
+      const existingRing = existingGeoJSON.coordinates[0] || []
+      for (const pt of newRing) {
+        if (isPointInRing(pt, existingRing)) {
+          return plot
+        }
+      }
     } catch {
       continue
     }

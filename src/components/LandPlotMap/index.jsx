@@ -105,12 +105,29 @@ const LandPlotMap = ({
     })
   }, [])
 
+  const revertLayerToLastValid = useCallback((layer, lastGeoJSON) => {
+    if (!layer || !lastGeoJSON?.coordinates) return
+    const positions = geoJSONToLeafletPositions(lastGeoJSON.coordinates)
+    const isPmEnabled =
+      layer.pm && typeof layer.pm.enabled === "function" && layer.pm.enabled()
+
+    if (isPmEnabled) {
+      layer.pm.disable()
+      layer.setLatLngs(positions)
+      layer.pm.enable({
+        allowSelfIntersection: false,
+      })
+    } else {
+      layer.setLatLngs(positions)
+    }
+  }, [])
+
   const validatePolygon = useCallback(
     (geoJSON, layer, { isDraw = false } = {}) => {
       // Kiểm tra diện tích tối đa 30 ha = 300,000 m²
       const areaM2 = calculatePolygonArea(geoJSON.coordinates)
       if (areaM2 > MAX_AREA_M2) {
-        const message = `Diện tích vượt quá giới hạn cho phép (tối đa  ${MAX_AREA_M2.toLocaleString("vi-VN")} m²). Vui lòng vẽ lại nhỏ hơn.`
+        const message = `Diện tích vượt quá giới hạn cho phép (tối đa ${MAX_AREA_M2.toLocaleString("vi-VN")} m²). Vui lòng vẽ lại nhỏ hơn.`
         setOverlapError(message)
         onOverlapErrorRef.current?.(message)
 
@@ -119,10 +136,7 @@ const LandPlotMap = ({
           activeLayer.current = null
           onPolygonChangeRef.current?.(null)
         } else if (layer && lastValidGeoJSON.current) {
-          const positions = geoJSONToLeafletPositions(
-            lastValidGeoJSON.current.coordinates,
-          )
-          layer.setLatLngs(positions)
+          revertLayerToLastValid(layer, lastValidGeoJSON.current)
         }
 
         return false
@@ -145,10 +159,7 @@ const LandPlotMap = ({
           activeLayer.current = null
           onPolygonChangeRef.current?.(null)
         } else if (layer && lastValidGeoJSON.current) {
-          const positions = geoJSONToLeafletPositions(
-            lastValidGeoJSON.current.coordinates,
-          )
-          layer.setLatLngs(positions)
+          revertLayerToLastValid(layer, lastValidGeoJSON.current)
         }
 
         return false
@@ -160,7 +171,7 @@ const LandPlotMap = ({
       emitPolygonChange(geoJSON)
       return true
     },
-    [emitPolygonChange],
+    [emitPolygonChange, revertLayerToLastValid],
   )
 
   const clearActiveLayer = useCallback(() => {
