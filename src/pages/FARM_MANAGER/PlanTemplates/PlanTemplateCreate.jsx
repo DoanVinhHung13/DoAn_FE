@@ -91,7 +91,7 @@ const StepCard = ({ step, index, steps, updateStep, removeStep }) => {
   )
 
   const hasEmptyDescError = touched && !trimmedDesc
-  const hasDescLengthError = trimmedDesc.length > 200
+  const hasDescLengthError = trimmedDesc.length > 500
   const hasDescSpaceError = Boolean(
     trimmedDesc && trimmedDesc !== trimmedDesc.replace(/\s+/g, " "),
   )
@@ -630,9 +630,7 @@ const PlanTemplateCreate = () => {
                 <Form.Item
                   name="description"
                   label="Mô tả"
-                  rules={[
-                    makeDescriptionValidator({ maxLength: 200 }),
-                  ]}
+                  rules={[makeDescriptionValidator({ maxLength: 200 })]}
                 >
                   <Input.TextArea
                     rows={3}
