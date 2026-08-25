@@ -160,8 +160,8 @@ const FarmSupervisorPlanDetail = () => {
     [tasks],
   )
 
-  const logbookStartDate = plan.actualStartDate || plan.startDate
-  const logbookStartLabel = plan.actualStartDate
+  const logbookStartDate = plan?.actualStartDate || plan?.startDate
+  const logbookStartLabel = plan?.actualStartDate
     ? "Ngày bắt đầu"
     : "Dự kiến"
 
