@@ -50,9 +50,10 @@ const LandPlotEdit = () => {
 
   // ── State riêng: chi tiết vùng trồng đang sửa ─────────────────────────────
   const [plot, setPlot] = useState(null)
-  const [plotLoading, setPlotLoading] = useState(false)
+  const [plotLoading, setPlotLoading] = useState(true)
   const [plotError, setPlotError] = useState(null)
   const [existingPlots, setExistingPlots] = useState([])
+  const [existingPlotsLoading, setExistingPlotsLoading] = useState(true)
 
   // Nếu không có quyền thì về trang danh sách
   useEffect(() => {
@@ -96,6 +97,7 @@ const LandPlotEdit = () => {
   const fetchExistingPlots = useCallback(async () => {
     if (!id) return
     try {
+      setExistingPlotsLoading(true)
       const response = await LandPlotService.getLandPlots({
         PageIndex: 1,
         PageSize: 100,
@@ -108,28 +110,34 @@ const LandPlotEdit = () => {
       )
 
       if (needsDetailFetch) {
-        const enriched = []
-        for (const item of filtered) {
-          if (item.boundaryJson || item.boundary || item.geometry) {
-            enriched.push(item)
-          } else if (item.id) {
-            try {
-              const res = await LandPlotService.getLandPlotById(item.id)
-              const detail = normalizeApiDetail(res)
-              enriched.push({ ...item, ...detail })
-            } catch {
-              enriched.push(item)
+        const results = await Promise.allSettled(
+          filtered.map(async item => {
+            if (item.boundaryJson || item.boundary || item.geometry) {
+              return item
             }
-          } else {
-            enriched.push(item)
-          }
-        }
+            if (item.id) {
+              try {
+                const res = await LandPlotService.getLandPlotById(item.id)
+                const detail = normalizeApiDetail(res)
+                return { ...item, ...detail }
+              } catch {
+                return item
+              }
+            }
+            return item
+          }),
+        )
+        const enriched = results.map((r, i) =>
+          r.status === "fulfilled" ? r.value : filtered[i],
+        )
         setExistingPlots(enriched)
       } else {
         setExistingPlots(filtered)
       }
     } catch {
       // Không ảnh hưởng UX chính
+    } finally {
+      setExistingPlotsLoading(false)
     }
   }, [id])
 
@@ -266,18 +274,28 @@ const LandPlotEdit = () => {
             {mapError && (
               <Alert className="mb-3" type="error" message={mapError} />
             )}
-            <LandPlotMap
-              mode={cultivationLocked ? "view" : "edit"}
-              height={520}
-              boundaryJson={plot.boundaryJson}
-              excludePlotId={id}
-              overlapPlots={existingPlots}
-              onPolygonChange={handlePolygonChange}
-              onAddressSelect={({ address, latitude, longitude }) => {
-                if (address)
-                  form.setFieldsValue({ address, latitude, longitude })
-              }}
-            />
+            {existingPlotsLoading ? (
+              <div
+                className="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 rounded text-gray-500 gap-3"
+                style={{ height: 520 }}
+              >
+                <Spin size="large" />
+                <span>Đang tải dữ liệu bản đồ...</span>
+              </div>
+            ) : (
+              <LandPlotMap
+                mode={cultivationLocked ? "view" : "edit"}
+                height={520}
+                boundaryJson={plot.boundaryJson}
+                excludePlotId={id}
+                overlapPlots={existingPlots}
+                onPolygonChange={handlePolygonChange}
+                onAddressSelect={({ address, latitude, longitude }) => {
+                  if (address)
+                    form.setFieldsValue({ address, latitude, longitude })
+                }}
+              />
+            )}
           </Card>
         </Col>
       </Row>

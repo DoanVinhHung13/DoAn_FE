@@ -47,6 +47,7 @@ const LandPlotCreate = () => {
 
   // ── State riêng: vùng trồng hiện có (kiểm tra chồng lấn) ─────────────────
   const [existingPlots, setExistingPlots] = useState([])
+  const [loadingPlots, setLoadingPlots] = useState(true)
 
   useEffect(() => {
     form.setFieldValue("areaUnit", MEASUREMENT_UNITS.SQUARE_METER)
@@ -70,6 +71,7 @@ const LandPlotCreate = () => {
   // ── Fetch: vùng trồng hiện có (kiểm tra chồng lấn) ────────────────────────
   const fetchExistingPlots = useCallback(async () => {
     try {
+      setLoadingPlots(true)
       const response = await LandPlotService.getLandPlots({
         PageIndex: 1,
         PageSize: 100,
@@ -81,28 +83,34 @@ const LandPlotCreate = () => {
       )
 
       if (needsDetailFetch) {
-        const enriched = []
-        for (const item of items) {
-          if (item.boundaryJson || item.boundary || item.geometry) {
-            enriched.push(item)
-          } else if (item.id) {
-            try {
-              const res = await LandPlotService.getLandPlotById(item.id)
-              const detail = normalizeApiDetail(res)
-              enriched.push({ ...item, ...detail })
-            } catch {
-              enriched.push(item)
+        const results = await Promise.allSettled(
+          items.map(async item => {
+            if (item.boundaryJson || item.boundary || item.geometry) {
+              return item
             }
-          } else {
-            enriched.push(item)
-          }
-        }
+            if (item.id) {
+              try {
+                const res = await LandPlotService.getLandPlotById(item.id)
+                const detail = normalizeApiDetail(res)
+                return { ...item, ...detail }
+              } catch {
+                return item
+              }
+            }
+            return item
+          }),
+        )
+        const enriched = results.map((r, i) =>
+          r.status === "fulfilled" ? r.value : items[i],
+        )
         setExistingPlots(enriched)
       } else {
         setExistingPlots(items)
       }
     } catch {
       // Existing plots are best-effort data for overlap validation.
+    } finally {
+      setLoadingPlots(false)
     }
   }, [])
 
@@ -193,16 +201,26 @@ const LandPlotCreate = () => {
             {mapError && (
               <Alert className="mb-3" type="error" message={mapError} />
             )}
-            <LandPlotMap
-              mode="draw"
-              height={520}
-              overlapPlots={existingPlots}
-              onPolygonChange={handlePolygonChange}
-              onAddressSelect={({ address, latitude, longitude }) => {
-                if (address)
-                  form.setFieldsValue({ address, latitude, longitude })
-              }}
-            />
+            {loadingPlots ? (
+              <div
+                className="flex flex-col items-center justify-center bg-gray-50 border border-gray-200 rounded text-gray-500 gap-3"
+                style={{ height: 520 }}
+              >
+                <Spin size="large" />
+                <span>Đang tải dữ liệu bản đồ...</span>
+              </div>
+            ) : (
+              <LandPlotMap
+                mode="draw"
+                height={520}
+                overlapPlots={existingPlots}
+                onPolygonChange={handlePolygonChange}
+                onAddressSelect={({ address, latitude, longitude }) => {
+                  if (address)
+                    form.setFieldsValue({ address, latitude, longitude })
+                }}
+              />
+            )}
           </Card>
         </Col>
       </Row>
