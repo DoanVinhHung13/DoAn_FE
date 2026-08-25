@@ -293,11 +293,42 @@ const LandPlotMap = ({
   useEffect(() => {
     if (mapInstance.current || !mapRef.current) return
 
+    // Tính toán bounds khởi tạo để tránh tải map ở vị trí mặc định trước khi nhảy sang lô đất
+    let initialBounds = null
+    const parsedBoundary = parseBoundaryJson(boundaryJson)
+    if (parsedBoundary?.coordinates) {
+      const positions = geoJSONToLeafletPositions(parsedBoundary.coordinates)
+      if (positions.length > 0) {
+        initialBounds = L.latLngBounds(positions)
+      }
+    } else if (overlapPlots?.length > 0) {
+      const allPositions = []
+      overlapPlots.forEach(plot => {
+        const rawBoundary =
+          plot?.boundaryJson ||
+          plot?.boundary ||
+          plot?.boundaries ||
+          plot?.polygon ||
+          plot?.geometry
+        const g = parseBoundaryJson(rawBoundary)
+        if (g?.coordinates) {
+          allPositions.push(...geoJSONToLeafletPositions(g.coordinates))
+        }
+      })
+      if (allPositions.length > 0) {
+        initialBounds = L.latLngBounds(allPositions)
+      }
+    }
+
     const map = L.map(mapRef.current, {
-      center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
       zoomControl: true,
     })
+
+    if (initialBounds && initialBounds.isValid()) {
+      map.fitBounds(initialBounds, { padding: [40, 40] })
+    } else {
+      map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)
+    }
 
     const osm = L.tileLayer(
       "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
@@ -454,7 +485,7 @@ const LandPlotMap = ({
     const geoJSON = parseBoundaryJson(boundaryJson)
     if (!geoJSON) return
 
-    const layer = renderPolygon(geoJSON, { fitBounds: true })
+    const layer = renderPolygon(geoJSON, { fitBounds: false })
     if (!layer) return
 
     activeLayer.current = layer
