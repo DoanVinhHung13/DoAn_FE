@@ -312,9 +312,7 @@ const TaskCard = ({
             {/* Hàng 1: Ngày bắt đầu / Dự kiến */}
             <div className="flex items-center gap-1.5 text-xs text-gray-600">
               <CalendarOutlined className="text-gray-400 flex-shrink-0" />
-              <span className="font-semibold text-gray-500">
-                {startLabel}
-              </span>
+              <span className="font-semibold text-gray-500">{startLabel}</span>
               <span className="font-medium text-gray-800">
                 {startDate ? formatDate(startDate) : "—"}
               </span>

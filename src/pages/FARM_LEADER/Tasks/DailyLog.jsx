@@ -92,7 +92,6 @@ import TaskSummaryModal from "./components/TaskSummaryModal"
 const { Text } = Typography
 const { TextArea } = Input
 
-
 const DailyLog = () => {
   const { getTaskStatus } = useCultivationStatus()
   const { taskId } = useParams()
@@ -471,9 +470,7 @@ const DailyLog = () => {
     }
 
     try {
-      const imageUrls = (fileList || [])
-        .map(getServerImageUrl)
-        .filter(Boolean)
+      const imageUrls = (fileList || []).map(getServerImageUrl).filter(Boolean)
 
       if (imageUrls.length === 0) {
         setShowImageError(true)
@@ -756,7 +753,10 @@ const DailyLog = () => {
         />
         <div className="flex gap-2">
           {!isNotFound && (
-            <Button type="primary" onClick={() => setRefreshKey(key => key + 1)}>
+            <Button
+              type="primary"
+              onClick={() => setRefreshKey(key => key + 1)}
+            >
               Thử lại
             </Button>
           )}
@@ -790,15 +790,11 @@ const DailyLog = () => {
     isHarvestTask &&
     Number(task.totalPlanArea || 0) > 0 &&
     remainingHarvestArea <= 0.0001
-  const actualEndDate = ["WAITING_APPROVAL", "COMPLETED"].includes(
-    task?.status,
-  )
+  const actualEndDate = ["WAITING_APPROVAL", "COMPLETED"].includes(task?.status)
     ? task?.workEndDate
     : null
   const displayStartDate = task?.workStartDate || task?.plannedStartDate
-  const displayStartLabel = task?.workStartDate
-    ? "Ngày bắt đầu"
-    : "Dự kiến"
+  const displayStartLabel = task?.workStartDate ? "Ngày bắt đầu" : "Dự kiến"
 
   return (
     <div className="pb-20 space-y-4 duration-500 animate-in fade-in slide-in-from-bottom-4">

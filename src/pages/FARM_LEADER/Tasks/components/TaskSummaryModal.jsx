@@ -62,9 +62,7 @@ const TaskSummaryModal = ({
       cancelText="Hủy"
       confirmLoading={submitting}
       okButtonProps={{
-        className: isWaitingApproval
-          ? ""
-          : "bg-green-600 border-green-600",
+        className: isWaitingApproval ? "" : "bg-green-600 border-green-600",
         disabled: summaryLoading,
       }}
       width={780}
@@ -75,9 +73,7 @@ const TaskSummaryModal = ({
           {(() => {
             const startDate = task?.workStartDate
             const endDate = actualEndDate
-            const formattedStartDate = startDate
-              ? formatDate(startDate)
-              : "—"
+            const formattedStartDate = startDate ? formatDate(startDate) : "—"
             const formattedEndDate = endDate
               ? formatDate(endDate)
               : "Chưa hoàn thành"
@@ -248,9 +244,7 @@ const TaskSummaryModal = ({
                 render: (_, r) => (
                   <span className="font-semibold text-blue-700">
                     {r.totalQuantity}{" "}
-                    <span className="font-normal text-gray-500">
-                      {r.unit}
-                    </span>
+                    <span className="font-normal text-gray-500">{r.unit}</span>
                   </span>
                 ),
               },
@@ -363,9 +357,7 @@ const TaskSummaryModal = ({
                 render: (_, r) => (
                   <span className="font-semibold text-purple-700">
                     {r.totalQuantity}{" "}
-                    <span className="font-normal text-gray-500">
-                      {r.unit}
-                    </span>
+                    <span className="font-normal text-gray-500">{r.unit}</span>
                   </span>
                 ),
               },
